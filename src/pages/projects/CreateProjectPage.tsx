@@ -1,0 +1,360 @@
+import { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { Card, CardHeader, Button, Input } from '../../components/ui';
+import api from '../../lib/api';
+import type { SkillCategory, Skill } from '../../types';
+
+interface MilestoneInput {
+  title: string;
+  description: string;
+  amount: string;
+  dueDate: string;
+}
+
+export function CreateProjectPage() {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState<SkillCategory[]>([]);
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    budget: '',
+    deadline: '',
+  });
+  const [selectedSkills, setSelectedSkills] = useState<Array<{ skillId: string; skillName: string }>>([]);
+  const [milestones, setMilestones] = useState<MilestoneInput[]>([
+    { title: '', description: '', amount: '', dueDate: '' }
+  ]);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await api.getSkillCategories();
+        setCategories(data);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    if (selectedCategory) {
+      const fetchSkills = async () => {
+        try {
+          const data = await api.getSkillsByCategory(selectedCategory);
+          setSkills(data);
+        } catch (error) {
+          console.error('Error fetching skills:', error);
+        }
+      };
+      fetchSkills();
+    }
+  }, [selectedCategory]);
+
+  const handleAddSkill = (skillId: string) => {
+    const skill = skills.find(s => s.id === skillId);
+    if (skill && !selectedSkills.find(s => s.skillId === skillId)) {
+      setSelectedSkills([...selectedSkills, { skillId: skill.id, skillName: skill.name }]);
+    }
+  };
+
+  const handleRemoveSkill = (skillId: string) => {
+    setSelectedSkills(selectedSkills.filter(s => s.skillId !== skillId));
+  };
+
+  const handleAddMilestone = () => {
+    setMilestones([...milestones, { title: '', description: '', amount: '', dueDate: '' }]);
+  };
+
+  const handleRemoveMilestone = (index: number) => {
+    if (milestones.length > 1) {
+      setMilestones(milestones.filter((_, i) => i !== index));
+    }
+  };
+
+  const handleMilestoneChange = (index: number, field: keyof MilestoneInput, value: string) => {
+    const updated = [...milestones];
+    updated[index] = { ...updated[index], [field]: value };
+    setMilestones(updated);
+  };
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.title.trim()) newErrors.title = 'Title is required';
+    if (!formData.description.trim()) newErrors.description = 'Description is required';
+    if (!formData.budget || parseFloat(formData.budget) <= 0) newErrors.budget = 'Valid budget is required';
+    if (!formData.deadline) newErrors.deadline = 'Deadline is required';
+    if (selectedSkills.length === 0) newErrors.skills = 'At least one skill is required';
+
+    const validMilestones = milestones.filter(m => m.title.trim());
+    if (validMilestones.length === 0) {
+      newErrors.milestones = 'At least one milestone is required';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent, publish = false) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    setLoading(true);
+    try {
+      // Create project
+      const project = await api.createProject({
+        title: formData.title,
+        description: formData.description,
+        budget: parseFloat(formData.budget),
+        deadline: formData.deadline,
+        requiredSkills: selectedSkills.map(s => ({ skillId: s.skillId })),
+      });
+
+      // Add milestones
+      const validMilestones = milestones.filter(m => m.title.trim());
+      if (validMilestones.length > 0) {
+        await api.addMilestones(project.id, {
+          milestones: validMilestones.map(m => ({
+            title: m.title,
+            description: m.description,
+            amount: parseFloat(m.amount) || 0,
+            dueDate: m.dueDate,
+          })),
+        });
+      }
+
+      // Publish if requested
+      if (publish) {
+        await api.publishProject(project.id);
+      }
+
+      navigate(`/projects/${project.id}`);
+    } catch (error) {
+      console.error('Error creating project:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="max-w-3xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <Link to="/projects/manage">
+          <Button variant="ghost" size="sm">
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </Button>
+        </Link>
+        <h1 className="text-2xl font-bold text-white">Create New Project</h1>
+      </div>
+
+      <form onSubmit={(e) => handleSubmit(e, false)}>
+        {/* Basic Info */}
+        <Card className="mb-6">
+          <CardHeader title="Project Details" description="Describe your project to attract the right freelancers" />
+          
+          <div className="space-y-4">
+            <Input
+              label="Project Title *"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              placeholder="e.g., Build a React dashboard"
+              error={errors.title}
+            />
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Description *
+              </label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                rows={6}
+                className="w-full bg-dark-bg border border-dark-border rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
+                placeholder="Describe your project requirements, goals, and any specific needs..."
+              />
+              {errors.description && (
+                <p className="text-red-400 text-sm mt-1">{errors.description}</p>
+              )}
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              <Input
+                type="number"
+                step="0.01"
+                min="0"
+                label="Budget (ETH) *"
+                value={formData.budget}
+                onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
+                placeholder="1.00"
+                error={errors.budget}
+              />
+              <Input
+                type="date"
+                label="Deadline *"
+                value={formData.deadline}
+                onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
+                error={errors.deadline}
+              />
+            </div>
+          </div>
+        </Card>
+
+        {/* Skills */}
+        <Card className="mb-6">
+          <CardHeader title="Required Skills" description="Select skills needed for this project" />
+          
+          <div className="space-y-4">
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Category
+                </label>
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-primary-500"
+                >
+                  <option value="">Select a category</option>
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Skill
+                </label>
+                <select
+                  value=""
+                  onChange={(e) => handleAddSkill(e.target.value)}
+                  className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-primary-500"
+                  disabled={!selectedCategory}
+                >
+                  <option value="">Add a skill</option>
+                  {skills.filter(s => !selectedSkills.find(sel => sel.skillId === s.id)).map(skill => (
+                    <option key={skill.id} value={skill.id}>{skill.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {selectedSkills.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {selectedSkills.map(skill => (
+                  <span
+                    key={skill.skillId}
+                    className="inline-flex items-center gap-1 px-3 py-1 bg-primary-900/50 text-primary-400 rounded-full text-sm"
+                  >
+                    {skill.skillName}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveSkill(skill.skillId)}
+                      className="hover:text-primary-300"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            {errors.skills && (
+              <p className="text-red-400 text-sm">{errors.skills}</p>
+            )}
+          </div>
+        </Card>
+
+        {/* Milestones */}
+        <Card className="mb-6">
+          <CardHeader 
+            title="Milestones" 
+            description="Break your project into milestones for structured payments"
+            action={
+              <Button type="button" variant="outline" size="sm" onClick={handleAddMilestone}>
+                <Plus className="w-4 h-4" />
+                Add Milestone
+              </Button>
+            }
+          />
+          
+          <div className="space-y-4">
+            {milestones.map((milestone, index) => (
+              <div key={index} className="p-4 bg-dark-bg rounded-lg space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-white font-medium">Milestone {index + 1}</h4>
+                  {milestones.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveMilestone(index)}
+                      className="text-red-400 hover:text-red-300"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <input
+                    type="text"
+                    value={milestone.title}
+                    onChange={(e) => handleMilestoneChange(index, 'title', e.target.value)}
+                    placeholder="Milestone title"
+                    className="w-full bg-dark-surface border border-dark-border rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
+                  />
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={milestone.amount}
+                    onChange={(e) => handleMilestoneChange(index, 'amount', e.target.value)}
+                    placeholder="Amount (ETH)"
+                    className="w-full bg-dark-surface border border-dark-border rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
+                  />
+                </div>
+                <textarea
+                  value={milestone.description}
+                  onChange={(e) => handleMilestoneChange(index, 'description', e.target.value)}
+                  placeholder="Milestone description"
+                  rows={2}
+                  className="w-full bg-dark-surface border border-dark-border rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
+                />
+                <input
+                  type="date"
+                  value={milestone.dueDate}
+                  onChange={(e) => handleMilestoneChange(index, 'dueDate', e.target.value)}
+                  className="w-full bg-dark-surface border border-dark-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-primary-500"
+                />
+              </div>
+            ))}
+            {errors.milestones && (
+              <p className="text-red-400 text-sm">{errors.milestones}</p>
+            )}
+          </div>
+        </Card>
+
+        {/* Actions */}
+        <div className="flex gap-4">
+          <Button type="submit" variant="outline" disabled={loading}>
+            Save as Draft
+          </Button>
+          <Button
+            type="button"
+            onClick={() => {
+              const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
+              handleSubmit(syntheticEvent, true);
+            }}
+            disabled={loading}
+          >
+            {loading ? 'Publishing...' : 'Publish Project'}
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+}
