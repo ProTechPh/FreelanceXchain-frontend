@@ -172,7 +172,40 @@ export function ProfilePage() {
 
   const handleAddExperience = async () => {
     try {
-      await api.addExperience(newExperience);
+      // Validate required fields
+      if (!newExperience.title || newExperience.title.trim().length < 2) {
+        alert('Title must be at least 2 characters');
+        return;
+      }
+      if (!newExperience.company || newExperience.company.trim().length < 2) {
+        alert('Company must be at least 2 characters');
+        return;
+      }
+      if (!newExperience.description || newExperience.description.trim().length < 10) {
+        alert('Description must be at least 10 characters');
+        return;
+      }
+      if (!newExperience.startDate) {
+        alert('Start date is required');
+        return;
+      }
+      // Validate end date only if not currently working
+      if (!newExperience.current && !newExperience.endDate) {
+        alert('End date is required when not currently working');
+        return;
+      }
+
+      // Prepare the experience data - set endDate to null if currently working
+      const experienceData = {
+        title: newExperience.title,
+        company: newExperience.company,
+        startDate: newExperience.startDate,
+        description: newExperience.description,
+        current: newExperience.current,
+        endDate: newExperience.current ? null : newExperience.endDate
+      };
+
+      await api.addExperience(experienceData);
       await fetchFreelancerProfile();
       setNewExperience({
         title: '',
@@ -185,6 +218,7 @@ export function ProfilePage() {
       setShowExperienceForm(false);
     } catch (error) {
       console.error('Error adding experience:', error);
+      alert(`Failed to add experience: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
@@ -368,7 +402,7 @@ export function ProfilePage() {
                   >
                     <option value="">Add a skill</option>
                     {skills
-                      .filter(s => !freelancerProfile?.skills.find(sel => sel.skillId === s.id))
+                      .filter(s => !freelancerProfile?.skills.find(sel => sel.name === s.name))
                       .map(skill => (
                         <option key={skill.id} value={skill.id}>{skill.name}</option>
                       ))
@@ -379,15 +413,15 @@ export function ProfilePage() {
 
               {freelancerProfile?.skills && freelancerProfile.skills.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                  {freelancerProfile.skills.map(skill => (
+                  {freelancerProfile.skills.map((skill, index) => (
                     <span
-                      key={skill.skillId}
+                      key={`${skill.name}-${index}`}
                       className="inline-flex items-center gap-1 px-3 py-1 bg-primary-900/50 text-primary-400 rounded-full text-sm"
                     >
-                      {skill.skillName}
+                      {skill.name}
                       <button
                         type="button"
-                        onClick={() => handleRemoveSkill(skill.skillName)}
+                        onClick={() => handleRemoveSkill(skill.name)}
                         className="hover:text-primary-300"
                       >
                         ×
@@ -452,7 +486,11 @@ export function ProfilePage() {
                   <input
                     type="checkbox"
                     checked={newExperience.current}
-                    onChange={(e) => setNewExperience({ ...newExperience, current: e.target.checked })}
+                    onChange={(e) => setNewExperience({
+                      ...newExperience,
+                      current: e.target.checked,
+                      endDate: e.target.checked ? '' : newExperience.endDate
+                    })}
                     className="w-4 h-4 rounded border-dark-border bg-dark-bg text-primary-500 focus:ring-primary-500"
                   />
                   Currently working here

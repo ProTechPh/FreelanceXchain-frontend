@@ -192,7 +192,7 @@ function ReviewItem({ rating }: { rating: Rating }) {
         </p>
       )}
       <div className="text-xs text-gray-500">
-        From: {rating.raterName || 'Anonymous'}
+        From: Anonymous
       </div>
     </div>
   );

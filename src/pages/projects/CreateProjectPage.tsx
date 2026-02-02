@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Wallet } from 'lucide-react';
 import { Card, CardHeader, Button, Input } from '../../components/ui';
+import { useWalletStore } from '../../store';
+import { useToast } from '../../contexts/ToastContext';
 import api from '../../lib/api';
 import type { SkillCategory, Skill } from '../../types';
 
@@ -14,6 +16,8 @@ interface MilestoneInput {
 
 export function CreateProjectPage() {
   const navigate = useNavigate();
+  const { isConnected, address, connect } = useWalletStore();
+  const { success, error } = useToast();
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<SkillCategory[]>([]);
   const [skills, setSkills] = useState<Skill[]>([]);
@@ -95,6 +99,14 @@ export function CreateProjectPage() {
     const validMilestones = milestones.filter(m => m.title.trim());
     if (validMilestones.length === 0) {
       newErrors.milestones = 'At least one milestone is required';
+    } else {
+      // Validate milestone amounts sum to total budget
+      const totalBudget = parseFloat(formData.budget) || 0;
+      const milestonesSum = validMilestones.reduce((sum, m) => sum + (parseFloat(m.amount) || 0), 0);
+      
+      if (Math.abs(milestonesSum - totalBudget) > 0.000001) { // Use small epsilon for floating point comparison
+        newErrors.milestones = `Milestone amounts must sum to total budget. Current sum: ${milestonesSum.toFixed(2)} ETH, Budget: ${totalBudget.toFixed(2)} ETH`;
+      }
     }
 
     setErrors(newErrors);
@@ -132,11 +144,18 @@ export function CreateProjectPage() {
       // Publish if requested
       if (publish) {
         await api.publishProject(project.id);
+        success('Project published successfully!', 'Success');
+      } else {
+        success('Project saved as draft successfully!', 'Success');
       }
 
       navigate(`/projects/${project.id}`);
-    } catch (error) {
-      console.error('Error creating project:', error);
+    } catch (err) {
+      console.error('Error creating project:', err);
+      error(
+        err instanceof Error ? err.message : 'Failed to create project. Please try again.',
+        'Error'
+      );
     } finally {
       setLoading(false);
     }
@@ -154,6 +173,25 @@ export function CreateProjectPage() {
         </Link>
         <h1 className="text-2xl font-bold text-white">Create New Project</h1>
       </div>
+
+      {/* Wallet Connection Warning */}
+      {!isConnected && (
+        <Card className="border-yellow-500/50 bg-yellow-500/10">
+          <div className="flex items-start gap-4">
+            <Wallet className="w-6 h-6 text-yellow-500 flex-shrink-0 mt-1" />
+            <div className="flex-1">
+              <h3 className="text-yellow-500 font-semibold mb-2">Wallet Not Connected</h3>
+              <p className="text-gray-300 text-sm mb-4">
+                You need to connect your wallet to create a project. Projects require blockchain transactions for escrow and milestone payments.
+              </p>
+              <Button onClick={connect} variant="outline" size="sm">
+                <Wallet className="w-4 h-4" />
+                Connect Wallet
+              </Button>
+            </div>
+          </div>
+        </Card>
+      )}
 
       <form onSubmit={(e) => handleSubmit(e, false)}>
         {/* Basic Info */}
@@ -273,8 +311,8 @@ export function CreateProjectPage() {
 
         {/* Milestones */}
         <Card className="mb-6">
-          <CardHeader 
-            title="Milestones" 
+          <CardHeader
+            title="Milestones"
             description="Break your project into milestones for structured payments"
             action={
               <Button type="button" variant="outline" size="sm" onClick={handleAddMilestone}>
@@ -285,6 +323,41 @@ export function CreateProjectPage() {
           />
           
           <div className="space-y-4">
+            {/* Budget Tracker */}
+            {formData.budget && parseFloat(formData.budget) > 0 && (
+              <div className="p-4 bg-dark-surface rounded-lg border border-dark-border">
+                <h4 className="text-white font-medium mb-3 text-sm">Milestone Budget Allocation</h4>
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-gray-400">Project Budget:</span>
+                  <span className="text-white font-medium">{parseFloat(formData.budget).toFixed(2)} ETH</span>
+                </div>
+                <div className="flex justify-between items-center text-sm mt-2">
+                  <span className="text-gray-400">Allocated to Milestones:</span>
+                  <span className="text-white font-medium">
+                    {milestones.reduce((sum, m) => sum + (parseFloat(m.amount) || 0), 0).toFixed(2)} ETH
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-sm mt-2 pt-2 border-t border-dark-border">
+                  <span className="text-gray-400">Unallocated Budget:</span>
+                  <span className={`font-medium ${
+                    Math.abs((parseFloat(formData.budget) || 0) - milestones.reduce((sum, m) => sum + (parseFloat(m.amount) || 0), 0)) < 0.000001
+                      ? 'text-green-400'
+                      : (parseFloat(formData.budget) || 0) - milestones.reduce((sum, m) => sum + (parseFloat(m.amount) || 0), 0) < 0
+                      ? 'text-red-400'
+                      : 'text-yellow-400'
+                  }`}>
+                    {((parseFloat(formData.budget) || 0) - milestones.reduce((sum, m) => sum + (parseFloat(m.amount) || 0), 0)).toFixed(2)} ETH
+                  </span>
+                </div>
+                {Math.abs((parseFloat(formData.budget) || 0) - milestones.reduce((sum, m) => sum + (parseFloat(m.amount) || 0), 0)) < 0.000001 ? (
+                  <p className="text-green-400 text-xs mt-2">✓ All budget allocated to milestones</p>
+                ) : (parseFloat(formData.budget) || 0) - milestones.reduce((sum, m) => sum + (parseFloat(m.amount) || 0), 0) < 0 ? (
+                  <p className="text-red-400 text-xs mt-2">⚠ Milestone amounts exceed project budget</p>
+                ) : (
+                  <p className="text-yellow-400 text-xs mt-2">⚠ Budget not fully allocated to milestones</p>
+                )}
+              </div>
+            )}
             {milestones.map((milestone, index) => (
               <div key={index} className="p-4 bg-dark-bg rounded-lg space-y-4">
                 <div className="flex items-center justify-between">
@@ -340,7 +413,7 @@ export function CreateProjectPage() {
 
         {/* Actions */}
         <div className="flex gap-4">
-          <Button type="submit" variant="outline" disabled={loading}>
+          <Button type="submit" variant="outline" disabled={loading || !isConnected}>
             Save as Draft
           </Button>
           <Button
@@ -349,11 +422,16 @@ export function CreateProjectPage() {
               const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
               handleSubmit(syntheticEvent, true);
             }}
-            disabled={loading}
+            disabled={loading || !isConnected}
           >
             {loading ? 'Publishing...' : 'Publish Project'}
           </Button>
         </div>
+        {!isConnected && (
+          <p className="text-yellow-500 text-sm">
+            Please connect your wallet to create a project
+          </p>
+        )}
       </form>
     </div>
   );

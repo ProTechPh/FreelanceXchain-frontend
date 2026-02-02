@@ -32,9 +32,8 @@ export interface LoginInput {
 
 // Profile Types
 export interface SkillReference {
-  skillId: string;
-  skillName: string;
-  yearsOfExperience?: number;
+  name: string;
+  yearsOfExperience: number;
 }
 
 export interface WorkExperience {

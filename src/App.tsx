@@ -62,11 +62,15 @@ import { AdminUsersPage } from './pages/admin/AdminUsersPage';
 import { AdminKYCPage } from './pages/admin/AdminKYCPage';
 import { AdminDisputesPage } from './pages/admin/AdminDisputesPage';
 import { AdminSkillsPage } from './pages/admin/AdminSkillsPage';
+import { AdminAnalyticsPage } from './pages/admin/AdminAnalyticsPage';
 import { HowItWorksPage } from './pages/info/HowItWorksPage';
 import { FAQsPage } from './pages/info/FAQsPage';
 import { HelpCenterPage } from './pages/info/HelpCenterPage';
 import { BlogPage } from './pages/info/BlogPage';
 import { TutorialsPage } from './pages/info/TutorialsPage';
+import { TermsPage } from './pages/info/TermsPage';
+import { PrivacyPage } from './pages/info/PrivacyPage';
+import { AboutPage } from './pages/info/AboutPage';
 import { SettingsPage } from './pages/settings/SettingsPage';
 
 function App() {
@@ -146,6 +150,9 @@ function App() {
         <Route path="/help-center" element={<PublicLayout showMinimalHeader><HelpCenterPage /></PublicLayout>} />
         <Route path="/blog" element={<PublicLayout showMinimalHeader><BlogPage /></PublicLayout>} />
         <Route path="/tutorials" element={<PublicLayout showMinimalHeader><TutorialsPage /></PublicLayout>} />
+        <Route path="/terms" element={<PublicLayout showMinimalHeader><TermsPage /></PublicLayout>} />
+        <Route path="/privacy" element={<PublicLayout showMinimalHeader><PrivacyPage /></PublicLayout>} />
+        <Route path="/about" element={<PublicLayout showMinimalHeader><AboutPage /></PublicLayout>} />
         <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
         <Route
           path="/login"
@@ -168,7 +175,16 @@ function App() {
 
         {/* Public Project Routes */}
         <Route path="/projects" element={<PublicLayout><ProjectListPage /></PublicLayout>} />
-        <Route path="/projects/:id" element={<PublicLayout><ProjectDetailPage /></PublicLayout>} />
+        <Route
+          path="/projects/:id"
+          element={
+            isAuthenticated ? (
+              <Layout><ProjectDetailPage /></Layout>
+            ) : (
+              <PublicLayout showMinimalHeader><ProjectDetailPage /></PublicLayout>
+            )
+          }
+        />
         
         {/* Search Route */}
         <Route path="/search" element={<PublicLayout><SearchResultsPage /></PublicLayout>} />
@@ -203,7 +219,7 @@ function App() {
           element={
             <ProtectedRoute roles={['employer', 'admin']}>
               <Layout>
-                <ProjectListPage />
+                <ProjectListPage showMyProjects={true} />
               </Layout>
             </ProtectedRoute>
           }
@@ -223,12 +239,7 @@ function App() {
           element={
             <ProtectedRoute roles={['employer', 'admin']}>
               <Layout>
-                <div className="min-h-screen flex items-center justify-center">
-                  <div className="text-center">
-                    <h2 className="text-3xl font-bold text-white mb-4">Project Proposals</h2>
-                    <p className="text-gray-400">Coming Soon</p>
-                  </div>
-                </div>
+                <ProposalsListPage />
               </Layout>
             </ProtectedRoute>
           }
@@ -378,12 +389,17 @@ function App() {
           element={
             <ProtectedRoute roles={['admin']}>
               <Layout>
-                <div className="min-h-screen flex items-center justify-center">
-                  <div className="text-center">
-                    <h2 className="text-3xl font-bold text-white mb-4">Admin Dashboard</h2>
-                    <p className="text-gray-400">Coming Soon</p>
-                  </div>
-                </div>
+                <DashboardPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/analytics"
+          element={
+            <ProtectedRoute roles={['admin']}>
+              <Layout>
+                <AdminAnalyticsPage />
               </Layout>
             </ProtectedRoute>
           }

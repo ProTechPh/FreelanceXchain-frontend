@@ -54,7 +54,7 @@ export function ContractDetailPage() {
           try {
             const canRateResponse = await api.canRate(id, rateeId);
             setCanRate(canRateResponse.canRate);
-            setHasRated(!canRateResponse.canRate && canRateResponse.reason?.includes('already rated'));
+            setHasRated(!canRateResponse.canRate && (canRateResponse.reason?.includes('already rated') ?? false));
           } catch (error) {
             console.error('Error checking rating status:', error);
           }

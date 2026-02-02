@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Users, Search, Filter, Star, DollarSign, MapPin, Briefcase } from 'lucide-react';
+import { Users, Search, Filter, MapPin, Briefcase } from 'lucide-react';
 import { Card, Button, Input, PageLoader, StatusBadge } from '../../components/ui';
 import api from '../../lib/api';
-import type { FreelancerProfile, SkillCategory } from '../../types';
+import type { FreelancerProfile } from '../../types';
 
 export function FreelancerListPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [freelancers, setFreelancers] = useState<FreelancerProfile[]>([]);
-  const [skillCategories, setSkillCategories] = useState<SkillCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const [filters, setFilters] = useState({
@@ -26,15 +25,11 @@ export function FreelancerListPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [freelancerData, skillData] = await Promise.all([
-        searchParams.get('q')
-          ? api.searchFreelancers({ keyword: searchParams.get('q')! })
-          : api.searchFreelancers({}),
-        api.getSkillCategories()
-      ]);
+      const freelancerData = searchParams.get('q')
+        ? await api.searchFreelancers({ keyword: searchParams.get('q')! })
+        : await api.searchFreelancers({});
       
-      setFreelancers(freelancerData.freelancers || []);
-      setSkillCategories(skillData);
+      setFreelancers(freelancerData.items || []);
     } catch (error) {
       console.error('Error loading freelancers:', error);
     } finally {
@@ -62,8 +57,8 @@ export function FreelancerListPage() {
       return false;
     }
     if (filters.skills.length > 0) {
-      const freelancerSkills = freelancer.skills?.map(s => s.id) || [];
-      if (!filters.skills.some(skillId => freelancerSkills.includes(skillId))) {
+      const freelancerSkills = freelancer.skills?.map(s => s.name) || [];
+      if (!filters.skills.some(skillName => freelancerSkills.includes(skillName))) {
         return false;
       }
     }

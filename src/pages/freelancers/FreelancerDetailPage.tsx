@@ -3,12 +3,8 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
   MapPin,
-  DollarSign,
-  Briefcase,
   Calendar,
-  Star,
   Mail,
-  ExternalLink,
   Award
 } from 'lucide-react';
 import { Card, CardHeader, Button, PageLoader, StatusBadge } from '../../components/ui';

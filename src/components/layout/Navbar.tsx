@@ -116,9 +116,9 @@ export function Navbar({ onMenuClick, isSidebarOpen }: NavbarProps) {
           api.searchProjects({ keyword: searchQuery, limit: 5 }),
           api.searchFreelancers({ keyword: searchQuery, limit: 5 })
         ]);
-        setSearchResults({ 
-          projects: projects.projects || [], 
-          freelancers: freelancers.freelancers || [] 
+        setSearchResults({
+          projects: projects.items || [],
+          freelancers: freelancers.items || []
         });
       } catch (error) {
         console.error('Search error:', error);

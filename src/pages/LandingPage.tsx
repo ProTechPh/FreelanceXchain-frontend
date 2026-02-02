@@ -41,7 +41,7 @@ const features = [
   },
   {
     icon: Globe,
-    title: 'Borderles Work',
+    title: 'Borderless Work',
     description: 'Access a truly global talent pool without currency barriers or complex international banking fees.',
     color: 'text-blue-400',
     bgColor: 'bg-blue-600/10',

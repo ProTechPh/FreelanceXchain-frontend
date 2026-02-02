@@ -129,16 +129,18 @@ export function ProjectDetailPage() {
           </Card>
 
           {/* Skills */}
-          <Card>
-            <CardHeader title="Required Skills" />
-            <div className="flex flex-wrap gap-2">
-              {project.requiredSkills.map((skill, idx) => (
-                <Badge key={skill.skillId || idx} variant="primary">
-                  {skill.skillName}
-                </Badge>
-              ))}
-            </div>
-          </Card>
+          {project.requiredSkills && project.requiredSkills.length > 0 && (
+            <Card>
+              <CardHeader title="Required Skills" />
+              <div className="flex flex-wrap gap-2">
+                {project.requiredSkills.map((skill, idx) => (
+                  <Badge key={skill.skillId || idx} variant="primary">
+                    {skill.skillName}
+                  </Badge>
+                ))}
+              </div>
+            </Card>
+          )}
 
           {/* Milestones */}
           {project.milestones && project.milestones.length > 0 && (
@@ -163,7 +165,9 @@ export function ProjectDetailPage() {
                         </span>
                         <span className="flex items-center gap-1">
                           <Calendar className="w-4 h-4" />
-                          Due: {format(new Date(milestone.dueDate), 'MMM d, yyyy')}
+                          Due: {milestone.dueDate
+                            ? format(new Date(milestone.dueDate), 'MMM d, yyyy')
+                            : 'No date'}
                         </span>
                       </div>
                     </div>
@@ -326,7 +330,9 @@ export function ProjectDetailPage() {
               <div className="flex items-center justify-between">
                 <span className="text-gray-400">Posted</span>
                 <span className="text-white">
-                  {format(new Date(project.createdAt), 'MMM d, yyyy')}
+                  {project.createdAt
+                    ? format(new Date(project.createdAt), 'MMM d, yyyy')
+                    : 'Unknown'}
                 </span>
               </div>
               {project.proposalCount !== undefined && (

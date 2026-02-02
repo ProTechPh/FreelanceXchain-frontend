@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { Search, Briefcase, User, Filter, Loader2, AlertCircle } from 'lucide-react';
+import { Search, Briefcase, User, AlertCircle } from 'lucide-react';
 import { Button, Card, StatusBadge, PageLoader } from '../../components/ui';
 import api from '../../lib/api';
 import type { Project, FreelancerProfile } from '../../types';
@@ -8,7 +8,7 @@ import type { Project, FreelancerProfile } from '../../types';
 type SearchTab = 'projects' | 'freelancers';
 
 export function SearchResultsPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const query = searchParams.get('q') || '';
   const [activeTab, setActiveTab] = useState<SearchTab>('projects');
   const [projects, setProjects] = useState<Project[]>([]);
@@ -32,8 +32,8 @@ export function SearchResultsPage() {
         api.searchFreelancers({ keyword: query })
       ]);
 
-      setProjects(projectResults.projects || []);
-      setFreelancers(freelancerResults.freelancers || []);
+      setProjects(projectResults.items || []);
+      setFreelancers(freelancerResults.items || []);
     } catch (err: any) {
       setError(err.message || 'Failed to perform search');
     } finally {
@@ -160,7 +160,7 @@ export function SearchResultsPage() {
                             key={index}
                             className="px-3 py-1 bg-primary-500/10 text-primary-400 rounded-full text-xs font-medium"
                           >
-                            {skill.name}
+                            {skill.skillName}
                           </span>
                         ))}
                         {project.requiredSkills.length > 5 && (

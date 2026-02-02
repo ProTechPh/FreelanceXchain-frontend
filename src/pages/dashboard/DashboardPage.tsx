@@ -248,6 +248,15 @@ export function DashboardPage() {
   const pendingProposals = proposals.filter(p => p.status === 'pending');
   const openProjects = projects.filter(p => p.status === 'open');
 
+  // Calculate total earned/spent from contracts
+  const totalEarned = contracts
+    .filter(c => c.status === 'completed' && isFreelancer)
+    .reduce((sum, c) => sum + (typeof c.totalAmount === 'string' ? parseFloat(c.totalAmount) : c.totalAmount), 0);
+  
+  const totalSpent = contracts
+    .filter(c => c.status === 'completed' && !isFreelancer)
+    .reduce((sum, c) => sum + (typeof c.totalAmount === 'string' ? parseFloat(c.totalAmount) : c.totalAmount), 0);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -309,7 +318,7 @@ export function DashboardPage() {
             <StatCard
               icon={DollarSign}
               label="Total Earned"
-              value="0 ETH"
+              value={`${totalEarned.toFixed(4)} ETH`}
               color="text-green-400"
               bgColor="bg-green-600/20"
             />
@@ -333,7 +342,7 @@ export function DashboardPage() {
             <StatCard
               icon={DollarSign}
               label="Total Spent"
-              value="0 ETH"
+              value={`${totalSpent.toFixed(4)} ETH`}
               color="text-green-400"
               bgColor="bg-green-600/20"
             />

@@ -384,6 +384,13 @@ class ApiClient {
     return this.request<PaginatedResponse<Project>>(`/projects${query}`);
   }
 
+  async getMyProjects(params?: Record<string, string | number>): Promise<PaginatedResponse<Project>> {
+    const query = params
+      ? `?${new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)])).toString()}`
+      : '';
+    return this.request<PaginatedResponse<Project>>(`/projects/my-projects${query}`);
+  }
+
   async getProject(id: string): Promise<Project> {
     return this.request<Project>(`/projects/${id}`);
   }
@@ -622,6 +629,17 @@ class ApiClient {
     totalEmployers: number;
   }> {
     return this.request('/admin/stats');
+  }
+
+  async getAdminAnalytics(): Promise<{
+    totalUsers: number;
+    totalProjects: number;
+    totalRevenue: number;
+    activeContracts: number;
+    userGrowth: number;
+    projectGrowth: number;
+  }> {
+    return this.request('/admin/analytics');
   }
 
   async getAdminUsers(): Promise<Array<{

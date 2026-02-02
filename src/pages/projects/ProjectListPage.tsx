@@ -23,7 +23,7 @@ import { format } from 'date-fns';
 import { useAuthStore } from '../../store';
 import { motion } from 'framer-motion';
 
-export function ProjectListPage() {
+export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: boolean }) {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuthStore();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -78,7 +78,9 @@ export function ProjectListPage() {
       if (filters.minBudget) params.minBudget = parseFloat(filters.minBudget);
       if (filters.maxBudget) params.maxBudget = parseFloat(filters.maxBudget);
 
-      const response = await api.getProjects(params);
+      const response = showMyProjects
+        ? await api.getMyProjects(params)
+        : await api.getProjects(params);
       
       if (loadMore) {
         setProjects(prev => [...prev, ...response.items]);
@@ -231,10 +233,20 @@ export function ProjectListPage() {
             </motion.div>
             
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
-              Browse <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-indigo-400">Blockchain-Powered</span> Projects
+              {showMyProjects ? (
+                <>
+                  My <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-indigo-400">Projects</span>
+                </>
+              ) : (
+                <>
+                  Browse <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-indigo-400">Blockchain-Powered</span> Projects
+                </>
+              )}
             </h1>
             <p className="text-lg text-gray-400 mb-8">
-              Find projects that match your skills. Secure payments through smart contracts. Build your reputation on-chain.
+              {showMyProjects
+                ? 'Manage your projects, track proposals, and monitor progress. All secured by blockchain technology.'
+                : 'Find projects that match your skills. Secure payments through smart contracts. Build your reputation on-chain.'}
             </p>
 
             {/* Stats */}
@@ -287,9 +299,11 @@ export function ProjectListPage() {
         {/* Header with Actions */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-white">All Projects</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-white">
+              {showMyProjects ? 'My Projects' : 'All Projects'}
+            </h2>
             <p className="text-gray-400 mt-1">
-              {projects.length > 0 ? `Showing ${projects.length} project${projects.length !== 1 ? 's' : ''}` : 'Find your next opportunity'}
+              {projects.length > 0 ? `Showing ${projects.length} project${projects.length !== 1 ? 's' : ''}` : showMyProjects ? 'No projects created yet' : 'Find your next opportunity'}
             </p>
           </div>
           <div className="flex items-center gap-2">

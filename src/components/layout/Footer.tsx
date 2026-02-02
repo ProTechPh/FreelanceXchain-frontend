@@ -62,7 +62,7 @@ export function Footer() {
                                 </Link>
                             </li>
                             <li>
-                                <Link to="#" className="text-gray-400 hover:text-primary-400 text-sm transition-colors">
+                                <Link to="/blog" className="text-gray-400 hover:text-primary-400 text-sm transition-colors">
                                     Success Stories
                                 </Link>
                             </li>
@@ -94,7 +94,7 @@ export function Footer() {
                                 </Link>
                             </li>
                             <li>
-                                <Link to="#" className="text-gray-400 hover:text-primary-400 text-sm transition-colors">
+                                <Link to="/help-center" className="text-gray-400 hover:text-primary-400 text-sm transition-colors">
                                     Contact Support
                                 </Link>
                             </li>
