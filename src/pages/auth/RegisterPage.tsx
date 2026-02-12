@@ -123,14 +123,14 @@ export function RegisterPage() {
                 <div className="w-full border-t border-gray-200 dark:border-white/10" />
               </div>
               <div className="relative flex justify-center text-xs uppercase tracking-wider">
-                <span className="px-2 bg-dark-bg text-gray-500">Or sign up with</span>
+                <span className="px-2 bg-white dark:bg-dark-bg text-gray-600 dark:text-gray-500">Or sign up with</span>
               </div>
             </div>
 
             <div className="grid grid-cols-4 gap-3">
               {[
                 { icon: FaGoogle, color: 'text-red-500', name: 'Google' },
-                { icon: FaGithub, color: 'text-white', name: 'GitHub' },
+                { icon: FaGithub, color: 'text-gray-900 dark:text-white', name: 'GitHub' },
                 { icon: FaLinkedin, color: 'text-blue-500', name: 'LinkedIn' },
                 { icon: FaMicrosoft, color: 'text-blue-400', name: 'Microsoft' },
               ].map((provider) => (

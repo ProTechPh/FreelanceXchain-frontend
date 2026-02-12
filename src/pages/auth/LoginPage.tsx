@@ -110,7 +110,7 @@ export function LoginPage() {
               <div className="w-full border-t border-gray-200 dark:border-white/10" />
             </div>
             <div className="relative flex justify-center text-xs uppercase tracking-wider">
-              <span className="px-2 bg-transparent text-gray-500 backdrop-blur-xl">Or continue with</span>
+              <span className="px-2 bg-white dark:bg-transparent text-gray-600 dark:text-gray-500 backdrop-blur-xl">Or continue with</span>
             </div>
           </div>
 
