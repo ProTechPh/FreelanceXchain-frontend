@@ -9,7 +9,6 @@ import {
   Shield,
   Sparkles,
   Settings,
-  User,
   Briefcase,
   BarChart3,
   CheckSquare
@@ -32,8 +31,6 @@ const freelancerNav: NavItem[] = [
   { label: 'AI Recommendations', href: '/recommendations', icon: Sparkles },
   { label: 'Skill Analysis', href: '/skill-analysis', icon: BarChart3 },
   { label: 'Disputes', href: '/disputes', icon: AlertTriangle },
-  { label: 'KYC Verification', href: '/kyc', icon: Shield },
-  { label: 'Profile', href: '/profile', icon: User },
 ];
 
 const employerNav: NavItem[] = [
@@ -43,8 +40,6 @@ const employerNav: NavItem[] = [
   { label: 'My Contracts', href: '/contracts', icon: Briefcase },
   { label: 'Browse Freelancers', href: '/freelancers', icon: Users },
   { label: 'Disputes', href: '/disputes', icon: AlertTriangle },
-  { label: 'KYC Verification', href: '/kyc', icon: Shield },
-  { label: 'Profile', href: '/profile', icon: User },
 ];
 
 const adminNav: NavItem[] = [

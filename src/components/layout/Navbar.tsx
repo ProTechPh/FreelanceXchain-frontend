@@ -14,6 +14,8 @@ import {
   ChevronDown,
   Users,
   Loader2,
+  User,
+  Shield,
 } from 'lucide-react';
 import { useAuthStore, useNotificationStore, useWalletStore, useThemeStore } from '../../store';
 import { Dropdown, DropdownItem } from '../ui';
@@ -331,6 +333,12 @@ export function Navbar({ onMenuClick, isSidebarOpen }: NavbarProps) {
                   <p className="text-xs text-primary-400 capitalize mt-0.5">{user?.role}</p>
                 </div>
                 <div className="p-2">
+                  <DropdownItem icon={<User className="w-4 h-4" />} onClick={() => navigate('/profile')}>
+                    Profile
+                  </DropdownItem>
+                  <DropdownItem icon={<Shield className="w-4 h-4" />} onClick={() => navigate('/kyc')}>
+                    KYC Verification
+                  </DropdownItem>
                   <DropdownItem icon={<LogOut className="w-4 h-4" />} onClick={logout} danger>
                     Logout
                   </DropdownItem>
