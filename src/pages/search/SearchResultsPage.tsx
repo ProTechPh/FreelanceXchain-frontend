@@ -53,20 +53,20 @@ export function SearchResultsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Search Results</h1>
-          <p className="text-gray-400">
+          <p className="text-gray-600 dark:text-gray-400">
             {totalResults} {totalResults === 1 ? 'result' : 'results'} for "{query}"
           </p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b border-white/10">
+      <div className="flex gap-2 border-b border-gray-200 dark:border-white/10">
         <button
           onClick={() => setActiveTab('projects')}
           className={`px-6 py-3 font-medium transition-colors relative ${
             activeTab === 'projects'
-              ? 'text-primary-400'
-              : 'text-gray-400 hover:text-gray-900 dark:text-white'
+              ? 'text-primary-600 dark:text-primary-400'
+              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
           }`}
         >
           <div className="flex items-center gap-2">
@@ -74,15 +74,15 @@ export function SearchResultsPage() {
             Projects ({projects.length})
           </div>
           {activeTab === 'projects' && (
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-400" />
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600 dark:bg-primary-400" />
           )}
         </button>
         <button
           onClick={() => setActiveTab('freelancers')}
           className={`px-6 py-3 font-medium transition-colors relative ${
             activeTab === 'freelancers'
-              ? 'text-primary-400'
-              : 'text-gray-400 hover:text-gray-900 dark:text-white'
+              ? 'text-primary-600 dark:text-primary-400'
+              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
           }`}
         >
           <div className="flex items-center gap-2">
@@ -90,7 +90,7 @@ export function SearchResultsPage() {
             Freelancers ({freelancers.length})
           </div>
           {activeTab === 'freelancers' && (
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-400" />
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600 dark:bg-primary-400" />
           )}
         </button>
       </div>
@@ -111,9 +111,9 @@ export function SearchResultsPage() {
           {projects.length === 0 ? (
             <Card>
               <div className="text-center py-12">
-                <Search className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+                <Search className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Projects Found</h3>
-                <p className="text-gray-400">
+                <p className="text-gray-600 dark:text-gray-400">
                   Try adjusting your search terms or browse all projects
                 </p>
                 <Link to="/projects">
@@ -130,22 +130,22 @@ export function SearchResultsPage() {
                   <div className="space-y-4">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
-                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2 hover:text-primary-400 transition-colors">
+                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
                           {project.title}
                         </h3>
-                        <p className="text-gray-400 line-clamp-2">{project.description}</p>
+                        <p className="text-gray-600 dark:text-gray-400 line-clamp-2">{project.description}</p>
                       </div>
                       <StatusBadge status={project.status} />
                     </div>
 
                     <div className="flex items-center gap-6 text-sm">
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-400">Budget:</span>
-                        <span className="text-primary-400 font-semibold">${project.budget}</span>
+                        <span className="text-gray-600 dark:text-gray-400">Budget:</span>
+                        <span className="text-primary-600 dark:text-primary-400 font-semibold">${project.budget}</span>
                       </div>
                       {project.deadline && (
                         <div className="flex items-center gap-2">
-                          <span className="text-gray-400">Deadline:</span>
+                          <span className="text-gray-600 dark:text-gray-400">Deadline:</span>
                           <span className="text-gray-900 dark:text-white">
                             {new Date(project.deadline).toLocaleDateString()}
                           </span>
@@ -158,13 +158,13 @@ export function SearchResultsPage() {
                         {project.requiredSkills.slice(0, 5).map((skill, index) => (
                           <span
                             key={index}
-                            className="px-3 py-1 bg-primary-500/10 text-primary-400 rounded-full text-xs font-medium"
+                            className="px-3 py-1 bg-primary-100 dark:bg-primary-500/10 text-primary-700 dark:text-primary-400 rounded-full text-xs font-medium"
                           >
                             {skill.skillName}
                           </span>
                         ))}
                         {project.requiredSkills.length > 5 && (
-                          <span className="px-3 py-1 bg-white/5 text-gray-400 rounded-full text-xs">
+                          <span className="px-3 py-1 bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 rounded-full text-xs">
                             +{project.requiredSkills.length - 5} more
                           </span>
                         )}
@@ -183,9 +183,9 @@ export function SearchResultsPage() {
           {freelancers.length === 0 ? (
             <Card>
               <div className="text-center py-12">
-                <User className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+                <User className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Freelancers Found</h3>
-                <p className="text-gray-400">
+                <p className="text-gray-600 dark:text-gray-400">
                   Try adjusting your search terms or browse all freelancers
                 </p>
                 <Link to="/freelancers">
@@ -202,23 +202,23 @@ export function SearchResultsPage() {
                   <div className="space-y-4">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
-                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2 hover:text-primary-400 transition-colors">
+                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
                           {freelancer.name || 'Anonymous'}
                         </h3>
-                        <p className="text-gray-400 line-clamp-2">{freelancer.bio}</p>
+                        <p className="text-gray-600 dark:text-gray-400 line-clamp-2">{freelancer.bio}</p>
                       </div>
                       <div className="text-right">
-                        <div className="text-2xl font-bold text-primary-400">
+                        <div className="text-2xl font-bold text-primary-600 dark:text-primary-400">
                           ${freelancer.hourlyRate}
                         </div>
-                        <div className="text-xs text-gray-400">per hour</div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400">per hour</div>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-4 text-sm">
                       <StatusBadge status={freelancer.availability} />
                       {freelancer.nationality && (
-                        <span className="text-gray-400">{freelancer.nationality}</span>
+                        <span className="text-gray-600 dark:text-gray-400">{freelancer.nationality}</span>
                       )}
                     </div>
 
@@ -227,13 +227,13 @@ export function SearchResultsPage() {
                         {freelancer.skills.slice(0, 5).map((skill, index) => (
                           <span
                             key={index}
-                            className="px-3 py-1 bg-primary-500/10 text-primary-400 rounded-full text-xs font-medium"
+                            className="px-3 py-1 bg-primary-100 dark:bg-primary-500/10 text-primary-700 dark:text-primary-400 rounded-full text-xs font-medium"
                           >
                             {skill.name}
                           </span>
                         ))}
                         {freelancer.skills.length > 5 && (
-                          <span className="px-3 py-1 bg-white/5 text-gray-400 rounded-full text-xs">
+                          <span className="px-3 py-1 bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 rounded-full text-xs">
                             +{freelancer.skills.length - 5} more
                           </span>
                         )}

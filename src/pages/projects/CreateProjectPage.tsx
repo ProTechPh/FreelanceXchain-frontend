@@ -166,22 +166,22 @@ export function CreateProjectPage() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link to="/projects/manage">
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="w-4 h-4" />
+          <Button variant="ghost">
+            <ArrowLeft className="w-5 h-5" />
             Back
           </Button>
         </Link>
-        <h1 className="text-2xl font-bold text-white">Create New Project</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Create New Project</h1>
       </div>
 
       {/* Wallet Connection Warning */}
       {!isConnected && (
-        <Card className="border-yellow-500/50 bg-yellow-500/10">
+        <Card className="border-yellow-200 dark:border-yellow-500/50 bg-yellow-50 dark:bg-yellow-500/10">
           <div className="flex items-start gap-4">
-            <Wallet className="w-6 h-6 text-yellow-500 flex-shrink-0 mt-1" />
+            <Wallet className="w-6 h-6 text-yellow-600 dark:text-yellow-500 flex-shrink-0 mt-1" />
             <div className="flex-1">
-              <h3 className="text-yellow-500 font-semibold mb-2">Wallet Not Connected</h3>
-              <p className="text-gray-300 text-sm mb-4">
+              <h3 className="text-yellow-700 dark:text-yellow-500 font-semibold mb-2">Wallet Not Connected</h3>
+              <p className="text-yellow-700 dark:text-gray-300 text-sm mb-4">
                 You need to connect your wallet to create a project. Projects require blockchain transactions for escrow and milestone payments.
               </p>
               <Button onClick={connect} variant="outline" size="sm">
@@ -208,14 +208,14 @@ export function CreateProjectPage() {
             />
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Description *
               </label>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={6}
-                className="w-full bg-dark-bg border border-dark-border rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
+                className="w-full bg-white dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-lg px-4 py-2 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
                 placeholder="Describe your project requirements, goals, and any specific needs..."
               />
               {errors.description && (
@@ -252,13 +252,13 @@ export function CreateProjectPage() {
           <div className="space-y-4">
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Category
                 </label>
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-primary-500"
+                  className="w-full bg-white dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-lg px-3 py-2 text-gray-900 dark:text-white focus:outline-none focus:border-primary-500"
                 >
                   <option value="">Select a category</option>
                   {categories.map(cat => (
@@ -267,13 +267,13 @@ export function CreateProjectPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Skill
                 </label>
                 <select
                   value=""
                   onChange={(e) => handleAddSkill(e.target.value)}
-                  className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-primary-500"
+                  className="w-full bg-white dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-lg px-3 py-2 text-gray-900 dark:text-white focus:outline-none focus:border-primary-500"
                   disabled={!selectedCategory}
                 >
                   <option value="">Add a skill</option>
@@ -289,13 +289,13 @@ export function CreateProjectPage() {
                 {selectedSkills.map(skill => (
                   <span
                     key={skill.skillId}
-                    className="inline-flex items-center gap-1 px-3 py-1 bg-primary-900/50 text-primary-400 rounded-full text-sm"
+                    className="inline-flex items-center gap-1 px-3 py-1 bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-400 rounded-full text-sm"
                   >
                     {skill.skillName}
                     <button
                       type="button"
                       onClick={() => handleRemoveSkill(skill.skillId)}
-                      className="hover:text-primary-300"
+                      className="hover:text-primary-600 dark:hover:text-primary-300"
                     >
                       ×
                     </button>
@@ -378,7 +378,7 @@ export function CreateProjectPage() {
                     value={milestone.title}
                     onChange={(e) => handleMilestoneChange(index, 'title', e.target.value)}
                     placeholder="Milestone title"
-                    className="w-full bg-dark-surface border border-dark-border rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
+                    className="w-full bg-gray-50 dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg px-3 py-2 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
                   />
                   <input
                     type="number"
@@ -387,7 +387,7 @@ export function CreateProjectPage() {
                     value={milestone.amount}
                     onChange={(e) => handleMilestoneChange(index, 'amount', e.target.value)}
                     placeholder="Amount (ETH)"
-                    className="w-full bg-dark-surface border border-dark-border rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
+                    className="w-full bg-gray-50 dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg px-3 py-2 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
                   />
                 </div>
                 <textarea
@@ -395,13 +395,13 @@ export function CreateProjectPage() {
                   onChange={(e) => handleMilestoneChange(index, 'description', e.target.value)}
                   placeholder="Milestone description"
                   rows={2}
-                  className="w-full bg-dark-surface border border-dark-border rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
+                  className="w-full bg-gray-50 dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg px-3 py-2 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
                 />
                 <input
                   type="date"
                   value={milestone.dueDate}
                   onChange={(e) => handleMilestoneChange(index, 'dueDate', e.target.value)}
-                  className="w-full bg-dark-surface border border-dark-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-primary-500"
+                  className="w-full bg-gray-50 dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg px-3 py-2 text-gray-900 dark:text-white focus:outline-none focus:border-primary-500"
                 />
               </div>
             ))}
@@ -428,7 +428,7 @@ export function CreateProjectPage() {
           </Button>
         </div>
         {!isConnected && (
-          <p className="text-yellow-500 text-sm">
+          <p className="text-yellow-600 dark:text-yellow-500 text-sm">
             Please connect your wallet to create a project
           </p>
         )}

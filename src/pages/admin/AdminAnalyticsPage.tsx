@@ -69,60 +69,60 @@ export function AdminAnalyticsPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Analytics Dashboard</h1>
-        <p className="text-gray-400">Platform performance and statistics</p>
+        <p className="text-gray-600 dark:text-gray-400">Platform performance and statistics</p>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         {/* Total Users */}
-        <div className="bg-dark-card border border-dark-border rounded-lg p-6">
+        <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-primary-500/10 rounded-lg">
-              <Users className="w-6 h-6 text-primary-400" />
+            <div className="p-3 bg-primary-100 dark:bg-primary-500/10 rounded-lg">
+              <Users className="w-6 h-6 text-primary-600 dark:text-primary-400" />
             </div>
-            <span className="text-green-400 text-sm font-medium flex items-center">
+            <span className="text-green-600 dark:text-green-400 text-sm font-medium flex items-center">
               <TrendingUp className="w-4 h-4 mr-1" />
               +{analytics.userGrowth}%
             </span>
           </div>
-          <h3 className="text-gray-400 text-sm mb-1">Total Users</h3>
+          <h3 className="text-gray-600 dark:text-gray-400 text-sm mb-1">Total Users</h3>
           <p className="text-3xl font-bold text-gray-900 dark:text-white">{analytics.totalUsers.toLocaleString()}</p>
         </div>
 
         {/* Total Projects */}
-        <div className="bg-dark-card border border-dark-border rounded-lg p-6">
+        <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-blue-500/10 rounded-lg">
-              <Briefcase className="w-6 h-6 text-blue-400" />
+            <div className="p-3 bg-blue-100 dark:bg-blue-500/10 rounded-lg">
+              <Briefcase className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
-            <span className="text-green-400 text-sm font-medium flex items-center">
+            <span className="text-green-600 dark:text-green-400 text-sm font-medium flex items-center">
               <TrendingUp className="w-4 h-4 mr-1" />
               +{analytics.projectGrowth}%
             </span>
           </div>
-          <h3 className="text-gray-400 text-sm mb-1">Total Projects</h3>
+          <h3 className="text-gray-600 dark:text-gray-400 text-sm mb-1">Total Projects</h3>
           <p className="text-3xl font-bold text-gray-900 dark:text-white">{analytics.totalProjects.toLocaleString()}</p>
         </div>
 
         {/* Total Revenue */}
-        <div className="bg-dark-card border border-dark-border rounded-lg p-6">
+        <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-green-500/10 rounded-lg">
-              <DollarSign className="w-6 h-6 text-green-400" />
+            <div className="p-3 bg-green-100 dark:bg-green-500/10 rounded-lg">
+              <DollarSign className="w-6 h-6 text-green-600 dark:text-green-400" />
             </div>
           </div>
-          <h3 className="text-gray-400 text-sm mb-1">Total Revenue</h3>
+          <h3 className="text-gray-600 dark:text-gray-400 text-sm mb-1">Total Revenue</h3>
           <p className="text-3xl font-bold text-gray-900 dark:text-white">${analytics.totalRevenue.toLocaleString()}</p>
         </div>
 
         {/* Active Contracts */}
-        <div className="bg-dark-card border border-dark-border rounded-lg p-6">
+        <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-purple-500/10 rounded-lg">
-              <Activity className="w-6 h-6 text-purple-400" />
+            <div className="p-3 bg-purple-100 dark:bg-purple-500/10 rounded-lg">
+              <Activity className="w-6 h-6 text-purple-600 dark:text-purple-400" />
             </div>
           </div>
-          <h3 className="text-gray-400 text-sm mb-1">Active Contracts</h3>
+          <h3 className="text-gray-600 dark:text-gray-400 text-sm mb-1">Active Contracts</h3>
           <p className="text-3xl font-bold text-gray-900 dark:text-white">{analytics.activeContracts}</p>
         </div>
       </div>
@@ -130,22 +130,22 @@ export function AdminAnalyticsPage() {
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Placeholder for charts */}
-        <div className="bg-dark-card border border-dark-border rounded-lg p-6">
+        <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-lg p-6">
           <div className="flex items-center mb-4">
-            <BarChart3 className="w-5 h-5 text-primary-400 mr-2" />
+            <BarChart3 className="w-5 h-5 text-primary-600 dark:text-primary-400 mr-2" />
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">User Growth</h2>
           </div>
-          <div className="h-64 flex items-center justify-center text-gray-500">
+          <div className="h-64 flex items-center justify-center text-gray-600 dark:text-gray-500">
             <p>Chart visualization coming soon</p>
           </div>
         </div>
 
-        <div className="bg-dark-card border border-dark-border rounded-lg p-6">
+        <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-lg p-6">
           <div className="flex items-center mb-4">
-            <BarChart3 className="w-5 h-5 text-blue-400 mr-2" />
+            <BarChart3 className="w-5 h-5 text-blue-600 dark:text-blue-400 mr-2" />
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Project Activity</h2>
           </div>
-          <div className="h-64 flex items-center justify-center text-gray-500">
+          <div className="h-64 flex items-center justify-center text-gray-600 dark:text-gray-500">
             <p>Chart visualization coming soon</p>
           </div>
         </div>

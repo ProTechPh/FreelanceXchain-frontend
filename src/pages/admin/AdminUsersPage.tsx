@@ -147,7 +147,7 @@ export function AdminUsersPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">User Management</h1>
-          <p className="text-gray-400 mt-1">Manage all registered users on the platform</p>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">Manage all registered users on the platform</p>
         </div>
       </div>
 
@@ -155,7 +155,7 @@ export function AdminUsersPage() {
       <Card padding="sm">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1 relative">
-            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 dark:text-gray-400" />
             <Input
               placeholder="Search users..."
               value={searchQuery}
@@ -166,7 +166,7 @@ export function AdminUsersPage() {
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="px-4 py-2 bg-white dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="all">All Roles</option>
             <option value="freelancer">Freelancers</option>
@@ -180,40 +180,40 @@ export function AdminUsersPage() {
       <Card padding="none">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-dark-bg border-b border-dark-border">
+            <thead className="bg-gray-50 dark:bg-dark-bg border-b border-gray-200 dark:border-dark-border">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-medium text-gray-400">User</th>
-                <th className="px-6 py-4 text-left text-sm font-medium text-gray-400">Role</th>
-                <th className="px-6 py-4 text-left text-sm font-medium text-gray-400">KYC Status</th>
-                <th className="px-6 py-4 text-left text-sm font-medium text-gray-400">Joined</th>
-                <th className="px-6 py-4 text-left text-sm font-medium text-gray-400">Status</th>
-                <th className="px-6 py-4 text-right text-sm font-medium text-gray-400">Actions</th>
+                <th className="px-6 py-4 text-left text-sm font-medium text-gray-600 dark:text-gray-400">User</th>
+                <th className="px-6 py-4 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Role</th>
+                <th className="px-6 py-4 text-left text-sm font-medium text-gray-600 dark:text-gray-400">KYC Status</th>
+                <th className="px-6 py-4 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Joined</th>
+                <th className="px-6 py-4 text-left text-sm font-medium text-gray-600 dark:text-gray-400">Status</th>
+                <th className="px-6 py-4 text-right text-sm font-medium text-gray-600 dark:text-gray-400">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-dark-border">
+            <tbody className="divide-y divide-gray-200 dark:divide-dark-border">
               {filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-400">
+                  <td colSpan={6} className="px-6 py-12 text-center text-gray-600 dark:text-gray-400">
                     {users.length === 0 ? 'No users found' : 'No users match your filters'}
                   </td>
                 </tr>
               ) : (
                 filteredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-dark-bg/50">
+                  <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-dark-bg/50">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-dark-card border border-dark-border flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-dark-card border border-gray-200 dark:border-dark-border flex items-center justify-center">
                           {user.avatarUrl ? (
                             <img src={user.avatarUrl} alt={user.name} className="w-full h-full rounded-full object-cover" />
                           ) : (
-                            <span className="text-sm font-medium text-primary-400">
+                            <span className="text-sm font-medium text-primary-600 dark:text-primary-400">
                               {(user.name || user.email).charAt(0).toUpperCase()}
                             </span>
                           )}
                         </div>
                         <div>
                           <p className="text-gray-900 dark:text-white font-medium">{user.name || user.email.split('@')[0]}</p>
-                          <p className="text-gray-400 text-sm">{user.email}</p>
+                          <p className="text-gray-600 dark:text-gray-400 text-sm">{user.email}</p>
                         </div>
                       </div>
                     </td>
@@ -233,7 +233,7 @@ export function AdminUsersPage() {
                         </Badge>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-gray-400 text-sm">
+                    <td className="px-6 py-4 text-gray-600 dark:text-gray-400 text-sm">
                       {new Date(user.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4">
@@ -243,22 +243,22 @@ export function AdminUsersPage() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button 
-                          className="p-2 text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100"
+                        <button
+                          className="p-2 text-gray-600 dark:text-gray-600 hover:text-gray-900 dark:hover:text-gray-900 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-100"
                           onClick={() => handleViewUser(user)}
                           title="View user details"
                         >
                           <FiEye className="w-4 h-4" />
                         </button>
-                        <button 
-                          className="p-2 text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100"
+                        <button
+                          className="p-2 text-gray-600 dark:text-gray-600 hover:text-gray-900 dark:hover:text-gray-900 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-100"
                           onClick={() => handleEditUser(user)}
                           title="Edit user"
                         >
                           <FiEdit className="w-4 h-4" />
                         </button>
-                        <button 
-                          className="p-2 text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100"
+                        <button
+                          className="p-2 text-gray-600 dark:text-gray-600 hover:text-gray-900 dark:hover:text-gray-900 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-100"
                           onClick={() => handleManageRole(user)}
                           title="Manage role"
                         >
@@ -279,23 +279,23 @@ export function AdminUsersPage() {
         <Card>
           <div className="p-4 text-center">
             <p className="text-2xl font-bold text-gray-900 dark:text-white">{users.length}</p>
-            <p className="text-gray-400 text-sm">Total Users</p>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">Total Users</p>
           </div>
         </Card>
         <Card>
           <div className="p-4 text-center">
-            <p className="text-2xl font-bold text-green-400">
+            <p className="text-2xl font-bold text-green-600 dark:text-green-400">
               {users.filter(u => u.role === 'freelancer').length}
             </p>
-            <p className="text-gray-400 text-sm">Freelancers</p>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">Freelancers</p>
           </div>
         </Card>
         <Card>
           <div className="p-4 text-center">
-            <p className="text-2xl font-bold text-blue-400">
+            <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
               {users.filter(u => u.role === 'employer').length}
             </p>
-            <p className="text-gray-400 text-sm">Employers</p>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">Employers</p>
           </div>
         </Card>
         <Card>

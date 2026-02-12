@@ -114,7 +114,7 @@ export function NotificationsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Notifications</h1>
-          <p className="text-gray-400 mt-1">
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
             {unreadCount > 0 ? `You have ${unreadCount} unread notifications` : 'All caught up!'}
           </p>
         </div>
@@ -131,8 +131,8 @@ export function NotificationsPage() {
         <button
           onClick={() => setFilter('all')}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === 'all'
-              ? 'bg-primary-600 text-gray-900 dark:text-white'
-              : 'bg-dark-surface text-gray-400 hover:text-gray-900 dark:text-white hover:bg-dark-border'
+              ? 'bg-primary-600 text-white'
+              : 'bg-gray-100 dark:bg-dark-surface text-gray-700 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-dark-border'
             }`}
         >
           All ({notifications.length})
@@ -140,8 +140,8 @@ export function NotificationsPage() {
         <button
           onClick={() => setFilter('unread')}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === 'unread'
-              ? 'bg-primary-600 text-gray-900 dark:text-white'
-              : 'bg-dark-surface text-gray-400 hover:text-gray-900 dark:text-white hover:bg-dark-border'
+              ? 'bg-primary-600 text-white'
+              : 'bg-gray-100 dark:bg-dark-surface text-gray-700 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-dark-border'
             }`}
         >
           Unread ({unreadCount})
@@ -151,9 +151,9 @@ export function NotificationsPage() {
       {/* Notifications List */}
       {filteredNotifications.length === 0 ? (
         <Card className="text-center py-12">
-          <Bell className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-400">No notifications</h3>
-          <p className="text-gray-500 mt-2">
+          <Bell className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white">No notifications</h3>
+          <p className="text-gray-600 dark:text-gray-500 mt-2">
             {filter === 'unread'
               ? "You've read all your notifications."
               : "You don't have any notifications yet."}
@@ -174,15 +174,15 @@ export function NotificationsPage() {
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <h3 className={`font-medium ${notification.isRead ? 'text-gray-400' : 'text-gray-900 dark:text-white'}`}>
+                    <h3 className={`font-medium ${notification.isRead ? 'text-gray-600 dark:text-gray-400' : 'text-gray-900 dark:text-white'}`}>
                       {notification.title}
                     </h3>
                     {!notification.isRead && (
                       <span className="w-2 h-2 bg-primary-500 rounded-full" />
                     )}
                   </div>
-                  <p className="text-gray-500 text-sm mb-2">{notification.message}</p>
-                  <p className="text-xs text-gray-600">
+                  <p className="text-gray-600 dark:text-gray-500 text-sm mb-2">{notification.message}</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-600">
                     {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                   </p>
                 </div>
@@ -191,7 +191,7 @@ export function NotificationsPage() {
                   {!notification.isRead && (
                     <button
                       onClick={() => handleMarkAsRead(notification.id)}
-                      className="p-2 text-gray-400 hover:text-primary-400 transition-colors"
+                      className="p-2 text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                       title="Mark as read"
                     >
                       <Check className="w-4 h-4" />

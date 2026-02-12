@@ -75,7 +75,7 @@ export function FreelancerListPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
-            <Users className="w-8 h-8 text-primary-400" />
+            <Users className="w-8 h-8 text-primary-600 dark:text-primary-400" />
             Browse Freelancers
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
@@ -180,7 +180,7 @@ export function FreelancerListPage() {
                     )}
                   </div>
                   <div className="text-right">
-                    <div className="text-xl font-bold text-primary-400">
+                    <div className="text-xl font-bold text-primary-600 dark:text-primary-400">
                       ${freelancer.hourlyRate}
                     </div>
                     <div className="text-xs text-gray-600 dark:text-gray-400">per hour</div>
@@ -209,7 +209,7 @@ export function FreelancerListPage() {
                     {freelancer.skills.slice(0, 6).map((skill, index) => (
                       <span
                         key={index}
-                        className="px-3 py-1 bg-primary-500/10 text-primary-400 rounded-full text-xs font-medium"
+                        className="px-3 py-1 bg-primary-100 dark:bg-primary-500/10 text-primary-700 dark:text-primary-400 rounded-full text-xs font-medium"
                       >
                         {skill.name}
                       </span>

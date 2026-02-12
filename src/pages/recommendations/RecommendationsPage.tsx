@@ -54,15 +54,15 @@ export function RecommendationsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-tour-id="recommendations-main">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             {isFreelancer ? 'Project Recommendations' : 'Freelancer Recommendations'}
           </h1>
-          <p className="text-gray-400 mt-1">
-            {isFreelancer 
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            {isFreelancer
               ? 'AI-powered project matches based on your skills and experience'
               : 'Find the best freelancers for your projects'
             }
@@ -91,9 +91,9 @@ export function RecommendationsPage() {
           {projectRecs.length === 0 ? (
             <Card>
               <div className="p-8 text-center">
-                <FiBriefcase className="w-12 h-12 text-gray-500 mx-auto mb-4" />
+                <FiBriefcase className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Recommendations Yet</h3>
-                <p className="text-gray-400 mb-4">
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
                   Complete your profile and add more skills to get personalized project recommendations.
                 </p>
                 <Link to="/profile">
@@ -114,9 +114,9 @@ export function RecommendationsPage() {
         <div className="space-y-4">
           <Card>
             <div className="p-8 text-center">
-              <FiUser className="w-12 h-12 text-gray-500 mx-auto mb-4" />
+              <FiUser className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Get Freelancer Recommendations</h3>
-              <p className="text-gray-400 mb-4">
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
                 Create a project to get AI-powered freelancer recommendations tailored to your needs.
               </p>
               <Link to="/projects/new">
@@ -145,7 +145,7 @@ function ProjectRecommendationCard({ recommendation }: { recommendation: Project
         <div className="flex justify-between items-start gap-4">
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-3">
-              <FiZap className="w-5 h-5 text-primary-400" />
+              <FiZap className="w-5 h-5 text-primary-600 dark:text-primary-400" />
               <span className="text-lg font-semibold text-gray-900 dark:text-white">Project Match</span>
               <Badge variant="success" className="flex items-center gap-1">
                 <FiStar className="w-3 h-3" />
@@ -154,7 +154,7 @@ function ProjectRecommendationCard({ recommendation }: { recommendation: Project
             </div>
             
             {/* Reasoning */}
-            <p className="text-gray-400 mb-4">{reasoning}</p>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">{reasoning}</p>
             
             {/* Matched Skills */}
             {matchedSkills.length > 0 && (
@@ -210,8 +210,8 @@ function FreelancerRecommendationCard({ recommendation }: { recommendation: Free
       <div className="p-6">
         <div className="flex items-start gap-4">
           {/* Avatar Placeholder */}
-          <div className="w-16 h-16 rounded-full bg-dark-card border border-dark-border flex items-center justify-center">
-            <FiUser className="w-8 h-8 text-primary-400" />
+          <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-dark-card border border-gray-200 dark:border-dark-border flex items-center justify-center">
+            <FiUser className="w-8 h-8 text-primary-600 dark:text-primary-400" />
           </div>
           
           <div className="flex-1">
@@ -225,16 +225,16 @@ function FreelancerRecommendationCard({ recommendation }: { recommendation: Free
             
             {/* Scores */}
             <div className="flex gap-4 mb-3 text-sm">
-              <span className="text-gray-400">
-                Match Score: <span className="text-primary-400">{Math.round(matchScore * 100)}%</span>
+              <span className="text-gray-600 dark:text-gray-400">
+                Match Score: <span className="text-primary-600 dark:text-primary-400">{Math.round(matchScore * 100)}%</span>
               </span>
-              <span className="text-gray-400">
-                Reputation: <span className="text-yellow-400">{Math.round(reputationScore * 100)}%</span>
+              <span className="text-gray-600 dark:text-gray-400">
+                Reputation: <span className="text-yellow-600 dark:text-yellow-400">{Math.round(reputationScore * 100)}%</span>
               </span>
             </div>
             
             {/* Reasoning */}
-            <p className="text-gray-400 mb-3">{reasoning}</p>
+            <p className="text-gray-600 dark:text-gray-400 mb-3">{reasoning}</p>
             
             {/* Matched Skills */}
             {matchedSkills.length > 0 && (

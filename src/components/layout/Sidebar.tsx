@@ -23,6 +23,17 @@ interface NavItem {
   roles?: ('freelancer' | 'employer' | 'admin')[];
 }
 
+const tourIdByHref: Record<string, string> = {
+  '/kyc': 'nav-kyc',
+  '/profile': 'nav-profile',
+  '/skill-analysis': 'nav-skill-analysis',
+  '/recommendations': 'nav-recommendations',
+  '/proposals': 'nav-proposals',
+  '/contracts': 'nav-contracts',
+  '/disputes': 'nav-disputes',
+  '/projects': 'nav-projects',
+};
+
 const freelancerNav: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: Home },
   { label: 'Skill Analysis', href: '/skill-analysis', icon: BarChart3 },
@@ -100,6 +111,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 key={item.href}
                 to={item.href}
                 onClick={onClose}
+                data-tour-id={tourIdByHref[item.href]}
                 className={clsx(
                   'flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative overflow-hidden',
                   isActive

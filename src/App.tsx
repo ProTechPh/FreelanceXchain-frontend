@@ -72,6 +72,7 @@ import { TermsPage } from './pages/info/TermsPage';
 import { PrivacyPage } from './pages/info/PrivacyPage';
 import { AboutPage } from './pages/info/AboutPage';
 import { SettingsPage } from './pages/settings/SettingsPage';
+import { TutorialProvider } from './features/onboarding/components/TutorialProvider';
 
 function App() {
   const { isDark, toggle } = useThemeStore();
@@ -144,6 +145,7 @@ function App() {
   return (
     <ToastProvider>
       <Router>
+      <TutorialProvider>
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<PublicLayout showMinimalHeader><LandingPage /></PublicLayout>} />
@@ -485,6 +487,7 @@ function App() {
           }
         />
       </Routes>
+      </TutorialProvider>
     </Router>
     </ToastProvider>
   );

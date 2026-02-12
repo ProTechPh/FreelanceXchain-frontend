@@ -19,6 +19,7 @@ import {
 import { Card, CardHeader, Button, Input, Modal } from '../../components/ui';
 import { useAuthStore, useThemeStore, useWalletStore } from '../../store';
 import { useToast } from '../../contexts/ToastContext';
+import { TutorialLauncher } from '../../features/onboarding/components/TutorialLauncher';
 
 export function SettingsPage() {
   const navigate = useNavigate();
@@ -170,6 +171,14 @@ export function SettingsPage() {
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Settings</h1>
         <p className="text-gray-600 dark:text-gray-400 mt-1">Manage your account preferences and settings</p>
       </div>
+
+      <Card>
+        <CardHeader
+          title="Onboarding Tutorial"
+          description="Replay the guided tutorial walkthrough at any time"
+        />
+        <TutorialLauncher className="px-4 py-2 rounded-lg bg-primary-600 text-white hover:bg-primary-700 transition-colors" />
+      </Card>
 
       {/* Account Information */}
       <Card>

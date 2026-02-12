@@ -100,8 +100,8 @@ export function ProjectDetailPage() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link to="/projects">
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="w-4 h-4" />
+          <Button variant="ghost">
+            <ArrowLeft className="w-5 h-5" />
             Back
           </Button>
         </Link>
@@ -148,8 +148,8 @@ export function ProjectDetailPage() {
               <CardHeader title="Milestones" description={`${project.milestones.length} milestones`} />
               <div className="space-y-4">
                 {project.milestones.map((milestone, index) => (
-                  <div key={milestone.id} className="flex items-start gap-4 p-4 bg-dark-bg rounded-lg">
-                    <div className="w-8 h-8 bg-primary-600/20 rounded-full flex items-center justify-center text-primary-400 font-bold text-sm">
+                  <div key={milestone.id} className="flex items-start gap-4 p-4 bg-gray-50 dark:bg-dark-bg rounded-lg">
+                    <div className="w-8 h-8 bg-primary-100 dark:bg-primary-600/20 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-sm">
                       {index + 1}
                     </div>
                     <div className="flex-1">
@@ -184,16 +184,16 @@ export function ProjectDetailPage() {
                 title="Proposals" 
                 description={`${proposals.length} proposals received`}
                 action={
-                  <Link to={`/projects/${project.id}/proposals`} className="text-primary-400 text-sm">
+                  <Link to={`/projects/${project.id}/proposals`} className="text-primary-600 dark:text-primary-400 text-sm hover:underline">
                     View All
                   </Link>
                 }
               />
               <div className="space-y-4">
                 {proposals.slice(0, 5).map((proposal) => (
-                  <div key={proposal.id} className="flex items-start gap-4 p-4 bg-dark-bg rounded-lg">
-                    <div className="w-10 h-10 bg-primary-600/20 rounded-full flex items-center justify-center">
-                      <User className="w-5 h-5 text-primary-400" />
+                  <div key={proposal.id} className="flex items-start gap-4 p-4 bg-gray-50 dark:bg-dark-bg rounded-lg">
+                    <div className="w-10 h-10 bg-primary-100 dark:bg-primary-600/20 rounded-full flex items-center justify-center">
+                      <User className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">
@@ -239,7 +239,7 @@ export function ProjectDetailPage() {
                         onChange={(e) => setProposalData({ ...proposalData, coverLetter: e.target.value })}
                         rows={5}
                         required
-                        className="w-full bg-dark-bg border border-dark-border rounded-lg px-4 py-2 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
+                        className="w-full bg-white dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-lg px-4 py-2 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
                         placeholder="Explain why you're a great fit for this project..."
                       />
                     </div>
@@ -255,7 +255,7 @@ export function ProjectDetailPage() {
                           value={proposalData.proposedRate}
                           onChange={(e) => setProposalData({ ...proposalData, proposedRate: e.target.value })}
                           required
-                          className="w-full bg-dark-bg border border-dark-border rounded-lg px-4 py-2 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
+                          className="w-full bg-white dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-lg px-4 py-2 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
                           placeholder="0.00"
                         />
                       </div>
@@ -269,7 +269,7 @@ export function ProjectDetailPage() {
                           value={proposalData.estimatedDuration}
                           onChange={(e) => setProposalData({ ...proposalData, estimatedDuration: e.target.value })}
                           required
-                          className="w-full bg-dark-bg border border-dark-border rounded-lg px-4 py-2 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
+                          className="w-full bg-white dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-lg px-4 py-2 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
                           placeholder="30"
                         />
                       </div>
@@ -290,7 +290,7 @@ export function ProjectDetailPage() {
 
           {!isAuthenticated && project.status === 'open' && (
             <Card className="text-center py-6">
-              <AlertTriangle className="w-12 h-12 text-amber-400 mx-auto mb-3" />
+              <AlertTriangle className="w-12 h-12 text-amber-600 dark:text-amber-400 mx-auto mb-3" />
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Want to apply?</h3>
               <p className="text-gray-600 dark:text-gray-400 mb-4">Sign in or create an account to submit a proposal</p>
               <div className="flex gap-3 justify-center">
@@ -314,14 +314,14 @@ export function ProjectDetailPage() {
               <div className="flex items-center justify-between">
                 <span className="text-gray-600 dark:text-gray-400">Budget</span>
                 <span className="text-gray-900 dark:text-white font-medium flex items-center gap-1">
-                  <DollarSign className="w-4 h-4 text-green-400" />
+                  <DollarSign className="w-4 h-4 text-green-600 dark:text-green-400" />
                   {project.budget} ETH
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-600 dark:text-gray-400">Deadline</span>
                 <span className="text-gray-900 dark:text-white flex items-center gap-1">
-                  <Clock className="w-4 h-4 text-amber-400" />
+                  <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                   {project.deadline 
                     ? format(new Date(project.deadline), 'MMM d, yyyy')
                     : 'No deadline'}
@@ -348,8 +348,8 @@ export function ProjectDetailPage() {
           <Card>
             <CardHeader title="About the Client" />
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-primary-600/20 rounded-full flex items-center justify-center">
-                <User className="w-6 h-6 text-primary-400" />
+              <div className="w-12 h-12 bg-primary-100 dark:bg-primary-600/20 rounded-full flex items-center justify-center">
+                <User className="w-6 h-6 text-primary-600 dark:text-primary-400" />
               </div>
               <div>
                 <p className="text-gray-900 dark:text-white font-medium">
@@ -366,12 +366,12 @@ export function ProjectDetailPage() {
           </Card>
 
           {/* Safety Tips */}
-          <Card className="bg-amber-900/20 border-amber-700/30">
+          <Card className="bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700/30">
             <div className="flex items-start gap-3">
-              <CheckCircle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+              <CheckCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
               <div>
-                <h4 className="text-amber-400 font-medium mb-1">Secure Payments</h4>
-                <p className="text-amber-200/80 text-sm">
+                <h4 className="text-amber-700 dark:text-amber-400 font-medium mb-1">Secure Payments</h4>
+                <p className="text-amber-700 dark:text-amber-200/80 text-sm">
                   All payments are held in smart contract escrow until milestones are approved.
                 </p>
               </div>

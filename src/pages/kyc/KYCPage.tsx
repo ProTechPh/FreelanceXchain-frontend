@@ -242,7 +242,7 @@ export function KYCPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <Card className={`border-2 ${getStatusColor(kycData.status)}`}>
+          <Card data-tour-id="kyc-start-card" className={`border-2 ${getStatusColor(kycData.status)}`}>
             <div className="text-center py-8">
               <motion.div
                 initial={{ scale: 0 }}
@@ -446,7 +446,7 @@ export function KYCPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
       >
-        <Card>
+        <Card data-tour-id="kyc-start-card">
           <div className="text-center py-8">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Why Verify Your Identity?</h2>
             

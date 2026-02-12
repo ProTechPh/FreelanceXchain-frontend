@@ -183,8 +183,8 @@ export function ContractDetailPage() {
   if (!contract) {
     return (
       <div className="text-center py-12">
-        <FileText className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-400">Contract not found</h3>
+        <FileText className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+        <h3 className="text-lg font-medium text-gray-600 dark:text-gray-400">Contract not found</h3>
         <Button variant="outline" onClick={() => navigate('/contracts')} className="mt-4">
           Back to Contracts
         </Button>
@@ -205,20 +205,20 @@ export function ContractDetailPage() {
       <div className="flex items-center gap-4">
         <button
           onClick={() => navigate('/contracts')}
-          className="p-2 hover:bg-dark-surface rounded-lg transition-colors"
+          className="p-2 hover:bg-gray-100 dark:hover:bg-dark-surface rounded-lg transition-colors"
         >
-          <ArrowLeft className="w-5 h-5 text-gray-400" />
+          <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
         </button>
         <div className="flex-1">
           <div className="flex items-center gap-3">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{contract.title}</h1>
             <StatusBadge status={contract.status} />
           </div>
-          <p className="text-gray-400 mt-1">{contract.description}</p>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">{contract.description}</p>
         </div>
         {contract.status === 'active' && (
           <Button variant="outline">
-            <AlertTriangle className="w-4 h-4" />
+            <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
             Open Dispute
           </Button>
         )}
@@ -228,11 +228,11 @@ export function ContractDetailPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-primary-600/20 rounded-lg">
-              <DollarSign className="w-6 h-6 text-primary-400" />
+            <div className="p-3 bg-primary-100 dark:bg-primary-600/20 rounded-lg">
+              <DollarSign className="w-6 h-6 text-primary-600 dark:text-primary-400" />
             </div>
             <div>
-              <p className="text-gray-400 text-sm">Total Value</p>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">Total Value</p>
               <p className="text-xl font-bold text-gray-900 dark:text-white">{contract.totalAmount} ETH</p>
             </div>
           </div>
@@ -240,11 +240,11 @@ export function ContractDetailPage() {
 
         <Card>
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-green-600/20 rounded-lg">
-              <CheckCircle className="w-6 h-6 text-green-400" />
+            <div className="p-3 bg-green-100 dark:bg-green-600/20 rounded-lg">
+              <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
             </div>
             <div>
-              <p className="text-gray-400 text-sm">Released</p>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">Released</p>
               <p className="text-xl font-bold text-gray-900 dark:text-white">
                 {paymentStatus?.releasedAmount || 0} ETH
               </p>
@@ -254,11 +254,11 @@ export function ContractDetailPage() {
 
         <Card>
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-yellow-600/20 rounded-lg">
-              <Clock className="w-6 h-6 text-yellow-400" />
+            <div className="p-3 bg-yellow-100 dark:bg-yellow-600/20 rounded-lg">
+              <Clock className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
             </div>
             <div>
-              <p className="text-gray-400 text-sm">In Escrow</p>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">In Escrow</p>
               <p className="text-xl font-bold text-gray-900 dark:text-white">
                 {paymentStatus?.pendingAmount || 0} ETH
               </p>
@@ -268,11 +268,11 @@ export function ContractDetailPage() {
 
         <Card>
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-blue-600/20 rounded-lg">
-              <FileText className="w-6 h-6 text-blue-400" />
+            <div className="p-3 bg-blue-100 dark:bg-blue-600/20 rounded-lg">
+              <FileText className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <p className="text-gray-400 text-sm">Progress</p>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">Progress</p>
               <p className="text-xl font-bold text-gray-900 dark:text-white">{progressPercentage}%</p>
             </div>
           </div>
@@ -292,7 +292,7 @@ export function ContractDetailPage() {
 
             {/* Progress bar */}
             <div className="mb-6">
-              <div className="h-2 bg-dark-bg rounded-full overflow-hidden">
+              <div className="h-2 bg-gray-200 dark:bg-dark-bg rounded-full overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-primary-500 to-primary-400 rounded-full transition-all"
                   style={{ width: `${progressPercentage}%` }}
@@ -306,12 +306,12 @@ export function ContractDetailPage() {
                 <div
                   key={milestone.id}
                   className={`p-4 rounded-lg border ${milestone.status === 'approved'
-                      ? 'bg-green-900/20 border-green-600/30'
+                      ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-600/30'
                       : milestone.status === 'submitted'
-                        ? 'bg-yellow-900/20 border-yellow-600/30'
+                        ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-600/30'
                         : milestone.status === 'disputed'
-                          ? 'bg-red-900/20 border-red-600/30'
-                          : 'bg-dark-bg border-dark-border'
+                          ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-600/30'
+                          : 'bg-gray-50 dark:bg-dark-bg border-gray-200 dark:border-dark-border'
                     }`}
                 >
                   <div className="flex items-start justify-between gap-4">
@@ -332,12 +332,12 @@ export function ContractDetailPage() {
                       </div>
                       <div>
                         <h4 className="font-medium text-gray-900 dark:text-white">{milestone.title}</h4>
-                        <p className="text-sm text-gray-400 mt-1">{milestone.description}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{milestone.description}</p>
                         <div className="flex items-center gap-4 mt-2 text-sm">
-                          <span className="text-primary-400 font-medium">
+                          <span className="text-primary-600 dark:text-primary-400 font-medium">
                             {milestone.amount} ETH
                           </span>
-                          <span className="text-gray-500">
+                          <span className="text-gray-600 dark:text-gray-500">
                             Due: {format(new Date(milestone.dueDate), 'MMM d, yyyy')}
                           </span>
                         </div>
@@ -349,7 +349,7 @@ export function ContractDetailPage() {
                   </div>
 
                   {getMilestoneActions(milestone).length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-dark-border flex gap-2">
+                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-dark-border flex gap-2">
                       {getMilestoneActions(milestone)}
                     </div>
                   )}
@@ -366,9 +366,9 @@ export function ContractDetailPage() {
             <CardHeader title="Contract Details" />
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <Calendar className="w-5 h-5 text-gray-400" />
+                <Calendar className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                 <div>
-                  <p className="text-sm text-gray-400">Start Date</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Start Date</p>
                   <p className="text-gray-900 dark:text-white">
                     {format(new Date(contract.startDate), 'MMMM d, yyyy')}
                   </p>
@@ -377,9 +377,9 @@ export function ContractDetailPage() {
 
               {contract.endDate && (
                 <div className="flex items-center gap-3">
-                  <Calendar className="w-5 h-5 text-gray-400" />
+                  <Calendar className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                   <div>
-                    <p className="text-sm text-gray-400">End Date</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">End Date</p>
                     <p className="text-gray-900 dark:text-white">
                       {format(new Date(contract.endDate), 'MMMM d, yyyy')}
                     </p>
@@ -388,14 +388,14 @@ export function ContractDetailPage() {
               )}
 
               <div className="flex items-center gap-3">
-                <ExternalLink className="w-5 h-5 text-gray-400" />
+                <ExternalLink className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                 <div>
-                  <p className="text-sm text-gray-400">Escrow Contract</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Escrow Contract</p>
                   <a
                     href={`https://etherscan.io/address/${contract.escrowAddress}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-primary-400 hover:text-primary-300 text-sm font-mono"
+                    className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 text-sm font-mono"
                   >
                     {contract.escrowAddress.slice(0, 6)}...{contract.escrowAddress.slice(-4)}
                   </a>
@@ -410,11 +410,11 @@ export function ContractDetailPage() {
             <div className="space-y-4">
               {contract.employer && (
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-600/20 rounded-lg">
-                    <Building className="w-5 h-5 text-blue-400" />
+                  <div className="p-2 bg-blue-100 dark:bg-blue-600/20 rounded-lg">
+                    <Building className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-400">Client</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Client</p>
                     <p className="text-gray-900 dark:text-white">{contract.employer.companyName}</p>
                   </div>
                 </div>
@@ -422,11 +422,11 @@ export function ContractDetailPage() {
 
               {contract.freelancer && (
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-green-600/20 rounded-lg">
-                    <User className="w-5 h-5 text-green-400" />
+                  <div className="p-2 bg-green-100 dark:bg-green-600/20 rounded-lg">
+                    <User className="w-5 h-5 text-green-600 dark:text-green-400" />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-400">Freelancer</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Freelancer</p>
                     <p className="text-gray-900 dark:text-white">{contract.freelancer.name}</p>
                   </div>
                 </div>
@@ -440,14 +440,14 @@ export function ContractDetailPage() {
             <div className="space-y-2">
               <Link to={`/projects/${contract.projectId}`}>
                 <Button variant="outline" className="w-full justify-start">
-                  <FileText className="w-4 h-4" />
+                  <FileText className="w-4 h-4 text-gray-600 dark:text-gray-400" />
                   View Project
                 </Button>
               </Link>
               {contract.status === 'active' && (
                 <Link to={`/disputes/new?contractId=${contract.id}`}>
-                  <Button variant="outline" className="w-full justify-start text-red-400 border-red-400/50 hover:bg-red-400/10">
-                    <AlertTriangle className="w-4 h-4" />
+                  <Button variant="outline" className="w-full justify-start text-red-600 dark:text-red-400 border-red-300 dark:border-red-400/50 hover:bg-red-50 dark:hover:bg-red-400/10">
+                    <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" />
                     Open Dispute
                   </Button>
                 </Link>
@@ -461,18 +461,18 @@ export function ContractDetailPage() {
               <CardHeader title="Rate Your Experience" />
               <div className="space-y-3">
                 {hasRated ? (
-                  <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
-                    <div className="flex items-center gap-2 text-green-400 mb-2">
-                      <CheckCircle className="w-5 h-5" />
+                  <div className="p-4 bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/30 rounded-lg">
+                    <div className="flex items-center gap-2 text-green-600 dark:text-green-400 mb-2">
+                      <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
                       <span className="font-medium">Rating Submitted</span>
                     </div>
-                    <p className="text-sm text-gray-400">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
                       Thank you for rating {isFreelancer ? 'the client' : 'the freelancer'}!
                     </p>
                   </div>
                 ) : canRate ? (
                   <>
-                    <p className="text-sm text-gray-400">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
                       Share your experience working with {isFreelancer ? contract.employer?.companyName : contract.freelancer?.name}
                     </p>
                     <Button
@@ -480,13 +480,13 @@ export function ContractDetailPage() {
                       className="w-full justify-start"
                       onClick={() => setShowRatingModal(true)}
                     >
-                      <Star className="w-4 h-4" />
+                      <Star className="w-4 h-4 text-white" />
                       Submit Rating
                     </Button>
                   </>
                 ) : (
-                  <div className="p-4 bg-white/5 border border-white/10 rounded-lg">
-                    <p className="text-sm text-gray-400">
+                  <div className="p-4 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
                       Rating not available at this time
                     </p>
                   </div>

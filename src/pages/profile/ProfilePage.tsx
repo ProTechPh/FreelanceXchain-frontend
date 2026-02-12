@@ -301,7 +301,7 @@ export function ProfilePage() {
               type="email"
               value={user?.email || ''}
               disabled
-              className="w-full bg-dark-bg border border-dark-border rounded-lg px-4 py-2 text-gray-600 dark:text-gray-400 cursor-not-allowed"
+              className="w-full bg-gray-50 dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-lg px-4 py-2 text-gray-600 dark:text-gray-400 cursor-not-allowed"
             />
           </div>
         </div>
@@ -329,7 +329,7 @@ export function ProfilePage() {
                   value={freelancerForm.bio}
                   onChange={(e) => setFreelancerForm({ ...freelancerForm, bio: e.target.value })}
                   rows={4}
-                  className="w-full bg-dark-bg border border-dark-border rounded-lg px-4 py-2 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-white dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-lg px-4 py-2 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="Tell clients about your experience and expertise..."
                   disabled={!isKycApproved}
                 />
@@ -355,7 +355,7 @@ export function ProfilePage() {
                       ...freelancerForm,
                       availability: e.target.value as 'available' | 'busy' | 'unavailable'
                     })}
-                    className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-gray-900 dark:text-white focus:outline-none focus:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-white dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-lg px-3 py-2 text-gray-900 dark:text-white focus:outline-none focus:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={!isKycApproved}
                   >
                     <option value="available">Available</option>
@@ -368,7 +368,7 @@ export function ProfilePage() {
           </Card>
 
           {/* Skills */}
-          <Card>
+          <Card data-tour-id="profile-skills-section">
             <CardHeader
               title="Skills"
               description="Add skills to show your expertise"
@@ -382,7 +382,7 @@ export function ProfilePage() {
                   <select
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-gray-900 dark:text-white focus:outline-none focus:border-primary-500"
+                    className="w-full bg-white dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-lg px-3 py-2 text-gray-900 dark:text-white focus:outline-none focus:border-primary-500"
                   >
                     <option value="">Select a category</option>
                     {categories.map(cat => (
@@ -397,7 +397,7 @@ export function ProfilePage() {
                   <select
                     value=""
                     onChange={(e) => handleAddSkill(e.target.value)}
-                    className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-gray-900 dark:text-white focus:outline-none focus:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-white dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-lg px-3 py-2 text-gray-900 dark:text-white focus:outline-none focus:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={!selectedCategory || !isKycApproved}
                   >
                     <option value="">Add a skill</option>
@@ -416,7 +416,7 @@ export function ProfilePage() {
                   {freelancerProfile.skills.map((skill, index) => (
                     <span
                       key={`${skill.name}-${index}`}
-                      className="inline-flex items-center gap-1 px-3 py-1 bg-primary-900/50 text-primary-400 rounded-full text-sm"
+                      className="inline-flex items-center gap-1 px-3 py-1 bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-400 rounded-full text-sm"
                     >
                       {skill.name}
                       <button
@@ -452,7 +452,7 @@ export function ProfilePage() {
             />
 
             {showExperienceForm && (
-              <div className="mb-6 p-4 bg-dark-bg rounded-lg space-y-4">
+              <div className="mb-6 p-4 bg-gray-50 dark:bg-dark-bg rounded-lg space-y-4">
                 <div className="grid sm:grid-cols-2 gap-4">
                   <Input
                     label="Job Title"
@@ -503,7 +503,7 @@ export function ProfilePage() {
                     value={newExperience.description}
                     onChange={(e) => setNewExperience({ ...newExperience, description: e.target.value })}
                     rows={3}
-                    className="w-full bg-dark-surface border border-dark-border rounded-lg px-4 py-2 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
+                    className="w-full bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg px-4 py-2 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
                     placeholder="Describe your responsibilities..."
                   />
                 </div>
@@ -516,9 +516,9 @@ export function ProfilePage() {
 
             <div className="space-y-4">
               {freelancerProfile?.experience.map((exp) => (
-                <div key={exp.id} className="flex items-start gap-4 p-4 bg-dark-bg rounded-lg">
-                  <div className="w-10 h-10 bg-primary-600/20 rounded-lg flex items-center justify-center">
-                    <Briefcase className="w-5 h-5 text-primary-400" />
+                <div key={exp.id} className="flex items-start gap-4 p-4 bg-gray-50 dark:bg-dark-bg rounded-lg">
+                  <div className="w-10 h-10 bg-primary-100 dark:bg-primary-600/20 rounded-lg flex items-center justify-center">
+                    <Briefcase className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-start justify-between">
@@ -578,7 +578,7 @@ export function ProfilePage() {
                 value={employerForm.description}
                 onChange={(e) => setEmployerForm({ ...employerForm, description: e.target.value })}
                 rows={4}
-                className="w-full bg-dark-bg border border-dark-border rounded-lg px-4 py-2 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-white dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-lg px-4 py-2 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="Tell freelancers about your company..."
                 disabled={!isKycApproved}
               />

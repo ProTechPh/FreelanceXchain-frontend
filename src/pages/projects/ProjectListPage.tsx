@@ -151,8 +151,8 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
         >
           <Card className="text-center py-16">
             <div className="max-w-md mx-auto">
-              <div className="w-16 h-16 bg-gray-800/50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Search className="w-8 h-8 text-gray-600" />
+              <div className="w-16 h-16 bg-gray-200 dark:bg-gray-800/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Search className="w-8 h-8 text-gray-400 dark:text-gray-600" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No projects found</h3>
               <p className="text-gray-600 dark:text-gray-400 mb-6">
@@ -228,8 +228,8 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
               transition={{ delay: 0.2, duration: 0.5 }}
               className="inline-flex items-center gap-2 px-4 py-2 bg-primary-500/10 border border-primary-500/20 rounded-full mb-6"
             >
-              <Sparkles className="w-4 h-4 text-primary-400" />
-              <span className="text-sm font-medium text-primary-300">Discover Your Next Opportunity</span>
+              <Sparkles className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+              <span className="text-sm font-medium text-primary-700 dark:text-primary-300">Discover Your Next Opportunity</span>
             </motion.div>
             
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4">
@@ -258,7 +258,7 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
                 className="bg-white/50 dark:bg-dark-card/50 backdrop-blur-sm border border-gray-200 dark:border-dark-border rounded-xl p-4"
               >
                 <div className="flex items-center justify-center gap-2 mb-1">
-                  <Briefcase className="w-5 h-5 text-primary-400" />
+                  <Briefcase className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                 </div>
                 <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{stats.totalProjects}</div>
                 <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total Projects</div>
@@ -271,7 +271,7 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
                 className="bg-white/50 dark:bg-dark-card/50 backdrop-blur-sm border border-gray-200 dark:border-dark-border rounded-xl p-4"
               >
                 <div className="flex items-center justify-center gap-2 mb-1">
-                  <Target className="w-5 h-5 text-green-400" />
+                  <Target className="w-5 h-5 text-green-600 dark:text-green-400" />
                 </div>
                 <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{stats.activeProjects}</div>
                 <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Active Now</div>
@@ -284,7 +284,7 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
                 className="bg-white/50 dark:bg-dark-card/50 backdrop-blur-sm border border-gray-200 dark:border-dark-border rounded-xl p-4"
               >
                 <div className="flex items-center justify-center gap-2 mb-1">
-                  <DollarSign className="w-5 h-5 text-yellow-400" />
+                  <DollarSign className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
                 </div>
                 <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{stats.totalBudget.toFixed(2)}</div>
                 <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">ETH Available</div>
@@ -335,6 +335,7 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.5 }}
+        data-tour-id="projects-search"
       >
         <Card>
         <form onSubmit={handleSearch}>
@@ -499,7 +500,7 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate hover:text-primary-400 transition-colors">
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
                             {project.title}
                           </h3>
                           <StatusBadge status={project.status} />
@@ -521,18 +522,18 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
                         </div>
                         <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
                           <span className="flex items-center gap-1.5">
-                            <DollarSign className="w-4 h-4 text-green-500" />
+                            <DollarSign className="w-4 h-4 text-green-600 dark:text-green-500" />
                             <span className="font-medium text-gray-900 dark:text-white">{project.budget} ETH</span>
                           </span>
                           <span className="flex items-center gap-1.5">
-                            <Clock className="w-4 h-4 text-blue-500" />
+                            <Clock className="w-4 h-4 text-blue-600 dark:text-blue-500" />
                             {project.deadline
                               ? format(new Date(project.deadline), 'MMM d, yyyy')
                               : 'No deadline'}
                           </span>
                           {project.proposalCount !== undefined && (
                             <span className="flex items-center gap-1.5">
-                              <TrendingUp className="w-4 h-4 text-purple-500" />
+                              <TrendingUp className="w-4 h-4 text-purple-600 dark:text-purple-500" />
                               {project.proposalCount} proposal{project.proposalCount !== 1 ? 's' : ''}
                             </span>
                           )}
@@ -573,10 +574,10 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.5 }}
         >
-          <Card className="bg-gradient-to-br from-primary-900/20 to-indigo-900/20 border-primary-500/20">
+          <Card className="bg-gradient-to-br from-primary-50 to-indigo-50 dark:from-primary-900/20 dark:to-indigo-900/20 border-primary-200 dark:border-primary-500/20">
             <div className="text-center py-12">
-              <div className="w-16 h-16 bg-primary-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="w-8 h-8 text-primary-400" />
+              <div className="w-16 h-16 bg-primary-100 dark:bg-primary-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users className="w-8 h-8 text-primary-600 dark:text-primary-400" />
               </div>
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Ready to Get Started?</h3>
               <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
