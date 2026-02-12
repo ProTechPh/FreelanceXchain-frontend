@@ -211,7 +211,7 @@ export function ContractDetailPage() {
         </button>
         <div className="flex-1">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-white">{contract.title}</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{contract.title}</h1>
             <StatusBadge status={contract.status} />
           </div>
           <p className="text-gray-400 mt-1">{contract.description}</p>
@@ -233,7 +233,7 @@ export function ContractDetailPage() {
             </div>
             <div>
               <p className="text-gray-400 text-sm">Total Value</p>
-              <p className="text-xl font-bold text-white">{contract.totalAmount} ETH</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white">{contract.totalAmount} ETH</p>
             </div>
           </div>
         </Card>
@@ -245,7 +245,7 @@ export function ContractDetailPage() {
             </div>
             <div>
               <p className="text-gray-400 text-sm">Released</p>
-              <p className="text-xl font-bold text-white">
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
                 {paymentStatus?.releasedAmount || 0} ETH
               </p>
             </div>
@@ -259,7 +259,7 @@ export function ContractDetailPage() {
             </div>
             <div>
               <p className="text-gray-400 text-sm">In Escrow</p>
-              <p className="text-xl font-bold text-white">
+              <p className="text-xl font-bold text-gray-900 dark:text-white">
                 {paymentStatus?.pendingAmount || 0} ETH
               </p>
             </div>
@@ -273,7 +273,7 @@ export function ContractDetailPage() {
             </div>
             <div>
               <p className="text-gray-400 text-sm">Progress</p>
-              <p className="text-xl font-bold text-white">{progressPercentage}%</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white">{progressPercentage}%</p>
             </div>
           </div>
         </Card>
@@ -317,11 +317,11 @@ export function ContractDetailPage() {
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${milestone.status === 'approved'
-                          ? 'bg-green-600 text-white'
+                          ? 'bg-green-600 text-gray-900 dark:text-white'
                           : milestone.status === 'submitted'
-                            ? 'bg-yellow-600 text-white'
+                            ? 'bg-yellow-600 text-gray-900 dark:text-white'
                             : milestone.status === 'disputed'
-                              ? 'bg-red-600 text-white'
+                              ? 'bg-red-600 text-gray-900 dark:text-white'
                               : 'bg-dark-border text-gray-400'
                         }`}>
                         {milestone.status === 'approved' ? (
@@ -331,7 +331,7 @@ export function ContractDetailPage() {
                         )}
                       </div>
                       <div>
-                        <h4 className="font-medium text-white">{milestone.title}</h4>
+                        <h4 className="font-medium text-gray-900 dark:text-white">{milestone.title}</h4>
                         <p className="text-sm text-gray-400 mt-1">{milestone.description}</p>
                         <div className="flex items-center gap-4 mt-2 text-sm">
                           <span className="text-primary-400 font-medium">
@@ -369,7 +369,7 @@ export function ContractDetailPage() {
                 <Calendar className="w-5 h-5 text-gray-400" />
                 <div>
                   <p className="text-sm text-gray-400">Start Date</p>
-                  <p className="text-white">
+                  <p className="text-gray-900 dark:text-white">
                     {format(new Date(contract.startDate), 'MMMM d, yyyy')}
                   </p>
                 </div>
@@ -380,7 +380,7 @@ export function ContractDetailPage() {
                   <Calendar className="w-5 h-5 text-gray-400" />
                   <div>
                     <p className="text-sm text-gray-400">End Date</p>
-                    <p className="text-white">
+                    <p className="text-gray-900 dark:text-white">
                       {format(new Date(contract.endDate), 'MMMM d, yyyy')}
                     </p>
                   </div>
@@ -415,7 +415,7 @@ export function ContractDetailPage() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-400">Client</p>
-                    <p className="text-white">{contract.employer.companyName}</p>
+                    <p className="text-gray-900 dark:text-white">{contract.employer.companyName}</p>
                   </div>
                 </div>
               )}
@@ -427,7 +427,7 @@ export function ContractDetailPage() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-400">Freelancer</p>
-                    <p className="text-white">{contract.freelancer.name}</p>
+                    <p className="text-gray-900 dark:text-white">{contract.freelancer.name}</p>
                   </div>
                 </div>
               )}

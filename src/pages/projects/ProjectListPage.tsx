@@ -154,8 +154,8 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
               <div className="w-16 h-16 bg-gray-800/50 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Search className="w-8 h-8 text-gray-600" />
               </div>
-              <h3 className="text-xl font-semibold text-white mb-2">No projects found</h3>
-              <p className="text-gray-400 mb-6">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No projects found</h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
                 We couldn't find any projects matching your criteria. Try adjusting your filters or search terms.
               </p>
               <Button variant="outline" onClick={clearFilters}>
@@ -178,10 +178,10 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
             <div className="w-16 h-16 bg-primary-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <Briefcase className="w-8 h-8 text-primary-500" />
             </div>
-            <h3 className="text-xl font-semibold text-white mb-2">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
               {isAuthenticated && user?.role === 'employer' ? 'No projects yet' : 'No projects available'}
             </h3>
-            <p className="text-gray-400 mb-6">
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
               {isAuthenticated && user?.role === 'employer'
                 ? 'Start by creating your first project and find the perfect freelancer for your needs.'
                 : isAuthenticated
@@ -212,7 +212,7 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-br from-primary-900/20 via-dark-bg to-dark-bg border-b border-dark-border">
+      <div className="relative bg-gradient-to-br from-primary-100/50 via-gray-50 to-white dark:from-primary-900/20 dark:via-dark-bg dark:to-dark-bg border-b border-gray-200 dark:border-dark-border">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnoiIHN0cm9rZT0iIzZCNzI4MCIgc3Ryb2tlLXdpZHRoPSIuNSIgb3BhY2l0eT0iLjEiLz48L2c+PC9zdmc+')] opacity-30"></div>
         
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
@@ -232,7 +232,7 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
               <span className="text-sm font-medium text-primary-300">Discover Your Next Opportunity</span>
             </motion.div>
             
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4">
               {showMyProjects ? (
                 <>
                   My <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-indigo-400">Projects</span>
@@ -243,7 +243,7 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
                 </>
               )}
             </h1>
-            <p className="text-lg text-gray-400 mb-8">
+            <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">
               {showMyProjects
                 ? 'Manage your projects, track proposals, and monitor progress. All secured by blockchain technology.'
                 : 'Find projects that match your skills. Secure payments through smart contracts. Build your reputation on-chain.'}
@@ -255,39 +255,39 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3, duration: 0.5 }}
-                className="bg-dark-card/50 backdrop-blur-sm border border-dark-border rounded-xl p-4"
+                className="bg-white/50 dark:bg-dark-card/50 backdrop-blur-sm border border-gray-200 dark:border-dark-border rounded-xl p-4"
               >
                 <div className="flex items-center justify-center gap-2 mb-1">
                   <Briefcase className="w-5 h-5 text-primary-400" />
                 </div>
-                <div className="text-2xl sm:text-3xl font-bold text-white">{stats.totalProjects}</div>
-                <div className="text-xs sm:text-sm text-gray-400">Total Projects</div>
+                <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{stats.totalProjects}</div>
+                <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total Projects</div>
               </motion.div>
               
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4, duration: 0.5 }}
-                className="bg-dark-card/50 backdrop-blur-sm border border-dark-border rounded-xl p-4"
+                className="bg-white/50 dark:bg-dark-card/50 backdrop-blur-sm border border-gray-200 dark:border-dark-border rounded-xl p-4"
               >
                 <div className="flex items-center justify-center gap-2 mb-1">
                   <Target className="w-5 h-5 text-green-400" />
                 </div>
-                <div className="text-2xl sm:text-3xl font-bold text-white">{stats.activeProjects}</div>
-                <div className="text-xs sm:text-sm text-gray-400">Active Now</div>
+                <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{stats.activeProjects}</div>
+                <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Active Now</div>
               </motion.div>
               
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5, duration: 0.5 }}
-                className="bg-dark-card/50 backdrop-blur-sm border border-dark-border rounded-xl p-4"
+                className="bg-white/50 dark:bg-dark-card/50 backdrop-blur-sm border border-gray-200 dark:border-dark-border rounded-xl p-4"
               >
                 <div className="flex items-center justify-center gap-2 mb-1">
                   <DollarSign className="w-5 h-5 text-yellow-400" />
                 </div>
-                <div className="text-2xl sm:text-3xl font-bold text-white">{stats.totalBudget.toFixed(2)}</div>
-                <div className="text-xs sm:text-sm text-gray-400">ETH Available</div>
+                <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{stats.totalBudget.toFixed(2)}</div>
+                <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">ETH Available</div>
               </motion.div>
             </div>
           </motion.div>
@@ -299,10 +299,10 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
         {/* Header with Actions */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-white">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
               {showMyProjects ? 'My Projects' : 'All Projects'}
             </h2>
-            <p className="text-gray-400 mt-1">
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
               {projects.length > 0 ? `Showing ${projects.length} project${projects.length !== 1 ? 's' : ''}` : showMyProjects ? 'No projects created yet' : 'Find your next opportunity'}
             </p>
           </div>
@@ -340,13 +340,13 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
         <form onSubmit={handleSearch}>
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600 dark:text-gray-400" />
               <input
                 type="text"
                 placeholder="Search projects by title or description..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-dark-bg border border-dark-border rounded-lg pl-10 pr-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-primary-500 transition-colors"
+                className="w-full bg-white dark:bg-dark-bg border border-gray-300 dark:border-dark-border rounded-lg pl-10 pr-4 py-2.5 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary-500 transition-colors"
               />
             </div>
             <div className="flex gap-2">
@@ -371,15 +371,15 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
           </div>
 
           {showFilters && (
-            <div className="mt-4 pt-4 border-t border-dark-border space-y-4">
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-dark-border space-y-4">
               {/* Skills Filter */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Required Skills
                 </label>
-                <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto p-2 bg-dark-bg rounded-lg border border-dark-border">
+                <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto p-2 bg-gray-50 dark:bg-dark-bg rounded-lg border border-gray-200 dark:border-dark-border">
                   {skills.length === 0 ? (
-                    <p className="text-sm text-gray-500">Loading skills...</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-500">Loading skills...</p>
                   ) : (
                     skills.map((skill) => (
                       <button
@@ -389,7 +389,7 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
                         className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                           selectedSkills.includes(skill.id)
                             ? 'bg-primary-500 text-white'
-                            : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+                            : 'bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700'
                         }`}
                       >
                         {skill.name}
@@ -421,35 +421,35 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
               {/* Budget Range */}
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Min Budget (ETH)
                   </label>
                   <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 dark:text-gray-400" />
                     <input
                       type="number"
                       step="0.01"
                       min="0"
                       value={filters.minBudget}
                       onChange={(e) => setFilters({ ...filters, minBudget: e.target.value })}
-                      className="w-full bg-dark-bg border border-dark-border rounded-lg pl-9 pr-3 py-2 text-white focus:outline-none focus:border-primary-500 transition-colors"
+                      className="w-full bg-white dark:bg-dark-bg border border-gray-300 dark:border-dark-border rounded-lg pl-9 pr-3 py-2 text-gray-900 dark:text-white focus:outline-none focus:border-primary-500 transition-colors"
                       placeholder="0.00"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Max Budget (ETH)
                   </label>
                   <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 dark:text-gray-400" />
                     <input
                       type="number"
                       step="0.01"
                       min="0"
                       value={filters.maxBudget}
                       onChange={(e) => setFilters({ ...filters, maxBudget: e.target.value })}
-                      className="w-full bg-dark-bg border border-dark-border rounded-lg pl-9 pr-3 py-2 text-white focus:outline-none focus:border-primary-500 transition-colors"
+                      className="w-full bg-white dark:bg-dark-bg border border-gray-300 dark:border-dark-border rounded-lg pl-9 pr-3 py-2 text-gray-900 dark:text-white focus:outline-none focus:border-primary-500 transition-colors"
                       placeholder="10.00"
                     />
                   </div>
@@ -499,12 +499,12 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-lg font-semibold text-white truncate hover:text-primary-400 transition-colors">
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate hover:text-primary-400 transition-colors">
                             {project.title}
                           </h3>
                           <StatusBadge status={project.status} />
                         </div>
-                        <p className="text-gray-400 text-sm line-clamp-2 mb-3">
+                        <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2 mb-3">
                           {project.description}
                         </p>
                         <div className="flex flex-wrap gap-2 mb-3">
@@ -519,10 +519,10 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
                             </Badge>
                           )}
                         </div>
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
+                        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
                           <span className="flex items-center gap-1.5">
                             <DollarSign className="w-4 h-4 text-green-500" />
-                            <span className="font-medium text-white">{project.budget} ETH</span>
+                            <span className="font-medium text-gray-900 dark:text-white">{project.budget} ETH</span>
                           </span>
                           <span className="flex items-center gap-1.5">
                             <Clock className="w-4 h-4 text-blue-500" />
@@ -578,8 +578,8 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
               <div className="w-16 h-16 bg-primary-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Users className="w-8 h-8 text-primary-400" />
               </div>
-              <h3 className="text-2xl font-bold text-white mb-2">Ready to Get Started?</h3>
-              <p className="text-gray-400 mb-6 max-w-md mx-auto">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Ready to Get Started?</h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
                 Join thousands of freelancers and employers using blockchain technology for secure, transparent work agreements.
               </p>
               <div className="flex gap-3 justify-center">

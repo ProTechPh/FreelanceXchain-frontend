@@ -62,7 +62,7 @@ export function SkillAnalysisPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white">Skill Analysis</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Skill Analysis</h1>
         <p className="text-gray-400 mt-1">
           Analyze your skills, identify gaps, and get personalized learning recommendations
         </p>
@@ -73,8 +73,8 @@ export function SkillAnalysisPage() {
         <button
           onClick={() => setActiveTab('gap')}
           className={`px-4 py-2 rounded-lg font-medium transition-colors ${activeTab === 'gap'
-              ? 'bg-primary-600 text-white'
-              : 'bg-dark-card text-gray-400 hover:text-white'
+              ? 'bg-primary-600 text-gray-900 dark:text-white'
+              : 'bg-dark-card text-gray-400 hover:text-gray-900 dark:text-white'
             }`}
         >
           <FiTrendingUp className="inline mr-2" />
@@ -83,8 +83,8 @@ export function SkillAnalysisPage() {
         <button
           onClick={() => setActiveTab('extract')}
           className={`px-4 py-2 rounded-lg font-medium transition-colors ${activeTab === 'extract'
-              ? 'bg-primary-600 text-white'
-              : 'bg-dark-card text-gray-400 hover:text-white'
+              ? 'bg-primary-600 text-gray-900 dark:text-white'
+              : 'bg-dark-card text-gray-400 hover:text-gray-900 dark:text-white'
             }`}
         >
           <FiSearch className="inline mr-2" />
@@ -137,7 +137,7 @@ export function SkillAnalysisPage() {
                 <div className="p-6">
                   <div className="flex items-center gap-2 mb-4">
                     <FiCheck className="w-5 h-5 text-green-400" />
-                    <h3 className="text-lg font-medium text-white">Your Current Skills</h3>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">Your Current Skills</h3>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {analysis.currentSkills.map((skill: string, idx: number) => (
@@ -157,7 +157,7 @@ export function SkillAnalysisPage() {
                 <div className="p-6">
                   <div className="flex items-center gap-2 mb-4">
                     <FiTrendingUp className="w-5 h-5 text-amber-400" />
-                    <h3 className="text-lg font-medium text-white">Recommended Skills</h3>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">Recommended Skills</h3>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {analysis.recommendedSkills.map((skill: string, idx: number) => (
@@ -177,12 +177,12 @@ export function SkillAnalysisPage() {
                 <div className="p-6">
                   <div className="flex items-center gap-2 mb-4">
                     <FiZap className="w-5 h-5 text-primary-400" />
-                    <h3 className="text-lg font-medium text-white">Market Demand Skills</h3>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">Market Demand Skills</h3>
                   </div>
                   <div className="space-y-3">
                     {analysis.marketDemand.map((item, idx) => (
                       <div key={idx} className="flex items-center justify-between p-3 bg-dark-bg rounded-lg">
-                        <span className="text-white">{item.skillName}</span>
+                        <span className="text-gray-900 dark:text-white">{item.skillName}</span>
                         <Badge
                           variant={
                             item.demandLevel === 'high' ? 'success' :
@@ -205,7 +205,7 @@ export function SkillAnalysisPage() {
                 <div className="p-6">
                   <div className="flex items-center gap-2 mb-4">
                     <FiBook className="w-5 h-5 text-purple-400" />
-                    <h3 className="text-lg font-medium text-white">AI Analysis</h3>
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">AI Analysis</h3>
                   </div>
                   <p className="text-gray-300 leading-relaxed">{analysis.reasoning}</p>
                 </div>
@@ -215,7 +215,7 @@ export function SkillAnalysisPage() {
             <Card>
               <div className="p-8 text-center">
                 <FiTrendingUp className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-white mb-2">Skill Gap Analysis</h3>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Skill Gap Analysis</h3>
                 <p className="text-gray-400 mb-4">
                   Click refresh to analyze your skills and get personalized recommendations
                 </p>
@@ -230,7 +230,7 @@ export function SkillAnalysisPage() {
         <div className="space-y-6">
           <Card>
             <div className="p-6">
-              <h3 className="text-lg font-medium text-white mb-4">Extract Skills from Text</h3>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Extract Skills from Text</h3>
               <p className="text-gray-400 mb-4">
                 Paste a job description, resume, or any text to automatically extract relevant skills.
               </p>
@@ -239,7 +239,7 @@ export function SkillAnalysisPage() {
                 value={textToAnalyze}
                 onChange={(e) => setTextToAnalyze(e.target.value)}
                 rows={6}
-                className="w-full px-4 py-3 bg-dark-bg border border-dark-border rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                className="w-full px-4 py-3 bg-dark-bg border border-dark-border rounded-lg text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
               />
               <div className="mt-4 flex justify-end">
                 <Button
@@ -261,7 +261,7 @@ export function SkillAnalysisPage() {
             <Card>
               <div className="p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium text-white">Extracted Skills</h3>
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">Extracted Skills</h3>
                   <span className="text-gray-400 text-sm">{extractedSkills.length} skills found</span>
                 </div>
                 <div className="space-y-3">

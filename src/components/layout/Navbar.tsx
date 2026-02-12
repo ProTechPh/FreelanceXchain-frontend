@@ -148,7 +148,7 @@ export function Navbar({ onMenuClick, isSidebarOpen }: NavbarProps) {
       transition={{ type: 'spring', stiffness: 100 }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled || !isLanding
-          ? 'bg-dark-bg/80 backdrop-blur-xl border-b border-white/5 h-16 shadow-lg shadow-black/10'
+          ? 'bg-white/80 dark:bg-dark-bg/80 backdrop-blur-xl border-b border-gray-200 dark:border-white/5 h-16 shadow-lg shadow-black/10'
           : 'bg-transparent h-20'
       }`}
     >
@@ -158,7 +158,7 @@ export function Navbar({ onMenuClick, isSidebarOpen }: NavbarProps) {
           {isAuthenticated && (
             <button
               onClick={onMenuClick}
-              className="p-2 text-gray-400 hover:text-white lg:hidden rounded-lg hover:bg-white/5 transition-colors"
+              className="p-2 text-gray-800 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white lg:hidden rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
             >
               {isSidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -176,8 +176,8 @@ export function Navbar({ onMenuClick, isSidebarOpen }: NavbarProps) {
                 className="h-10 w-auto object-contain"
               />
             </motion.div>
-            <span className="text-xl font-bold text-white tracking-tight hidden sm:block">
-              Freelance<span className="text-primary-400">Xchain</span>
+            <span className="text-xl font-bold text-gray-900 dark:text-white tracking-tight hidden sm:block">
+              Freelance<span className="text-primary-600 dark:text-primary-400">Xchain</span>
             </span>
           </Link>
 
@@ -202,7 +202,7 @@ export function Navbar({ onMenuClick, isSidebarOpen }: NavbarProps) {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowSearch(!showSearch)}
-              className="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/5 hidden sm:block"
+              className="p-2 text-gray-800 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 hidden sm:block"
             >
               <Search className="w-5 h-5" />
             </motion.button>
@@ -213,7 +213,7 @@ export function Navbar({ onMenuClick, isSidebarOpen }: NavbarProps) {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={toggleTheme}
-            className="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/5"
+            className="p-2 text-gray-800 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-white/5"
           >
             <AnimatePresence mode="wait">
               {isDark ? (
@@ -249,14 +249,14 @@ export function Navbar({ onMenuClick, isSidebarOpen }: NavbarProps) {
                     <motion.div
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
-                      className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-dark-surface/50 rounded-full border border-white/10 backdrop-blur-sm"
+                      className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-dark-surface/50 rounded-full border border-gray-300 dark:border-white/10 backdrop-blur-sm"
                     >
                       <motion.div
                         animate={{ scale: [1, 1.2, 1] }}
                         transition={{ duration: 2, repeat: Infinity }}
                         className="w-2 h-2 rounded-full bg-accent-success"
                       />
-                      <span className="text-sm text-gray-300 font-mono">{formatAddress(address!)}</span>
+                      <span className="text-sm text-gray-800 dark:text-gray-300 font-mono">{formatAddress(address!)}</span>
                       {balance && (
                         <span className="text-sm text-primary-400 font-medium pl-2 border-l border-white/10">
                           {parseFloat(balance).toFixed(4)} ETH
@@ -271,7 +271,7 @@ export function Navbar({ onMenuClick, isSidebarOpen }: NavbarProps) {
                             message: 'Your wallet has been disconnected',
                           });
                         }}
-                        className="text-gray-500 hover:text-gray-300 ml-1 p-1 rounded hover:bg-white/5"
+                        className="text-gray-800 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 ml-1 p-1 rounded hover:bg-gray-200 dark:hover:bg-white/5"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -295,14 +295,14 @@ export function Navbar({ onMenuClick, isSidebarOpen }: NavbarProps) {
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Link
                   to="/notifications"
-                  className="relative p-2 text-gray-400 hover:text-white rounded-lg hover:bg-white/5 transition-colors"
+                  className="relative p-2 text-gray-800 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
                 >
                   <Bell className="w-5 h-5" />
                   {unreadCount > 0 && (
                     <motion.span
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      className="absolute top-1 right-1 w-2 h-2 bg-accent-error rounded-full border-2 border-dark-bg"
+                      className="absolute top-1 right-1 w-2 h-2 bg-accent-error rounded-full border-2 border-white dark:border-dark-bg"
                     />
                   )}
                 </Link>
@@ -322,12 +322,12 @@ export function Navbar({ onMenuClick, isSidebarOpen }: NavbarProps) {
                         {user?.email.charAt(0).toUpperCase()}
                       </span>
                     </div>
-                    <ChevronDown className="w-4 h-4 text-gray-400 hidden sm:block" />
+                    <ChevronDown className="w-4 h-4 text-gray-800 dark:text-gray-400 hidden sm:block" />
                   </motion.button>
                 }
               >
-                <div className="p-4 border-b border-white/5 bg-white/5">
-                  <p className="text-sm text-white font-medium truncate">{user?.email}</p>
+                <div className="p-4 border-b border-gray-200 dark:border-white/5 bg-gray-100 dark:bg-white/5">
+                  <p className="text-sm text-gray-900 dark:text-white font-medium truncate">{user?.email}</p>
                   <p className="text-xs text-primary-400 capitalize mt-0.5">{user?.role}</p>
                 </div>
                 <div className="p-2">
@@ -341,14 +341,14 @@ export function Navbar({ onMenuClick, isSidebarOpen }: NavbarProps) {
             <div className="flex items-center gap-3">
               <Link
                 to="/login"
-                className="text-sm font-medium text-gray-300 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-white/5"
+                className="text-sm font-medium text-gray-800 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5"
               >
                 Log In
               </Link>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Link
                   to="/register"
-                  className="px-5 py-2.5 bg-gradient-to-r from-white to-gray-100 text-primary-900 hover:from-gray-100 hover:to-white rounded-full transition-all text-sm font-bold shadow-lg shadow-white/10"
+                  className="px-5 py-2.5 bg-gradient-to-r from-primary-600 to-indigo-600 dark:from-white dark:to-gray-100 text-white dark:text-primary-900 hover:from-primary-500 hover:to-indigo-500 dark:hover:from-gray-100 dark:hover:to-white rounded-full transition-all text-sm font-bold shadow-lg shadow-primary-500/20 dark:shadow-white/10"
                 >
                   Sign Up
                 </Link>
@@ -365,22 +365,22 @@ export function Navbar({ onMenuClick, isSidebarOpen }: NavbarProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute top-full left-0 right-0 bg-dark-surface/95 backdrop-blur-xl border-b border-white/10 p-4 shadow-2xl z-50"
+            className="absolute top-full left-0 right-0 bg-white/95 dark:bg-dark-surface/95 backdrop-blur-xl border-b border-gray-200 dark:border-white/10 p-4 shadow-2xl z-50"
           >
             <div className="max-w-2xl mx-auto space-y-4">
               <form onSubmit={handleSearchSubmit}>
                 <div className="relative">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-800 dark:text-gray-400" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search projects, freelancers..."
-                    className="w-full pl-12 pr-4 py-3 bg-dark-bg border border-white/10 rounded-xl text-white placeholder:text-gray-500 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+                    className="w-full pl-12 pr-4 py-3 bg-gray-50 dark:bg-dark-bg border border-gray-300 dark:border-white/10 rounded-xl text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
                     autoFocus
                   />
                   {searchLoading && (
-                    <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 animate-spin" />
+                    <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-800 dark:text-gray-400 animate-spin" />
                   )}
                 </div>
               </form>
@@ -391,7 +391,7 @@ export function Navbar({ onMenuClick, isSidebarOpen }: NavbarProps) {
                   {/* Projects */}
                   {searchResults.projects.length > 0 && (
                     <div>
-                      <h3 className="text-sm font-medium text-gray-400 mb-2 px-2">Projects</h3>
+                      <h3 className="text-sm font-medium text-gray-800 dark:text-gray-400 mb-2 px-2">Projects</h3>
                       <div className="space-y-1">
                         {searchResults.projects.map((project) => (
                           <Link
@@ -401,10 +401,10 @@ export function Navbar({ onMenuClick, isSidebarOpen }: NavbarProps) {
                               setShowSearch(false);
                               setSearchQuery('');
                             }}
-                            className="block p-3 bg-dark-bg hover:bg-white/5 rounded-lg transition-colors"
+                            className="block p-3 bg-gray-50 dark:bg-dark-bg hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors"
                           >
-                            <div className="font-medium text-white">{project.title}</div>
-                            <div className="text-sm text-gray-400 line-clamp-1">{project.description}</div>
+                            <div className="font-medium text-gray-900 dark:text-white">{project.title}</div>
+                            <div className="text-sm text-gray-700 dark:text-gray-400 line-clamp-1">{project.description}</div>
                             <div className="text-xs text-primary-400 mt-1">${project.budget}</div>
                           </Link>
                         ))}
@@ -415,7 +415,7 @@ export function Navbar({ onMenuClick, isSidebarOpen }: NavbarProps) {
                   {/* Freelancers */}
                   {searchResults.freelancers.length > 0 && (
                     <div>
-                      <h3 className="text-sm font-medium text-gray-400 mb-2 px-2">Freelancers</h3>
+                      <h3 className="text-sm font-medium text-gray-800 dark:text-gray-400 mb-2 px-2">Freelancers</h3>
                       <div className="space-y-1">
                         {searchResults.freelancers.map((freelancer) => (
                           <Link
@@ -425,10 +425,10 @@ export function Navbar({ onMenuClick, isSidebarOpen }: NavbarProps) {
                               setShowSearch(false);
                               setSearchQuery('');
                             }}
-                            className="block p-3 bg-dark-bg hover:bg-white/5 rounded-lg transition-colors"
+                            className="block p-3 bg-gray-50 dark:bg-dark-bg hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors"
                           >
-                            <div className="font-medium text-white">{freelancer.name || 'Anonymous'}</div>
-                            <div className="text-sm text-gray-400 line-clamp-1">{freelancer.bio}</div>
+                            <div className="font-medium text-gray-900 dark:text-white">{freelancer.name || 'Anonymous'}</div>
+                            <div className="text-sm text-gray-700 dark:text-gray-400 line-clamp-1">{freelancer.bio}</div>
                             <div className="text-xs text-primary-400 mt-1">${freelancer.hourlyRate}/hr</div>
                           </Link>
                         ))}
@@ -438,7 +438,7 @@ export function Navbar({ onMenuClick, isSidebarOpen }: NavbarProps) {
 
                   {/* No Results */}
                   {searchResults.projects.length === 0 && searchResults.freelancers.length === 0 && (
-                    <div className="text-center py-8 text-gray-400">
+                    <div className="text-center py-8 text-gray-700 dark:text-gray-400">
                       No results found for "{searchQuery}"
                     </div>
                   )}
@@ -481,8 +481,8 @@ function NavLink({ to, icon, children }: NavLinkProps) {
       to={to}
       className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
         isActive
-          ? 'text-white bg-white/10'
-          : 'text-gray-400 hover:text-white hover:bg-white/5'
+          ? 'text-gray-900 dark:text-white bg-gray-100 dark:bg-white/10'
+          : 'text-gray-800 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5'
       }`}
     >
       {icon}

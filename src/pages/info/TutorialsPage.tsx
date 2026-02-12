@@ -206,7 +206,7 @@ export function TutorialsPage() {
       : tutorials.filter((tutorial) => tutorial.category === selectedCategory);
 
   return (
-    <div className="min-h-screen bg-dark-bg text-white">
+    <div className="min-h-screen bg-white dark:bg-dark-bg text-gray-900 dark:text-white">
       {/* Background Gradients */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/4 w-[400px] h-[400px] bg-primary-600/10 rounded-full blur-[120px]" />
@@ -222,7 +222,7 @@ export function TutorialsPage() {
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm mb-8"
           >
             <BookOpen className="w-4 h-4 text-primary-400" />
-            <span className="text-sm font-medium text-gray-300">Learn at Your Own Pace</span>
+            <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Learn at Your Own Pace</span>
           </motion.div>
 
           <motion.h1
@@ -241,7 +241,7 @@ export function TutorialsPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-xl text-gray-400 max-w-3xl mx-auto"
+            className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto"
           >
             Master FreelanceXchain with our comprehensive tutorials and step-by-step guides
           </motion.p>
@@ -261,8 +261,8 @@ export function TutorialsPage() {
                 onClick={() => setSelectedCategory(category)}
                 className={`px-6 py-3 rounded-full transition-all ${
                   selectedCategory === category
-                    ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/20'
-                    : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white border border-white/10'
+                    ? 'bg-primary-600 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20'
+                    : 'bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-white/10 hover:text-gray-900 dark:text-white border border-white/10'
                 }`}
               >
                 {category}
@@ -287,7 +287,7 @@ export function TutorialsPage() {
               >
                 {/* Header */}
                 <div className="flex items-start justify-between mb-6">
-                  <div className="w-14 h-14 rounded-xl bg-dark-bg/80 flex items-center justify-center">
+                  <div className="w-14 h-14 rounded-xl bg-white dark:bg-dark-bg/80 flex items-center justify-center">
                     <tutorial.icon className={`w-7 h-7 ${tutorial.color}`} />
                   </div>
                   <div className="flex items-center gap-2">
@@ -307,7 +307,7 @@ export function TutorialsPage() {
                 <h3 className="text-xl font-bold mb-3 group-hover:text-primary-400 transition-colors">
                   {tutorial.title}
                 </h3>
-                <p className="text-gray-400 text-sm mb-6 leading-relaxed">{tutorial.description}</p>
+                <p className="text-gray-600 dark:text-gray-400 text-sm mb-6 leading-relaxed">{tutorial.description}</p>
 
                 {/* Meta Info */}
                 <div className="flex items-center gap-3 mb-6">
@@ -318,7 +318,7 @@ export function TutorialsPage() {
                   >
                     {tutorial.difficulty}
                   </span>
-                  <div className="flex items-center gap-1 text-xs text-gray-400">
+                  <div className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
                     <Clock className="w-3 h-3" />
                     <span>{tutorial.duration}</span>
                   </div>
@@ -327,7 +327,7 @@ export function TutorialsPage() {
                 {/* Lessons */}
                 <div className="space-y-2 mb-6">
                   {tutorial.lessons.slice(0, 3).map((lesson, idx) => (
-                    <div key={idx} className="flex items-start gap-2 text-sm text-gray-400">
+                    <div key={idx} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400">
                       <CheckCircle className="w-4 h-4 text-green-400 flex-shrink-0 mt-0.5" />
                       <span>{lesson}</span>
                     </div>
@@ -340,7 +340,7 @@ export function TutorialsPage() {
                 </div>
 
                 {/* CTA */}
-                <button className="w-full py-3 px-4 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 text-white font-medium flex items-center justify-center gap-2 transition-colors group-hover:border-primary-500/50">
+                <button className="w-full py-3 px-4 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 text-gray-900 dark:text-white font-medium flex items-center justify-center gap-2 transition-colors group-hover:border-primary-500/50">
                   {tutorial.type === 'video' ? 'Watch Tutorial' : 'Read Guide'}
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>

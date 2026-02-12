@@ -58,7 +58,7 @@ export function RecommendationsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             {isFreelancer ? 'Project Recommendations' : 'Freelancer Recommendations'}
           </h1>
           <p className="text-gray-400 mt-1">
@@ -92,7 +92,7 @@ export function RecommendationsPage() {
             <Card>
               <div className="p-8 text-center">
                 <FiBriefcase className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-white mb-2">No Recommendations Yet</h3>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Recommendations Yet</h3>
                 <p className="text-gray-400 mb-4">
                   Complete your profile and add more skills to get personalized project recommendations.
                 </p>
@@ -115,7 +115,7 @@ export function RecommendationsPage() {
           <Card>
             <div className="p-8 text-center">
               <FiUser className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-white mb-2">Get Freelancer Recommendations</h3>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Get Freelancer Recommendations</h3>
               <p className="text-gray-400 mb-4">
                 Create a project to get AI-powered freelancer recommendations tailored to your needs.
               </p>
@@ -146,7 +146,7 @@ function ProjectRecommendationCard({ recommendation }: { recommendation: Project
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-3">
               <FiZap className="w-5 h-5 text-primary-400" />
-              <span className="text-lg font-semibold text-white">Project Match</span>
+              <span className="text-lg font-semibold text-gray-900 dark:text-white">Project Match</span>
               <Badge variant="success" className="flex items-center gap-1">
                 <FiStar className="w-3 h-3" />
                 {Math.round(matchScore * 100)}% Match
@@ -216,7 +216,7 @@ function FreelancerRecommendationCard({ recommendation }: { recommendation: Free
           
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
-              <span className="text-lg font-semibold text-white">Freelancer Match</span>
+              <span className="text-lg font-semibold text-gray-900 dark:text-white">Freelancer Match</span>
               <Badge variant="success" className="flex items-center gap-1">
                 <FiStar className="w-3 h-3" />
                 {Math.round(combinedScore * 100)}% Match

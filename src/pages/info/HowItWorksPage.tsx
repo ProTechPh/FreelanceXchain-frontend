@@ -131,7 +131,7 @@ const features = [
 
 export function HowItWorksPage() {
   return (
-    <div className="min-h-screen bg-dark-bg text-white">
+    <div className="min-h-screen bg-white dark:bg-dark-bg text-gray-900 dark:text-white">
       {/* Background Gradients */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/4 w-[400px] h-[400px] bg-primary-600/10 rounded-full blur-[120px]" />
@@ -144,10 +144,10 @@ export function HowItWorksPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm mb-8"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 backdrop-blur-sm mb-8"
           >
             <Zap className="w-4 h-4 text-primary-400" />
-            <span className="text-sm font-medium text-gray-300">Simple, Transparent, Secure</span>
+            <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Simple, Transparent, Secure</span>
           </motion.div>
 
           <motion.h1
@@ -166,7 +166,7 @@ export function HowItWorksPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-xl text-gray-400 max-w-3xl mx-auto"
+            className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto"
           >
             A decentralized platform that connects talent with opportunity, powered by blockchain
             technology and artificial intelligence.
@@ -179,7 +179,7 @@ export function HowItWorksPage() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4">For Freelancers</h2>
-            <p className="text-gray-400 text-lg">
+            <p className="text-gray-600 dark:text-gray-400 text-lg">
               Start earning with confidence on a platform built for your success
             </p>
           </div>
@@ -192,18 +192,18 @@ export function HowItWorksPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                className={`relative p-8 rounded-2xl border border-white/10 ${step.bgColor} backdrop-blur-sm`}
+                className={`relative p-8 rounded-2xl border border-gray-200 dark:border-white/10 ${step.bgColor} backdrop-blur-sm`}
               >
                 <div className="flex items-start gap-4 mb-4">
-                  <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-dark-bg/80 flex items-center justify-center">
+                  <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gray-100 dark:bg-dark-bg/80 flex items-center justify-center">
                     <step.icon className={`w-6 h-6 ${step.color}`} />
                   </div>
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white/5 flex items-center justify-center">
-                    <span className="text-sm font-bold text-gray-400">{index + 1}</span>
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center">
+                    <span className="text-sm font-bold text-gray-600 dark:text-gray-400">{index + 1}</span>
                   </div>
                 </div>
                 <h3 className="text-xl font-bold mb-3">{step.title}</h3>
-                <p className="text-gray-400 leading-relaxed">{step.description}</p>
+                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{step.description}</p>
               </motion.div>
             ))}
           </div>
@@ -225,11 +225,11 @@ export function HowItWorksPage() {
       </section>
 
       {/* For Employers */}
-      <section className="relative py-20 px-4 sm:px-6 lg:px-8 bg-dark-surface/30">
+      <section className="relative py-20 px-4 sm:px-6 lg:px-8 bg-gray-50 dark:bg-dark-surface/30">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4">For Employers</h2>
-            <p className="text-gray-400 text-lg">
+            <p className="text-gray-600 dark:text-gray-400 text-lg">
               Find and hire top talent with complete transparency and security
             </p>
           </div>
@@ -242,18 +242,18 @@ export function HowItWorksPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                className={`relative p-8 rounded-2xl border border-white/10 ${step.bgColor} backdrop-blur-sm`}
+                className={`relative p-8 rounded-2xl border border-gray-200 dark:border-white/10 ${step.bgColor} backdrop-blur-sm`}
               >
                 <div className="flex items-start gap-4 mb-4">
-                  <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-dark-bg/80 flex items-center justify-center">
+                  <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-gray-100 dark:bg-dark-bg/80 flex items-center justify-center">
                     <step.icon className={`w-6 h-6 ${step.color}`} />
                   </div>
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white/5 flex items-center justify-center">
-                    <span className="text-sm font-bold text-gray-400">{index + 1}</span>
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center">
+                    <span className="text-sm font-bold text-gray-600 dark:text-gray-400">{index + 1}</span>
                   </div>
                 </div>
                 <h3 className="text-xl font-bold mb-3">{step.title}</h3>
-                <p className="text-gray-400 leading-relaxed">{step.description}</p>
+                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{step.description}</p>
               </motion.div>
             ))}
           </div>
@@ -279,7 +279,7 @@ export function HowItWorksPage() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-4">What Makes Us Different</h2>
-            <p className="text-gray-400 text-lg">
+            <p className="text-gray-600 dark:text-gray-400 text-lg">
               Blockchain technology and AI working together for a better freelance experience
             </p>
           </div>
@@ -292,11 +292,11 @@ export function HowItWorksPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                className="p-8 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm hover:bg-white/10 transition-colors"
+                className="p-8 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 backdrop-blur-sm hover:bg-gray-50 dark:hover:bg-white/10 transition-colors"
               >
                 <feature.icon className="w-12 h-12 text-primary-400 mb-4" />
                 <h3 className="text-2xl font-bold mb-3">{feature.title}</h3>
-                <p className="text-gray-400 leading-relaxed">{feature.description}</p>
+                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{feature.description}</p>
               </motion.div>
             ))}
           </div>

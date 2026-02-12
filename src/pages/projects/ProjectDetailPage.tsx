@@ -83,7 +83,7 @@ export function ProjectDetailPage() {
   if (!project) {
     return (
       <div className="text-center py-12">
-        <h2 className="text-xl text-white">Project not found</h2>
+        <h2 className="text-xl text-gray-900 dark:text-white">Project not found</h2>
         <Link to="/projects">
           <Button variant="outline" className="mt-4">Back to Projects</Button>
         </Link>
@@ -113,7 +113,7 @@ export function ProjectDetailPage() {
           <Card>
             <div className="flex items-start justify-between gap-4 mb-4">
               <div>
-                <h1 className="text-2xl font-bold text-white mb-2">{project.title}</h1>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{project.title}</h1>
                 <StatusBadge status={project.status} />
               </div>
               {isOwner && project.status === 'draft' && (
@@ -124,7 +124,7 @@ export function ProjectDetailPage() {
             </div>
             
             <div className="prose prose-invert max-w-none">
-              <p className="text-gray-300 whitespace-pre-wrap">{project.description}</p>
+              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{project.description}</p>
             </div>
           </Card>
 
@@ -154,11 +154,11 @@ export function ProjectDetailPage() {
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">
-                        <h4 className="font-medium text-white">{milestone.title}</h4>
+                        <h4 className="font-medium text-gray-900 dark:text-white">{milestone.title}</h4>
                         <StatusBadge status={milestone.status} />
                       </div>
-                      <p className="text-gray-400 text-sm mb-2">{milestone.description}</p>
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
+                      <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">{milestone.description}</p>
+                      <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-500">
                         <span className="flex items-center gap-1">
                           <DollarSign className="w-4 h-4" />
                           {milestone.amount} ETH
@@ -197,13 +197,13 @@ export function ProjectDetailPage() {
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">
-                        <h4 className="font-medium text-white">
+                        <h4 className="font-medium text-gray-900 dark:text-white">
                           {proposal.freelancer?.name || 'Freelancer'}
                         </h4>
                         <StatusBadge status={proposal.status} />
                       </div>
-                      <p className="text-gray-400 text-sm line-clamp-2">{proposal.coverLetter}</p>
-                      <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                      <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2">{proposal.coverLetter}</p>
+                      <div className="flex items-center gap-4 mt-2 text-sm text-gray-600 dark:text-gray-500">
                         <span>{proposal.proposedRate} ETH</span>
                         <span>{proposal.estimatedDuration} days</span>
                       </div>
@@ -219,8 +219,8 @@ export function ProjectDetailPage() {
             <Card>
               {!showProposalForm ? (
                 <div className="text-center py-6">
-                  <h3 className="text-lg font-semibold text-white mb-2">Interested in this project?</h3>
-                  <p className="text-gray-400 mb-4">Submit a proposal to get started</p>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Interested in this project?</h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-4">Submit a proposal to get started</p>
                   <Button onClick={() => setShowProposalForm(true)}>
                     <Send className="w-4 h-4" />
                     Submit Proposal
@@ -231,7 +231,7 @@ export function ProjectDetailPage() {
                   <CardHeader title="Submit Proposal" />
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Cover Letter *
                       </label>
                       <textarea
@@ -239,13 +239,13 @@ export function ProjectDetailPage() {
                         onChange={(e) => setProposalData({ ...proposalData, coverLetter: e.target.value })}
                         rows={5}
                         required
-                        className="w-full bg-dark-bg border border-dark-border rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
+                        className="w-full bg-dark-bg border border-dark-border rounded-lg px-4 py-2 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
                         placeholder="Explain why you're a great fit for this project..."
                       />
                     </div>
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           Proposed Rate (ETH) *
                         </label>
                         <input
@@ -255,12 +255,12 @@ export function ProjectDetailPage() {
                           value={proposalData.proposedRate}
                           onChange={(e) => setProposalData({ ...proposalData, proposedRate: e.target.value })}
                           required
-                          className="w-full bg-dark-bg border border-dark-border rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
+                          className="w-full bg-dark-bg border border-dark-border rounded-lg px-4 py-2 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
                           placeholder="0.00"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           Estimated Duration (days) *
                         </label>
                         <input
@@ -269,7 +269,7 @@ export function ProjectDetailPage() {
                           value={proposalData.estimatedDuration}
                           onChange={(e) => setProposalData({ ...proposalData, estimatedDuration: e.target.value })}
                           required
-                          className="w-full bg-dark-bg border border-dark-border rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
+                          className="w-full bg-dark-bg border border-dark-border rounded-lg px-4 py-2 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
                           placeholder="30"
                         />
                       </div>
@@ -291,8 +291,8 @@ export function ProjectDetailPage() {
           {!isAuthenticated && project.status === 'open' && (
             <Card className="text-center py-6">
               <AlertTriangle className="w-12 h-12 text-amber-400 mx-auto mb-3" />
-              <h3 className="text-lg font-semibold text-white mb-2">Want to apply?</h3>
-              <p className="text-gray-400 mb-4">Sign in or create an account to submit a proposal</p>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Want to apply?</h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">Sign in or create an account to submit a proposal</p>
               <div className="flex gap-3 justify-center">
                 <Link to="/login">
                   <Button>Sign In</Button>
@@ -312,15 +312,15 @@ export function ProjectDetailPage() {
             <CardHeader title="Project Details" />
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-gray-400">Budget</span>
-                <span className="text-white font-medium flex items-center gap-1">
+                <span className="text-gray-600 dark:text-gray-400">Budget</span>
+                <span className="text-gray-900 dark:text-white font-medium flex items-center gap-1">
                   <DollarSign className="w-4 h-4 text-green-400" />
                   {project.budget} ETH
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-400">Deadline</span>
-                <span className="text-white flex items-center gap-1">
+                <span className="text-gray-600 dark:text-gray-400">Deadline</span>
+                <span className="text-gray-900 dark:text-white flex items-center gap-1">
                   <Clock className="w-4 h-4 text-amber-400" />
                   {project.deadline 
                     ? format(new Date(project.deadline), 'MMM d, yyyy')
@@ -328,8 +328,8 @@ export function ProjectDetailPage() {
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-400">Posted</span>
-                <span className="text-white">
+                <span className="text-gray-600 dark:text-gray-400">Posted</span>
+                <span className="text-gray-900 dark:text-white">
                   {project.createdAt
                     ? format(new Date(project.createdAt), 'MMM d, yyyy')
                     : 'Unknown'}
@@ -337,8 +337,8 @@ export function ProjectDetailPage() {
               </div>
               {project.proposalCount !== undefined && (
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-400">Proposals</span>
-                  <span className="text-white">{project.proposalCount}</span>
+                  <span className="text-gray-600 dark:text-gray-400">Proposals</span>
+                  <span className="text-gray-900 dark:text-white">{project.proposalCount}</span>
                 </div>
               )}
             </div>
@@ -352,16 +352,16 @@ export function ProjectDetailPage() {
                 <User className="w-6 h-6 text-primary-400" />
               </div>
               <div>
-                <p className="text-white font-medium">
+                <p className="text-gray-900 dark:text-white font-medium">
                   {project.employer?.companyName || 'Company Name'}
                 </p>
-                <p className="text-gray-400 text-sm">
+                <p className="text-gray-600 dark:text-gray-400 text-sm">
                   {project.employer?.industry || 'Technology'}
                 </p>
               </div>
             </div>
             {project.employer?.description && (
-              <p className="text-gray-400 text-sm mt-4">{project.employer.description}</p>
+              <p className="text-gray-600 dark:text-gray-400 text-sm mt-4">{project.employer.description}</p>
             )}
           </Card>
 

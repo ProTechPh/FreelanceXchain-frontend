@@ -238,7 +238,7 @@ export function ProfilePage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">Profile Settings</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Profile Settings</h1>
         <Button onClick={handleSaveProfile} disabled={saving || !isKycApproved}>
           <Save className="w-4 h-4" />
           {saving ? 'Saving...' : 'Save Changes'}
@@ -294,14 +294,14 @@ export function ProfilePage() {
             disabled={!isKycApproved}
           />
           <div className="sm:col-span-2">
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Email
             </label>
             <input
               type="email"
               value={user?.email || ''}
               disabled
-              className="w-full bg-dark-bg border border-dark-border rounded-lg px-4 py-2 text-gray-400 cursor-not-allowed"
+              className="w-full bg-dark-bg border border-dark-border rounded-lg px-4 py-2 text-gray-600 dark:text-gray-400 cursor-not-allowed"
             />
           </div>
         </div>
@@ -322,14 +322,14 @@ export function ProfilePage() {
             />
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Bio
                 </label>
                 <textarea
                   value={freelancerForm.bio}
                   onChange={(e) => setFreelancerForm({ ...freelancerForm, bio: e.target.value })}
                   rows={4}
-                  className="w-full bg-dark-bg border border-dark-border rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full bg-dark-bg border border-dark-border rounded-lg px-4 py-2 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="Tell clients about your experience and expertise..."
                   disabled={!isKycApproved}
                 />
@@ -346,7 +346,7 @@ export function ProfilePage() {
                   disabled={!isKycApproved}
                 />
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Availability
                   </label>
                   <select
@@ -355,7 +355,7 @@ export function ProfilePage() {
                       ...freelancerForm,
                       availability: e.target.value as 'available' | 'busy' | 'unavailable'
                     })}
-                    className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-gray-900 dark:text-white focus:outline-none focus:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={!isKycApproved}
                   >
                     <option value="available">Available</option>
@@ -376,13 +376,13 @@ export function ProfilePage() {
             <div className="space-y-4">
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Category
                   </label>
                   <select
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-primary-500"
+                    className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-gray-900 dark:text-white focus:outline-none focus:border-primary-500"
                   >
                     <option value="">Select a category</option>
                     {categories.map(cat => (
@@ -391,13 +391,13 @@ export function ProfilePage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Skill
                   </label>
                   <select
                     value=""
                     onChange={(e) => handleAddSkill(e.target.value)}
-                    className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-white focus:outline-none focus:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-dark-bg border border-dark-border rounded-lg px-3 py-2 text-gray-900 dark:text-white focus:outline-none focus:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={!selectedCategory || !isKycApproved}
                   >
                     <option value="">Add a skill</option>
@@ -482,7 +482,7 @@ export function ProfilePage() {
                     disabled={newExperience.current}
                   />
                 </div>
-                <label className="flex items-center gap-2 text-gray-300">
+                <label className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
                   <input
                     type="checkbox"
                     checked={newExperience.current}
@@ -496,14 +496,14 @@ export function ProfilePage() {
                   Currently working here
                 </label>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Description
                   </label>
                   <textarea
                     value={newExperience.description}
                     onChange={(e) => setNewExperience({ ...newExperience, description: e.target.value })}
                     rows={3}
-                    className="w-full bg-dark-surface border border-dark-border rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
+                    className="w-full bg-dark-surface border border-dark-border rounded-lg px-4 py-2 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
                     placeholder="Describe your responsibilities..."
                   />
                 </div>
@@ -523,8 +523,8 @@ export function ProfilePage() {
                   <div className="flex-1">
                     <div className="flex items-start justify-between">
                       <div>
-                        <h4 className="font-medium text-white">{exp.title}</h4>
-                        <p className="text-gray-400 text-sm">{exp.company}</p>
+                        <h4 className="font-medium text-gray-900 dark:text-white">{exp.title}</h4>
+                        <p className="text-gray-600 dark:text-gray-400 text-sm">{exp.company}</p>
                       </div>
                       <button
                         onClick={() => handleDeleteExperience(exp.id)}
@@ -533,17 +533,17 @@ export function ProfilePage() {
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
-                    <p className="text-gray-500 text-sm mt-1">
+                    <p className="text-gray-600 dark:text-gray-500 text-sm mt-1">
                       {exp.startDate} - {exp.current ? 'Present' : exp.endDate}
                     </p>
                     {exp.description && (
-                      <p className="text-gray-400 text-sm mt-2">{exp.description}</p>
+                      <p className="text-gray-600 dark:text-gray-400 text-sm mt-2">{exp.description}</p>
                     )}
                   </div>
                 </div>
               ))}
               {(!freelancerProfile?.experience || freelancerProfile.experience.length === 0) && !showExperienceForm && (
-                <p className="text-gray-400 text-center py-4">No experience added yet</p>
+                <p className="text-gray-600 dark:text-gray-400 text-center py-4">No experience added yet</p>
               )}
             </div>
           </Card>
@@ -571,14 +571,14 @@ export function ProfilePage() {
               disabled={!isKycApproved}
             />
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Company Description
               </label>
               <textarea
                 value={employerForm.description}
                 onChange={(e) => setEmployerForm({ ...employerForm, description: e.target.value })}
                 rows={4}
-                className="w-full bg-dark-bg border border-dark-border rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full bg-dark-bg border border-dark-border rounded-lg px-4 py-2 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="Tell freelancers about your company..."
                 disabled={!isKycApproved}
               />

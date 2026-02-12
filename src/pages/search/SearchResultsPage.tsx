@@ -52,7 +52,7 @@ export function SearchResultsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Search Results</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Search Results</h1>
           <p className="text-gray-400">
             {totalResults} {totalResults === 1 ? 'result' : 'results'} for "{query}"
           </p>
@@ -66,7 +66,7 @@ export function SearchResultsPage() {
           className={`px-6 py-3 font-medium transition-colors relative ${
             activeTab === 'projects'
               ? 'text-primary-400'
-              : 'text-gray-400 hover:text-white'
+              : 'text-gray-400 hover:text-gray-900 dark:text-white'
           }`}
         >
           <div className="flex items-center gap-2">
@@ -82,7 +82,7 @@ export function SearchResultsPage() {
           className={`px-6 py-3 font-medium transition-colors relative ${
             activeTab === 'freelancers'
               ? 'text-primary-400'
-              : 'text-gray-400 hover:text-white'
+              : 'text-gray-400 hover:text-gray-900 dark:text-white'
           }`}
         >
           <div className="flex items-center gap-2">
@@ -112,7 +112,7 @@ export function SearchResultsPage() {
             <Card>
               <div className="text-center py-12">
                 <Search className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-white mb-2">No Projects Found</h3>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Projects Found</h3>
                 <p className="text-gray-400">
                   Try adjusting your search terms or browse all projects
                 </p>
@@ -130,7 +130,7 @@ export function SearchResultsPage() {
                   <div className="space-y-4">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
-                        <h3 className="text-xl font-semibold text-white mb-2 hover:text-primary-400 transition-colors">
+                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2 hover:text-primary-400 transition-colors">
                           {project.title}
                         </h3>
                         <p className="text-gray-400 line-clamp-2">{project.description}</p>
@@ -146,7 +146,7 @@ export function SearchResultsPage() {
                       {project.deadline && (
                         <div className="flex items-center gap-2">
                           <span className="text-gray-400">Deadline:</span>
-                          <span className="text-white">
+                          <span className="text-gray-900 dark:text-white">
                             {new Date(project.deadline).toLocaleDateString()}
                           </span>
                         </div>
@@ -184,7 +184,7 @@ export function SearchResultsPage() {
             <Card>
               <div className="text-center py-12">
                 <User className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-white mb-2">No Freelancers Found</h3>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Freelancers Found</h3>
                 <p className="text-gray-400">
                   Try adjusting your search terms or browse all freelancers
                 </p>
@@ -202,7 +202,7 @@ export function SearchResultsPage() {
                   <div className="space-y-4">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1">
-                        <h3 className="text-xl font-semibold text-white mb-2 hover:text-primary-400 transition-colors">
+                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2 hover:text-primary-400 transition-colors">
                           {freelancer.name || 'Anonymous'}
                         </h3>
                         <p className="text-gray-400 line-clamp-2">{freelancer.bio}</p>

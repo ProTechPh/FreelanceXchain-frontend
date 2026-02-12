@@ -133,7 +133,7 @@ export function HelpCenterPage() {
   const [searchQuery, setSearchQuery] = useState('');
 
   return (
-    <div className="min-h-screen bg-dark-bg text-white">
+    <div className="min-h-screen bg-white dark:bg-dark-bg text-gray-900 dark:text-white">
       {/* Background Gradients */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/4 w-[400px] h-[400px] bg-primary-600/10 rounded-full blur-[120px]" />
@@ -149,7 +149,7 @@ export function HelpCenterPage() {
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm mb-8"
           >
             <BookOpen className="w-4 h-4 text-primary-400" />
-            <span className="text-sm font-medium text-gray-300">24/7 Support</span>
+            <span className="text-sm font-medium text-gray-600 dark:text-gray-300">24/7 Support</span>
           </motion.div>
 
           <motion.h1
@@ -168,7 +168,7 @@ export function HelpCenterPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-xl text-gray-400 max-w-3xl mx-auto mb-12"
+            className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto mb-12"
           >
             Search our knowledge base or browse categories to find answers
           </motion.p>
@@ -180,7 +180,7 @@ export function HelpCenterPage() {
             transition={{ delay: 0.3 }}
             className="relative max-w-2xl mx-auto"
           >
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600 dark:text-gray-400" />
             <Input
               type="text"
               placeholder="Search for help articles..."
@@ -210,12 +210,12 @@ export function HelpCenterPage() {
                   <span className="text-xs font-medium text-primary-400 px-3 py-1 rounded-full bg-primary-600/10">
                     {article.category}
                   </span>
-                  <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-primary-400 group-hover:translate-x-1 transition-all" />
+                  <ArrowRight className="w-5 h-5 text-gray-600 dark:text-gray-400 group-hover:text-primary-400 group-hover:translate-x-1 transition-all" />
                 </div>
                 <h3 className="text-lg font-bold mb-3 group-hover:text-primary-400 transition-colors">
                   {article.title}
                 </h3>
-                <div className="flex items-center gap-4 text-sm text-gray-400">
+                <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
                   <span>{article.views} views</span>
                   <span>•</span>
                   <span>{article.readTime} read</span>
@@ -241,7 +241,7 @@ export function HelpCenterPage() {
                 className={`p-8 rounded-2xl border border-white/10 ${category.bgColor} backdrop-blur-sm hover:scale-105 transition-transform cursor-pointer`}
               >
                 <div className="flex items-center gap-4 mb-6">
-                  <div className="w-12 h-12 rounded-xl bg-dark-bg/80 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-xl bg-white dark:bg-dark-bg/80 flex items-center justify-center">
                     <category.icon className={`w-6 h-6 ${category.color}`} />
                   </div>
                   <h3 className="text-xl font-bold">{category.name}</h3>
@@ -251,7 +251,7 @@ export function HelpCenterPage() {
                     <li key={article.title}>
                       <a
                         href="#"
-                        className="text-gray-400 hover:text-primary-400 transition-colors text-sm flex items-center justify-between group"
+                        className="text-gray-600 dark:text-gray-400 hover:text-primary-400 transition-colors text-sm flex items-center justify-between group"
                       >
                         <span className="group-hover:translate-x-1 transition-transform">
                           {article.title}

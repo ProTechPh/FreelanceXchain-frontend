@@ -64,7 +64,7 @@ export function DisputesListPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Disputes</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Disputes</h1>
           <p className="text-gray-400 mt-1">
             Manage and track your dispute cases
           </p>
@@ -80,7 +80,7 @@ export function DisputesListPage() {
             </div>
             <div>
               <p className="text-gray-400 text-sm">Open</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {disputes.filter(d => d.status === 'open').length}
               </p>
             </div>
@@ -94,7 +94,7 @@ export function DisputesListPage() {
             </div>
             <div>
               <p className="text-gray-400 text-sm">Under Review</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {disputes.filter(d => d.status === 'under_review').length}
               </p>
             </div>
@@ -108,7 +108,7 @@ export function DisputesListPage() {
             </div>
             <div>
               <p className="text-gray-400 text-sm">Resolved</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {disputes.filter(d => d.status === 'resolved').length}
               </p>
             </div>
@@ -122,7 +122,7 @@ export function DisputesListPage() {
             </div>
             <div>
               <p className="text-gray-400 text-sm">Escalated</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {disputes.filter(d => d.status === 'escalated').length}
               </p>
             </div>
@@ -138,8 +138,8 @@ export function DisputesListPage() {
             onClick={() => setFilter(status)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               filter === status
-                ? 'bg-primary-600 text-white'
-                : 'bg-dark-surface text-gray-400 hover:text-white hover:bg-dark-border'
+                ? 'bg-primary-600 text-gray-900 dark:text-white'
+                : 'bg-dark-surface text-gray-400 hover:text-gray-900 dark:text-white hover:bg-dark-border'
             }`}
           >
             {status === 'all' ? 'All' : status.replace('_', ' ').charAt(0).toUpperCase() + status.replace('_', ' ').slice(1)}
@@ -168,7 +168,7 @@ export function DisputesListPage() {
                     <AlertTriangle className={`w-5 h-5 ${getStatusColor(dispute.status)}`} />
                     <Link 
                       to={`/disputes/${dispute.id}`}
-                      className="text-lg font-semibold text-white hover:text-primary-400 transition-colors"
+                      className="text-lg font-semibold text-gray-900 dark:text-white hover:text-primary-400 transition-colors"
                     >
                       Dispute #{dispute.id.slice(0, 8)}
                     </Link>

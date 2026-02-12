@@ -84,7 +84,7 @@ export function AdminDisputesPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Dispute Management</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dispute Management</h1>
           <p className="text-gray-400 mt-1">Resolve conflicts between freelancers and employers</p>
         </div>
         <div className="flex items-center gap-2">
@@ -92,7 +92,7 @@ export function AdminDisputesPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="all">All Status</option>
             <option value="open">Open</option>
@@ -154,7 +154,7 @@ export function AdminDisputesPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-400 text-sm">Total Value</p>
-                <p className="text-2xl font-bold text-white">
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {disputes.length > 0 ? '0 ETH' : '0 ETH'}
                 </p>
               </div>
@@ -181,7 +181,7 @@ export function AdminDisputesPage() {
                 <div className="flex flex-col md:flex-row justify-between gap-6">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-medium text-white">{dispute.projectTitle}</h3>
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-white">{dispute.projectTitle}</h3>
                       <Badge variant={getStatusBadgeVariant(dispute.status)}>
                         {dispute.status.charAt(0).toUpperCase() + dispute.status.slice(1)}
                       </Badge>
@@ -193,19 +193,19 @@ export function AdminDisputesPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                       <div className="flex items-center gap-2 text-gray-400">
                         <FiUser className="text-primary-400" />
-                        <span>Raised by: <span className="text-white">{dispute.raisedByName || 'Unknown'}</span> ({dispute.raisedByRole || 'user'})</span>
+                        <span>Raised by: <span className="text-gray-900 dark:text-white">{dispute.raisedByName || 'Unknown'}</span> ({dispute.raisedByRole || 'user'})</span>
                       </div>
                       <div className="flex items-center gap-2 text-gray-400">
                         <FiUser className="text-red-400" />
-                        <span>Against: <span className="text-white">{dispute.againstName || 'Unknown'}</span> ({dispute.againstRole || 'user'})</span>
+                        <span>Against: <span className="text-gray-900 dark:text-white">{dispute.againstName || 'Unknown'}</span> ({dispute.againstRole || 'user'})</span>
                       </div>
                       <div className="flex items-center gap-2 text-gray-400">
                         <FiDollarSign className="text-green-400" />
-                        <span>Contract: <span className="text-white">{dispute.contractId?.slice(0, 8) || 'N/A'}</span></span>
+                        <span>Contract: <span className="text-gray-900 dark:text-white">{dispute.contractId?.slice(0, 8) || 'N/A'}</span></span>
                       </div>
                       <div className="flex items-center gap-2 text-gray-400">
                         <FiMessageSquare className="text-blue-400" />
-                        <span>Evidence Submitted: <span className="text-white">{dispute.evidenceCount || 0} items</span></span>
+                        <span>Evidence Submitted: <span className="text-gray-900 dark:text-white">{dispute.evidenceCount || 0} items</span></span>
                       </div>
                     </div>
                   </div>
@@ -240,13 +240,13 @@ export function AdminDisputesPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setSelectedDispute(null)}>
           <Card className="max-w-2xl w-full mx-4" onClick={(e) => e?.stopPropagation()}>
             <div className="p-6">
-              <h3 className="text-xl font-semibold text-white mb-6">Dispute Details</h3>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Dispute Details</h3>
               
               <div className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-400 mb-1">Project</p>
-                    <p className="text-white font-medium">{selectedDispute.projectTitle}</p>
+                    <p className="text-gray-900 dark:text-white font-medium">{selectedDispute.projectTitle}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-400 mb-1">Status</p>
@@ -256,17 +256,17 @@ export function AdminDisputesPage() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-400 mb-1">Disputed Amount</p>
-                    <p className="text-white font-medium">N/A</p>
+                    <p className="text-gray-900 dark:text-white font-medium">N/A</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-400 mb-1">Date Raised</p>
-                    <p className="text-white font-medium">{new Date(selectedDispute.createdAt).toLocaleDateString()}</p>
+                    <p className="text-gray-900 dark:text-white font-medium">{new Date(selectedDispute.createdAt).toLocaleDateString()}</p>
                   </div>
                 </div>
 
                 <div className="bg-dark-bg p-4 rounded-lg border border-dark-border">
                   <p className="text-sm text-gray-400 mb-2">Reason for Dispute</p>
-                  <p className="text-white">{selectedDispute.reason}</p>
+                  <p className="text-gray-900 dark:text-white">{selectedDispute.reason}</p>
                 </div>
 
                 <div className="flex gap-4">
@@ -277,7 +277,7 @@ export function AdminDisputesPage() {
                         {selectedDispute.raisedByName?.charAt(0) || 'U'}
                       </div>
                       <div>
-                        <p className="text-white text-sm font-medium">{selectedDispute.raisedByName || 'Unknown'}</p>
+                        <p className="text-gray-900 dark:text-white text-sm font-medium">{selectedDispute.raisedByName || 'Unknown'}</p>
                         <p className="text-gray-500 text-xs capitalize">{selectedDispute.raisedByRole || 'user'}</p>
                       </div>
                     </div>
@@ -289,7 +289,7 @@ export function AdminDisputesPage() {
                         {selectedDispute.againstName?.charAt(0) || 'U'}
                       </div>
                       <div>
-                        <p className="text-white text-sm font-medium">{selectedDispute.againstName || 'Unknown'}</p>
+                        <p className="text-gray-900 dark:text-white text-sm font-medium">{selectedDispute.againstName || 'Unknown'}</p>
                         <p className="text-gray-500 text-xs capitalize">{selectedDispute.againstRole || 'user'}</p>
                       </div>
                     </div>

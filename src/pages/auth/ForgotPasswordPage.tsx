@@ -36,9 +36,9 @@ export function ForgotPasswordPage() {
             </div>
             
             <div className="space-y-2">
-              <h1 className="text-2xl font-bold text-white">Check Your Email</h1>
-              <p className="text-gray-400">
-                We've sent password reset instructions to <span className="text-white font-medium">{email}</span>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Check Your Email</h1>
+              <p className="text-gray-600 dark:text-gray-400">
+                We've sent password reset instructions to <span className="text-gray-900 dark:text-white font-medium">{email}</span>
               </p>
             </div>
 
@@ -59,7 +59,7 @@ export function ForgotPasswordPage() {
                   setSuccess(false);
                   setEmail('');
                 }}
-                className="text-sm text-primary-400 hover:text-primary-300 transition-colors"
+                className="text-sm text-primary-500 dark:text-primary-400 hover:text-primary-600 dark:hover:text-primary-300 transition-colors"
               >
                 Try a different email
               </button>
@@ -79,8 +79,8 @@ export function ForgotPasswordPage() {
             <div className="w-16 h-16 bg-primary-500/20 rounded-full flex items-center justify-center mx-auto">
               <Mail className="w-8 h-8 text-primary-400" />
             </div>
-            <h1 className="text-2xl font-bold text-white">Forgot Password?</h1>
-            <p className="text-gray-400">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Forgot Password?</h1>
+            <p className="text-gray-600 dark:text-gray-400">
               Enter your email address and we'll send you instructions to reset your password.
             </p>
           </div>
@@ -119,7 +119,7 @@ export function ForgotPasswordPage() {
           <div className="text-center">
             <Link
               to="/login"
-              className="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
+              className="inline-flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
               Back to Login

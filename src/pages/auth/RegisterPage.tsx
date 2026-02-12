@@ -74,8 +74,8 @@ export function RegisterPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-indigo-600 mb-6 shadow-lg shadow-primary-500/30">
             <Zap className="w-8 h-8 text-white fill-current" />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-2">Create Account</h1>
-          <p className="text-gray-400">Join the decentralized workforce</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Create Account</h1>
+          <p className="text-gray-600 dark:text-gray-400">Join the decentralized workforce</p>
         </div>
 
         {step === 'role' ? (
@@ -91,8 +91,8 @@ export function RegisterPage() {
                   <User className="w-6 h-6 text-primary-400 group-hover:text-white transition-colors" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-white group-hover:text-primary-300 transition-colors">Freelancer</h3>
-                  <p className="text-gray-400 text-sm mt-1 group-hover:text-gray-300 transition-colors">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-primary-300 transition-colors">Freelancer</h3>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm mt-1 group-hover:text-gray-500 dark:group-hover:text-gray-300 transition-colors">
                     Find projects, showcase your skills, and earn crypto payments
                   </p>
                 </div>
@@ -110,8 +110,8 @@ export function RegisterPage() {
                   <Briefcase className="w-6 h-6 text-accent-success group-hover:text-white transition-colors" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-white group-hover:text-accent-success/80 transition-colors">Employer</h3>
-                  <p className="text-gray-400 text-sm mt-1 group-hover:text-gray-300 transition-colors">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-accent-success/80 transition-colors">Employer</h3>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm mt-1 group-hover:text-gray-500 dark:group-hover:text-gray-300 transition-colors">
                     Post projects, hire talent, and manage secure escrow payments
                   </p>
                 </div>
@@ -120,7 +120,7 @@ export function RegisterPage() {
 
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-white/10" />
+                <div className="w-full border-t border-gray-200 dark:border-white/10" />
               </div>
               <div className="relative flex justify-center text-xs uppercase tracking-wider">
                 <span className="px-2 bg-dark-bg text-gray-500">Or sign up with</span>
@@ -137,7 +137,7 @@ export function RegisterPage() {
                 <button
                   key={provider.name}
                   onClick={() => handleOAuth(provider.name.toLowerCase())}
-                  className="flex items-center justify-center p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:scale-105 transition-all duration-200 group"
+                  className="flex items-center justify-center p-3 bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl hover:bg-white/10 hover:scale-105 transition-all duration-200 group"
                   title={`Sign up with ${provider.name}`}
                 >
                   <provider.icon className={`w-5 h-5 ${provider.color} group-hover:scale-110 transition-transform`} />
@@ -145,7 +145,7 @@ export function RegisterPage() {
               ))}
             </div>
 
-            <p className="text-center text-gray-400 mt-6">
+            <p className="text-center text-gray-600 dark:text-gray-400 mt-6">
               Already have an account?{' '}
               <Link to="/login" className="text-primary-400 hover:text-primary-300 font-semibold transition-colors hover:underline decoration-primary-500/30 underline-offset-4">
                 Sign in
@@ -156,7 +156,7 @@ export function RegisterPage() {
           <Card variant="glass" className="backdrop-blur-xl border-white/10" padding="lg">
             <button
               onClick={() => setStep('role')}
-              className="text-sm text-gray-400 hover:text-white mb-6 flex items-center gap-2 transition-colors group"
+              className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-6 flex items-center gap-2 transition-colors group"
             >
               <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
               Change role
@@ -174,8 +174,8 @@ export function RegisterPage() {
                 )}
               </div>
               <div>
-                <p className="text-white font-bold capitalize text-lg">{selectedRole}</p>
-                <p className="text-gray-400 text-sm">Account Type</p>
+                <p className="text-gray-900 dark:text-white font-bold capitalize text-lg">{selectedRole}</p>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">Account Type</p>
               </div>
             </div>
 
@@ -218,7 +218,7 @@ export function RegisterPage() {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="text-gray-400 hover:text-white transition-colors focus:outline-none"
+                        className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors focus:outline-none"
                       >
                         {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </button>
@@ -249,7 +249,7 @@ export function RegisterPage() {
                 />
               </div>
 
-              <div className="text-sm text-gray-400 text-center leading-relaxed">
+              <div className="text-sm text-gray-600 dark:text-gray-400 text-center leading-relaxed">
                 By creating an account, you agree to our{' '}
                 <Link to="/terms" className="text-primary-400 hover:text-primary-300 hover:underline">
                   Terms of Service

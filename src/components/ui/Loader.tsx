@@ -57,7 +57,7 @@ export function Skeleton({ className, width, height }: SkeletonProps) {
   return (
     <div
       className={clsx(
-        'animate-pulse bg-dark-border rounded',
+        'animate-pulse bg-gray-200 dark:bg-dark-border rounded',
         className
       )}
       style={{ width, height }}
@@ -67,7 +67,7 @@ export function Skeleton({ className, width, height }: SkeletonProps) {
 
 export function SkeletonCard() {
   return (
-    <div className="bg-dark-surface border border-dark-border rounded-xl p-6 space-y-4">
+    <div className="bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-xl p-6 space-y-4">
       <Skeleton className="h-6 w-3/4" />
       <Skeleton className="h-4 w-full" />
       <Skeleton className="h-4 w-5/6" />
@@ -82,7 +82,7 @@ export function SkeletonCard() {
 
 export function ProjectCardSkeleton() {
   return (
-    <div className="bg-dark-card border border-dark-border rounded-lg p-6">
+    <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-lg p-6">
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div className="flex-1 min-w-0 space-y-3">
           <div className="flex items-center gap-3">

@@ -159,7 +159,7 @@ export function FAQsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-dark-bg text-white">
+    <div className="min-h-screen bg-white dark:bg-dark-bg text-gray-900 dark:text-white">
       {/* Background Gradients */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/4 w-[400px] h-[400px] bg-primary-600/10 rounded-full blur-[120px]" />
@@ -172,10 +172,10 @@ export function FAQsPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm mb-8"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 backdrop-blur-sm mb-8"
           >
             <HelpCircle className="w-4 h-4 text-primary-400" />
-            <span className="text-sm font-medium text-gray-300">We're Here to Help</span>
+            <span className="text-sm font-medium text-gray-600 dark:text-gray-300">We're Here to Help</span>
           </motion.div>
 
           <motion.h1
@@ -194,7 +194,7 @@ export function FAQsPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-xl text-gray-400 max-w-3xl mx-auto mb-12"
+            className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto mb-12"
           >
             Find answers to common questions about FreelanceXchain
           </motion.p>
@@ -206,13 +206,13 @@ export function FAQsPage() {
             transition={{ delay: 0.3 }}
             className="relative max-w-2xl mx-auto"
           >
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-600 dark:text-gray-400" />
             <Input
               type="text"
               placeholder="Search for answers..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 h-14 text-lg bg-dark-surface/50 border-white/10"
+              className="pl-12 h-14 text-lg bg-gray-50 dark:bg-dark-surface/50 border-gray-200 dark:border-white/10"
             />
           </motion.div>
         </div>
@@ -232,7 +232,7 @@ export function FAQsPage() {
                 className={`flex items-center gap-2 px-6 py-3 rounded-full transition-all ${
                   selectedCategory === category.id
                     ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/20'
-                    : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white border border-white/10'
+                    : 'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-white/10'
                 }`}
               >
                 <category.icon className="w-4 h-4" />
@@ -248,7 +248,7 @@ export function FAQsPage() {
         <div className="max-w-4xl mx-auto">
           {filteredFaqs.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-400 text-lg">No questions found matching your search.</p>
+              <p className="text-gray-600 dark:text-gray-400 text-lg">No questions found matching your search.</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -259,15 +259,15 @@ export function FAQsPage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.05 }}
-                  className="rounded-xl border border-white/10 bg-dark-surface/50 backdrop-blur-sm overflow-hidden"
+                  className="rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-dark-surface/50 backdrop-blur-sm overflow-hidden"
                 >
                   <button
                     onClick={() => setOpenIndex(openIndex === index ? null : index)}
-                    className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-white/5 transition-colors"
+                    className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
                   >
                     <span className="text-lg font-semibold pr-4">{faq.question}</span>
                     <ChevronDown
-                      className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform ${
+                      className={`w-5 h-5 text-gray-600 dark:text-gray-400 flex-shrink-0 transition-transform ${
                         openIndex === index ? 'rotate-180' : ''
                       }`}
                     />
@@ -278,9 +278,9 @@ export function FAQsPage() {
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.3 }}
-                      className="px-6 pb-5 border-t border-white/5"
+                      className="px-6 pb-5 border-t border-gray-200 dark:border-white/5"
                     >
-                      <p className="text-gray-400 leading-relaxed pt-4">{faq.answer}</p>
+                      <p className="text-gray-600 dark:text-gray-400 leading-relaxed pt-4">{faq.answer}</p>
                     </motion.div>
                   )}
                 </motion.div>

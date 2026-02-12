@@ -155,7 +155,7 @@ export function AdminSkillsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Skills Management</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Skills Management</h1>
           <p className="text-gray-400 mt-1">Manage skill categories and individual skills</p>
         </div>
         <Button onClick={handleOpenAddModal}>
@@ -170,7 +170,7 @@ export function AdminSkillsPage() {
           className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'skills'
               ? 'border-primary-500 text-primary-400'
-              : 'border-transparent text-gray-400 hover:text-white'
+              : 'border-transparent text-gray-400 hover:text-gray-900 dark:text-white'
           }`}
           onClick={() => setActiveTab('skills')}
         >
@@ -180,7 +180,7 @@ export function AdminSkillsPage() {
           className={`px-6 py-3 text-sm font-medium border-b-2 transition-colors ${
             activeTab === 'categories'
               ? 'border-primary-500 text-primary-400'
-              : 'border-transparent text-gray-400 hover:text-white'
+              : 'border-transparent text-gray-400 hover:text-gray-900 dark:text-white'
           }`}
           onClick={() => setActiveTab('categories')}
         >
@@ -204,7 +204,7 @@ export function AdminSkillsPage() {
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
               <option value="all">All Categories</option>
               {categories.map(cat => (
@@ -239,10 +239,10 @@ export function AdminSkillsPage() {
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center gap-2">
                     <FiTag className="text-primary-400" />
-                    <h3 className="font-medium text-white">{skill.name}</h3>
+                    <h3 className="font-medium text-gray-900 dark:text-white">{skill.name}</h3>
                   </div>
                   <div className="flex gap-1">
-                    <button className="p-1 text-gray-400 hover:text-white transition-colors">
+                    <button className="p-1 text-gray-400 hover:text-gray-900 dark:text-white transition-colors">
                       <FiEdit2 className="w-4 h-4" />
                     </button>
                     <button className="p-1 text-gray-400 hover:text-red-400 transition-colors">
@@ -283,10 +283,10 @@ export function AdminSkillsPage() {
                 <div className="flex justify-between items-start mb-3">
                   <div className="flex items-center gap-2">
                     <FiLayers className="text-blue-400" />
-                    <h3 className="font-medium text-white">{category.name}</h3>
+                    <h3 className="font-medium text-gray-900 dark:text-white">{category.name}</h3>
                   </div>
                   <div className="flex gap-1">
-                    <button className="p-1 text-gray-400 hover:text-white transition-colors">
+                    <button className="p-1 text-gray-400 hover:text-gray-900 dark:text-white transition-colors">
                       <FiEdit2 className="w-4 h-4" />
                     </button>
                     <button className="p-1 text-gray-400 hover:text-red-400 transition-colors">
@@ -344,7 +344,7 @@ export function AdminSkillsPage() {
               <select
                 value={formData.categoryId}
                 onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 <option value="">Select a category</option>
                 {categories.map(cat => (

@@ -146,7 +146,7 @@ export function AdminUsersPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">User Management</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">User Management</h1>
           <p className="text-gray-400 mt-1">Manage all registered users on the platform</p>
         </div>
       </div>
@@ -166,7 +166,7 @@ export function AdminUsersPage() {
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="all">All Roles</option>
             <option value="freelancer">Freelancers</option>
@@ -212,7 +212,7 @@ export function AdminUsersPage() {
                           )}
                         </div>
                         <div>
-                          <p className="text-white font-medium">{user.name || user.email.split('@')[0]}</p>
+                          <p className="text-gray-900 dark:text-white font-medium">{user.name || user.email.split('@')[0]}</p>
                           <p className="text-gray-400 text-sm">{user.email}</p>
                         </div>
                       </div>
@@ -278,7 +278,7 @@ export function AdminUsersPage() {
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <Card>
           <div className="p-4 text-center">
-            <p className="text-2xl font-bold text-white">{users.length}</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">{users.length}</p>
             <p className="text-gray-400 text-sm">Total Users</p>
           </div>
         </Card>
@@ -331,7 +331,7 @@ export function AdminUsersPage() {
                 )}
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-white">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
                   {selectedUser.name || selectedUser.email.split('@')[0]}
                 </h3>
                 <p className="text-gray-400">{selectedUser.email}</p>
@@ -343,7 +343,7 @@ export function AdminUsersPage() {
                 <label className="block text-sm font-medium text-gray-400 mb-1">
                   User ID
                 </label>
-                <p className="text-white font-mono text-sm">{selectedUser.id}</p>
+                <p className="text-gray-900 dark:text-white font-mono text-sm">{selectedUser.id}</p>
               </div>
 
               <div>
@@ -381,7 +381,7 @@ export function AdminUsersPage() {
                 <label className="block text-sm font-medium text-gray-400 mb-1">
                   Wallet Address
                 </label>
-                <p className="text-white font-mono text-xs break-all">
+                <p className="text-gray-900 dark:text-white font-mono text-xs break-all">
                   {selectedUser.walletAddress || 'Not connected'}
                 </p>
               </div>
@@ -390,7 +390,7 @@ export function AdminUsersPage() {
                 <label className="block text-sm font-medium text-gray-400 mb-1">
                   Joined Date
                 </label>
-                <p className="text-white">
+                <p className="text-gray-900 dark:text-white">
                   {new Date(selectedUser.createdAt).toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: 'long',
@@ -432,7 +432,7 @@ export function AdminUsersPage() {
           <div className="space-y-4">
             <div className="pb-4 border-b border-dark-border">
               <p className="text-sm text-gray-400">Editing user</p>
-              <p className="text-white font-medium">{selectedUser.email}</p>
+              <p className="text-gray-900 dark:text-white font-medium">{selectedUser.email}</p>
             </div>
 
             <div>
@@ -453,7 +453,7 @@ export function AdminUsersPage() {
               <select
                 value={editFormData.role}
                 onChange={(e) => setEditFormData({ ...editFormData, role: e.target.value as any })}
-                className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="w-full px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
                 disabled={selectedUser.id === users.find(u => u.role === 'admin')?.id}
               >
                 <option value="freelancer">Freelancer</option>
@@ -480,7 +480,7 @@ export function AdminUsersPage() {
                     onChange={() => setEditFormData({ ...editFormData, isActive: true })}
                     className="w-4 h-4 text-primary-500 focus:ring-primary-500"
                   />
-                  <span className="text-white">Active</span>
+                  <span className="text-gray-900 dark:text-white">Active</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -490,7 +490,7 @@ export function AdminUsersPage() {
                     onChange={() => setEditFormData({ ...editFormData, isActive: false })}
                     className="w-4 h-4 text-primary-500 focus:ring-primary-500"
                   />
-                  <span className="text-white">Inactive</span>
+                  <span className="text-gray-900 dark:text-white">Inactive</span>
                 </label>
               </div>
             </div>

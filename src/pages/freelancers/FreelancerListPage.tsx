@@ -74,7 +74,7 @@ export function FreelancerListPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
             <Users className="w-8 h-8 text-primary-400" />
             Browse Freelancers
           </h1>
@@ -96,7 +96,7 @@ export function FreelancerListPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search by name, skills, or bio..."
-                  className="w-full pl-12 pr-4 py-3 bg-dark-bg border border-white/10 rounded-lg text-white placeholder:text-gray-500 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+                  className="w-full pl-12 pr-4 py-3 bg-dark-bg border border-white/10 rounded-lg text-gray-900 dark:text-white placeholder:text-gray-500 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
                 />
               </div>
             </div>
@@ -137,7 +137,7 @@ export function FreelancerListPage() {
                 <select
                   value={filters.availability}
                   onChange={(e) => setFilters({ ...filters, availability: e.target.value })}
-                  className="w-full px-4 py-2 bg-dark-bg border border-white/10 rounded-lg text-white focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+                  className="w-full px-4 py-2 bg-dark-bg border border-white/10 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
                 >
                   <option value="">All</option>
                   <option value="available">Available</option>
@@ -155,7 +155,7 @@ export function FreelancerListPage() {
         <Card>
           <div className="text-center py-12">
             <Users className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-white mb-2">No Freelancers Found</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Freelancers Found</h3>
             <p className="text-gray-400">
               Try adjusting your search or filters
             </p>
@@ -169,7 +169,7 @@ export function FreelancerListPage() {
                 {/* Header */}
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
-                    <h3 className="text-xl font-semibold text-white mb-1 hover:text-primary-400 transition-colors">
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-1 hover:text-primary-400 transition-colors">
                       {freelancer.name || 'Anonymous'}
                     </h3>
                     {freelancer.nationality && (

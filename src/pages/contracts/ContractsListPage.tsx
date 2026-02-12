@@ -52,7 +52,7 @@ export function ContractsListPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">My Contracts</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Contracts</h1>
           <p className="text-gray-400 mt-1">
             Manage your active and past contracts
           </p>
@@ -67,8 +67,8 @@ export function ContractsListPage() {
             onClick={() => setFilter(status)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               filter === status
-                ? 'bg-primary-600 text-white'
-                : 'bg-dark-surface text-gray-400 hover:text-white hover:bg-dark-border'
+                ? 'bg-primary-600 text-gray-900 dark:text-white'
+                : 'bg-dark-surface text-gray-400 hover:text-gray-900 dark:text-white hover:bg-dark-border'
             }`}
           >
             {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -85,7 +85,7 @@ export function ContractsListPage() {
             </div>
             <div>
               <p className="text-gray-400 text-sm">Total Contracts</p>
-              <p className="text-2xl font-bold text-white">{contracts.length}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{contracts.length}</p>
             </div>
           </div>
         </Card>
@@ -97,7 +97,7 @@ export function ContractsListPage() {
             </div>
             <div>
               <p className="text-gray-400 text-sm">Active</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {contracts.filter(c => c.status === 'active').length}
               </p>
             </div>
@@ -111,7 +111,7 @@ export function ContractsListPage() {
             </div>
             <div>
               <p className="text-gray-400 text-sm">Completed</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {contracts.filter(c => c.status === 'completed').length}
               </p>
             </div>
@@ -125,7 +125,7 @@ export function ContractsListPage() {
             </div>
             <div>
               <p className="text-gray-400 text-sm">Total Value</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {contracts.reduce((sum, c) => sum + c.totalAmount, 0).toFixed(2)} ETH
               </p>
             </div>
@@ -152,7 +152,7 @@ export function ContractsListPage() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-semibold text-white">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                         {contract.title}
                       </h3>
                       <StatusBadge status={contract.status} />
@@ -187,7 +187,7 @@ export function ContractsListPage() {
                   <div className="flex flex-col items-end gap-2">
                     <div className="text-right">
                       <p className="text-sm text-gray-400">Progress</p>
-                      <p className="text-xl font-bold text-white">
+                      <p className="text-xl font-bold text-gray-900 dark:text-white">
                         {getProgressPercentage(contract)}%
                       </p>
                     </div>

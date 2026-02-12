@@ -62,7 +62,7 @@ export function Modal({
   };
 
   const variantStyles = {
-    default: 'border-white/10',
+    default: 'border-gray-200 dark:border-white/10',
     confirmation: 'border-blue-500/30',
     danger: 'border-red-500/30',
     success: 'border-green-500/30',
@@ -105,13 +105,13 @@ export function Modal({
             >
               {/* Header */}
               {title && (
-                <div className="flex items-center gap-3 p-6 border-b border-white/10">
+                <div className="flex items-center gap-3 p-6 border-b border-gray-200 dark:border-white/10">
                   {variantIcons[variant]}
-                  <h2 className="text-xl font-bold text-white flex-1">{title}</h2>
+                  <h2 className="text-xl font-bold text-gray-900 dark:text-white flex-1">{title}</h2>
                   {showCloseButton && (
                     <button
                       onClick={onClose}
-                      className="p-2 rounded-lg hover:bg-white/10 transition-colors text-gray-400 hover:text-white"
+                      className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                       aria-label="Close modal"
                     >
                       <X className="w-5 h-5" />
@@ -124,7 +124,7 @@ export function Modal({
               {!title && showCloseButton && (
                 <button
                   onClick={onClose}
-                  className="absolute top-4 right-4 p-2 rounded-lg hover:bg-white/10 transition-colors text-gray-400 hover:text-white z-10"
+                  className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white z-10"
                   aria-label="Close modal"
                 >
                   <X className="w-5 h-5" />
@@ -138,7 +138,7 @@ export function Modal({
 
               {/* Footer */}
               {footer && (
-                <div className="flex items-center justify-end gap-3 p-6 border-t border-white/10 bg-white/5">
+                <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5">
                   {footer}
                 </div>
               )}
@@ -205,7 +205,7 @@ export function ConfirmationModal({
         </>
       }
     >
-      <p className="text-gray-300 leading-relaxed">{message}</p>
+      <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{message}</p>
     </Modal>
   );
 }

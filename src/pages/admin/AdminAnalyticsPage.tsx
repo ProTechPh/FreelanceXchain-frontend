@@ -56,7 +56,7 @@ export function AdminAnalyticsPage() {
           <p className="text-red-400 mb-4">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+            className="px-4 py-2 bg-red-500 hover:bg-red-600 text-gray-900 dark:text-white rounded-lg transition-colors"
           >
             Retry
           </button>
@@ -68,7 +68,7 @@ export function AdminAnalyticsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">Analytics Dashboard</h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Analytics Dashboard</h1>
         <p className="text-gray-400">Platform performance and statistics</p>
       </div>
 
@@ -86,7 +86,7 @@ export function AdminAnalyticsPage() {
             </span>
           </div>
           <h3 className="text-gray-400 text-sm mb-1">Total Users</h3>
-          <p className="text-3xl font-bold text-white">{analytics.totalUsers.toLocaleString()}</p>
+          <p className="text-3xl font-bold text-gray-900 dark:text-white">{analytics.totalUsers.toLocaleString()}</p>
         </div>
 
         {/* Total Projects */}
@@ -101,7 +101,7 @@ export function AdminAnalyticsPage() {
             </span>
           </div>
           <h3 className="text-gray-400 text-sm mb-1">Total Projects</h3>
-          <p className="text-3xl font-bold text-white">{analytics.totalProjects.toLocaleString()}</p>
+          <p className="text-3xl font-bold text-gray-900 dark:text-white">{analytics.totalProjects.toLocaleString()}</p>
         </div>
 
         {/* Total Revenue */}
@@ -112,7 +112,7 @@ export function AdminAnalyticsPage() {
             </div>
           </div>
           <h3 className="text-gray-400 text-sm mb-1">Total Revenue</h3>
-          <p className="text-3xl font-bold text-white">${analytics.totalRevenue.toLocaleString()}</p>
+          <p className="text-3xl font-bold text-gray-900 dark:text-white">${analytics.totalRevenue.toLocaleString()}</p>
         </div>
 
         {/* Active Contracts */}
@@ -123,7 +123,7 @@ export function AdminAnalyticsPage() {
             </div>
           </div>
           <h3 className="text-gray-400 text-sm mb-1">Active Contracts</h3>
-          <p className="text-3xl font-bold text-white">{analytics.activeContracts}</p>
+          <p className="text-3xl font-bold text-gray-900 dark:text-white">{analytics.activeContracts}</p>
         </div>
       </div>
 
@@ -133,7 +133,7 @@ export function AdminAnalyticsPage() {
         <div className="bg-dark-card border border-dark-border rounded-lg p-6">
           <div className="flex items-center mb-4">
             <BarChart3 className="w-5 h-5 text-primary-400 mr-2" />
-            <h2 className="text-xl font-semibold text-white">User Growth</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">User Growth</h2>
           </div>
           <div className="h-64 flex items-center justify-center text-gray-500">
             <p>Chart visualization coming soon</p>
@@ -143,7 +143,7 @@ export function AdminAnalyticsPage() {
         <div className="bg-dark-card border border-dark-border rounded-lg p-6">
           <div className="flex items-center mb-4">
             <BarChart3 className="w-5 h-5 text-blue-400 mr-2" />
-            <h2 className="text-xl font-semibold text-white">Project Activity</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Project Activity</h2>
           </div>
           <div className="h-64 flex items-center justify-center text-gray-500">
             <p>Chart visualization coming soon</p>

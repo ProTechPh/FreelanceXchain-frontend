@@ -325,20 +325,20 @@ export function CreateProjectPage() {
           <div className="space-y-4">
             {/* Budget Tracker */}
             {formData.budget && parseFloat(formData.budget) > 0 && (
-              <div className="p-4 bg-dark-surface rounded-lg border border-dark-border">
-                <h4 className="text-white font-medium mb-3 text-sm">Milestone Budget Allocation</h4>
+              <div className="p-4 bg-gray-50 dark:bg-dark-surface rounded-lg border border-gray-200 dark:border-dark-border">
+                <h4 className="text-gray-900 dark:text-white font-medium mb-3 text-sm">Milestone Budget Allocation</h4>
                 <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-400">Project Budget:</span>
-                  <span className="text-white font-medium">{parseFloat(formData.budget).toFixed(2)} ETH</span>
+                  <span className="text-gray-600 dark:text-gray-400">Project Budget:</span>
+                  <span className="text-gray-900 dark:text-white font-medium">{parseFloat(formData.budget).toFixed(2)} ETH</span>
                 </div>
                 <div className="flex justify-between items-center text-sm mt-2">
-                  <span className="text-gray-400">Allocated to Milestones:</span>
-                  <span className="text-white font-medium">
+                  <span className="text-gray-600 dark:text-gray-400">Allocated to Milestones:</span>
+                  <span className="text-gray-900 dark:text-white font-medium">
                     {milestones.reduce((sum, m) => sum + (parseFloat(m.amount) || 0), 0).toFixed(2)} ETH
                   </span>
                 </div>
-                <div className="flex justify-between items-center text-sm mt-2 pt-2 border-t border-dark-border">
-                  <span className="text-gray-400">Unallocated Budget:</span>
+                <div className="flex justify-between items-center text-sm mt-2 pt-2 border-t border-gray-200 dark:border-dark-border">
+                  <span className="text-gray-600 dark:text-gray-400">Unallocated Budget:</span>
                   <span className={`font-medium ${
                     Math.abs((parseFloat(formData.budget) || 0) - milestones.reduce((sum, m) => sum + (parseFloat(m.amount) || 0), 0)) < 0.000001
                       ? 'text-green-400'
@@ -359,9 +359,9 @@ export function CreateProjectPage() {
               </div>
             )}
             {milestones.map((milestone, index) => (
-              <div key={index} className="p-4 bg-dark-bg rounded-lg space-y-4">
+              <div key={index} className="p-4 bg-white dark:bg-dark-bg rounded-lg border border-gray-200 dark:border-dark-border space-y-4">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-white font-medium">Milestone {index + 1}</h4>
+                  <h4 className="text-gray-900 dark:text-white font-medium">Milestone {index + 1}</h4>
                   {milestones.length > 1 && (
                     <button
                       type="button"

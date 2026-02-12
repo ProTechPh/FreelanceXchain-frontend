@@ -57,7 +57,7 @@ export function ProposalsListPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">My Proposals</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Proposals</h1>
           <p className="text-gray-400 mt-1">
             Track and manage your submitted proposals
           </p>
@@ -72,8 +72,8 @@ export function ProposalsListPage() {
             onClick={() => setFilter(status)}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               filter === status
-                ? 'bg-primary-600 text-white'
-                : 'bg-dark-surface text-gray-400 hover:text-white hover:bg-dark-border'
+                ? 'bg-primary-600 text-gray-900 dark:text-white'
+                : 'bg-dark-surface text-gray-400 hover:text-gray-900 dark:text-white hover:bg-dark-border'
             }`}
           >
             {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -90,7 +90,7 @@ export function ProposalsListPage() {
             </div>
             <div>
               <p className="text-gray-400 text-sm">Total Proposals</p>
-              <p className="text-2xl font-bold text-white">{proposals.length}</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{proposals.length}</p>
             </div>
           </div>
         </Card>
@@ -102,7 +102,7 @@ export function ProposalsListPage() {
             </div>
             <div>
               <p className="text-gray-400 text-sm">Pending</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {proposals.filter(p => p.status === 'pending').length}
               </p>
             </div>
@@ -116,7 +116,7 @@ export function ProposalsListPage() {
             </div>
             <div>
               <p className="text-gray-400 text-sm">Accepted</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {proposals.filter(p => p.status === 'accepted').length}
               </p>
             </div>
@@ -130,7 +130,7 @@ export function ProposalsListPage() {
             </div>
             <div>
               <p className="text-gray-400 text-sm">Rejected</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {proposals.filter(p => p.status === 'rejected').length}
               </p>
             </div>
@@ -161,7 +161,7 @@ export function ProposalsListPage() {
                   <div className="flex items-center gap-3 mb-2">
                     <Link 
                       to={`/projects/${proposal.projectId}`}
-                      className="text-lg font-semibold text-white hover:text-primary-400 transition-colors"
+                      className="text-lg font-semibold text-gray-900 dark:text-white hover:text-primary-400 transition-colors"
                     >
                       {proposal.project?.title || 'Project'}
                     </Link>

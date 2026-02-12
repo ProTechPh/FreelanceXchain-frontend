@@ -93,7 +93,7 @@ export function DisputeDetailPage() {
     return (
       <div className="text-center py-12">
         <AlertTriangle className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-        <h2 className="text-xl font-semibold text-white">Dispute not found</h2>
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Dispute not found</h2>
         <p className="text-gray-400 mt-2">The dispute you're looking for doesn't exist or has been removed.</p>
         <Link to="/disputes">
           <Button className="mt-4">
@@ -112,12 +112,12 @@ export function DisputeDetailPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link to="/disputes" className="text-gray-400 hover:text-white transition-colors">
+        <Link to="/disputes" className="text-gray-400 hover:text-gray-900 dark:text-white transition-colors">
           <ChevronLeft className="w-6 h-6" />
         </Link>
         <div className="flex-1">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-white">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
               Dispute #{dispute.id.slice(0, 8)}
             </h1>
             <StatusBadge status={dispute.status} />
@@ -137,7 +137,7 @@ export function DisputeDetailPage() {
             <div className="space-y-4">
               <div>
                 <h4 className="text-sm text-gray-400 mb-1">Reason</h4>
-                <p className="text-white">{dispute.reason}</p>
+                <p className="text-gray-900 dark:text-white">{dispute.reason}</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -152,7 +152,7 @@ export function DisputeDetailPage() {
                 {dispute.milestoneId && (
                   <div>
                     <h4 className="text-sm text-gray-400 mb-1">Milestone ID</h4>
-                    <span className="text-white">{dispute.milestoneId.slice(0, 12)}...</span>
+                    <span className="text-gray-900 dark:text-white">{dispute.milestoneId.slice(0, 12)}...</span>
                   </div>
                 )}
               </div>
@@ -193,7 +193,7 @@ export function DisputeDetailPage() {
                         {format(new Date(evidence.submittedAt), 'MMM d, yyyy h:mm a')}
                       </span>
                     </div>
-                    <p className="text-white">{evidence.content}</p>
+                    <p className="text-gray-900 dark:text-white">{evidence.content}</p>
                     {evidence.fileUrl && (
                       <a
                         href={evidence.fileUrl}
@@ -213,7 +213,7 @@ export function DisputeDetailPage() {
             {/* Submit Evidence Form */}
             {canSubmitEvidence && (
               <form onSubmit={handleSubmitEvidence} className="mt-6 pt-6 border-t border-dark-border">
-                <h4 className="text-white font-medium mb-4">Submit New Evidence</h4>
+                <h4 className="text-gray-900 dark:text-white font-medium mb-4">Submit New Evidence</h4>
                 <div className="space-y-4">
                   <div className="flex gap-2">
                     {(['text', 'file', 'link'] as const).map((type) => (
@@ -222,8 +222,8 @@ export function DisputeDetailPage() {
                         type="button"
                         onClick={() => setNewEvidence({ ...newEvidence, type })}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${newEvidence.type === type
-                            ? 'bg-primary-600 text-white'
-                            : 'bg-dark-surface text-gray-400 hover:text-white'
+                            ? 'bg-primary-600 text-gray-900 dark:text-white'
+                            : 'bg-dark-surface text-gray-400 hover:text-gray-900 dark:text-white'
                           }`}
                       >
                         {type.charAt(0).toUpperCase() + type.slice(1)}
@@ -234,7 +234,7 @@ export function DisputeDetailPage() {
                     value={newEvidence.content}
                     onChange={(e) => setNewEvidence({ ...newEvidence, content: e.target.value })}
                     placeholder="Describe your evidence..."
-                    className="w-full px-4 py-3 bg-dark-surface border border-dark-border rounded-lg text-white placeholder:text-gray-500 focus:outline-none focus:border-primary-500 min-h-[100px]"
+                    className="w-full px-4 py-3 bg-dark-surface border border-dark-border rounded-lg text-gray-900 dark:text-white placeholder:text-gray-500 focus:outline-none focus:border-primary-500 min-h-[100px]"
                   />
                   {newEvidence.type === 'link' && (
                     <Input
@@ -270,11 +270,11 @@ export function DisputeDetailPage() {
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="text-gray-400">Amount to Freelancer:</span>
-                      <span className="text-white ml-2">{dispute.resolution.amountToFreelancer} ETH</span>
+                      <span className="text-gray-900 dark:text-white ml-2">{dispute.resolution.amountToFreelancer} ETH</span>
                     </div>
                     <div>
                       <span className="text-gray-400">Amount to Employer:</span>
-                      <span className="text-white ml-2">{dispute.resolution.amountToEmployer} ETH</span>
+                      <span className="text-gray-900 dark:text-white ml-2">{dispute.resolution.amountToEmployer} ETH</span>
                     </div>
                   </div>
                 )}
@@ -298,7 +298,7 @@ export function DisputeDetailPage() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-400">Initiator</p>
-                  <p className="text-white font-medium">
+                  <p className="text-gray-900 dark:text-white font-medium">
                     {dispute.initiatorId === user?.id ? 'You' : dispute.initiatorId.slice(0, 8) + '...'}
                   </p>
                 </div>
@@ -309,7 +309,7 @@ export function DisputeDetailPage() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-400">Respondent</p>
-                  <p className="text-white font-medium">
+                  <p className="text-gray-900 dark:text-white font-medium">
                     {dispute.respondentId === user?.id ? 'You' : dispute.respondentId.slice(0, 8) + '...'}
                   </p>
                 </div>
@@ -324,7 +324,7 @@ export function DisputeDetailPage() {
               <div className="flex items-start gap-3">
                 <div className="w-2 h-2 mt-2 bg-primary-500 rounded-full" />
                 <div>
-                  <p className="text-white text-sm">Dispute Created</p>
+                  <p className="text-gray-900 dark:text-white text-sm">Dispute Created</p>
                   <p className="text-xs text-gray-500">
                     {format(new Date(dispute.createdAt), 'MMM d, yyyy h:mm a')}
                   </p>
@@ -334,7 +334,7 @@ export function DisputeDetailPage() {
                 <div key={evidence.id} className="flex items-start gap-3">
                   <div className="w-2 h-2 mt-2 bg-yellow-500 rounded-full" />
                   <div>
-                    <p className="text-white text-sm">Evidence Submitted</p>
+                    <p className="text-gray-900 dark:text-white text-sm">Evidence Submitted</p>
                     <p className="text-xs text-gray-500">
                       {format(new Date(evidence.submittedAt), 'MMM d, yyyy h:mm a')}
                     </p>
@@ -345,7 +345,7 @@ export function DisputeDetailPage() {
                 <div className="flex items-start gap-3">
                   <div className="w-2 h-2 mt-2 bg-green-500 rounded-full" />
                   <div>
-                    <p className="text-white text-sm">Dispute Resolved</p>
+                    <p className="text-gray-900 dark:text-white text-sm">Dispute Resolved</p>
                     <p className="text-xs text-gray-500">
                       {format(new Date(dispute.resolution.resolvedAt), 'MMM d, yyyy h:mm a')}
                     </p>

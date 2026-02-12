@@ -25,16 +25,16 @@ export function Button({
   className,
   fullWidth = false,
 }: ButtonProps) {
-  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-dark-bg disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden';
+  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-dark-bg disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden';
 
   const variants = {
     primary: 'bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-500 hover:to-indigo-500 text-white shadow-lg shadow-primary-500/25 hover:shadow-primary-500/40 border border-transparent',
-    secondary: 'bg-dark-card hover:bg-dark-border text-white border border-dark-border hover:border-gray-500',
-    outline: 'border border-dark-border hover:border-primary-500/50 text-gray-300 hover:text-white hover:bg-white/5 backdrop-blur-sm',
-    ghost: 'hover:bg-white/5 text-gray-400 hover:text-white',
+    secondary: 'bg-gray-200 hover:bg-gray-300 dark:bg-dark-card dark:hover:bg-dark-border text-gray-900 dark:text-white border border-gray-300 dark:border-dark-border hover:border-gray-400 dark:hover:border-gray-500 shadow-sm',
+    outline: 'bg-white dark:bg-transparent border-2 border-gray-300 dark:border-dark-border hover:border-primary-500 dark:hover:border-primary-500/50 text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-white hover:bg-primary-50 dark:hover:bg-white/5 shadow-sm',
+    ghost: 'hover:bg-gray-200 dark:hover:bg-white/5 text-gray-700 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white',
     danger: 'bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white shadow-lg shadow-red-500/20',
-    glow: 'bg-dark-bg border border-primary-500/50 text-white shadow-[0_0_15px_rgba(139,92,246,0.5)] hover:shadow-[0_0_25px_rgba(139,92,246,0.7)] hover:border-primary-400',
-    glass: 'bg-white/10 hover:bg-white/20 text-white border border-white/10 backdrop-blur-md shadow-xl',
+    glow: 'bg-gradient-to-br from-primary-50 to-indigo-50 dark:from-primary-900/30 dark:to-indigo-900/30 border-2 border-primary-400 dark:border-primary-500/50 text-primary-700 dark:text-white shadow-lg shadow-primary-500/30 hover:shadow-xl hover:shadow-primary-500/50 hover:border-primary-500 dark:hover:border-primary-400',
+    glass: 'bg-white/80 hover:bg-white/90 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white border border-gray-200 dark:border-white/10 backdrop-blur-md shadow-lg',
   };
 
   const sizes = {

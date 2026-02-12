@@ -81,7 +81,7 @@ export function FreelancerDetailPage() {
             <div className="space-y-6">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
-                  <h1 className="text-3xl font-bold text-white mb-2">
+                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
                     {freelancer.name || 'Anonymous'}
                   </h1>
                   {freelancer.nationality && (
@@ -102,7 +102,7 @@ export function FreelancerDetailPage() {
 
               {freelancer.bio && (
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-2">About</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">About</h3>
                   <p className="text-gray-400 leading-relaxed">{freelancer.bio}</p>
                 </div>
               )}
@@ -162,7 +162,7 @@ export function FreelancerDetailPage() {
                     <div className="space-y-2">
                       <div className="flex items-start justify-between gap-4">
                         <div>
-                          <h4 className="text-lg font-semibold text-white">{exp.title}</h4>
+                          <h4 className="text-lg font-semibold text-gray-900 dark:text-white">{exp.title}</h4>
                           <p className="text-gray-400">{exp.company}</p>
                         </div>
                         <div className="text-sm text-gray-500 flex items-center gap-1">
@@ -195,7 +195,7 @@ export function FreelancerDetailPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-gray-400">Hourly Rate</span>
-                <span className="text-white font-semibold">${freelancer.hourlyRate}</span>
+                <span className="text-gray-900 dark:text-white font-semibold">${freelancer.hourlyRate}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-gray-400">Availability</span>
@@ -204,7 +204,7 @@ export function FreelancerDetailPage() {
               {freelancer.experience && (
                 <div className="flex items-center justify-between">
                   <span className="text-gray-400">Experience</span>
-                  <span className="text-white font-semibold">
+                  <span className="text-gray-900 dark:text-white font-semibold">
                     {freelancer.experience.length} {freelancer.experience.length === 1 ? 'project' : 'projects'}
                   </span>
                 </div>
@@ -212,7 +212,7 @@ export function FreelancerDetailPage() {
               {freelancer.skills && (
                 <div className="flex items-center justify-between">
                   <span className="text-gray-400">Skills</span>
-                  <span className="text-white font-semibold">{freelancer.skills.length}</span>
+                  <span className="text-gray-900 dark:text-white font-semibold">{freelancer.skills.length}</span>
                 </div>
               )}
             </div>
@@ -227,7 +227,7 @@ export function FreelancerDetailPage() {
                   <Award className="w-6 h-6 text-primary-400" />
                 </div>
                 <div>
-                  <div className="text-white font-semibold">
+                  <div className="text-gray-900 dark:text-white font-semibold">
                     {format(new Date(freelancer.createdAt), 'MMMM yyyy')}
                   </div>
                   <div className="text-sm text-gray-400">

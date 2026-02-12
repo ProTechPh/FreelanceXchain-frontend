@@ -66,8 +66,8 @@ export function WalletPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white">Wallet</h1>
-        <p className="text-gray-400 mt-1">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-900 dark:text-white">Wallet</h1>
+        <p className="text-gray-600 dark:text-gray-400 mt-1">
           Connect your Web3 wallet to enable blockchain transactions
         </p>
       </div>
@@ -107,10 +107,10 @@ export function WalletPage() {
                 <div className="p-4 bg-dark-bg rounded-lg">
                   <p className="text-gray-400 text-sm mb-1">Address</p>
                   <div className="flex items-center gap-2">
-                    <p className="text-white font-mono">{formatAddress(address)}</p>
+                    <p className="text-gray-900 dark:text-white font-mono">{formatAddress(address)}</p>
                     <button
                       onClick={handleCopyAddress}
-                      className="text-gray-400 hover:text-white transition-colors"
+                      className="text-gray-400 hover:text-gray-900 dark:text-white transition-colors"
                     >
                       {copied ? <FiCheck className="w-4 h-4 text-green-400" /> : <FiCopy className="w-4 h-4" />}
                     </button>
@@ -118,7 +118,7 @@ export function WalletPage() {
                       href={`https://etherscan.io/address/${address}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-gray-400 hover:text-white transition-colors"
+                      className="text-gray-400 hover:text-gray-900 dark:text-white transition-colors"
                     >
                       <FiExternalLink className="w-4 h-4" />
                     </a>
@@ -127,7 +127,7 @@ export function WalletPage() {
 
                 <div className="p-4 bg-dark-bg rounded-lg">
                   <p className="text-gray-400 text-sm mb-1">Balance</p>
-                  <p className="text-white text-xl font-semibold">{balance || '0.0000'} ETH</p>
+                  <p className="text-gray-900 dark:text-white text-xl font-semibold">{balance || '0.0000'} ETH</p>
                 </div>
 
                 <div className="p-4 bg-dark-bg rounded-lg md:col-span-2">
@@ -148,7 +148,7 @@ export function WalletPage() {
               <div className="w-20 h-20 rounded-full bg-dark-bg mx-auto mb-6 flex items-center justify-center">
                 <FiLink className="w-10 h-10 text-primary-400" />
               </div>
-              <h3 className="text-xl font-semibold text-white mb-2">Connect Your Wallet</h3>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Connect Your Wallet</h3>
               <p className="text-gray-400 mb-6 max-w-md mx-auto">
                 Connect your MetaMask wallet to enable secure blockchain transactions,
                 escrow payments, and on-chain reputation tracking.
@@ -184,7 +184,7 @@ export function WalletPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-white mb-2">Secure Escrow</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Secure Escrow</h3>
             <p className="text-gray-400 text-sm">
               Payments are held in smart contract escrow until milestones are completed and approved.
             </p>
@@ -198,7 +198,7 @@ export function WalletPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-white mb-2">On-Chain Reputation</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">On-Chain Reputation</h3>
             <p className="text-gray-400 text-sm">
               Your work history and ratings are stored on the blockchain, creating a permanent and verifiable reputation.
             </p>
@@ -212,7 +212,7 @@ export function WalletPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
             </div>
-            <h3 className="text-lg font-medium text-white mb-2">Instant Payments</h3>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">Instant Payments</h3>
             <p className="text-gray-400 text-sm">
               Receive payments instantly upon milestone approval, with no intermediaries or delays.
             </p>

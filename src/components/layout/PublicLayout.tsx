@@ -20,7 +20,7 @@ export function PublicLayout({ children, showMinimalHeader = false }: PublicLayo
   const isLandingPage = location.pathname === '/';
 
   return (
-    <div className="min-h-screen bg-dark-bg text-gray-100 flex flex-col">
+    <div className="min-h-screen bg-white dark:bg-dark-bg text-gray-900 dark:text-gray-100 flex flex-col">
       {/* Header */}
       <motion.header
         initial={{ y: -100 }}
@@ -29,7 +29,7 @@ export function PublicLayout({ children, showMinimalHeader = false }: PublicLayo
         className={`fixed top-0 left-0 right-0 z-50 ${
           showMinimalHeader || isLandingPage
             ? 'bg-transparent'
-            : 'bg-dark-card/80 backdrop-blur-xl border-b border-dark-border'
+            : 'bg-white/80 dark:bg-dark-card/80 backdrop-blur-xl border-b border-gray-200 dark:border-dark-border'
         }`}
       >
         <div className="flex items-center justify-between h-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
@@ -46,7 +46,7 @@ export function PublicLayout({ children, showMinimalHeader = false }: PublicLayo
                 className="h-10 w-auto object-contain"
               />
             </motion.div>
-            <span className="text-xl font-bold text-white tracking-tight hidden sm:block">
+            <span className="text-xl font-bold text-gray-900 dark:text-white tracking-tight hidden sm:block">
               Freelance<span className="text-primary-400">Xchain</span>
             </span>
           </Link>
@@ -56,19 +56,19 @@ export function PublicLayout({ children, showMinimalHeader = false }: PublicLayo
             <nav className="hidden md:flex items-center gap-6">
               <Link
                 to="/projects"
-                className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
+                className="text-sm font-medium text-gray-800 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
               >
                 Browse Projects
               </Link>
               <Link
                 to="/how-it-works"
-                className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
+                className="text-sm font-medium text-gray-800 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
               >
                 How It Works
               </Link>
               <Link
                 to="/faqs"
-                className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
+                className="text-sm font-medium text-gray-800 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
               >
                 FAQs
               </Link>
@@ -82,7 +82,7 @@ export function PublicLayout({ children, showMinimalHeader = false }: PublicLayo
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={toggleTheme}
-              className="p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/5"
+              className="p-2 text-gray-800 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-white/5"
             >
               {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </motion.button>
@@ -99,7 +99,7 @@ export function PublicLayout({ children, showMinimalHeader = false }: PublicLayo
               <>
                 <Link
                   to="/login"
-                  className="text-sm font-medium text-gray-300 hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-white/5 hidden sm:block"
+                  className="text-sm font-medium text-gray-800 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 hidden sm:block"
                 >
                   Log In
                 </Link>
@@ -118,7 +118,7 @@ export function PublicLayout({ children, showMinimalHeader = false }: PublicLayo
             {!showMinimalHeader && !isLandingPage && (
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/5"
+                className="md:hidden p-2 text-gray-800 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-white/5"
               >
                 {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
@@ -132,27 +132,27 @@ export function PublicLayout({ children, showMinimalHeader = false }: PublicLayo
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden border-t border-dark-border bg-dark-card/95 backdrop-blur-xl"
+            className="md:hidden border-t border-gray-200 dark:border-dark-border bg-white/95 dark:bg-dark-card/95 backdrop-blur-xl"
           >
             <nav className="px-4 py-4 space-y-2">
               <Link
                 to="/projects"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block px-4 py-2 text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+                className="block px-4 py-2 text-sm font-medium text-gray-800 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors"
               >
                 Browse Projects
               </Link>
               <Link
                 to="/how-it-works"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block px-4 py-2 text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+                className="block px-4 py-2 text-sm font-medium text-gray-800 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors"
               >
                 How It Works
               </Link>
               <Link
                 to="/faqs"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block px-4 py-2 text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+                className="block px-4 py-2 text-sm font-medium text-gray-800 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors"
               >
                 FAQs
               </Link>
@@ -160,7 +160,7 @@ export function PublicLayout({ children, showMinimalHeader = false }: PublicLayo
                 <Link
                   to="/login"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block px-4 py-2 text-sm font-medium text-gray-300 hover:text-white hover:bg-white/5 rounded-lg transition-colors sm:hidden"
+                  className="block px-4 py-2 text-sm font-medium text-gray-800 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg transition-colors sm:hidden"
                 >
                   Log In
                 </Link>

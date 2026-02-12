@@ -18,13 +18,13 @@ export function Badge({
   className,
 }: BadgeProps) {
   const variants = {
-    default: 'bg-gray-700 text-gray-300',
-    success: 'bg-green-900/50 text-green-400 border border-green-700/50',
-    warning: 'bg-amber-900/50 text-amber-400 border border-amber-700/50',
-    error: 'bg-red-900/50 text-red-400 border border-red-700/50',
-    info: 'bg-blue-900/50 text-blue-400 border border-blue-700/50',
-    primary: 'bg-primary-900/50 text-primary-400 border border-primary-700/50',
-    secondary: 'bg-gray-800 text-gray-400 border border-gray-600/50',
+    default: 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
+    success: 'bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400 border border-green-300 dark:border-green-700/50',
+    warning: 'bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-700/50',
+    error: 'bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-400 border border-red-300 dark:border-red-700/50',
+    info: 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400 border border-blue-300 dark:border-blue-700/50',
+    primary: 'bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-400 border border-primary-300 dark:border-primary-700/50',
+    secondary: 'bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-400 border border-gray-300 dark:border-gray-600/50',
   };
 
   const sizes = {

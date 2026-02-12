@@ -51,7 +51,7 @@ export function Dropdown({ trigger, children, align = 'left', className }: Dropd
               transition={{ duration: 0.2 }}
               className={clsx(
                 'absolute z-50 mt-2 min-w-[200px] rounded-xl',
-                'bg-dark-surface/95 backdrop-blur-xl border border-white/10',
+                'bg-white/95 dark:bg-dark-surface/95 backdrop-blur-xl border border-gray-200 dark:border-white/10',
                 'shadow-2xl shadow-black/50',
                 alignmentClasses[align]
               )}
@@ -79,8 +79,8 @@ export function DropdownItem({ children, onClick, icon, danger, className }: Dro
       onClick={onClick}
       className={clsx(
         'w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors',
-        'hover:bg-white/5 first:rounded-t-xl last:rounded-b-xl',
-        danger ? 'text-accent-error hover:bg-accent-error/10' : 'text-gray-300 hover:text-white',
+        'hover:bg-gray-100 dark:hover:bg-white/5 first:rounded-t-xl last:rounded-b-xl',
+        danger ? 'text-accent-error hover:bg-red-50 dark:hover:bg-accent-error/10' : 'text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white',
         className
       )}
     >
@@ -91,5 +91,5 @@ export function DropdownItem({ children, onClick, icon, danger, className }: Dro
 }
 
 export function DropdownDivider() {
-  return <div className="h-px bg-white/5 my-1" />;
+  return <div className="h-px bg-gray-200 dark:bg-white/5 my-1" />;
 }

@@ -233,8 +233,8 @@ export function KYCPage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center"
         >
-          <h1 className="text-3xl font-bold text-white mb-2">KYC Verification</h1>
-          <p className="text-gray-400">Your identity verification status</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">KYC Verification</h1>
+          <p className="text-gray-600 dark:text-gray-400">Your identity verification status</p>
         </motion.div>
 
         <motion.div
@@ -248,16 +248,16 @@ export function KYCPage() {
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ type: 'spring', delay: 0.2 }}
-                className="mx-auto w-20 h-20 rounded-full bg-dark-surface flex items-center justify-center mb-6"
+                className="mx-auto w-20 h-20 rounded-full bg-gray-100 dark:bg-dark-surface flex items-center justify-center mb-6"
               >
                 {getStatusIcon(kycData.status)}
               </motion.div>
               
-              <h2 className="text-2xl font-bold text-white mb-3">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
                 {getStatusTitle(kycData.status)}
               </h2>
               
-              <p className="text-gray-300 max-w-md mx-auto mb-6">
+              <p className="text-gray-700 dark:text-gray-300 max-w-md mx-auto mb-6">
                 {getStatusMessage(kycData.status)}
               </p>
 
@@ -336,7 +336,7 @@ export function KYCPage() {
                   >
                     <RefreshCw className="w-4 h-4" />
                   </motion.div>
-                  <span>Checking status every 15 seconds (webhook will update automatically)...</span>
+                  <span className="text-gray-600 dark:text-gray-400">Checking status every 15 seconds (webhook will update automatically)...</span>
                 </motion.div>
               )}
             </div>
@@ -355,12 +355,12 @@ export function KYCPage() {
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-gray-400 mb-1">Status</p>
-                    <p className="text-white font-medium capitalize">{kycData.status}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Status</p>
+                    <p className="text-gray-900 dark:text-white font-medium capitalize">{kycData.status}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-400 mb-1">Verified On</p>
-                    <p className="text-white font-medium">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Verified On</p>
+                    <p className="text-gray-900 dark:text-white font-medium">
                       {kycData.completed_at ? new Date(kycData.completed_at).toLocaleDateString() : 'N/A'}
                     </p>
                   </div>
@@ -370,7 +370,7 @@ export function KYCPage() {
                   <CheckCircle className="w-6 h-6 text-green-400 flex-shrink-0" />
                   <div>
                     <p className="text-green-400 font-medium">Account Fully Verified</p>
-                    <p className="text-sm text-gray-400">You have access to all platform features</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">You have access to all platform features</p>
                   </div>
                 </div>
               </div>
@@ -388,7 +388,7 @@ export function KYCPage() {
             <Card className="border-red-500/50">
               <CardHeader title="Rejection Reason" />
               <p className="text-red-400 mb-4">{kycData.admin_notes}</p>
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 Please address the issues mentioned above and start a new verification.
               </p>
             </Card>
@@ -405,8 +405,8 @@ export function KYCPage() {
             <div className="flex items-start gap-4">
               <Shield className="w-6 h-6 text-primary-400 flex-shrink-0 mt-1" />
               <div>
-                <h3 className="text-white font-semibold mb-2">Powered by Didit</h3>
-                <p className="text-sm text-gray-300">
+                <h3 className="text-gray-900 dark:text-white font-semibold mb-2">Powered by Didit</h3>
+                <p className="text-sm text-gray-700 dark:text-gray-300">
                   Your verification is processed securely by Didit, a trusted identity verification provider.
                   All your personal data is encrypted and handled according to industry standards.
                 </p>
@@ -435,8 +435,8 @@ export function KYCPage() {
           <Shield className="w-12 h-12 text-white" />
         </motion.div>
         
-        <h1 className="text-3xl font-bold text-white mb-3">Identity Verification</h1>
-        <p className="text-gray-400 text-lg">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">Identity Verification</h1>
+        <p className="text-gray-600 dark:text-gray-400 text-lg">
           Complete KYC verification to unlock all platform features
         </p>
       </motion.div>
@@ -448,15 +448,15 @@ export function KYCPage() {
       >
         <Card>
           <div className="text-center py-8">
-            <h2 className="text-xl font-semibold text-white mb-4">Why Verify Your Identity?</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Why Verify Your Identity?</h2>
             
             <div className="grid md:grid-cols-3 gap-6 mb-8">
               <div className="p-4">
                 <div className="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center mx-auto mb-3">
                   <CheckCircle className="w-6 h-6 text-green-400" />
                 </div>
-                <h3 className="text-white font-medium mb-2">Full Access</h3>
-                <p className="text-sm text-gray-400">
+                <h3 className="text-gray-900 dark:text-white font-medium mb-2">Full Access</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   Create projects, submit proposals, and manage contracts
                 </p>
               </div>
@@ -465,8 +465,8 @@ export function KYCPage() {
                 <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center mx-auto mb-3">
                   <Shield className="w-6 h-6 text-blue-400" />
                 </div>
-                <h3 className="text-white font-medium mb-2">Trust & Safety</h3>
-                <p className="text-sm text-gray-400">
+                <h3 className="text-gray-900 dark:text-white font-medium mb-2">Trust & Safety</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   Build trust with verified identity and secure transactions
                 </p>
               </div>
@@ -475,8 +475,8 @@ export function KYCPage() {
                 <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center mx-auto mb-3">
                   <FileCheck className="w-6 h-6 text-purple-400" />
                 </div>
-                <h3 className="text-white font-medium mb-2">Compliance</h3>
-                <p className="text-sm text-gray-400">
+                <h3 className="text-gray-900 dark:text-white font-medium mb-2">Compliance</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   Meet regulatory requirements for blockchain transactions
                 </p>
               </div>
@@ -506,19 +506,19 @@ export function KYCPage() {
           <ul className="space-y-3">
             <li className="flex items-start gap-3">
               <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-              <span className="text-gray-300">Government-issued ID (Passport, Driver's License, or National ID)</span>
+              <span className="text-gray-700 dark:text-gray-300">Government-issued ID (Passport, Driver's License, or National ID)</span>
             </li>
             <li className="flex items-start gap-3">
               <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-              <span className="text-gray-300">Clear photos of your document (front and back)</span>
+              <span className="text-gray-700 dark:text-gray-300">Clear photos of your document (front and back)</span>
             </li>
             <li className="flex items-start gap-3">
               <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-              <span className="text-gray-300">Selfie for identity verification</span>
+              <span className="text-gray-700 dark:text-gray-300">Selfie for identity verification</span>
             </li>
             <li className="flex items-start gap-3">
               <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-              <span className="text-gray-300">5-10 minutes to complete the process</span>
+              <span className="text-gray-700 dark:text-gray-300">5-10 minutes to complete the process</span>
             </li>
           </ul>
         </Card>
@@ -533,12 +533,12 @@ export function KYCPage() {
           <div className="flex items-start gap-4">
             <Shield className="w-6 h-6 text-primary-400 flex-shrink-0 mt-1" />
             <div>
-              <h3 className="text-white font-semibold mb-2">Your Data is Secure</h3>
-              <p className="text-sm text-gray-300 mb-3">
+              <h3 className="text-gray-900 dark:text-white font-semibold mb-2">Your Data is Secure</h3>
+              <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
                 We use Didit, a trusted identity verification provider, to process your verification securely.
                 Your personal information is encrypted and protected according to industry standards.
               </p>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-gray-600 dark:text-gray-400">
                 By continuing, you agree to share your identity information with Didit for verification purposes.
               </p>
             </div>

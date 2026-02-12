@@ -113,7 +113,7 @@ export function NotificationsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Notifications</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Notifications</h1>
           <p className="text-gray-400 mt-1">
             {unreadCount > 0 ? `You have ${unreadCount} unread notifications` : 'All caught up!'}
           </p>
@@ -131,8 +131,8 @@ export function NotificationsPage() {
         <button
           onClick={() => setFilter('all')}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === 'all'
-              ? 'bg-primary-600 text-white'
-              : 'bg-dark-surface text-gray-400 hover:text-white hover:bg-dark-border'
+              ? 'bg-primary-600 text-gray-900 dark:text-white'
+              : 'bg-dark-surface text-gray-400 hover:text-gray-900 dark:text-white hover:bg-dark-border'
             }`}
         >
           All ({notifications.length})
@@ -140,8 +140,8 @@ export function NotificationsPage() {
         <button
           onClick={() => setFilter('unread')}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === 'unread'
-              ? 'bg-primary-600 text-white'
-              : 'bg-dark-surface text-gray-400 hover:text-white hover:bg-dark-border'
+              ? 'bg-primary-600 text-gray-900 dark:text-white'
+              : 'bg-dark-surface text-gray-400 hover:text-gray-900 dark:text-white hover:bg-dark-border'
             }`}
         >
           Unread ({unreadCount})
@@ -174,7 +174,7 @@ export function NotificationsPage() {
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <h3 className={`font-medium ${notification.isRead ? 'text-gray-400' : 'text-white'}`}>
+                    <h3 className={`font-medium ${notification.isRead ? 'text-gray-400' : 'text-gray-900 dark:text-white'}`}>
                       {notification.title}
                     </h3>
                     {!notification.isRead && (

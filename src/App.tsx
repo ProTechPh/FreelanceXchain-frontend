@@ -74,11 +74,13 @@ import { AboutPage } from './pages/info/AboutPage';
 import { SettingsPage } from './pages/settings/SettingsPage';
 
 function App() {
-  const { isDark } = useThemeStore();
+  const { isDark, toggle } = useThemeStore();
   const { isAuthenticated, fetchCurrentUser } = useAuthStore();
   const { isConnected, address, updateBalance } = useWalletStore();
 
+  // Initialize theme on mount and sync with store state
   useEffect(() => {
+    // Force sync DOM with store state on mount
     if (isDark) {
       document.documentElement.classList.add('dark');
     } else {
@@ -145,11 +147,11 @@ function App() {
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<PublicLayout showMinimalHeader><LandingPage /></PublicLayout>} />
-        <Route path="/how-it-works" element={<PublicLayout showMinimalHeader><HowItWorksPage /></PublicLayout>} />
-        <Route path="/faqs" element={<PublicLayout showMinimalHeader><FAQsPage /></PublicLayout>} />
-        <Route path="/help-center" element={<PublicLayout showMinimalHeader><HelpCenterPage /></PublicLayout>} />
-        <Route path="/blog" element={<PublicLayout showMinimalHeader><BlogPage /></PublicLayout>} />
-        <Route path="/tutorials" element={<PublicLayout showMinimalHeader><TutorialsPage /></PublicLayout>} />
+        <Route path="/how-it-works" element={<PublicLayout><HowItWorksPage /></PublicLayout>} />
+        <Route path="/faqs" element={<PublicLayout><FAQsPage /></PublicLayout>} />
+        <Route path="/help-center" element={<PublicLayout><HelpCenterPage /></PublicLayout>} />
+        <Route path="/blog" element={<PublicLayout><BlogPage /></PublicLayout>} />
+        <Route path="/tutorials" element={<PublicLayout><TutorialsPage /></PublicLayout>} />
         <Route path="/terms" element={<PublicLayout showMinimalHeader><TermsPage /></PublicLayout>} />
         <Route path="/privacy" element={<PublicLayout showMinimalHeader><PrivacyPage /></PublicLayout>} />
         <Route path="/about" element={<PublicLayout showMinimalHeader><AboutPage /></PublicLayout>} />
@@ -453,10 +455,10 @@ function App() {
         <Route
           path="*"
           element={
-            <div className="min-h-screen bg-dark-bg flex items-center justify-center">
+            <div className="min-h-screen bg-white dark:bg-dark-bg flex items-center justify-center">
               <div className="text-center">
-                <h1 className="text-4xl font-bold text-white mb-4">404</h1>
-                <p className="text-gray-400 mb-6">Page not found</p>
+                <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">404</h1>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">Page not found</p>
                 <a href="/" className="text-primary-400 hover:text-primary-300">
                   Go back home
                 </a>

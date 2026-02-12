@@ -84,8 +84,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={clsx(
-          'fixed top-16 left-0 z-40 h-[calc(100vh-4rem)] w-64 border-r border-white/5 transition-transform duration-300 lg:translate-x-0',
-          'bg-dark-bg/80 backdrop-blur-xl',
+          'fixed top-16 left-0 z-40 h-[calc(100vh-4rem)] w-64 border-r border-gray-200 dark:border-white/5 transition-transform duration-300 lg:translate-x-0',
+          'bg-white/80 dark:bg-dark-bg/80 backdrop-blur-xl',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
@@ -102,28 +102,28 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 className={clsx(
                   'flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative overflow-hidden',
                   isActive
-                    ? 'text-white'
-                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                    ? 'text-gray-900 dark:text-white'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5'
                 )}
               >
                 {isActive && (
                   <div className="absolute inset-0 bg-gradient-to-r from-primary-600/20 to-primary-600/5 border-l-2 border-primary-500" />
                 )}
                 <Icon className={clsx("w-5 h-5 relative z-10", isActive ? "text-primary-400" : "group-hover:text-primary-400 transition-colors")} />
-                <span className={clsx("font-medium relative z-10", isActive && "text-primary-100")}>{item.label}</span>
+                <span className="font-medium relative z-10">{item.label}</span>
               </Link>
             );
           })}
 
-          <div className="pt-4 border-t border-white/5 mt-4 space-y-1">
+          <div className="pt-4 border-t border-gray-200 dark:border-white/5 mt-4 space-y-1">
             <Link
               to="/notifications"
               onClick={onClose}
               className={clsx(
                 'flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative overflow-hidden',
                 location.pathname === '/notifications'
-                  ? 'text-white'
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  ? 'text-gray-900 dark:text-white'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5'
               )}
             >
               {location.pathname === '/notifications' && (
@@ -138,8 +138,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               className={clsx(
                 'flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative overflow-hidden',
                 location.pathname === '/settings'
-                  ? 'text-white'
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  ? 'text-gray-900 dark:text-white'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5'
               )}
             >
               {location.pathname === '/settings' && (
