@@ -447,9 +447,27 @@ function App() {
           }
         />
 
-        {/* Freelancer Directory */}
-        <Route path="/freelancers" element={<PublicLayout><FreelancerListPage /></PublicLayout>} />
-        <Route path="/freelancers/:id" element={<PublicLayout><FreelancerDetailPage /></PublicLayout>} />
+        {/* Freelancer Directory - Employer Routes */}
+        <Route
+          path="/freelancers"
+          element={
+            <ProtectedRoute roles={['employer', 'admin']}>
+              <Layout>
+                <FreelancerListPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/freelancers/:id"
+          element={
+            <ProtectedRoute roles={['employer', 'admin']}>
+              <Layout>
+                <FreelancerDetailPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
 
         {/* 404 */}
         <Route
