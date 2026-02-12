@@ -25,21 +25,25 @@ interface NavItem {
 
 const freelancerNav: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: Home },
-  { label: 'Browse Projects', href: '/projects', icon: FolderKanban },
+  { label: 'Skill Analysis', href: '/skill-analysis', icon: BarChart3 },
+  { label: 'AI Recommendations', href: '/recommendations', icon: Sparkles },
   { label: 'My Proposals', href: '/proposals', icon: FileText },
   { label: 'My Contracts', href: '/contracts', icon: Briefcase },
-  { label: 'AI Recommendations', href: '/recommendations', icon: Sparkles },
-  { label: 'Skill Analysis', href: '/skill-analysis', icon: BarChart3 },
   { label: 'Disputes', href: '/disputes', icon: AlertTriangle },
+  { label: 'Browse Projects', href: '/projects', icon: FolderKanban },
+  { label: 'Notifications', href: '/notifications', icon: Bell },
+  { label: 'Settings', href: '/settings', icon: Settings },
 ];
 
 const employerNav: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: Home },
-  { label: 'My Projects', href: '/projects/manage', icon: FolderKanban },
   { label: 'Create Project', href: '/projects/new', icon: FileText },
+  { label: 'My Projects', href: '/projects/manage', icon: FolderKanban },
   { label: 'My Contracts', href: '/contracts', icon: Briefcase },
-  { label: 'Browse Freelancers', href: '/freelancers', icon: Users },
   { label: 'Disputes', href: '/disputes', icon: AlertTriangle },
+  { label: 'Browse Freelancers', href: '/freelancers', icon: Users },
+  { label: 'Notifications', href: '/notifications', icon: Bell },
+  { label: 'Settings', href: '/settings', icon: Settings },
 ];
 
 const adminNav: NavItem[] = [
@@ -49,6 +53,8 @@ const adminNav: NavItem[] = [
   { label: 'Disputes', href: '/admin/disputes', icon: AlertTriangle },
   { label: 'Skills Management', href: '/admin/skills', icon: CheckSquare },
   { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
+  { label: 'Notifications', href: '/notifications', icon: Bell },
+  { label: 'Settings', href: '/settings', icon: Settings },
 ];
 
 interface SidebarProps {
@@ -109,41 +115,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               </Link>
             );
           })}
-
-          <div className="pt-4 border-t border-gray-200 dark:border-white/5 mt-4 space-y-1">
-            <Link
-              to="/notifications"
-              onClick={onClose}
-              className={clsx(
-                'flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative overflow-hidden',
-                location.pathname === '/notifications'
-                  ? 'text-gray-900 dark:text-white'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5'
-              )}
-            >
-              {location.pathname === '/notifications' && (
-                <div className="absolute inset-0 bg-gradient-to-r from-primary-600/20 to-primary-600/5 border-l-2 border-primary-500" />
-              )}
-              <Bell className={clsx("w-5 h-5 relative z-10", location.pathname === '/notifications' ? "text-primary-400" : "group-hover:text-primary-400 transition-colors")} />
-              <span className="font-medium relative z-10">Notifications</span>
-            </Link>
-            <Link
-              to="/settings"
-              onClick={onClose}
-              className={clsx(
-                'flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative overflow-hidden',
-                location.pathname === '/settings'
-                  ? 'text-gray-900 dark:text-white'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5'
-              )}
-            >
-              {location.pathname === '/settings' && (
-                <div className="absolute inset-0 bg-gradient-to-r from-primary-600/20 to-primary-600/5 border-l-2 border-primary-500" />
-              )}
-              <Settings className={clsx("w-5 h-5 relative z-10", location.pathname === '/settings' ? "text-primary-400" : "group-hover:text-primary-400 transition-colors")} />
-              <span className="font-medium relative z-10">Settings</span>
-            </Link>
-          </div>
         </nav>
       </aside>
     </>
