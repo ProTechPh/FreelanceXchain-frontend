@@ -550,7 +550,7 @@ export function ProfilePage() {
         </>
       ) : (
         /* Employer Details */
-        <Card>
+        <Card data-tour-id="employer-profile-section">
           <CardHeader
             title="Company Details"
             description="Information about your company"
@@ -589,4 +589,3 @@ export function ProfilePage() {
     </div>
   );
 }
-

@@ -6,7 +6,8 @@ import type {
   TutorialProgressStatus,
   TutorialStatus,
 } from './types';
-import { FREELANCER_TUTORIAL_ID, FREELANCER_TUTORIAL_VERSION } from './steps/freelancerSteps';
+import { FREELANCER_TUTORIAL_ID } from './steps/freelancerSteps';
+import { getTutorialVersion } from './steps/tutorials';
 
 interface OnboardingState {
   status: TutorialStatus;
@@ -15,6 +16,7 @@ interface OnboardingState {
   activeUserId?: string;
   records: Record<string, OnboardingProgressRecord>;
   isHydrated: boolean;
+  setTutorialId: (tutorialId: TutorialId) => void;
   start: (userId: string) => void;
   pause: () => void;
   resume: () => void;
@@ -37,11 +39,11 @@ function getNow() {
   return new Date().toISOString();
 }
 
-function getInitialRecord(userId: string): OnboardingProgressRecord {
+function getInitialRecord(userId: string, tutorialId: TutorialId): OnboardingProgressRecord {
   return {
     userId,
-    tutorialId: FREELANCER_TUTORIAL_ID,
-    version: FREELANCER_TUTORIAL_VERSION,
+    tutorialId,
+    version: getTutorialVersion(tutorialId),
     status: 'not_started',
     completedStepIds: [],
     updatedAt: getNow(),
@@ -66,6 +68,10 @@ export const useOnboardingStore = create<OnboardingState>()(
       isHydrated: false,
 
       setHydrated: (value: boolean) => set({ isHydrated: value }),
+      setTutorialId: (tutorialId: TutorialId) => {
+        if (get().tutorialId === tutorialId) return;
+        set({ tutorialId, status: 'idle', stepIndex: 0 });
+      },
 
       syncFromStorage: (userId: string) => {
         const state = get();
@@ -88,7 +94,7 @@ export const useOnboardingStore = create<OnboardingState>()(
       start: (userId: string) => {
         const state = get();
         const key = getRecordKey(userId, state.tutorialId);
-        const existing = state.records[key] ?? getInitialRecord(userId);
+        const existing = state.records[key] ?? getInitialRecord(userId, state.tutorialId);
 
         const nextRecord: OnboardingProgressRecord = {
           ...existing,
@@ -119,7 +125,7 @@ export const useOnboardingStore = create<OnboardingState>()(
         const state = get();
         if (!state.activeUserId) return;
         const key = getRecordKey(state.activeUserId, state.tutorialId);
-        const existing = state.records[key] ?? getInitialRecord(state.activeUserId);
+        const existing = state.records[key] ?? getInitialRecord(state.activeUserId, state.tutorialId);
         const now = getNow();
 
         set({
@@ -140,7 +146,7 @@ export const useOnboardingStore = create<OnboardingState>()(
         const state = get();
         if (!state.activeUserId) return;
         const key = getRecordKey(state.activeUserId, state.tutorialId);
-        const existing = state.records[key] ?? getInitialRecord(state.activeUserId);
+        const existing = state.records[key] ?? getInitialRecord(state.activeUserId, state.tutorialId);
         const now = getNow();
 
         set({
@@ -172,7 +178,7 @@ export const useOnboardingStore = create<OnboardingState>()(
         const state = get();
         if (!state.activeUserId) return;
         const key = getRecordKey(state.activeUserId, state.tutorialId);
-        const existing = state.records[key] ?? getInitialRecord(state.activeUserId);
+        const existing = state.records[key] ?? getInitialRecord(state.activeUserId, state.tutorialId);
         const completedStepIds = existing.completedStepIds.includes(stepId)
           ? existing.completedStepIds
           : [...existing.completedStepIds, stepId];
@@ -192,8 +198,9 @@ export const useOnboardingStore = create<OnboardingState>()(
       },
 
       restart: (userId: string) => {
-        const key = getRecordKey(userId, FREELANCER_TUTORIAL_ID);
-        const fresh = getInitialRecord(userId);
+        const tutorialId = get().tutorialId;
+        const key = getRecordKey(userId, tutorialId);
+        const fresh = getInitialRecord(userId, tutorialId);
 
         set((state) => ({
           activeUserId: userId,

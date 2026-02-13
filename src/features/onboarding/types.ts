@@ -1,4 +1,4 @@
-export type TutorialId = 'freelancer_v1';
+export type TutorialId = 'freelancer_v1' | 'employer_v1';
 
 export type TutorialStatus =
   | 'idle'
@@ -21,7 +21,7 @@ export interface TutorialStep {
   title: string;
   body: string;
   route: string;
-  role: 'freelancer';
+  role: 'freelancer' | 'employer';
   required?: boolean;
   anchor: {
     selector: string;

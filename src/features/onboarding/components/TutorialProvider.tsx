@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../../store';
 import { canAccessStep, getStepByIndex, getStepIndexById, waitForAnchor } from '../engine';
 import { useSpotlightAnchor, useTutorialEligibility, useTutorialKeyboardShortcuts } from '../hooks';
-import { freelancerTutorialSteps, FREELANCER_TUTORIAL_ID } from '../steps/freelancerSteps';
+import { getTutorialConfigByRole } from '../steps/tutorials';
 import { useOnboardingStore } from '../store';
 import { TutorialOverlay } from './TutorialOverlay';
 
@@ -18,6 +18,8 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
 
   const {
     isHydrated,
+    tutorialId: activeTutorialId,
+    setTutorialId,
     syncFromStorage,
     start,
     status,
@@ -32,32 +34,43 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
     records,
   } = useOnboardingStore();
 
-  const { eligible, alreadyFinished } = useTutorialEligibility();
+  const tutorialConfig = useMemo(() => getTutorialConfigByRole(user?.role), [user?.role]);
+  const selectedTutorialId = tutorialConfig?.id ?? null;
+  const tutorialSteps = tutorialConfig?.steps ?? [];
+  const { eligible, alreadyFinished } = useTutorialEligibility(selectedTutorialId);
   const [anchorReady, setAnchorReady] = useState(false);
-  const shouldRunTutorial = isAuthenticated && user?.role === 'freelancer';
+  const shouldRunTutorial = isAuthenticated && !!tutorialConfig;
+  const tutorialContextReady = shouldRunTutorial && !!selectedTutorialId && selectedTutorialId === activeTutorialId;
+
+  useEffect(() => {
+    if (!selectedTutorialId) return;
+    setTutorialId(selectedTutorialId);
+  }, [selectedTutorialId, setTutorialId]);
 
   const currentStep = useMemo(
-    () => getStepByIndex(freelancerTutorialSteps, stepIndex),
-    [stepIndex]
+    () => getStepByIndex(tutorialSteps, stepIndex),
+    [stepIndex, tutorialSteps]
   );
-  const isTutorialVisible = shouldRunTutorial && status === 'active' && !!currentStep && anchorReady;
+  const isTutorialVisible = tutorialContextReady && status === 'active' && !!currentStep && anchorReady;
   const { rect } = useSpotlightAnchor(currentStep, isTutorialVisible);
 
   const loadExistingProgress = useCallback(
     (userId: string) => {
-      const key = `${userId}:${FREELANCER_TUTORIAL_ID}`;
+      if (!selectedTutorialId) return;
+      const key = `${userId}:${selectedTutorialId}`;
       const record = records[key];
       if (!record) return;
-      const index = getStepIndexById(freelancerTutorialSteps, record.currentStepId);
+      const index = getStepIndexById(tutorialSteps, record.currentStepId);
       setStepIndex(index);
     },
-    [records, setStepIndex]
+    [records, selectedTutorialId, setStepIndex, tutorialSteps]
   );
 
   useEffect(() => {
-    if (!isHydrated || !user) return;
+    if (!isHydrated || !user || !selectedTutorialId || !tutorialContextReady) return;
     console.log('[TutorialProvider] syncFromStorage effect triggered', {
       userId: user.id,
+      tutorialId: selectedTutorialId,
       currentStatus: status,
       currentStepIndex: stepIndex
     });
@@ -67,13 +80,31 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
       syncFromStorage(user.id);
       loadExistingProgress(user.id);
     }
-  }, [isHydrated, loadExistingProgress, syncFromStorage, user, status, stepIndex]);
+  }, [
+    isHydrated,
+    loadExistingProgress,
+    selectedTutorialId,
+    status,
+    stepIndex,
+    syncFromStorage,
+    tutorialContextReady,
+    user,
+  ]);
 
   useEffect(() => {
-    if (!isHydrated || !isAuthenticated || !user) return;
+    if (!isHydrated || !isAuthenticated || !user || !tutorialContextReady) return;
     if (!eligible || alreadyFinished) return;
     if (status === 'idle') start(user.id);
-  }, [alreadyFinished, eligible, isAuthenticated, isHydrated, start, status, user]);
+  }, [
+    alreadyFinished,
+    eligible,
+    isAuthenticated,
+    isHydrated,
+    start,
+    status,
+    tutorialContextReady,
+    user,
+  ]);
 
   useEffect(() => {
     let cancelled = false;
@@ -81,6 +112,7 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
     async function prepareStep() {
       console.log('[TutorialProvider] prepareStep called', {
         shouldRunTutorial,
+        tutorialContextReady,
         currentStepId: currentStep?.id,
         stepIndex,
         status,
@@ -88,7 +120,7 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
         kycStatus: user?.kycStatus
       });
 
-      if (!shouldRunTutorial || !currentStep || status !== 'active') {
+      if (!tutorialContextReady || !currentStep || status !== 'active') {
         console.log('[TutorialProvider] prepareStep: not running tutorial');
         setAnchorReady(false);
         return;
@@ -133,7 +165,17 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
     return () => {
       cancelled = true;
     };
-  }, [currentStep, location.pathname, navigate, next, setStepIndex, shouldRunTutorial, status, user?.kycStatus]);
+  }, [
+    currentStep,
+    location.pathname,
+    navigate,
+    next,
+    setStepIndex,
+    shouldRunTutorial,
+    status,
+    tutorialContextReady,
+    user?.kycStatus,
+  ]);
 
   const handleNext = useCallback(() => {
     console.log('[TutorialProvider] handleNext called', {
@@ -157,14 +199,14 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
 
     console.log('[TutorialProvider] handleNext: marking step completed and advancing');
     markStepCompleted(currentStep.id);
-    if (stepIndex >= freelancerTutorialSteps.length - 1) {
+    if (stepIndex >= tutorialSteps.length - 1) {
       console.log('[TutorialProvider] handleNext: completing tutorial');
       complete();
       return;
     }
     console.log('[TutorialProvider] handleNext: calling next() to advance step');
     next();
-  }, [complete, currentStep, markStepCompleted, next, setStepIndex, stepIndex, user]);
+  }, [complete, currentStep, markStepCompleted, next, setStepIndex, stepIndex, tutorialSteps.length, user]);
 
   const handlePrev = useCallback(() => {
     prev();
@@ -198,7 +240,7 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
         <TutorialOverlay
           step={currentStep}
           stepNumber={stepIndex + 1}
-          totalSteps={freelancerTutorialSteps.length}
+          totalSteps={tutorialSteps.length}
           targetRect={rect}
           onNext={handleNext}
           onPrev={handlePrev}

@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAuthStore } from '../../store';
-import type { TutorialStep } from './types';
+import type { TutorialId, TutorialStep } from './types';
 import { resolveAnchorElement } from './engine';
-import { FREELANCER_TUTORIAL_ID } from './steps/freelancerSteps';
 import { useOnboardingStore } from './store';
 
 interface SpotlightAnchorState {
@@ -10,23 +9,24 @@ interface SpotlightAnchorState {
   rect: DOMRect | null;
 }
 
-export function useTutorialEligibility() {
+export function useTutorialEligibility(tutorialId: TutorialId | null) {
   const { isAuthenticated, user } = useAuthStore();
   const { records } = useOnboardingStore();
 
   return useMemo(() => {
-    if (!isAuthenticated || !user || user.role !== 'freelancer') {
+    const hasSupportedRole = user?.role === 'freelancer' || user?.role === 'employer';
+    if (!isAuthenticated || !user || !tutorialId || !hasSupportedRole) {
       return { eligible: false, alreadyFinished: false };
     }
 
-    const key = `${user.id}:${FREELANCER_TUTORIAL_ID}`;
+    const key = `${user.id}:${tutorialId}`;
     const record = records[key];
     const alreadyFinished = record?.status === 'completed' || record?.status === 'dismissed';
     return {
       eligible: true,
       alreadyFinished,
     };
-  }, [isAuthenticated, records, user]);
+  }, [isAuthenticated, records, tutorialId, user]);
 }
 
 export function useSpotlightAnchor(step: TutorialStep | null, enabled: boolean): SpotlightAnchorState {

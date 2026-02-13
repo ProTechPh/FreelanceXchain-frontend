@@ -162,7 +162,7 @@ export function CreateProjectPage() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-6" data-tour-id="create-project-main">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link to="/projects/manage">

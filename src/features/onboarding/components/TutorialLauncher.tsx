@@ -9,7 +9,8 @@ export function TutorialLauncher({ className }: TutorialLauncherProps) {
   const { user } = useAuthStore();
   const { restart } = useOnboardingStore();
 
-  if (!user || user.role !== 'freelancer') return null;
+  const canLaunchTutorial = user?.role === 'freelancer' || user?.role === 'employer';
+  if (!user || !canLaunchTutorial) return null;
 
   return (
     <button

@@ -85,7 +85,7 @@ export function FreelancerListPage() {
       </div>
 
       {/* Search & Filters */}
-      <Card>
+      <Card data-tour-id="freelancers-search">
         <form onSubmit={handleSearch} className="space-y-4">
           <div className="flex gap-4">
             <div className="flex-1">
