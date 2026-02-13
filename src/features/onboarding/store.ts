@@ -76,7 +76,8 @@ export const useOnboardingStore = create<OnboardingState>()(
           return;
         }
 
-        const stepIndex = 0;
+        // Preserve current stepIndex if tutorial is active, otherwise reset to 0
+        const stepIndex = state.status === 'active' ? state.stepIndex : 0;
         set({
           activeUserId: userId,
           status: toRuntimeStatus(existing.status),
@@ -156,7 +157,14 @@ export const useOnboardingStore = create<OnboardingState>()(
         });
       },
 
-      next: () => set((state) => ({ stepIndex: state.stepIndex + 1 })),
+      next: () => {
+        console.log('[OnboardingStore] next() called, current stepIndex:', get().stepIndex);
+        set((state) => {
+          const newIndex = state.stepIndex + 1;
+          console.log('[OnboardingStore] next() setting stepIndex to:', newIndex);
+          return { stepIndex: newIndex };
+        });
+      },
       prev: () => set((state) => ({ stepIndex: Math.max(0, state.stepIndex - 1) })),
       setStepIndex: (index: number) => set({ stepIndex: Math.max(0, index) }),
 

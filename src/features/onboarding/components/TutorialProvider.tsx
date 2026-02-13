@@ -56,9 +56,18 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
 
   useEffect(() => {
     if (!isHydrated || !user) return;
-    syncFromStorage(user.id);
-    loadExistingProgress(user.id);
-  }, [isHydrated, loadExistingProgress, syncFromStorage, user]);
+    console.log('[TutorialProvider] syncFromStorage effect triggered', {
+      userId: user.id,
+      currentStatus: status,
+      currentStepIndex: stepIndex
+    });
+    // Only sync from storage if tutorial is not currently active
+    // to prevent resetting progress during active tutorial
+    if (status !== 'active') {
+      syncFromStorage(user.id);
+      loadExistingProgress(user.id);
+    }
+  }, [isHydrated, loadExistingProgress, syncFromStorage, user, status, stepIndex]);
 
   useEffect(() => {
     if (!isHydrated || !isAuthenticated || !user) return;
@@ -70,32 +79,52 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
     let cancelled = false;
 
     async function prepareStep() {
+      console.log('[TutorialProvider] prepareStep called', {
+        shouldRunTutorial,
+        currentStepId: currentStep?.id,
+        stepIndex,
+        status,
+        pathname: location.pathname,
+        kycStatus: user?.kycStatus
+      });
+
       if (!shouldRunTutorial || !currentStep || status !== 'active') {
+        console.log('[TutorialProvider] prepareStep: not running tutorial');
         setAnchorReady(false);
         return;
       }
 
       const isKycApproved = user?.kycStatus === 'approved';
       const accessible = canAccessStep(currentStep, isKycApproved);
+      console.log('[TutorialProvider] prepareStep: accessibility check', { accessible, isKycApproved, requiresKyc: currentStep.guard?.requiresKycApproved });
+      
       if (!accessible) {
+        console.log('[TutorialProvider] prepareStep: step not accessible, resetting to 0');
         setStepIndex(0);
         return;
       }
 
       if (location.pathname !== currentStep.route) {
+        console.log('[TutorialProvider] prepareStep: navigating to', currentStep.route);
         navigate(currentStep.route);
         setAnchorReady(false);
         return;
       }
 
+      console.log('[TutorialProvider] prepareStep: waiting for anchor', currentStep.anchor.selector);
       const anchor = await waitForAnchor(currentStep);
-      if (cancelled) return;
+      if (cancelled) {
+        console.log('[TutorialProvider] prepareStep: cancelled');
+        return;
+      }
 
       if (!anchor && currentStep.guard?.skipIfMissing) {
+        console.log('[TutorialProvider] prepareStep: anchor missing, auto-advancing');
         next();
         return;
       }
 
+      console.log('[TutorialProvider] prepareStep: anchor ready', { found: !!anchor });
       setAnchorReady(true);
     }
 
@@ -107,18 +136,33 @@ export function TutorialProvider({ children }: TutorialProviderProps) {
   }, [currentStep, location.pathname, navigate, next, setStepIndex, shouldRunTutorial, status, user?.kycStatus]);
 
   const handleNext = useCallback(() => {
-    if (!currentStep || !user) return;
+    console.log('[TutorialProvider] handleNext called', {
+      currentStepId: currentStep?.id,
+      stepIndex,
+      userId: user?.id,
+      kycStatus: user?.kycStatus
+    });
+    
+    if (!currentStep || !user) {
+      console.log('[TutorialProvider] handleNext: missing currentStep or user');
+      return;
+    }
+    
     const isKycApproved = user.kycStatus === 'approved';
     if (currentStep.id !== 'kyc-verification' && currentStep.guard?.requiresKycApproved && !isKycApproved) {
+      console.log('[TutorialProvider] handleNext: resetting to step 0 due to KYC guard');
       setStepIndex(0);
       return;
     }
 
+    console.log('[TutorialProvider] handleNext: marking step completed and advancing');
     markStepCompleted(currentStep.id);
     if (stepIndex >= freelancerTutorialSteps.length - 1) {
+      console.log('[TutorialProvider] handleNext: completing tutorial');
       complete();
       return;
     }
+    console.log('[TutorialProvider] handleNext: calling next() to advance step');
     next();
   }, [complete, currentStep, markStepCompleted, next, setStepIndex, stepIndex, user]);
 
