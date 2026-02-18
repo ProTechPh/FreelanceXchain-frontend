@@ -54,8 +54,31 @@ export const freelancerTutorialSteps: TutorialStep[] = [
     },
   },
   {
-    id: 'skill-analysis',
+    id: 'connect-wallet',
     order: 3,
+    title: 'Connect Wallet',
+    body: 'Connect your wallet to enable escrow, milestone releases, and secure on-chain payments.',
+    route: '/wallet',
+    role: 'freelancer',
+    anchor: {
+      selector: '[data-tour-id="wallet-main"]',
+      fallbackSelector: 'main h1',
+      placement: 'bottom',
+      padding: 8,
+    },
+    behavior: {
+      allowBackdropClose: true,
+      allowSkip: true,
+      blockInteraction: false,
+      autoAdvanceOn: 'manual',
+    },
+    guard: {
+      requiresKycApproved: true,
+    },
+  },
+  {
+    id: 'skill-analysis',
+    order: 4,
     title: 'Skill Analysis',
     body: 'Analyze your current strengths and identify high-demand skills to improve your match quality.',
     route: '/skill-analysis',
@@ -78,7 +101,7 @@ export const freelancerTutorialSteps: TutorialStep[] = [
   },
   {
     id: 'ai-recommendations',
-    order: 4,
+    order: 5,
     title: 'AI Recommendations',
     body: 'Use personalized project recommendations to prioritize the best-fit opportunities.',
     route: '/recommendations',
@@ -98,7 +121,7 @@ export const freelancerTutorialSteps: TutorialStep[] = [
   },
   {
     id: 'proposals',
-    order: 5,
+    order: 6,
     title: 'Proposals',
     body: 'Track submitted proposals, monitor status changes, and manage active applications.',
     route: '/proposals',
@@ -121,7 +144,7 @@ export const freelancerTutorialSteps: TutorialStep[] = [
   },
   {
     id: 'contracts',
-    order: 6,
+    order: 7,
     title: 'My Contracts',
     body: 'Manage milestones, progress, and payment lifecycle for all active contracts.',
     route: '/contracts',
@@ -144,7 +167,7 @@ export const freelancerTutorialSteps: TutorialStep[] = [
   },
   {
     id: 'disputes',
-    order: 7,
+    order: 8,
     title: 'Disputes',
     body: 'Open or track dispute cases and submit evidence when contract milestones are contested.',
     route: '/disputes',
@@ -167,7 +190,7 @@ export const freelancerTutorialSteps: TutorialStep[] = [
   },
   {
     id: 'browse-projects',
-    order: 8,
+    order: 9,
     title: 'Browse Projects',
     body: 'Search and filter projects to quickly find opportunities that fit your skills and rates.',
     route: '/projects',

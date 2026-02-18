@@ -46,8 +46,31 @@ export const employerTutorialSteps: TutorialStep[] = [
     },
   },
   {
-    id: 'create-projects',
+    id: 'connect-wallet',
     order: 3,
+    title: 'Connect Wallet',
+    body: 'Connect your wallet to fund escrow and pay freelancers securely through smart contracts.',
+    route: '/wallet',
+    role: 'employer',
+    anchor: {
+      selector: '[data-tour-id="wallet-main"]',
+      fallbackSelector: 'main h1',
+      placement: 'bottom',
+      padding: 8,
+    },
+    behavior: {
+      allowBackdropClose: true,
+      allowSkip: true,
+      blockInteraction: false,
+      autoAdvanceOn: 'manual',
+    },
+    guard: {
+      requiresKycApproved: true,
+    },
+  },
+  {
+    id: 'create-projects',
+    order: 4,
     title: 'Create Projects',
     body: 'Create a project with scope, budget, and milestones to start receiving qualified proposals.',
     route: '/projects/new',
@@ -70,7 +93,7 @@ export const employerTutorialSteps: TutorialStep[] = [
   },
   {
     id: 'my-projects',
-    order: 4,
+    order: 5,
     title: 'My Projects',
     body: 'Review all projects you posted, track status, and manage project activity in one place.',
     route: '/projects/manage',
@@ -93,7 +116,7 @@ export const employerTutorialSteps: TutorialStep[] = [
   },
   {
     id: 'disputes',
-    order: 5,
+    order: 6,
     title: 'Disputes',
     body: 'Handle open disputes, submit evidence, and track resolution outcomes for your contracts.',
     route: '/disputes',
@@ -116,7 +139,7 @@ export const employerTutorialSteps: TutorialStep[] = [
   },
   {
     id: 'browse-freelancer',
-    order: 6,
+    order: 7,
     title: 'Browse Freelancer',
     body: 'Search freelancers by skill, rate, and availability to find the best fit for your projects.',
     route: '/freelancers',
