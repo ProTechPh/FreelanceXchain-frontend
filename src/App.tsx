@@ -73,6 +73,7 @@ import { PrivacyPage } from './pages/info/PrivacyPage';
 import { AboutPage } from './pages/info/AboutPage';
 import { SettingsPage } from './pages/settings/SettingsPage';
 import { TutorialProvider } from './features/onboarding/components/TutorialProvider';
+import { MfaChallengePage } from './pages/auth/MfaChallengePage';
 
 function App() {
   const { isDark, toggle } = useThemeStore();
@@ -176,6 +177,7 @@ function App() {
         />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/mfa/challenge" element={<PublicLayout><MfaChallengePage /></PublicLayout>} />
 
         {/* Public Project Routes */}
         <Route path="/projects" element={<PublicLayout><ProjectListPage /></PublicLayout>} />

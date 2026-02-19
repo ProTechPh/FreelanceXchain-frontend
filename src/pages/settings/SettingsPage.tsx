@@ -20,6 +20,7 @@ import { Card, CardHeader, Button, Input, Modal } from '../../components/ui';
 import { useAuthStore, useThemeStore, useWalletStore } from '../../store';
 import { useToast } from '../../contexts/ToastContext';
 import { TutorialLauncher } from '../../features/onboarding/components/TutorialLauncher';
+import { MfaStatusCard } from '../../features/mfa/components/MfaStatusCard';
 
 export function SettingsPage() {
   const navigate = useNavigate();
@@ -505,6 +506,12 @@ export function SettingsPage() {
 
           <div className="pt-4">
             <Button onClick={handleChangePassword}>Change Password</Button>
+          </div>
+
+          {/* MFA */}
+          <div className="border-t border-gray-200 dark:border-dark-border pt-5">
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">MFA</p>
+            <MfaStatusCard />
           </div>
         </div>
       </Card>

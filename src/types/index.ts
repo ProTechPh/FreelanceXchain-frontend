@@ -7,6 +7,7 @@ export interface User {
   role: UserRole;
   walletAddress: string;
   kycStatus?: KycStatus; // KYC verification status
+  mfaEnabled?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -15,6 +16,8 @@ export interface AuthResult {
   user: User;
   accessToken: string;
   refreshToken: string;
+  mfaRequired?: boolean;
+  factorId?: string;
 }
 
 export interface RegisterInput {
