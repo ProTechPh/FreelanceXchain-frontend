@@ -7,7 +7,7 @@ interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, captchaToken?: string) => Promise<void>;
   register: (email: string, password: string, role: 'freelancer' | 'employer', name?: string, walletAddress?: string, captchaToken?: string) => Promise<void>;
   logout: () => void;
   fetchCurrentUser: () => Promise<void>;
@@ -21,13 +21,13 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isLoading: false,
 
-      login: async (email: string, password: string) => {
+      login: async (email: string, password: string, captchaToken?: string) => {
         set({ isLoading: true });
         try {
           // Clear any existing wallet connection before login
           useWalletStore.getState().disconnect();
           
-          const result = await api.login({ email, password });
+          const result = await api.login({ email, password, captchaToken });
           set({ user: result.user, isAuthenticated: true, isLoading: false });
         } catch (error) {
           set({ isLoading: false });

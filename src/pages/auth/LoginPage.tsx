@@ -5,6 +5,7 @@ import { useAuthStore } from '../../store';
 import { Button, Input, Card } from '../../components/ui';
 import { FaGoogle, FaGithub, FaLinkedin, FaMicrosoft } from 'react-icons/fa';
 import api from '../../lib/api';
+import { TurnstileCaptcha } from '../../components/TurnstileCaptcha';
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -14,19 +15,27 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
+    if (!captchaToken) {
+      setError('Please complete the CAPTCHA verification');
+      return;
+    }
+
     try {
-      await login(email, password);
+      await login(email, password, captchaToken);
       
       // Redirect to returnUrl if available, otherwise dashboard
       const returnUrl = searchParams.get('returnUrl');
       navigate(returnUrl || '/dashboard');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
+      // Reset captcha on error
+      setCaptchaToken(null);
     }
   };
 
@@ -100,7 +109,17 @@ export function LoginPage() {
               </Link>
             </div>
 
-            <Button type="submit" variant="glow" fullWidth loading={isLoading} size="lg">
+            <TurnstileCaptcha
+              siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+              onSuccess={(token) => setCaptchaToken(token)}
+              onError={() => {
+                setCaptchaToken(null);
+                setError('CAPTCHA verification failed. Please try again.');
+              }}
+              theme="auto"
+            />
+
+            <Button type="submit" variant="glow" fullWidth loading={isLoading} size="lg" disabled={!captchaToken}>
               Sign In
             </Button>
           </form>
