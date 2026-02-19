@@ -36,6 +36,18 @@ export function ContractDetailPage() {
   const isFreelancer = user?.role === 'freelancer';
   const isEmployer = user?.role === 'employer';
 
+  // Helper function to safely format dates
+  const formatDate = (dateString: string | undefined | null, formatStr: string): string => {
+    if (!dateString) return 'N/A';
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'Invalid Date';
+      return format(date, formatStr);
+    } catch {
+      return 'Invalid Date';
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       if (!id || !user) return;
@@ -192,11 +204,11 @@ export function ContractDetailPage() {
     );
   }
 
-  const completedMilestones = contract.milestones.filter(
+  const completedMilestones = (contract.milestones || []).filter(
     (m: ContractMilestone) => m.status === 'approved'
   ).length;
-  const progressPercentage = contract.milestones.length
-    ? Math.round((completedMilestones / contract.milestones.length) * 100)
+  const progressPercentage = (contract.milestones || []).length
+    ? Math.round((completedMilestones / (contract.milestones || []).length) * 100)
     : 0;
 
   return (
@@ -287,7 +299,7 @@ export function ContractDetailPage() {
           <Card>
             <CardHeader
               title="Milestones"
-              description={`${completedMilestones}/${contract.milestones.length} completed`}
+              description={`${completedMilestones}/${(contract.milestones || []).length} completed`}
             />
 
             {/* Progress bar */}
@@ -302,7 +314,7 @@ export function ContractDetailPage() {
 
             {/* Milestones list */}
             <div className="space-y-4">
-              {contract.milestones.map((milestone: ContractMilestone, index: number) => (
+              {(contract.milestones || []).map((milestone: ContractMilestone, index: number) => (
                 <div
                   key={milestone.id}
                   className={`p-4 rounded-lg border ${milestone.status === 'approved'
@@ -338,7 +350,7 @@ export function ContractDetailPage() {
                             {milestone.amount} ETH
                           </span>
                           <span className="text-gray-600 dark:text-gray-500">
-                            Due: {format(new Date(milestone.dueDate), 'MMM d, yyyy')}
+                            Due: {formatDate(milestone.dueDate, 'MMM d, yyyy')}
                           </span>
                         </div>
                       </div>
@@ -370,7 +382,7 @@ export function ContractDetailPage() {
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Start Date</p>
                   <p className="text-gray-900 dark:text-white">
-                    {format(new Date(contract.startDate), 'MMMM d, yyyy')}
+                    {formatDate(contract.startDate, 'MMMM d, yyyy')}
                   </p>
                 </div>
               </div>
@@ -381,7 +393,7 @@ export function ContractDetailPage() {
                   <div>
                     <p className="text-sm text-gray-600 dark:text-gray-400">End Date</p>
                     <p className="text-gray-900 dark:text-white">
-                      {format(new Date(contract.endDate), 'MMMM d, yyyy')}
+                      {formatDate(contract.endDate, 'MMMM d, yyyy')}
                     </p>
                   </div>
                 </div>
