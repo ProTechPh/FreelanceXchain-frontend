@@ -312,8 +312,22 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify(data),
     });
+    // When MFA is required, the accessToken is a temporary token — do NOT persist it
+    if (!result.mfaRequired) {
+      this.setTokens(result.accessToken, result.refreshToken);
+      // Fetch CSRF token after successful login
+      await this.fetchCsrfToken();
+    }
+    return result;
+  }
+
+  /** Called from MFA challenge page to complete a login that required MFA. */
+  async completeMFALogin(tempAccessToken: string, factorId: string, code: string): Promise<AuthResult> {
+    const result = await this.request<AuthResult>('/auth/login/mfa-verify', {
+      method: 'POST',
+      body: JSON.stringify({ accessToken: tempAccessToken, factorId, code }),
+    });
     this.setTokens(result.accessToken, result.refreshToken);
-    // Fetch CSRF token after successful login
     await this.fetchCsrfToken();
     return result;
   }

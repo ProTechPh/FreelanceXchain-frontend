@@ -27,11 +27,17 @@ export function LoginPage() {
     }
 
     try {
-      await login(email, password, captchaToken);
-      
-      // Redirect to returnUrl if available, otherwise dashboard
-      const returnUrl = searchParams.get('returnUrl');
-      navigate(returnUrl || '/dashboard');
+      const result = await login(email, password, captchaToken ?? undefined);
+      const returnUrl = searchParams.get('returnUrl') || '/dashboard';
+
+      if (result.mfaRequired) {
+        navigate('/mfa/challenge', {
+          state: { accessToken: result.accessToken, factorId: result.factorId, returnUrl },
+        });
+        return;
+      }
+
+      navigate(returnUrl);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
       // Reset captcha on error

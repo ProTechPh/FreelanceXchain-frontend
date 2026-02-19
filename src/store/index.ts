@@ -7,7 +7,8 @@ interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string, captchaToken?: string) => Promise<void>;
+  login: (email: string, password: string, captchaToken?: string) => Promise<{ mfaRequired: boolean; accessToken?: string; factorId?: string }>;
+  loginWithMfa: (tempAccessToken: string, factorId: string, code: string) => Promise<void>;
   register: (email: string, password: string, role: 'freelancer' | 'employer', name?: string, walletAddress?: string, captchaToken?: string) => Promise<void>;
   logout: () => void;
   fetchCurrentUser: () => Promise<void>;
@@ -26,8 +27,26 @@ export const useAuthStore = create<AuthState>()(
         try {
           // Clear any existing wallet connection before login
           useWalletStore.getState().disconnect();
-          
+
           const result = await api.login({ email, password, captchaToken });
+
+          if (result.mfaRequired) {
+            set({ isLoading: false });
+            return { mfaRequired: true, accessToken: result.accessToken, factorId: result.factorId };
+          }
+
+          set({ user: result.user, isAuthenticated: true, isLoading: false });
+          return { mfaRequired: false };
+        } catch (error) {
+          set({ isLoading: false });
+          throw error;
+        }
+      },
+
+      loginWithMfa: async (tempAccessToken: string, factorId: string, code: string) => {
+        set({ isLoading: true });
+        try {
+          const result = await api.completeMFALogin(tempAccessToken, factorId, code);
           set({ user: result.user, isAuthenticated: true, isLoading: false });
         } catch (error) {
           set({ isLoading: false });

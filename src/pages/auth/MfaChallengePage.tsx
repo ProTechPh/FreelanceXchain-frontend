@@ -3,41 +3,49 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { ShieldCheck, AlertCircle, Smartphone } from 'lucide-react';
 import { Button, Input, Card } from '../../components/ui';
 import { useToast } from '../../contexts/ToastContext';
+import { useAuthStore } from '../../store';
 
 interface LocationState {
+  accessToken?: string;
+  factorId?: string;
   returnUrl?: string;
 }
-
-const delay = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 export function MfaChallengePage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { showToast } = useToast();
+  const { loginWithMfa, isLoading } = useAuthStore();
 
-  const returnUrl = (location.state as LocationState)?.returnUrl ?? '/dashboard';
+  const state = (location.state as LocationState) ?? {};
+  const { accessToken, factorId, returnUrl = '/dashboard' } = state;
 
   const [code, setCode] = useState('');
-  const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState('');
+
+  // If we arrived here without the required MFA state, go back to login
+  if (!accessToken || !factorId) {
+    navigate('/login', { replace: true });
+    return null;
+  }
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     if (code.length !== 6) return;
 
     setError('');
-    setIsVerifying(true);
 
-    // Static simulation — any 6-digit code succeeds
-    await delay(700);
-    setIsVerifying(false);
-
-    showToast({
-      type: 'success',
-      title: 'Verified',
-      message: 'MFA verification successful',
-    });
-    navigate(returnUrl, { replace: true });
+    try {
+      await loginWithMfa(accessToken, factorId, code);
+      showToast({
+        type: 'success',
+        title: 'Verified',
+        message: 'MFA verification successful',
+      });
+      navigate(returnUrl, { replace: true });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Invalid verification code. Please try again.');
+    }
   };
 
   return (
@@ -90,7 +98,7 @@ export function MfaChallengePage() {
             <Button
               type="submit"
               fullWidth
-              loading={isVerifying}
+              loading={isLoading}
               disabled={code.length !== 6}
             >
               Verify
