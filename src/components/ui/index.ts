@@ -14,3 +14,4 @@ export { Tabs } from './Tabs';
 export { StatusBadge } from './StatusBadge';
 export { PageLoader, InlineLoader } from './PageLoader';
 export { Toast } from './Toast';
+export { FileUpload } from './FileUpload';

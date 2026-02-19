@@ -46,6 +46,13 @@ class ApiClient {
   constructor() {
     this.accessToken = localStorage.getItem('accessToken');
     this.refreshToken = localStorage.getItem('refreshToken');
+    
+    // Fetch CSRF token if user is already authenticated
+    if (this.accessToken) {
+      this.fetchCsrfToken().catch(err => {
+        console.error('Failed to fetch CSRF token on init:', err);
+      });
+    }
   }
 
   // Set toast callback from ToastContext
@@ -66,9 +73,18 @@ class ApiClient {
       (headers as Record<string, string>)['Authorization'] = `Bearer ${this.accessToken}`;
     }
 
+    // Add CSRF token from cookie for state-changing requests
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(options.method?.toUpperCase() || 'GET')) {
+      const csrfToken = this.getCsrfTokenFromCookie();
+      if (csrfToken) {
+        (headers as Record<string, string>)['X-CSRF-Token'] = csrfToken;
+      }
+    }
+
     const response = await fetch(`${API_BASE}${endpoint}`, {
       ...options,
       headers,
+      credentials: 'include', // Important: Include cookies in requests
     });
 
     // Handle token expiration
@@ -102,6 +118,40 @@ class ApiClient {
     }
 
     return response.json();
+  }
+
+  /**
+   * Extract CSRF token from cookie or localStorage fallback
+   */
+  private getCsrfTokenFromCookie(): string | null {
+    // First try to get from cookie
+    const cookies = document.cookie.split(';');
+    for (const cookie of cookies) {
+      const [name, value] = cookie.trim().split('=');
+      if (name === '__Host-psifi.x-csrf-token' || name === 'psifi.x-csrf-token') {
+        return decodeURIComponent(value);
+      }
+    }
+    
+    // Fallback to localStorage if cookie is not available
+    const tokenFromStorage = localStorage.getItem('csrf-token');
+    if (tokenFromStorage) {
+      console.log('[CSRF] Using token from localStorage (cookie not available)');
+      return tokenFromStorage;
+    }
+    
+    return null;
+  }
+
+  /**
+   * Clear CSRF token cookie and localStorage (for logout)
+   */
+  private clearCsrfCookie(): void {
+    // Clear both possible cookie names
+    document.cookie = '__Host-psifi.x-csrf-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    document.cookie = 'psifi.x-csrf-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    // Also clear from localStorage
+    localStorage.removeItem('csrf-token');
   }
 
   private sanitizeApiError(message: string, statusCode: number): string {
@@ -182,22 +232,76 @@ class ApiClient {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('auth-storage'); // Clear zustand persisted state
+    this.clearCsrfCookie(); // Clear CSRF token cookie
   }
 
   setTokens(access: string, refresh: string): void {
+    console.log('[AUTH] Setting tokens:', {
+      hasAccess: !!access,
+      hasRefresh: !!refresh,
+      accessLength: access?.length || 0,
+      refreshLength: refresh?.length || 0,
+    });
     this.accessToken = access;
     this.refreshToken = refresh;
     localStorage.setItem('accessToken', access);
     localStorage.setItem('refreshToken', refresh);
+    console.log('[AUTH] Tokens set in localStorage and instance');
   }
 
   logout(): void {
+    // Call backend logout endpoint to clear server-side session
+    // Don't await - just fire and forget, then clear local state
+    this.request('/auth/logout', { method: 'POST' })
+      .catch(err => console.error('Logout request failed:', err));
+    
     this.clearAuth();
     window.location.href = '/login';
   }
 
   isAuthenticated(): boolean {
     return !!this.accessToken;
+  }
+
+  /**
+   * Fetch CSRF token from the server
+   * This should be called when the app initializes or after login
+   */
+  async fetchCsrfToken(): Promise<void> {
+    try {
+      console.log('[CSRF] Fetching CSRF token from:', `${API_BASE}/auth/csrf-token`);
+      const response = await fetch(`${API_BASE}/auth/csrf-token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Important: Include cookies
+        body: JSON.stringify({}),
+      });
+      console.log('[CSRF] Response status:', response.status);
+      console.log('[CSRF] Response headers:', Object.fromEntries(response.headers.entries()));
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('[CSRF] Token response:', data);
+        console.log('[CSRF] Cookies after fetch:', document.cookie);
+        
+        // If the response includes a token, store it in localStorage as fallback
+        if (data.token) {
+          console.log('[CSRF] Token received in response:', data.token);
+          localStorage.setItem('csrf-token', data.token);
+          console.log('[CSRF] Token stored in localStorage as fallback');
+        }
+      } else {
+        console.error('[CSRF] Failed to fetch token:', response.status, response.statusText);
+        const errorData = await response.json().catch(() => ({}));
+        console.error('[CSRF] Error details:', errorData);
+        throw new Error(`Failed to fetch CSRF token: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('Failed to fetch CSRF token:', error);
+      throw error; // Re-throw so calling code can handle it
+    }
   }
 
   // =====================
@@ -209,6 +313,8 @@ class ApiClient {
       body: JSON.stringify(data),
     });
     this.setTokens(result.accessToken, result.refreshToken);
+    // Fetch CSRF token after successful login
+    await this.fetchCsrfToken();
     return result;
   }
 
@@ -218,6 +324,8 @@ class ApiClient {
       body: JSON.stringify(data),
     });
     this.setTokens(result.accessToken, result.refreshToken);
+    // Fetch CSRF token after successful registration
+    await this.fetchCsrfToken();
     return result;
   }
 
@@ -422,7 +530,8 @@ class ApiClient {
   }
 
   async getProjectProposals(projectId: string): Promise<Proposal[]> {
-    return this.request<Proposal[]>(`/projects/${projectId}/proposals`);
+    const result = await this.request<PaginatedResponse<Proposal>>(`/projects/${projectId}/proposals`);
+    return result.items;
   }
 
   async getMyEmployerProjects(): Promise<Project[]> {
@@ -744,6 +853,174 @@ class ApiClient {
 
   async canRate(contractId: string, rateeId: string): Promise<import('../types').CanRateResponse> {
     return this.request<import('../types').CanRateResponse>(`/reputation/can-rate?contractId=${contractId}&rateeId=${rateeId}`);
+  }
+
+  // File Upload Methods
+  async uploadFile(
+    file: File,
+    bucket: 'profile-images' | 'contract-documents' | 'proposal-attachments' | 'dispute-evidence',
+    folder?: string
+  ): Promise<{ success: boolean; url: string; path: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('bucket', bucket);
+    if (folder) {
+      formData.append('folder', folder);
+    }
+
+    // Get CSRF token from cookie - required for security
+    const csrfToken = this.getCsrfTokenFromCookie();
+    const headers: HeadersInit = {
+      'Authorization': `Bearer ${this.accessToken}`,
+    };
+    
+    console.log('[UPLOAD] Auth token:', this.accessToken ? 'Present' : 'Missing');
+    console.log('[UPLOAD] CSRF token:', csrfToken ? 'Present' : 'Missing');
+    
+    if (!csrfToken) {
+      // Try to fetch CSRF token if missing
+      console.log('[UPLOAD] CSRF token missing, attempting to fetch...');
+      try {
+        await this.fetchCsrfToken();
+        const newCsrfToken = this.getCsrfTokenFromCookie();
+        if (newCsrfToken) {
+          (headers as Record<string, string>)['X-CSRF-Token'] = newCsrfToken;
+          console.log('[UPLOAD] CSRF token fetched and added to headers');
+        } else {
+          throw new Error('Failed to obtain CSRF token');
+        }
+      } catch (error) {
+        console.error('[UPLOAD] Failed to fetch CSRF token:', error);
+        throw new Error('CSRF token required for file upload. Please refresh the page and try again.');
+      }
+    } else {
+      (headers as Record<string, string>)['X-CSRF-Token'] = csrfToken;
+    }
+
+    const response = await fetch(`${API_BASE}/files/upload`, {
+      method: 'POST',
+      headers,
+      body: formData,
+      credentials: 'include', // Include cookies
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to upload file');
+    }
+
+    return response.json();
+  }
+
+  async uploadMultipleFiles(
+    files: File[],
+    bucket: 'profile-images' | 'contract-documents' | 'proposal-attachments' | 'dispute-evidence',
+    folder?: string
+  ): Promise<{ success: boolean; files: Array<{ url: string; path: string; filename: string }> }> {
+    const uploadPromises = files.map(file => this.uploadFile(file, bucket, folder));
+    const results = await Promise.all(uploadPromises);
+    
+    return {
+      success: true,
+      files: results.map((result, index) => ({
+        url: result.url,
+        path: result.path,
+        filename: files[index].name,
+      })),
+    };
+  }
+
+  async deleteFile(bucket: string, path: string): Promise<{ success: boolean }> {
+    return this.request<{ success: boolean }>(`/files/${bucket}/${path}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getSignedUrl(bucket: string, path: string, expiresIn?: number): Promise<{ success: boolean; url: string }> {
+    const params = expiresIn ? `?expiresIn=${expiresIn}` : '';
+    return this.request<{ success: boolean; url: string }>(`/files/signed-url/${bucket}/${path}${params}`);
+  }
+
+  async listUserFiles(bucket: string, folder?: string): Promise<{ success: boolean; files: any[] }> {
+    const params = folder ? `?folder=${folder}` : '';
+    return this.request<{ success: boolean; files: any[] }>(`/files/list/${bucket}${params}`);
+  }
+
+  // =====================
+  // MFA Endpoints
+  // =====================
+  async enrollMFA(): Promise<{ qrCode: string; secret: string; factorId: string }> {
+    return this.request<{ qrCode: string; secret: string; factorId: string }>('/auth/mfa/enroll', {
+      method: 'POST',
+    });
+  }
+
+  async verifyMFAEnrollment(factorId: string, code: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>('/auth/mfa/verify-enrollment', {
+      method: 'POST',
+      body: JSON.stringify({ factorId, code }),
+    });
+  }
+
+  async getMFAFactors(): Promise<{ factors: Array<{ id: string; type: string; status: string; created_at: string }> }> {
+    return this.request<{ factors: Array<{ id: string; type: string; status: string; created_at: string }> }>('/auth/mfa/factors');
+  }
+
+  async challengeMFA(factorId: string): Promise<{ challengeId: string }> {
+    return this.request<{ challengeId: string }>('/auth/mfa/challenge', {
+      method: 'POST',
+      body: JSON.stringify({ factorId }),
+    });
+  }
+
+  async verifyMFAChallenge(factorId: string, challengeId: string, code: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>('/auth/mfa/verify', {
+      method: 'POST',
+      body: JSON.stringify({ factorId, challengeId, code }),
+    });
+  }
+
+  async disableMFA(factorId: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>('/auth/mfa/disable', {
+      method: 'POST',
+      body: JSON.stringify({ factorId }),
+    });
+  }
+
+  async verifyMFALogin(accessToken: string, factorId: string, code: string): Promise<AuthResult> {
+    return this.request<AuthResult>('/auth/login/mfa-verify', {
+      method: 'POST',
+      body: JSON.stringify({ accessToken, factorId, code }),
+    });
+  }
+
+  // =====================
+  // Audit Logs Endpoints
+  // =====================
+  async getMyAuditLogs(limit = 100): Promise<{ logs: Array<{
+    id: string;
+    action: string;
+    resource_type: string;
+    resource_id: string | null;
+    payload: Record<string, any>;
+    ip_address: string | null;
+    user_agent: string | null;
+    status: 'success' | 'failure' | 'pending';
+    error_message: string | null;
+    created_at: string;
+  }> }> {
+    return this.request<{ logs: Array<{
+      id: string;
+      action: string;
+      resource_type: string;
+      resource_id: string | null;
+      payload: Record<string, any>;
+      ip_address: string | null;
+      user_agent: string | null;
+      status: 'success' | 'failure' | 'pending';
+      error_message: string | null;
+      created_at: string;
+    }> }>(`/audit-logs/me?limit=${limit}`);
   }
 }
 

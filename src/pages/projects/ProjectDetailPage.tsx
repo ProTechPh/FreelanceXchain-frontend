@@ -26,6 +26,7 @@ export function ProjectDetailPage() {
   const { user, isAuthenticated } = useAuthStore();
   const [project, setProject] = useState<Project | null>(null);
   const [proposals, setProposals] = useState<Proposal[]>([]);
+  const [myProposal, setMyProposal] = useState<Proposal | null>(null); // Add state for freelancer's own proposal
   const [loading, setLoading] = useState(true);
   const [showProposalForm, setShowProposalForm] = useState(false);
   const [proposalData, setProposalData] = useState({
@@ -89,12 +90,43 @@ export function ProjectDetailPage() {
       if (!id) return;
       try {
         const projectData = await api.getProject(id);
+        console.log('[PROJECT DEBUG] Project data:', projectData);
+        console.log('[PROJECT DEBUG] createdAt:', projectData.createdAt);
+        console.log('[PROJECT DEBUG] User:', { role: user?.role, userId: user?.id, employerId: projectData.employerId, employer_id: (projectData as any).employer_id });
+        console.log('[PROJECT DEBUG] Is employer?', user?.role === 'employer');
+        console.log('[PROJECT DEBUG] Is owner?', user?.id === projectData.employerId || user?.id === (projectData as any).employer_id);
         setProject(projectData);
 
-        // If employer, fetch proposals
-        if (user?.role === 'employer' && user.id === projectData.employerId) {
-          const proposalsData = await api.getProjectProposals(id);
-          setProposals(proposalsData);
+        // If employer, fetch all proposals
+        // Note: Backend returns employer_id (snake_case) but type expects employerId (camelCase)
+        const employerId = projectData.employerId || (projectData as any).employer_id;
+        if (user?.role === 'employer' && user.id === employerId) {
+          console.log('[PROPOSALS DEBUG] Fetching proposals for project:', id);
+          try {
+            const proposalsData = await api.getProjectProposals(id);
+            console.log('[PROPOSALS DEBUG] Proposals received:', proposalsData);
+            setProposals(proposalsData);
+          } catch (error) {
+            console.error('[PROPOSALS DEBUG] Error fetching proposals:', error);
+          }
+        } else {
+          console.log('[PROPOSALS DEBUG] Not fetching proposals - not owner or not employer');
+        }
+        
+        // If freelancer, fetch their own proposal for this project
+        if (user?.role === 'freelancer') {
+          try {
+            const myProposalsData = await api.getMyProposals();
+            const proposalForThisProject = myProposalsData.find(p => p.projectId === id);
+            // Only set myProposal if it's not withdrawn
+            if (proposalForThisProject && proposalForThisProject.status !== 'withdrawn') {
+              setMyProposal(proposalForThisProject);
+            } else {
+              setMyProposal(null); // Clear if withdrawn
+            }
+          } catch (error) {
+            console.log('No proposal found for this project');
+          }
         }
       } catch (error) {
         console.error('Error fetching project:', error);
@@ -113,12 +145,44 @@ export function ProjectDetailPage() {
 
     setSubmitting(true);
     try {
-      await api.submitProposal({
+      // First, upload the files if any
+      let attachments: Array<{ url: string; filename: string; size: number; mimeType: string }> = [];
+      
+      if (uploadedFiles.length > 0) {
+        console.log('Uploading files:', uploadedFiles.map(f => f.name));
+        
+        // Upload files using the API client
+        const uploadResults = await api.uploadMultipleFiles(
+          uploadedFiles,
+          'proposal-attachments',
+          `project-${id}`
+        );
+        
+        if (uploadResults.success && uploadResults.files) {
+          attachments = uploadResults.files.map((file, index) => ({
+            url: file.url,
+            filename: file.filename,
+            size: uploadedFiles[index].size, // Add file size
+            mimeType: uploadedFiles[index].type, // Add MIME type
+          }));
+          console.log('Files uploaded successfully:', attachments);
+        } else {
+          throw new Error('Failed to upload files');
+        }
+      }
+
+      // Then submit the proposal with the uploaded file URLs
+      const submittedProposal = await api.submitProposal({
         projectId: id,
         coverLetter: '',
         proposedRate: parseFloat(proposalData.proposedRate),
         estimatedDuration: parseInt(proposalData.estimatedDuration, 10),
+        attachments, // This will be an empty array if no files uploaded, which is now valid
       });
+      
+      // Update the myProposal state with the newly submitted proposal
+      setMyProposal(submittedProposal);
+      
       setShowProposalForm(false);
       setProposalData({ proposedRate: '', estimatedDuration: '' });
       setUploadedFiles([]);
@@ -126,6 +190,7 @@ export function ProjectDetailPage() {
       // Show success message or redirect
     } catch (error) {
       console.error('Error submitting proposal:', error);
+      setFileError(error instanceof Error ? error.message : 'Failed to submit proposal');
     } finally {
       setSubmitting(false);
     }
@@ -146,7 +211,9 @@ export function ProjectDetailPage() {
     );
   }
 
-  const isOwner = user?.role === 'employer' && user.id === project.employerId;
+  // Note: Backend returns employer_id (snake_case) but type expects employerId (camelCase)
+  const employerId = project.employerId || (project as any).employer_id;
+  const isOwner = user?.role === 'employer' && user.id === employerId;
   const isFreelancer = user?.role === 'freelancer';
   const canApply = isFreelancer && project.status === 'open';
 
@@ -246,7 +313,7 @@ export function ProjectDetailPage() {
               />
               <div className="space-y-4">
                 {proposals.slice(0, 5).map((proposal) => (
-                  <div key={proposal.id} className="flex items-start gap-4 p-4 bg-gray-50 dark:bg-dark-bg rounded-lg">
+                  <div key={proposal.id} className="flex items-start gap-4 p-4 bg-gray-50 dark:bg-dark-bg rounded-lg border border-gray-200 dark:border-dark-border hover:border-primary-500 dark:hover:border-primary-500 transition-colors">
                     <div className="w-10 h-10 bg-primary-100 dark:bg-primary-600/20 rounded-full flex items-center justify-center">
                       <User className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                     </div>
@@ -257,10 +324,54 @@ export function ProjectDetailPage() {
                         </h4>
                         <StatusBadge status={proposal.status} />
                       </div>
-                      <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2">{proposal.coverLetter}</p>
-                      <div className="flex items-center gap-4 mt-2 text-sm text-gray-600 dark:text-gray-500">
-                        <span>{proposal.proposedRate} ETH</span>
-                        <span>{proposal.estimatedDuration} days</span>
+                      {proposal.coverLetter && (
+                        <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2 mb-2">{proposal.coverLetter}</p>
+                      )}
+                      
+                      {/* Attachments Preview */}
+                      {proposal.attachments && proposal.attachments.length > 0 && (
+                        <div className="mb-2 p-2 bg-white dark:bg-dark-surface rounded border border-gray-200 dark:border-dark-border">
+                          <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">
+                            Attachments ({proposal.attachments.length})
+                          </p>
+                          <div className="space-y-1">
+                            {proposal.attachments.slice(0, 2).map((attachment, idx) => (
+                              <a
+                                key={idx}
+                                href={attachment.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 text-xs text-primary-600 dark:text-primary-400 hover:underline"
+                              >
+                                <FileText className="w-3 h-3" />
+                                <span className="truncate">{attachment.filename}</span>
+                              </a>
+                            ))}
+                            {proposal.attachments.length > 2 && (
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                +{proposal.attachments.length - 2} more file{proposal.attachments.length - 2 > 1 ? 's' : ''}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <DollarSign className="w-4 h-4" />
+                            {proposal.proposedRate} ETH
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-4 h-4" />
+                            {proposal.estimatedDuration} days
+                          </span>
+                        </div>
+                        <Link to={`/projects/${project.id}/proposals/${proposal.id}`}>
+                          <Button variant="outline" size="sm">
+                            View Details
+                          </Button>
+                        </Link>
                       </div>
                     </div>
                   </div>
@@ -269,8 +380,68 @@ export function ProjectDetailPage() {
             </Card>
           )}
 
+          {/* My Submitted Proposal (for freelancers) */}
+          {myProposal && (
+            <Card>
+              <CardHeader title="Your Proposal" description="You have already submitted a proposal for this project" />
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-dark-bg rounded-lg">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <StatusBadge status={myProposal.status} />
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        Submitted {myProposal.createdAt ? format(new Date(myProposal.createdAt), 'MMM d, yyyy') : ''}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-600 dark:text-gray-400">Proposed Rate:</span>
+                        <span className="ml-2 font-medium text-gray-900 dark:text-white">{myProposal.proposedRate} ETH</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-600 dark:text-gray-400">Duration:</span>
+                        <span className="ml-2 font-medium text-gray-900 dark:text-white">{myProposal.estimatedDuration} days</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Attachments */}
+                {myProposal.attachments && myProposal.attachments.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Attachments ({myProposal.attachments.length})</h4>
+                    <ul className="space-y-2">
+                      {myProposal.attachments.map((attachment: { url: string; filename: string; size: number; mimeType: string }, idx: number) => (
+                        <li
+                          key={idx}
+                          className="flex items-center justify-between gap-3 bg-gray-50 dark:bg-dark-border/30 border border-gray-200 dark:border-dark-border rounded-lg px-4 py-2"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <FileText className="w-4 h-4 text-primary-500 flex-shrink-0" />
+                            <span className="text-sm text-gray-700 dark:text-gray-200 truncate">{attachment.filename}</span>
+                            <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">
+                              {formatBytes(attachment.size || 0)}
+                            </span>
+                          </div>
+                          <a
+                            href={attachment.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary-600 dark:text-primary-400 hover:underline text-sm flex-shrink-0"
+                          >
+                            View
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            </Card>
+          )}
+
           {/* Apply Form */}
-          {canApply && (
+          {canApply && !myProposal && (
             <Card>
               {!showProposalForm ? (
                 <div className="text-center py-6">
@@ -288,7 +459,7 @@ export function ProjectDetailPage() {
                     {/* File Upload */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Proposal Documents *
+                        Proposal Documents (Optional)
                         <span className="ml-2 text-xs font-normal text-gray-400 dark:text-gray-500">
                           PDF or Word · max {MAX_FILES} files · {MAX_FILE_SIZE_MB}MB each · {MAX_TOTAL_SIZE_MB}MB total
                         </span>
@@ -400,7 +571,7 @@ export function ProjectDetailPage() {
                       </div>
                     </div>
                     <div className="flex gap-3">
-                      <Button type="submit" disabled={submitting || uploadedFiles.length === 0}>
+                      <Button type="submit" disabled={submitting}>
                         {submitting ? 'Submitting...' : 'Submit Proposal'}
                       </Button>
                       <Button type="button" variant="ghost" onClick={() => { setShowProposalForm(false); setUploadedFiles([]); setFileError(null); }}>
@@ -457,7 +628,7 @@ export function ProjectDetailPage() {
                 <span className="text-gray-900 dark:text-white">
                   {project.createdAt
                     ? format(new Date(project.createdAt), 'MMM d, yyyy')
-                    : 'Unknown'}
+                    : 'Recently'}
                 </span>
               </div>
               {project.proposalCount !== undefined && (

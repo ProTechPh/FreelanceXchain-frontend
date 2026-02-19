@@ -21,6 +21,7 @@ import { ProfilePage } from './pages/profile/ProfilePage';
 import { ContractsListPage } from './pages/contracts/ContractsListPage';
 import { ContractDetailPage } from './pages/contracts/ContractDetailPage';
 import { ProposalsListPage } from './pages/proposals/ProposalsListPage';
+import { ProposalDetailPage } from './pages/proposals/ProposalDetailPage';
 import { NotificationsPage } from './pages/notifications/NotificationsPage';
 import { DisputesListPage } from './pages/disputes/DisputesListPage';
 import { DisputeDetailPage } from './pages/disputes/DisputeDetailPage';
@@ -72,6 +73,7 @@ import { TermsPage } from './pages/info/TermsPage';
 import { PrivacyPage } from './pages/info/PrivacyPage';
 import { AboutPage } from './pages/info/AboutPage';
 import { SettingsPage } from './pages/settings/SettingsPage';
+import { ActivityLogPage } from './pages/settings/ActivityLogPage';
 import { TutorialProvider } from './features/onboarding/components/TutorialProvider';
 import { MfaChallengePage } from './pages/auth/MfaChallengePage';
 
@@ -189,6 +191,14 @@ function App() {
             ) : (
               <PublicLayout showMinimalHeader><ProjectDetailPage /></PublicLayout>
             )
+          }
+        />
+        <Route
+          path="/projects/:projectId/proposals/:proposalId"
+          element={
+            <ProtectedRoute>
+              <Layout><ProposalDetailPage /></Layout>
+            </ProtectedRoute>
           }
         />
         
@@ -384,6 +394,16 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <SettingsPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/settings/activity"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <ActivityLogPage />
               </Layout>
             </ProtectedRoute>
           }

@@ -12,6 +12,9 @@ export function OAuthCallbackPage() {
   const { setUser } = useAuthStore();
   const [isLoading, setIsLoading] = useState(true);
   const [showRoleModal, setShowRoleModal] = useState(false);
+  const [showMfaModal, setShowMfaModal] = useState(false);
+  const [mfaData, setMfaData] = useState<{ accessToken: string; factorId: string } | null>(null);
+  const [mfaCode, setMfaCode] = useState('');
   const [tempAccessToken, setTempAccessToken] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [walletAddress, setWalletAddress] = useState('');
@@ -64,10 +67,26 @@ export function OAuthCallbackPage() {
             setTempAccessToken(data.accessToken || accessToken);
             setShowRoleModal(true);
             setIsLoading(false);
+          } else if (response.ok && data.mfaRequired) {
+            console.log('MFA required - showing MFA modal');
+            // MFA required
+            setMfaData({ accessToken: data.accessToken, factorId: data.factorId });
+            setShowMfaModal(true);
+            setIsLoading(false);
           } else if (response.ok && data.user) {
             console.log('Existing user detected - logging in', data.user);
+            console.log('OAuth response data:', data);
+            console.log('Access token:', data.accessToken);
+            console.log('Refresh token:', data.refreshToken);
+            
             // Existing user - login complete
             api.setTokens(data.accessToken, data.refreshToken || refreshToken || '');
+            // Fetch CSRF token after setting tokens - don't block login if it fails
+            try {
+              await api.fetchCsrfToken();
+            } catch (csrfError) {
+              console.warn('CSRF token fetch failed after login, but continuing:', csrfError);
+            }
             setUser(data.user);
             navigate('/dashboard');
           } else if (response.ok) {
@@ -110,6 +129,12 @@ export function OAuthCallbackPage() {
           } else if (response.ok && data.user) {
             // Existing user - login complete
             api.setTokens(data.accessToken, data.refreshToken);
+            // Fetch CSRF token after setting tokens - don't block login if it fails
+            try {
+              await api.fetchCsrfToken();
+            } catch (csrfError) {
+              console.warn('CSRF token fetch failed after login, but continuing:', csrfError);
+            }
             setUser(data.user);
             navigate('/dashboard');
           } else {
@@ -150,6 +175,30 @@ export function OAuthCallbackPage() {
     }
   };
 
+  const handleMfaSubmit = async () => {
+    if (!mfaData || mfaCode.length !== 6) return;
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const result = await api.verifyMFALogin(mfaData.accessToken, mfaData.factorId, mfaCode);
+      api.setTokens(result.accessToken, result.refreshToken);
+      // Fetch CSRF token after setting tokens
+      try {
+        await api.fetchCsrfToken();
+      } catch (csrfError) {
+        console.warn('CSRF token fetch failed after MFA login, but continuing:', csrfError);
+      }
+      setUser(result.user);
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Invalid verification code');
+      setIsLoading(false);
+      setMfaCode('');
+    }
+  };
+
   if (isLoading && !showRoleModal) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -185,6 +234,51 @@ export function OAuthCallbackPage() {
 
   return (
     <>
+      {/* MFA Verification Modal */}
+      <Modal isOpen={showMfaModal} onClose={() => {}} size="sm">
+        <div className="p-6">
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-indigo-600 mb-4 shadow-lg shadow-primary-500/30">
+              <span className="text-3xl">🔐</span>
+            </div>
+            <h2 className="text-2xl font-bold text-white mb-2">Two-Factor Authentication</h2>
+            <p className="text-gray-400">Enter the 6-digit code from your authenticator app</p>
+          </div>
+
+          {error && (
+            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg mb-4">
+              <p className="text-sm text-red-400 text-center">{error}</p>
+            </div>
+          )}
+
+          <div className="mb-6">
+            <Input
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength={6}
+              placeholder="000000"
+              value={mfaCode}
+              onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              className="text-center text-2xl tracking-widest"
+              autoFocus
+            />
+          </div>
+
+          <Button
+            onClick={handleMfaSubmit}
+            variant="glow"
+            fullWidth
+            size="lg"
+            disabled={mfaCode.length !== 6 || isLoading}
+            loading={isLoading}
+          >
+            Verify & Continue
+          </Button>
+        </div>
+      </Modal>
+
+      {/* Role Selection Modal */}
       <Modal isOpen={showRoleModal} onClose={() => {}} size="md">
         <div className="p-6">
           <div className="text-center mb-8">

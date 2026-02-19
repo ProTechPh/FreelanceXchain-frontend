@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ShieldCheck, Copy, CheckCircle, AlertCircle } from 'lucide-react';
+import QRCode from 'qrcode';
 import { Modal } from '../../../components/ui/Modal';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
@@ -20,6 +21,7 @@ export function MfaSetupModal({ isOpen, onClose, onEnroll, onVerify }: MfaSetupM
 
   const [step, setStep] = useState<Step>('scan');
   const [enrollData, setEnrollData] = useState<MfaEnrollResponse | null>(null);
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string>('');
   const [code, setCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [secretCopied, setSecretCopied] = useState(false);
@@ -30,6 +32,17 @@ export function MfaSetupModal({ isOpen, onClose, onEnroll, onVerify }: MfaSetupM
     try {
       const data = await onEnroll();
       setEnrollData(data);
+      
+      // Generate QR code image from the otpauth URL
+      const qrDataUrl = await QRCode.toDataURL(data.qrCode, {
+        width: 256,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF',
+        },
+      });
+      setQrCodeDataUrl(qrDataUrl);
     } catch (err: any) {
       showToast({ type: 'error', title: 'Enrollment Failed', message: err.message ?? 'Could not start MFA enrollment' });
       onClose();
@@ -75,6 +88,7 @@ export function MfaSetupModal({ isOpen, onClose, onEnroll, onVerify }: MfaSetupM
   const handleClose = () => {
     setStep('scan');
     setEnrollData(null);
+    setQrCodeDataUrl('');
     setCode('');
     setIsLoading(false);
     setLoadingEnroll(false);
@@ -120,11 +134,17 @@ export function MfaSetupModal({ isOpen, onClose, onEnroll, onVerify }: MfaSetupM
               <>
                 <div className="flex justify-center">
                   <div className="p-3 bg-white rounded-xl border border-gray-200 dark:border-dark-border shadow-sm">
-                    <img
-                      src={enrollData.qrCode}
-                      alt="MFA QR Code"
-                      className="w-48 h-48"
-                    />
+                    {qrCodeDataUrl ? (
+                      <img
+                        src={qrCodeDataUrl}
+                        alt="MFA QR Code"
+                        className="w-48 h-48"
+                      />
+                    ) : (
+                      <div className="w-48 h-48 flex items-center justify-center">
+                        <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    )}
                   </div>
                 </div>
 

@@ -27,11 +27,23 @@ export function StatusBadge({ status, className, showIcon = true }: StatusBadgeP
       icon: CheckCircle,
       label: 'Completed',
     },
+    accepted: {
+      color: 'text-green-400',
+      bg: 'bg-green-500/10 border-green-500/20',
+      icon: CheckCircle,
+      label: 'Accepted',
+    },
     rejected: {
       color: 'text-red-400',
       bg: 'bg-red-500/10 border-red-500/20',
       icon: XCircle,
       label: 'Rejected',
+    },
+    withdrawn: {
+      color: 'text-gray-400',
+      bg: 'bg-gray-500/10 border-gray-500/20',
+      icon: XCircle,
+      label: 'Withdrawn',
     },
     cancelled: {
       color: 'text-gray-400',

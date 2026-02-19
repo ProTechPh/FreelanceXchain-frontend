@@ -14,7 +14,8 @@ import {
   Wallet,
   ExternalLink,
   Copy,
-  CheckCircle
+  CheckCircle,
+  History
 } from 'lucide-react';
 import { Card, CardHeader, Button, Input, Modal } from '../../components/ui';
 import { useAuthStore, useThemeStore, useWalletStore } from '../../store';
@@ -438,6 +439,20 @@ export function SettingsPage() {
           description="Manage your password and security settings"
         />
         <div className="space-y-4">
+          {/* Activity Log Link */}
+          <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-dark-bg rounded-lg border border-gray-300 dark:border-dark-border">
+            <div className="flex items-center gap-3">
+              <History className="w-5 h-5 text-gray-400" />
+              <div>
+                <p className="text-gray-900 dark:text-white font-medium">Activity Log</p>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">View your account activity and security events</p>
+              </div>
+            </div>
+            <Button variant="outline" onClick={() => navigate('/settings/activity')}>
+              View Log
+            </Button>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Current Password

@@ -188,6 +188,7 @@ export interface Proposal {
   estimatedDuration: number;
   status: ProposalStatus;
   milestones?: ProposalMilestone[];
+  attachments?: Array<{ url: string; filename: string; size: number; mimeType: string }>;
   createdAt: string;
   updatedAt: string;
   // Extended fields
@@ -200,6 +201,7 @@ export interface SubmitProposalInput {
   coverLetter: string;
   proposedRate: number;
   estimatedDuration: number;
+  attachments?: Array<{ url: string; filename: string; size: number; mimeType: string }>;
 }
 
 // Contract Types
@@ -532,4 +534,45 @@ export interface ApiError {
   };
   timestamp: string;
   requestId: string;
+}
+
+// File Upload Types
+export interface UploadedFile {
+  url: string;
+  path: string;
+  filename: string;
+  size?: number;
+  mimeType?: string;
+}
+
+export type StorageBucket = 
+  | 'profile-images' 
+  | 'contract-documents' 
+  | 'proposal-attachments' 
+  | 'dispute-evidence';
+
+export interface FileUploadResult {
+  success: boolean;
+  url?: string;
+  path?: string;
+  error?: string;
+}
+
+export interface MultipleFileUploadResult {
+  success: boolean;
+  files?: UploadedFile[];
+  error?: string;
+}
+
+export interface FileListResult {
+  success: boolean;
+  files?: Array<{
+    name: string;
+    id: string;
+    updated_at: string;
+    created_at: string;
+    last_accessed_at: string;
+    metadata: Record<string, any>;
+  }>;
+  error?: string;
 }
