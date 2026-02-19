@@ -6,6 +6,7 @@ import { Button, Input, Card } from '../../components/ui';
 import { FaGoogle, FaGithub, FaLinkedin, FaMicrosoft } from 'react-icons/fa';
 import api from '../../lib/api';
 import type { UserRole } from '../../types';
+import { TurnstileCaptcha } from '../../components/TurnstileCaptcha';
 
 export function RegisterPage() {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ export function RegisterPage() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [captchaToken, setCaptchaToken] = useState<string>();
 
   const handleRoleSelect = (role: UserRole) => {
     setSelectedRole(role);
@@ -39,6 +41,11 @@ export function RegisterPage() {
     e.preventDefault();
     setError('');
 
+    if (!captchaToken) {
+      setError('Please complete the CAPTCHA verification');
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return;
@@ -55,7 +62,8 @@ export function RegisterPage() {
         formData.password,
         selectedRole as 'freelancer' | 'employer',
         formData.name || undefined,
-        formData.walletAddress || undefined
+        formData.walletAddress || undefined,
+        captchaToken
       );
       navigate('/dashboard');
     } catch (err) {
@@ -259,6 +267,16 @@ export function RegisterPage() {
                   Privacy Policy
                 </Link>
               </div>
+
+              <TurnstileCaptcha
+                siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'}
+                onSuccess={(token) => setCaptchaToken(token)}
+                onError={() => {
+                  setCaptchaToken(undefined);
+                  setError('CAPTCHA verification failed. Please try again.');
+                }}
+                theme="auto"
+              />
 
               <Button type="submit" variant="glow" fullWidth loading={isLoading} size="lg">
                 Create Account

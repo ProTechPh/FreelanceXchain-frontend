@@ -26,6 +26,7 @@ export interface RegisterInput {
   role: UserRole;
   name?: string;
   walletAddress?: string;
+  captchaToken?: string;
 }
 
 export interface LoginInput {
