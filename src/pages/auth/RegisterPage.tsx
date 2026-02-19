@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, User, Briefcase, Wallet, ArrowLeft, Zap } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, User, Briefcase, Wallet, ArrowLeft, Zap, CheckCircle2, XCircle } from 'lucide-react';
 import { useAuthStore } from '../../store';
 import { Button, Input, Card } from '../../components/ui';
 import { FaGoogle, FaGithub, FaLinkedin, FaMicrosoft } from 'react-icons/fa';
@@ -24,6 +24,14 @@ export function RegisterPage() {
   const [error, setError] = useState('');
   const [captchaToken, setCaptchaToken] = useState<string>();
 
+  const passwordRules = [
+    { label: 'At least 8 characters',        met: formData.password.length >= 8 },
+    { label: 'One uppercase letter',          met: /[A-Z]/.test(formData.password) },
+    { label: 'One number',                    met: /[0-9]/.test(formData.password) },
+    { label: 'One special character (!@#…)',  met: /[^A-Za-z0-9]/.test(formData.password) },
+  ];
+  const passwordValid = passwordRules.every((r) => r.met);
+
   const handleRoleSelect = (role: UserRole) => {
     setSelectedRole(role);
     setStep('details');
@@ -46,13 +54,13 @@ export function RegisterPage() {
       return;
     }
 
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+    if (!passwordValid) {
+      setError('Password does not meet all requirements');
       return;
     }
 
-    if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters');
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
       return;
     }
 
@@ -233,6 +241,20 @@ export function RegisterPage() {
                     }
                     required
                   />
+                  {formData.password.length > 0 && (
+                    <ul className="mt-2 space-y-1 px-1">
+                      {passwordRules.map((rule) => (
+                        <li key={rule.label} className={`flex items-center gap-2 text-xs transition-colors ${
+                          rule.met ? 'text-green-400' : 'text-gray-500 dark:text-gray-400'
+                        }`}>
+                          {rule.met
+                            ? <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                            : <XCircle className="w-3.5 h-3.5 shrink-0" />}
+                          {rule.label}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
 
                 <div className="relative">
