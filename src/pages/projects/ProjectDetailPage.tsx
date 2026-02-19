@@ -8,7 +8,11 @@ import {
   Calendar,
   CheckCircle,
   Send,
-  AlertTriangle
+  AlertTriangle,
+  Upload,
+  X,
+  FileText,
+  AlertCircle
 } from 'lucide-react';
 import { Card, CardHeader, Button, StatusBadge, Badge, PageLoader } from '../../components/ui';
 import { useAuthStore } from '../../store';
@@ -25,11 +29,60 @@ export function ProjectDetailPage() {
   const [loading, setLoading] = useState(true);
   const [showProposalForm, setShowProposalForm] = useState(false);
   const [proposalData, setProposalData] = useState({
-    coverLetter: '',
     proposedRate: '',
     estimatedDuration: '',
   });
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  const MAX_FILES = 5;
+  const MAX_FILE_SIZE_MB = 10;
+  const MAX_TOTAL_SIZE_MB = 25;
+  const ACCEPTED_TYPES = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+  const ACCEPTED_EXT = ['.pdf', '.doc', '.docx'];
+
+  const validateAndAddFiles = (incoming: FileList | File[]) => {
+    setFileError(null);
+    const incomingArr = Array.from(incoming);
+    const combined = [...uploadedFiles, ...incomingArr];
+
+    if (combined.length > MAX_FILES) {
+      setFileError(`You can upload a maximum of ${MAX_FILES} files.`);
+      return;
+    }
+
+    for (const file of incomingArr) {
+      if (!ACCEPTED_TYPES.includes(file.type)) {
+        setFileError(`"${file.name}" is not supported. Only PDF and Word documents are allowed.`);
+        return;
+      }
+      if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+        setFileError(`"${file.name}" exceeds the ${MAX_FILE_SIZE_MB}MB per-file limit.`);
+        return;
+      }
+    }
+
+    const totalSize = combined.reduce((sum, f) => sum + f.size, 0);
+    if (totalSize > MAX_TOTAL_SIZE_MB * 1024 * 1024) {
+      setFileError(`Total upload size exceeds the ${MAX_TOTAL_SIZE_MB}MB limit.`);
+      return;
+    }
+
+    setUploadedFiles(combined);
+  };
+
+  const removeFile = (index: number) => {
+    setFileError(null);
+    setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const formatBytes = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -62,12 +115,14 @@ export function ProjectDetailPage() {
     try {
       await api.submitProposal({
         projectId: id,
-        coverLetter: proposalData.coverLetter,
+        coverLetter: '',
         proposedRate: parseFloat(proposalData.proposedRate),
         estimatedDuration: parseInt(proposalData.estimatedDuration, 10),
       });
       setShowProposalForm(false);
-      setProposalData({ coverLetter: '', proposedRate: '', estimatedDuration: '' });
+      setProposalData({ proposedRate: '', estimatedDuration: '' });
+      setUploadedFiles([]);
+      setFileError(null);
       // Show success message or redirect
     } catch (error) {
       console.error('Error submitting proposal:', error);
@@ -230,19 +285,89 @@ export function ProjectDetailPage() {
                 <form onSubmit={handleSubmitProposal}>
                   <CardHeader title="Submit Proposal" />
                   <div className="space-y-4">
+                    {/* File Upload */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Cover Letter *
+                        Proposal Documents *
+                        <span className="ml-2 text-xs font-normal text-gray-400 dark:text-gray-500">
+                          PDF or Word · max {MAX_FILES} files · {MAX_FILE_SIZE_MB}MB each · {MAX_TOTAL_SIZE_MB}MB total
+                        </span>
                       </label>
-                      <textarea
-                        value={proposalData.coverLetter}
-                        onChange={(e) => setProposalData({ ...proposalData, coverLetter: e.target.value })}
-                        rows={5}
-                        required
-                        className="w-full bg-white dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-lg px-4 py-2 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
-                        placeholder="Explain why you're a great fit for this project..."
-                      />
+
+                      {/* Drop Zone */}
+                      <div
+                        className={`relative border-2 border-dashed rounded-lg px-6 py-8 text-center transition-colors cursor-pointer ${
+                          isDragging
+                            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                            : 'border-gray-200 dark:border-dark-border hover:border-primary-400 dark:hover:border-primary-500 bg-white dark:bg-dark-bg'
+                        }`}
+                        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                        onDragLeave={() => setIsDragging(false)}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          setIsDragging(false);
+                          validateAndAddFiles(e.dataTransfer.files);
+                        }}
+                        onClick={() => document.getElementById('proposal-file-input')?.click()}
+                      >
+                        <input
+                          id="proposal-file-input"
+                          type="file"
+                          multiple
+                          accept={ACCEPTED_EXT.join(',')}
+                          className="hidden"
+                          onChange={(e) => e.target.files && validateAndAddFiles(e.target.files)}
+                        />
+                        <Upload className="w-8 h-8 text-gray-400 dark:text-gray-500 mx-auto mb-3" />
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Drag &amp; drop files here or <span className="text-primary-600 dark:text-primary-400">browse</span>
+                        </p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                          Supported: .pdf, .doc, .docx
+                        </p>
+                      </div>
+
+                      {/* Error */}
+                      {fileError && (
+                        <div className="flex items-center gap-2 mt-2 text-red-600 dark:text-red-400 text-sm">
+                          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                          <span>{fileError}</span>
+                        </div>
+                      )}
+
+                      {/* File List */}
+                      {uploadedFiles.length > 0 && (
+                        <ul className="mt-3 space-y-2">
+                          {uploadedFiles.map((file, idx) => (
+                            <li
+                              key={idx}
+                              className="flex items-center justify-between gap-3 bg-gray-50 dark:bg-dark-border/30 border border-gray-200 dark:border-dark-border rounded-lg px-4 py-2"
+                            >
+                              <div className="flex items-center gap-2 min-w-0">
+                                <FileText className="w-4 h-4 text-primary-500 flex-shrink-0" />
+                                <span className="text-sm text-gray-700 dark:text-gray-200 truncate">{file.name}</span>
+                                <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">{formatBytes(file.size)}</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); removeFile(idx); }}
+                                className="text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 flex-shrink-0 transition-colors"
+                                aria-label="Remove file"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+
+                      {/* Counter */}
+                      <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 text-right">
+                        {uploadedFiles.length}/{MAX_FILES} files &nbsp;·&nbsp;
+                        {formatBytes(uploadedFiles.reduce((s, f) => s + f.size, 0))} / {MAX_TOTAL_SIZE_MB}MB
+                      </p>
                     </div>
+
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -275,10 +400,10 @@ export function ProjectDetailPage() {
                       </div>
                     </div>
                     <div className="flex gap-3">
-                      <Button type="submit" disabled={submitting}>
+                      <Button type="submit" disabled={submitting || uploadedFiles.length === 0}>
                         {submitting ? 'Submitting...' : 'Submit Proposal'}
                       </Button>
-                      <Button type="button" variant="ghost" onClick={() => setShowProposalForm(false)}>
+                      <Button type="button" variant="ghost" onClick={() => { setShowProposalForm(false); setUploadedFiles([]); setFileError(null); }}>
                         Cancel
                       </Button>
                     </div>

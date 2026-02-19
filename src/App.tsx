@@ -76,7 +76,7 @@ import { TutorialProvider } from './features/onboarding/components/TutorialProvi
 import { MfaChallengePage } from './pages/auth/MfaChallengePage';
 
 function App() {
-  const { isDark, toggle } = useThemeStore();
+  const { isDark } = useThemeStore();
   const { isAuthenticated, fetchCurrentUser } = useAuthStore();
   const { isConnected, address, updateBalance } = useWalletStore();
 

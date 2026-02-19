@@ -16,7 +16,7 @@ interface MilestoneInput {
 
 export function CreateProjectPage() {
   const navigate = useNavigate();
-  const { isConnected, address, connect } = useWalletStore();
+  const { isConnected, connect } = useWalletStore();
   const { success, error } = useToast();
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<SkillCategory[]>([]);
