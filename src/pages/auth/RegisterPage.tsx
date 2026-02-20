@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, User, Briefcase, Wallet, ArrowLeft, Zap, CheckCircle2, XCircle } from 'lucide-react';
 import { useAuthStore } from '../../store';
 import { Button, Input, Card } from '../../components/ui';
@@ -9,8 +9,8 @@ import type { UserRole } from '../../types';
 import { TurnstileCaptcha } from '../../components/TurnstileCaptcha';
 
 export function RegisterPage() {
-  const navigate = useNavigate();
-  const { register, isLoading } = useAuthStore();
+  const { register, logout, isLoading } = useAuthStore();
+  const nameRegex = /^[A-Za-z\s]+$/;
   const [step, setStep] = useState<'role' | 'details'>('role');
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [formData, setFormData] = useState({
@@ -22,6 +22,7 @@ export function RegisterPage() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [nameError, setNameError] = useState('');
   const [captchaToken, setCaptchaToken] = useState<string>();
 
   const passwordRules = [
@@ -42,6 +43,13 @@ export function RegisterPage() {
   };
 
   const handleInputChange = (field: string, value: string) => {
+    if (field === 'name') {
+      const sanitizedName = value.replace(/[^A-Za-z\s]/g, '');
+      setNameError(value !== sanitizedName ? 'Full name can contain letters only' : '');
+      setFormData((prev) => ({ ...prev, name: sanitizedName }));
+      return;
+    }
+
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -64,16 +72,29 @@ export function RegisterPage() {
       return;
     }
 
+    const trimmedName = formData.name.trim();
+    if (trimmedName && !nameRegex.test(trimmedName)) {
+      setNameError('Full name can contain letters only');
+      setError('Please enter a valid full name');
+      return;
+    }
+
+    setNameError('');
+
     try {
       await register(
         formData.email,
         formData.password,
         selectedRole as 'freelancer' | 'employer',
-        formData.name || undefined,
+        trimmedName || undefined,
         formData.walletAddress || undefined,
         captchaToken
       );
-      navigate('/dashboard');
+      sessionStorage.setItem(
+        'registration_success_message',
+        'Registration successful. Please check your email to verify your account before signing in.'
+      );
+      logout();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed');
     }
@@ -210,6 +231,8 @@ export function RegisterPage() {
                   value={formData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
                   leftIcon={<User className="w-5 h-5" />}
+                  error={nameError}
+                  helperText="Letters and spaces only"
                 />
 
                 <Input

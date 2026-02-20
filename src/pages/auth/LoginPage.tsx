@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, Zap } from 'lucide-react';
 import { useAuthStore } from '../../store';
@@ -15,8 +15,17 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaResetKey, setCaptchaResetKey] = useState(0);
+
+  useEffect(() => {
+    const message = sessionStorage.getItem('registration_success_message');
+    if (message) {
+      setSuccessMessage(message);
+      sessionStorage.removeItem('registration_success_message');
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,6 +78,12 @@ export function LoginPage() {
 
         <Card variant="glass" className="mb-6 backdrop-blur-xl border-white/10" padding="lg">
           <form onSubmit={handleSubmit} className="space-y-6">
+            {successMessage && (
+              <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-lg animate-fade-in-up">
+                <p className="text-sm text-green-400 text-center">{successMessage}</p>
+              </div>
+            )}
+
             {error && (
               <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg animate-fade-in-up">
                 <p className="text-sm text-red-400 text-center">{error}</p>
