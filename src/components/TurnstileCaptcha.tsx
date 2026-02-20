@@ -3,6 +3,7 @@ import { Turnstile } from '@marsidev/react-turnstile';
 interface TurnstileCaptchaProps {
   onSuccess: (token: string) => void;
   onError?: () => void;
+  onExpire?: () => void;
   siteKey: string;
   theme?: 'light' | 'dark' | 'auto';
 }
@@ -10,6 +11,7 @@ interface TurnstileCaptchaProps {
 export function TurnstileCaptcha({ 
   onSuccess, 
   onError,
+  onExpire,
   siteKey,
   theme = 'auto'
 }: TurnstileCaptchaProps) {
@@ -23,7 +25,12 @@ export function TurnstileCaptcha({
         onError={() => {
           onError?.();
         }}
-        theme={theme}
+        onExpire={() => {
+          onExpire?.();
+        }}
+        options={{
+          theme,
+        }}
       />
     </div>
   );

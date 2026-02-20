@@ -16,6 +16,7 @@ export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaResetKey, setCaptchaResetKey] = useState(0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,9 +40,11 @@ export function LoginPage() {
 
       navigate(returnUrl);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
-      // Reset captcha on error
+      const errorMessage = err instanceof Error ? err.message : 'Login failed';
+      setError(errorMessage);
+      // Turnstile tokens are single-use; force a new challenge for any retry.
       setCaptchaToken(null);
+      setCaptchaResetKey((prev) => prev + 1);
     }
   };
 
@@ -116,16 +119,23 @@ export function LoginPage() {
             </div>
 
             <TurnstileCaptcha
+              key={captchaResetKey}
               siteKey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
-              onSuccess={(token) => setCaptchaToken(token)}
+              onSuccess={(token) => {
+                setCaptchaToken(token);
+                setError('');
+              }}
               onError={() => {
                 setCaptchaToken(null);
                 setError('CAPTCHA verification failed. Please try again.');
               }}
+              onExpire={() => {
+                setCaptchaToken(null);
+              }}
               theme="auto"
             />
 
-            <Button type="submit" variant="glow" fullWidth loading={isLoading} size="lg" disabled={!captchaToken}>
+            <Button type="submit" variant="glow" fullWidth loading={isLoading} size="lg" disabled={isLoading}>
               Sign In
             </Button>
           </form>

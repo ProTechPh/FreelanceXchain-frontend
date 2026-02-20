@@ -30,7 +30,6 @@ import type {
   UserReputation,
   PaginatedResponse,
   SearchPaginatedResponse,
-  ApiError,
 } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api';
@@ -69,7 +68,7 @@ class ApiClient {
       ...options.headers,
     };
 
-    if (this.accessToken) {
+    if (this.accessToken && !this.isPublicAuthEndpoint(endpoint)) {
       (headers as Record<string, string>)['Authorization'] = `Bearer ${this.accessToken}`;
     }
 
@@ -87,8 +86,8 @@ class ApiClient {
       credentials: 'include', // Important: Include cookies in requests
     });
 
-    // Handle token expiration
-    if (response.status === 401) {
+    // Handle token expiration on authenticated routes only
+    if (response.status === 401 && !this.isPublicAuthEndpoint(endpoint)) {
       // Prevent multiple simultaneous refresh attempts
       if (this.isRefreshing) {
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -113,11 +112,89 @@ class ApiClient {
     }
 
     if (!response.ok) {
-      const error = await response.json() as ApiError;
-      throw new Error(this.sanitizeApiError(error.error.message, response.status));
+      const apiErrorMessage = await this.extractApiErrorMessage(response);
+      throw new Error(this.sanitizeApiError(apiErrorMessage, response.status));
     }
 
     return response.json();
+  }
+
+  private isPublicAuthEndpoint(endpoint: string): boolean {
+    const publicAuthPrefixes = [
+      '/auth/login',
+      '/auth/register',
+      '/auth/refresh',
+      '/auth/forgot-password',
+      '/auth/reset-password',
+      '/auth/resend-confirmation',
+      '/auth/oauth',
+      '/auth/csrf-token',
+    ];
+
+    return publicAuthPrefixes.some((prefix) => endpoint.startsWith(prefix));
+  }
+
+  private async extractApiErrorMessage(response: Response): Promise<string | null> {
+    const contentType = response.headers.get('content-type')?.toLowerCase() || '';
+
+    if (contentType.includes('application/json')) {
+      const payload = await response.json().catch(() => null);
+      return this.parseApiErrorMessage(payload);
+    }
+
+    const text = await response.text().catch(() => '');
+    if (!text) return null;
+
+    try {
+      const payload = JSON.parse(text);
+      return this.parseApiErrorMessage(payload) || text.trim() || null;
+    } catch {
+      return text.trim() || null;
+    }
+  }
+
+  private parseApiErrorMessage(payload: unknown): string | null {
+    if (!payload || typeof payload !== 'object') return null;
+
+    const data = payload as Record<string, unknown>;
+
+    if (typeof data.message === 'string' && data.message.trim()) {
+      return data.message.trim();
+    }
+
+    if (typeof data.error === 'string' && data.error.trim()) {
+      return data.error.trim();
+    }
+
+    if (data.error && typeof data.error === 'object') {
+      const errorObject = data.error as Record<string, unknown>;
+
+      if (typeof errorObject.message === 'string' && errorObject.message.trim()) {
+        return errorObject.message.trim();
+      }
+
+      if (Array.isArray(errorObject.details) && errorObject.details.length > 0) {
+        const firstErrorDetail = errorObject.details[0];
+        if (firstErrorDetail && typeof firstErrorDetail === 'object') {
+          const detailMessage = (firstErrorDetail as Record<string, unknown>).message;
+          if (typeof detailMessage === 'string' && detailMessage.trim()) {
+            return detailMessage.trim();
+          }
+        }
+      }
+    }
+
+    if (Array.isArray(data.details) && data.details.length > 0) {
+      const firstDetail = data.details[0];
+      if (firstDetail && typeof firstDetail === 'object') {
+        const detailMessage = (firstDetail as Record<string, unknown>).message;
+        if (typeof detailMessage === 'string' && detailMessage.trim()) {
+          return detailMessage.trim();
+        }
+      }
+    }
+
+    return null;
   }
 
   /**
@@ -154,9 +231,21 @@ class ApiClient {
     localStorage.removeItem('csrf-token');
   }
 
-  private sanitizeApiError(message: string, statusCode: number): string {
+  private sanitizeApiError(message: string | null, statusCode: number): string {
+    const trimmedMessage = message?.trim();
+
+    // Use backend-provided messages for expected user-facing auth and validation errors
+    if (trimmedMessage && [400, 401, 422, 429].includes(statusCode)) {
+      return trimmedMessage;
+    }
+
+    // In development, show backend messages whenever available
+    if (trimmedMessage && import.meta.env.DEV) {
+      return trimmedMessage;
+    }
+
     // Don't expose internal error details in production
-    if (process.env.NODE_ENV === 'production') {
+    if (import.meta.env.PROD) {
       switch (statusCode) {
         case 400:
           return 'Invalid request. Please check your input and try again.';
@@ -168,6 +257,8 @@ class ApiClient {
           return 'The requested resource was not found.';
         case 409:
           return 'This action conflicts with existing data.';
+        case 429:
+          return 'Too many requests. Please try again later.';
         case 500:
           return 'Server error. Please try again later.';
         default:
@@ -175,8 +266,7 @@ class ApiClient {
       }
     }
     
-    // In development, show the actual error message
-    return message;
+    return trimmedMessage || 'An error occurred. Please try again.';
   }
 
   private async refreshTokens(): Promise<boolean> {
