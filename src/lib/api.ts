@@ -59,6 +59,18 @@ class ApiClient {
     showToastCallback = callback;
   }
 
+  /**
+   * Ensure CSRF token is available. If not, fetch it.
+   * Call this before making important state-changing requests.
+   */
+  async ensureCsrfToken(): Promise<void> {
+    const token = this.getCsrfTokenFromCookie();
+    if (!token && this.accessToken) {
+      console.log('[CSRF] Token not found, fetching...');
+      await this.fetchCsrfToken();
+    }
+  }
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
@@ -77,46 +89,88 @@ class ApiClient {
       const csrfToken = this.getCsrfTokenFromCookie();
       if (csrfToken) {
         (headers as Record<string, string>)['X-CSRF-Token'] = csrfToken;
-      }
-    }
-
-    const response = await fetch(`${API_BASE}${endpoint}`, {
-      ...options,
-      headers,
-      credentials: 'include', // Important: Include cookies in requests
-    });
-
-    // Handle token expiration on authenticated routes only
-    if (response.status === 401 && !this.isPublicAuthEndpoint(endpoint)) {
-      // Prevent multiple simultaneous refresh attempts
-      if (this.isRefreshing) {
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        return this.request<T>(endpoint, options);
-      }
-      
-      // Try to refresh token if we have one
-      if (this.refreshToken && !this.isRefreshing) {
-        this.isRefreshing = true;
-        const refreshed = await this.refreshTokens();
-        this.isRefreshing = false;
-        
-        if (refreshed) {
-          // Retry the original request with new token
-          return this.request<T>(endpoint, options);
+      } else {
+        console.warn('[CSRF] No CSRF token found in cookie for', options.method, endpoint);
+        console.warn('[CSRF] Cookies:', document.cookie);
+        // Try to fetch CSRF token if missing and user is authenticated
+        if (this.accessToken && !endpoint.startsWith('/auth/csrf-token')) {
+          console.warn('[CSRF] Attempting to fetch CSRF token...');
+          // Don't await - this would create a loop. Log for debugging.
         }
       }
+    }
+
+    // Add timeout to prevent indefinite waiting
+    // AI endpoints get longer timeout (300s = 5 minutes) since LLM can be slow
+    const isAIEndpoint = endpoint.startsWith('/matching');
+    const timeoutMs = isAIEndpoint ? 300000 : 30000;
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => {
+      console.error(`[API] Request timeout after ${timeoutMs}ms:`, endpoint);
+      controller.abort();
+    }, timeoutMs);
+
+    try {
+      const response = await fetch(`${API_BASE}${endpoint}`, {
+        ...options,
+        headers,
+        credentials: 'include', // Important: Include cookies in requests
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      // Handle token expiration on authenticated routes only
+      if (response.status === 401 && !this.isPublicAuthEndpoint(endpoint)) {
+        // Prevent multiple simultaneous refresh attempts
+        if (this.isRefreshing) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          return this.request<T>(endpoint, options);
+        }
+        
+        // Try to refresh token if we have one
+        if (this.refreshToken && !this.isRefreshing) {
+          this.isRefreshing = true;
+          const refreshed = await this.refreshTokens();
+          this.isRefreshing = false;
+          
+          if (refreshed) {
+            // Retry the original request with new token
+            return this.request<T>(endpoint, options);
+          }
+        }
+        
+        // Refresh failed or no refresh token - logout
+        this.handleAuthFailure();
+        throw new Error('Session expired. Please login again.');
+      }
+
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({}));
+        const apiErrorMessage = errorBody.error?.message || response.statusText;
+        const error: any = new Error(this.sanitizeApiError(apiErrorMessage, response.status));
+        error.response = errorBody; // Attach full response for debugging
+        throw error;
+      }
+
+      return response.json();
+    } catch (error: any) {
+      clearTimeout(timeoutId);
       
-      // Refresh failed or no refresh token - logout
-      this.handleAuthFailure();
-      throw new Error('Session expired. Please login again.');
+      // Handle abort/timeout errors
+      if (error.name === 'AbortError') {
+        console.error('[API] Request aborted due to timeout:', endpoint);
+        const timeoutError: any = new Error(
+          `Request timed out after ${timeoutMs / 1000} seconds. The AI service may be experiencing high load. Please try again.`
+        );
+        timeoutError.isTimeout = true;
+        throw timeoutError;
+      }
+      
+      // Re-throw other errors
+      throw error;
     }
-
-    if (!response.ok) {
-      const apiErrorMessage = await this.extractApiErrorMessage(response);
-      throw new Error(this.sanitizeApiError(apiErrorMessage, response.status));
-    }
-
-    return response.json();
   }
 
   private isPublicAuthEndpoint(endpoint: string): boolean {
@@ -198,10 +252,9 @@ class ApiClient {
   }
 
   /**
-   * Extract CSRF token from cookie or localStorage fallback
+   * Extract CSRF token from cookie only (no localStorage fallback for security)
    */
   private getCsrfTokenFromCookie(): string | null {
-    // First try to get from cookie
     const cookies = document.cookie.split(';');
     for (const cookie of cookies) {
       const [name, value] = cookie.trim().split('=');
@@ -210,25 +263,17 @@ class ApiClient {
       }
     }
     
-    // Fallback to localStorage if cookie is not available
-    const tokenFromStorage = localStorage.getItem('csrf-token');
-    if (tokenFromStorage) {
-      console.log('[CSRF] Using token from localStorage (cookie not available)');
-      return tokenFromStorage;
-    }
-    
+    // No fallback - cookies are required for CSRF protection
     return null;
   }
 
   /**
-   * Clear CSRF token cookie and localStorage (for logout)
+   * Clear CSRF token cookie (for logout)
    */
   private clearCsrfCookie(): void {
     // Clear both possible cookie names
     document.cookie = '__Host-psifi.x-csrf-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     document.cookie = 'psifi.x-csrf-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    // Also clear from localStorage
-    localStorage.removeItem('csrf-token');
   }
 
   private sanitizeApiError(message: string | null, statusCode: number): string {
@@ -359,38 +404,31 @@ class ApiClient {
    */
   async fetchCsrfToken(): Promise<void> {
     try {
-      console.log('[CSRF] Fetching CSRF token from:', `${API_BASE}/auth/csrf-token`);
       const response = await fetch(`${API_BASE}/auth/csrf-token`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include', // Important: Include cookies
+        credentials: 'include', // Important: Include cookies for CSRF token
         body: JSON.stringify({}),
       });
-      console.log('[CSRF] Response status:', response.status);
-      console.log('[CSRF] Response headers:', Object.fromEntries(response.headers.entries()));
       
       if (response.ok) {
-        const data = await response.json();
-        console.log('[CSRF] Token response:', data);
-        console.log('[CSRF] Cookies after fetch:', document.cookie);
-        
-        // If the response includes a token, store it in localStorage as fallback
-        if (data.token) {
-          console.log('[CSRF] Token received in response:', data.token);
-          localStorage.setItem('csrf-token', data.token);
-          console.log('[CSRF] Token stored in localStorage as fallback');
-        }
+        await response.json(); // Consume response but don't need the data
+        // Token is set in httpOnly cookie by backend - we don't need it in response body
+        console.log('[CSRF] Token fetched successfully, cookie set by server');
       } else {
-        console.error('[CSRF] Failed to fetch token:', response.status, response.statusText);
-        const errorData = await response.json().catch(() => ({}));
-        console.error('[CSRF] Error details:', errorData);
-        throw new Error(`Failed to fetch CSRF token: ${response.status}`);
+        const errorText = await response.text().catch(() => 'Unknown error');
+        console.error('[CSRF] Failed to fetch CSRF token:', response.status, errorText);
+        throw new Error('Failed to fetch CSRF token. Please ensure cookies are enabled.');
       }
     } catch (error) {
-      console.error('Failed to fetch CSRF token:', error);
-      throw error; // Re-throw so calling code can handle it
+      console.error('[CSRF] Error fetching token:', error);
+      // Provide helpful error message
+      if (error instanceof Error) {
+        throw new Error(`CSRF token fetch failed: ${error.message}. Please ensure cookies are enabled in your browser.`);
+      }
+      throw error;
     }
   }
 
@@ -490,6 +528,8 @@ class ApiClient {
   }
 
   async addSkill(skill: { name: string; yearsOfExperience: number }): Promise<FreelancerProfile> {
+    // Ensure CSRF token is available before making the request
+    await this.ensureCsrfToken();
     return this.request<FreelancerProfile>('/freelancers/profile/skills', {
       method: 'POST',
       body: JSON.stringify({ skills: [skill] }),
@@ -617,12 +657,6 @@ class ApiClient {
   async deleteProject(id: string): Promise<void> {
     return this.request<void>(`/projects/${id}`, {
       method: 'DELETE',
-    });
-  }
-
-  async publishProject(id: string): Promise<Project> {
-    return this.request<Project>(`/projects/${id}/publish`, {
-      method: 'POST',
     });
   }
 
@@ -973,32 +1007,37 @@ class ApiClient {
     }
 
     // Get CSRF token from cookie - required for security
-    const csrfToken = this.getCsrfTokenFromCookie();
+    let csrfToken = this.getCsrfTokenFromCookie();
     const headers: HeadersInit = {
       'Authorization': `Bearer ${this.accessToken}`,
     };
     
     console.log('[UPLOAD] Auth token:', this.accessToken ? 'Present' : 'Missing');
-    console.log('[UPLOAD] CSRF token:', csrfToken ? 'Present' : 'Missing');
+    console.log('[UPLOAD] CSRF token from cookie:', csrfToken ? 'Present' : 'Missing');
     
     if (!csrfToken) {
       // Try to fetch CSRF token if missing
       console.log('[UPLOAD] CSRF token missing, attempting to fetch...');
       try {
         await this.fetchCsrfToken();
-        const newCsrfToken = this.getCsrfTokenFromCookie();
-        if (newCsrfToken) {
-          (headers as Record<string, string>)['X-CSRF-Token'] = newCsrfToken;
-          console.log('[UPLOAD] CSRF token fetched and added to headers');
-        } else {
-          throw new Error('Failed to obtain CSRF token');
+        csrfToken = this.getCsrfTokenFromCookie();
+        console.log('[UPLOAD] CSRF token after fetch:', csrfToken ? 'Present' : 'Missing');
+        
+        if (!csrfToken) {
+          console.warn('[UPLOAD] CSRF token still not available after fetch. Proceeding without it - backend may reject the request.');
+          // Don't throw error - let the backend reject if needed
+          // This allows uploads to work in environments where cookies don't work
         }
       } catch (error) {
         console.error('[UPLOAD] Failed to fetch CSRF token:', error);
-        throw new Error('CSRF token required for file upload. Please refresh the page and try again.');
+        // Don't throw - attempt upload anyway, backend will reject if token is truly required
       }
-    } else {
+    }
+    
+    // Add CSRF token to headers if available
+    if (csrfToken) {
       (headers as Record<string, string>)['X-CSRF-Token'] = csrfToken;
+      console.log('[UPLOAD] CSRF token added to headers');
     }
 
     const response = await fetch(`${API_BASE}/files/upload`, {

@@ -113,13 +113,13 @@ export function CreateProjectPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent, publish = false) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
 
     setLoading(true);
     try {
-      // Create project
+      // Create project (backend creates as 'open' status by default)
       const project = await api.createProject({
         title: formData.title,
         description: formData.description,
@@ -141,21 +141,22 @@ export function CreateProjectPage() {
         });
       }
 
-      // Publish if requested
-      if (publish) {
-        await api.publishProject(project.id);
-        success('Project published successfully!', 'Success');
-      } else {
-        success('Project saved as draft successfully!', 'Success');
-      }
-
+      success('Project created successfully!', 'Success');
       navigate(`/projects/${project.id}`);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error creating project:', err);
-      error(
-        err instanceof Error ? err.message : 'Failed to create project. Please try again.',
-        'Error'
-      );
+      console.error('Error details:', err.response || err);
+      
+      // Extract detailed validation errors if available
+      let errorMessage = 'Failed to create project. Please try again.';
+      if (err.response && err.response.error && err.response.error.details) {
+        const validationErrors = err.response.error.details;
+        errorMessage = validationErrors.map((e: any) => `${e.field}: ${e.message}`).join(', ');
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      
+      error(errorMessage, 'Error');
     } finally {
       setLoading(false);
     }
@@ -193,7 +194,7 @@ export function CreateProjectPage() {
         </Card>
       )}
 
-      <form onSubmit={(e) => handleSubmit(e, false)}>
+      <form onSubmit={handleSubmit}>
         {/* Basic Info */}
         <Card className="mb-6">
           <CardHeader title="Project Details" description="Describe your project to attract the right freelancers" />
@@ -412,23 +413,17 @@ export function CreateProjectPage() {
         </Card>
 
         {/* Actions */}
-        <div className="flex gap-4">
-          <Button type="submit" variant="outline" disabled={loading || !isConnected}>
-            Save as Draft
-          </Button>
-          <Button
-            type="button"
-            onClick={() => {
-              const syntheticEvent = { preventDefault: () => {} } as React.FormEvent;
-              handleSubmit(syntheticEvent, true);
-            }}
+        <div className="flex justify-end gap-4">
+          <Button 
+            type="submit" 
+            loading={loading}
             disabled={loading || !isConnected}
           >
-            {loading ? 'Publishing...' : 'Publish Project'}
+            {loading ? 'Creating...' : 'Create Project'}
           </Button>
         </div>
         {!isConnected && (
-          <p className="text-yellow-600 dark:text-yellow-500 text-sm">
+          <p className="text-yellow-600 dark:text-yellow-500 text-sm text-right">
             Please connect your wallet to create a project
           </p>
         )}

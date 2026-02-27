@@ -14,19 +14,35 @@ export function SkillAnalysisPage() {
   const [activeTab, setActiveTab] = useState<'gap' | 'extract'>('gap');
 
   useEffect(() => {
-    if (activeTab === 'gap' && !analysis) {
+    if (activeTab === 'gap' && !analysis && !loading) {
+      console.log('[SkillAnalysis] Auto-fetching initial analysis');
       fetchSkillGapAnalysis();
     }
   }, [activeTab]);
 
   const fetchSkillGapAnalysis = async () => {
+    console.log('[SkillAnalysis] === FETCH START ===');
     setLoading(true);
     setError(null);
+    setAnalysis(null); // Clear previous analysis to show loading state
+    
     try {
+      console.log('[SkillAnalysis] Calling API...');
       const data = await api.getSkillGaps();
-      setAnalysis(data);
+      console.log('[SkillAnalysis] API responded with data:', JSON.stringify(data).substring(0, 200));
+      
+      if (data) {
+        console.log('[SkillAnalysis] Setting analysis state...');
+        setAnalysis(data);
+        // Force a small delay to ensure state updates propagate
+        await new Promise(resolve => setTimeout(resolve, 50));
+        console.log('[SkillAnalysis] Analysis state set');
+      } else {
+        console.warn('[SkillAnalysis] Received null/undefined data');
+        setError('No data received from server');
+      }
     } catch (err: any) {
-      console.error('Error fetching skill gap analysis:', err);
+      console.error('[SkillAnalysis] ERROR caught:', err);
       const errorMessage = err?.message || 'Failed to load skill gap analysis';
       setError(errorMessage);
       // Set empty analysis to show the UI
@@ -36,27 +52,48 @@ export function SkillAnalysisPage() {
         marketDemand: [],
         reasoning: 'Unable to generate analysis. Please ensure you have skills added to your profile and try again.'
       });
-    } finally {
-      setLoading(false);
     }
+    
+    // ALWAYS set loading to false, no matter what
+    console.log('[SkillAnalysis] Setting loading to FALSE');
+    setLoading(false);
+    console.log('[SkillAnalysis] === FETCH END ===');
   };
 
   const handleExtractSkills = async () => {
     if (!textToAnalyze.trim()) return;
 
+    console.log('[SkillExtract] === EXTRACT START ===');
     setExtractLoading(true);
     setError(null);
+    setExtractedSkills([]); // Clear previous results
+    
     try {
+      console.log('[SkillExtract] Calling API...');
       const data = await api.extractSkills(textToAnalyze);
-      setExtractedSkills(data);
+      console.log('[SkillExtract] API responded with:', data?.length || 0, 'skills');
+      
+      if (data) {
+        setExtractedSkills(data);
+        console.log('[SkillExtract] State updated with', data.length, 'skills');
+      } else {
+        console.warn('[SkillExtract] Received null/undefined data');
+        setError('No skills extracted from text');
+      }
     } catch (err: any) {
-      console.error('Error extracting skills:', err);
+      console.error('[SkillExtract] ERROR:', err);
       const errorMessage = err?.message || 'Failed to extract skills from text';
       setError(errorMessage);
-    } finally {
-      setExtractLoading(false);
     }
+    
+    // ALWAYS set loading to false
+    console.log('[SkillExtract] Setting extractLoading to FALSE');
+    setExtractLoading(false);
+    console.log('[SkillExtract] === EXTRACT END ===');
   };
+
+  // Debug logging for render state
+  console.log('[SkillAnalysis] Render - loading:', loading, 'analysis:', analysis ? 'present' : 'null', 'error:', error);
 
   return (
     <div className="space-y-6" data-tour-id="skill-analysis-main">
@@ -100,7 +137,23 @@ export function SkillAnalysisPage() {
               <div className="flex-1">
                 <h4 className="text-red-400 font-medium mb-1">Error</h4>
                 <p className="text-red-300 text-sm">{error}</p>
-                {error.includes('Failed to load') && (
+                {error.includes('timed out') && (
+                  <div className="mt-3">
+                    <p className="text-red-300/80 text-sm mb-2">
+                      The AI service is taking longer than usual. This can happen during high load.
+                    </p>
+                    <Button
+                      onClick={fetchSkillGapAnalysis}
+                      disabled={loading}
+                      size="sm"
+                      variant="outline"
+                      className="border-red-400 text-red-400 hover:bg-red-500/20"
+                    >
+                      Try Again
+                    </Button>
+                  </div>
+                )}
+                {error.includes('Failed to load') && !error.includes('timed out') && (
                   <p className="text-red-300/80 text-sm mt-2">
                     This feature requires:
                     <ul className="list-disc list-inside mt-1 ml-2">
@@ -127,8 +180,14 @@ export function SkillAnalysisPage() {
           </div>
 
           {loading ? (
-            <div className="flex items-center justify-center min-h-[300px]">
+            <div className="flex flex-col items-center justify-center min-h-[300px] gap-4">
               <Loader size="lg" />
+              <div className="text-center">
+                <p className="text-gray-700 dark:text-gray-300 font-medium">Analyzing your skills...</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
+                  This may take up to 5 minutes as AI analyzes your profile
+                </p>
+              </div>
             </div>
           ) : analysis ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -246,7 +305,12 @@ export function SkillAnalysisPage() {
                   onClick={handleExtractSkills}
                   disabled={extractLoading || !textToAnalyze.trim()}
                 >
-                  {extractLoading ? <Loader size="sm" /> : (
+                  {extractLoading ? (
+                    <span className="flex items-center gap-2">
+                      <Loader size="sm" />
+                      <span>Extracting...</span>
+                    </span>
+                  ) : (
                     <>
                       <FiSearch className="mr-2" />
                       Extract Skills

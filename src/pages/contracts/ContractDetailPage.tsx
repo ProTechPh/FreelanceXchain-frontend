@@ -85,7 +85,7 @@ export function ContractDetailPage() {
     if (!id) return;
     setActionLoading(`submit-${milestoneId}`);
     try {
-      await api.completeMilestone(id, milestoneId);
+      await api.completeMilestone(milestoneId, id); // Fixed: milestoneId first, contractId second
       // Refresh data
       const contractData = await api.getContract(id);
       setContract(contractData);
@@ -100,7 +100,7 @@ export function ContractDetailPage() {
     if (!id) return;
     setActionLoading(`approve-${milestoneId}`);
     try {
-      await api.approveMilestone(id, milestoneId);
+      await api.approveMilestone(milestoneId, id); // Fixed: milestoneId first, contractId second
       // Refresh data
       const [contractData, paymentData] = await Promise.all([
         api.getContract(id),
