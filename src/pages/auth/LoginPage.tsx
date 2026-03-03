@@ -42,7 +42,7 @@ export function LoginPage() {
 
       if (result.mfaRequired) {
         navigate('/mfa/challenge', {
-          state: { accessToken: result.accessToken, factorId: result.factorId, returnUrl },
+          state: { mfaSessionId: result.mfaSessionId, factorId: result.factorId, returnUrl },
         });
         return;
       }

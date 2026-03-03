@@ -13,7 +13,7 @@ export function OAuthCallbackPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [showRoleModal, setShowRoleModal] = useState(false);
   const [showMfaModal, setShowMfaModal] = useState(false);
-  const [mfaData, setMfaData] = useState<{ accessToken: string; factorId: string } | null>(null);
+  const [mfaData, setMfaData] = useState<{ mfaSessionId: string; factorId: string } | null>(null);
   const [mfaCode, setMfaCode] = useState('');
   const [tempAccessToken, setTempAccessToken] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
@@ -70,7 +70,13 @@ export function OAuthCallbackPage() {
           } else if (response.ok && data.mfaRequired) {
             console.log('MFA required - showing MFA modal');
             // MFA required
-            setMfaData({ accessToken: data.accessToken, factorId: data.factorId });
+            const nextMfaSessionId = data.mfaSessionId ?? data.accessToken;
+            if (!nextMfaSessionId || !data.factorId) {
+              setError('OAuth MFA response is missing required session data');
+              setIsLoading(false);
+              return;
+            }
+            setMfaData({ mfaSessionId: nextMfaSessionId, factorId: data.factorId });
             setShowMfaModal(true);
             setIsLoading(false);
           } else if (response.ok && data.user) {
@@ -182,7 +188,7 @@ export function OAuthCallbackPage() {
     setError('');
 
     try {
-      const result = await api.verifyMFALogin(mfaData.accessToken, mfaData.factorId, mfaCode);
+      const result = await api.verifyMFALogin(mfaData.mfaSessionId, mfaData.factorId, mfaCode);
       api.setTokens(result.accessToken, result.refreshToken);
       // Fetch CSRF token after setting tokens
       try {

@@ -450,10 +450,10 @@ class ApiClient {
   }
 
   /** Called from MFA challenge page to complete a login that required MFA. */
-  async completeMFALogin(tempAccessToken: string, factorId: string, code: string): Promise<AuthResult> {
+  async completeMFALogin(mfaSessionId: string, factorId: string, code: string): Promise<AuthResult> {
     const result = await this.request<AuthResult>('/auth/login/mfa-verify', {
       method: 'POST',
-      body: JSON.stringify({ accessToken: tempAccessToken, factorId, code }),
+      body: JSON.stringify({ mfaSessionId, factorId, code }),
     });
     this.setTokens(result.accessToken, result.refreshToken);
     await this.fetchCsrfToken();
@@ -1130,10 +1130,10 @@ class ApiClient {
     });
   }
 
-  async verifyMFALogin(accessToken: string, factorId: string, code: string): Promise<AuthResult> {
+  async verifyMFALogin(mfaSessionId: string, factorId: string, code: string): Promise<AuthResult> {
     return this.request<AuthResult>('/auth/login/mfa-verify', {
       method: 'POST',
-      body: JSON.stringify({ accessToken, factorId, code }),
+      body: JSON.stringify({ mfaSessionId, factorId, code }),
     });
   }
 

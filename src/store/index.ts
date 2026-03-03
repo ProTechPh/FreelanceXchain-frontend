@@ -7,8 +7,8 @@ interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string, captchaToken?: string) => Promise<{ mfaRequired: boolean; accessToken?: string; factorId?: string }>;
-  loginWithMfa: (tempAccessToken: string, factorId: string, code: string) => Promise<void>;
+  login: (email: string, password: string, captchaToken?: string) => Promise<{ mfaRequired: boolean; mfaSessionId?: string; factorId?: string }>;
+  loginWithMfa: (mfaSessionId: string, factorId: string, code: string) => Promise<void>;
   register: (email: string, password: string, role: 'freelancer' | 'employer', name?: string, walletAddress?: string, captchaToken?: string) => Promise<void>;
   logout: () => void;
   fetchCurrentUser: () => Promise<void>;
@@ -31,8 +31,12 @@ export const useAuthStore = create<AuthState>()(
           const result = await api.login({ email, password, captchaToken });
 
           if (result.mfaRequired) {
+            const mfaSessionId = result.mfaSessionId ?? result.accessToken;
+            if (!mfaSessionId || !result.factorId) {
+              throw new Error('MFA login response is missing required session data');
+            }
             set({ isLoading: false });
-            return { mfaRequired: true, accessToken: result.accessToken, factorId: result.factorId };
+            return { mfaRequired: true, mfaSessionId, factorId: result.factorId };
           }
 
           set({ user: result.user, isAuthenticated: true, isLoading: false });
@@ -43,10 +47,10 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      loginWithMfa: async (tempAccessToken: string, factorId: string, code: string) => {
+      loginWithMfa: async (mfaSessionId: string, factorId: string, code: string) => {
         set({ isLoading: true });
         try {
-          const result = await api.completeMFALogin(tempAccessToken, factorId, code);
+          const result = await api.completeMFALogin(mfaSessionId, factorId, code);
           set({ user: result.user, isAuthenticated: true, isLoading: false });
         } catch (error) {
           set({ isLoading: false });

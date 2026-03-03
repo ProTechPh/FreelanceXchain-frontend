@@ -17,6 +17,7 @@ export interface AuthResult {
   accessToken: string;
   refreshToken: string;
   mfaRequired?: boolean;
+  mfaSessionId?: string;
   factorId?: string;
 }
 

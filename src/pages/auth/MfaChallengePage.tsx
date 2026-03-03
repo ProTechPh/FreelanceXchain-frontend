@@ -6,7 +6,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { useAuthStore } from '../../store';
 
 interface LocationState {
-  accessToken?: string;
+  mfaSessionId?: string;
   factorId?: string;
   returnUrl?: string;
 }
@@ -18,13 +18,13 @@ export function MfaChallengePage() {
   const { loginWithMfa, isLoading } = useAuthStore();
 
   const state = (location.state as LocationState) ?? {};
-  const { accessToken, factorId, returnUrl = '/dashboard' } = state;
+  const { mfaSessionId, factorId, returnUrl = '/dashboard' } = state;
 
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
 
   // If we arrived here without the required MFA state, go back to login
-  if (!accessToken || !factorId) {
+  if (!mfaSessionId || !factorId) {
     navigate('/login', { replace: true });
     return null;
   }
@@ -36,7 +36,7 @@ export function MfaChallengePage() {
     setError('');
 
     try {
-      await loginWithMfa(accessToken, factorId, code);
+      await loginWithMfa(mfaSessionId, factorId, code);
       showToast({
         type: 'success',
         title: 'Verified',
@@ -132,4 +132,3 @@ export function MfaChallengePage() {
     </div>
   );
 }
-
