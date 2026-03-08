@@ -1165,6 +1165,37 @@ class ApiClient {
       created_at: string;
     }> }>(`/audit-logs/me?limit=${limit}`);
   }
+
+  // =====================
+  // Message/Chat Endpoints
+  // =====================
+  async getMessages(contractId: string, params?: { limit?: number; offset?: number }): Promise<import('../types').MessagePaginatedResponse> {
+    const query = params
+      ? `?${new URLSearchParams(Object.entries(params).filter(([_, v]) => v !== undefined).map(([k, v]) => [k, String(v)])).toString()}`
+      : '';
+    return this.request<import('../types').MessagePaginatedResponse>(`/messages/${contractId}${query}`);
+  }
+
+  async sendMessage(contractId: string, content: string): Promise<import('../types').Message> {
+    return this.request<import('../types').Message>(`/messages/${contractId}`, {
+      method: 'POST',
+      body: JSON.stringify({ content }),
+    });
+  }
+
+  async getUnreadMessageCount(contractId: string): Promise<{ count: number }> {
+    return this.request<{ count: number }>(`/messages/${contractId}/unread`);
+  }
+
+  async getConversationSummary(contractId: string): Promise<import('../types').ConversationSummary> {
+    return this.request<import('../types').ConversationSummary>(`/messages/${contractId}/summary`);
+  }
+
+  async markMessagesAsRead(contractId: string): Promise<void> {
+    return this.request<void>(`/messages/${contractId}/read`, {
+      method: 'POST',
+    });
+  }
 }
 
 export const api = new ApiClient();

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Card, CardHeader, Button, PageLoader, StatusBadge } from '../../components/ui';
 import { RatingModal } from '../../components/RatingModal';
+import { ChatPopup, ChatButton } from '../../components/chat';
 import { useAuthStore } from '../../store';
 import api from '../../lib/api';
 import type { Contract, PaymentStatus, ContractMilestone } from '../../types';
@@ -32,6 +33,9 @@ export function ContractDetailPage() {
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [canRate, setCanRate] = useState(false);
   const [hasRated, setHasRated] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isChatMinimized, setIsChatMinimized] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const isFreelancer = user?.role === 'freelancer';
   const isEmployer = user?.role === 'employer';
@@ -47,6 +51,34 @@ export function ContractDetailPage() {
       return 'Invalid Date';
     }
   };
+
+  // Fetch unread message count
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      if (!id || !contract) return;
+      
+      // Only fetch unread count for active or disputed contracts
+      if (contract.status === 'active' || contract.status === 'disputed') {
+        try {
+          const { count } = await api.getUnreadMessageCount(id);
+          setUnreadCount(count);
+        } catch (error) {
+          console.error('Error fetching unread count:', error);
+        }
+      }
+    };
+
+    fetchUnreadCount();
+    
+    // Refresh unread count periodically when chat is closed
+    const interval = setInterval(() => {
+      if (!isChatOpen) {
+        fetchUnreadCount();
+      }
+    }, 30000); // Every 30 seconds
+    
+    return () => clearInterval(interval);
+  }, [id, contract, isChatOpen]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -518,6 +550,28 @@ export function ContractDetailPage() {
           rateeName={isFreelancer ? contract.employer?.companyName || 'Client' : contract.freelancer?.name || 'Freelancer'}
           rateeRole={isFreelancer ? 'employer' : 'freelancer'}
         />
+      )}
+
+      {/* Chat Components - Only show for active or disputed contracts */}
+      {contract && (contract.status === 'active' || contract.status === 'disputed') && (
+        <>
+          <ChatButton 
+            onClick={() => setIsChatOpen(true)}
+            unreadCount={unreadCount}
+            isOpen={isChatOpen}
+          />
+          
+          <ChatPopup
+            contractId={contract.id}
+            otherPartyName={isFreelancer ? contract.employer?.companyName || 'Client' : contract.freelancer?.name || 'Freelancer'}
+            otherPartyRole={isFreelancer ? 'Client' : 'Freelancer'}
+            isOpen={isChatOpen}
+            onClose={() => setIsChatOpen(false)}
+            onMinimize={() => setIsChatMinimized(!isChatMinimized)}
+            isMinimized={isChatMinimized}
+            onUnreadCountChange={setUnreadCount}
+          />
+        </>
       )}
     </div>
   );

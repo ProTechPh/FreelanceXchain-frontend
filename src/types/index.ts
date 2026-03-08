@@ -579,3 +579,30 @@ export interface FileListResult {
   }>;
   error?: string;
 }
+
+// Message Types (Contract Chat)
+export interface Message {
+  id: string;
+  contract_id: string;
+  sender_id: string;
+  content: string;
+  is_read: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SendMessageInput {
+  content: string;
+}
+
+export interface MessagePaginatedResponse {
+  items: Message[];
+  hasMore: boolean;
+  total?: number;
+}
+
+export interface ConversationSummary {
+  contractId: string;
+  lastMessage: Message | null;
+  unreadCount: number;
+}
