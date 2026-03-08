@@ -297,15 +297,17 @@ export function Navbar({ onMenuClick, isSidebarOpen }: NavbarProps) {
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Link
                   to="/notifications"
-                  className="relative p-2 text-gray-800 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
+                  className="relative p-2 text-gray-800 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 transition-colors inline-block"
                 >
                   <Bell className="w-5 h-5" />
                   {unreadCount > 0 && (
                     <motion.span
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      className="absolute top-1 right-1 w-2 h-2 bg-accent-error rounded-full border-2 border-white dark:border-dark-bg"
-                    />
+                      className="absolute top-0.5 right-0.5 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1 border-2 border-white dark:border-dark-bg shadow-md"
+                    >
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </motion.span>
                   )}
                 </Link>
               </motion.div>

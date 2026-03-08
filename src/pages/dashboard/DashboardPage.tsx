@@ -418,7 +418,7 @@ export function DashboardPage() {
             />
             {notifications.length > 0 ? (
               <div className="space-y-3">
-                {notifications.map((notification) => (
+                {notifications.slice(0, 4).map((notification) => (
                   <div
                     key={notification.id}
                     className="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-bg"

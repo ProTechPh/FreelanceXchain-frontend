@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Bell,
   CheckCircle,
@@ -14,6 +15,7 @@ import type { Notification, NotificationType } from '../../types';
 import { formatDistanceToNow } from 'date-fns';
 
 export function NotificationsPage() {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
@@ -54,6 +56,70 @@ export function NotificationsPage() {
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
+    }
+  };
+
+  const handleNotificationClick = async (notification: Notification) => {
+    // Mark as read if not already read
+    if (!notification.isRead) {
+      await handleMarkAsRead(notification.id);
+    }
+
+    // Navigate based on notification type and data
+    const { type, data } = notification;
+
+    switch (type) {
+      case 'proposal_received':
+        // Navigate to project detail if projectId exists, else to proposals list
+        if (data.projectId) {
+          navigate(`/projects/${data.projectId}`);
+        } else {
+          navigate('/proposals');
+        }
+        break;
+      
+      case 'proposal_accepted':
+      case 'proposal_rejected':
+        // Navigate to contract detail if contractId exists, else to proposals list
+        if (data.contractId) {
+          navigate(`/contracts/${data.contractId}`);
+        } else if (data.proposalId && data.projectId) {
+          navigate(`/projects/${data.projectId}/proposals/${data.proposalId}`);
+        } else {
+          navigate('/proposals');
+        }
+        break;
+      
+      case 'milestone_submitted':
+      case 'milestone_approved':
+      case 'payment_released':
+      case 'message':
+        // Navigate to contract detail
+        if (data.contractId) {
+          navigate(`/contracts/${data.contractId}`);
+        } else {
+          navigate('/contracts');
+        }
+        break;
+      
+      case 'dispute_created':
+      case 'dispute_resolved':
+        // Navigate to dispute detail if disputeId exists, else to disputes list
+        if (data.disputeId) {
+          navigate(`/disputes/${data.disputeId}`);
+        } else {
+          navigate('/disputes');
+        }
+        break;
+      
+      case 'rating_received':
+        // Navigate to profile
+        navigate('/profile');
+        break;
+      
+      default:
+        // Do nothing for unknown notification types
+        break;
     }
   };
 
@@ -164,7 +230,8 @@ export function NotificationsPage() {
           {filteredNotifications.map((notification) => (
             <Card
               key={notification.id}
-              className={`hover:border-primary-500/50 transition-colors ${!notification.isRead ? 'border-l-4 border-l-primary-500' : ''
+              onClick={() => handleNotificationClick(notification)}
+              className={`cursor-pointer hover:border-primary-500/50 hover:shadow-md transition-all ${!notification.isRead ? 'border-l-4 border-l-primary-500' : ''
                 }`}
             >
               <div className="flex items-start gap-4">
@@ -190,7 +257,10 @@ export function NotificationsPage() {
                 <div className="flex items-center gap-2">
                   {!notification.isRead && (
                     <button
-                      onClick={() => handleMarkAsRead(notification.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleMarkAsRead(notification.id);
+                      }}
                       className="p-2 text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                       title="Mark as read"
                     >
