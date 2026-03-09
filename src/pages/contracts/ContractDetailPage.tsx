@@ -435,14 +435,18 @@ export function ContractDetailPage() {
                 <ExternalLink className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">Escrow Contract</p>
-                  <a
-                    href={`https://etherscan.io/address/${contract.escrowAddress}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 text-sm font-mono"
-                  >
-                    {contract.escrowAddress.slice(0, 6)}...{contract.escrowAddress.slice(-4)}
-                  </a>
+                  {contract.escrowAddress ? (
+                    <a
+                      href={`https://etherscan.io/address/${contract.escrowAddress}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 text-sm font-mono"
+                    >
+                      {contract.escrowAddress.slice(0, 6)}...{contract.escrowAddress.slice(-4)}
+                    </a>
+                  ) : (
+                    <p className="text-gray-500 dark:text-gray-500 text-sm">Not deployed</p>
+                  )}
                 </div>
               </div>
             </div>
