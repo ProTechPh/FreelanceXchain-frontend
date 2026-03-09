@@ -49,8 +49,8 @@ export function MfaChallengePage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center py-12 px-4 relative overflow-hidden">
-      {/* Background decoration — matches other auth pages */}
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 relative overflow-hidden">
+      {/* Background decoration */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary-600/20 rounded-full blur-[100px] pointer-events-none mix-blend-screen animate-pulse-glow" />
       <div
         className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-[100px] pointer-events-none mix-blend-screen animate-pulse-glow"

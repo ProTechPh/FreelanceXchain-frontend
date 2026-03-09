@@ -37,6 +37,12 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api
 // Toast notification helper (will be called from outside)
 let showToastCallback: ((toast: { type: 'success' | 'error' | 'warning' | 'info'; title: string; message: string }) => void) | null = null;
 
+// MFA required callback (will be called when admin needs MFA to access protected routes)
+let mfaRequiredCallback: (() => void) | null = null;
+
+// MFA recommendation localStorage key
+const MFA_RECOMMEND_KEY = 'mfa-recommend-shown-date';
+
 class ApiClient {
   private accessToken: string | null = null;
   private refreshToken: string | null = null;
@@ -57,6 +63,25 @@ class ApiClient {
   // Set toast callback from ToastContext
   setToastCallback(callback: (toast: { type: 'success' | 'error' | 'warning' | 'info'; title: string; message: string }) => void) {
     showToastCallback = callback;
+  }
+
+  // Set MFA required callback from MfaContext
+  setMfaRequiredCallback(callback: () => void) {
+    mfaRequiredCallback = callback;
+  }
+
+  // Check if MFA recommendation was already shown today
+  private wasMfaRecommendShownToday(): boolean {
+    const lastShown = localStorage.getItem(MFA_RECOMMEND_KEY);
+    if (!lastShown) return false;
+    const today = new Date().toDateString();
+    return lastShown === today;
+  }
+
+  // Mark MFA recommendation as shown today
+  private markMfaRecommendShown(): void {
+    const today = new Date().toDateString();
+    localStorage.setItem(MFA_RECOMMEND_KEY, today);
   }
 
   /**
@@ -149,9 +174,30 @@ class ApiClient {
       if (!response.ok) {
         const errorBody = await response.json().catch(() => ({}));
         const apiErrorMessage = errorBody.error?.message || response.statusText;
+        const errorCode = errorBody.error?.code;
+        
+        // Handle MFA_REQUIRED error - trigger modal for admins
+        if (errorCode === 'MFA_REQUIRED' && mfaRequiredCallback) {
+          mfaRequiredCallback();
+        }
+        
         const error: any = new Error(this.sanitizeApiError(apiErrorMessage, response.status));
         error.response = errorBody; // Attach full response for debugging
+        error.code = errorCode; // Attach error code
         throw error;
+      }
+
+      // Check for X-MFA-Recommended header and show toast (once per day)
+      const mfaRecommended = response.headers.get('X-MFA-Recommended');
+      if (mfaRecommended === 'true' && !this.wasMfaRecommendShownToday()) {
+        this.markMfaRecommendShown();
+        if (showToastCallback) {
+          showToastCallback({
+            type: 'info',
+            title: 'Enhance Your Security',
+            message: 'Enable MFA to add an extra layer of protection to your admin account.',
+          });
+        }
       }
 
       return response.json();
@@ -186,69 +232,6 @@ class ApiClient {
     ];
 
     return publicAuthPrefixes.some((prefix) => endpoint.startsWith(prefix));
-  }
-
-  private async extractApiErrorMessage(response: Response): Promise<string | null> {
-    const contentType = response.headers.get('content-type')?.toLowerCase() || '';
-
-    if (contentType.includes('application/json')) {
-      const payload = await response.json().catch(() => null);
-      return this.parseApiErrorMessage(payload);
-    }
-
-    const text = await response.text().catch(() => '');
-    if (!text) return null;
-
-    try {
-      const payload = JSON.parse(text);
-      return this.parseApiErrorMessage(payload) || text.trim() || null;
-    } catch {
-      return text.trim() || null;
-    }
-  }
-
-  private parseApiErrorMessage(payload: unknown): string | null {
-    if (!payload || typeof payload !== 'object') return null;
-
-    const data = payload as Record<string, unknown>;
-
-    if (typeof data.message === 'string' && data.message.trim()) {
-      return data.message.trim();
-    }
-
-    if (typeof data.error === 'string' && data.error.trim()) {
-      return data.error.trim();
-    }
-
-    if (data.error && typeof data.error === 'object') {
-      const errorObject = data.error as Record<string, unknown>;
-
-      if (typeof errorObject.message === 'string' && errorObject.message.trim()) {
-        return errorObject.message.trim();
-      }
-
-      if (Array.isArray(errorObject.details) && errorObject.details.length > 0) {
-        const firstErrorDetail = errorObject.details[0];
-        if (firstErrorDetail && typeof firstErrorDetail === 'object') {
-          const detailMessage = (firstErrorDetail as Record<string, unknown>).message;
-          if (typeof detailMessage === 'string' && detailMessage.trim()) {
-            return detailMessage.trim();
-          }
-        }
-      }
-    }
-
-    if (Array.isArray(data.details) && data.details.length > 0) {
-      const firstDetail = data.details[0];
-      if (firstDetail && typeof firstDetail === 'object') {
-        const detailMessage = (firstDetail as Record<string, unknown>).message;
-        if (typeof detailMessage === 'string' && detailMessage.trim()) {
-          return detailMessage.trim();
-        }
-      }
-    }
-
-    return null;
   }
 
   /**
@@ -1123,10 +1106,10 @@ class ApiClient {
     });
   }
 
-  async disableMFA(factorId: string): Promise<{ message: string }> {
+  async disableMFA(factorId: string, totpCode: string): Promise<{ message: string }> {
     return this.request<{ message: string }>('/auth/mfa/disable', {
       method: 'POST',
-      body: JSON.stringify({ factorId }),
+      body: JSON.stringify({ factorId, totpCode }),
     });
   }
 

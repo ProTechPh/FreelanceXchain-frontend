@@ -76,6 +76,7 @@ import { SettingsPage } from './pages/settings/SettingsPage';
 import { ActivityLogPage } from './pages/settings/ActivityLogPage';
 import { TutorialProvider } from './features/onboarding/components/TutorialProvider';
 import { MfaChallengePage } from './pages/auth/MfaChallengePage';
+import { MfaProvider } from './contexts/MfaContext';
 
 function App() {
   const { isDark } = useThemeStore();
@@ -148,6 +149,7 @@ function App() {
   return (
     <ToastProvider>
       <Router>
+      <MfaProvider>
       <TutorialProvider>
       <Routes>
         {/* Public Routes */}
@@ -179,7 +181,7 @@ function App() {
         />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
-        <Route path="/mfa/challenge" element={<PublicLayout><MfaChallengePage /></PublicLayout>} />
+        <Route path="/mfa/challenge" element={<MfaChallengePage />} />
 
         {/* Public Project Routes */}
         <Route path="/projects" element={<PublicLayout><ProjectListPage /></PublicLayout>} />
@@ -510,6 +512,7 @@ function App() {
         />
       </Routes>
       </TutorialProvider>
+      </MfaProvider>
     </Router>
     </ToastProvider>
   );

@@ -10,7 +10,7 @@ interface MfaDisableModalProps {
   isOpen: boolean;
   onClose: () => void;
   factor: MfaFactor | null;
-  onDisable: (factorId: string) => Promise<void>;
+  onDisable: (factorId: string, totpCode: string) => Promise<void>;
 }
 
 export function MfaDisableModal({ isOpen, onClose, factor, onDisable }: MfaDisableModalProps) {
@@ -22,7 +22,7 @@ export function MfaDisableModal({ isOpen, onClose, factor, onDisable }: MfaDisab
     if (!factor || code.length !== 6) return;
     setIsLoading(true);
     try {
-      await onDisable(factor.id);
+      await onDisable(factor.id, code);
       showToast({
         type: 'success',
         title: 'MFA Disabled',

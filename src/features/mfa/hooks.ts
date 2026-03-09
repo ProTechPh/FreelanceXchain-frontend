@@ -68,11 +68,11 @@ export function useMfa() {
     }
   }, [fetchFactors]);
 
-  const disable = useCallback(async (factorId: string): Promise<void> => {
+  const disable = useCallback(async (factorId: string, totpCode: string): Promise<void> => {
     try {
       setIsActing(true);
       setError(null);
-      await api.disableMFA(factorId);
+      await api.disableMFA(factorId, totpCode);
       // Refresh factors after disabling
       await fetchFactors();
     } catch (err: any) {
