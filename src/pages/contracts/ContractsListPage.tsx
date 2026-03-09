@@ -37,7 +37,9 @@ export function ContractsListPage() {
     : contracts.filter(c => c.status === filter);
 
   const getProgressPercentage = (contract: Contract) => {
-    if (!contract.milestones.length) return 0;
+    if (!contract.milestones.length) {
+      return contract.status === 'completed' ? 100 : 0;
+    }
     const completed = contract.milestones.filter(
       (m: ContractMilestone) => m.status === 'approved'
     ).length;
@@ -145,9 +147,9 @@ export function ContractsListPage() {
           </p>
         </Card>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-8">
           {filteredContracts.map((contract) => (
-            <Link key={contract.id} to={`/contracts/${contract.id}`}>
+            <Link key={contract.id} to={`/contracts/${contract.id}`} className="block mb-6">
               <Card className="hover:border-primary-500/50 transition-colors cursor-pointer">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
