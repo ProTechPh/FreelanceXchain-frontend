@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, User, Briefcase, Wallet, ArrowLeft, Zap, CheckCircle2, XCircle } from 'lucide-react';
 import { useAuthStore } from '../../store';
 import { Button, Input, Card } from '../../components/ui';
-import { FaGoogle, FaGithub, FaLinkedin, FaMicrosoft } from 'react-icons/fa';
+import { FaGoogle, FaGithub, FaMicrosoft } from 'react-icons/fa';
 import api from '../../lib/api';
 import type { UserRole } from '../../types';
 import { TurnstileCaptcha } from '../../components/TurnstileCaptcha';
@@ -164,11 +164,10 @@ export function RegisterPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-3 gap-3">
               {[
                 { icon: FaGoogle, color: 'text-red-500', name: 'Google' },
                 { icon: FaGithub, color: 'text-gray-900 dark:text-white', name: 'GitHub' },
-                { icon: FaLinkedin, color: 'text-blue-500', name: 'LinkedIn' },
                 { icon: FaMicrosoft, color: 'text-blue-400', name: 'Microsoft' },
               ].map((provider) => (
                 <button

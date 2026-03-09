@@ -127,8 +127,10 @@ class ApiClient {
 
     // Add timeout to prevent indefinite waiting
     // AI endpoints get longer timeout (300s = 5 minutes) since LLM can be slow
+    // Blockchain endpoints get medium timeout (120s) since on-chain transactions take time
     const isAIEndpoint = endpoint.startsWith('/matching');
-    const timeoutMs = isAIEndpoint ? 300000 : 30000;
+    const isBlockchainEndpoint = endpoint.startsWith('/reputation') || endpoint.startsWith('/payments') || endpoint.startsWith('/disputes');
+    const timeoutMs = isAIEndpoint ? 300000 : isBlockchainEndpoint ? 120000 : 30000;
     
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
@@ -207,8 +209,9 @@ class ApiClient {
       // Handle abort/timeout errors
       if (error.name === 'AbortError') {
         console.error('[API] Request aborted due to timeout:', endpoint);
+        const serviceLabel = isAIEndpoint ? 'AI service' : isBlockchainEndpoint ? 'blockchain service' : 'server';
         const timeoutError: any = new Error(
-          `Request timed out after ${timeoutMs / 1000} seconds. The AI service may be experiencing high load. Please try again.`
+          `Request timed out after ${timeoutMs / 1000} seconds. The ${serviceLabel} may be experiencing high load. Please try again.`
         );
         timeoutError.isTimeout = true;
         throw timeoutError;

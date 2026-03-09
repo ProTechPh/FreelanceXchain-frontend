@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, Zap } from 'lucide-react';
 import { useAuthStore } from '../../store';
 import { Button, Input, Card } from '../../components/ui';
-import { FaGoogle, FaGithub, FaLinkedin, FaMicrosoft } from 'react-icons/fa';
+import { FaGoogle, FaGithub, FaMicrosoft } from 'react-icons/fa';
 import api from '../../lib/api';
 import { TurnstileCaptcha } from '../../components/TurnstileCaptcha';
 
@@ -164,11 +164,10 @@ export function LoginPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             {[
               { icon: FaGoogle, color: 'text-red-500', name: 'Google' },
               { icon: FaGithub, color: 'text-gray-700 dark:text-white', name: 'GitHub' },
-              { icon: FaLinkedin, color: 'text-blue-500', name: 'LinkedIn' },
               { icon: FaMicrosoft, color: 'text-blue-400', name: 'Microsoft' },
             ].map((provider) => (
               <button
