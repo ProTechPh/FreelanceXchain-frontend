@@ -81,11 +81,11 @@ export function FreelancerDetailPage() {
             <div className="space-y-6">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
-                  <h1 className="text-3xl font-bold text-white mb-2">
+                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
                     {freelancer.name || 'Anonymous'}
                   </h1>
                   {freelancer.nationality && (
-                    <div className="flex items-center gap-2 text-gray-400 mb-4">
+                    <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 mb-4">
                       <MapPin className="w-4 h-4" />
                       {freelancer.nationality}
                     </div>
@@ -93,23 +93,23 @@ export function FreelancerDetailPage() {
                   <StatusBadge status={freelancer.availability} />
                 </div>
                 <div className="text-right">
-                  <div className="text-3xl font-bold text-primary-400">
+                  <div className="text-3xl font-bold text-primary-600 dark:text-primary-400">
                     ${freelancer.hourlyRate}
                   </div>
-                  <div className="text-sm text-gray-400">per hour</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">per hour</div>
                 </div>
               </div>
 
               {freelancer.bio && (
                 <div>
-                  <h3 className="text-lg font-semibold text-white mb-2">About</h3>
-                  <p className="text-gray-400 leading-relaxed">{freelancer.bio}</p>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">About</h3>
+                  <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{freelancer.bio}</p>
                 </div>
               )}
 
               {/* Action Buttons */}
               {!isOwnProfile && isEmployer && (
-                <div className="flex gap-3 pt-4 border-t border-white/10">
+                <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-white/10">
                   <Button variant="primary" className="flex-1">
                     <Mail className="w-4 h-4" />
                     Contact Freelancer
@@ -123,7 +123,7 @@ export function FreelancerDetailPage() {
               )}
 
               {isOwnProfile && (
-                <div className="pt-4 border-t border-white/10">
+                <div className="pt-4 border-t border-gray-200 dark:border-white/10">
                   <Link to="/profile">
                     <Button variant="primary" className="w-full">
                       Edit Profile
@@ -142,7 +142,7 @@ export function FreelancerDetailPage() {
                 {freelancer.skills.map((skill, index) => (
                   <span
                     key={index}
-                    className="px-4 py-2 bg-primary-500/10 text-primary-400 rounded-lg text-sm font-medium border border-primary-500/20"
+                    className="px-4 py-2 bg-primary-100 dark:bg-primary-500/10 text-primary-700 dark:text-primary-400 rounded-lg text-sm font-medium border border-primary-200 dark:border-primary-500/20"
                   >
                     {skill.name}
                   </span>
@@ -162,17 +162,17 @@ export function FreelancerDetailPage() {
                     <div className="space-y-2">
                       <div className="flex items-start justify-between gap-4">
                         <div>
-                          <h4 className="text-lg font-semibold text-white">{exp.title}</h4>
-                          <p className="text-gray-400">{exp.company}</p>
+                          <h4 className="text-lg font-semibold text-gray-900 dark:text-white">{exp.title}</h4>
+                          <p className="text-gray-600 dark:text-gray-400">{exp.company}</p>
                         </div>
-                        <div className="text-sm text-gray-500 flex items-center gap-1">
+                        <div className="text-sm text-gray-600 dark:text-gray-500 flex items-center gap-1">
                           <Calendar className="w-4 h-4" />
                           {format(new Date(exp.startDate), 'MMM yyyy')} - 
                           {exp.endDate ? format(new Date(exp.endDate), 'MMM yyyy') : 'Present'}
                         </div>
                       </div>
                       {exp.description && (
-                        <p className="text-gray-400 text-sm leading-relaxed">{exp.description}</p>
+                        <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">{exp.description}</p>
                       )}
                     </div>
                   </div>
@@ -194,25 +194,25 @@ export function FreelancerDetailPage() {
             <CardHeader title="Quick Stats" />
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-gray-400">Hourly Rate</span>
-                <span className="text-white font-semibold">${freelancer.hourlyRate}</span>
+                <span className="text-gray-600 dark:text-gray-400">Hourly Rate</span>
+                <span className="text-gray-900 dark:text-white font-semibold">${freelancer.hourlyRate}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-400">Availability</span>
+                <span className="text-gray-600 dark:text-gray-400">Availability</span>
                 <StatusBadge status={freelancer.availability} />
               </div>
               {freelancer.experience && (
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-400">Experience</span>
-                  <span className="text-white font-semibold">
+                  <span className="text-gray-600 dark:text-gray-400">Experience</span>
+                  <span className="text-gray-900 dark:text-white font-semibold">
                     {freelancer.experience.length} {freelancer.experience.length === 1 ? 'project' : 'projects'}
                   </span>
                 </div>
               )}
               {freelancer.skills && (
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-400">Skills</span>
-                  <span className="text-white font-semibold">{freelancer.skills.length}</span>
+                  <span className="text-gray-600 dark:text-gray-400">Skills</span>
+                  <span className="text-gray-900 dark:text-white font-semibold">{freelancer.skills.length}</span>
                 </div>
               )}
             </div>
@@ -223,14 +223,14 @@ export function FreelancerDetailPage() {
             <Card>
               <CardHeader title="Member Since" />
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-primary-500/20 rounded-full flex items-center justify-center">
-                  <Award className="w-6 h-6 text-primary-400" />
+                <div className="w-12 h-12 bg-primary-100 dark:bg-primary-500/20 rounded-full flex items-center justify-center">
+                  <Award className="w-6 h-6 text-primary-600 dark:text-primary-400" />
                 </div>
                 <div>
-                  <div className="text-white font-semibold">
+                  <div className="text-gray-900 dark:text-white font-semibold">
                     {format(new Date(freelancer.createdAt), 'MMMM yyyy')}
                   </div>
-                  <div className="text-sm text-gray-400">
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
                     Joined FreelanceXchain
                   </div>
                 </div>
@@ -241,7 +241,7 @@ export function FreelancerDetailPage() {
           {/* Similar Freelancers */}
           <Card>
             <CardHeader title="Similar Freelancers" />
-            <div className="text-center py-6 text-gray-400 text-sm">
+            <div className="text-center py-6 text-gray-600 dark:text-gray-400 text-sm">
               Coming soon
             </div>
           </Card>

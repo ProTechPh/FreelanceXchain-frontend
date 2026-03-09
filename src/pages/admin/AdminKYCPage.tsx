@@ -121,7 +121,7 @@ export function AdminKYCPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">KYC Verification Review</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">KYC Verification Review</h1>
           <p className="text-gray-400 mt-1">Review and approve user identity verifications</p>
         </div>
         <div className="flex items-center gap-2">
@@ -129,7 +129,7 @@ export function AdminKYCPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="px-4 py-2 bg-dark-bg border border-dark-border rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
           >
             <option value="all">All Status</option>
             <option value="pending">Pending</option>
@@ -192,7 +192,7 @@ export function AdminKYCPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-gray-400 text-sm">Total</p>
-                <p className="text-2xl font-bold text-white">{verifications.length}</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{verifications.length}</p>
               </div>
               <div className="w-10 h-10 rounded-lg bg-primary-500/20 flex items-center justify-center">
                 <FiUser className="w-5 h-5 text-primary-400" />
@@ -220,7 +220,7 @@ export function AdminKYCPage() {
                     </div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h3 className="text-lg font-medium text-white">
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                           {kyc.firstName} {kyc.lastName}
                         </h3>
                         <Badge variant={getStatusBadgeVariant(kyc.status)}>
@@ -292,26 +292,26 @@ export function AdminKYCPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setSelectedKyc(null)}>
           <Card className="max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto" onClick={handleCardClick}>
             <div className="p-6">
-              <h3 className="text-xl font-semibold text-white mb-4">KYC Verification Details</h3>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">KYC Verification Details</h3>
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <span className="text-gray-400 text-sm">User Email:</span>
-                    <p className="text-white">{selectedKyc.userEmail}</p>
+                    <p className="text-gray-900 dark:text-white">{selectedKyc.userEmail}</p>
                   </div>
                   <div>
                     <span className="text-gray-400 text-sm">User Name:</span>
-                    <p className="text-white">{selectedKyc.userName}</p>
+                    <p className="text-gray-900 dark:text-white">{selectedKyc.userName}</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <span className="text-gray-400 text-sm">First Name:</span>
-                    <p className="text-white">{selectedKyc.firstName}</p>
+                    <p className="text-gray-900 dark:text-white">{selectedKyc.firstName}</p>
                   </div>
                   <div>
                     <span className="text-gray-400 text-sm">Last Name:</span>
-                    <p className="text-white">{selectedKyc.lastName}</p>
+                    <p className="text-gray-900 dark:text-white">{selectedKyc.lastName}</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -325,28 +325,28 @@ export function AdminKYCPage() {
                   </div>
                   <div>
                     <span className="text-gray-400 text-sm">Nationality:</span>
-                    <p className="text-white">{selectedKyc.nationality || 'N/A'}</p>
+                    <p className="text-gray-900 dark:text-white">{selectedKyc.nationality || 'N/A'}</p>
                   </div>
                 </div>
                 {selectedKyc.dateOfBirth && (
                   <div>
                     <span className="text-gray-400 text-sm">Date of Birth:</span>
-                    <p className="text-white">{new Date(selectedKyc.dateOfBirth).toLocaleDateString()}</p>
+                    <p className="text-gray-900 dark:text-white">{new Date(selectedKyc.dateOfBirth).toLocaleDateString()}</p>
                   </div>
                 )}
                 <div>
                   <span className="text-gray-400 text-sm">Document Type:</span>
-                  <p className="text-white">{selectedKyc.documentType || 'N/A'}</p>
+                  <p className="text-gray-900 dark:text-white">{selectedKyc.documentType || 'N/A'}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <span className="text-gray-400 text-sm">Submitted:</span>
-                    <p className="text-white">{new Date(selectedKyc.createdAt).toLocaleString()}</p>
+                    <p className="text-gray-900 dark:text-white">{new Date(selectedKyc.createdAt).toLocaleString()}</p>
                   </div>
                   {selectedKyc.completed_at && (
                     <div>
                       <span className="text-gray-400 text-sm">Completed:</span>
-                      <p className="text-white">{new Date(selectedKyc.completed_at).toLocaleString()}</p>
+                      <p className="text-gray-900 dark:text-white">{new Date(selectedKyc.completed_at).toLocaleString()}</p>
                     </div>
                   )}
                 </div>

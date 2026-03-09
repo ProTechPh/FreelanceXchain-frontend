@@ -95,7 +95,7 @@ export function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-dark-bg text-white selection:bg-primary-500/30">
+    <div className="min-h-screen bg-white dark:bg-dark-bg text-gray-900 dark:text-white selection:bg-primary-500/30">
       {/* Background Gradients - Reduced intensity */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/4 w-[400px] h-[400px] bg-primary-600/10 rounded-full blur-[120px] mix-blend-screen" />
@@ -108,10 +108,10 @@ export function LandingPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm mb-10"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-gray-200 dark:border-white/10 backdrop-blur-sm mb-10"
         >
           <Zap className="w-4 h-4 text-primary-400" />
-          <span className="text-sm font-medium text-gray-300">The Next Gen Freelance Platform</span>
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">The Next Gen Freelance Platform</span>
         </motion.div>
 
         <motion.h1
@@ -130,7 +130,7 @@ export function LandingPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-12 leading-relaxed"
+          className="text-lg sm:text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto mb-12 leading-relaxed"
         >
           Connect with elite global talent, secure payments with smart contracts,
           and build a reputation that truly belongs to you.
@@ -152,7 +152,7 @@ export function LandingPage() {
           </Link>
           <Link to="/projects">
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-              <Button size="lg" variant="outline" className="h-14 px-8 text-base bg-dark-bg/50 backdrop-blur-sm border-white/10 hover:bg-white/5">
+              <Button size="lg" variant="outline" className="h-14 px-8 text-base bg-white/50 dark:bg-dark-bg/50 backdrop-blur-sm border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/5">
                 Find Work
               </Button>
             </motion.div>
@@ -164,7 +164,7 @@ export function LandingPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
-          className="mt-24 grid grid-cols-2 md:grid-cols-4 gap-12 pt-16 border-t border-white/5"
+          className="mt-24 grid grid-cols-2 md:grid-cols-4 gap-12 pt-16 border-t border-gray-200 dark:border-white/5"
         >
           {displayStats.map((stat, index) => (
             <motion.div
@@ -174,17 +174,17 @@ export function LandingPage() {
               transition={{ duration: 0.6, delay: 0.5 + index * 0.1 }}
               className="flex flex-col items-center"
             >
-              <span className="text-4xl sm:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-500">
+              <span className="text-4xl sm:text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-gray-900 dark:from-white to-gray-500">
                 {stat.value}
               </span>
-              <span className="text-sm text-gray-400 mt-3 font-medium">{stat.label}</span>
+              <span className="text-sm text-gray-600 dark:text-gray-400 mt-3 font-medium">{stat.label}</span>
             </motion.div>
           ))}
         </motion.div>
       </section>
 
       {/* Features Grid - Cleaner spacing */}
-      <section className="section-spacing bg-dark-surface/30 relative">
+      <section className="section-spacing bg-gray-50 dark:bg-dark-surface/30 relative">
         <div className="max-w-7xl mx-auto container-padding">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -193,8 +193,8 @@ export function LandingPage() {
             transition={{ duration: 0.6 }}
             className="text-center max-w-3xl mx-auto mb-20"
           >
-            <h2 className="text-4xl sm:text-5xl font-bold mb-6 text-balance">Redefining Platform Reliability</h2>
-            <p className="text-gray-400 text-lg leading-relaxed">
+            <h2 className="text-4xl sm:text-5xl font-bold mb-6 text-balance text-gray-900 dark:text-white">Redefining Platform Reliability</h2>
+            <p className="text-gray-600 dark:text-gray-400 text-lg leading-relaxed">
               We've eliminated the middlemen and inefficiencies. Experience a platform built for
               trust, speed, and transparency.
             </p>
@@ -213,12 +213,12 @@ export function LandingPage() {
               >
                 <motion.div
                   whileHover={{ scale: 1.05, rotate: 3 }}
-                  className="w-14 h-14 rounded-xl bg-dark-bg/80 flex items-center justify-center mb-6"
+                  className="w-14 h-14 rounded-xl bg-white dark:bg-dark-bg/80 flex items-center justify-center mb-6"
                 >
                   <feature.icon className={`w-7 h-7 ${feature.color}`} />
                 </motion.div>
-                <h3 className="text-xl font-bold mb-4">{feature.title}</h3>
-                <p className="text-gray-400 leading-relaxed">{feature.description}</p>
+                <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">{feature.title}</h3>
+                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">{feature.description}</p>
               </motion.div>
             ))}
           </div>
@@ -233,41 +233,41 @@ export function LandingPage() {
               {/* Abstract decorative elements */}
               <div className="absolute -inset-4 bg-gradient-to-r from-primary-500/10 to-purple-500/10 rounded-full blur-3xl opacity-50" />
 
-              <div className="relative bg-dark-surface border border-white/5 rounded-2xl p-8 shadow-2xl">
+              <div className="relative bg-white dark:bg-dark-surface border border-gray-200 dark:border-white/5 rounded-2xl p-8 shadow-2xl">
                 <div className="flex items-start gap-4 mb-8">
                   <div className="p-3 rounded-full bg-green-500/10 border border-green-500/20">
                     <Lock className="w-6 h-6 text-green-400" />
                   </div>
                   <div>
-                    <h4 className="text-lg font-bold">Smart Contract Escrow</h4>
-                    <p className="text-gray-400 mt-1">Funds are held safely on-chain until work is approved.</p>
+                    <h4 className="text-lg font-bold text-gray-900 dark:text-white">Smart Contract Escrow</h4>
+                    <p className="text-gray-600 dark:text-gray-400 mt-1">Funds are held safely on-chain until work is approved.</p>
                   </div>
                 </div>
                 <div className="space-y-4">
-                  <div className="h-2 bg-dark-bg rounded-full overflow-hidden">
+                  <div className="h-2 bg-gray-200 dark:bg-dark-bg rounded-full overflow-hidden">
                     <div className="h-full w-3/4 bg-green-500 rounded-full" />
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-400">Milestone 2/3 Complete</span>
+                    <span className="text-gray-600 dark:text-gray-400">Milestone 2/3 Complete</span>
                     <span className="text-green-400">75%</span>
                   </div>
                 </div>
               </div>
 
-              <div className="relative mt-6 bg-dark-surface border border-white/5 rounded-2xl p-8 shadow-2xl lg:ml-12">
+              <div className="relative mt-6 bg-white dark:bg-dark-surface border border-gray-200 dark:border-white/5 rounded-2xl p-8 shadow-2xl lg:ml-12">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-primary-600 flex items-center justify-center text-lg font-bold">
+                  <div className="w-12 h-12 rounded-full bg-primary-600 flex items-center justify-center text-lg font-bold text-white">
                     JD
                   </div>
                   <div>
-                    <h4 className="font-bold">John Doe</h4>
+                    <h4 className="font-bold text-gray-900 dark:text-white">John Doe</h4>
                     <div className="flex items-center gap-1 text-amber-400 text-sm">
                       <Star className="w-4 h-4 fill-current" />
                       <Star className="w-4 h-4 fill-current" />
                       <Star className="w-4 h-4 fill-current" />
                       <Star className="w-4 h-4 fill-current" />
                       <Star className="w-4 h-4 fill-current" />
-                      <span className="text-gray-500 ml-2">(48 Reviews)</span>
+                      <span className="text-gray-500 dark:text-gray-400 ml-2">(48 Reviews)</span>
                     </div>
                   </div>
                 </div>
@@ -275,11 +275,11 @@ export function LandingPage() {
             </div>
 
             <div className="order-1 lg:order-2">
-              <h2 className="text-4xl sm:text-5xl font-bold mb-8 text-balance">
+              <h2 className="text-4xl sm:text-5xl font-bold mb-8 text-balance text-gray-900 dark:text-white">
                 Trust is Built-in, <br />
                 <span className="text-primary-400">Not Added On</span>
               </h2>
-              <p className="text-lg text-gray-400 mb-10 leading-relaxed">
+              <p className="text-lg text-gray-600 dark:text-gray-400 mb-10 leading-relaxed">
                 Traditional platforms rely on obscure algorithms and support teams.
                 FreelanceXchain uses open source smart contracts and verifying systems
                 to ensure fair play for everyone.
@@ -293,7 +293,7 @@ export function LandingPage() {
                 ].map((item) => (
                   <li key={item} className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-primary-500 flex-shrink-0" />
-                    <span className="text-gray-200">{item}</span>
+                    <span className="text-gray-700 dark:text-gray-200">{item}</span>
                   </li>
                 ))}
               </ul>

@@ -130,7 +130,7 @@ export function BlogPage() {
   const regularPosts = filteredPosts.filter((post) => !post.featured);
 
   return (
-    <div className="min-h-screen bg-dark-bg text-white">
+    <div className="min-h-screen bg-white dark:bg-dark-bg text-gray-900 dark:text-white">
       {/* Background Gradients */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-1/4 w-[400px] h-[400px] bg-primary-600/10 rounded-full blur-[120px]" />
@@ -146,7 +146,7 @@ export function BlogPage() {
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm mb-8"
           >
             <Sparkles className="w-4 h-4 text-primary-400" />
-            <span className="text-sm font-medium text-gray-300">Latest Updates & Stories</span>
+            <span className="text-sm font-medium text-gray-600 dark:text-gray-300">Latest Updates & Stories</span>
           </motion.div>
 
           <motion.h1
@@ -165,7 +165,7 @@ export function BlogPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="text-xl text-gray-400 max-w-3xl mx-auto"
+            className="text-xl text-gray-600 dark:text-gray-400 max-w-3xl mx-auto"
           >
             Platform updates, success stories, and insights from the world of decentralized freelancing
           </motion.p>
@@ -185,8 +185,8 @@ export function BlogPage() {
                 onClick={() => setSelectedCategory(category)}
                 className={`px-6 py-3 rounded-full transition-all ${
                   selectedCategory === category
-                    ? 'bg-primary-600 text-white shadow-lg shadow-primary-500/20'
-                    : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white border border-white/10'
+                    ? 'bg-primary-600 text-gray-900 dark:text-white shadow-lg shadow-primary-500/20'
+                    : 'bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-white/10 hover:text-gray-900 dark:text-white border border-white/10'
                 }`}
               >
                 {category}
@@ -223,7 +223,7 @@ export function BlogPage() {
                       {featuredPost.category}
                     </span>
                     {featuredPost.tags.map((tag) => (
-                      <span key={tag} className="text-xs text-gray-400">
+                      <span key={tag} className="text-xs text-gray-600 dark:text-gray-400">
                         #{tag}
                       </span>
                     ))}
@@ -231,8 +231,8 @@ export function BlogPage() {
                   <h2 className="text-3xl font-bold mb-4 group-hover:text-primary-400 transition-colors">
                     {featuredPost.title}
                   </h2>
-                  <p className="text-gray-400 mb-6 leading-relaxed">{featuredPost.excerpt}</p>
-                  <div className="flex items-center gap-6 text-sm text-gray-400 mb-6">
+                  <p className="text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">{featuredPost.excerpt}</p>
+                  <div className="flex items-center gap-6 text-sm text-gray-600 dark:text-gray-400 mb-6">
                     <div className="flex items-center gap-2">
                       <Calendar className="w-4 h-4" />
                       <span>{new Date(featuredPost.date).toLocaleDateString()}</span>
@@ -243,7 +243,7 @@ export function BlogPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-sm text-gray-400">By {featuredPost.author}</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">By {featuredPost.author}</span>
                     <ArrowRight className="w-5 h-5 text-primary-400 group-hover:translate-x-2 transition-transform" />
                   </div>
                 </div>
@@ -282,8 +282,8 @@ export function BlogPage() {
                   <h3 className="text-xl font-bold mb-3 group-hover:text-primary-400 transition-colors line-clamp-2">
                     {post.title}
                   </h3>
-                  <p className="text-gray-400 text-sm mb-4 line-clamp-3">{post.excerpt}</p>
-                  <div className="flex items-center gap-4 text-xs text-gray-400 mb-4">
+                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-3">{post.excerpt}</p>
+                  <div className="flex items-center gap-4 text-xs text-gray-600 dark:text-gray-400 mb-4">
                     <div className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
                       <span>{new Date(post.date).toLocaleDateString()}</span>
@@ -294,8 +294,8 @@ export function BlogPage() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between pt-4 border-t border-white/10">
-                    <span className="text-sm text-gray-400">{post.author}</span>
-                    <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-primary-400 group-hover:translate-x-1 transition-all" />
+                    <span className="text-sm text-gray-600 dark:text-gray-400">{post.author}</span>
+                    <ArrowRight className="w-5 h-5 text-gray-600 dark:text-gray-400 group-hover:text-primary-400 group-hover:translate-x-1 transition-all" />
                   </div>
                 </div>
               </motion.div>
@@ -319,7 +319,7 @@ export function BlogPage() {
                 <input
                   type="email"
                   placeholder="Enter your email"
-                  className="flex-1 px-6 py-3 rounded-full bg-white/10 border border-white/20 text-white placeholder:text-gray-400 focus:outline-none focus:border-white/40"
+                  className="flex-1 px-6 py-3 rounded-full bg-white/10 border border-white/20 text-gray-900 dark:text-white placeholder:text-gray-600 dark:text-gray-400 focus:outline-none focus:border-white/40"
                 />
                 <Button size="lg" className="bg-white text-primary-900 hover:bg-gray-100 rounded-full">
                   Subscribe

@@ -22,9 +22,9 @@ export function Card({
   const baseStyles = 'rounded-2xl transition-all duration-300 relative overflow-hidden';
 
   const variants = {
-    default: 'bg-dark-card border border-dark-border',
-    glass: 'glass-card text-white',
-    neon: 'bg-dark-bg border border-primary-500/30 shadow-[0_0_15px_rgba(139,92,246,0.15)]',
+    default: 'bg-white dark:bg-dark-card border-2 border-gray-300 dark:border-dark-border shadow-md',
+    glass: 'glass-card text-gray-900 dark:text-white shadow-lg',
+    neon: 'bg-white dark:bg-dark-bg border-2 border-primary-400 dark:border-primary-500/30 shadow-lg shadow-primary-500/20 dark:shadow-[0_0_15px_rgba(139,92,246,0.15)]',
   };
 
   const paddings = {
@@ -47,7 +47,7 @@ export function Card({
         baseStyles,
         variants[variant],
         paddings[padding],
-        hover && 'cursor-pointer hover:shadow-2xl hover:shadow-primary-900/20 hover:border-primary-500/30',
+        hover && 'cursor-pointer hover:shadow-2xl hover:shadow-primary-500/30 dark:hover:shadow-primary-900/20 hover:border-primary-400 dark:hover:border-primary-500/30',
         className
       )}
       {...hoverProps}
@@ -78,9 +78,9 @@ export function CardHeader({ title, description, action }: CardHeaderProps) {
   return (
     <div className="flex items-start justify-between mb-4">
       <div>
-        <h3 className="text-lg font-semibold text-white">{title}</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
         {description && (
-          <p className="text-sm text-gray-400 mt-1">{description}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{description}</p>
         )}
       </div>
       {action && <div>{action}</div>}

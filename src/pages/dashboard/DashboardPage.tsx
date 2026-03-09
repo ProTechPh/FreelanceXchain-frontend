@@ -46,8 +46,8 @@ function StatCard({ icon: Icon, label, value, trend, color, bgColor }: StatCardP
             <Icon className={`w-6 h-6 ${color}`} />
           </motion.div>
           <div className="flex-1">
-            <p className="text-gray-400 text-sm">{label}</p>
-            <p className="text-2xl font-bold text-white">{value}</p>
+            <p className="text-gray-600 dark:text-gray-400 text-sm">{label}</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
           </div>
           {trend && (
             <div className="flex items-center gap-1 text-green-400 text-sm">
@@ -149,7 +149,7 @@ export function DashboardPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
         >
-          <h1 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-3">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
             <motion.div
               animate={{ rotate: [0, 10, -10, 0] }}
               transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
@@ -158,7 +158,7 @@ export function DashboardPage() {
             </motion.div>
             Welcome back, Admin!
           </h1>
-          <p className="text-gray-400 mt-1">
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
             Platform overview and management
           </p>
         </motion.div>
@@ -201,39 +201,39 @@ export function DashboardPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <Link
               to="/admin/users"
-              className="flex flex-col items-center gap-2 p-4 bg-dark-bg rounded-lg hover:bg-dark-border transition-colors"
+              className="flex flex-col items-center gap-3 p-6 bg-white dark:bg-dark-surface border-2 border-gray-300 dark:border-white/20 rounded-xl shadow-md hover:shadow-xl hover:scale-105 hover:-translate-y-1 hover:border-primary-500 dark:hover:border-primary-400 transition-all duration-200"
             >
               <div className="w-12 h-12 bg-primary-600/20 rounded-lg flex items-center justify-center">
                 <Users className="w-6 h-6 text-primary-400" />
               </div>
-              <span className="text-sm text-gray-300">Manage Users</span>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Manage Users</span>
             </Link>
             <Link
               to="/admin/kyc"
-              className="flex flex-col items-center gap-2 p-4 bg-dark-bg rounded-lg hover:bg-dark-border transition-colors"
+              className="flex flex-col items-center gap-3 p-6 bg-white dark:bg-dark-surface border-2 border-gray-300 dark:border-white/20 rounded-xl shadow-md hover:shadow-xl hover:scale-105 hover:-translate-y-1 hover:border-amber-500 dark:hover:border-amber-400 transition-all duration-200"
             >
               <div className="w-12 h-12 bg-amber-600/20 rounded-lg flex items-center justify-center">
                 <Shield className="w-6 h-6 text-amber-400" />
               </div>
-              <span className="text-sm text-gray-300">KYC Reviews</span>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">KYC Reviews</span>
             </Link>
             <Link
               to="/admin/disputes"
-              className="flex flex-col items-center gap-2 p-4 bg-dark-bg rounded-lg hover:bg-dark-border transition-colors"
+              className="flex flex-col items-center gap-3 p-6 bg-white dark:bg-dark-surface border-2 border-gray-300 dark:border-white/20 rounded-xl shadow-md hover:shadow-xl hover:scale-105 hover:-translate-y-1 hover:border-red-500 dark:hover:border-red-400 transition-all duration-200"
             >
               <div className="w-12 h-12 bg-red-600/20 rounded-lg flex items-center justify-center">
                 <AlertTriangle className="w-6 h-6 text-red-400" />
               </div>
-              <span className="text-sm text-gray-300">Disputes</span>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Disputes</span>
             </Link>
             <Link
               to="/settings"
-              className="flex flex-col items-center gap-2 p-4 bg-dark-bg rounded-lg hover:bg-dark-border transition-colors"
+              className="flex flex-col items-center gap-3 p-6 bg-white dark:bg-dark-surface border-2 border-gray-300 dark:border-white/20 rounded-xl shadow-md hover:shadow-xl hover:scale-105 hover:-translate-y-1 hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-200"
             >
               <div className="w-12 h-12 bg-blue-600/20 rounded-lg flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-blue-400" />
               </div>
-              <span className="text-sm text-gray-300">Settings</span>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Settings</span>
             </Link>
           </div>
         </Card>
@@ -272,7 +272,7 @@ export function DashboardPage() {
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
       >
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-3">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
             <motion.div
               animate={{ rotate: [0, 10, -10, 0] }}
               transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
@@ -281,7 +281,7 @@ export function DashboardPage() {
             </motion.div>
             Welcome back{profile?.name ? `, ${profile.name}` : ''}!
           </h1>
-          <p className="text-gray-400 mt-1">
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
             Here's what's happening with your {isFreelancer ? 'freelance work' : 'projects'}
           </p>
         </div>
@@ -376,15 +376,15 @@ export function DashboardPage() {
                   <Link
                     key={contract.id}
                     to={`/contracts/${contract.id}`}
-                    className="flex items-center justify-between p-3 bg-dark-bg rounded-lg hover:bg-dark-border transition-colors"
+                    className="flex items-center justify-between p-3 bg-gray-50 dark:bg-dark-bg rounded-lg hover:bg-gray-100 dark:hover:bg-dark-border transition-colors"
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 bg-primary-600/20 rounded-lg flex items-center justify-center">
                         <Briefcase className="w-5 h-5 text-primary-400" />
                       </div>
                       <div>
-                        <p className="text-white font-medium">Contract #{contract.id.slice(0, 8)}</p>
-                        <p className="text-gray-400 text-sm">{contract.totalAmount} ETH</p>
+                        <p className="text-gray-900 dark:text-white font-medium">Contract #{contract.id.slice(0, 8)}</p>
+                        <p className="text-gray-600 dark:text-gray-400 text-sm">{contract.totalAmount} ETH</p>
                       </div>
                     </div>
                     <StatusBadge status={contract.status} />
@@ -394,7 +394,7 @@ export function DashboardPage() {
             ) : (
               <div className="text-center py-8">
                 <Briefcase className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-                <p className="text-gray-400">No active contracts</p>
+                <p className="text-gray-600 dark:text-gray-400">No active contracts</p>
                 <Link to={isFreelancer ? '/projects' : '/projects/new'}>
                   <Button variant="outline" size="sm" className="mt-3">
                     {isFreelancer ? 'Find Projects' : 'Create Project'}
@@ -418,10 +418,10 @@ export function DashboardPage() {
             />
             {notifications.length > 0 ? (
               <div className="space-y-3">
-                {notifications.map((notification) => (
+                {notifications.slice(0, 4).map((notification) => (
                   <div
                     key={notification.id}
-                    className="flex items-start gap-3 p-2 rounded-lg hover:bg-dark-bg"
+                    className="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-bg"
                   >
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                       notification.type.includes('approved') || notification.type.includes('accepted')
@@ -439,7 +439,7 @@ export function DashboardPage() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-white truncate">{notification.title}</p>
+                      <p className="text-sm text-gray-900 dark:text-white truncate">{notification.title}</p>
                       <p className="text-xs text-gray-500">
                         {new Date(notification.createdAt).toLocaleDateString()}
                       </p>
@@ -450,7 +450,7 @@ export function DashboardPage() {
             ) : (
               <div className="text-center py-6">
                 <Clock className="w-10 h-10 text-gray-600 mx-auto mb-2" />
-                <p className="text-gray-400 text-sm">No recent activity</p>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">No recent activity</p>
               </div>
             )}
           </Card>
@@ -463,39 +463,39 @@ export function DashboardPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <Link
             to="/profile"
-            className="flex flex-col items-center gap-2 p-4 bg-dark-bg rounded-lg hover:bg-dark-border transition-colors"
+            className="flex flex-col items-center gap-3 p-6 bg-white dark:bg-dark-surface border-2 border-gray-300 dark:border-white/20 rounded-xl shadow-md hover:shadow-xl hover:scale-105 hover:-translate-y-1 hover:border-primary-500 dark:hover:border-primary-400 transition-all duration-200"
           >
             <div className="w-12 h-12 bg-primary-600/20 rounded-lg flex items-center justify-center">
               <FileText className="w-6 h-6 text-primary-400" />
             </div>
-            <span className="text-sm text-gray-300">Edit Profile</span>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Edit Profile</span>
           </Link>
           <Link
             to="/kyc"
-            className="flex flex-col items-center gap-2 p-4 bg-dark-bg rounded-lg hover:bg-dark-border transition-colors"
+            className="flex flex-col items-center gap-3 p-6 bg-white dark:bg-dark-surface border-2 border-gray-300 dark:border-white/20 rounded-xl shadow-md hover:shadow-xl hover:scale-105 hover:-translate-y-1 hover:border-green-500 dark:hover:border-green-400 transition-all duration-200"
           >
             <div className="w-12 h-12 bg-green-600/20 rounded-lg flex items-center justify-center">
               <CheckCircle className="w-6 h-6 text-green-400" />
             </div>
-            <span className="text-sm text-gray-300">KYC Status</span>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">KYC Status</span>
           </Link>
           <Link
             to="/wallet"
-            className="flex flex-col items-center gap-2 p-4 bg-dark-bg rounded-lg hover:bg-dark-border transition-colors"
+            className="flex flex-col items-center gap-3 p-6 bg-white dark:bg-dark-surface border-2 border-gray-300 dark:border-white/20 rounded-xl shadow-md hover:shadow-xl hover:scale-105 hover:-translate-y-1 hover:border-amber-500 dark:hover:border-amber-400 transition-all duration-200"
           >
             <div className="w-12 h-12 bg-amber-600/20 rounded-lg flex items-center justify-center">
               <DollarSign className="w-6 h-6 text-amber-400" />
             </div>
-            <span className="text-sm text-gray-300">Wallet</span>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Wallet</span>
           </Link>
           <Link
             to="/settings"
-            className="flex flex-col items-center gap-2 p-4 bg-dark-bg rounded-lg hover:bg-dark-border transition-colors"
+            className="flex flex-col items-center gap-3 p-6 bg-white dark:bg-dark-surface border-2 border-gray-300 dark:border-white/20 rounded-xl shadow-md hover:shadow-xl hover:scale-105 hover:-translate-y-1 hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-200"
           >
             <div className="w-12 h-12 bg-blue-600/20 rounded-lg flex items-center justify-center">
               <TrendingUp className="w-6 h-6 text-blue-400" />
             </div>
-            <span className="text-sm text-gray-300">Settings</span>
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Settings</span>
           </Link>
         </div>
       </Card>

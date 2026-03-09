@@ -37,9 +37,9 @@ export function Input({
   };
 
   const variants = {
-    default: 'bg-dark-surface border border-dark-border hover:border-gray-500',
-    filled: 'bg-white/5 border border-transparent hover:bg-white/10',
-    minimal: 'bg-transparent border-b border-dark-border hover:border-gray-500 rounded-none px-0',
+    default: 'bg-white dark:bg-dark-surface border-2 border-gray-300 dark:border-dark-border hover:border-gray-400 dark:hover:border-gray-500 shadow-sm',
+    filled: 'bg-gray-100 dark:bg-white/5 border-2 border-gray-200 dark:border-transparent hover:bg-gray-200 hover:border-gray-300 dark:hover:bg-white/10',
+    minimal: 'bg-transparent border-b-2 border-gray-300 dark:border-dark-border hover:border-gray-400 dark:hover:border-gray-500 rounded-none px-0',
   };
 
   const hasError = !!error;
@@ -49,7 +49,7 @@ export function Input({
   return (
     <div className={clsx('flex flex-col gap-2', fullWidth && 'w-full', className)}>
       {label && (
-        <label className="text-sm font-medium text-gray-200">
+        <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
           {label}
           {required && <span className="text-red-400 ml-1">*</span>}
         </label>
@@ -57,7 +57,7 @@ export function Input({
       
       <div className="relative group">
         {leftIcon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 transition-colors group-focus-within:text-primary-400 pointer-events-none">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 transition-colors group-focus-within:text-primary-400 pointer-events-none">
             {leftIcon}
           </div>
         )}
@@ -67,7 +67,7 @@ export function Input({
           required={required}
           className={clsx(
             'w-full rounded-xl transition-all duration-200',
-            'text-white placeholder:text-gray-500',
+            'text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500',
             'focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20',
             'disabled:cursor-not-allowed disabled:opacity-50',
             sizes[inputSize],
@@ -90,7 +90,7 @@ export function Input({
             {hasError ? <AlertCircle className="w-5 h-5" /> : <CheckCircle2 className="w-5 h-5" />}
           </div>
         ) : rightIcon ? (
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 transition-colors group-focus-within:text-primary-400 pointer-events-none">
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 transition-colors group-focus-within:text-primary-400 pointer-events-none">
             {rightIcon}
           </div>
         ) : null}
@@ -116,7 +116,7 @@ export function Input({
             </>
           )}
           {helperText && !error && !success && (
-            <span className="text-gray-400">{helperText}</span>
+            <span className="text-gray-600 dark:text-gray-400">{helperText}</span>
           )}
         </motion.div>
       )}

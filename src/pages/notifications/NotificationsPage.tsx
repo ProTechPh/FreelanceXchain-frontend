@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Bell,
   CheckCircle,
@@ -14,6 +15,7 @@ import type { Notification, NotificationType } from '../../types';
 import { formatDistanceToNow } from 'date-fns';
 
 export function NotificationsPage() {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
@@ -54,6 +56,70 @@ export function NotificationsPage() {
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
+    }
+  };
+
+  const handleNotificationClick = async (notification: Notification) => {
+    // Mark as read if not already read
+    if (!notification.isRead) {
+      await handleMarkAsRead(notification.id);
+    }
+
+    // Navigate based on notification type and data
+    const { type, data } = notification;
+
+    switch (type) {
+      case 'proposal_received':
+        // Navigate to project detail if projectId exists, else to proposals list
+        if (data.projectId) {
+          navigate(`/projects/${data.projectId}`);
+        } else {
+          navigate('/proposals');
+        }
+        break;
+      
+      case 'proposal_accepted':
+      case 'proposal_rejected':
+        // Navigate to contract detail if contractId exists, else to proposals list
+        if (data.contractId) {
+          navigate(`/contracts/${data.contractId}`);
+        } else if (data.proposalId && data.projectId) {
+          navigate(`/projects/${data.projectId}/proposals/${data.proposalId}`);
+        } else {
+          navigate('/proposals');
+        }
+        break;
+      
+      case 'milestone_submitted':
+      case 'milestone_approved':
+      case 'payment_released':
+      case 'message':
+        // Navigate to contract detail
+        if (data.contractId) {
+          navigate(`/contracts/${data.contractId}`);
+        } else {
+          navigate('/contracts');
+        }
+        break;
+      
+      case 'dispute_created':
+      case 'dispute_resolved':
+        // Navigate to dispute detail if disputeId exists, else to disputes list
+        if (data.disputeId) {
+          navigate(`/disputes/${data.disputeId}`);
+        } else {
+          navigate('/disputes');
+        }
+        break;
+      
+      case 'rating_received':
+        // Navigate to profile
+        navigate('/profile');
+        break;
+      
+      default:
+        // Do nothing for unknown notification types
+        break;
     }
   };
 
@@ -113,8 +179,8 @@ export function NotificationsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Notifications</h1>
-          <p className="text-gray-400 mt-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Notifications</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
             {unreadCount > 0 ? `You have ${unreadCount} unread notifications` : 'All caught up!'}
           </p>
         </div>
@@ -132,7 +198,7 @@ export function NotificationsPage() {
           onClick={() => setFilter('all')}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === 'all'
               ? 'bg-primary-600 text-white'
-              : 'bg-dark-surface text-gray-400 hover:text-white hover:bg-dark-border'
+              : 'bg-gray-100 dark:bg-dark-surface text-gray-700 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-dark-border'
             }`}
         >
           All ({notifications.length})
@@ -141,7 +207,7 @@ export function NotificationsPage() {
           onClick={() => setFilter('unread')}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === 'unread'
               ? 'bg-primary-600 text-white'
-              : 'bg-dark-surface text-gray-400 hover:text-white hover:bg-dark-border'
+              : 'bg-gray-100 dark:bg-dark-surface text-gray-700 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-dark-border'
             }`}
         >
           Unread ({unreadCount})
@@ -151,9 +217,9 @@ export function NotificationsPage() {
       {/* Notifications List */}
       {filteredNotifications.length === 0 ? (
         <Card className="text-center py-12">
-          <Bell className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-400">No notifications</h3>
-          <p className="text-gray-500 mt-2">
+          <Bell className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white">No notifications</h3>
+          <p className="text-gray-600 dark:text-gray-500 mt-2">
             {filter === 'unread'
               ? "You've read all your notifications."
               : "You don't have any notifications yet."}
@@ -164,7 +230,8 @@ export function NotificationsPage() {
           {filteredNotifications.map((notification) => (
             <Card
               key={notification.id}
-              className={`hover:border-primary-500/50 transition-colors ${!notification.isRead ? 'border-l-4 border-l-primary-500' : ''
+              onClick={() => handleNotificationClick(notification)}
+              className={`cursor-pointer hover:border-primary-500/50 hover:shadow-md transition-all ${!notification.isRead ? 'border-l-4 border-l-primary-500' : ''
                 }`}
             >
               <div className="flex items-start gap-4">
@@ -174,15 +241,15 @@ export function NotificationsPage() {
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <h3 className={`font-medium ${notification.isRead ? 'text-gray-400' : 'text-white'}`}>
+                    <h3 className={`font-medium ${notification.isRead ? 'text-gray-600 dark:text-gray-400' : 'text-gray-900 dark:text-white'}`}>
                       {notification.title}
                     </h3>
                     {!notification.isRead && (
                       <span className="w-2 h-2 bg-primary-500 rounded-full" />
                     )}
                   </div>
-                  <p className="text-gray-500 text-sm mb-2">{notification.message}</p>
-                  <p className="text-xs text-gray-600">
+                  <p className="text-gray-600 dark:text-gray-500 text-sm mb-2">{notification.message}</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-600">
                     {formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}
                   </p>
                 </div>
@@ -190,8 +257,11 @@ export function NotificationsPage() {
                 <div className="flex items-center gap-2">
                   {!notification.isRead && (
                     <button
-                      onClick={() => handleMarkAsRead(notification.id)}
-                      className="p-2 text-gray-400 hover:text-primary-400 transition-colors"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleMarkAsRead(notification.id);
+                      }}
+                      className="p-2 text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                       title="Mark as read"
                     >
                       <Check className="w-4 h-4" />

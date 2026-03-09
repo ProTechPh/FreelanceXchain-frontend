@@ -21,6 +21,7 @@ import { ProfilePage } from './pages/profile/ProfilePage';
 import { ContractsListPage } from './pages/contracts/ContractsListPage';
 import { ContractDetailPage } from './pages/contracts/ContractDetailPage';
 import { ProposalsListPage } from './pages/proposals/ProposalsListPage';
+import { ProposalDetailPage } from './pages/proposals/ProposalDetailPage';
 import { NotificationsPage } from './pages/notifications/NotificationsPage';
 import { DisputesListPage } from './pages/disputes/DisputesListPage';
 import { DisputeDetailPage } from './pages/disputes/DisputeDetailPage';
@@ -72,13 +73,19 @@ import { TermsPage } from './pages/info/TermsPage';
 import { PrivacyPage } from './pages/info/PrivacyPage';
 import { AboutPage } from './pages/info/AboutPage';
 import { SettingsPage } from './pages/settings/SettingsPage';
+import { ActivityLogPage } from './pages/settings/ActivityLogPage';
+import { TutorialProvider } from './features/onboarding/components/TutorialProvider';
+import { MfaChallengePage } from './pages/auth/MfaChallengePage';
+import { MfaProvider } from './contexts/MfaContext';
 
 function App() {
   const { isDark } = useThemeStore();
   const { isAuthenticated, fetchCurrentUser } = useAuthStore();
   const { isConnected, address, updateBalance } = useWalletStore();
 
+  // Initialize theme on mount and sync with store state
   useEffect(() => {
+    // Force sync DOM with store state on mount
     if (isDark) {
       document.documentElement.classList.add('dark');
     } else {
@@ -142,14 +149,16 @@ function App() {
   return (
     <ToastProvider>
       <Router>
+      <MfaProvider>
+      <TutorialProvider>
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<PublicLayout showMinimalHeader><LandingPage /></PublicLayout>} />
-        <Route path="/how-it-works" element={<PublicLayout showMinimalHeader><HowItWorksPage /></PublicLayout>} />
-        <Route path="/faqs" element={<PublicLayout showMinimalHeader><FAQsPage /></PublicLayout>} />
-        <Route path="/help-center" element={<PublicLayout showMinimalHeader><HelpCenterPage /></PublicLayout>} />
-        <Route path="/blog" element={<PublicLayout showMinimalHeader><BlogPage /></PublicLayout>} />
-        <Route path="/tutorials" element={<PublicLayout showMinimalHeader><TutorialsPage /></PublicLayout>} />
+        <Route path="/how-it-works" element={<PublicLayout><HowItWorksPage /></PublicLayout>} />
+        <Route path="/faqs" element={<PublicLayout><FAQsPage /></PublicLayout>} />
+        <Route path="/help-center" element={<PublicLayout><HelpCenterPage /></PublicLayout>} />
+        <Route path="/blog" element={<PublicLayout><BlogPage /></PublicLayout>} />
+        <Route path="/tutorials" element={<PublicLayout><TutorialsPage /></PublicLayout>} />
         <Route path="/terms" element={<PublicLayout showMinimalHeader><TermsPage /></PublicLayout>} />
         <Route path="/privacy" element={<PublicLayout showMinimalHeader><PrivacyPage /></PublicLayout>} />
         <Route path="/about" element={<PublicLayout showMinimalHeader><AboutPage /></PublicLayout>} />
@@ -172,6 +181,7 @@ function App() {
         />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+        <Route path="/mfa/challenge" element={<MfaChallengePage />} />
 
         {/* Public Project Routes */}
         <Route path="/projects" element={<PublicLayout><ProjectListPage /></PublicLayout>} />
@@ -183,6 +193,14 @@ function App() {
             ) : (
               <PublicLayout showMinimalHeader><ProjectDetailPage /></PublicLayout>
             )
+          }
+        />
+        <Route
+          path="/projects/:projectId/proposals/:proposalId"
+          element={
+            <ProtectedRoute>
+              <Layout><ProposalDetailPage /></Layout>
+            </ProtectedRoute>
           }
         />
         
@@ -382,6 +400,16 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/settings/activity"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <ActivityLogPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
 
         {/* Admin Routes */}
         <Route
@@ -445,18 +473,36 @@ function App() {
           }
         />
 
-        {/* Freelancer Directory */}
-        <Route path="/freelancers" element={<PublicLayout><FreelancerListPage /></PublicLayout>} />
-        <Route path="/freelancers/:id" element={<PublicLayout><FreelancerDetailPage /></PublicLayout>} />
+        {/* Freelancer Directory - Employer Routes */}
+        <Route
+          path="/freelancers"
+          element={
+            <ProtectedRoute roles={['employer', 'admin']}>
+              <Layout>
+                <FreelancerListPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/freelancers/:id"
+          element={
+            <ProtectedRoute roles={['employer', 'admin']}>
+              <Layout>
+                <FreelancerDetailPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
 
         {/* 404 */}
         <Route
           path="*"
           element={
-            <div className="min-h-screen bg-dark-bg flex items-center justify-center">
+            <div className="min-h-screen bg-white dark:bg-dark-bg flex items-center justify-center">
               <div className="text-center">
-                <h1 className="text-4xl font-bold text-white mb-4">404</h1>
-                <p className="text-gray-400 mb-6">Page not found</p>
+                <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">404</h1>
+                <p className="text-gray-600 dark:text-gray-400 mb-6">Page not found</p>
                 <a href="/" className="text-primary-400 hover:text-primary-300">
                   Go back home
                 </a>
@@ -465,6 +511,8 @@ function App() {
           }
         />
       </Routes>
+      </TutorialProvider>
+      </MfaProvider>
     </Router>
     </ToastProvider>
   );

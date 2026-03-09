@@ -9,7 +9,6 @@ import {
   Shield,
   Sparkles,
   Settings,
-  User,
   Briefcase,
   BarChart3,
   CheckSquare
@@ -24,27 +23,38 @@ interface NavItem {
   roles?: ('freelancer' | 'employer' | 'admin')[];
 }
 
+const tourIdByHref: Record<string, string> = {
+  '/kyc': 'nav-kyc',
+  '/profile': 'nav-profile',
+  '/skill-analysis': 'nav-skill-analysis',
+  '/recommendations': 'nav-recommendations',
+  '/proposals': 'nav-proposals',
+  '/contracts': 'nav-contracts',
+  '/disputes': 'nav-disputes',
+  '/projects': 'nav-projects',
+};
+
 const freelancerNav: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: Home },
-  { label: 'Browse Projects', href: '/projects', icon: FolderKanban },
+  { label: 'Skill Analysis', href: '/skill-analysis', icon: BarChart3 },
+  { label: 'AI Recommendations', href: '/recommendations', icon: Sparkles },
   { label: 'My Proposals', href: '/proposals', icon: FileText },
   { label: 'My Contracts', href: '/contracts', icon: Briefcase },
-  { label: 'AI Recommendations', href: '/recommendations', icon: Sparkles },
-  { label: 'Skill Analysis', href: '/skill-analysis', icon: BarChart3 },
   { label: 'Disputes', href: '/disputes', icon: AlertTriangle },
-  { label: 'KYC Verification', href: '/kyc', icon: Shield },
-  { label: 'Profile', href: '/profile', icon: User },
+  { label: 'Browse Projects', href: '/projects', icon: FolderKanban },
+  { label: 'Notifications', href: '/notifications', icon: Bell },
+  { label: 'Settings', href: '/settings', icon: Settings },
 ];
 
 const employerNav: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: Home },
-  { label: 'My Projects', href: '/projects/manage', icon: FolderKanban },
   { label: 'Create Project', href: '/projects/new', icon: FileText },
+  { label: 'My Projects', href: '/projects/manage', icon: FolderKanban },
   { label: 'My Contracts', href: '/contracts', icon: Briefcase },
-  { label: 'Browse Freelancers', href: '/freelancers', icon: Users },
   { label: 'Disputes', href: '/disputes', icon: AlertTriangle },
-  { label: 'KYC Verification', href: '/kyc', icon: Shield },
-  { label: 'Profile', href: '/profile', icon: User },
+  { label: 'Browse Freelancers', href: '/freelancers', icon: Users },
+  { label: 'Notifications', href: '/notifications', icon: Bell },
+  { label: 'Settings', href: '/settings', icon: Settings },
 ];
 
 const adminNav: NavItem[] = [
@@ -54,6 +64,8 @@ const adminNav: NavItem[] = [
   { label: 'Disputes', href: '/admin/disputes', icon: AlertTriangle },
   { label: 'Skills Management', href: '/admin/skills', icon: CheckSquare },
   { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
+  { label: 'Notifications', href: '/notifications', icon: Bell },
+  { label: 'Settings', href: '/settings', icon: Settings },
 ];
 
 interface SidebarProps {
@@ -84,8 +96,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={clsx(
-          'fixed top-16 left-0 z-40 h-[calc(100vh-4rem)] w-64 border-r border-white/5 transition-transform duration-300 lg:translate-x-0',
-          'bg-dark-bg/80 backdrop-blur-xl',
+          'fixed top-16 left-0 z-40 h-[calc(100vh-4rem)] w-64 border-r border-gray-200 dark:border-white/5 transition-transform duration-300 lg:translate-x-0',
+          'bg-white/80 dark:bg-dark-bg/80 backdrop-blur-xl',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
@@ -99,56 +111,22 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 key={item.href}
                 to={item.href}
                 onClick={onClose}
+                data-tour-id={tourIdByHref[item.href]}
                 className={clsx(
                   'flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative overflow-hidden',
                   isActive
-                    ? 'text-white'
-                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                    ? 'text-gray-900 dark:text-white'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5'
                 )}
               >
                 {isActive && (
                   <div className="absolute inset-0 bg-gradient-to-r from-primary-600/20 to-primary-600/5 border-l-2 border-primary-500" />
                 )}
                 <Icon className={clsx("w-5 h-5 relative z-10", isActive ? "text-primary-400" : "group-hover:text-primary-400 transition-colors")} />
-                <span className={clsx("font-medium relative z-10", isActive && "text-primary-100")}>{item.label}</span>
+                <span className="font-medium relative z-10">{item.label}</span>
               </Link>
             );
           })}
-
-          <div className="pt-4 border-t border-white/5 mt-4 space-y-1">
-            <Link
-              to="/notifications"
-              onClick={onClose}
-              className={clsx(
-                'flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative overflow-hidden',
-                location.pathname === '/notifications'
-                  ? 'text-white'
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
-              )}
-            >
-              {location.pathname === '/notifications' && (
-                <div className="absolute inset-0 bg-gradient-to-r from-primary-600/20 to-primary-600/5 border-l-2 border-primary-500" />
-              )}
-              <Bell className={clsx("w-5 h-5 relative z-10", location.pathname === '/notifications' ? "text-primary-400" : "group-hover:text-primary-400 transition-colors")} />
-              <span className="font-medium relative z-10">Notifications</span>
-            </Link>
-            <Link
-              to="/settings"
-              onClick={onClose}
-              className={clsx(
-                'flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative overflow-hidden',
-                location.pathname === '/settings'
-                  ? 'text-white'
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
-              )}
-            >
-              {location.pathname === '/settings' && (
-                <div className="absolute inset-0 bg-gradient-to-r from-primary-600/20 to-primary-600/5 border-l-2 border-primary-500" />
-              )}
-              <Settings className={clsx("w-5 h-5 relative z-10", location.pathname === '/settings' ? "text-primary-400" : "group-hover:text-primary-400 transition-colors")} />
-              <span className="font-medium relative z-10">Settings</span>
-            </Link>
-          </div>
         </nav>
       </aside>
     </>

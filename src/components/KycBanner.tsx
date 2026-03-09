@@ -82,8 +82,8 @@ export function KycBanner() {
         </div>
         
         <div className="flex-1 min-w-0">
-          <h3 className="text-lg font-semibold text-white mb-1">{config.title}</h3>
-          <p className="text-gray-300 text-sm leading-relaxed mb-4">{config.message}</p>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">{config.title}</h3>
+          <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-4">{config.message}</p>
           
           {!isKycApproved && (
             <div className="flex flex-wrap items-center gap-3">
@@ -97,7 +97,7 @@ export function KycBanner() {
               </Button>
               
               {needsSubmission && (
-                <p className="text-xs text-gray-400">
+                <p className="text-xs text-gray-600 dark:text-gray-400">
                   Required for: Projects • Proposals • Contracts • Payments
                 </p>
               )}

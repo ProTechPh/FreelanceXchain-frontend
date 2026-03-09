@@ -7,14 +7,14 @@ export function TermsPage() {
         <div className="bg-dark-card border border-dark-border rounded-lg p-8">
           <div className="flex items-center mb-6">
             <FileText className="w-8 h-8 text-primary-400 mr-3" />
-            <h1 className="text-3xl font-bold text-white">Terms of Service</h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Terms of Service</h1>
           </div>
 
-          <div className="text-gray-300 space-y-6">
+          <div className="text-gray-600 dark:text-gray-300 space-y-6">
             <p className="text-sm text-gray-400">Last Updated: January 2026</p>
 
             <section>
-              <h2 className="text-2xl font-semibold text-white mb-3">1. Acceptance of Terms</h2>
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-3">1. Acceptance of Terms</h2>
               <p>
                 By accessing and using FreelanceXchain, you accept and agree to be bound by the terms and provision of this agreement. 
                 If you do not agree to abide by the above, please do not use this service.
@@ -22,7 +22,7 @@ export function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold text-white mb-3">2. Use License</h2>
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-3">2. Use License</h2>
               <p>
                 Permission is granted to temporarily access the materials (information or software) on FreelanceXchain's platform 
                 for personal, non-commercial transitory viewing only. This is the grant of a license, not a transfer of title.
@@ -36,7 +36,7 @@ export function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold text-white mb-3">3. User Accounts</h2>
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-3">3. User Accounts</h2>
               <p>
                 When you create an account with us, you must provide accurate, complete, and current information. 
                 Failure to do so constitutes a breach of the Terms, which may result in immediate termination of your account.
@@ -47,7 +47,7 @@ export function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold text-white mb-3">4. KYC Verification</h2>
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-3">4. KYC Verification</h2>
               <p>
                 Users must complete Know Your Customer (KYC) verification to access certain features of the platform. 
                 By submitting KYC information, you consent to the collection, processing, and storage of your personal data 
@@ -56,7 +56,7 @@ export function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold text-white mb-3">5. Smart Contracts and Blockchain</h2>
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-3">5. Smart Contracts and Blockchain</h2>
               <p>
                 FreelanceXchain utilizes blockchain technology and smart contracts for escrow and payment processing. 
                 You acknowledge that:
@@ -70,7 +70,7 @@ export function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold text-white mb-3">6. Dispute Resolution</h2>
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-3">6. Dispute Resolution</h2>
               <p>
                 In the event of a dispute between parties, FreelanceXchain provides a dispute resolution mechanism. 
                 The platform's decision in disputes is final and binding. Users agree to abide by the dispute resolution process.
@@ -78,7 +78,7 @@ export function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold text-white mb-3">7. Fees and Payments</h2>
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-3">7. Fees and Payments</h2>
               <p>
                 FreelanceXchain charges service fees for facilitating transactions. All fees are clearly disclosed before 
                 transaction confirmation. Payment processing is handled through blockchain smart contracts.
@@ -86,7 +86,7 @@ export function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold text-white mb-3">8. Prohibited Activities</h2>
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-3">8. Prohibited Activities</h2>
               <p>You agree not to engage in any of the following prohibited activities:</p>
               <ul className="list-disc list-inside mt-2 space-y-1 ml-4">
                 <li>Violating laws and regulations</li>
@@ -99,7 +99,7 @@ export function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold text-white mb-3">9. Limitation of Liability</h2>
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-3">9. Limitation of Liability</h2>
               <p>
                 FreelanceXchain shall not be liable for any indirect, incidental, special, consequential, or punitive damages 
                 resulting from your use of or inability to use the service.
@@ -107,7 +107,7 @@ export function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold text-white mb-3">10. Changes to Terms</h2>
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-3">10. Changes to Terms</h2>
               <p>
                 We reserve the right to modify or replace these Terms at any time. We will provide notice of any changes 
                 by posting the new Terms on this page. Your continued use of the platform after any changes constitutes 
@@ -116,7 +116,7 @@ export function TermsPage() {
             </section>
 
             <section>
-              <h2 className="text-2xl font-semibold text-white mb-3">11. Contact Information</h2>
+              <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-3">11. Contact Information</h2>
               <p>
                 If you have any questions about these Terms, please contact us at:
               </p>

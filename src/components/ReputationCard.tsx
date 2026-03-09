@@ -42,9 +42,9 @@ export function ReputationCard({
     return (
       <div className={clsx('glass-card p-6', className)}>
         <div className="animate-pulse space-y-4">
-          <div className="h-6 bg-white/10 rounded w-1/3"></div>
-          <div className="h-4 bg-white/10 rounded w-1/2"></div>
-          <div className="h-20 bg-white/10 rounded"></div>
+          <div className="h-6 bg-gray-200 dark:bg-white/10 rounded w-1/3"></div>
+          <div className="h-4 bg-gray-200 dark:bg-white/10 rounded w-1/2"></div>
+          <div className="h-20 bg-gray-200 dark:bg-white/10 rounded"></div>
         </div>
       </div>
     );
@@ -61,7 +61,7 @@ export function ReputationCard({
   if (!reputation) {
     return (
       <div className={clsx('glass-card p-6', className)}>
-        <p className="text-gray-400 text-sm">No reputation data available</p>
+        <p className="text-gray-600 dark:text-gray-400 text-sm">No reputation data available</p>
       </div>
     );
   }
@@ -74,7 +74,7 @@ export function ReputationCard({
     <div className={clsx('glass-card p-6 space-y-6', className)}>
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
           <Award className="w-5 h-5 text-primary-400" />
           Reputation
         </h3>
@@ -88,10 +88,10 @@ export function ReputationCard({
             <TrendingUp className="w-4 h-4" />
             Score
           </div>
-          <div className="text-3xl font-bold text-white">
+          <div className="text-3xl font-bold text-gray-900 dark:text-white">
             {reputation.score.toFixed(1)}
           </div>
-          <div className="text-xs text-gray-400 mt-1">
+          <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
             Blockchain verified
           </div>
         </div>
@@ -103,12 +103,12 @@ export function ReputationCard({
             Rating
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-3xl font-bold text-white">
+            <span className="text-3xl font-bold text-gray-900 dark:text-white">
               {reputation.averageRating.toFixed(1)}
             </span>
-            <span className="text-gray-400 text-sm">/ 5</span>
+            <span className="text-gray-600 dark:text-gray-400 text-sm">/ 5</span>
           </div>
-          <div className="text-xs text-gray-400 mt-1">
+          <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
             {reputation.totalRatings} {reputation.totalRatings === 1 ? 'review' : 'reviews'}
           </div>
         </div>
@@ -123,19 +123,19 @@ export function ReputationCard({
               'w-5 h-5',
               star <= Math.round(reputation.averageRating)
                 ? 'fill-yellow-400 text-yellow-400'
-                : 'text-gray-600'
+                : 'text-gray-400 dark:text-gray-600'
             )}
           />
         ))}
-        <span className="ml-2 text-sm text-gray-400">
+        <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">
           ({reputation.totalRatings})
         </span>
       </div>
 
       {/* Reviews */}
       {showReviews && displayedReviews.length > 0 && (
-        <div className="space-y-4 pt-4 border-t border-white/10">
-          <h4 className="text-sm font-medium text-gray-300 flex items-center gap-2">
+        <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-white/10">
+          <h4 className="text-sm font-medium text-gray-600 dark:text-gray-300 flex items-center gap-2">
             <MessageSquare className="w-4 h-4" />
             Recent Reviews
           </h4>
@@ -157,7 +157,7 @@ export function ReputationCard({
 
       {/* No Reviews Message */}
       {showReviews && reputation.totalRatings === 0 && (
-        <div className="text-center py-6 text-gray-400 text-sm">
+        <div className="text-center py-6 text-gray-600 dark:text-gray-400 text-sm">
           No reviews yet
         </div>
       )}
@@ -167,7 +167,7 @@ export function ReputationCard({
 
 function ReviewItem({ rating }: { rating: Rating }) {
   return (
-    <div className="p-4 bg-white/5 border border-white/10 rounded-lg space-y-2">
+    <div className="p-4 bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg space-y-2">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1">
           {[1, 2, 3, 4, 5].map((star) => (
@@ -177,21 +177,21 @@ function ReviewItem({ rating }: { rating: Rating }) {
                 'w-4 h-4',
                 star <= rating.rating
                   ? 'fill-yellow-400 text-yellow-400'
-                  : 'text-gray-600'
+                  : 'text-gray-400 dark:text-gray-600'
               )}
             />
           ))}
         </div>
-        <span className="text-xs text-gray-500">
+        <span className="text-xs text-gray-600 dark:text-gray-500">
           {new Date(rating.createdAt).toLocaleDateString()}
         </span>
       </div>
       {rating.comment && (
-        <p className="text-sm text-gray-300 leading-relaxed">
+        <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
           {rating.comment}
         </p>
       )}
-      <div className="text-xs text-gray-500">
+      <div className="text-xs text-gray-600 dark:text-gray-500">
         From: Anonymous
       </div>
     </div>

@@ -7,6 +7,7 @@ export interface User {
   role: UserRole;
   walletAddress: string;
   kycStatus?: KycStatus; // KYC verification status
+  mfaEnabled?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -15,6 +16,9 @@ export interface AuthResult {
   user: User;
   accessToken: string;
   refreshToken: string;
+  mfaRequired?: boolean;
+  mfaSessionId?: string;
+  factorId?: string;
 }
 
 export interface RegisterInput {
@@ -23,11 +27,13 @@ export interface RegisterInput {
   role: UserRole;
   name?: string;
   walletAddress?: string;
+  captchaToken?: string;
 }
 
 export interface LoginInput {
   email: string;
   password: string;
+  captchaToken?: string;
 }
 
 // Profile Types
@@ -185,6 +191,7 @@ export interface Proposal {
   estimatedDuration: number;
   status: ProposalStatus;
   milestones?: ProposalMilestone[];
+  attachments?: Array<{ url: string; filename: string; size: number; mimeType: string }>;
   createdAt: string;
   updatedAt: string;
   // Extended fields
@@ -197,6 +204,7 @@ export interface SubmitProposalInput {
   coverLetter: string;
   proposedRate: number;
   estimatedDuration: number;
+  attachments?: Array<{ url: string; filename: string; size: number; mimeType: string }>;
 }
 
 // Contract Types
@@ -529,4 +537,72 @@ export interface ApiError {
   };
   timestamp: string;
   requestId: string;
+}
+
+// File Upload Types
+export interface UploadedFile {
+  url: string;
+  path: string;
+  filename: string;
+  size?: number;
+  mimeType?: string;
+}
+
+export type StorageBucket = 
+  | 'profile-images' 
+  | 'contract-documents' 
+  | 'proposal-attachments' 
+  | 'dispute-evidence';
+
+export interface FileUploadResult {
+  success: boolean;
+  url?: string;
+  path?: string;
+  error?: string;
+}
+
+export interface MultipleFileUploadResult {
+  success: boolean;
+  files?: UploadedFile[];
+  error?: string;
+}
+
+export interface FileListResult {
+  success: boolean;
+  files?: Array<{
+    name: string;
+    id: string;
+    updated_at: string;
+    created_at: string;
+    last_accessed_at: string;
+    metadata: Record<string, any>;
+  }>;
+  error?: string;
+}
+
+// Message Types (Contract Chat)
+export interface Message {
+  id: string;
+  contract_id: string;
+  sender_id: string;
+  content: string;
+  is_read: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SendMessageInput {
+  content: string;
+}
+
+export interface MessagePaginatedResponse {
+  items: Message[];
+  hasMore: boolean;
+  total?: number;
+}
+
+export interface ConversationSummary {
+  contractId: string;
+  lastMessage: Message | null;
+  unreadCount: number;
 }

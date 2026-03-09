@@ -22,7 +22,7 @@ export function Layout({ children }: LayoutProps) {
   }, [isDark]);
 
   return (
-    <div className="min-h-screen bg-dark-bg text-gray-100 flex flex-col">
+    <div className="min-h-screen bg-white dark:bg-dark-bg text-gray-900 dark:text-gray-100 flex flex-col">
       <Navbar
         onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)}
         isSidebarOpen={isSidebarOpen}

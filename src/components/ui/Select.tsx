@@ -29,9 +29,9 @@ export function Select({
   ...props
 }: SelectProps) {
   const variants = {
-    default: 'bg-dark-surface border border-dark-border hover:border-gray-500',
-    filled: 'bg-white/5 border border-transparent hover:bg-white/10',
-    minimal: 'bg-transparent border-b border-dark-border hover:border-gray-500 rounded-none px-0',
+    default: 'bg-white dark:bg-dark-surface border border-gray-200 dark:border-white/10 hover:border-gray-500',
+    filled: 'bg-gray-100 dark:bg-white/5 border border-transparent hover:bg-gray-200 dark:hover:bg-white/10',
+    minimal: 'bg-transparent border-b border-gray-200 dark:border-white/10 hover:border-gray-500 rounded-none px-0',
   };
 
   const hasError = !!error;
@@ -41,7 +41,7 @@ export function Select({
   return (
     <div className={clsx('flex flex-col gap-2', fullWidth && 'w-full', className)}>
       {label && (
-        <label className="text-sm font-medium text-gray-200">
+        <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
           {label}
           {required && <span className="text-red-400 ml-1">*</span>}
         </label>
@@ -49,7 +49,7 @@ export function Select({
       
       <div className="relative group">
         {leftIcon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 transition-colors group-focus-within:text-primary-400 pointer-events-none z-10">
+          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 dark:text-gray-400 transition-colors group-focus-within:text-primary-400 pointer-events-none z-10">
             {leftIcon}
           </div>
         )}
@@ -59,7 +59,7 @@ export function Select({
           required={required}
           className={clsx(
             'w-full h-12 rounded-xl px-4 transition-all duration-200 appearance-none cursor-pointer',
-            'text-white',
+            'text-gray-900 dark:text-white',
             'focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20',
             'disabled:cursor-not-allowed disabled:opacity-50',
             variants[variant],
@@ -83,7 +83,7 @@ export function Select({
               {hasError ? <AlertCircle className="w-5 h-5" /> : <CheckCircle2 className="w-5 h-5" />}
             </div>
           )}
-          <ChevronDown className="w-5 h-5 text-gray-400 group-focus-within:text-primary-400 transition-colors" />
+          <ChevronDown className="w-5 h-5 text-gray-600 dark:text-gray-400 group-focus-within:text-primary-400 transition-colors" />
         </div>
       </div>
       
@@ -107,7 +107,7 @@ export function Select({
             </>
           )}
           {helperText && !error && !success && (
-            <span className="text-gray-400">{helperText}</span>
+            <span className="text-gray-600 dark:text-gray-400">{helperText}</span>
           )}
         </motion.div>
       )}

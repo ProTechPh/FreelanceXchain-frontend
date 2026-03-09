@@ -32,6 +32,12 @@ export default {
           surface: 'rgb(var(--color-dark-surface) / <alpha-value>)',
           card: 'rgb(var(--color-dark-card) / <alpha-value>)',
           border: 'rgb(var(--color-dark-border) / <alpha-value>)',
+        },
+        theme: {
+          bg: 'rgb(var(--bg) / <alpha-value>)',
+          surface: 'rgb(var(--surface) / <alpha-value>)',
+          card: 'rgb(var(--card) / <alpha-value>)',
+          border: 'rgb(var(--border) / <alpha-value>)',
         }
       },
       fontFamily: {

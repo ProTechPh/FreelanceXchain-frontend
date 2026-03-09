@@ -37,7 +37,7 @@ export function Radio({
             'group-hover:border-primary-400',
             checked
               ? 'border-primary-600'
-              : 'bg-dark-surface border-dark-border',
+              : 'bg-white dark:bg-dark-surface border-gray-300 dark:border-white/20',
             error && 'border-red-500'
           )}>
             <motion.div
@@ -52,12 +52,12 @@ export function Radio({
         {(label || description) && (
           <div className="flex-1">
             {label && (
-              <span className="text-sm font-medium text-gray-200 block">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-200 block">
                 {label}
               </span>
             )}
             {description && (
-              <span className="text-xs text-gray-400 block mt-0.5">
+              <span className="text-xs text-gray-600 dark:text-gray-400 block mt-0.5">
                 {description}
               </span>
             )}
@@ -89,7 +89,7 @@ export function RadioGroup({ children, label, error, className }: RadioGroupProp
   return (
     <div className={clsx('flex flex-col gap-3', className)}>
       {label && (
-        <label className="text-sm font-medium text-gray-200">
+        <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
           {label}
         </label>
       )}

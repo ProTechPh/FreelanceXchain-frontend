@@ -74,29 +74,29 @@ export function FreelancerListPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
-            <Users className="w-8 h-8 text-primary-400" />
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center gap-3">
+            <Users className="w-8 h-8 text-primary-600 dark:text-primary-400" />
             Browse Freelancers
           </h1>
-          <p className="text-gray-400">
+          <p className="text-gray-600 dark:text-gray-400">
             {filteredFreelancers.length} {filteredFreelancers.length === 1 ? 'freelancer' : 'freelancers'} available
           </p>
         </div>
       </div>
 
       {/* Search & Filters */}
-      <Card>
+      <Card data-tour-id="freelancers-search">
         <form onSubmit={handleSearch} className="space-y-4">
           <div className="flex gap-4">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500 dark:text-gray-400" />
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search by name, skills, or bio..."
-                  className="w-full pl-12 pr-4 py-3 bg-dark-bg border border-white/10 rounded-lg text-white placeholder:text-gray-500 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+                  className="w-full pl-12 pr-4 py-3 bg-white dark:bg-dark-bg border border-gray-200 dark:border-white/10 rounded-lg text-gray-900 dark:text-white placeholder:text-gray-500 focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
                 />
               </div>
             </div>
@@ -115,7 +115,7 @@ export function FreelancerListPage() {
 
           {/* Advanced Filters */}
           {showFilters && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-white/10">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200 dark:border-white/10">
               <Input
                 label="Min Hourly Rate ($)"
                 type="number"
@@ -131,13 +131,13 @@ export function FreelancerListPage() {
                 placeholder="1000"
               />
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Availability
                 </label>
                 <select
                   value={filters.availability}
                   onChange={(e) => setFilters({ ...filters, availability: e.target.value })}
-                  className="w-full px-4 py-2 bg-dark-bg border border-white/10 rounded-lg text-white focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
+                  className="w-full px-4 py-2 bg-white dark:bg-dark-bg border border-gray-200 dark:border-white/10 rounded-lg text-gray-900 dark:text-white focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
                 >
                   <option value="">All</option>
                   <option value="available">Available</option>
@@ -154,49 +154,49 @@ export function FreelancerListPage() {
       {filteredFreelancers.length === 0 ? (
         <Card>
           <div className="text-center py-12">
-            <Users className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-white mb-2">No Freelancers Found</h3>
-            <p className="text-gray-400">
+            <Users className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Freelancers Found</h3>
+            <p className="text-gray-600 dark:text-gray-400">
               Try adjusting your search or filters
             </p>
           </div>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {filteredFreelancers.map((freelancer) => (
-            <Card key={freelancer.id} hover>
-              <Link to={`/freelancers/${freelancer.userId}`} className="block space-y-4">
+            <Card key={freelancer.id} hover padding="sm">
+              <Link to={`/freelancers/${freelancer.userId}`} className="block space-y-3">
                 {/* Header */}
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
-                    <h3 className="text-xl font-semibold text-white mb-1 hover:text-primary-400 transition-colors">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1 hover:text-primary-400 transition-colors">
                       {freelancer.name || 'Anonymous'}
                     </h3>
                     {freelancer.nationality && (
-                      <div className="flex items-center gap-2 text-sm text-gray-400">
+                      <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                         <MapPin className="w-4 h-4" />
                         {freelancer.nationality}
                       </div>
                     )}
                   </div>
                   <div className="text-right">
-                    <div className="text-2xl font-bold text-primary-400">
+                    <div className="text-xl font-bold text-primary-600 dark:text-primary-400">
                       ${freelancer.hourlyRate}
                     </div>
-                    <div className="text-xs text-gray-400">per hour</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">per hour</div>
                   </div>
                 </div>
 
                 {/* Bio */}
                 {freelancer.bio && (
-                  <p className="text-gray-400 line-clamp-2">{freelancer.bio}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{freelancer.bio}</p>
                 )}
 
                 {/* Stats */}
-                <div className="flex items-center gap-4 text-sm">
+                <div className="flex items-center gap-3 text-sm">
                   <StatusBadge status={freelancer.availability} />
                   {freelancer.experience && freelancer.experience.length > 0 && (
-                    <div className="flex items-center gap-1 text-gray-400">
+                    <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400">
                       <Briefcase className="w-4 h-4" />
                       {freelancer.experience.length} {freelancer.experience.length === 1 ? 'project' : 'projects'}
                     </div>
@@ -209,13 +209,13 @@ export function FreelancerListPage() {
                     {freelancer.skills.slice(0, 6).map((skill, index) => (
                       <span
                         key={index}
-                        className="px-3 py-1 bg-primary-500/10 text-primary-400 rounded-full text-xs font-medium"
+                        className="px-3 py-1 bg-primary-100 dark:bg-primary-500/10 text-primary-700 dark:text-primary-400 rounded-full text-xs font-medium"
                       >
                         {skill.name}
                       </span>
                     ))}
                     {freelancer.skills.length > 6 && (
-                      <span className="px-3 py-1 bg-white/5 text-gray-400 rounded-full text-xs">
+                      <span className="px-3 py-1 bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 rounded-full text-xs">
                         +{freelancer.skills.length - 6} more
                       </span>
                     )}
@@ -223,7 +223,7 @@ export function FreelancerListPage() {
                 )}
 
                 {/* CTA */}
-                <div className="pt-4 border-t border-white/10">
+                <div className="pt-3 border-t border-gray-200 dark:border-white/10">
                   <Button variant="primary" size="sm" className="w-full">
                     View Profile
                   </Button>

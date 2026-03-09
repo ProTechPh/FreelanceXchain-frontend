@@ -54,11 +54,11 @@ export function ProposalsListPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-tour-id="proposals-main">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">My Proposals</h1>
-          <p className="text-gray-400 mt-1">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Proposals</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
             Track and manage your submitted proposals
           </p>
         </div>
@@ -73,7 +73,7 @@ export function ProposalsListPage() {
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               filter === status
                 ? 'bg-primary-600 text-white'
-                : 'bg-dark-surface text-gray-400 hover:text-white hover:bg-dark-border'
+                : 'bg-gray-100 dark:bg-dark-surface text-gray-700 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-dark-border'
             }`}
           >
             {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -83,54 +83,54 @@ export function ProposalsListPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-primary-900/50 to-dark-surface">
+        <Card className="bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/50 dark:to-dark-surface">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-primary-600/20 rounded-lg">
-              <FileText className="w-6 h-6 text-primary-400" />
+              <FileText className="w-6 h-6 text-primary-600 dark:text-primary-400" />
             </div>
             <div>
-              <p className="text-gray-400 text-sm">Total Proposals</p>
-              <p className="text-2xl font-bold text-white">{proposals.length}</p>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">Total Proposals</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{proposals.length}</p>
             </div>
           </div>
         </Card>
         
-        <Card className="bg-gradient-to-br from-yellow-900/50 to-dark-surface">
+        <Card className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/50 dark:to-dark-surface">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-yellow-600/20 rounded-lg">
-              <Clock className="w-6 h-6 text-yellow-400" />
+              <Clock className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
             </div>
             <div>
-              <p className="text-gray-400 text-sm">Pending</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-gray-600 dark:text-gray-400 text-sm">Pending</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {proposals.filter(p => p.status === 'pending').length}
               </p>
             </div>
           </div>
         </Card>
         
-        <Card className="bg-gradient-to-br from-green-900/50 to-dark-surface">
+        <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/50 dark:to-dark-surface">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-green-600/20 rounded-lg">
-              <CheckCircle className="w-6 h-6 text-green-400" />
+              <CheckCircle className="w-6 h-6 text-green-600 dark:text-green-400" />
             </div>
             <div>
-              <p className="text-gray-400 text-sm">Accepted</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-gray-600 dark:text-gray-400 text-sm">Accepted</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {proposals.filter(p => p.status === 'accepted').length}
               </p>
             </div>
           </div>
         </Card>
         
-        <Card className="bg-gradient-to-br from-red-900/50 to-dark-surface">
+        <Card className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/50 dark:to-dark-surface">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-red-600/20 rounded-lg">
-              <XCircle className="w-6 h-6 text-red-400" />
+              <XCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
             </div>
             <div>
-              <p className="text-gray-400 text-sm">Rejected</p>
-              <p className="text-2xl font-bold text-white">
+              <p className="text-gray-600 dark:text-gray-400 text-sm">Rejected</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
                 {proposals.filter(p => p.status === 'rejected').length}
               </p>
             </div>
@@ -141,11 +141,11 @@ export function ProposalsListPage() {
       {/* Proposals List */}
       {filteredProposals.length === 0 ? (
         <Card className="text-center py-12">
-          <FileText className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-400">No proposals found</h3>
-          <p className="text-gray-500 mt-2">
-            {filter === 'all' 
-              ? "You haven't submitted any proposals yet." 
+          <FileText className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-400">No proposals found</h3>
+          <p className="text-gray-600 dark:text-gray-500 mt-2">
+            {filter === 'all'
+              ? "You haven't submitted any proposals yet."
               : `No ${filter} proposals found.`}
           </p>
           <Link to="/projects">
@@ -161,21 +161,21 @@ export function ProposalsListPage() {
                   <div className="flex items-center gap-3 mb-2">
                     <Link 
                       to={`/projects/${proposal.projectId}`}
-                      className="text-lg font-semibold text-white hover:text-primary-400 transition-colors"
+                      className="text-lg font-semibold text-gray-900 dark:text-white hover:text-primary-400 transition-colors"
                     >
                       {proposal.project?.title || 'Project'}
                     </Link>
                     <StatusBadge status={proposal.status} />
                   </div>
                   
-                  <p className="text-gray-400 text-sm mb-4 line-clamp-2">
+                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 line-clamp-2">
                     {proposal.coverLetter}
                   </p>
 
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
+                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
                     <div className="flex items-center gap-1">
                       <DollarSign className="w-4 h-4" />
-                      <span className="text-primary-400 font-medium">
+                      <span className="text-primary-600 dark:text-primary-400 font-medium">
                         {proposal.proposedRate} ETH
                       </span>
                     </div>
@@ -214,9 +214,9 @@ export function ProposalsListPage() {
                     </Link>
                   )}
                   
-                  <Link 
+                  <Link
                     to={`/projects/${proposal.projectId}`}
-                    className="text-sm text-gray-400 hover:text-primary-400 flex items-center gap-1"
+                    className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 flex items-center gap-1"
                   >
                     View Project
                     <ChevronRight className="w-4 h-4" />
@@ -226,21 +226,21 @@ export function ProposalsListPage() {
 
               {/* Milestones preview */}
               {proposal.milestones && proposal.milestones.length > 0 && (
-                <div className="mt-4 pt-4 border-t border-dark-border">
-                  <p className="text-sm text-gray-400 mb-2">
+                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-dark-border">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                     Proposed Milestones ({proposal.milestones.length})
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {proposal.milestones.slice(0, 3).map((milestone, index) => (
                       <span
                         key={index}
-                        className="px-3 py-1 bg-dark-bg rounded-full text-sm text-gray-300"
+                        className="px-3 py-1 bg-gray-100 dark:bg-dark-bg rounded-full text-sm text-gray-700 dark:text-gray-300"
                       >
                         {milestone.title} - {milestone.amount} ETH
                       </span>
                     ))}
                     {proposal.milestones.length > 3 && (
-                      <span className="px-3 py-1 bg-dark-bg rounded-full text-sm text-gray-400">
+                      <span className="px-3 py-1 bg-gray-100 dark:bg-dark-bg rounded-full text-sm text-gray-600 dark:text-gray-400">
                         +{proposal.milestones.length - 3} more
                       </span>
                     )}

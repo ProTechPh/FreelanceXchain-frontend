@@ -7,8 +7,9 @@ interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, role: 'freelancer' | 'employer', name?: string, walletAddress?: string) => Promise<void>;
+  login: (email: string, password: string, captchaToken?: string) => Promise<{ mfaRequired: boolean; mfaSessionId?: string; factorId?: string }>;
+  loginWithMfa: (mfaSessionId: string, factorId: string, code: string) => Promise<void>;
+  register: (email: string, password: string, role: 'freelancer' | 'employer', name?: string, walletAddress?: string, captchaToken?: string) => Promise<void>;
   logout: () => void;
   fetchCurrentUser: () => Promise<void>;
   setUser: (user: User | null) => void;
@@ -21,13 +22,35 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isLoading: false,
 
-      login: async (email: string, password: string) => {
+      login: async (email: string, password: string, captchaToken?: string) => {
         set({ isLoading: true });
         try {
           // Clear any existing wallet connection before login
           useWalletStore.getState().disconnect();
-          
-          const result = await api.login({ email, password });
+
+          const result = await api.login({ email, password, captchaToken });
+
+          if (result.mfaRequired) {
+            const mfaSessionId = result.mfaSessionId ?? result.accessToken;
+            if (!mfaSessionId || !result.factorId) {
+              throw new Error('MFA login response is missing required session data');
+            }
+            set({ isLoading: false });
+            return { mfaRequired: true, mfaSessionId, factorId: result.factorId };
+          }
+
+          set({ user: result.user, isAuthenticated: true, isLoading: false });
+          return { mfaRequired: false };
+        } catch (error) {
+          set({ isLoading: false });
+          throw error;
+        }
+      },
+
+      loginWithMfa: async (mfaSessionId: string, factorId: string, code: string) => {
+        set({ isLoading: true });
+        try {
+          const result = await api.completeMFALogin(mfaSessionId, factorId, code);
           set({ user: result.user, isAuthenticated: true, isLoading: false });
         } catch (error) {
           set({ isLoading: false });
@@ -35,10 +58,10 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      register: async (email: string, password: string, role: 'freelancer' | 'employer', name?: string, walletAddress?: string) => {
+      register: async (email: string, password: string, role: 'freelancer' | 'employer', name?: string, walletAddress?: string, captchaToken?: string) => {
         set({ isLoading: true });
         try {
-          const result = await api.register({ email, password, role, name, walletAddress });
+          const result = await api.register({ email, password, role, name, walletAddress, captchaToken });
           set({ user: result.user, isAuthenticated: true, isLoading: false });
         } catch (error) {
           set({ isLoading: false });
@@ -367,6 +390,16 @@ export const useThemeStore = create<ThemeState>()(
     }),
     {
       name: 'theme-storage',
+      onRehydrateStorage: () => (state) => {
+        // Sync DOM with persisted state on rehydration
+        if (state) {
+          if (state.isDark) {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        }
+      },
     }
   )
 );

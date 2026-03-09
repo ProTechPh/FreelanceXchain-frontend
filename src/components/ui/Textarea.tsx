@@ -30,9 +30,9 @@ export function Textarea({
   ...props
 }: TextareaProps) {
   const variants = {
-    default: 'bg-dark-surface border border-dark-border hover:border-gray-500',
-    filled: 'bg-white/5 border border-transparent hover:bg-white/10',
-    minimal: 'bg-transparent border-b border-dark-border hover:border-gray-500 rounded-none px-0',
+    default: 'bg-white dark:bg-dark-surface border border-gray-200 dark:border-white/10 hover:border-gray-500',
+    filled: 'bg-gray-100 dark:bg-white/5 border border-transparent hover:bg-gray-200 dark:hover:bg-white/10',
+    minimal: 'bg-transparent border-b border-gray-200 dark:border-white/10 hover:border-gray-500 rounded-none px-0',
   };
 
   const hasError = !!error;
@@ -43,7 +43,7 @@ export function Textarea({
     <div className={clsx('flex flex-col gap-2', fullWidth && 'w-full', className)}>
       <div className="flex items-center justify-between">
         {label && (
-          <label className="text-sm font-medium text-gray-200">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
             {label}
             {required && <span className="text-red-400 ml-1">*</span>}
           </label>
@@ -51,7 +51,7 @@ export function Textarea({
         {showCharCount && maxLength && (
           <span className={clsx(
             'text-xs',
-            charCount > maxLength ? 'text-red-400' : 'text-gray-500'
+            charCount > maxLength ? 'text-red-400' : 'text-gray-400 dark:text-gray-500'
           )}>
             {charCount}/{maxLength}
           </span>
@@ -66,7 +66,7 @@ export function Textarea({
           value={value}
           className={clsx(
             'w-full rounded-xl px-4 py-3 transition-all duration-200 resize-none',
-            'text-white placeholder:text-gray-500',
+            'text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500',
             'focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20',
             'disabled:cursor-not-allowed disabled:opacity-50',
             variants[variant],
@@ -108,7 +108,7 @@ export function Textarea({
             </>
           )}
           {helperText && !error && !success && (
-            <span className="text-gray-400">{helperText}</span>
+            <span className="text-gray-600 dark:text-gray-400">{helperText}</span>
           )}
         </motion.div>
       )}

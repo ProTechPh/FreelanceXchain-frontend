@@ -88,8 +88,8 @@ export function ResetPasswordPage() {
             </div>
             
             <div className="space-y-2">
-              <h1 className="text-2xl font-bold text-white">Password Reset Successful</h1>
-              <p className="text-gray-400">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Password Reset Successful</h1>
+              <p className="text-gray-600 dark:text-gray-400">
                 Your password has been successfully reset. You can now log in with your new password.
               </p>
             </div>
@@ -120,8 +120,8 @@ export function ResetPasswordPage() {
             <div className="w-16 h-16 bg-primary-500/20 rounded-full flex items-center justify-center mx-auto">
               <Lock className="w-8 h-8 text-primary-400" />
             </div>
-            <h1 className="text-2xl font-bold text-white">Reset Your Password</h1>
-            <p className="text-gray-400">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Reset Your Password</h1>
+            <p className="text-gray-600 dark:text-gray-400">
               Enter your new password below
             </p>
           </div>
@@ -132,7 +132,7 @@ export function ResetPasswordPage() {
               <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
               <div className="space-y-2">
                 <p className="text-sm text-red-400 font-medium">Invalid Reset Link</p>
-                <p className="text-sm text-gray-400">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   This password reset link is invalid or has expired. Please request a new one.
                 </p>
                 <Link to="/forgot-password">
@@ -161,7 +161,7 @@ export function ResetPasswordPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-[38px] text-gray-400 hover:text-white transition-colors"
+                  className="absolute right-3 top-[38px] text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                   tabIndex={-1}
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -181,7 +181,7 @@ export function ResetPasswordPage() {
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-[38px] text-gray-400 hover:text-white transition-colors"
+                  className="absolute right-3 top-[38px] text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                   tabIndex={-1}
                 >
                   {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -189,9 +189,9 @@ export function ResetPasswordPage() {
               </div>
 
               {/* Password Requirements */}
-              <div className="p-4 bg-white/5 border border-white/10 rounded-lg">
-                <p className="text-sm font-medium text-gray-300 mb-2">Password Requirements:</p>
-                <ul className="text-xs text-gray-400 space-y-1">
+              <div className="p-4 bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Password Requirements:</p>
+                <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
                   <li className={newPassword.length >= 8 ? 'text-green-400' : ''}>
                     • At least 8 characters
                   </li>
@@ -229,7 +229,7 @@ export function ResetPasswordPage() {
           <div className="text-center">
             <Link
               to="/login"
-              className="text-sm text-gray-400 hover:text-white transition-colors"
+              className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
               Back to Login
             </Link>

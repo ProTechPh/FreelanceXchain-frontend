@@ -29,7 +29,7 @@ export function Tabs({ tabs, defaultTab, onChange, className }: TabsProps) {
   return (
     <div className={clsx('w-full', className)}>
       {/* Tab Headers */}
-      <div className="flex gap-1 p-1 bg-dark-surface/50 rounded-xl border border-white/5 mb-6">
+      <div className="flex gap-1 p-1 bg-gray-100 dark:bg-dark-surface/50 rounded-xl border border-gray-200 dark:border-white/5 mb-6">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -38,8 +38,8 @@ export function Tabs({ tabs, defaultTab, onChange, className }: TabsProps) {
               'relative flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg',
               'text-sm font-medium transition-colors flex-1',
               activeTab === tab.id
-                ? 'text-white'
-                : 'text-gray-400 hover:text-gray-300'
+                ? 'text-gray-900 dark:text-white'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
             )}
           >
             {activeTab === tab.id && (

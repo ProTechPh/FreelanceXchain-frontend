@@ -87,7 +87,7 @@ export function RatingModal({
       <div className="space-y-6">
         {/* Rating Stars */}
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-3">
+          <label className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-3">
             How would you rate this {rateeRole}?
           </label>
           <div className="flex items-center gap-2">
@@ -106,19 +106,19 @@ export function RatingModal({
                     'w-10 h-10 transition-colors',
                     (hoveredRating >= star || rating >= star)
                       ? 'fill-yellow-400 text-yellow-400'
-                      : 'text-gray-600 hover:text-gray-500'
+                      : 'text-gray-400 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-500'
                   )}
                 />
               </button>
             ))}
             {rating > 0 && (
-              <span className="ml-3 text-lg font-semibold text-white">
+              <span className="ml-3 text-lg font-semibold text-gray-900 dark:text-white">
                 {rating} / 5
               </span>
             )}
           </div>
           {rating > 0 && (
-            <p className="mt-2 text-sm text-gray-400">
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
               {rating === 1 && 'Poor'}
               {rating === 2 && 'Fair'}
               {rating === 3 && 'Good'}
@@ -130,7 +130,7 @@ export function RatingModal({
 
         {/* Comment */}
         <div>
-          <label htmlFor="rating-comment" className="block text-sm font-medium text-gray-300 mb-2">
+          <label htmlFor="rating-comment" className="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
             Review (Optional)
           </label>
           <textarea
@@ -140,10 +140,10 @@ export function RatingModal({
             placeholder={`Share your experience working with ${rateeName}...`}
             rows={4}
             disabled={isSubmitting}
-            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full px-4 py-3 bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none disabled:opacity-50 disabled:cursor-not-allowed"
             maxLength={1000}
           />
-          <div className="mt-1 flex justify-between text-xs text-gray-500">
+          <div className="mt-1 flex justify-between text-xs text-gray-600 dark:text-gray-500">
             <span>Share details about communication, quality, and professionalism</span>
             <span>{comment.length} / 1000</span>
           </div>
@@ -158,7 +158,7 @@ export function RatingModal({
 
         {/* Info */}
         <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
-          <p className="text-sm text-blue-300">
+          <p className="text-sm text-blue-600 dark:text-blue-300">
             Your rating will be recorded on the blockchain and cannot be changed. Please be honest and fair.
           </p>
         </div>
