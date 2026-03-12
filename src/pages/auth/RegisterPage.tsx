@@ -108,11 +108,20 @@ export function RegisterPage() {
 
       <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-indigo-600 mb-6 shadow-lg shadow-primary-500/30">
+          <Link 
+            to="/" 
+            className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-indigo-600 mb-6 shadow-lg shadow-primary-500/30 hover:scale-105 transition-transform"
+          >
             <Zap className="w-8 h-8 text-white fill-current" />
-          </div>
+          </Link>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Create Account</h1>
           <p className="text-gray-600 dark:text-gray-400">Join the decentralized workforce</p>
+          <Link 
+            to="/" 
+            className="inline-block mt-3 text-sm text-primary-400 hover:text-primary-300 font-medium transition-colors hover:underline decoration-primary-500/30 underline-offset-4"
+          >
+            ← Back to Home
+          </Link>
         </div>
 
         {step === 'role' ? (
