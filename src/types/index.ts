@@ -147,6 +147,7 @@ export interface Project {
   deadline: string;
   status: ProjectStatus;
   milestones: Milestone[];
+  tags?: string[];
   createdAt: string;
   updatedAt: string;
   // Extended fields that may be populated in list views
@@ -158,9 +159,10 @@ export interface Project {
 export interface CreateProjectInput {
   title: string;
   description: string;
-  requiredSkills: Array<{ skillId: string; yearsOfExperience?: number }>;
+  requiredSkills: Array<{ skillId: string }>;
   budget: number;
   deadline: string;
+  tags?: string[];
 }
 
 export interface AddMilestonesInput {

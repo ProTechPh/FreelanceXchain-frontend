@@ -14,7 +14,9 @@ import {
   Sparkles,
   Users,
   Target,
-  ArrowRight
+  ArrowRight,
+  Tag,
+  Wrench
 } from 'lucide-react';
 import { Card, Button, StatusBadge, Badge, ProjectCardSkeleton } from '../../components/ui';
 import api from '../../lib/api';
@@ -37,6 +39,9 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
   const [selectedSkills, setSelectedSkills] = useState<string[]>(
     searchParams.get('skills')?.split(',').filter(Boolean) || []
   );
+  const [selectedTags, setSelectedTags] = useState<string[]>(
+    searchParams.get('tags')?.split(',').filter(Boolean) || []
+  );
   const [filters, setFilters] = useState({
     minBudget: searchParams.get('minBudget') || '',
     maxBudget: searchParams.get('maxBudget') || '',
@@ -48,6 +53,7 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
     activeProjects: 0,
     totalBudget: 0
   });
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
 
   // Fetch available skills for filter
   useEffect(() => {
@@ -82,23 +88,40 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
         ? await api.getMyProjects(params)
         : await api.getProjects(params);
       
+      // Apply client-side tag filtering
+      let filteredItems = response.items;
+      if (selectedTags.length > 0) {
+        filteredItems = response.items.filter((project: Project) =>
+          project.tags && project.tags.some(tag => selectedTags.includes(tag))
+        );
+      }
+      
       if (loadMore) {
-        setProjects(prev => [...prev, ...response.items]);
+        setProjects(prev => [...prev, ...filteredItems]);
       } else {
-        setProjects(response.items);
+        setProjects(filteredItems);
       }
       
       setHasMore(response.hasMore);
       setContinuationToken(response.continuationToken);
 
+      // Extract unique tags from all projects
+      const allTags = new Set<string>();
+      response.items.forEach((project: Project) => {
+        if (project.tags) {
+          project.tags.forEach(tag => allTags.add(tag));
+        }
+      });
+      setAvailableTags(Array.from(allTags).sort());
+
       // Calculate stats
-      const activeProjects = response.items.filter((p: Project) => p.status === 'open').length;
-      const totalBudget = response.items.reduce((sum: number, p: Project) => {
+      const activeProjects = filteredItems.filter((p: Project) => p.status === 'open').length;
+      const totalBudget = filteredItems.reduce((sum: number, p: Project) => {
         const budget = typeof p.budget === 'string' ? parseFloat(p.budget) : p.budget;
         return sum + (budget || 0);
       }, 0);
       setStats({
-        totalProjects: response.items.length,
+        totalProjects: filteredItems.length,
         activeProjects,
         totalBudget
       });
@@ -119,6 +142,7 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
     const params = new URLSearchParams();
     if (searchTerm) params.set('keyword', searchTerm);
     if (selectedSkills.length > 0) params.set('skills', selectedSkills.join(','));
+    if (selectedTags.length > 0) params.set('tags', selectedTags.join(','));
     if (filters.minBudget) params.set('minBudget', filters.minBudget);
     if (filters.maxBudget) params.set('maxBudget', filters.maxBudget);
     setSearchParams(params);
@@ -132,14 +156,23 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
     );
   };
 
+  const toggleTag = (tag: string) => {
+    setSelectedTags(prev =>
+      prev.includes(tag)
+        ? prev.filter(t => t !== tag)
+        : [...prev, tag]
+    );
+  };
+
   const clearFilters = () => {
     setSearchTerm('');
     setSelectedSkills([]);
+    setSelectedTags([]);
     setFilters({ minBudget: '', maxBudget: '' });
     setSearchParams({});
   };
 
-  const hasActiveFilters = searchTerm || selectedSkills.length > 0 || filters.minBudget || filters.maxBudget;
+  const hasActiveFilters = searchTerm || selectedSkills.length > 0 || selectedTags.length > 0 || filters.minBudget || filters.maxBudget;
 
   const EmptyState = () => {
     if (hasActiveFilters) {
@@ -364,7 +397,7 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
                 Filters
                 {hasActiveFilters && (
                   <span className="ml-2 px-1.5 py-0.5 bg-primary-500 text-white text-xs rounded-full">
-                    {[searchTerm, ...selectedSkills, filters.minBudget, filters.maxBudget].filter(Boolean).length}
+                    {[searchTerm, ...selectedSkills, ...selectedTags, filters.minBudget, filters.maxBudget].filter(Boolean).length}
                   </span>
                 )}
               </Button>
@@ -415,6 +448,50 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
                         </Badge>
                       ) : null;
                     })}
+                  </div>
+                )}
+              </div>
+
+              {/* Tags Filter */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <Tag className="w-4 h-4" />
+                  Project Tags
+                </label>
+                <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto p-2 bg-gray-50 dark:bg-dark-bg rounded-lg border border-gray-200 dark:border-dark-border">
+                  {availableTags.length === 0 ? (
+                    <p className="text-sm text-gray-600 dark:text-gray-500">No tags available</p>
+                  ) : (
+                    availableTags.map((tag) => (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => toggleTag(tag)}
+                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                          selectedTags.includes(tag)
+                            ? 'bg-secondary-500 text-white'
+                            : 'bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700'
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    ))
+                  )}
+                </div>
+                {selectedTags.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {selectedTags.map((tag) => (
+                      <Badge key={tag} variant="secondary" className="flex items-center gap-1">
+                        {tag}
+                        <button
+                          type="button"
+                          onClick={() => toggleTag(tag)}
+                          className="ml-1 hover:text-white"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </Badge>
+                    ))}
                   </div>
                 )}
               </div>
@@ -499,48 +576,87 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
                   <Card hover className="transition-all hover:shadow-lg hover:shadow-primary-500/10 hover:border-primary-500/30">
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+                        {/* Title and Status */}
+                        <div className="flex items-start justify-between gap-3 mb-2">
+                          <h3 className="text-xl font-bold text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex-1">
                             {project.title}
                           </h3>
-                          <StatusBadge status={project.status} />
+                          <StatusBadge status={project.status} className="flex-shrink-0" />
                         </div>
-                        <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2 mb-3">
+                        
+                        {/* Description */}
+                        <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2 mb-3 leading-relaxed">
                           {project.description}
                         </p>
-                        <div className="flex flex-wrap gap-2 mb-3">
-                          {project.requiredSkills?.slice(0, 5).map((skill, idx) => (
-                            <Badge key={skill.skillId || idx} variant="primary" size="sm">
-                              {skill.skillName}
-                            </Badge>
-                          ))}
-                          {project.requiredSkills && project.requiredSkills.length > 5 && (
-                            <Badge variant="default" size="sm">
-                              +{project.requiredSkills.length - 5} more
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-                          <span className="flex items-center gap-1.5">
-                            <DollarSign className="w-4 h-4 text-green-600 dark:text-green-500" />
-                            <span className="font-medium text-gray-900 dark:text-white">{project.budget} ETH</span>
+                        
+                        {/* Tags */}
+                        {project.tags && project.tags.length > 0 && (
+                          <div className="mb-3">
+                            <div className="flex items-center gap-1.5 mb-1.5">
+                              <Tag className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+                              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Tags:</span>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {project.tags.slice(0, 3).map((tag, idx) => (
+                                <Badge key={idx} variant="secondary" size="sm" className="text-xs">
+                                  {tag}
+                                </Badge>
+                              ))}
+                              {project.tags.length > 3 && (
+                                <Badge variant="default" size="sm" className="text-xs">
+                                  +{project.tags.length - 3}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Skills */}
+                        {project.requiredSkills && project.requiredSkills.length > 0 && (
+                          <div className="mb-3">
+                            <div className="flex items-center gap-1.5 mb-1.5">
+                              <Wrench className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+                              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Required Skills:</span>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {project.requiredSkills.slice(0, 4).map((skill, idx) => (
+                                <Badge key={skill.skillId || idx} variant="primary" size="sm">
+                                  {skill.skillName}
+                                </Badge>
+                              ))}
+                              {project.requiredSkills.length > 4 && (
+                                <Badge variant="default" size="sm">
+                                  +{project.requiredSkills.length - 4}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Meta Info */}
+                        <div className="flex flex-wrap items-center gap-4 text-sm">
+                          <span className="flex items-center gap-1.5 font-semibold text-green-600 dark:text-green-400">
+                            <DollarSign className="w-4 h-4" />
+                            {project.budget} ETH
                           </span>
-                          <span className="flex items-center gap-1.5">
-                            <Clock className="w-4 h-4 text-blue-600 dark:text-blue-500" />
+                          <span className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400">
+                            <Clock className="w-4 h-4" />
                             {project.deadline
                               ? format(new Date(project.deadline), 'MMM d, yyyy')
                               : 'No deadline'}
                           </span>
                           {project.proposalCount !== undefined && (
-                            <span className="flex items-center gap-1.5">
-                              <TrendingUp className="w-4 h-4 text-purple-600 dark:text-purple-500" />
+                            <span className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400">
+                              <TrendingUp className="w-4 h-4" />
                               {project.proposalCount} proposal{project.proposalCount !== 1 ? 's' : ''}
                             </span>
                           )}
                         </div>
                       </div>
-                      <div className="flex sm:flex-col items-center gap-2">
-                        <Button size="sm" variant="ghost" className="group">
+                      
+                      {/* Action Button */}
+                      <div className="flex sm:flex-col items-center gap-2 sm:justify-center">
+                        <Button size="sm" variant="ghost" className="group whitespace-nowrap">
                           View Details
                           <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                         </Button>

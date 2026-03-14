@@ -32,6 +32,8 @@ export function CreateProjectPage() {
   const [milestones, setMilestones] = useState<MilestoneInput[]>([
     { title: '', description: '', amount: '', dueDate: '' }
   ]);
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -71,6 +73,18 @@ export function CreateProjectPage() {
     setSelectedSkills(selectedSkills.filter(s => s.skillId !== skillId));
   };
 
+  const handleAddTag = () => {
+    const trimmedTag = tagInput.trim();
+    if (trimmedTag && !tags.includes(trimmedTag) && tags.length < 10) {
+      setTags([...tags, trimmedTag]);
+      setTagInput('');
+    }
+  };
+
+  const handleRemoveTag = (index: number) => {
+    setTags(tags.filter((_, i) => i !== index));
+  };
+
   const handleAddMilestone = () => {
     setMilestones([...milestones, { title: '', description: '', amount: '', dueDate: '' }]);
   };
@@ -90,12 +104,37 @@ export function CreateProjectPage() {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.title.trim()) newErrors.title = 'Title is required';
-    if (!formData.description.trim()) newErrors.description = 'Description is required';
-    if (!formData.budget || parseFloat(formData.budget) <= 0) newErrors.budget = 'Valid budget is required';
-    if (!formData.deadline) newErrors.deadline = 'Deadline is required';
-    if (selectedSkills.length === 0) newErrors.skills = 'At least one skill is required';
+    // Title: min 5 characters (match backend)
+    if (!formData.title.trim() || formData.title.trim().length < 5) {
+      newErrors.title = 'Title must be at least 5 characters';
+    }
 
+    // Description: min 20 characters (match backend)
+    if (!formData.description.trim() || formData.description.trim().length < 20) {
+      newErrors.description = 'Description must be at least 20 characters';
+    }
+
+    // Budget: must be > 0
+    if (!formData.budget || parseFloat(formData.budget) <= 0) {
+      newErrors.budget = 'Budget must be greater than 0';
+    }
+
+    // Deadline: required
+    if (!formData.deadline) {
+      newErrors.deadline = 'Deadline is required';
+    }
+
+    // Skills: at least one required
+    if (selectedSkills.length === 0) {
+      newErrors.skills = 'At least one skill is required';
+    }
+
+    // Tags: max 10
+    if (tags.length > 10) {
+      newErrors.tags = 'Maximum 10 tags allowed';
+    }
+
+    // Milestones validation
     const validMilestones = milestones.filter(m => m.title.trim());
     if (validMilestones.length === 0) {
       newErrors.milestones = 'At least one milestone is required';
@@ -104,7 +143,7 @@ export function CreateProjectPage() {
       const totalBudget = parseFloat(formData.budget) || 0;
       const milestonesSum = validMilestones.reduce((sum, m) => sum + (parseFloat(m.amount) || 0), 0);
       
-      if (Math.abs(milestonesSum - totalBudget) > 0.000001) { // Use small epsilon for floating point comparison
+      if (Math.abs(milestonesSum - totalBudget) > 0.000001) {
         newErrors.milestones = `Milestone amounts must sum to total budget. Current sum: ${milestonesSum.toFixed(2)} ETH, Budget: ${totalBudget.toFixed(2)} ETH`;
       }
     }
@@ -119,13 +158,22 @@ export function CreateProjectPage() {
 
     setLoading(true);
     try {
+      // Helper to convert date to ISO format
+      const formatDeadlineToISO = (dateString: string): string => {
+        const date = new Date(dateString);
+        // Set to end of day
+        date.setHours(23, 59, 59, 999);
+        return date.toISOString();
+      };
+
       // Create project (backend creates as 'open' status by default)
       const project = await api.createProject({
         title: formData.title,
         description: formData.description,
         budget: parseFloat(formData.budget),
-        deadline: formData.deadline,
+        deadline: formatDeadlineToISO(formData.deadline),
         requiredSkills: selectedSkills.map(s => ({ skillId: s.skillId })),
+        tags: tags.length > 0 ? tags : undefined,
       });
 
       // Add milestones
@@ -200,18 +248,36 @@ export function CreateProjectPage() {
           <CardHeader title="Project Details" description="Describe your project to attract the right freelancers" />
           
           <div className="space-y-4">
-            <Input
-              label="Project Title *"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder="e.g., Build a React dashboard"
-              error={errors.title}
-            />
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Project Title *
+                </label>
+                <span className={`text-xs ${
+                  formData.title.length >= 5 ? 'text-green-400' : 'text-gray-400'
+                }`}>
+                  {formData.title.length}/5 min
+                </span>
+              </div>
+              <Input
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                placeholder="e.g., Build a React dashboard"
+                error={errors.title}
+              />
+            </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Description *
-              </label>
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Description *
+                </label>
+                <span className={`text-xs ${
+                  formData.description.length >= 20 ? 'text-green-400' : 'text-gray-400'
+                }`}>
+                  {formData.description.length}/20 min
+                </span>
+              </div>
               <textarea
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -306,6 +372,68 @@ export function CreateProjectPage() {
             )}
             {errors.skills && (
               <p className="text-red-400 text-sm">{errors.skills}</p>
+            )}
+          </div>
+        </Card>
+
+        {/* Tags */}
+        <Card className="mb-6">
+          <CardHeader
+            title="Project Tags (Optional)"
+            description="Add tags to help freelancers find your project (max 10)"
+          />
+          
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <Input
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleAddTag();
+                  }
+                }}
+                placeholder="e.g., React, TypeScript, UI/UX"
+                disabled={tags.length >= 10}
+              />
+              <Button
+                type="button"
+                onClick={handleAddTag}
+                disabled={!tagInput.trim() || tags.length >= 10}
+                variant="outline"
+              >
+                <Plus className="w-4 h-4" />
+                Add
+              </Button>
+            </div>
+            
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {tags.map((tag, index) => (
+                  <span
+                    key={index}
+                    className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-400 rounded-full text-sm"
+                  >
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveTag(index)}
+                      className="hover:text-blue-600 dark:hover:text-blue-300"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+            
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              {tags.length}/10 tags
+            </p>
+            
+            {errors.tags && (
+              <p className="text-red-400 text-sm">{errors.tags}</p>
             )}
           </div>
         </Card>

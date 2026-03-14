@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { 
+import {
   ArrowLeft,
-  DollarSign, 
-  Clock, 
+  DollarSign,
+  Clock,
   User,
   Calendar,
   CheckCircle,
@@ -12,7 +12,13 @@ import {
   Upload,
   X,
   FileText,
-  AlertCircle
+  AlertCircle,
+  ChevronRight,
+  Edit,
+  Trash2,
+  MoreVertical,
+  XCircle,
+  Eye
 } from 'lucide-react';
 import { Card, CardHeader, Button, StatusBadge, Badge, PageLoader } from '../../components/ui';
 import { useAuthStore } from '../../store';
@@ -26,7 +32,7 @@ export function ProjectDetailPage() {
   const { user, isAuthenticated } = useAuthStore();
   const [project, setProject] = useState<Project | null>(null);
   const [proposals, setProposals] = useState<Proposal[]>([]);
-  const [myProposal, setMyProposal] = useState<Proposal | null>(null); // Add state for freelancer's own proposal
+  const [myProposal, setMyProposal] = useState<Proposal | null>(null);
   const [loading, setLoading] = useState(true);
   const [showProposalForm, setShowProposalForm] = useState(false);
   const [proposalData, setProposalData] = useState({
@@ -37,6 +43,7 @@ export function ProjectDetailPage() {
   const [fileError, setFileError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showActionsMenu, setShowActionsMenu] = useState(false);
 
   const MAX_FILES = 5;
   const MAX_FILE_SIZE_MB = 10;
@@ -90,11 +97,6 @@ export function ProjectDetailPage() {
       if (!id) return;
       try {
         const projectData = await api.getProject(id);
-        console.log('[PROJECT DEBUG] Project data:', projectData);
-        console.log('[PROJECT DEBUG] createdAt:', projectData.createdAt);
-        console.log('[PROJECT DEBUG] User:', { role: user?.role, userId: user?.id, employerId: projectData.employerId, employer_id: (projectData as any).employer_id });
-        console.log('[PROJECT DEBUG] Is employer?', user?.role === 'employer');
-        console.log('[PROJECT DEBUG] Is owner?', user?.id === projectData.employerId || user?.id === (projectData as any).employer_id);
         setProject(projectData);
 
         // If employer, fetch all proposals
@@ -219,36 +221,148 @@ export function ProjectDetailPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
+      {/* Breadcrumb Navigation */}
+      <nav className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+        <Link to="/" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+          Home
+        </Link>
+        <ChevronRight className="w-4 h-4" />
+        <Link to="/projects" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+          Projects
+        </Link>
+        <ChevronRight className="w-4 h-4" />
+        <span className="text-gray-900 dark:text-white font-medium truncate max-w-xs">
+          {project?.title || 'Loading...'}
+        </span>
+      </nav>
+
+      {/* Header with Actions */}
+      <div className="flex items-center justify-between gap-4">
         <Link to="/projects">
-          <Button variant="ghost">
-            <ArrowLeft className="w-5 h-5" />
-            Back
+          <Button variant="ghost" size="sm">
+            <ArrowLeft className="w-4 h-4" />
+            Back to Projects
           </Button>
         </Link>
+        
+        {/* Employer Actions Menu */}
+        {isOwner && (
+          <div className="relative">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowActionsMenu(!showActionsMenu)}
+              className="gap-2"
+            >
+              <MoreVertical className="w-4 h-4" />
+              Actions
+            </Button>
+            
+            {showActionsMenu && (
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setShowActionsMenu(false)}
+                />
+                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-dark-surface rounded-lg shadow-lg border border-gray-200 dark:border-dark-border z-20 py-1">
+                  {project?.status === 'draft' && (
+                    <Link
+                      to={`/projects/${project.id}/edit`}
+                      className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-bg transition-colors"
+                      onClick={() => setShowActionsMenu(false)}
+                    >
+                      <Edit className="w-4 h-4" />
+                      Edit Project
+                    </Link>
+                  )}
+                  <Link
+                    to={`/projects/${project?.id}`}
+                    className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-dark-bg transition-colors"
+                    onClick={() => setShowActionsMenu(false)}
+                  >
+                    <Eye className="w-4 h-4" />
+                    View Proposals
+                  </Link>
+                  {project?.status === 'open' && (
+                    <button
+                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-amber-600 dark:text-amber-400 hover:bg-gray-100 dark:hover:bg-dark-bg transition-colors"
+                      onClick={() => {
+                        setShowActionsMenu(false);
+                        // TODO: Implement close project
+                        console.log('Close project');
+                      }}
+                    >
+                      <XCircle className="w-4 h-4" />
+                      Close Project
+                    </button>
+                  )}
+                  <button
+                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-dark-bg transition-colors border-t border-gray-200 dark:border-dark-border"
+                    onClick={() => {
+                      setShowActionsMenu(false);
+                      // TODO: Implement delete project
+                      if (confirm('Are you sure you want to delete this project?')) {
+                        console.log('Delete project');
+                      }
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete Project
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           <Card>
-            <div className="flex items-start justify-between gap-4 mb-4">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{project.title}</h1>
-                <StatusBadge status={project.status} />
+            <div className="mb-6">
+              <div className="flex items-start justify-between gap-4 mb-3">
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{project.title}</h1>
+                <StatusBadge status={project.status} className="text-base px-4 py-1.5" />
               </div>
-              {isOwner && project.status === 'draft' && (
-                <Link to={`/projects/${project.id}/edit`}>
-                  <Button variant="outline">Edit Project</Button>
-                </Link>
-              )}
+              
+              {/* Project Meta Info */}
+              <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                <span className="flex items-center gap-1.5">
+                  <Calendar className="w-4 h-4" />
+                  Posted {project.createdAt ? format(new Date(project.createdAt), 'MMM d, yyyy') : 'Recently'}
+                </span>
+                {project.proposalCount !== undefined && (
+                  <span className="flex items-center gap-1.5">
+                    <User className="w-4 h-4" />
+                    {project.proposalCount} {project.proposalCount === 1 ? 'Proposal' : 'Proposals'}
+                  </span>
+                )}
+                <span className="flex items-center gap-1.5">
+                  <DollarSign className="w-4 h-4" />
+                  {project.budget} ETH Budget
+                </span>
+              </div>
             </div>
             
             <div className="prose prose-invert max-w-none">
-              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{project.description}</p>
+              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">{project.description}</p>
             </div>
           </Card>
+
+          {/* Tags */}
+          {project.tags && project.tags.length > 0 && (
+            <Card>
+              <CardHeader title="Tags" />
+              <div className="flex flex-wrap gap-2">
+                {project.tags.map((tag, idx) => (
+                  <Badge key={idx} variant="secondary">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            </Card>
+          )}
 
           {/* Skills */}
           {project.requiredSkills && project.requiredSkills.length > 0 && (
@@ -267,34 +381,51 @@ export function ProjectDetailPage() {
           {/* Milestones */}
           {project.milestones && project.milestones.length > 0 && (
             <Card>
-              <CardHeader title="Milestones" description={`${project.milestones.length} milestones`} />
-              <div className="space-y-4">
-                {project.milestones.map((milestone, index) => (
-                  <div key={milestone.id} className="flex items-start gap-4 p-4 bg-gray-50 dark:bg-dark-bg rounded-lg">
-                    <div className="w-8 h-8 bg-primary-100 dark:bg-primary-600/20 rounded-full flex items-center justify-center text-primary-600 dark:text-primary-400 font-bold text-sm">
-                      {index + 1}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-1">
-                        <h4 className="font-medium text-gray-900 dark:text-white">{milestone.title}</h4>
-                        <StatusBadge status={milestone.status} />
+              <CardHeader
+                title="Project Milestones"
+                description={`${project.milestones.length} milestone${project.milestones.length !== 1 ? 's' : ''} • Total: ${project.budget} ETH`}
+              />
+              <div className="space-y-3">
+                {project.milestones.map((milestone, index) => {
+                  const statusColors = {
+                    pending: 'bg-gray-100 dark:bg-gray-800 border-gray-300 dark:border-gray-700',
+                    in_progress: 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700',
+                    submitted: 'bg-purple-50 dark:bg-purple-900/20 border-purple-300 dark:border-purple-700',
+                    approved: 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700',
+                    disputed: 'bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700',
+                    refunded: 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700'
+                  };
+                  
+                  return (
+                    <div
+                      key={milestone.id}
+                      className={`flex items-start gap-4 p-4 rounded-lg border-2 transition-all ${statusColors[milestone.status] || statusColors.pending}`}
+                    >
+                      <div className="w-10 h-10 bg-primary-500 text-white rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0 shadow-sm">
+                        {index + 1}
                       </div>
-                      <p className="text-gray-600 dark:text-gray-400 text-sm mb-2">{milestone.description}</p>
-                      <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-500">
-                        <span className="flex items-center gap-1">
-                          <DollarSign className="w-4 h-4" />
-                          {milestone.amount} ETH
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
-                          Due: {milestone.dueDate
-                            ? format(new Date(milestone.dueDate), 'MMM d, yyyy')
-                            : 'No date'}
-                        </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-3 mb-2">
+                          <h4 className="font-semibold text-gray-900 dark:text-white text-lg">{milestone.title}</h4>
+                          <StatusBadge status={milestone.status} className="flex-shrink-0" />
+                        </div>
+                        <p className="text-gray-600 dark:text-gray-400 text-sm mb-3 leading-relaxed">{milestone.description}</p>
+                        <div className="flex flex-wrap items-center gap-4 text-sm">
+                          <span className="flex items-center gap-1.5 font-medium text-green-600 dark:text-green-400">
+                            <DollarSign className="w-4 h-4" />
+                            {milestone.amount} ETH
+                          </span>
+                          <span className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400">
+                            <Calendar className="w-4 h-4" />
+                            {milestone.dueDate
+                              ? format(new Date(milestone.dueDate), 'MMM d, yyyy')
+                              : 'No deadline'}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </Card>
           )}
