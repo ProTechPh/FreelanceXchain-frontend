@@ -81,6 +81,18 @@ export function StatusBadge({ status, className, showIcon = true }: StatusBadgeP
       icon: Loader,
       label: 'Processing',
     },
+    submitted: {
+      color: 'text-blue-400',
+      bg: 'bg-blue-500/10 border-blue-500/20',
+      icon: Clock,
+      label: 'Submitted',
+    },
+    approved: {
+      color: 'text-green-400',
+      bg: 'bg-green-500/10 border-green-500/20',
+      icon: CheckCircle,
+      label: 'Approved',
+    },
   };
 
   const config = statusConfig[status.toLowerCase()] || statusConfig.pending;

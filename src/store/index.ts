@@ -25,9 +25,6 @@ export const useAuthStore = create<AuthState>()(
       login: async (email: string, password: string, captchaToken?: string) => {
         set({ isLoading: true });
         try {
-          // Clear any existing wallet connection before login
-          useWalletStore.getState().disconnect();
-
           const result = await api.login({ email, password, captchaToken });
 
           if (result.mfaRequired) {
@@ -94,8 +91,14 @@ export const useAuthStore = create<AuthState>()(
         try {
           const { user } = await api.getCurrentUser();
           set({ user, isAuthenticated: true, isLoading: false });
-        } catch {
-          set({ user: null, isAuthenticated: false, isLoading: false });
+        } catch (error: any) {
+          // Only clear auth state on explicit 401/403 (token invalid/expired)
+          // Don't logout on transient network errors
+          if (error?.status === 401 || error?.status === 403) {
+            set({ user: null, isAuthenticated: false, isLoading: false });
+          } else {
+            set({ isLoading: false });
+          }
         }
       },
 
@@ -325,6 +328,22 @@ export const useWalletStore = create<WalletState>()(
             chainId: Number(network.chainId),
             error: null, // Explicitly clear error on success
           });
+
+          // Persist wallet address to the database if user is authenticated
+          const { isAuthenticated } = useAuthStore.getState();
+          if (isAuthenticated) {
+            try {
+              await api.updateWalletAddress(address);
+              // Update the auth store user with the new wallet address
+              const currentUser = useAuthStore.getState().user;
+              if (currentUser) {
+                useAuthStore.getState().setUser({ ...currentUser, walletAddress: address });
+              }
+            } catch {
+              // Wallet is connected locally even if DB update fails
+              console.warn('Failed to save wallet address to database');
+            }
+          }
         } catch (error) {
           const sanitizedError = sanitizeWalletError(error);
           set({

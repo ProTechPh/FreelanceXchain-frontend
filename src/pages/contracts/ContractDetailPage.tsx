@@ -201,16 +201,18 @@ export function ContractDetailPage() {
     if (!id) return;
     setActionLoading(`approve-${milestoneId}`);
     try {
-      await api.approveMilestone(milestoneId, id); // Fixed: milestoneId first, contractId second
+      await api.approveMilestone(milestoneId, id);
       // Refresh data
       const [contractData, paymentData] = await Promise.all([
         api.getContract(id),
         api.getPaymentStatus(id)
       ]);
-      setContract(contractData);
-      setPaymentStatus(paymentData);
-    } catch (error) {
+      setContract({ ...contractData });
+      setPaymentStatus({ ...paymentData });
+      showSuccess('Milestone approved and payment released!', 'Success');
+    } catch (error: any) {
       console.error('Error approving milestone:', error);
+      showError(error?.message || 'Failed to approve milestone. Please try again.', 'Error');
     } finally {
       setActionLoading(null);
     }
@@ -225,6 +227,49 @@ export function ContractDetailPage() {
       navigate('/disputes');
     } catch (error) {
       console.error('Error disputing milestone:', error);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleFundContract = async () => {
+    if (!id) return;
+    setActionLoading('fund');
+    try {
+      // Step 1: Get funding info from backend (freelancer wallet, milestone amounts, etc.)
+      const fundInfo = await api.getFundInfo(id);
+
+      // Step 2: Deploy escrow contract via MetaMask (employer pays from their wallet)
+      const { deployEscrowViaMetaMask } = await import('../../lib/escrow');
+      const arbiterAddress = '0x0000000000000000000000000000000000000001';
+
+      const result = await deployEscrowViaMetaMask({
+        freelancerAddress: fundInfo.freelancerWallet,
+        arbiterAddress,
+        platformAddress: fundInfo.platformWallet,
+        contractId: fundInfo.contractId,
+        milestoneAmounts: fundInfo.milestoneAmounts.map((a: string) => BigInt(a)),
+        milestoneDescriptions: fundInfo.milestoneDescriptions,
+        totalAmount: BigInt(fundInfo.totalAmount),
+      });
+
+      // Step 3: Tell backend the escrow address so it activates the contract
+      await api.fundContract(id, result.escrowAddress, result.transactionHash);
+
+      const [contractData, paymentData] = await Promise.all([
+        api.getContract(id),
+        api.getPaymentStatus(id)
+      ]);
+      setContract(contractData);
+      setPaymentStatus(paymentData);
+      showSuccess('Contract funded from your wallet and escrow deployed!', 'Success');
+    } catch (error: any) {
+      console.error('Error funding contract:', error);
+      if (error?.code === 'ACTION_REJECTED' || error?.code === 4001) {
+        showError('Transaction rejected in MetaMask.', 'Cancelled');
+      } else {
+        showError(error?.message || 'Failed to fund contract. Please try again.', 'Error');
+      }
     } finally {
       setActionLoading(null);
     }
@@ -332,6 +377,16 @@ export function ContractDetailPage() {
           </div>
           <p className="text-gray-600 dark:text-gray-400 mt-1">{contract.description}</p>
         </div>
+        {isEmployer && contract.status === 'pending' && (
+          <Button
+            variant="primary"
+            onClick={handleFundContract}
+            disabled={actionLoading === 'fund'}
+          >
+            <DollarSign className="w-4 h-4" />
+            {actionLoading === 'fund' ? 'Funding...' : 'Fund Contract'}
+          </Button>
+        )}
         {contract.status === 'active' && (
           <Button variant="outline">
             <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />

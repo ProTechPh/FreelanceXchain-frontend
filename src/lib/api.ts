@@ -104,6 +104,7 @@ class ApiClient {
   ): Promise<T> {
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache',
       ...options.headers,
     };
 
@@ -501,6 +502,13 @@ class ApiClient {
     return this.request<{ user: User }>('/auth/me');
   }
 
+  async updateWalletAddress(walletAddress: string): Promise<{ message: string; walletAddress: string }> {
+    return this.request<{ message: string; walletAddress: string }>('/auth/wallet', {
+      method: 'PATCH',
+      body: JSON.stringify({ walletAddress }),
+    });
+  }
+
   getOAuthUrl(provider: string): string {
     return `${API_BASE}/auth/oauth/${provider}`;
   }
@@ -801,6 +809,24 @@ class ApiClient {
 
   async getContract(id: string): Promise<Contract> {
     return this.request<Contract>(`/contracts/${id}`);
+  }
+
+  async fundContract(contractId: string, escrowAddress?: string, transactionHash?: string): Promise<{ message: string; escrowAddress: string; contractStatus: string }> {
+    return this.request<{ message: string; escrowAddress: string; contractStatus: string }>(`/contracts/${contractId}/fund`, {
+      method: 'POST',
+      body: JSON.stringify({ escrowAddress, transactionHash }),
+    });
+  }
+
+  async getFundInfo(contractId: string): Promise<{
+    contractId: string;
+    freelancerWallet: string;
+    platformWallet: string;
+    milestoneAmounts: string[];
+    milestoneDescriptions: string[];
+    totalAmount: string;
+  }> {
+    return this.request(`/contracts/${contractId}/fund-info`);
   }
 
   // =====================
