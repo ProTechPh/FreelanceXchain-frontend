@@ -21,6 +21,12 @@ export function StatusBadge({ status, className, showIcon = true }: StatusBadgeP
       icon: Clock,
       label: 'Pending',
     },
+    in_progress: {
+      color: 'text-blue-400',
+      bg: 'bg-blue-500/10 border-blue-500/20',
+      icon: Loader,
+      label: 'In Progress',
+    },
     completed: {
       color: 'text-blue-400',
       bg: 'bg-blue-500/10 border-blue-500/20',
