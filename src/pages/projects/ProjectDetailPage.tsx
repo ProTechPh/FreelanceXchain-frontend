@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { Card, CardHeader, Button, StatusBadge, Badge, PageLoader } from '../../components/ui';
 import { FileUpload } from '../../components/ui/FileUpload';
+import { ChatPopup, ChatButton } from '../../components/chat';
 import { useAuthStore } from '../../store';
 import { useToast } from '../../contexts/ToastContext';
 import api from '../../lib/api';
@@ -53,6 +54,9 @@ export function ProjectDetailPage() {
   const [milestoneNotes, setMilestoneNotes] = useState<Record<string, string>>({});
   const [submittingMilestone, setSubmittingMilestone] = useState<string | null>(null);
   const [processingProposalId, setProcessingProposalId] = useState<string | null>(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isChatMinimized, setIsChatMinimized] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const MAX_FILES = 5;
   const MAX_FILE_SIZE_MB = 10;
@@ -149,6 +153,41 @@ export function ProjectDetailPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const projectOwnerUserId = project?.employer?.userId || project?.employerId || project?.employer_id || null;
+  const canUseChat = isAuthenticated && !!user?.id && !!projectOwnerUserId && projectOwnerUserId !== user.id;
+  const chatPartyName = project?.employer?.companyName || project?.employer?.name || 'Client';
+
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      if (!canUseChat || !projectOwnerUserId || !user?.id) return;
+
+      try {
+        const conversation = await api.findConversationWithUser(projectOwnerUserId);
+        if (!conversation) {
+          setUnreadCount(0);
+          return;
+        }
+
+        const count = conversation.participant1_id === user.id
+          ? conversation.unread_count_1
+          : conversation.unread_count_2;
+        setUnreadCount(count);
+      } catch (chatError) {
+        console.error('Error fetching unread chat count:', chatError);
+      }
+    };
+
+    fetchUnreadCount();
+
+    const interval = setInterval(() => {
+      if (!isChatOpen) {
+        fetchUnreadCount();
+      }
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [canUseChat, isChatOpen, projectOwnerUserId, user?.id]);
 
   const handleCloseProject = async () => {
     if (!id || actionLoading) return;
@@ -1212,6 +1251,30 @@ export function ProjectDetailPage() {
           </Card>
         </div>
       </div>
+
+      {canUseChat && projectOwnerUserId && (
+        <>
+          <ChatButton
+            onClick={() => {
+              setIsChatOpen(true);
+              setIsChatMinimized(false);
+            }}
+            unreadCount={unreadCount}
+            isOpen={isChatOpen}
+          />
+          <ChatPopup
+            contractId={project.id}
+            otherPartyId={projectOwnerUserId}
+            otherPartyName={chatPartyName}
+            otherPartyRole="Client"
+            isOpen={isChatOpen}
+            onClose={() => setIsChatOpen(false)}
+            onMinimize={() => setIsChatMinimized(!isChatMinimized)}
+            isMinimized={isChatMinimized}
+            onUnreadCountChange={setUnreadCount}
+          />
+        </>
+      )}
     </div>
   );
 }
