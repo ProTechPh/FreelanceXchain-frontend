@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2, Wallet } from 'lucide-react';
 import { Card, CardHeader, Button, Input } from '../../components/ui';
+import { FileUpload } from '../../components/ui/FileUpload';
 import { useWalletStore } from '../../store';
 import { useToast } from '../../contexts/ToastContext';
 import api from '../../lib/api';
@@ -34,6 +35,7 @@ export function CreateProjectPage() {
   ]);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
+  const [attachmentFiles, setAttachmentFiles] = useState<File[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -166,15 +168,22 @@ export function CreateProjectPage() {
         return date.toISOString();
       };
 
-      // Create project (backend creates as 'open' status by default)
-      const project = await api.createProject({
+      const projectData = {
         title: formData.title,
         description: formData.description,
         budget: parseFloat(formData.budget),
         deadline: formatDeadlineToISO(formData.deadline),
         requiredSkills: selectedSkills.map(s => ({ skillId: s.skillId })),
         tags: tags.length > 0 ? tags : undefined,
-      });
+      };
+
+      // Use the appropriate API method based on whether files are attached
+      let project;
+      if (attachmentFiles.length > 0) {
+        project = await api.createProjectWithAttachments(projectData, attachmentFiles);
+      } else {
+        project = await api.createProject(projectData);
+      }
 
       // Add milestones
       const validMilestones = milestones.filter(m => m.title.trim());
@@ -435,6 +444,37 @@ export function CreateProjectPage() {
             {errors.tags && (
               <p className="text-red-400 text-sm">{errors.tags}</p>
             )}
+          </div>
+        </Card>
+
+        {/* Project Attachments */}
+        <Card className="mb-6">
+          <CardHeader
+            title="Project Attachments (Optional)"
+            description="Upload reference files, images, or documents to help freelancers understand your project better"
+          />
+          
+          <div className="space-y-4">
+            <FileUpload
+              maxFiles={10}
+              maxSizeMB={10}
+              acceptedTypes={['.pdf', '.doc', '.docx', '.txt', '.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.zip', '.rar']}
+              onFilesChange={setAttachmentFiles}
+              files={attachmentFiles}
+              disabled={loading}
+              label="Upload Files"
+              helperText="Max 10 files, 10MB per file. Accepted: PDF, DOC, DOCX, TXT, PNG, JPG, JPEG, GIF, WEBP, SVG, ZIP, RAR"
+            />
+            
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="font-medium mb-1">💡 Tips for attachments:</p>
+              <ul className="list-disc list-inside space-y-1 text-xs">
+                <li>Include design mockups or wireframes for visual projects</li>
+                <li>Add sample documents to show expected quality and style</li>
+                <li>Upload reference materials or inspiration examples</li>
+                <li>Include technical specifications or requirements documents</li>
+              </ul>
+            </div>
           </div>
         </Card>
 

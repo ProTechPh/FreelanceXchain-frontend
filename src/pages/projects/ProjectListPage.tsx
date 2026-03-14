@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Search,
@@ -11,12 +11,12 @@ import {
   Briefcase,
   TrendingUp,
   Plus,
-  Sparkles,
   Users,
   Target,
   ArrowRight,
   Tag,
-  Wrench
+  Wrench,
+  Paperclip
 } from 'lucide-react';
 import { Card, Button, StatusBadge, Badge, ProjectCardSkeleton } from '../../components/ui';
 import api from '../../lib/api';
@@ -68,7 +68,7 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
     fetchSkills();
   }, []);
 
-  const fetchProjects = async (loadMore = false) => {
+  const fetchProjects = useCallback(async (loadMore = false) => {
     setLoading(true);
     try {
       const params: Record<string, string | number> = {
@@ -81,6 +81,7 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
 
       if (searchTerm) params.keyword = searchTerm;
       if (selectedSkills.length > 0) params.skills = selectedSkills.join(',');
+      if (selectedTags.length > 0) params.tags = selectedTags.join(',');
       if (filters.minBudget) params.minBudget = parseFloat(filters.minBudget);
       if (filters.maxBudget) params.maxBudget = parseFloat(filters.maxBudget);
 
@@ -88,13 +89,8 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
         ? await api.getMyProjects(params)
         : await api.getProjects(params);
       
-      // Apply client-side tag filtering
-      let filteredItems = response.items;
-      if (selectedTags.length > 0) {
-        filteredItems = response.items.filter((project: Project) =>
-          project.tags && project.tags.some(tag => selectedTags.includes(tag))
-        );
-      }
+      // Server-side filtering now handles tags
+      const filteredItems = response.items;
       
       if (loadMore) {
         setProjects(prev => [...prev, ...filteredItems]);
@@ -114,28 +110,33 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
       });
       setAvailableTags(Array.from(allTags).sort());
 
-      // Calculate stats
-      const activeProjects = filteredItems.filter((p: Project) => p.status === 'open').length;
-      const totalBudget = filteredItems.reduce((sum: number, p: Project) => {
-        const budget = typeof p.budget === 'string' ? parseFloat(p.budget) : p.budget;
-        return sum + (budget || 0);
-      }, 0);
-      setStats({
-        totalProjects: filteredItems.length,
-        activeProjects,
-        totalBudget
-      });
+      // Calculate stats from response metadata if available, otherwise from current page
+      if ((response as any).stats) {
+        setStats((response as any).stats);
+      } else {
+        const activeProjects = filteredItems.filter((p: Project) => p.status === 'open').length;
+        const totalBudget = filteredItems.reduce((sum: number, p: Project) => {
+          // Ensure budget is always treated as a number
+          const budget = Number(p.budget);
+          return sum + (isNaN(budget) ? 0 : budget);
+        }, 0);
+        setStats({
+          totalProjects: filteredItems.length,
+          activeProjects,
+          totalBudget
+        });
+      }
     } catch (error) {
       console.error('Error fetching projects:', error);
       setProjects([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchTerm, selectedSkills, selectedTags, filters.minBudget, filters.maxBudget, showMyProjects, continuationToken]);
 
   useEffect(() => {
     fetchProjects();
-  }, [searchParams]);
+  }, [searchParams, fetchProjects]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -243,125 +244,44 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
   };
 
   return (
-    <div className="min-h-screen">
-      {/* Hero Section */}
-      <div className="relative bg-gradient-to-br from-primary-100/50 via-gray-50 to-white dark:from-primary-900/20 dark:via-dark-bg dark:to-dark-bg border-b border-gray-200 dark:border-dark-border">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnoiIHN0cm9rZT0iIzZCNzI4MCIgc3Ryb2tlLXdpZHRoPSIuNSIgb3BhY2l0eT0iLjEiLz48L2c+PC9zdmc+')] opacity-30"></div>
-        
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center max-w-3xl mx-auto"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-primary-500/10 border border-primary-500/20 rounded-full mb-6"
-            >
-              <Sparkles className="w-4 h-4 text-primary-600 dark:text-primary-400" />
-              <span className="text-sm font-medium text-primary-700 dark:text-primary-300">Discover Your Next Opportunity</span>
-            </motion.div>
-            
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4">
-              {showMyProjects ? (
-                <>
-                  My <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-indigo-400">Projects</span>
-                </>
-              ) : (
-                <>
-                  Browse <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-indigo-400">Blockchain-Powered</span> Projects
-                </>
-              )}
-            </h1>
-            <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">
-              {showMyProjects
-                ? 'Manage your projects, track proposals, and monitor progress. All secured by blockchain technology.'
-                : 'Find projects that match your skills. Secure payments through smart contracts. Build your reputation on-chain.'}
-            </p>
-
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-4 sm:gap-8 max-w-2xl mx-auto">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3, duration: 0.5 }}
-                className="bg-white/50 dark:bg-dark-card/50 backdrop-blur-sm border border-gray-200 dark:border-dark-border rounded-xl p-4"
-              >
-                <div className="flex items-center justify-center gap-2 mb-1">
-                  <Briefcase className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-                </div>
-                <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{stats.totalProjects}</div>
-                <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total Projects</div>
-              </motion.div>
-              
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4, duration: 0.5 }}
-                className="bg-white/50 dark:bg-dark-card/50 backdrop-blur-sm border border-gray-200 dark:border-dark-border rounded-xl p-4"
-              >
-                <div className="flex items-center justify-center gap-2 mb-1">
-                  <Target className="w-5 h-5 text-green-600 dark:text-green-400" />
-                </div>
-                <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{stats.activeProjects}</div>
-                <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Active Now</div>
-              </motion.div>
-              
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5, duration: 0.5 }}
-                className="bg-white/50 dark:bg-dark-card/50 backdrop-blur-sm border border-gray-200 dark:border-dark-border rounded-xl p-4"
-              >
-                <div className="flex items-center justify-center gap-2 mb-1">
-                  <DollarSign className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-                </div>
-                <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{stats.totalBudget.toFixed(2)}</div>
-                <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">ETH Available</div>
-              </motion.div>
-            </div>
-          </motion.div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {showMyProjects ? 'My Projects' : 'Browse Projects'}
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            {showMyProjects
+              ? 'Manage your projects, track proposals, and monitor progress'
+              : 'Find projects that match your skills and start building your reputation'}
+          </p>
         </div>
+        {isAuthenticated && user?.role === 'employer' && (
+          <Button onClick={() => navigate('/projects/create')}>
+            <Plus className="w-4 h-4 mr-2" />
+            Create Project
+          </Button>
+        )}
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        {/* Header with Actions */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
-              {showMyProjects ? 'My Projects' : 'All Projects'}
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              {projects.length > 0 ? `Showing ${projects.length} project${projects.length !== 1 ? 's' : ''}` : showMyProjects ? 'No projects created yet' : 'Find your next opportunity'}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            {isAuthenticated && user?.role === 'employer' && (
-              <Button onClick={() => navigate('/projects/create')}>
-                <Plus className="w-4 h-4 mr-2" />
-                Create Project
-              </Button>
-            )}
-            <Button
-              variant={viewMode === 'grid' ? 'primary' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('grid')}
-            >
-              <Grid3x3 className="w-4 h-4" />
-            </Button>
-            <Button
-              variant={viewMode === 'list' ? 'primary' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('list')}
-            >
-              <List className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
+      {/* View Mode Toggle */}
+      <div className="flex justify-end gap-2">
+        <Button
+          variant={viewMode === 'grid' ? 'primary' : 'ghost'}
+          size="sm"
+          onClick={() => setViewMode('grid')}
+        >
+          <Grid3x3 className="w-4 h-4" />
+        </Button>
+        <Button
+          variant={viewMode === 'list' ? 'primary' : 'ghost'}
+          size="sm"
+          onClick={() => setViewMode('list')}
+        >
+          <List className="w-4 h-4" />
+        </Button>
+      </div>
 
       {/* Search and Filters */}
       <motion.div
@@ -573,20 +493,22 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
                 transition={{ delay: index * 0.05, duration: 0.3 }}
               >
                 <Link to={`/projects/${project.id}`}>
-                  <Card hover className="transition-all hover:shadow-lg hover:shadow-primary-500/10 hover:border-primary-500/30">
+                  <Card className="cursor-pointer hover:border-primary-500 dark:hover:border-primary-500 transition-all duration-300 hover:shadow-lg group">
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         {/* Title and Status */}
                         <div className="flex items-start justify-between gap-3 mb-2">
-                          <h3 className="text-xl font-bold text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex-1">
+                          <h3 className="text-xl font-bold text-gray-900 dark:text-white flex-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                             {project.title}
                           </h3>
                           <StatusBadge status={project.status} className="flex-shrink-0" />
                         </div>
                         
                         {/* Description */}
-                        <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2 mb-3 leading-relaxed">
-                          {project.description}
+                        <p className="text-gray-600 dark:text-gray-400 text-sm mb-3 leading-relaxed">
+                          {project.description.length > 150
+                            ? `${project.description.substring(0, 150)}...`
+                            : project.description}
                         </p>
                         
                         {/* Tags */}
@@ -651,14 +573,20 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
                               {project.proposalCount} proposal{project.proposalCount !== 1 ? 's' : ''}
                             </span>
                           )}
+                          {project.attachments && project.attachments.length > 0 && (
+                            <span className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400">
+                              <Paperclip className="w-4 h-4" />
+                              {project.attachments.length} file{project.attachments.length !== 1 ? 's' : ''}
+                            </span>
+                          )}
                         </div>
                       </div>
                       
                       {/* Action Button */}
                       <div className="flex sm:flex-col items-center gap-2 sm:justify-center">
-                        <Button size="sm" variant="ghost" className="group whitespace-nowrap">
+                        <Button size="sm" variant="ghost" className="whitespace-nowrap">
                           View Details
-                          <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                          <ArrowRight className="w-4 h-4 ml-2" />
                         </Button>
                       </div>
                     </div>
@@ -713,6 +641,5 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
         </motion.div>
       )}
     </div>
-  </div>
   );
 }

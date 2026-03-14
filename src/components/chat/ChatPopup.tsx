@@ -15,6 +15,7 @@ import type { Message } from '../../types';
 
 interface ChatPopupProps {
   contractId: string;
+  otherPartyId: string;
   otherPartyName: string;
   otherPartyRole: 'Client' | 'Freelancer';
   isOpen: boolean;
@@ -28,6 +29,7 @@ const POLLING_INTERVAL = 5000; // Poll for new messages every 5 seconds
 
 export function ChatPopup({
   contractId,
+  otherPartyId,
   otherPartyName,
   otherPartyRole,
   isOpen,
@@ -39,6 +41,7 @@ export function ChatPopup({
   const { user } = useAuthStore();
   const [messageInput, setMessageInput] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,31 +53,63 @@ export function ChatPopup({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
 
+  const sortMessagesByTime = useCallback((items: Message[]) => {
+    return [...items].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+  }, []);
+
+  useEffect(() => {
+    setConversationId(null);
+    setMessages([]);
+    setError(null);
+  }, [contractId, otherPartyId]);
+
   // Fetch messages from the API
   const fetchMessages = useCallback(async (showLoading = false) => {
-    if (!contractId || !isOpen) return;
+    if (!contractId || !otherPartyId || !isOpen) return;
     
     if (showLoading) setLoading(true);
     setError(null);
     
     try {
-      const response = await api.getMessages(contractId, { limit: 100 });
-      setMessages(response.items);
+      let activeConversationId = conversationId;
+
+      if (!activeConversationId) {
+        const conversation = await api.findConversationWithUser(otherPartyId);
+        if (!conversation) {
+          setConversationId(null);
+          setMessages([]);
+          onUnreadCountChange?.(0);
+          return;
+        }
+
+        activeConversationId = conversation.id;
+        setConversationId(activeConversationId);
+      }
+
+      const response = await api.getMessages(activeConversationId, { limit: 100 });
+      setMessages(sortMessagesByTime(response.items));
+
+      const unreadForCurrentUser = response.items.filter(
+        (item) => item.receiver_id === user?.id && !item.is_read
+      ).length;
       
       // Mark messages as read when fetched
-      await api.markMessagesAsRead(contractId).catch(() => {
-        // Silently fail - messages are already marked as read by the backend
-      });
-      
-      // Notify parent about unread count change (now 0 since we read them)
-      onUnreadCountChange?.(0);
+      try {
+        await api.markMessagesAsRead(activeConversationId);
+        onUnreadCountChange?.(0);
+      } catch {
+        // Keep unread count accurate if mark-as-read request fails
+        onUnreadCountChange?.(unreadForCurrentUser);
+      }
     } catch (err: any) {
       console.error('Error fetching messages:', err);
       setError(err.message || 'Failed to load messages');
     } finally {
       setLoading(false);
     }
-  }, [contractId, isOpen, onUnreadCountChange]);
+  }, [contractId, conversationId, isOpen, onUnreadCountChange, otherPartyId, sortMessagesByTime, user?.id]);
 
   // Initial fetch and start polling when chat opens
   useEffect(() => {
@@ -104,14 +139,17 @@ export function ChatPopup({
 
   // Send message
   const handleSendMessage = async () => {
-    if (!messageInput.trim() || sending) return;
+    if (!otherPartyId || !messageInput.trim() || sending) return;
     
     const content = messageInput.trim();
     setMessageInput('');
     setSending(true);
     
     try {
-      const newMessage = await api.sendMessage(contractId, content);
+      const newMessage = await api.sendMessage(otherPartyId, content);
+      if (!conversationId && newMessage.conversation_id) {
+        setConversationId(newMessage.conversation_id);
+      }
       setMessages(prev => [...prev, newMessage]);
       scrollToBottom();
     } catch (err: any) {

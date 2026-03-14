@@ -12,6 +12,7 @@ import {
   Lock,
 } from 'lucide-react';
 import { Button } from '../components/ui';
+import { FeaturedProjects } from '../components/FeaturedProjects';
 import api from '../lib/api';
 
 const features = [
@@ -224,6 +225,9 @@ export function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Featured Projects Section */}
+      <FeaturedProjects />
 
       {/* Trust Section - Better spacing and clarity */}
       <section className="section-spacing relative overflow-hidden">

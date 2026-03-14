@@ -184,7 +184,16 @@ function App() {
         <Route path="/mfa/challenge" element={<MfaChallengePage />} />
 
         {/* Public Project Routes */}
-        <Route path="/projects" element={<PublicLayout><ProjectListPage /></PublicLayout>} />
+        <Route
+          path="/projects"
+          element={
+            isAuthenticated ? (
+              <Layout><ProjectListPage /></Layout>
+            ) : (
+              <PublicLayout><ProjectListPage /></PublicLayout>
+            )
+          }
+        />
         <Route
           path="/projects/:id"
           element={

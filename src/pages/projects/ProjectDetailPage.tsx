@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -13,15 +13,18 @@ import {
   X,
   FileText,
   AlertCircle,
-  ChevronRight,
   Edit,
   Trash2,
   MoreVertical,
   XCircle,
-  Eye
+  Eye,
+  Image as ImageIcon,
+  Download
 } from 'lucide-react';
 import { Card, CardHeader, Button, StatusBadge, Badge, PageLoader } from '../../components/ui';
+import { FileUpload } from '../../components/ui/FileUpload';
 import { useAuthStore } from '../../store';
+import { useToast } from '../../contexts/ToastContext';
 import api from '../../lib/api';
 import type { Project, Proposal } from '../../types';
 import { format } from 'date-fns';
@@ -30,6 +33,7 @@ export function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuthStore();
+  const { success, error } = useToast();
   const [project, setProject] = useState<Project | null>(null);
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [myProposal, setMyProposal] = useState<Proposal | null>(null);
@@ -44,6 +48,11 @@ export function ProjectDetailPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [showActionsMenu, setShowActionsMenu] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [milestoneFiles, setMilestoneFiles] = useState<Record<string, File[]>>({});
+  const [milestoneNotes, setMilestoneNotes] = useState<Record<string, string>>({});
+  const [submittingMilestone, setSubmittingMilestone] = useState<string | null>(null);
+  const [processingProposalId, setProcessingProposalId] = useState<string | null>(null);
 
   const MAX_FILES = 5;
   const MAX_FILE_SIZE_MB = 10;
@@ -92,58 +101,106 @@ export function ProjectDetailPage() {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      if (!id) return;
-      try {
-        const projectData = await api.getProject(id);
-        setProject(projectData);
+  const fetchData = useCallback(async () => {
+    if (!id) return;
+    try {
+      const projectData = await api.getProject(id);
+      setProject(projectData);
 
-        // If employer, fetch all proposals
-        // Note: Backend returns employer_id (snake_case) but type expects employerId (camelCase)
-        const employerId = projectData.employerId || (projectData as any).employer_id;
-        if (user?.role === 'employer' && user.id === employerId) {
-          console.log('[PROPOSALS DEBUG] Fetching proposals for project:', id);
-          try {
-            const proposalsData = await api.getProjectProposals(id);
-            console.log('[PROPOSALS DEBUG] Proposals received:', proposalsData);
-            setProposals(proposalsData);
-          } catch (error) {
-            console.error('[PROPOSALS DEBUG] Error fetching proposals:', error);
-          }
-        } else {
-          console.log('[PROPOSALS DEBUG] Not fetching proposals - not owner or not employer');
+      // If employer, fetch all proposals
+      // Backend may return employer_id (snake_case) or employerId (camelCase)
+      const employerId = projectData.employerId || projectData.employer_id;
+      if (user?.role === 'employer' && user.id === employerId) {
+        console.log('[PROPOSALS DEBUG] Fetching proposals for project:', id);
+        try {
+          const proposalsData = await api.getProjectProposals(id);
+          console.log('[PROPOSALS DEBUG] Proposals received:', proposalsData);
+          setProposals(proposalsData);
+        } catch (error) {
+          console.error('[PROPOSALS DEBUG] Error fetching proposals:', error);
         }
-        
-        // If freelancer, fetch their own proposal for this project
-        if (user?.role === 'freelancer') {
-          try {
-            const myProposalsData = await api.getMyProposals();
-            const proposalForThisProject = myProposalsData.find(p => p.projectId === id);
-            // Only set myProposal if it's not withdrawn
-            if (proposalForThisProject && proposalForThisProject.status !== 'withdrawn') {
-              setMyProposal(proposalForThisProject);
-            } else {
-              setMyProposal(null); // Clear if withdrawn
-            }
-          } catch (error) {
-            console.log('No proposal found for this project');
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching project:', error);
-        navigate('/projects');
-      } finally {
-        setLoading(false);
+      } else {
+        console.log('[PROPOSALS DEBUG] Not fetching proposals - not owner or not employer');
       }
-    };
+      
+      // If freelancer, fetch their own proposal for this project
+      if (user?.role === 'freelancer') {
+        try {
+          const myProposalsData = await api.getMyProposals();
+          const proposalForThisProject = myProposalsData.find(p => p.projectId === id);
+          // Only set myProposal if it's not withdrawn
+          if (proposalForThisProject && proposalForThisProject.status !== 'withdrawn') {
+            setMyProposal(proposalForThisProject);
+          } else {
+            setMyProposal(null); // Clear if withdrawn
+          }
+        } catch (error) {
+          console.log('No proposal found for this project');
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching project:', error);
+      navigate('/projects');
+    } finally {
+      setLoading(false);
+    }
+  }, [id, user?.role, user?.id, navigate]);
 
+  useEffect(() => {
     fetchData();
-  }, [id, user, navigate]);
+  }, [fetchData]);
+
+  const handleCloseProject = async () => {
+    if (!id || actionLoading) return;
+    
+    setActionLoading(true);
+    try {
+      // Note: Using 'cancelled' status as 'closed' is not in ProjectStatus type
+      await api.updateProject(id, { deadline: project?.deadline || new Date().toISOString() });
+      // Refresh the project data
+      await fetchData();
+      setShowActionsMenu(false);
+    } catch (error) {
+      console.error('Error closing project:', error);
+      alert(error instanceof Error ? error.message : 'Failed to close project');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeleteProject = async () => {
+    if (!id || actionLoading) return;
+    
+    if (!confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
+      return;
+    }
+    
+    setActionLoading(true);
+    try {
+      await api.deleteProject(id);
+      navigate('/projects');
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      alert(error instanceof Error ? error.message : 'Failed to delete project');
+      setActionLoading(false);
+    }
+  };
 
   const handleSubmitProposal = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!id) return;
+    if (!id || submitting) return; // Prevent double submission
+
+    // Validate proposal rate against project budget
+    const proposedRate = parseFloat(proposalData.proposedRate);
+    if (isNaN(proposedRate) || proposedRate <= 0) {
+      setFileError('Please enter a valid proposed rate');
+      return;
+    }
+    
+    if (project && proposedRate > project.budget) {
+      setFileError(`Proposed rate (${proposedRate} ETH) cannot exceed project budget (${project.budget} ETH)`);
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -153,23 +210,32 @@ export function ProjectDetailPage() {
       if (uploadedFiles.length > 0) {
         console.log('Uploading files:', uploadedFiles.map(f => f.name));
         
-        // Upload files using the API client
-        const uploadResults = await api.uploadMultipleFiles(
-          uploadedFiles,
-          'proposal-attachments',
-          `project-${id}`
-        );
-        
-        if (uploadResults.success && uploadResults.files) {
-          attachments = uploadResults.files.map((file, index) => ({
-            url: file.url,
-            filename: file.filename,
-            size: uploadedFiles[index].size, // Add file size
-            mimeType: uploadedFiles[index].type, // Add MIME type
-          }));
-          console.log('Files uploaded successfully:', attachments);
-        } else {
-          throw new Error('Failed to upload files');
+        try {
+          // Upload files using the API client
+          const uploadResults = await api.uploadMultipleFiles(
+            uploadedFiles,
+            'proposal-attachments',
+            `project-${id}`
+          );
+          
+          if (uploadResults.success && uploadResults.files) {
+            attachments = uploadResults.files.map((file, index) => ({
+              url: file.url,
+              filename: file.filename,
+              size: uploadedFiles[index].size,
+              mimeType: uploadedFiles[index].type,
+            }));
+            console.log('Files uploaded successfully:', attachments);
+          } else {
+            // Provide specific error message
+            const fileNames = uploadedFiles.map(f => f.name).join(', ');
+            throw new Error(`Failed to upload files: ${fileNames}. Please check file size and format.`);
+          }
+        } catch (uploadError) {
+          // Enhance error message with file details
+          const fileNames = uploadedFiles.map(f => f.name).join(', ');
+          const errorMsg = uploadError instanceof Error ? uploadError.message : 'Unknown error';
+          throw new Error(`File upload error (${fileNames}): ${errorMsg}`);
         }
       }
 
@@ -177,7 +243,7 @@ export function ProjectDetailPage() {
       const submittedProposal = await api.submitProposal({
         projectId: id,
         coverLetter: '',
-        proposedRate: parseFloat(proposalData.proposedRate),
+        proposedRate,
         estimatedDuration: parseInt(proposalData.estimatedDuration, 10),
         attachments, // This will be an empty array if no files uploaded, which is now valid
       });
@@ -195,6 +261,100 @@ export function ProjectDetailPage() {
       setFileError(error instanceof Error ? error.message : 'Failed to submit proposal');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleSubmitMilestone = async (milestoneId: string) => {
+    try {
+      setSubmittingMilestone(milestoneId);
+      const files = milestoneFiles[milestoneId] || [];
+      const notes = milestoneNotes[milestoneId] || '';
+      const milestone = project?.milestones?.find((m) => m.id === milestoneId);
+      const existingDeliverables = milestone?.deliverableFiles || (milestone as any)?.attachments || [];
+      
+      if (files.length === 0) {
+        error('Please upload at least one deliverable file', 'Error');
+        return;
+      }
+      
+      await api.submitMilestoneWithFiles(milestoneId, files, notes, existingDeliverables);
+      
+      success('Milestone submitted successfully!', 'Success');
+      
+      // Clear files and notes
+      setMilestoneFiles(prev => {
+        const updated = { ...prev };
+        delete updated[milestoneId];
+        return updated;
+      });
+      setMilestoneNotes(prev => {
+        const updated = { ...prev };
+        delete updated[milestoneId];
+        return updated;
+      });
+      
+      // Refresh project data
+      await fetchData();
+    } catch (err: any) {
+      error(err.message || 'Failed to submit milestone', 'Error');
+    } finally {
+      setSubmittingMilestone(null);
+    }
+  };
+
+  const handleAcceptProposal = async (proposalId: string) => {
+    if (processingProposalId) return;
+    
+    setProcessingProposalId(proposalId);
+    try {
+      await api.acceptProposal(proposalId);
+      success('Proposal accepted successfully!', 'Success');
+      
+      // Refresh project data to show updated status
+      await fetchData();
+    } catch (err: any) {
+      console.error('Error accepting proposal:', err);
+      
+      // Show specific error messages based on error code
+      if (err.code === 'CSRF_VALIDATION_FAILED') {
+        error('Security token expired. Please refresh the page and try again.', 'Error');
+      } else if (err.code === 'KYC_REQUIRED') {
+        error('Identity verification is required. Please complete KYC verification first.', 'KYC Required');
+      } else if (err.code === 'AUTH_FORBIDDEN') {
+        error('Only employers can accept proposals.', 'Permission Denied');
+      } else if (err.code === 'UNAUTHORIZED') {
+        error('You are not authorized to accept proposals for this project.', 'Unauthorized');
+      } else if (err.code === 'NO_MILESTONES') {
+        error('Project must have milestones defined before accepting a proposal.', 'Milestones Required');
+      } else if (err.code === 'AMOUNT_MISMATCH') {
+        error('Proposal rate must match the total project milestone amount.', 'Amount Mismatch');
+      } else {
+        error(err.message || 'Failed to accept proposal. Please try again.', 'Error');
+      }
+    } finally {
+      setProcessingProposalId(null);
+    }
+  };
+
+  const handleRejectProposal = async (proposalId: string) => {
+    if (processingProposalId) return;
+    
+    if (!confirm('Are you sure you want to reject this proposal?')) {
+      return;
+    }
+    
+    setProcessingProposalId(proposalId);
+    try {
+      await api.rejectProposal(proposalId);
+      success('Proposal rejected.', 'Success');
+      
+      // Refresh project data
+      await fetchData();
+    } catch (err: any) {
+      console.error('Error rejecting proposal:', err);
+      error(err.message || 'Failed to reject proposal. Please try again.', 'Error');
+    } finally {
+      setProcessingProposalId(null);
     }
   };
 
@@ -221,21 +381,6 @@ export function ProjectDetailPage() {
 
   return (
     <div className="space-y-6">
-      {/* Breadcrumb Navigation */}
-      <nav className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-        <Link to="/" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
-          Home
-        </Link>
-        <ChevronRight className="w-4 h-4" />
-        <Link to="/projects" className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
-          Projects
-        </Link>
-        <ChevronRight className="w-4 h-4" />
-        <span className="text-gray-900 dark:text-white font-medium truncate max-w-xs">
-          {project?.title || 'Loading...'}
-        </span>
-      </nav>
-
       {/* Header with Actions */}
       <div className="flex items-center justify-between gap-4">
         <Link to="/projects">
@@ -285,29 +430,21 @@ export function ProjectDetailPage() {
                   </Link>
                   {project?.status === 'open' && (
                     <button
-                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-amber-600 dark:text-amber-400 hover:bg-gray-100 dark:hover:bg-dark-bg transition-colors"
-                      onClick={() => {
-                        setShowActionsMenu(false);
-                        // TODO: Implement close project
-                        console.log('Close project');
-                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2 text-sm text-amber-600 dark:text-amber-400 hover:bg-gray-100 dark:hover:bg-dark-bg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      onClick={handleCloseProject}
+                      disabled={actionLoading}
                     >
                       <XCircle className="w-4 h-4" />
-                      Close Project
+                      {actionLoading ? 'Closing...' : 'Close Project'}
                     </button>
                   )}
                   <button
-                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-dark-bg transition-colors border-t border-gray-200 dark:border-dark-border"
-                    onClick={() => {
-                      setShowActionsMenu(false);
-                      // TODO: Implement delete project
-                      if (confirm('Are you sure you want to delete this project?')) {
-                        console.log('Delete project');
-                      }
-                    }}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-dark-bg transition-colors border-t border-gray-200 dark:border-dark-border disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={handleDeleteProject}
+                    disabled={actionLoading}
                   >
                     <Trash2 className="w-4 h-4" />
-                    Delete Project
+                    {actionLoading ? 'Deleting...' : 'Delete Project'}
                   </button>
                 </div>
               </>
@@ -349,6 +486,91 @@ export function ProjectDetailPage() {
               <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">{project.description}</p>
             </div>
           </Card>
+
+          {/* Project Attachments */}
+          {project.attachments && project.attachments.length > 0 && (() => {
+            const images = project.attachments.filter(a => a.mimeType.startsWith('image/'));
+            const files = project.attachments.filter(a => !a.mimeType.startsWith('image/'));
+            
+            return (
+              <Card>
+                <CardHeader
+                  title="Project Attachments"
+                  description={`${project.attachments.length} reference file${project.attachments.length > 1 ? 's' : ''} provided by the employer`}
+                />
+                
+                <div className="space-y-6">
+                  {/* Image Gallery */}
+                  {images.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                        <ImageIcon className="w-4 h-4" />
+                        Images ({images.length})
+                      </h4>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        {images.map((image, idx) => (
+                          <a
+                            key={idx}
+                            href={image.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group relative aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-dark-surface border border-gray-200 dark:border-dark-border hover:border-primary-500 dark:hover:border-primary-500 transition-all"
+                          >
+                            <img
+                              src={image.url}
+                              alt={image.filename}
+                              className="w-full h-full object-cover"
+                              loading="lazy"
+                            />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors flex items-center justify-center">
+                              <Eye className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </div>
+                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                              <p className="text-xs text-white truncate">{image.filename}</p>
+                            </div>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* File List */}
+                  {files.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 flex items-center gap-2">
+                        <FileText className="w-4 h-4" />
+                        Documents ({files.length})
+                      </h4>
+                      <div className="space-y-2">
+                        {files.map((file, idx) => (
+                          <a
+                            key={idx}
+                            href={file.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-between p-3 bg-gray-50 dark:bg-dark-surface rounded-lg hover:bg-gray-100 dark:hover:bg-dark-border transition-colors group"
+                          >
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <FileText className="w-5 h-5 text-primary-500 flex-shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                  {file.filename}
+                                </p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                  {formatBytes(file.size)} • {file.mimeType}
+                                </p>
+                              </div>
+                            </div>
+                            <Download className="w-4 h-4 text-gray-400 group-hover:text-primary-500 flex-shrink-0" />
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </Card>
+            );
+          })()}
 
           {/* Tags */}
           {project.tags && project.tags.length > 0 && (
@@ -392,7 +614,9 @@ export function ProjectDetailPage() {
                     in_progress: 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700',
                     submitted: 'bg-purple-50 dark:bg-purple-900/20 border-purple-300 dark:border-purple-700',
                     approved: 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700',
+                    rejected: 'bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700',
                     disputed: 'bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700',
+                    completed: 'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700',
                     refunded: 'bg-amber-50 dark:bg-amber-900/20 border-amber-300 dark:border-amber-700'
                   };
                   
@@ -410,7 +634,7 @@ export function ProjectDetailPage() {
                           <StatusBadge status={milestone.status} className="flex-shrink-0" />
                         </div>
                         <p className="text-gray-600 dark:text-gray-400 text-sm mb-3 leading-relaxed">{milestone.description}</p>
-                        <div className="flex flex-wrap items-center gap-4 text-sm">
+                        <div className="flex flex-wrap items-center gap-4 text-sm mb-3">
                           <span className="flex items-center gap-1.5 font-medium text-green-600 dark:text-green-400">
                             <DollarSign className="w-4 h-4" />
                             {milestone.amount} ETH
@@ -421,7 +645,149 @@ export function ProjectDetailPage() {
                               ? format(new Date(milestone.dueDate), 'MMM d, yyyy')
                               : 'No deadline'}
                           </span>
+                          {milestone.deliverableFiles && milestone.deliverableFiles.length > 0 && (
+                            <span className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400">
+                              <FileText className="w-4 h-4" />
+                              {milestone.deliverableFiles.length} file{milestone.deliverableFiles.length !== 1 ? 's' : ''}
+                            </span>
+                          )}
                         </div>
+
+                        {/* Milestone Deliverables Display */}
+                        {milestone.deliverableFiles && milestone.deliverableFiles.length > 0 && (() => {
+                          const images = milestone.deliverableFiles.filter(f => f.mimeType.startsWith('image/'));
+                          const files = milestone.deliverableFiles.filter(f => !f.mimeType.startsWith('image/'));
+                          
+                          return (
+                            <div className="mt-4 space-y-3">
+                              {images.length > 0 && (
+                                <div>
+                                  <h5 className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-1.5">
+                                    <ImageIcon className="w-3.5 h-3.5" />
+                                    Images ({images.length})
+                                  </h5>
+                                  <div className="grid grid-cols-3 gap-2">
+                                    {images.map((image, idx) => (
+                                      <a
+                                        key={idx}
+                                        href={image.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="group relative aspect-square rounded-lg overflow-hidden bg-gray-100 dark:bg-dark-surface border border-gray-200 dark:border-dark-border hover:border-primary-500 transition-all"
+                                      >
+                                        <img
+                                          src={image.url}
+                                          alt={image.filename}
+                                          className="w-full h-full object-cover"
+                                          loading="lazy"
+                                        />
+                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/50 transition-colors flex items-center justify-center">
+                                          <Eye className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        </div>
+                                      </a>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {files.length > 0 && (
+                                <div>
+                                  <h5 className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-1.5">
+                                    <FileText className="w-3.5 h-3.5" />
+                                    Documents ({files.length})
+                                  </h5>
+                                  <div className="space-y-1">
+                                    {files.map((file, idx) => (
+                                      <a
+                                        key={idx}
+                                        href={file.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex items-center gap-2 p-2 bg-white dark:bg-dark-bg rounded hover:bg-gray-50 dark:hover:bg-dark-surface transition-colors text-xs group"
+                                      >
+                                        <FileText className="w-3.5 h-3.5 text-primary-500 flex-shrink-0" />
+                                        <span className="flex-1 truncate text-gray-900 dark:text-gray-100">
+                                          {file.filename}
+                                        </span>
+                                        <span className="text-xs text-gray-500">
+                                          {formatBytes(file.size)}
+                                        </span>
+                                        <Download className="w-3.5 h-3.5 text-gray-400 group-hover:text-primary-500 flex-shrink-0" />
+                                      </a>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
+
+                        {/* File Upload for Pending/In Progress Milestones (Freelancer Only) */}
+                        {(milestone.status === 'pending' || milestone.status === 'in_progress' || milestone.status === 'rejected') &&
+                         user?.role === 'freelancer' &&
+                         project.status === 'in_progress' && (
+                          <div className="mt-4 p-4 bg-white dark:bg-dark-bg rounded-lg border border-gray-200 dark:border-dark-border">
+                            <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
+                              Submit Deliverables
+                            </h5>
+                            
+                            <FileUpload
+                              maxFiles={10}
+                              maxSizeMB={25}
+                              acceptedTypes={[
+                                '.pdf', '.doc', '.docx', '.xlsx', '.pptx', '.txt', '.csv',
+                                '.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg',
+                                '.zip', '.rar', '.7z',
+                                '.html', '.css', '.js', '.json', '.xml',
+                                '.mp4', '.webm', '.mov'
+                              ]}
+                              onFilesChange={(files) => setMilestoneFiles({
+                                ...milestoneFiles,
+                                [milestone.id]: files
+                              })}
+                              files={milestoneFiles[milestone.id] || []}
+                              disabled={submittingMilestone === milestone.id}
+                              label="Upload Files"
+                              helperText="Max 10 files, 25MB per file. Documents, Images, Archives, Code, Videos"
+                            />
+                            
+                            <div className="mt-3">
+                              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                                Submission Notes (Optional)
+                              </label>
+                              <textarea
+                                value={milestoneNotes[milestone.id] || ''}
+                                onChange={(e) => setMilestoneNotes({
+                                  ...milestoneNotes,
+                                  [milestone.id]: e.target.value
+                                })}
+                                className="w-full bg-white dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
+                                rows={2}
+                                placeholder="Add any notes about your submission..."
+                                disabled={submittingMilestone === milestone.id}
+                              />
+                            </div>
+                            
+                            <Button
+                              onClick={() => handleSubmitMilestone(milestone.id)}
+                              disabled={!milestoneFiles[milestone.id] || milestoneFiles[milestone.id].length === 0 || submittingMilestone === milestone.id}
+                              className="mt-3 w-full sm:w-auto"
+                              size="sm"
+                            >
+                              {submittingMilestone === milestone.id ? (
+                                <>
+                                  <Upload className="w-4 h-4 animate-pulse" />
+                                  Submitting...
+                                </>
+                              ) : (
+                                <>
+                                  <Upload className="w-4 h-4" />
+                                  Submit Milestone
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
@@ -487,7 +853,7 @@ export function ProjectDetailPage() {
                         </div>
                       )}
                       
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-500">
                           <span className="flex items-center gap-1">
                             <DollarSign className="w-4 h-4" />
@@ -498,11 +864,47 @@ export function ProjectDetailPage() {
                             {proposal.estimatedDuration} days
                           </span>
                         </div>
-                        <Link to={`/projects/${project.id}/proposals/${proposal.id}`}>
-                          <Button variant="outline" size="sm">
-                            View Details
-                          </Button>
-                        </Link>
+                        
+                        {/* Action buttons for pending proposals */}
+                        {proposal.status === 'pending' ? (
+                          <div className="flex items-center gap-2">
+                            <Button 
+                              onClick={() => handleAcceptProposal(proposal.id)}
+                              disabled={processingProposalId === proposal.id}
+                              size="sm"
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                            >
+                              {processingProposalId === proposal.id ? (
+                                'Processing...'
+                              ) : (
+                                <>
+                                  <CheckCircle className="w-4 h-4" />
+                                  Accept
+                                </>
+                              )}
+                            </Button>
+                            <Button 
+                              onClick={() => handleRejectProposal(proposal.id)}
+                              disabled={processingProposalId === proposal.id}
+                              variant="outline" 
+                              size="sm"
+                            >
+                              <XCircle className="w-4 h-4" />
+                              Reject
+                            </Button>
+                            <Link to={`/projects/${project.id}/proposals/${proposal.id}`}>
+                              <Button variant="ghost" size="sm">
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                            </Link>
+                          </div>
+                        ) : (
+                          <Link to={`/projects/${project.id}/proposals/${proposal.id}`}>
+                            <Button variant="outline" size="sm">
+                              View Details
+                            </Button>
+                          </Link>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -674,11 +1076,15 @@ export function ProjectDetailPage() {
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                           Proposed Rate (ETH) *
+                          <span className="ml-2 text-xs font-normal text-gray-500 dark:text-gray-400">
+                            Max: {project.budget} ETH
+                          </span>
                         </label>
                         <input
                           type="number"
                           step="0.01"
                           min="0"
+                          max={project.budget}
                           value={proposalData.proposedRate}
                           onChange={(e) => setProposalData({ ...proposalData, proposedRate: e.target.value })}
                           required

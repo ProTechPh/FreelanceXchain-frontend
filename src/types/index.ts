@@ -118,7 +118,15 @@ export interface Skill {
 
 // Project Types
 export type ProjectStatus = 'draft' | 'open' | 'in_progress' | 'completed' | 'cancelled';
-export type MilestoneStatus = 'pending' | 'in_progress' | 'submitted' | 'approved' | 'disputed';
+export type MilestoneStatus =
+  | 'pending'
+  | 'in_progress'
+  | 'submitted'
+  | 'approved'
+  | 'rejected'
+  | 'disputed'
+  | 'completed'
+  | 'refunded';
 
 export interface ProjectSkillReference {
   skillId?: string;
@@ -133,11 +141,28 @@ export interface Milestone {
   amount: number;
   dueDate: string;
   status: MilestoneStatus;
+  contractId?: string;
+  deliverableFiles?: Array<{
+    filename: string;
+    url: string;
+    size: number;
+    mimeType: string;
+  }>;
+  submittedAt?: string;
+  approvedAt?: string;
+  rejectedAt?: string;
+  completedAt?: string;
+  rejectionReason?: string;
+  revisionCount?: number;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Project {
   id: string;
   employerId: string;
+  employer_id?: string; // Backend returns snake_case, keeping both for compatibility
   title: string;
   description: string;
   requiredSkills: ProjectSkillReference[];
@@ -148,6 +173,12 @@ export interface Project {
   status: ProjectStatus;
   milestones: Milestone[];
   tags?: string[];
+  attachments?: Array<{
+    url: string;
+    filename: string;
+    size: number;
+    mimeType: string;
+  }>;
   createdAt: string;
   updatedAt: string;
   // Extended fields that may be populated in list views
@@ -219,6 +250,20 @@ export interface ContractMilestone {
   amount: number;
   dueDate: string;
   status: MilestoneStatus;
+  contractId?: string;
+  deliverableFiles?: Array<{
+    filename: string;
+    url: string;
+    size: number;
+    mimeType: string;
+  }>;
+  submittedAt?: string;
+  approvedAt?: string;
+  rejectedAt?: string;
+  completedAt?: string;
+  rejectionReason?: string;
+  revisionCount?: number;
+  notes?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -582,15 +627,39 @@ export interface FileListResult {
   error?: string;
 }
 
-// Message Types (Contract Chat)
+// Message Types
 export interface Message {
   id: string;
-  contract_id: string;
+  conversation_id: string;
   sender_id: string;
+  receiver_id: string;
   content: string;
   is_read: boolean;
+  attachments?: Array<{
+    url: string;
+    filename: string;
+    size: number;
+    mimeType: string;
+  }>;
   created_at: string;
   updated_at: string;
+}
+
+export interface Conversation {
+  id: string;
+  participant1_id: string;
+  participant2_id: string;
+  last_message_at: string;
+  last_message_preview?: string;
+  unread_count_1: number;
+  unread_count_2: number;
+  created_at: string;
+  updated_at: string;
+  otherUser?: {
+    id: string;
+    name: string;
+    email: string;
+  };
 }
 
 export interface SendMessageInput {
@@ -603,8 +672,14 @@ export interface MessagePaginatedResponse {
   total?: number;
 }
 
+export interface ConversationPaginatedResponse {
+  items: Conversation[];
+  hasMore: boolean;
+  total?: number;
+}
+
 export interface ConversationSummary {
-  contractId: string;
+  conversationId: string;
   lastMessage: Message | null;
   unreadCount: number;
 }
