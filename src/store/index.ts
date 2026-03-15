@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { User, FreelancerProfile, EmployerProfile, Notification, FreelancerProfileUpdate, EmployerProfileUpdate } from '../types';
+import type { User, FreelancerProfile, EmployerProfile, Notification, FreelancerProfileUpdate, EmployerProfileUpdate, SkillGapAnalysis, ProjectRecommendation, Project } from '../types';
 import api from '../lib/api';
 
 interface AuthState {
@@ -86,6 +86,9 @@ export const useAuthStore = create<AuthState>()(
           notifications: [], 
           unreadCount: 0 
         });
+        
+        // Clear AI cache on logout
+        useAICacheStore.getState().clearCache();
       },
 
       fetchCurrentUser: async () => {
@@ -424,6 +427,100 @@ export const useThemeStore = create<ThemeState>()(
     }
   )
 );
+
+interface AICacheState {
+  skillAnalysis: SkillGapAnalysis | null;
+  skillAnalysisLoading: boolean;
+  skillAnalysisFetched: boolean;
+  skillAnalysisError: string | null;
+  projectRecs: ProjectRecommendation[];
+  projectDetails: Record<string, Project>;
+  recsLoading: boolean;
+  recsFetched: boolean;
+  recsError: string | null;
+  fetchSkillAnalysis: (force?: boolean) => Promise<void>;
+  fetchProjectRecs: (force?: boolean) => Promise<void>;
+  clearCache: () => void;
+}
+
+export const useAICacheStore = create<AICacheState>()((set, get) => ({
+  skillAnalysis: null,
+  skillAnalysisLoading: false,
+  skillAnalysisFetched: false,
+  skillAnalysisError: null,
+  projectRecs: [],
+  projectDetails: {},
+  recsLoading: false,
+  recsFetched: false,
+  recsError: null,
+
+  fetchSkillAnalysis: async (force = false) => {
+    const { skillAnalysisFetched, skillAnalysisLoading } = get();
+    if (!force && skillAnalysisFetched) return;
+    if (skillAnalysisLoading) return;
+
+    set({ skillAnalysisLoading: true, skillAnalysisError: null });
+    try {
+      const data = await api.getSkillGaps();
+      set({ skillAnalysis: data, skillAnalysisFetched: true, skillAnalysisLoading: false });
+    } catch (err: any) {
+      set({
+        skillAnalysisError: err?.message || 'Failed to load skill gap analysis',
+        skillAnalysisLoading: false,
+        skillAnalysisFetched: true,
+        skillAnalysis: {
+          currentSkills: [],
+          recommendedSkills: [],
+          marketDemand: [],
+          reasoning: 'Unable to generate analysis. Please ensure you have skills added to your profile and try again.',
+        },
+      });
+    }
+  },
+
+  fetchProjectRecs: async (force = false) => {
+    const { recsFetched, recsLoading } = get();
+    if (!force && recsFetched) return;
+    if (recsLoading) return;
+
+    set({ recsLoading: true, recsError: null });
+    try {
+      const data = await api.getProjectRecommendations();
+      const recs = data ?? [];
+      const detailsMap: Record<string, Project> = {};
+      await Promise.all(
+        recs.map(async (rec) => {
+          try {
+            const project = await api.getProject(rec.projectId);
+            detailsMap[rec.projectId] = project;
+          } catch {
+            // silently fail
+          }
+        })
+      );
+      set({ projectRecs: recs, projectDetails: detailsMap, recsFetched: true, recsLoading: false });
+    } catch (err: any) {
+      set({
+        recsError: err?.message || 'Failed to load recommendations',
+        projectRecs: [],
+        recsFetched: true,
+        recsLoading: false,
+      });
+    }
+  },
+
+  clearCache: () => {
+    set({
+      skillAnalysis: null,
+      skillAnalysisFetched: false,
+      skillAnalysisError: null,
+      projectRecs: [],
+      projectDetails: {},
+      recsFetched: false,
+      recsError: null,
+    });
+  },
+}));
 
 // Extend Window interface for ethereum
 declare global {
