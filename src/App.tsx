@@ -25,6 +25,7 @@ import { ProposalDetailPage } from './pages/proposals/ProposalDetailPage';
 import { NotificationsPage } from './pages/notifications/NotificationsPage';
 import { DisputesListPage } from './pages/disputes/DisputesListPage';
 import { DisputeDetailPage } from './pages/disputes/DisputeDetailPage';
+import { CreateDisputePage } from './pages/disputes/CreateDisputePage';
 import { KYCPage } from './pages/kyc/KYCPage';
 import { RecommendationsPage } from './pages/recommendations/RecommendationsPage';
 import { SkillAnalysisPage } from './pages/skills/SkillAnalysisPage';
@@ -338,6 +339,18 @@ function App() {
               <KycProtectedRoute>
                 <Layout>
                   <ContractDetailPage />
+                </Layout>
+              </KycProtectedRoute>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/disputes/new"
+          element={
+            <ProtectedRoute>
+              <KycProtectedRoute>
+                <Layout>
+                  <CreateDisputePage />
                 </Layout>
               </KycProtectedRoute>
             </ProtectedRoute>

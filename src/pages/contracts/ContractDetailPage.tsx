@@ -388,7 +388,7 @@ export function ContractDetailPage() {
           </Button>
         )}
         {contract.status === 'active' && (
-          <Button variant="outline">
+          <Button variant="outline" onClick={() => navigate(`/disputes/new?contractId=${contract.id}`)}>
             <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
             Open Dispute
           </Button>
