@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Card, Button, Badge, Input, Loader, Modal } from '../../components/ui';
-import { FiSearch, FiShield, FiEdit, FiEye } from 'react-icons/fi';
+import { FiSearch, FiEdit, FiEye } from 'react-icons/fi';
 import api from '../../lib/api';
 import { useToast } from '../../contexts/ToastContext';
 
@@ -117,15 +117,6 @@ export function AdminUsersPage() {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleManageRole = (user: AdminUser) => {
-    showToast({
-      type: 'info',
-      title: 'Manage Role',
-      message: `Managing role for: ${user.email}`,
-    });
-    // TODO: Implement role management
   };
 
   const handleCloseViewModal = () => {
@@ -256,13 +247,6 @@ export function AdminUsersPage() {
                           title="Edit user"
                         >
                           <FiEdit className="w-4 h-4" />
-                        </button>
-                        <button
-                          className="p-2 text-gray-600 dark:text-gray-600 hover:text-gray-900 dark:hover:text-gray-900 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-100"
-                          onClick={() => handleManageRole(user)}
-                          title="Manage role"
-                        >
-                          <FiShield className="w-4 h-4" />
                         </button>
                       </div>
                     </td>

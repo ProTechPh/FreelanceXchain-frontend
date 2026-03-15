@@ -174,7 +174,7 @@ export function DashboardPage() {
           />
           <StatCard
             icon={Shield}
-            label="Pending KYC"
+            label="Awaiting Review"
             value={adminStats.pendingKyc}
             color="text-amber-400"
             bgColor="bg-amber-600/20"

@@ -1143,6 +1143,37 @@ class ApiClient {
     });
   }
 
+  async manualKycVerification(params: {
+    userId: string;
+    idFront: File;
+    idBack?: File;
+    selfie: File;
+  }): Promise<{ message: string; verification: KycVerification }> {
+    const formData = new FormData();
+    formData.append('userId', params.userId);
+    formData.append('id_front', params.idFront);
+    if (params.idBack) {
+      formData.append('id_back', params.idBack);
+    }
+    formData.append('selfie', params.selfie);
+
+    const response = await fetch(`${this.baseUrl}/kyc/admin/manual-verify`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${this.accessToken}`,
+        'X-CSRF-Token': this.csrfToken || '',
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error?.message || 'Manual verification failed');
+    }
+
+    return response.json();
+  }
+
   // =====================
   // Admin Stats Endpoints
   // =====================
@@ -1176,7 +1207,8 @@ class ApiClient {
     kycVerified: boolean;
     isActive: boolean;
   }>> {
-    return this.request('/admin/users');
+    const response = await this.request<{ users: any[]; total: number }>('/admin/users');
+    return response.users;
   }
 
   async updateAdminUser(id: string, data: {
