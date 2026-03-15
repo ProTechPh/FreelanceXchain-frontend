@@ -6,7 +6,8 @@ import { useChatContext } from '../../contexts/ChatContext';
 import api from '../../lib/api';
 import type { Conversation } from '../../types';
 
-const POLLING_INTERVAL = 10000; // Poll every 10 seconds for unread count
+const SSE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api').replace(/\/api$/, '') + '/api/notifications/stream';
+const FALLBACK_POLLING_INTERVAL = 15000; // Fallback polling when SSE unavailable
 
 export function GlobalChat() {
   const { isAuthenticated, user } = useAuthStore();
@@ -16,6 +17,7 @@ export function GlobalChat() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
+  const sseAbortRef = useRef<AbortController | null>(null);
 
   // Fetch unread count
   const fetchUnreadCount = useCallback(async () => {
@@ -40,20 +42,64 @@ export function GlobalChat() {
     }
   }, [isAuthenticated, user?.id, selectedConversation]);
 
-  // Poll for unread messages
+  // SSE subscription for real-time unread count (polling fallback when SSE unavailable)
   useEffect(() => {
-    if (isAuthenticated && !isChatOpen) {
-      fetchUnreadCount();
-      pollingRef.current = setInterval(fetchUnreadCount, POLLING_INTERVAL);
-    }
+    if (!isAuthenticated || !user?.id || isChatOpen) return;
+
+    fetchUnreadCount();
+
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    const ctrl = new AbortController();
+    sseAbortRef.current = ctrl;
+
+    const connectSSE = async () => {
+      try {
+        const res = await fetch(SSE_URL, {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: ctrl.signal,
+        });
+        if (!res.body) throw new Error('No body');
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buf = '';
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += decoder.decode(value, { stream: true });
+          const lines = buf.split('\n');
+          buf = lines.pop() ?? '';
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            try {
+              const event = JSON.parse(line.slice(6));
+              if (event?.type === 'message') {
+                fetchUnreadCount();
+              }
+            } catch { /* ignore */ }
+          }
+        }
+      } catch {
+        if (ctrl.signal.aborted) return;
+        // SSE unavailable — poll
+        if (!pollingRef.current) {
+          pollingRef.current = setInterval(fetchUnreadCount, FALLBACK_POLLING_INTERVAL);
+        }
+      }
+    };
+
+    connectSSE();
 
     return () => {
+      ctrl.abort();
+      sseAbortRef.current = null;
       if (pollingRef.current) {
         clearInterval(pollingRef.current);
         pollingRef.current = null;
       }
     };
-  }, [isAuthenticated, isChatOpen, fetchUnreadCount]);
+  }, [isAuthenticated, user?.id, isChatOpen, fetchUnreadCount]);
 
   // Don't render if not authenticated
   if (!isAuthenticated || !user?.id) {

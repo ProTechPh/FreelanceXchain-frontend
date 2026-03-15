@@ -223,7 +223,7 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
                 : 'Sign up to access exclusive projects and start your freelancing journey.'}
             </p>
             {isAuthenticated && user?.role === 'employer' ? (
-              <Button onClick={() => navigate('/projects/create')}>
+              <Button onClick={() => navigate('/projects/new')}>
                 <Plus className="w-4 h-4 mr-2" />
                 Create Project
               </Button>
@@ -258,7 +258,7 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
           </p>
         </div>
         {isAuthenticated && user?.role === 'employer' && (
-          <Button onClick={() => navigate('/projects/create')}>
+          <Button onClick={() => navigate('/projects/new')}>
             <Plus className="w-4 h-4 mr-2" />
             Create Project
           </Button>

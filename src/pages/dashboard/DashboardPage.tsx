@@ -342,7 +342,7 @@ export function DashboardPage() {
             <StatCard
               icon={DollarSign}
               label="Total Spent"
-              value={`${totalSpent.toFixed(4)} ETH`}
+              value={`${parseFloat(totalSpent.toFixed(4))} ETH`}
               color="text-green-400"
               bgColor="bg-green-600/20"
             />

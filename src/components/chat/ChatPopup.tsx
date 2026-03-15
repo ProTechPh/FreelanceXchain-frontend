@@ -25,7 +25,8 @@ interface ChatPopupProps {
   onUnreadCountChange?: (count: number) => void;
 }
 
-const POLLING_INTERVAL = 5000; // Poll for new messages every 5 seconds
+const SSE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api').replace(/\/api$/, '') + '/api/notifications/stream';
+const FALLBACK_POLLING_INTERVAL = 10000; // Fallback polling when SSE is unavailable
 
 export function ChatPopup({
   contractId,
@@ -50,6 +51,7 @@ export function ChatPopup({
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
+  const sseAbortRef = useRef<AbortController | null>(null);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -183,26 +185,76 @@ export function ChatPopup({
     }
   }, [contractId, conversationId, isOpen, onUnreadCountChange, otherPartyId, sortMessagesByTime, user?.id]);
 
-  // Initial fetch and start polling when chat opens
+  // Initial fetch + SSE subscription when chat opens
   useEffect(() => {
-    if (isOpen && !isMinimized) {
-      fetchConversations();
-      fetchMessages(true);
-      
-      // Start polling for new messages
-      pollingRef.current = setInterval(() => {
-        fetchConversations();
-        fetchMessages(false);
-      }, POLLING_INTERVAL);
-    }
-    
+    if (!isOpen || isMinimized) return;
+
+    fetchConversations();
+    fetchMessages(true);
+
+    const token = localStorage.getItem('accessToken');
+    if (!token) return;
+
+    const ctrl = new AbortController();
+    sseAbortRef.current = ctrl;
+
+    const connectSSE = async () => {
+      try {
+        const res = await fetch(SSE_URL, {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: ctrl.signal,
+        });
+        if (!res.body) throw new Error('No body');
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buf = '';
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += decoder.decode(value, { stream: true });
+          const lines = buf.split('\n');
+          buf = lines.pop() ?? '';
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            try {
+              const event = JSON.parse(line.slice(6));
+              if (event?.type === 'message' && event?.data?.message) {
+                const msg = event.data.message;
+                setMessages(prev => {
+                  if (prev.some(m => m.id === msg.id)) return prev;
+                  return sortMessagesByTime([...prev, msg]);
+                });
+                if (msg.conversation_id) {
+                  setConversationId(prev => prev ?? msg.conversation_id);
+                }
+                fetchConversations();
+              }
+            } catch { /* ignore malformed lines */ }
+          }
+        }
+      } catch (err: unknown) {
+        if (ctrl.signal.aborted) return;
+        // SSE failed — fall back to polling
+        if (!pollingRef.current) {
+          pollingRef.current = setInterval(() => {
+            fetchConversations();
+            fetchMessages(false);
+          }, FALLBACK_POLLING_INTERVAL);
+        }
+      }
+    };
+
+    connectSSE();
+
     return () => {
+      ctrl.abort();
+      sseAbortRef.current = null;
       if (pollingRef.current) {
         clearInterval(pollingRef.current);
         pollingRef.current = null;
       }
     };
-  }, [isOpen, isMinimized, fetchConversations, fetchMessages]);
+  }, [isOpen, isMinimized, fetchConversations, fetchMessages, sortMessagesByTime]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
