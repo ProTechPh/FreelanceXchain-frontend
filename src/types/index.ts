@@ -8,6 +8,7 @@ export interface User {
   walletAddress: string;
   kycStatus?: KycStatus; // KYC verification status
   mfaEnabled?: boolean;
+  authProvider?: 'email' | 'oauth';
   createdAt: string;
   updatedAt: string;
 }
