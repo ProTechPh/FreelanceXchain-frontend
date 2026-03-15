@@ -183,7 +183,17 @@ class ApiClient {
         const errorCode = errorBody.error?.code;
         const method = (options.method || 'GET').toUpperCase();
         const isStateChanging = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
-        
+
+        // Handle USER_SUSPENDED error - logout immediately
+        if (errorCode === 'USER_SUSPENDED') {
+          this.handleAuthFailure();
+          const error: any = new Error(apiErrorMessage || 'Your account has been suspended');
+          error.code = errorCode;
+          error.status = response.status;
+          error.isSuspended = true;
+          throw error;
+        }
+
         // Handle MFA_REQUIRED error - trigger modal for admins
         if (errorCode === 'MFA_REQUIRED' && mfaRequiredCallback) {
           mfaRequiredCallback();
