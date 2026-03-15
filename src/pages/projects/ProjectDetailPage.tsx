@@ -25,6 +25,7 @@ import { Card, CardHeader, Button, StatusBadge, Badge, PageLoader } from '../../
 import { FileUpload } from '../../components/ui/FileUpload';
 import { ChatPopup, ChatButton } from '../../components/chat';
 import { useAuthStore } from '../../store';
+import { useChatContext } from '../../contexts/ChatContext';
 import { useToast } from '../../contexts/ToastContext';
 import api from '../../lib/api';
 import type { Project, Proposal } from '../../types';
@@ -35,6 +36,7 @@ export function ProjectDetailPage() {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuthStore();
   const { success, error } = useToast();
+  const { setPreferredRecipient } = useChatContext();
   const [project, setProject] = useState<Project | null>(null);
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [myProposal, setMyProposal] = useState<Proposal | null>(null);
@@ -153,6 +155,31 @@ export function ProjectDetailPage() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Set preferred chat recipient when project is loaded
+  useEffect(() => {
+    if (project && user) {
+      const projectOwnerUserId = project?.employer?.userId || project?.employerId || project?.employer_id;
+      const projectOwnerName = project?.employer?.companyName || project?.employer?.name || 'Project Client';
+      
+      // Only set if viewing a project that's not created by current user
+      if (projectOwnerUserId && projectOwnerUserId !== user.id) {
+        setPreferredRecipient({
+          userId: projectOwnerUserId,
+          name: projectOwnerName,
+          role: 'Client',
+          contextId: project.id
+        });
+      } else {
+        setPreferredRecipient(null);
+      }
+    }
+
+    // Clear on unmount
+    return () => {
+      setPreferredRecipient(null);
+    };
+  }, [project, user, setPreferredRecipient]);
 
   const projectOwnerUserId = project?.employer?.userId || project?.employerId || project?.employer_id || null;
   const canUseChat = isAuthenticated && !!user?.id && !!projectOwnerUserId && projectOwnerUserId !== user.id;

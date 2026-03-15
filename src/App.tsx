@@ -4,6 +4,7 @@ import { Layout } from './components/layout/Layout';
 import { PublicLayout } from './components/layout/PublicLayout';
 import { KycProtectedRoute } from './components/KycProtectedRoute';
 import { ToastProvider } from './contexts/ToastContext';
+import { ChatProvider } from './contexts/ChatContext';
 import { useEffect } from 'react';
 
 // Pages
@@ -149,10 +150,11 @@ function App() {
 
   return (
     <ToastProvider>
-      <Router>
-      <MfaProvider>
-      <TutorialProvider>
-      <Routes>
+      <ChatProvider>
+        <Router>
+          <MfaProvider>
+            <TutorialProvider>
+              <Routes>
         {/* Public Routes */}
         <Route path="/" element={<PublicLayout showMinimalHeader><LandingPage /></PublicLayout>} />
         <Route path="/how-it-works" element={<PublicLayout><HowItWorksPage /></PublicLayout>} />
@@ -536,6 +538,7 @@ function App() {
       </TutorialProvider>
       </MfaProvider>
     </Router>
+      </ChatProvider>
     </ToastProvider>
   );
 }

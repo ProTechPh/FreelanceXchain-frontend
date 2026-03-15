@@ -21,6 +21,7 @@ import { FileUpload } from '../../components/ui/FileUpload';
 import { RatingModal } from '../../components/RatingModal';
 import { ChatPopup, ChatButton } from '../../components/chat';
 import { useAuthStore } from '../../store';
+import { useChatContext } from '../../contexts/ChatContext';
 import { useToast } from '../../contexts/ToastContext';
 import api from '../../lib/api';
 import type { Contract, PaymentStatus, ContractMilestone, RefundRequest } from '../../types';
@@ -38,6 +39,7 @@ export function ContractDetailPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const { success: showSuccess, error: showError } = useToast();
+  const { setPreferredRecipient } = useChatContext();
 
   const [contract, setContract] = useState<Contract | null>(null);
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | null>(null);
@@ -160,6 +162,30 @@ export function ContractDetailPage() {
 
     fetchData();
   }, [id, user, isFreelancer]);
+
+  // Set preferred chat recipient when viewing contract
+  useEffect(() => {
+    if (contract && user && otherPartyId && otherPartyId !== user.id) {
+      const otherPartyName = isFreelancer 
+        ? (contract.employer?.companyName || contract.employer?.name || 'Client')
+        : (contract.freelancer?.name || 'Freelancer');
+      const otherPartyRole = isFreelancer ? 'Client' : 'Freelancer';
+
+      setPreferredRecipient({
+        userId: otherPartyId,
+        name: otherPartyName,
+        role: otherPartyRole,
+        contextId: contract.id
+      });
+    } else {
+      setPreferredRecipient(null);
+    }
+
+    // Clear on unmount
+    return () => {
+      setPreferredRecipient(null);
+    };
+  }, [contract, user, otherPartyId, isFreelancer, setPreferredRecipient]);
 
   // Fetch refund requests for active contracts
   useEffect(() => {

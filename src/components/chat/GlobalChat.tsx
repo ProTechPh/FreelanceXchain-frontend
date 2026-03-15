@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { ChatButton } from './ChatButton';
 import { ChatPopup } from './ChatPopup';
 import { useAuthStore } from '../../store';
+import { useChatContext } from '../../contexts/ChatContext';
 import api from '../../lib/api';
 import type { Conversation } from '../../types';
 
@@ -9,6 +10,7 @@ const POLLING_INTERVAL = 10000; // Poll every 10 seconds for unread count
 
 export function GlobalChat() {
   const { isAuthenticated, user } = useAuthStore();
+  const { preferredRecipient } = useChatContext();
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isChatMinimized, setIsChatMinimized] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -58,15 +60,33 @@ export function GlobalChat() {
     return null;
   }
 
-  // Use first conversation or fallback
-  const contractId = selectedConversation?.id || 'global';
-  const otherPartyId = selectedConversation 
-    ? (selectedConversation.participant1_id === user.id 
-        ? selectedConversation.participant2_id 
-        : selectedConversation.participant1_id)
-    : user.id; // Fallback to self
-  const otherPartyName = selectedConversation?.otherUser?.name || 'Messages';
-  const otherPartyRole = 'User' as const;
+  // Use preferred recipient if set, otherwise use first conversation or fallback
+  let contractId: string;
+  let otherPartyId: string;
+  let otherPartyName: string;
+  let otherPartyRole: 'Client' | 'Freelancer' | 'User';
+
+  if (preferredRecipient) {
+    // Use the preferred recipient from context (e.g., project creator)
+    contractId = preferredRecipient.contextId || 'global';
+    otherPartyId = preferredRecipient.userId;
+    otherPartyName = preferredRecipient.name;
+    otherPartyRole = preferredRecipient.role;
+  } else if (selectedConversation) {
+    // Use selected conversation
+    contractId = selectedConversation.id;
+    otherPartyId = selectedConversation.participant1_id === user.id 
+      ? selectedConversation.participant2_id 
+      : selectedConversation.participant1_id;
+    otherPartyName = selectedConversation.otherUser?.name || 'User';
+    otherPartyRole = 'User';
+  } else {
+    // Fallback
+    contractId = 'global';
+    otherPartyId = user.id;
+    otherPartyName = 'Messages';
+    otherPartyRole = 'User';
+  }
 
   return (
     <>
