@@ -359,6 +359,28 @@ export interface ResolveDisputeInput {
   reasoning: string;
 }
 
+// Refund Types
+export type RefundStatus = 'pending' | 'approved' | 'rejected' | 'completed' | 'cancelled';
+
+export interface RefundRequest {
+  id: string;
+  contract_id: string;
+  requested_by: string;
+  amount: number;
+  is_partial: boolean;
+  reason: string;
+  status: RefundStatus;
+  approved_by: string | null;
+  approved_at: string | null;
+  rejected_by: string | null;
+  rejected_at: string | null;
+  rejection_reason: string | null;
+  completed_at: string | null;
+  transaction_hash: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // Notification Types
 export type NotificationType =
   | 'proposal_received'

@@ -12,7 +12,9 @@ import {
   Building,
   ExternalLink,
   Star,
-  Download
+  Download,
+  RotateCcw,
+  X
 } from 'lucide-react';
 import { Card, CardHeader, Button, PageLoader, StatusBadge } from '../../components/ui';
 import { FileUpload } from '../../components/ui/FileUpload';
@@ -21,7 +23,7 @@ import { ChatPopup, ChatButton } from '../../components/chat';
 import { useAuthStore } from '../../store';
 import { useToast } from '../../contexts/ToastContext';
 import api from '../../lib/api';
-import type { Contract, PaymentStatus, ContractMilestone } from '../../types';
+import type { Contract, PaymentStatus, ContractMilestone, RefundRequest } from '../../types';
 import { format } from 'date-fns';
 
 type MilestoneAttachment = {
@@ -49,6 +51,11 @@ export function ContractDetailPage() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [milestoneFiles, setMilestoneFiles] = useState<Record<string, File[]>>({});
   const [milestoneNotes, setMilestoneNotes] = useState<Record<string, string>>({});
+  const [refundRequests, setRefundRequests] = useState<RefundRequest[]>([]);
+  const [showRefundForm, setShowRefundForm] = useState(false);
+  const [refundReason, setRefundReason] = useState('');
+  const [rejectReason, setRejectReason] = useState('');
+  const [rejectingRefundId, setRejectingRefundId] = useState<string | null>(null);
 
   const isFreelancer = user?.role === 'freelancer';
   const isEmployer = user?.role === 'employer';
@@ -153,6 +160,21 @@ export function ContractDetailPage() {
 
     fetchData();
   }, [id, user, isFreelancer]);
+
+  // Fetch refund requests for active contracts
+  useEffect(() => {
+    const fetchRefunds = async () => {
+      if (!id || !contract || (contract.status !== 'active' && contract.status !== 'disputed')) return;
+      try {
+        const data = await api.getContractRefunds(id);
+        setRefundRequests(data);
+      } catch (error) {
+        console.error('Error fetching refund requests:', error);
+      }
+    };
+
+    fetchRefunds();
+  }, [id, contract?.status]);
 
   const handleSubmitMilestone = async (milestone: ContractMilestone) => {
     if (!id) return;
@@ -270,6 +292,64 @@ export function ContractDetailPage() {
       } else {
         showError(error?.message || 'Failed to fund contract. Please try again.', 'Error');
       }
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleRequestRefund = async () => {
+    if (!id || !refundReason.trim()) return;
+    setActionLoading('refund-request');
+    try {
+      await api.createRefundRequest(id, { reason: refundReason.trim() });
+      const data = await api.getContractRefunds(id);
+      setRefundRequests(data);
+      setShowRefundForm(false);
+      setRefundReason('');
+      showSuccess('Refund request submitted successfully.', 'Success');
+    } catch (error: any) {
+      console.error('Error requesting refund:', error);
+      showError(error?.message || 'Failed to submit refund request.', 'Error');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleApproveRefund = async (refundId: string) => {
+    if (!id) return;
+    setActionLoading(`approve-refund-${refundId}`);
+    try {
+      await api.approveRefund(refundId);
+      const data = await api.getContractRefunds(id);
+      setRefundRequests(data);
+      const [contractData, paymentData] = await Promise.all([
+        api.getContract(id),
+        api.getPaymentStatus(id)
+      ]);
+      setContract(contractData);
+      setPaymentStatus(paymentData);
+      showSuccess('Refund approved and processed.', 'Success');
+    } catch (error: any) {
+      console.error('Error approving refund:', error);
+      showError(error?.message || 'Failed to approve refund.', 'Error');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleRejectRefund = async (refundId: string) => {
+    if (!id || !rejectReason.trim()) return;
+    setActionLoading(`reject-refund-${refundId}`);
+    try {
+      await api.rejectRefund(refundId, rejectReason.trim());
+      const data = await api.getContractRefunds(id);
+      setRefundRequests(data);
+      setRejectingRefundId(null);
+      setRejectReason('');
+      showSuccess('Refund request rejected.', 'Success');
+    } catch (error: any) {
+      console.error('Error rejecting refund:', error);
+      showError(error?.message || 'Failed to reject refund.', 'Error');
     } finally {
       setActionLoading(null);
     }
@@ -712,6 +792,150 @@ export function ContractDetailPage() {
               )}
             </div>
           </Card>
+
+          {/* Refund Escrow Section */}
+          {(contract.status === 'active' || contract.status === 'disputed') && (
+            <Card>
+              <CardHeader title="Refund Escrow" />
+              <div className="space-y-3">
+                {/* Existing refund requests */}
+                {refundRequests.length > 0 && (
+                  <div className="space-y-2">
+                    {refundRequests.map((refund) => {
+                      const isRequester = refund.requested_by === user?.id;
+                      const isPending = refund.status === 'pending';
+                      return (
+                        <div
+                          key={refund.id}
+                          className={`p-3 rounded-lg border text-sm ${
+                            refund.status === 'approved'
+                              ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-600/30'
+                              : refund.status === 'rejected'
+                                ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-600/30'
+                                : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-600/30'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-medium text-gray-900 dark:text-white">
+                              {refund.amount} ETH
+                            </span>
+                            <StatusBadge status={refund.status} />
+                          </div>
+                          <p className="text-gray-600 dark:text-gray-400 text-xs mb-2">
+                            {refund.reason}
+                          </p>
+                          {refund.rejection_reason && (
+                            <p className="text-red-600 dark:text-red-400 text-xs mb-2">
+                              Rejected: {refund.rejection_reason}
+                            </p>
+                          )}
+
+                          {/* Approve/Reject buttons for the other party */}
+                          {isPending && !isRequester && (
+                            <div className="space-y-2 mt-2">
+                              {rejectingRefundId === refund.id ? (
+                                <div className="space-y-2">
+                                  <textarea
+                                    value={rejectReason}
+                                    onChange={(e) => setRejectReason(e.target.value)}
+                                    className="w-full bg-white dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-lg px-3 py-2 text-xs text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
+                                    rows={2}
+                                    placeholder="Reason for rejection..."
+                                  />
+                                  <div className="flex gap-2">
+                                    <Button
+                                      size="sm"
+                                      variant="danger"
+                                      onClick={() => handleRejectRefund(refund.id)}
+                                      disabled={actionLoading === `reject-refund-${refund.id}` || !rejectReason.trim()}
+                                    >
+                                      {actionLoading === `reject-refund-${refund.id}` ? 'Rejecting...' : 'Confirm Reject'}
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => { setRejectingRefundId(null); setRejectReason(''); }}
+                                    >
+                                      Cancel
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="primary"
+                                    onClick={() => handleApproveRefund(refund.id)}
+                                    disabled={actionLoading === `approve-refund-${refund.id}`}
+                                  >
+                                    <CheckCircle className="w-3 h-3" />
+                                    {actionLoading === `approve-refund-${refund.id}` ? 'Approving...' : 'Approve'}
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="danger"
+                                    onClick={() => setRejectingRefundId(refund.id)}
+                                  >
+                                    <X className="w-3 h-3" />
+                                    Reject
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {isPending && isRequester && (
+                            <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
+                              Waiting for the other party to respond...
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Request Refund Form */}
+                {refundRequests.some(r => r.status === 'pending') ? null : showRefundForm ? (
+                  <div className="space-y-3">
+                    <textarea
+                      value={refundReason}
+                      onChange={(e) => setRefundReason(e.target.value)}
+                      className="w-full bg-white dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary-500"
+                      rows={3}
+                      placeholder="Describe why you're requesting a refund..."
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="primary"
+                        onClick={handleRequestRefund}
+                        disabled={actionLoading === 'refund-request' || !refundReason.trim()}
+                      >
+                        {actionLoading === 'refund-request' ? 'Submitting...' : 'Submit Request'}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => { setShowRefundForm(false); setRefundReason(''); }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-amber-600 dark:text-amber-400 border-amber-300 dark:border-amber-400/50 hover:bg-amber-50 dark:hover:bg-amber-400/10"
+                    onClick={() => setShowRefundForm(true)}
+                  >
+                    <RotateCcw className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                    Request Refund
+                  </Button>
+                )}
+              </div>
+            </Card>
+          )}
 
           {/* Rating Section */}
           {contract.status === 'completed' && (

@@ -21,6 +21,7 @@ import type {
   CreateDisputeInput,
   SubmitEvidenceInput,
   ResolveDisputeInput,
+  RefundRequest,
   Notification,
   KycVerification,
   ProjectRecommendation,
@@ -1027,6 +1028,33 @@ class ApiClient {
 
   async getContractDisputes(contractId: string): Promise<Dispute[]> {
     return this.request<Dispute[]>(`/disputes/contracts/${contractId}/disputes`);
+  }
+
+  // =====================
+  // Escrow Refund Endpoints
+  // =====================
+  async createRefundRequest(contractId: string, data: { reason: string; amount?: number }): Promise<RefundRequest> {
+    return this.request<RefundRequest>(`/escrow/${contractId}/refund-request`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getContractRefunds(contractId: string): Promise<RefundRequest[]> {
+    return this.request<RefundRequest[]>(`/escrow/${contractId}/refunds`);
+  }
+
+  async approveRefund(refundId: string): Promise<RefundRequest> {
+    return this.request<RefundRequest>(`/escrow/refunds/${refundId}/approve`, {
+      method: 'POST',
+    });
+  }
+
+  async rejectRefund(refundId: string, reason: string): Promise<RefundRequest> {
+    return this.request<RefundRequest>(`/escrow/refunds/${refundId}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
   }
 
   // =====================
