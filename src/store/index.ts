@@ -25,6 +25,8 @@ export const useAuthStore = create<AuthState>()(
       login: async (email: string, password: string, captchaToken?: string) => {
         set({ isLoading: true });
         try {
+          // Note: Wallet remains connected across logins for better UX
+          
           const result = await api.login({ email, password, captchaToken });
 
           if (result.mfaRequired) {
@@ -70,8 +72,8 @@ export const useAuthStore = create<AuthState>()(
         api.logout();
         set({ user: null, isAuthenticated: false });
         
-        // Clear wallet state on logout
-        useWalletStore.getState().disconnect();
+        // Note: Wallet remains connected across sessions for better UX
+        // Users can manually disconnect from the wallet page if needed
         
         // Clear profile state on logout
         useProfileStore.setState({ 
