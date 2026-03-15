@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { FreelancerRecommendation } from '../../types';
+import type { FreelancerRecommendation, ProjectRecommendation, Project } from '../../types';
 import { useAuthStore, useAICacheStore } from '../../store';
 import { Card, Button, Badge, Loader } from '../../components/ui';
 import { Link } from 'react-router-dom';
@@ -10,7 +10,7 @@ export function RecommendationsPage() {
   const isFreelancer = user?.role === 'freelancer';
 
   const { projectRecs, projectDetails, recsLoading, recsFetched, recsError, fetchProjectRecs } = useAICacheStore();
-  const [freelancerRecs, setFreelancerRecs] = useState<FreelancerRecommendation[]>([]);
+  const [freelancerRecs] = useState<FreelancerRecommendation[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
   const loading = recsLoading && !recsFetched;
@@ -186,7 +186,7 @@ function ProjectRecommendationCard({ recommendation, project }: { recommendation
                 </span>
                 {project.tags && project.tags.length > 0 && (
                   <span className="flex items-center gap-1">
-                    {project.tags.slice(0, 3).map((tag, i) => (
+                    {project.tags.slice(0, 3).map((tag: string, i: number) => (
                       <span key={i} className="bg-gray-100 dark:bg-dark-card px-1.5 py-0.5 rounded text-xs">{tag}</span>
                     ))}
                   </span>

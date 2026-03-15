@@ -1157,11 +1157,11 @@ class ApiClient {
     }
     formData.append('selfie', params.selfie);
 
-    const response = await fetch(`${this.baseUrl}/kyc/admin/manual-verify`, {
+    const response = await fetch(`${API_BASE}/kyc/admin/manual-verify`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${this.accessToken}`,
-        'X-CSRF-Token': this.csrfToken || '',
+        'X-CSRF-Token': this.getCsrfTokenFromCookie() || '',
       },
       body: formData,
     });
