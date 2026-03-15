@@ -20,6 +20,7 @@ import {
 import { Card, CardHeader, Button, Input, Modal } from '../../components/ui';
 import { useAuthStore, useThemeStore, useWalletStore } from '../../store';
 import { useToast } from '../../contexts/ToastContext';
+import { api } from '../../lib/api';
 import { TutorialLauncher } from '../../features/onboarding/components/TutorialLauncher';
 import { MfaStatusCard } from '../../features/mfa/components/MfaStatusCard';
 
@@ -85,10 +86,12 @@ export function SettingsPage() {
   });
 
   // Privacy Settings
-  const [privacy, setPrivacy] = useState({
-    profileVisibility: 'public' as 'public' | 'private',
-    showEmail: false,
-    showWallet: false,
+  const [privacy, setPrivacy] = useState(() => {
+    try {
+      const saved = localStorage.getItem('privacySettings');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return { profileVisibility: 'public' as 'public' | 'private', showEmail: false, showWallet: false };
   });
 
   // Password Change
@@ -106,18 +109,40 @@ export function SettingsPage() {
   // Modals
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [savingNotifications, setSavingNotifications] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
 
-  const handleSaveNotifications = () => {
-    // TODO: Save to backend
-    showToast({
-      type: 'success',
-      title: 'Settings Saved',
-      message: 'Notification preferences saved successfully',
-    });
+  const handleSaveNotifications = async () => {
+    setSavingNotifications(true);
+    try {
+      await api.updateEmailPreferences({
+        proposalReceived: notifications.proposalReceived,
+        proposalAccepted: notifications.proposalAccepted,
+        milestoneCompleted: notifications.milestoneCompleted,
+        paymentReleased: notifications.paymentReleased,
+        disputeCreated: notifications.disputeCreated,
+        messages: notifications.messages,
+      });
+      showToast({
+        type: 'success',
+        title: 'Settings Saved',
+        message: 'Notification preferences saved successfully',
+      });
+    } catch (error: any) {
+      showToast({
+        type: 'error',
+        title: 'Save Failed',
+        message: error.message || 'Failed to save notification preferences',
+      });
+    } finally {
+      setSavingNotifications(false);
+    }
   };
 
   const handleSavePrivacy = () => {
-    // TODO: Save to backend
+    // Privacy settings are stored locally — no backend endpoint exists yet
+    localStorage.setItem('privacySettings', JSON.stringify(privacy));
     showToast({
       type: 'success',
       title: 'Settings Saved',
@@ -125,7 +150,7 @@ export function SettingsPage() {
     });
   };
 
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
       showToast({
         type: 'error',
@@ -142,22 +167,28 @@ export function SettingsPage() {
       });
       return;
     }
-    // TODO: Call API to change password
-    showToast({
-      type: 'success',
-      title: 'Password Changed',
-      message: 'Password changed successfully',
-    });
-    setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    if (!user?.email) return;
+    setChangingPassword(true);
+    try {
+      await api.requestPasswordChangeEmail(user.email);
+      showToast({
+        type: 'success',
+        title: 'Check Your Email',
+        message: 'A password reset link has been sent to your email address',
+      });
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (error: any) {
+      showToast({
+        type: 'error',
+        title: 'Request Failed',
+        message: error.message || 'Failed to send password reset email',
+      });
+    } finally {
+      setChangingPassword(false);
+    }
   };
 
   const handleDeleteAccount = () => {
-    // TODO: Call API to delete account
-    showToast({
-      type: 'success',
-      title: 'Account Deleted',
-      message: 'Your account has been deleted',
-    });
     logout();
     navigate('/');
   };
@@ -380,7 +411,9 @@ export function SettingsPage() {
           </div>
 
           <div className="pt-4">
-            <Button onClick={handleSaveNotifications}>Save Notification Preferences</Button>
+            <Button onClick={handleSaveNotifications} disabled={savingNotifications}>
+              {savingNotifications ? 'Saving...' : 'Save Notification Preferences'}
+            </Button>
           </div>
         </div>
       </Card>
@@ -520,7 +553,9 @@ export function SettingsPage() {
           </div>
 
           <div className="pt-4">
-            <Button onClick={handleChangePassword}>Change Password</Button>
+            <Button onClick={handleChangePassword} disabled={changingPassword}>
+              {changingPassword ? 'Sending...' : 'Change Password'}
+            </Button>
           </div>
 
           {/* MFA */}
@@ -607,15 +642,14 @@ export function SettingsPage() {
           <p className="text-gray-700 dark:text-gray-300">Type <span className="font-mono text-gray-900 dark:text-white">DELETE</span> to confirm:</p>
           <Input
             placeholder="Type DELETE to confirm"
-            onChange={() => {
-              // Simple confirmation check
-            }}
+            value={deleteConfirmText}
+            onChange={(e) => setDeleteConfirmText(e.target.value)}
           />
           <div className="flex gap-3 justify-end">
-            <Button variant="ghost" onClick={() => setShowDeleteModal(false)}>
+            <Button variant="ghost" onClick={() => { setShowDeleteModal(false); setDeleteConfirmText(''); }}>
               Cancel
             </Button>
-            <Button variant="outline" onClick={handleDeleteAccount}>
+            <Button variant="outline" onClick={handleDeleteAccount} disabled={deleteConfirmText !== 'DELETE'}>
               Delete My Account
             </Button>
           </div>

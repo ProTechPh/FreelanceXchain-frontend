@@ -20,6 +20,51 @@ export type DeployEscrowResult = {
   transactionHash: string;
 };
 
+export type ResolveDisputeParams = {
+  escrowAddress: string;
+  milestoneIndex: number;
+  inFavorOfFreelancer: boolean;
+};
+
+export type TransactionResult = {
+  transactionHash: string;
+};
+
+/**
+ * Resolve a dispute via MetaMask (arbiter/admin pays gas)
+ */
+export async function resolveDisputeViaMetaMask(
+  params: ResolveDisputeParams
+): Promise<TransactionResult> {
+  if (!window.ethereum) {
+    throw new Error('MetaMask is not installed');
+  }
+
+  const provider = new ethers.BrowserProvider(window.ethereum);
+  await provider.send('eth_requestAccounts', []);
+  const signer = await provider.getSigner();
+
+  // Create contract instance at existing address
+  const contract = new ethers.Contract(
+    params.escrowAddress,
+    FreelanceEscrowArtifact.abi,
+    signer
+  );
+
+  // Call the resolveDispute function on the smart contract
+  // Note: the caller must be the "arbiter" address that was set during deployment
+  const tx = await contract.resolveDispute(
+    params.milestoneIndex,
+    params.inFavorOfFreelancer
+  );
+
+  await tx.wait(); // Wait for confirmation block
+
+  return {
+    transactionHash: tx.hash,
+  };
+}
+
 /**
  * Deploy FreelanceEscrow contract via MetaMask (employer pays)
  */

@@ -61,6 +61,7 @@ export function ContractDetailPage() {
 
   const isFreelancer = user?.role === 'freelancer';
   const isEmployer = user?.role === 'employer';
+  const isAdmin = user?.role === 'admin';
   const freelancerUserId = contract?.freelancer?.userId || contract?.freelancer?.id || contract?.freelancerId;
   const employerUserId = contract?.employer?.userId || contract?.employer?.id || contract?.employerId;
   const otherPartyId = contract
@@ -804,14 +805,14 @@ export function ContractDetailPage() {
             <div className="space-y-2">
               <Link to={`/projects/${contract.projectId}`}>
                 <Button variant="outline" className="w-full justify-start">
-                  <FileText className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                  <FileText className="w-4 h-4 mr-2 text-gray-600 dark:text-gray-400" />
                   View Project
                 </Button>
               </Link>
-              {contract.status === 'active' && (
+              {!isAdmin && contract.status === 'active' && (
                 <Link to={`/disputes/new?contractId=${contract.id}`}>
                   <Button variant="outline" className="w-full justify-start text-red-600 dark:text-red-400 border-red-300 dark:border-red-400/50 hover:bg-red-50 dark:hover:bg-red-400/10">
-                    <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" />
+                    <AlertTriangle className="w-4 h-4 mr-2" />
                     Open Dispute
                   </Button>
                 </Link>
@@ -820,7 +821,7 @@ export function ContractDetailPage() {
           </Card>
 
           {/* Refund Escrow Section */}
-          {(contract.status === 'active' || contract.status === 'disputed') && (
+          {!isAdmin && (contract.status === 'active' || contract.status === 'disputed') && (
             <Card>
               <CardHeader title="Refund Escrow" />
               <div className="space-y-3">

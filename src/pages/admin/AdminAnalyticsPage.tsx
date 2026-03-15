@@ -9,6 +9,57 @@ interface AnalyticsData {
   activeContracts: number;
   userGrowth: number;
   projectGrowth: number;
+  userGrowthData: { month: string; count: number }[];
+  projectActivityData: { month: string; count: number }[];
+}
+
+interface SimpleBarChartProps {
+  data: { month: string; count: number }[];
+  color: string;
+}
+
+function SimpleBarChart({ data, color }: SimpleBarChartProps) {
+  if (!data || data.length === 0) {
+    return (
+      <div className="h-64 flex items-center justify-center text-gray-500 dark:text-gray-400">
+        No data available
+      </div>
+    );
+  }
+
+  const maxValue = Math.max(...data.map(d => d.count), 1);
+  const barWidth = 100 / data.length;
+
+  return (
+    <div className="h-64 flex flex-col">
+      <div className="flex-1 flex items-end justify-around gap-2 px-4">
+        {data.map((item, index) => {
+          const height = (item.count / maxValue) * 100;
+          return (
+            <div key={index} className="flex-1 flex flex-col items-center gap-2">
+              <div className="w-full flex items-end justify-center" style={{ height: '200px' }}>
+                <div
+                  className="w-full rounded-t transition-all hover:opacity-80"
+                  style={{
+                    height: `${height}%`,
+                    backgroundColor: color,
+                    minHeight: item.count > 0 ? '4px' : '0',
+                  }}
+                  title={`${item.month}: ${item.count}`}
+                />
+              </div>
+              <div className="text-xs text-gray-600 dark:text-gray-400 text-center">
+                {item.month.split('-')[1]}/{item.month.split('-')[0].slice(2)}
+              </div>
+              <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                {item.count}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 }
 
 export function AdminAnalyticsPage() {
@@ -19,6 +70,8 @@ export function AdminAnalyticsPage() {
     activeContracts: 0,
     userGrowth: 0,
     projectGrowth: 0,
+    userGrowthData: [],
+    projectActivityData: [],
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -129,25 +182,22 @@ export function AdminAnalyticsPage() {
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Placeholder for charts */}
+        {/* User Growth Chart */}
         <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-lg p-6">
           <div className="flex items-center mb-4">
             <BarChart3 className="w-5 h-5 text-primary-600 dark:text-primary-400 mr-2" />
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">User Growth</h2>
           </div>
-          <div className="h-64 flex items-center justify-center text-gray-600 dark:text-gray-500">
-            <p>Chart visualization coming soon</p>
-          </div>
+          <SimpleBarChart data={analytics.userGrowthData} color="#8b5cf6" />
         </div>
 
+        {/* Project Activity Chart */}
         <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-lg p-6">
           <div className="flex items-center mb-4">
             <BarChart3 className="w-5 h-5 text-blue-600 dark:text-blue-400 mr-2" />
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Project Activity</h2>
           </div>
-          <div className="h-64 flex items-center justify-center text-gray-600 dark:text-gray-500">
-            <p>Chart visualization coming soon</p>
-          </div>
+          <SimpleBarChart data={analytics.projectActivityData} color="#3b82f6" />
         </div>
       </div>
     </div>

@@ -1514,6 +1514,31 @@ class ApiClient {
       method: 'PATCH',
     });
   }
+
+  // =====================
+  // Email Preferences
+  // =====================
+  async getEmailPreferences(): Promise<Record<string, boolean>> {
+    return this.request<Record<string, boolean>>('/email-preferences');
+  }
+
+  async updateEmailPreferences(preferences: Record<string, boolean>): Promise<Record<string, boolean>> {
+    await this.ensureCsrfToken();
+    return this.request<Record<string, boolean>>('/email-preferences', {
+      method: 'PATCH',
+      body: JSON.stringify(preferences),
+    });
+  }
+
+  // =====================
+  // Account Management
+  // =====================
+  async requestPasswordChangeEmail(email: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  }
 }
 
 export const api = new ApiClient();

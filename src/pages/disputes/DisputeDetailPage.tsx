@@ -12,46 +12,115 @@ import {
 } from 'lucide-react';
 import { Card, CardHeader, PageLoader, StatusBadge, Button, Input } from '../../components/ui';
 import api from '../../lib/api';
-import type { Dispute, Evidence, SubmitEvidenceInput } from '../../types';
+import type { Dispute, Evidence, SubmitEvidenceInput, Contract } from '../../types';
 import { format } from 'date-fns';
 import { useAuthStore } from '../../store';
 
 export function DisputeDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [dispute, setDispute] = useState<Dispute | null>(null);
+  const [contractDetails, setContractDetails] = useState<Contract | null>(null);
+  const [partyNames, setPartyNames] = useState<{ initiatorName?: string; respondentName?: string }>({});
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [newEvidence, setNewEvidence] = useState<SubmitEvidenceInput>({
     type: 'text',
     content: '',
   });
+  const [fileToUpload, setFileToUpload] = useState<File | null>(null);
+  const [linkUrl, setLinkUrl] = useState<string>('');
   const { user } = useAuthStore();
 
   useEffect(() => {
-    const fetchDispute = async () => {
+    const fetchDisputeData = async () => {
       if (!id) return;
       try {
         const data = await api.getDispute(id);
         setDispute(data);
+        if (data.contractId) {
+          const contractRes = await api.getContract(data.contractId);
+          setContractDetails(contractRes);
+
+          // Determine respondent ID and their roles to fetch names
+          const respondentIdFallback = data.initiatorId === contractRes.employerId ? contractRes.freelancerId : contractRes.employerId;
+          const actualRespondentId = data.respondentId || respondentIdFallback;
+
+          const isInitiatorEmployer = data.initiatorId === contractRes.employerId;
+
+          try {
+            // Fetch names based on role (employer/freelancer)
+            const resolvedNames: { initiatorName?: string; respondentName?: string } = {};
+
+            if (isInitiatorEmployer) {
+              const employer = await api.getEmployer(data.initiatorId).catch(() => null);
+              const freelancer = await api.getFreelancer(actualRespondentId).catch(() => null);
+              resolvedNames.initiatorName = employer?.companyName || employer?.name || employer?.userId?.slice(0, 8);
+              resolvedNames.respondentName = freelancer?.firstName ? `${freelancer.firstName} ${freelancer.lastName}` : freelancer?.name || freelancer?.userId?.slice(0, 8);
+            } else {
+              const freelancer = await api.getFreelancer(data.initiatorId).catch(() => null);
+              const employer = await api.getEmployer(actualRespondentId).catch(() => null);
+              resolvedNames.initiatorName = freelancer?.firstName ? `${freelancer.firstName} ${freelancer.lastName}` : freelancer?.name || freelancer?.userId?.slice(0, 8);
+              resolvedNames.respondentName = employer?.companyName || employer?.name || employer?.userId?.slice(0, 8);
+            }
+
+            setPartyNames(resolvedNames);
+          } catch (e) {
+            console.error("Failed to load party names", e);
+          }
+        }
       } catch (error) {
-        console.error('Error fetching dispute:', error);
+        console.error('Error fetching dispute/contract:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchDispute();
+    fetchDisputeData();
   }, [id]);
 
   const handleSubmitEvidence = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!id || !newEvidence.content.trim()) return;
+    if (!id || (!newEvidence.content.trim() && !fileToUpload && !linkUrl.trim())) return;
 
     setSubmitting(true);
     try {
-      const updated = await api.submitEvidence(id, newEvidence);
-      setDispute(updated);
+      // 1. If Text Only
+      if (newEvidence.content.trim() && !fileToUpload && !linkUrl.trim()) {
+        const updated = await api.submitEvidence(id, { type: 'text', content: newEvidence.content.trim() });
+        setDispute(updated);
+      }
+
+      // 2. If Link provided (with or without description)
+      if (linkUrl.trim()) {
+        const desc = newEvidence.content.trim() ? newEvidence.content.trim() + " - " : "";
+        const updated = await api.submitEvidence(id, {
+          type: 'link',
+          content: `${desc}${linkUrl.trim()}`,
+          fileUrl: linkUrl.trim()
+        });
+        setDispute(updated);
+      }
+
+      // 3. If File provided (needs to upload first)
+      if (fileToUpload) {
+        // Upload the file first using uploadFile from api.ts
+        const uploadRes = await api.uploadFile(fileToUpload, 'dispute-evidence', id);
+
+        if (uploadRes.success) {
+          const desc = newEvidence.content.trim() || fileToUpload.name;
+          const updated = await api.submitEvidence(id, {
+            type: 'file',
+            content: desc,
+            fileUrl: uploadRes.url
+          });
+          setDispute(updated);
+        }
+      }
+
+      // Reset everything after success
       setNewEvidence({ type: 'text', content: '' });
+      setFileToUpload(null);
+      setLinkUrl('');
     } catch (error) {
       console.error('Error submitting evidence:', error);
     } finally {
@@ -105,8 +174,15 @@ export function DisputeDetailPage() {
     );
   }
 
-  const isParticipant = user?.id === dispute.initiatorId || user?.id === dispute.respondentId;
-  const canSubmitEvidence = isParticipant && dispute.status !== 'resolved';
+  const respondentIdFallback = contractDetails ?
+    (dispute?.initiatorId === contractDetails.employerId ? contractDetails.freelancerId : contractDetails.employerId)
+    : null;
+
+  // Subukan hanapin directly sa API object kung meron, kundi gamitin ang inferred mula sa contract.
+  const respondentId = dispute?.respondentId || respondentIdFallback;
+
+  const isParticipant = user?.id === dispute?.initiatorId || user?.id === respondentId;
+  const canSubmitEvidence = isParticipant && dispute?.status !== 'resolved';
 
   return (
     <div className="space-y-6">
@@ -215,38 +291,49 @@ export function DisputeDetailPage() {
               <form onSubmit={handleSubmitEvidence} className="mt-6 pt-6 border-t border-gray-200 dark:border-dark-border">
                 <h4 className="text-gray-900 dark:text-white font-medium mb-4">Submit New Evidence</h4>
                 <div className="space-y-4">
-                  <div className="flex gap-2">
-                    {(['text', 'file', 'link'] as const).map((type) => (
-                      <button
-                        key={type}
-                        type="button"
-                        onClick={() => setNewEvidence({ ...newEvidence, type })}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${newEvidence.type === type
-                            ? 'bg-primary-600 text-white'
-                            : 'bg-gray-100 dark:bg-dark-surface text-gray-700 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                          }`}
-                      >
-                        {type.charAt(0).toUpperCase() + type.slice(1)}
-                      </button>
-                    ))}
-                  </div>
+
+                  {/* Pagsasamahin natin yung input fields para text agad, tapos may optional fields */}
                   <textarea
                     value={newEvidence.content}
                     onChange={(e) => setNewEvidence({ ...newEvidence, content: e.target.value })}
-                    placeholder="Describe your evidence..."
+                    placeholder="Describe your evidence (Required)"
                     className="w-full px-4 py-3 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg text-gray-900 dark:text-white placeholder:text-gray-500 focus:outline-none focus:border-primary-500 min-h-[100px]"
                   />
-                  {newEvidence.type === 'link' && (
-                    <Input
-                      placeholder="Enter URL..."
-                      value={newEvidence.fileUrl || ''}
-                      onChange={(e) => setNewEvidence({ ...newEvidence, fileUrl: e.target.value })}
-                    />
+
+                  {/* Optional File/Link attachment */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <span className="block text-sm text-gray-500 mb-1">Attach a Link (Optional)</span>
+                      <Input
+                        placeholder="https://..."
+                        value={linkUrl}
+                        onChange={(e) => setLinkUrl(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <span className="block text-sm text-gray-500 mb-1">Attach a File (Optional)</span>
+                      <input
+                        type="file"
+                        onChange={(e) => setFileToUpload(e.target.files ? e.target.files[0] : null)}
+                        className="w-full px-4 py-[0.4rem] bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:border-primary-500 file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 dark:file:bg-primary-900/20 dark:file:text-primary-400"
+                        accept="image/*,.pdf,.doc,.docx"
+                      />
+                    </div>
+                  </div>
+
+                  {fileToUpload && (
+                    <div className="text-sm text-primary-600 dark:text-primary-400 flex items-center gap-2 bg-primary-50 dark:bg-primary-900/10 p-2 rounded">
+                      <Paperclip className="w-4 h-4" />
+                      {fileToUpload.name} selected
+                    </div>
                   )}
-                  <Button type="submit" disabled={submitting || !newEvidence.content.trim()}>
-                    {submitting ? 'Submitting...' : 'Submit Evidence'}
-                    <Send className="w-4 h-4 ml-2" />
-                  </Button>
+
+                  <div className="flex justify-end pt-2">
+                    <Button type="submit" disabled={submitting || (!newEvidence.content.trim() && !fileToUpload && !linkUrl.trim())}>
+                      {submitting ? 'Submitting Evidence...' : 'Submit Evidence'}
+                      <Send className="w-4 h-4 ml-2" />
+                    </Button>
+                  </div>
                 </div>
               </form>
             )}
@@ -299,7 +386,7 @@ export function DisputeDetailPage() {
                 <div>
                   <p className="text-xs text-gray-600 dark:text-gray-400">Initiator</p>
                   <p className="text-gray-900 dark:text-white font-medium">
-                    {dispute.initiatorId === user?.id ? 'You' : dispute.initiatorId.slice(0, 8) + '...'}
+                    {dispute.initiatorId === user?.id ? 'You' : partyNames.initiatorName || (dispute.initiatorId ? dispute.initiatorId.slice(0, 8) + '...' : 'Unknown')}
                   </p>
                 </div>
               </div>
@@ -310,7 +397,7 @@ export function DisputeDetailPage() {
                 <div>
                   <p className="text-xs text-gray-600 dark:text-gray-400">Respondent</p>
                   <p className="text-gray-900 dark:text-white font-medium">
-                    {dispute.respondentId === user?.id ? 'You' : dispute.respondentId.slice(0, 8) + '...'}
+                    {respondentId === user?.id ? 'You' : partyNames.respondentName || (respondentId ? respondentId.slice(0, 8) + '...' : 'Unknown')}
                   </p>
                 </div>
               </div>
