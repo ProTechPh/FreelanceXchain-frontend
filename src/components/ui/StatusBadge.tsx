@@ -95,7 +95,9 @@ export function StatusBadge({ status, className, showIcon = true }: StatusBadgeP
     },
   };
 
-  const config = statusConfig[status.toLowerCase()] || statusConfig.pending;
+  // Guard against undefined/null status strings gracefully
+  const normalizedStatus = (status || 'pending').toLowerCase();
+  const config = statusConfig[normalizedStatus] || statusConfig.pending;
   const Icon = config.icon;
 
   return (
