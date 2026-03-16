@@ -472,6 +472,16 @@ export function SettingsPage() {
           description="Manage your password and security settings"
         />
         <div className="space-y-4">
+          {/* OAuth notice */}
+          {user?.authProvider === 'oauth' && (
+            <div className="flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
+              <Shield className="w-5 h-5 text-blue-500 shrink-0" />
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                You signed in with OAuth. Password management is handled by your OAuth provider and is not available here.
+              </p>
+            </div>
+          )}
+
           {/* Activity Log Link */}
           <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-dark-bg rounded-lg border border-gray-300 dark:border-dark-border">
             <div className="flex items-center gap-3">
@@ -494,14 +504,16 @@ export function SettingsPage() {
               <input
                 type={showPasswords.current ? 'text' : 'password'}
                 value={passwordForm.currentPassword}
+                disabled={user?.authProvider === 'oauth'}
                 onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-                className="w-full bg-white dark:bg-dark-bg border border-gray-300 dark:border-dark-border rounded-lg px-4 py-2 pr-10 text-gray-900 dark:text-white focus:outline-none focus:border-primary-500"
+                className="w-full bg-white dark:bg-dark-bg border border-gray-300 dark:border-dark-border rounded-lg px-4 py-2 pr-10 text-gray-900 dark:text-white focus:outline-none focus:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="Enter current password"
               />
               <button
                 type="button"
+                disabled={user?.authProvider === 'oauth'}
                 onClick={() => setShowPasswords({ ...showPasswords, current: !showPasswords.current })}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-900 dark:hover:text-white disabled:pointer-events-none"
               >
                 {showPasswords.current ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -516,14 +528,16 @@ export function SettingsPage() {
               <input
                 type={showPasswords.new ? 'text' : 'password'}
                 value={passwordForm.newPassword}
+                disabled={user?.authProvider === 'oauth'}
                 onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                className="w-full bg-white dark:bg-dark-bg border border-gray-300 dark:border-dark-border rounded-lg px-4 py-2 pr-10 text-gray-900 dark:text-white focus:outline-none focus:border-primary-500"
+                className="w-full bg-white dark:bg-dark-bg border border-gray-300 dark:border-dark-border rounded-lg px-4 py-2 pr-10 text-gray-900 dark:text-white focus:outline-none focus:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="Enter new password"
               />
               <button
                 type="button"
+                disabled={user?.authProvider === 'oauth'}
                 onClick={() => setShowPasswords({ ...showPasswords, new: !showPasswords.new })}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-900 dark:hover:text-white disabled:pointer-events-none"
               >
                 {showPasswords.new ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -538,14 +552,16 @@ export function SettingsPage() {
               <input
                 type={showPasswords.confirm ? 'text' : 'password'}
                 value={passwordForm.confirmPassword}
+                disabled={user?.authProvider === 'oauth'}
                 onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                className="w-full bg-white dark:bg-dark-bg border border-gray-300 dark:border-dark-border rounded-lg px-4 py-2 pr-10 text-gray-900 dark:text-white focus:outline-none focus:border-primary-500"
+                className="w-full bg-white dark:bg-dark-bg border border-gray-300 dark:border-dark-border rounded-lg px-4 py-2 pr-10 text-gray-900 dark:text-white focus:outline-none focus:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 placeholder="Confirm new password"
               />
               <button
                 type="button"
+                disabled={user?.authProvider === 'oauth'}
                 onClick={() => setShowPasswords({ ...showPasswords, confirm: !showPasswords.confirm })}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-900 dark:hover:text-white disabled:pointer-events-none"
               >
                 {showPasswords.confirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -553,7 +569,7 @@ export function SettingsPage() {
           </div>
 
           <div className="pt-4">
-            <Button onClick={handleChangePassword} disabled={changingPassword}>
+            <Button onClick={handleChangePassword} disabled={changingPassword || user?.authProvider === 'oauth'}>
               {changingPassword ? 'Sending...' : 'Change Password'}
             </Button>
           </div>
