@@ -155,7 +155,7 @@ export function RecommendationsPage() {
 }
 
 function ProjectRecommendationCard({ recommendation, project }: { recommendation: ProjectRecommendation; project?: Project }) {
-  const { projectId, matchScore, matchedSkills, missingSkills, reasoning } = recommendation;
+  const { projectId, matchScore, matchedSkills, missingSkills } = recommendation;
 
   return (
     <Card className="hover:border-primary-500/50 transition-colors">
@@ -199,9 +199,6 @@ function ProjectRecommendationCard({ recommendation, project }: { recommendation
               <p className="text-gray-600 dark:text-gray-400 text-sm mb-3 line-clamp-2">{project.description}</p>
             )}
 
-            {/* AI Reasoning */}
-            <p className="text-gray-500 dark:text-gray-500 text-sm italic mb-4">{reasoning}</p>
-            
             {/* Matched Skills */}
             {matchedSkills.length > 0 && (
               <div className="mb-3">
