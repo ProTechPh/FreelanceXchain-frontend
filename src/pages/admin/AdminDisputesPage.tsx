@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Card, Button, Badge, Loader } from '../../components/ui';
+import { Card, Button, Badge, Loader, Modal, Input } from '../../components/ui';
 import { FiAlertCircle, FiCheckCircle, FiMessageSquare, FiDollarSign, FiUser, FiFilter, FiEye } from 'react-icons/fi';
+import { Link } from 'react-router-dom';
 import api from '../../lib/api';
 import type { Dispute } from '../../types';
+import { useToast } from '../../contexts/ToastContext';
 
 // Extended dispute interface with user details
 interface DisputeWithDetails extends Dispute {
@@ -20,6 +22,14 @@ export function AdminDisputesPage() {
   const [statusFilter, setStatusFilter] = useState<string>('open');
   const [selectedDispute, setSelectedDispute] = useState<DisputeWithDetails | null>(null);
 
+  // Resolve modal controls
+  const [resolveModalOpen, setResolveModalOpen] = useState(false);
+  const [resolveDecision, setResolveDecision] = useState<'freelancer_favor' | 'employer_favor' | 'split'>('split');
+  const [resolveReasoning, setResolveReasoning] = useState('');
+  const [resolving, setResolving] = useState(false);
+
+  const { showToast } = useToast();
+
   useEffect(() => {
     fetchDisputes();
   }, [statusFilter]);
@@ -31,19 +41,50 @@ export function AdminDisputesPage() {
       const response = await api.getDisputes(
         statusFilter !== 'all' ? { status: statusFilter } : undefined
       );
-      
-      // The API returns disputes with basic info
-      // In a real implementation, you'd fetch additional details (project title, user names, etc.)
-      const disputesWithDetails = response.items.map(dispute => ({
-        ...dispute,
-        projectTitle: 'Project #' + (dispute.contractId?.slice(0, 8) || 'Unknown'),
-        raisedByName: 'User ' + (dispute.initiatorId?.slice(0, 8) || 'Unknown'),
-        raisedByRole: 'freelancer' as const,
-        againstName: 'User (Opponent)',
-        againstRole: 'employer' as const,
-        evidenceCount: Array.isArray(dispute.evidence) ? dispute.evidence.length : 0,
+
+      // Fetch additional details concurrently
+      const disputesWithDetails = await Promise.all(response.items.map(async (dispute) => {
+        let raisedByName = 'User ' + dispute.initiatorId?.slice(0, 8);
+        let againstName = 'Unknown Opponent';
+        let raisedByRole: "employer" | "freelancer" = 'freelancer';
+        let againstRole: "employer" | "freelancer" = 'employer';
+
+        try {
+          const contract = await api.getContract(dispute.contractId).catch(() => null);
+          if (contract) {
+             const actualRespondentId = dispute.initiatorId === contract.employerId ? contract.freelancerId : contract.employerId;
+             const isInitiatorEmployer = dispute.initiatorId === contract.employerId;
+
+             raisedByRole = isInitiatorEmployer ? 'employer' : 'freelancer';
+             againstRole = isInitiatorEmployer ? 'freelancer' : 'employer';
+
+             if (isInitiatorEmployer) {
+                const employer = await api.getEmployer(dispute.initiatorId).catch(() => null);
+                const freelancer = await api.getFreelancer(actualRespondentId).catch(() => null);
+                raisedByName = employer?.companyName || employer?.name || employer?.userId?.slice(0, 8) || raisedByName;
+                againstName = freelancer?.firstName ? `${freelancer.firstName} ${freelancer.lastName}` : freelancer?.name || freelancer?.userId?.slice(0, 8) || againstName;
+             } else {
+                const freelancer = await api.getFreelancer(dispute.initiatorId).catch(() => null);
+                const employer = await api.getEmployer(actualRespondentId).catch(() => null);
+                raisedByName = freelancer?.firstName ? `${freelancer.firstName} ${freelancer.lastName}` : freelancer?.name || freelancer?.userId?.slice(0, 8) || raisedByName;
+                againstName = employer?.companyName || employer?.name || employer?.userId?.slice(0, 8) || againstName;
+             }
+          }
+        } catch (e) {
+          // Ignore failures and fallback to ID slices
+        }
+
+        return {
+          ...dispute,
+          projectTitle: 'Project #' + (dispute.contractId?.slice(0, 8) || 'Unknown'),
+          raisedByName,
+          raisedByRole,
+          againstName,
+          againstRole,
+          evidenceCount: Array.isArray(dispute.evidence) ? dispute.evidence.length : 0,
+        };
       }));
-      
+
       setDisputes(disputesWithDetails);
     } catch (error) {
       console.error('Error fetching disputes:', error);
@@ -53,8 +94,8 @@ export function AdminDisputesPage() {
     }
   };
 
-  const filteredDisputes = statusFilter === 'all' 
-    ? disputes 
+  const filteredDisputes = statusFilter === 'all'
+    ? disputes
     : disputes.filter(d => d.status === statusFilter);
 
   const getStatusBadgeVariant = (status: string): 'success' | 'warning' | 'error' | 'info' => {
@@ -66,9 +107,41 @@ export function AdminDisputesPage() {
     }
   };
 
-  const handleResolve = (id: string) => {
-    console.log('Resolving dispute:', id);
-    // Logic to resolve dispute
+  const handleResolveOpen = (dispute: DisputeWithDetails) => {
+    setSelectedDispute(dispute);
+    setResolveModalOpen(true);
+    setResolveReasoning('');
+  };
+
+  const submitResolution = async () => {
+    if (!selectedDispute || !resolveReasoning.trim()) return;
+
+    setResolving(true);
+    try {
+      await api.resolveDispute(selectedDispute.id, {
+        decision: resolveDecision,
+        reasoning: resolveReasoning
+      });
+
+      showToast({
+        type: 'success',
+        title: 'Dispute Resolved',
+        message: 'The dispute block arrangement has been resolved successfully.',
+      });
+
+      setResolveModalOpen(false);
+      setSelectedDispute(null);
+      // Reload logic
+      fetchDisputes();
+    } catch (e: any) {
+      showToast({
+        type: 'error',
+        title: 'Failed to Resolve',
+        message: e.message || 'An error occurred while resolving.',
+      });
+    } finally {
+      setResolving(false);
+    }
   };
 
   if (loading) {
@@ -211,17 +284,17 @@ export function AdminDisputesPage() {
                   </div>
 
                   <div className="flex flex-col justify-center gap-2 min-w-[140px]">
-                    <Button 
-                      variant="outline" 
-                      onClick={() => setSelectedDispute(dispute)}
+                    <Button
+                      variant="outline"
+                      onClick={() => handleResolveOpen(dispute)}
                       className="w-full"
                     >
                       <FiEye className="mr-2" /> View Details
                     </Button>
                     {dispute.status !== 'resolved' && (
-                      <Button 
+                      <Button
                         variant="primary"
-                        onClick={() => handleResolve(dispute.id)}
+                        onClick={() => handleResolveOpen(dispute)}
                         className="w-full"
                       >
                         Resolve Dispute
@@ -237,16 +310,32 @@ export function AdminDisputesPage() {
 
       {/* Detail Modal Placeholder */}
       {selectedDispute && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setSelectedDispute(null)}>
-          <Card className="max-w-2xl w-full mx-4" onClick={(e) => e?.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => {
+          setSelectedDispute(null);
+          setResolveModalOpen(false);
+          setResolveDecision('split');
+          setResolveReasoning('');
+        }}>
+          <Card className="max-w-3xl w-full mx-auto max-h-[90vh] overflow-y-auto" onClick={(e) => e?.stopPropagation()}>
             <div className="p-6">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Dispute Details</h3>
-              
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Dispute Details</h3>
+                <button
+                  onClick={() => {
+                    setSelectedDispute(null);
+                    setResolveModalOpen(false);
+                  }}
+                  className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                >
+                  <FiAlertCircle className="w-6 h-6" /> {/* Generic close icon substitution */}
+                </button>
+              </div>
+
               <div className="space-y-6">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                   <div>
                     <p className="text-sm text-gray-400 mb-1">Project</p>
-                    <p className="text-gray-900 dark:text-white font-medium">{selectedDispute.projectTitle}</p>
+                    <p className="text-gray-900 dark:text-white font-medium truncate" title={selectedDispute.projectTitle}>{selectedDispute.projectTitle}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-400 mb-1">Status</p>
@@ -255,8 +344,8 @@ export function AdminDisputesPage() {
                     </Badge>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-400 mb-1">Disputed Amount</p>
-                    <p className="text-gray-900 dark:text-white font-medium">N/A</p>
+                    <p className="text-sm text-gray-400 mb-1">Contract ID</p>
+                    <p className="text-gray-900 dark:text-white font-medium text-xs font-mono">{selectedDispute.contractId?.slice(0, 8)}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-400 mb-1">Date Raised</p>
@@ -266,15 +355,15 @@ export function AdminDisputesPage() {
 
                 <div className="bg-dark-bg p-4 rounded-lg border border-dark-border">
                   <p className="text-sm text-gray-400 mb-2">Reason for Dispute</p>
-                  <p className="text-gray-900 dark:text-white">{selectedDispute.reason}</p>
+                  <p className="text-gray-900 dark:text-white text-sm">{selectedDispute.reason}</p>
                 </div>
 
-                <div className="flex gap-4">
+                <div className="flex flex-col md:flex-row gap-4">
                   <div className="flex-1 bg-dark-bg p-4 rounded-lg border border-dark-border">
-                    <p className="text-sm text-gray-400 mb-2">Plaintiff</p>
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-primary-500/20 flex items-center justify-center text-primary-400">
-                        {selectedDispute.raisedByName?.charAt(0) || 'U'}
+                    <p className="text-sm text-gray-400 mb-2">Initiator</p>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary-500/20 flex items-center justify-center text-primary-400 font-bold">
+                        {selectedDispute.raisedByName?.charAt(0)?.toUpperCase() || 'U'}
                       </div>
                       <div>
                         <p className="text-gray-900 dark:text-white text-sm font-medium">{selectedDispute.raisedByName || 'Unknown'}</p>
@@ -283,10 +372,10 @@ export function AdminDisputesPage() {
                     </div>
                   </div>
                   <div className="flex-1 bg-dark-bg p-4 rounded-lg border border-dark-border">
-                    <p className="text-sm text-gray-400 mb-2">Defendant</p>
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center text-red-400">
-                        {selectedDispute.againstName?.charAt(0) || 'U'}
+                    <p className="text-sm text-gray-400 mb-2">Respondent</p>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center text-red-400 font-bold">
+                        {selectedDispute.againstName?.charAt(0)?.toUpperCase() || 'U'}
                       </div>
                       <div>
                         <p className="text-gray-900 dark:text-white text-sm font-medium">{selectedDispute.againstName || 'Unknown'}</p>
@@ -295,11 +384,70 @@ export function AdminDisputesPage() {
                     </div>
                   </div>
                 </div>
+
+                {resolveModalOpen && selectedDispute.status !== 'resolved' && (
+                  <div className="border border-primary-500/30 bg-primary-500/5 rounded-lg p-5 mt-6">
+                    <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Resolve Dispute</h4>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Decision
+                        </label>
+                        <select
+                          value={resolveDecision}
+                          onChange={(e) => setResolveDecision(e.target.value as any)}
+                          className="w-full px-4 py-2 bg-white dark:bg-dark-bg border border-gray-300 dark:border-dark-border rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                        >
+                          <option value="split">Split Escrow (50/50)</option>
+                          <option value="freelancer_favor">Favor Freelancer (Release Funds)</option>
+                          <option value="employer_favor">Favor Employer (Refund Funds)</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Reasoning (Required)
+                        </label>
+                        <textarea
+                          value={resolveReasoning}
+                          onChange={(e) => setResolveReasoning(e.target.value)}
+                          placeholder="Provide the reasoning for this administrative decision..."
+                          rows={4}
+                          className="w-full px-4 py-2 bg-white dark:bg-dark-bg border border-gray-300 dark:border-dark-border rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 placeholder-gray-400"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              <div className="mt-8 flex justify-end gap-3">
-                <Button variant="ghost" onClick={() => setSelectedDispute(null)}>Close</Button>
-                <Button variant="primary">View Evidence</Button>
+              <div className="mt-8 pt-6 border-t border-gray-100 dark:border-dark-border flex flex-col sm:flex-row justify-between items-center gap-4">
+                <Link to={`/disputes/${selectedDispute.id}`} className="w-full sm:w-auto">
+                  <Button variant="outline" className="w-full">
+                    View Full Evidence
+                  </Button>
+                </Link>
+
+                <div className="flex gap-3 w-full sm:w-auto">
+                  <Button variant="ghost" className="flex-1 sm:flex-none" onClick={() => {
+                    setSelectedDispute(null);
+                    setResolveModalOpen(false);
+                  }}>
+                    Close
+                  </Button>
+
+                  {resolveModalOpen && selectedDispute.status !== 'resolved' && (
+                    <Button
+                      variant="primary"
+                      onClick={submitResolution}
+                      disabled={resolving || !resolveReasoning.trim()}
+                      className="flex-1 sm:flex-none whitespace-nowrap"
+                    >
+                      {resolving ? <Loader size="sm" /> : 'Submit Resolution'}
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           </Card>

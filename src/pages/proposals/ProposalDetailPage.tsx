@@ -9,10 +9,12 @@ import {
   FileText,
   CheckCircle,
   XCircle,
-  Mail
+  Mail,
+  AlertCircle
 } from 'lucide-react';
 import { Card, CardHeader, Button, StatusBadge, PageLoader } from '../../components/ui';
 import { useAuthStore } from '../../store';
+import { useToast } from '../../contexts/ToastContext';
 import api from '../../lib/api';
 import type { Proposal } from '../../types';
 import { format } from 'date-fns';
@@ -21,8 +23,10 @@ export function ProposalDetailPage() {
   const { projectId, proposalId } = useParams<{ projectId: string; proposalId: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const { success, error: showError } = useToast();
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     const fetchProposal = async () => {
@@ -42,22 +46,50 @@ export function ProposalDetailPage() {
   }, [proposalId, projectId, navigate]);
 
   const handleAccept = async () => {
-    if (!proposalId) return;
+    if (!proposalId || actionLoading) return;
+    
+    setActionLoading(true);
     try {
       await api.acceptProposal(proposalId);
+      success('Proposal accepted successfully!', 'Success');
       navigate(`/projects/${projectId}`);
-    } catch (error) {
-      console.error('Error accepting proposal:', error);
+    } catch (err: any) {
+      console.error('Error accepting proposal:', err);
+      
+      // Show specific error messages based on error code
+      if (err.code === 'CSRF_VALIDATION_FAILED') {
+        showError('Security token expired. Please refresh the page and try again.', 'Error');
+      } else if (err.code === 'KYC_REQUIRED') {
+        showError('Identity verification is required. Please complete KYC verification first.', 'KYC Required');
+      } else if (err.code === 'AUTH_FORBIDDEN') {
+        showError('Only employers can accept proposals.', 'Permission Denied');
+      } else if (err.code === 'UNAUTHORIZED') {
+        showError('You are not authorized to accept proposals for this project.', 'Unauthorized');
+      } else if (err.code === 'NO_MILESTONES') {
+        showError('Project must have milestones defined before accepting a proposal.', 'Milestones Required');
+      } else if (err.code === 'AMOUNT_MISMATCH') {
+        showError('Proposal rate must match the total project milestone amount.', 'Amount Mismatch');
+      } else {
+        showError(err.message || 'Failed to accept proposal. Please try again.', 'Error');
+      }
+    } finally {
+      setActionLoading(false);
     }
   };
 
   const handleReject = async () => {
-    if (!proposalId) return;
+    if (!proposalId || actionLoading) return;
+    
+    setActionLoading(true);
     try {
       await api.rejectProposal(proposalId);
+      success('Proposal rejected.', 'Success');
       navigate(`/projects/${projectId}`);
-    } catch (error) {
-      console.error('Error rejecting proposal:', error);
+    } catch (err: any) {
+      console.error('Error rejecting proposal:', err);
+      showError(err.message || 'Failed to reject proposal. Please try again.', 'Error');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -177,11 +209,20 @@ export function ProposalDetailPage() {
             <Card>
               <CardHeader title="Actions" description="Review and respond to this proposal" />
               <div className="flex gap-3">
-                <Button onClick={handleAccept} className="flex-1">
+                <Button 
+                  onClick={handleAccept} 
+                  className="flex-1"
+                  disabled={actionLoading}
+                >
                   <CheckCircle className="w-4 h-4" />
-                  Accept Proposal
+                  {actionLoading ? 'Processing...' : 'Accept Proposal'}
                 </Button>
-                <Button onClick={handleReject} variant="outline" className="flex-1">
+                <Button 
+                  onClick={handleReject} 
+                  variant="outline" 
+                  className="flex-1"
+                  disabled={actionLoading}
+                >
                   <XCircle className="w-4 h-4" />
                   Reject
                 </Button>

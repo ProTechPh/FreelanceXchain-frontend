@@ -4,19 +4,25 @@ import {
   Plus,
   Trash2,
   Save,
-  Shield
+  Shield,
+  Wallet,
+  CheckCircle2,
+  XCircle
 } from 'lucide-react';
 import { Card, CardHeader, Button, Input, PageLoader } from '../../components/ui';
 import { KycBanner } from '../../components/KycBanner';
 import { ReputationCard } from '../../components/ReputationCard';
-import { useAuthStore, useProfileStore } from '../../store';
+import { useAuthStore, useProfileStore, useWalletStore } from '../../store';
 import { useKycGuard } from '../../hooks/useKycGuard';
+import { useToast } from '../../contexts/ToastContext';
 import api from '../../lib/api';
 import type { SkillCategory, Skill, WorkExperience } from '../../types';
 
 export function ProfilePage() {
   const { user } = useAuthStore();
   const { isKycApproved } = useKycGuard();
+  const { address, isConnected, connect, balance } = useWalletStore();
+  const { showToast } = useToast();
   const {
     freelancerProfile,
     employerProfile,
@@ -30,6 +36,7 @@ export function ProfilePage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [connectingWallet, setConnectingWallet] = useState(false);
   const [categories, setCategories] = useState<SkillCategory[]>([]);
   const [skills, setSkills] = useState<Skill[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -135,6 +142,11 @@ export function ProfilePage() {
           hourlyRate: parseFloat(freelancerForm.hourlyRate),
           availability: freelancerForm.availability,
         });
+        showToast({
+          type: 'success',
+          title: 'Profile Updated',
+          message: 'Your freelancer profile has been updated successfully.',
+        });
       } else {
         await updateEmployerProfile({
           name: employerForm.name,
@@ -143,11 +155,42 @@ export function ProfilePage() {
           description: employerForm.description,
           industry: employerForm.industry,
         });
+        showToast({
+          type: 'success',
+          title: 'Profile Updated',
+          message: 'Your company profile has been updated successfully.',
+        });
       }
     } catch (error) {
       console.error('Error saving profile:', error);
+      showToast({
+        type: 'error',
+        title: 'Update Failed',
+        message: error instanceof Error ? error.message : 'Failed to update profile. Please try again.',
+      });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleWalletConnect = async () => {
+    setConnectingWallet(true);
+    try {
+      await connect();
+      showToast({
+        type: 'success',
+        title: 'Wallet Connected',
+        message: 'Your wallet has been connected successfully.',
+      });
+    } catch (error) {
+      console.error('Error connecting wallet:', error);
+      showToast({
+        type: 'error',
+        title: 'Connection Failed',
+        message: error instanceof Error ? error.message : 'Failed to connect wallet. Please try again.',
+      });
+    } finally {
+      setConnectingWallet(false);
     }
   };
 
@@ -549,42 +592,103 @@ export function ProfilePage() {
           </Card>
         </>
       ) : (
-        /* Employer Details */
-        <Card data-tour-id="employer-profile-section">
-          <CardHeader
-            title="Company Details"
-            description="Information about your company"
-          />
-          <div className="space-y-4">
-            <Input
-              label="Company Name"
-              value={employerForm.companyName}
-              onChange={(e) => setEmployerForm({ ...employerForm, companyName: e.target.value })}
-              placeholder="Your company name"
-              disabled={!isKycApproved}
+        <>
+          {/* Employer Details */}
+          <Card data-tour-id="employer-profile-section">
+            <CardHeader
+              title="Company Details"
+              description="Information about your company"
             />
-            <Input
-              label="Industry"
-              value={employerForm.industry}
-              onChange={(e) => setEmployerForm({ ...employerForm, industry: e.target.value })}
-              placeholder="e.g., Technology, Finance, Healthcare"
-              disabled={!isKycApproved}
-            />
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Company Description
-              </label>
-              <textarea
-                value={employerForm.description}
-                onChange={(e) => setEmployerForm({ ...employerForm, description: e.target.value })}
-                rows={4}
-                className="w-full bg-white dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-lg px-4 py-2 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                placeholder="Tell freelancers about your company..."
+            <div className="space-y-4">
+              <Input
+                label="Company Name"
+                value={employerForm.companyName}
+                onChange={(e) => setEmployerForm({ ...employerForm, companyName: e.target.value })}
+                placeholder="Your company name"
                 disabled={!isKycApproved}
               />
+              <Input
+                label="Industry"
+                value={employerForm.industry}
+                onChange={(e) => setEmployerForm({ ...employerForm, industry: e.target.value })}
+                placeholder="e.g., Technology, Finance, Healthcare"
+                disabled={!isKycApproved}
+              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Company Description
+                </label>
+                <textarea
+                  value={employerForm.description}
+                  onChange={(e) => setEmployerForm({ ...employerForm, description: e.target.value })}
+                  rows={4}
+                  className="w-full bg-white dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-lg px-4 py-2 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:border-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  placeholder="Tell freelancers about your company..."
+                  disabled={!isKycApproved}
+                />
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+
+          {/* Wallet Connection Card for Employers */}
+          <Card>
+            <CardHeader
+              title="Wallet Connection"
+              description="Connect your wallet for blockchain transactions"
+            />
+            <div className="space-y-4">
+              {isConnected ? (
+                <div className="p-4 bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-green-900 dark:text-green-100 font-medium mb-1">Wallet Connected</h4>
+                      <p className="text-green-700 dark:text-green-300 text-sm mb-2">
+                        Your wallet is connected and ready for transactions
+                      </p>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm text-green-600 dark:text-green-400 font-medium">Address:</span>
+                          <span className="text-sm text-green-800 dark:text-green-200 font-mono break-all">
+                            {address}
+                          </span>
+                        </div>
+                        {balance && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-green-600 dark:text-green-400 font-medium">Balance:</span>
+                            <span className="text-sm text-green-800 dark:text-green-200 font-mono">
+                              {parseFloat(balance).toFixed(4)} ETH
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <XCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <h4 className="text-amber-900 dark:text-amber-100 font-medium mb-1">No Wallet Connected</h4>
+                      <p className="text-amber-700 dark:text-amber-300 text-sm mb-3">
+                        Connect your wallet to manage escrow payments, create projects, and interact with smart contracts
+                      </p>
+                      <Button 
+                        onClick={handleWalletConnect} 
+                        disabled={connectingWallet}
+                        className="inline-flex items-center gap-2"
+                      >
+                        <Wallet className="w-4 h-4" />
+                        {connectingWallet ? 'Connecting...' : 'Connect Wallet'}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </Card>
+        </>
       )}
     </div>
   );

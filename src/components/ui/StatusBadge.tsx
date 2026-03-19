@@ -21,6 +21,12 @@ export function StatusBadge({ status, className, showIcon = true }: StatusBadgeP
       icon: Clock,
       label: 'Pending',
     },
+    in_progress: {
+      color: 'text-blue-400',
+      bg: 'bg-blue-500/10 border-blue-500/20',
+      icon: Loader,
+      label: 'In Progress',
+    },
     completed: {
       color: 'text-blue-400',
       bg: 'bg-blue-500/10 border-blue-500/20',
@@ -75,9 +81,23 @@ export function StatusBadge({ status, className, showIcon = true }: StatusBadgeP
       icon: Loader,
       label: 'Processing',
     },
+    submitted: {
+      color: 'text-blue-400',
+      bg: 'bg-blue-500/10 border-blue-500/20',
+      icon: Clock,
+      label: 'Submitted',
+    },
+    approved: {
+      color: 'text-green-400',
+      bg: 'bg-green-500/10 border-green-500/20',
+      icon: CheckCircle,
+      label: 'Approved',
+    },
   };
 
-  const config = statusConfig[status.toLowerCase()] || statusConfig.pending;
+  // Guard against undefined/null status strings gracefully
+  const normalizedStatus = (status || 'pending').toLowerCase();
+  const config = statusConfig[normalizedStatus] || statusConfig.pending;
   const Icon = config.icon;
 
   return (

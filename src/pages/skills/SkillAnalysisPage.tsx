@@ -1,63 +1,26 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../lib/api';
-import type { SkillGapAnalysis, ExtractedSkill } from '../../types';
+import type { ExtractedSkill } from '../../types';
+import { useAICacheStore } from '../../store';
 import { Card, Button, Badge, Loader } from '../../components/ui';
 import { FiSearch, FiCheck, FiTrendingUp, FiAlertCircle, FiBook, FiExternalLink, FiZap } from 'react-icons/fi';
 
 export function SkillAnalysisPage() {
-  const [analysis, setAnalysis] = useState<SkillGapAnalysis | null>(null);
+  const { skillAnalysis: analysis, skillAnalysisLoading: loading, skillAnalysisError, fetchSkillAnalysis } = useAICacheStore();
   const [extractedSkills, setExtractedSkills] = useState<ExtractedSkill[]>([]);
-  const [loading, setLoading] = useState(false);
   const [extractLoading, setExtractLoading] = useState(false);
   const [textToAnalyze, setTextToAnalyze] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [extractError, setExtractError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'gap' | 'extract'>('gap');
 
-  useEffect(() => {
-    if (activeTab === 'gap' && !analysis && !loading) {
-      console.log('[SkillAnalysis] Auto-fetching initial analysis');
-      fetchSkillGapAnalysis();
-    }
-  }, [activeTab]);
+  const displayError = activeTab === 'gap' ? skillAnalysisError : extractError;
 
-  const fetchSkillGapAnalysis = async () => {
-    console.log('[SkillAnalysis] === FETCH START ===');
-    setLoading(true);
-    setError(null);
-    setAnalysis(null); // Clear previous analysis to show loading state
-    
-    try {
-      console.log('[SkillAnalysis] Calling API...');
-      const data = await api.getSkillGaps();
-      console.log('[SkillAnalysis] API responded with data:', JSON.stringify(data).substring(0, 200));
-      
-      if (data) {
-        console.log('[SkillAnalysis] Setting analysis state...');
-        setAnalysis(data);
-        // Force a small delay to ensure state updates propagate
-        await new Promise(resolve => setTimeout(resolve, 50));
-        console.log('[SkillAnalysis] Analysis state set');
-      } else {
-        console.warn('[SkillAnalysis] Received null/undefined data');
-        setError('No data received from server');
-      }
-    } catch (err: any) {
-      console.error('[SkillAnalysis] ERROR caught:', err);
-      const errorMessage = err?.message || 'Failed to load skill gap analysis';
-      setError(errorMessage);
-      // Set empty analysis to show the UI
-      setAnalysis({
-        currentSkills: [],
-        recommendedSkills: [],
-        marketDemand: [],
-        reasoning: 'Unable to generate analysis. Please ensure you have skills added to your profile and try again.'
-      });
-    }
-    
-    // ALWAYS set loading to false, no matter what
-    console.log('[SkillAnalysis] Setting loading to FALSE');
-    setLoading(false);
-    console.log('[SkillAnalysis] === FETCH END ===');
+  useEffect(() => {
+    fetchSkillAnalysis(); // no-op if already cached
+  }, []);
+
+  const fetchSkillGapAnalysis = () => {
+    fetchSkillAnalysis(true); // force refresh
   };
 
   const handleExtractSkills = async () => {
@@ -65,7 +28,7 @@ export function SkillAnalysisPage() {
 
     console.log('[SkillExtract] === EXTRACT START ===');
     setExtractLoading(true);
-    setError(null);
+    setExtractError(null);
     setExtractedSkills([]); // Clear previous results
     
     try {
@@ -78,12 +41,12 @@ export function SkillAnalysisPage() {
         console.log('[SkillExtract] State updated with', data.length, 'skills');
       } else {
         console.warn('[SkillExtract] Received null/undefined data');
-        setError('No skills extracted from text');
+        setExtractError('No skills extracted from text');
       }
     } catch (err: any) {
       console.error('[SkillExtract] ERROR:', err);
       const errorMessage = err?.message || 'Failed to extract skills from text';
-      setError(errorMessage);
+      setExtractError(errorMessage);
     }
     
     // ALWAYS set loading to false
@@ -91,9 +54,6 @@ export function SkillAnalysisPage() {
     setExtractLoading(false);
     console.log('[SkillExtract] === EXTRACT END ===');
   };
-
-  // Debug logging for render state
-  console.log('[SkillAnalysis] Render - loading:', loading, 'analysis:', analysis ? 'present' : 'null', 'error:', error);
 
   return (
     <div className="space-y-6" data-tour-id="skill-analysis-main">
@@ -129,15 +89,15 @@ export function SkillAnalysisPage() {
         </button>
       </div>
 
-      {error && (
+      {displayError && (
         <Card className="bg-red-500/10 border-red-500/30">
           <div className="p-4">
             <div className="flex items-start gap-3">
               <FiAlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
                 <h4 className="text-red-400 font-medium mb-1">Error</h4>
-                <p className="text-red-300 text-sm">{error}</p>
-                {error.includes('timed out') && (
+                <p className="text-red-300 text-sm">{displayError}</p>
+                {displayError?.includes('timed out') && (
                   <div className="mt-3">
                     <p className="text-red-300/80 text-sm mb-2">
                       The AI service is taking longer than usual. This can happen during high load.
@@ -153,7 +113,7 @@ export function SkillAnalysisPage() {
                     </Button>
                   </div>
                 )}
-                {error.includes('Failed to load') && !error.includes('timed out') && (
+                {displayError?.includes('Failed to load') && !displayError?.includes('timed out') && (
                   <p className="text-red-300/80 text-sm mt-2">
                     This feature requires:
                     <ul className="list-disc list-inside mt-1 ml-2">
@@ -239,19 +199,25 @@ export function SkillAnalysisPage() {
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white">Market Demand Skills</h3>
                   </div>
                   <div className="space-y-3">
-                    {analysis.marketDemand.map((item, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-dark-bg rounded-lg">
-                        <span className="text-gray-900 dark:text-white">{item.skillName}</span>
-                        <Badge
-                          variant={
-                            item.demandLevel === 'high' ? 'success' :
-                              item.demandLevel === 'medium' ? 'warning' : 'default'
-                          }
-                        >
-                          {item.demandLevel.charAt(0).toUpperCase() + item.demandLevel.slice(1)} Demand
-                        </Badge>
-                      </div>
-                    ))}
+                    {analysis.marketDemand.map((item, idx) => {
+                      // Safely handle missing or invalid demandLevel
+                      const demandLevel = item.demandLevel || 'low';
+                      const demandLabel = demandLevel.charAt(0).toUpperCase() + demandLevel.slice(1);
+                      
+                      return (
+                        <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-dark-bg rounded-lg">
+                          <span className="text-gray-900 dark:text-white">{item.skillName}</span>
+                          <Badge
+                            variant={
+                              demandLevel === 'high' ? 'success' :
+                                demandLevel === 'medium' ? 'warning' : 'default'
+                            }
+                          >
+                            {demandLabel} Demand
+                          </Badge>
+                        </div>
+                      );
+                    })}
                     {analysis.marketDemand.length === 0 && (
                       <p className="text-gray-600 dark:text-gray-400">No market demand data available.</p>
                     )}

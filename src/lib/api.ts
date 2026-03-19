@@ -12,6 +12,7 @@ import type {
   Project,
   CreateProjectInput,
   AddMilestonesInput,
+  Milestone,
   Proposal,
   SubmitProposalInput,
   Contract,
@@ -20,6 +21,7 @@ import type {
   CreateDisputeInput,
   SubmitEvidenceInput,
   ResolveDisputeInput,
+  RefundRequest,
   Notification,
   KycVerification,
   ProjectRecommendation,
@@ -98,10 +100,12 @@ class ApiClient {
 
   private async request<T>(
     endpoint: string,
-    options: RequestInit = {}
+    options: RequestInit = {},
+    hasRetriedCsrf = false
   ): Promise<T> {
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
+      'Cache-Control': 'no-cache',
       ...options.headers,
     };
 
@@ -127,8 +131,10 @@ class ApiClient {
 
     // Add timeout to prevent indefinite waiting
     // AI endpoints get longer timeout (300s = 5 minutes) since LLM can be slow
+    // Blockchain endpoints get medium timeout (120s) since on-chain transactions take time
     const isAIEndpoint = endpoint.startsWith('/matching');
-    const timeoutMs = isAIEndpoint ? 300000 : 30000;
+    const isBlockchainEndpoint = endpoint.startsWith('/reputation') || endpoint.startsWith('/payments') || endpoint.startsWith('/disputes');
+    const timeoutMs = isAIEndpoint ? 300000 : isBlockchainEndpoint ? 120000 : 30000;
     
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
@@ -175,15 +181,57 @@ class ApiClient {
         const errorBody = await response.json().catch(() => ({}));
         const apiErrorMessage = errorBody.error?.message || response.statusText;
         const errorCode = errorBody.error?.code;
-        
+        const method = (options.method || 'GET').toUpperCase();
+        const isStateChanging = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method);
+
+        // Handle USER_SUSPENDED error - logout immediately
+        if (errorCode === 'USER_SUSPENDED') {
+          this.handleAuthFailure();
+          const error: any = new Error(apiErrorMessage || 'Your account has been suspended');
+          error.code = errorCode;
+          error.status = response.status;
+          error.isSuspended = true;
+          throw error;
+        }
+
         // Handle MFA_REQUIRED error - trigger modal for admins
         if (errorCode === 'MFA_REQUIRED' && mfaRequiredCallback) {
           mfaRequiredCallback();
         }
         
+        // Handle CSRF validation failures - try to refetch token and show helpful message
+        if (errorCode === 'CSRF_VALIDATION_FAILED' || response.status === 403) {
+          console.error('[CSRF] Validation failed:', errorBody);
+          
+          // Retry once automatically for state-changing requests by refreshing the CSRF token.
+          if (
+            errorCode === 'CSRF_VALIDATION_FAILED' &&
+            this.accessToken &&
+            isStateChanging &&
+            !hasRetriedCsrf &&
+            !endpoint.startsWith('/auth/csrf-token')
+          ) {
+            try {
+              await this.fetchCsrfToken();
+              return this.request<T>(endpoint, options, true);
+            } catch (retryError) {
+              console.error('[CSRF] Retry after token refresh failed:', retryError);
+            }
+          }
+
+          // If it's a CSRF error, try to fetch a new token for next time
+          if (errorCode === 'CSRF_VALIDATION_FAILED' && this.accessToken) {
+            console.log('[CSRF] Attempting to fetch new token...');
+            this.fetchCsrfToken().catch(err => {
+              console.error('[CSRF] Failed to fetch new token:', err);
+            });
+          }
+        }
+        
         const error: any = new Error(this.sanitizeApiError(apiErrorMessage, response.status));
         error.response = errorBody; // Attach full response for debugging
         error.code = errorCode; // Attach error code
+        error.status = response.status; // Attach status code
         throw error;
       }
 
@@ -207,8 +255,9 @@ class ApiClient {
       // Handle abort/timeout errors
       if (error.name === 'AbortError') {
         console.error('[API] Request aborted due to timeout:', endpoint);
+        const serviceLabel = isAIEndpoint ? 'AI service' : isBlockchainEndpoint ? 'blockchain service' : 'server';
         const timeoutError: any = new Error(
-          `Request timed out after ${timeoutMs / 1000} seconds. The AI service may be experiencing high load. Please try again.`
+          `Request timed out after ${timeoutMs / 1000} seconds. The ${serviceLabel} may be experiencing high load. Please try again.`
         );
         timeoutError.isTimeout = true;
         throw timeoutError;
@@ -387,11 +436,17 @@ class ApiClient {
    */
   async fetchCsrfToken(): Promise<void> {
     try {
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json',
+      };
+
+      if (this.accessToken) {
+        (headers as Record<string, string>)['Authorization'] = `Bearer ${this.accessToken}`;
+      }
+
       const response = await fetch(`${API_BASE}/auth/csrf-token`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         credentials: 'include', // Important: Include cookies for CSRF token
         body: JSON.stringify({}),
       });
@@ -458,6 +513,13 @@ class ApiClient {
     return this.request<{ user: User }>('/auth/me');
   }
 
+  async updateWalletAddress(walletAddress: string): Promise<{ message: string; walletAddress: string }> {
+    return this.request<{ message: string; walletAddress: string }>('/auth/wallet', {
+      method: 'PATCH',
+      body: JSON.stringify({ walletAddress }),
+    });
+  }
+
   getOAuthUrl(provider: string): string {
     return `${API_BASE}/auth/oauth/${provider}`;
   }
@@ -481,7 +543,12 @@ class ApiClient {
   async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
     return this.request<{ message: string }>('/auth/reset-password', {
       method: 'POST',
-      body: JSON.stringify({ token, newPassword }),
+      body: JSON.stringify({
+        token,
+        newPassword,
+        accessToken: token,
+        password: newPassword,
+      }),
     });
   }
 
@@ -612,6 +679,55 @@ class ApiClient {
     });
   }
 
+  async createProjectWithAttachments(data: CreateProjectInput, files: File[]): Promise<Project> {
+    const formData = new FormData();
+    
+    // Add text fields
+    formData.append('title', data.title);
+    formData.append('description', data.description);
+    formData.append('requiredSkills', JSON.stringify(data.requiredSkills));
+    formData.append('budget', data.budget.toString());
+    formData.append('deadline', data.deadline);
+    
+    // Add optional tags
+    if (data.tags && data.tags.length > 0) {
+      formData.append('tags', JSON.stringify(data.tags));
+    }
+    
+    // Add files
+    files.forEach(file => {
+      formData.append('files', file);
+    });
+    
+    // Get CSRF token
+    const csrfToken = this.getCsrfTokenFromCookie();
+    
+    // Make request without Content-Type header (browser sets it with boundary)
+    const headers: HeadersInit = {};
+    
+    if (this.accessToken) {
+      (headers as Record<string, string>)['Authorization'] = `Bearer ${this.accessToken}`;
+    }
+    
+    if (csrfToken) {
+      (headers as Record<string, string>)['X-CSRF-Token'] = csrfToken;
+    }
+    
+    const response = await fetch(`${API_BASE}/projects/with-attachments`, {
+      method: 'POST',
+      headers,
+      credentials: 'include',
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: { message: 'Failed to create project' } }));
+      throw new Error(errorData.error?.message || 'Failed to create project');
+    }
+    
+    return response.json();
+  }
+
   async getProjects(params?: Record<string, string | number>): Promise<PaginatedResponse<Project>> {
     const query = params
       ? `?${new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)])).toString()}`
@@ -679,6 +795,9 @@ class ApiClient {
   }
 
   async acceptProposal(id: string): Promise<{ proposal: Proposal; contract: Contract }> {
+    // Ensure CSRF token is available before making the request
+    await this.ensureCsrfToken();
+    
     return this.request<{ proposal: Proposal; contract: Contract }>(`/proposals/${id}/accept`, {
       method: 'POST',
     });
@@ -706,6 +825,159 @@ class ApiClient {
 
   async getContract(id: string): Promise<Contract> {
     return this.request<Contract>(`/contracts/${id}`);
+  }
+
+  async fundContract(contractId: string, escrowAddress?: string, transactionHash?: string): Promise<{ message: string; escrowAddress: string; contractStatus: string }> {
+    return this.request<{ message: string; escrowAddress: string; contractStatus: string }>(`/contracts/${contractId}/fund`, {
+      method: 'POST',
+      body: JSON.stringify({ escrowAddress, transactionHash }),
+    });
+  }
+
+  async getFundInfo(contractId: string): Promise<{
+    contractId: string;
+    freelancerWallet: string;
+    platformWallet: string;
+    milestoneAmounts: string[];
+    milestoneDescriptions: string[];
+    totalAmount: string;
+  }> {
+    return this.request(`/contracts/${contractId}/fund-info`);
+  }
+
+  // =====================
+  // Milestone File Upload Endpoints
+  // =====================
+  async uploadMilestoneDeliverables(
+    milestoneId: string,
+    files: File[]
+  ): Promise<{
+    success: boolean;
+    files: Array<{
+      filename: string;
+      url: string;
+      size: number;
+      mimeType: string;
+    }>;
+    message: string;
+  }> {
+    const formData = new FormData();
+    files.forEach(file => {
+      formData.append('files', file);
+    });
+
+    await this.ensureCsrfToken();
+
+    const buildHeaders = (): HeadersInit => {
+      const headers: HeadersInit = {};
+      if (this.accessToken) {
+        (headers as Record<string, string>)['Authorization'] = `Bearer ${this.accessToken}`;
+      }
+      const csrfToken = this.getCsrfTokenFromCookie();
+      if (csrfToken) {
+        (headers as Record<string, string>)['X-CSRF-Token'] = csrfToken;
+      }
+      return headers;
+    };
+
+    const doRequest = () => fetch(`${API_BASE}/milestones/${milestoneId}/upload-deliverables`, {
+      method: 'POST',
+      headers: buildHeaders(),
+      credentials: 'include',
+      body: formData,
+    });
+
+    let response = await doRequest();
+
+    // Retry once on CSRF mismatch by refreshing token
+    if (response.status === 403) {
+      const csrfError = await response.clone().json().catch(() => null);
+      if (csrfError?.error?.code === 'CSRF_VALIDATION_FAILED') {
+        await this.fetchCsrfToken();
+        response = await doRequest();
+      }
+    }
+
+    if (!response.ok) {
+      const errorBody = await response.json().catch(() => ({}));
+      const message =
+        (typeof errorBody.error === 'string' ? errorBody.error : errorBody.error?.message) ||
+        'Failed to upload files';
+      throw new Error(message);
+    }
+
+    return response.json();
+  }
+
+  async submitMilestoneWithFiles(
+    milestoneId: string,
+    files: File[],
+    notes?: string,
+    existingDeliverables?: Array<{
+      filename: string;
+      url: string;
+      size: number;
+      mimeType: string;
+    }>
+  ): Promise<Milestone> {
+    const formData = new FormData();
+    
+    files.forEach(file => {
+      formData.append('files', file);
+    });
+    
+    if (notes !== undefined) {
+      formData.append('notes', notes);
+    }
+    
+    if (existingDeliverables && existingDeliverables.length > 0) {
+      const serialized = JSON.stringify(existingDeliverables);
+      formData.append('existingDeliverables', serialized);
+      // Backward/forward compatibility across backend field naming
+      formData.append('attachments', serialized);
+    }
+
+    await this.ensureCsrfToken();
+
+    const buildHeaders = (): HeadersInit => {
+      const headers: HeadersInit = {};
+      if (this.accessToken) {
+        (headers as Record<string, string>)['Authorization'] = `Bearer ${this.accessToken}`;
+      }
+      const csrfToken = this.getCsrfTokenFromCookie();
+      if (csrfToken) {
+        (headers as Record<string, string>)['X-CSRF-Token'] = csrfToken;
+      }
+      return headers;
+    };
+
+    const doRequest = () => fetch(`${API_BASE}/milestones/${milestoneId}/submit-with-files`, {
+      method: 'POST',
+      headers: buildHeaders(),
+      credentials: 'include',
+      body: formData,
+    });
+
+    let response = await doRequest();
+
+    // Retry once on CSRF mismatch by refreshing token
+    if (response.status === 403) {
+      const csrfError = await response.clone().json().catch(() => null);
+      if (csrfError?.error?.code === 'CSRF_VALIDATION_FAILED') {
+        await this.fetchCsrfToken();
+        response = await doRequest();
+      }
+    }
+
+    if (!response.ok) {
+      const errorBody = await response.json().catch(() => ({}));
+      const message =
+        (typeof errorBody.error === 'string' ? errorBody.error : errorBody.error?.message) ||
+        'Failed to submit milestone';
+      throw new Error(message);
+    }
+
+    return response.json();
   }
 
   // =====================
@@ -771,6 +1043,33 @@ class ApiClient {
 
   async getContractDisputes(contractId: string): Promise<Dispute[]> {
     return this.request<Dispute[]>(`/disputes/contracts/${contractId}/disputes`);
+  }
+
+  // =====================
+  // Escrow Refund Endpoints
+  // =====================
+  async createRefundRequest(contractId: string, data: { reason: string; amount?: number }): Promise<RefundRequest> {
+    return this.request<RefundRequest>(`/escrow/${contractId}/refund-request`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getContractRefunds(contractId: string): Promise<RefundRequest[]> {
+    return this.request<RefundRequest[]>(`/escrow/${contractId}/refunds`);
+  }
+
+  async approveRefund(refundId: string): Promise<RefundRequest> {
+    return this.request<RefundRequest>(`/escrow/refunds/${refundId}/approve`, {
+      method: 'POST',
+    });
+  }
+
+  async rejectRefund(refundId: string, reason: string): Promise<RefundRequest> {
+    return this.request<RefundRequest>(`/escrow/refunds/${refundId}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ reason }),
+    });
   }
 
   // =====================
@@ -1152,31 +1451,97 @@ class ApiClient {
   // =====================
   // Message/Chat Endpoints
   // =====================
-  async getMessages(contractId: string, params?: { limit?: number; offset?: number }): Promise<import('../types').MessagePaginatedResponse> {
+  async getConversations(params?: { limit?: number; page?: number }): Promise<import('../types').ConversationPaginatedResponse> {
     const query = params
       ? `?${new URLSearchParams(Object.entries(params).filter(([_, v]) => v !== undefined).map(([k, v]) => [k, String(v)])).toString()}`
       : '';
-    return this.request<import('../types').MessagePaginatedResponse>(`/messages/${contractId}${query}`);
+    return this.request<import('../types').ConversationPaginatedResponse>(`/messages/conversations${query}`);
   }
 
-  async sendMessage(contractId: string, content: string): Promise<import('../types').Message> {
-    return this.request<import('../types').Message>(`/messages/${contractId}`, {
+  async findConversationWithUser(otherUserId: string): Promise<import('../types').Conversation | null> {
+    const limit = 100;
+    const maxPages = 100;
+    let page = 1;
+
+    while (page <= maxPages) {
+      const response = await this.getConversations({ limit, page });
+      const conversation = response.items.find(
+        (item) =>
+          item.otherUser?.id === otherUserId ||
+          item.participant1_id === otherUserId ||
+          item.participant2_id === otherUserId
+      );
+
+      if (conversation) {
+        return conversation;
+      }
+
+      if (!response.hasMore) {
+        break;
+      }
+
+      page += 1;
+    }
+
+    return null;
+  }
+
+  async getMessages(conversationId: string, params?: { limit?: number; page?: number }): Promise<import('../types').MessagePaginatedResponse> {
+    const query = params
+      ? `?${new URLSearchParams(Object.entries(params).filter(([_, v]) => v !== undefined).map(([k, v]) => [k, String(v)])).toString()}`
+      : '';
+    return this.request<import('../types').MessagePaginatedResponse>(`/messages/conversations/${conversationId}${query}`);
+  }
+
+  async sendMessage(
+    receiverId: string,
+    content: string,
+    attachments?: Array<{ url: string; filename: string; size: number; mimeType: string }>
+  ): Promise<import('../types').Message> {
+    await this.ensureCsrfToken();
+    return this.request<import('../types').Message>(`/messages/send`, {
       method: 'POST',
-      body: JSON.stringify({ content }),
+      body: JSON.stringify({
+        receiverId,
+        content,
+        ...(attachments !== undefined ? { attachments } : {}),
+      }),
     });
   }
 
-  async getUnreadMessageCount(contractId: string): Promise<{ count: number }> {
-    return this.request<{ count: number }>(`/messages/${contractId}/unread`);
+  async getUnreadMessageCount(): Promise<{ count: number }> {
+    return this.request<{ count: number }>(`/messages/unread-count`);
   }
 
-  async getConversationSummary(contractId: string): Promise<import('../types').ConversationSummary> {
-    return this.request<import('../types').ConversationSummary>(`/messages/${contractId}/summary`);
+  async markMessagesAsRead(conversationId: string): Promise<void> {
+    await this.ensureCsrfToken();
+    await this.request<{ message: string }>(`/messages/conversations/${conversationId}/read`, {
+      method: 'PATCH',
+    });
   }
 
-  async markMessagesAsRead(contractId: string): Promise<void> {
-    return this.request<void>(`/messages/${contractId}/read`, {
+  // =====================
+  // Email Preferences
+  // =====================
+  async getEmailPreferences(): Promise<Record<string, boolean>> {
+    return this.request<Record<string, boolean>>('/email-preferences');
+  }
+
+  async updateEmailPreferences(preferences: Record<string, boolean>): Promise<Record<string, boolean>> {
+    await this.ensureCsrfToken();
+    return this.request<Record<string, boolean>>('/email-preferences', {
+      method: 'PATCH',
+      body: JSON.stringify(preferences),
+    });
+  }
+
+  // =====================
+  // Account Management
+  // =====================
+  async requestPasswordChangeEmail(email: string): Promise<{ message: string }> {
+    return this.request<{ message: string }>('/auth/forgot-password', {
       method: 'POST',
+      body: JSON.stringify({ email }),
     });
   }
 }

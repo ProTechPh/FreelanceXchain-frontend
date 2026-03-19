@@ -4,6 +4,7 @@ import { Layout } from './components/layout/Layout';
 import { PublicLayout } from './components/layout/PublicLayout';
 import { KycProtectedRoute } from './components/KycProtectedRoute';
 import { ToastProvider } from './contexts/ToastContext';
+import { ChatProvider } from './contexts/ChatContext';
 import { useEffect } from 'react';
 
 // Pages
@@ -25,6 +26,7 @@ import { ProposalDetailPage } from './pages/proposals/ProposalDetailPage';
 import { NotificationsPage } from './pages/notifications/NotificationsPage';
 import { DisputesListPage } from './pages/disputes/DisputesListPage';
 import { DisputeDetailPage } from './pages/disputes/DisputeDetailPage';
+import { CreateDisputePage } from './pages/disputes/CreateDisputePage';
 import { KYCPage } from './pages/kyc/KYCPage';
 import { RecommendationsPage } from './pages/recommendations/RecommendationsPage';
 import { SkillAnalysisPage } from './pages/skills/SkillAnalysisPage';
@@ -148,10 +150,11 @@ function App() {
 
   return (
     <ToastProvider>
-      <Router>
-      <MfaProvider>
-      <TutorialProvider>
-      <Routes>
+      <ChatProvider>
+        <Router>
+          <MfaProvider>
+            <TutorialProvider>
+              <Routes>
         {/* Public Routes */}
         <Route path="/" element={<PublicLayout showMinimalHeader><LandingPage /></PublicLayout>} />
         <Route path="/how-it-works" element={<PublicLayout><HowItWorksPage /></PublicLayout>} />
@@ -184,7 +187,16 @@ function App() {
         <Route path="/mfa/challenge" element={<MfaChallengePage />} />
 
         {/* Public Project Routes */}
-        <Route path="/projects" element={<PublicLayout><ProjectListPage /></PublicLayout>} />
+        <Route
+          path="/projects"
+          element={
+            isAuthenticated ? (
+              <Layout><ProjectListPage /></Layout>
+            ) : (
+              <PublicLayout><ProjectListPage /></PublicLayout>
+            )
+          }
+        />
         <Route
           path="/projects/:id"
           element={
@@ -329,6 +341,18 @@ function App() {
               <KycProtectedRoute>
                 <Layout>
                   <ContractDetailPage />
+                </Layout>
+              </KycProtectedRoute>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/disputes/new"
+          element={
+            <ProtectedRoute>
+              <KycProtectedRoute>
+                <Layout>
+                  <CreateDisputePage />
                 </Layout>
               </KycProtectedRoute>
             </ProtectedRoute>
@@ -514,6 +538,7 @@ function App() {
       </TutorialProvider>
       </MfaProvider>
     </Router>
+      </ChatProvider>
     </ToastProvider>
   );
 }

@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { User, Briefcase, Wallet, Zap, ShieldCheck, AlertCircle, Smartphone } from 'lucide-react';
 import { useAuthStore } from '../../store';
 import { Button, Input, Card, Modal } from '../../components/ui';
-import { useToast } from '../../contexts/ToastContext';
 import api from '../../lib/api';
 import type { UserRole } from '../../types';
 

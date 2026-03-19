@@ -3,6 +3,7 @@ import { Navbar } from './Navbar';
 import { Sidebar } from './Sidebar';
 import { Footer } from './Footer';
 import { useAuthStore, useThemeStore } from '../../store';
+import { GlobalChat } from '../chat';
 
 interface LayoutProps {
   children: ReactNode;
@@ -44,6 +45,9 @@ export function Layout({ children }: LayoutProps) {
       </div>
 
       {!isAuthenticated && <Footer />}
+      
+      {/* Global Chat - Available on all authenticated pages */}
+      {isAuthenticated && <GlobalChat />}
     </div>
   );
 }

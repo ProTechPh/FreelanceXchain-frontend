@@ -22,6 +22,8 @@ export function KYCPage() {
   const [isPolling, setIsPolling] = useState(false);
   const [popupBlocked, setPopupBlocked] = useState(false);
   const [sessionUrl, setSessionUrl] = useState<string | null>(null);
+  const [retryAfter, setRetryAfter] = useState<string | null>(null);
+  const [cooldownHours, setCooldownHours] = useState<number>(0);
   const { showToast } = useToast();
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const pollingStartTimeRef = useRef<number | null>(null);
@@ -30,16 +32,16 @@ export function KYCPage() {
 
   useEffect(() => {
     fetchKycStatus();
-    
+
     // Auto-refresh status when user returns to tab
     const handleVisibilityChange = () => {
       if (!document.hidden && kycData && (kycData.status === 'pending' || kycData.status === 'in_progress')) {
         fetchKycStatus();
       }
     };
-    
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    
+
     // Cleanup polling and event listener on unmount
     return () => {
       if (pollingIntervalRef.current) {
@@ -48,6 +50,30 @@ export function KYCPage() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
+
+  // Calculate cooldown hours from retryAfter timestamp
+  useEffect(() => {
+    if (!retryAfter) {
+      setCooldownHours(0);
+      return;
+    }
+
+    const calculateCooldown = () => {
+      const now = new Date();
+      const retryTime = new Date(retryAfter);
+      const hoursRemaining = Math.max(0, Math.ceil((retryTime.getTime() - now.getTime()) / (1000 * 60 * 60)));
+      setCooldownHours(hoursRemaining);
+
+      if (hoursRemaining === 0) {
+        setRetryAfter(null);
+      }
+    };
+
+    calculateCooldown();
+    const interval = setInterval(calculateCooldown, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, [retryAfter]);
 
   const fetchKycStatus = async () => {
     try {
@@ -122,22 +148,45 @@ export function KYCPage() {
     setInitiating(true);
     try {
       const result = await api.initiateKycVerification();
-      
+
       showToast({
         type: 'success',
         title: 'Verification Session Created',
         message: 'Opening Didit verification in new tab...',
       });
 
+      // Clear any previous cooldown
+      setRetryAfter(null);
+      setCooldownHours(0);
+
       // Open in new tab instead of redirecting
       openInNewTab(result.didit_session_url);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error initiating KYC:', error);
-      showToast({
-        type: 'error',
-        title: 'Failed to Start Verification',
-        message: error instanceof Error ? error.message : 'Please try again later',
-      });
+
+      // Handle cooldown error
+      if (error.message && error.message.includes('wait') && error.message.includes('hour')) {
+        // Extract retryAfter from error if available
+        const match = error.message.match(/(\d+)\s+hour/);
+        if (match) {
+          const hours = parseInt(match[1]);
+          const retryTime = new Date(Date.now() + hours * 60 * 60 * 1000);
+          setRetryAfter(retryTime.toISOString());
+          setCooldownHours(hours);
+        }
+
+        showToast({
+          type: 'warning',
+          title: 'Cooldown Active',
+          message: error.message,
+        });
+      } else {
+        showToast({
+          type: 'error',
+          title: 'Failed to Start Verification',
+          message: error instanceof Error ? error.message : 'Please try again later',
+        });
+      }
     } finally {
       setInitiating(false);
     }
@@ -223,8 +272,9 @@ export function KYCPage() {
 
   // KYC Already Submitted - Show Status
   if (kycData) {
-    const canContinue = kycData.status === 'pending' || kycData.status === 'in_progress';
-    const canRestart = kycData.status === 'rejected' || kycData.status === 'expired';
+    const canContinue = kycData.status === 'in_progress';
+    const canRetry = kycData.status === 'pending' || kycData.status === 'rejected' || kycData.status === 'expired';
+    const isInCooldown = cooldownHours > 0;
 
     return (
       <div className="space-y-6 max-w-3xl mx-auto">
@@ -271,7 +321,7 @@ export function KYCPage() {
                       Continue Verification
                       <ExternalLink className="w-4 h-4 ml-2" />
                     </Button>
-                    
+
                     {isPolling && (
                       <Button
                         variant="secondary"
@@ -285,15 +335,33 @@ export function KYCPage() {
                   </>
                 )}
 
-                {canRestart && (
-                  <Button
-                    variant="primary"
-                    onClick={handleInitiateVerification}
-                    disabled={initiating}
-                    loading={initiating}
-                  >
-                    Start New Verification
-                  </Button>
+                {canRetry && (
+                  <>
+                    <Button
+                      variant="primary"
+                      onClick={handleInitiateVerification}
+                      disabled={initiating || isInCooldown}
+                      loading={initiating}
+                    >
+                      {isInCooldown ? (
+                        <>
+                          <Clock className="w-4 h-4 mr-2" />
+                          Retry in {cooldownHours}h
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="w-4 h-4 mr-2" />
+                          {kycData.status === 'pending' ? 'Retry Verification' : 'Start New Verification'}
+                        </>
+                      )}
+                    </Button>
+
+                    {isInCooldown && (
+                      <p className="text-sm text-gray-400 w-full text-center mt-2">
+                        You can retry verification in {cooldownHours} hour{cooldownHours !== 1 ? 's' : ''}
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
 

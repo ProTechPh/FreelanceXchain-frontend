@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Search,
@@ -11,10 +11,12 @@ import {
   Briefcase,
   TrendingUp,
   Plus,
-  Sparkles,
   Users,
   Target,
-  ArrowRight
+  ArrowRight,
+  Tag,
+  Wrench,
+  Paperclip
 } from 'lucide-react';
 import { Card, Button, StatusBadge, Badge, ProjectCardSkeleton } from '../../components/ui';
 import api from '../../lib/api';
@@ -37,6 +39,9 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
   const [selectedSkills, setSelectedSkills] = useState<string[]>(
     searchParams.get('skills')?.split(',').filter(Boolean) || []
   );
+  const [selectedTags, setSelectedTags] = useState<string[]>(
+    searchParams.get('tags')?.split(',').filter(Boolean) || []
+  );
   const [filters, setFilters] = useState({
     minBudget: searchParams.get('minBudget') || '',
     maxBudget: searchParams.get('maxBudget') || '',
@@ -48,6 +53,7 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
     activeProjects: 0,
     totalBudget: 0
   });
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
 
   // Fetch available skills for filter
   useEffect(() => {
@@ -62,7 +68,7 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
     fetchSkills();
   }, []);
 
-  const fetchProjects = async (loadMore = false) => {
+  const fetchProjects = useCallback(async (loadMore = false) => {
     setLoading(true);
     try {
       const params: Record<string, string | number> = {
@@ -75,6 +81,7 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
 
       if (searchTerm) params.keyword = searchTerm;
       if (selectedSkills.length > 0) params.skills = selectedSkills.join(',');
+      if (selectedTags.length > 0) params.tags = selectedTags.join(',');
       if (filters.minBudget) params.minBudget = parseFloat(filters.minBudget);
       if (filters.maxBudget) params.maxBudget = parseFloat(filters.maxBudget);
 
@@ -82,43 +89,61 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
         ? await api.getMyProjects(params)
         : await api.getProjects(params);
       
+      // Server-side filtering now handles tags
+      const filteredItems = response.items;
+      
       if (loadMore) {
-        setProjects(prev => [...prev, ...response.items]);
+        setProjects(prev => [...prev, ...filteredItems]);
       } else {
-        setProjects(response.items);
+        setProjects(filteredItems);
       }
       
       setHasMore(response.hasMore);
       setContinuationToken(response.continuationToken);
 
-      // Calculate stats
-      const activeProjects = response.items.filter((p: Project) => p.status === 'open').length;
-      const totalBudget = response.items.reduce((sum: number, p: Project) => {
-        const budget = typeof p.budget === 'string' ? parseFloat(p.budget) : p.budget;
-        return sum + (budget || 0);
-      }, 0);
-      setStats({
-        totalProjects: response.items.length,
-        activeProjects,
-        totalBudget
+      // Extract unique tags from all projects
+      const allTags = new Set<string>();
+      response.items.forEach((project: Project) => {
+        if (project.tags) {
+          project.tags.forEach(tag => allTags.add(tag));
+        }
       });
+      setAvailableTags(Array.from(allTags).sort());
+
+      // Calculate stats from response metadata if available, otherwise from current page
+      if ((response as any).stats) {
+        setStats((response as any).stats);
+      } else {
+        const activeProjects = filteredItems.filter((p: Project) => p.status === 'open').length;
+        const totalBudget = filteredItems.reduce((sum: number, p: Project) => {
+          // Ensure budget is always treated as a number
+          const budget = Number(p.budget);
+          return sum + (isNaN(budget) ? 0 : budget);
+        }, 0);
+        setStats({
+          totalProjects: filteredItems.length,
+          activeProjects,
+          totalBudget
+        });
+      }
     } catch (error) {
       console.error('Error fetching projects:', error);
       setProjects([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchTerm, selectedSkills, selectedTags, filters.minBudget, filters.maxBudget, showMyProjects, continuationToken]);
 
   useEffect(() => {
     fetchProjects();
-  }, [searchParams]);
+  }, [searchParams, fetchProjects]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const params = new URLSearchParams();
     if (searchTerm) params.set('keyword', searchTerm);
     if (selectedSkills.length > 0) params.set('skills', selectedSkills.join(','));
+    if (selectedTags.length > 0) params.set('tags', selectedTags.join(','));
     if (filters.minBudget) params.set('minBudget', filters.minBudget);
     if (filters.maxBudget) params.set('maxBudget', filters.maxBudget);
     setSearchParams(params);
@@ -132,14 +157,23 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
     );
   };
 
+  const toggleTag = (tag: string) => {
+    setSelectedTags(prev =>
+      prev.includes(tag)
+        ? prev.filter(t => t !== tag)
+        : [...prev, tag]
+    );
+  };
+
   const clearFilters = () => {
     setSearchTerm('');
     setSelectedSkills([]);
+    setSelectedTags([]);
     setFilters({ minBudget: '', maxBudget: '' });
     setSearchParams({});
   };
 
-  const hasActiveFilters = searchTerm || selectedSkills.length > 0 || filters.minBudget || filters.maxBudget;
+  const hasActiveFilters = searchTerm || selectedSkills.length > 0 || selectedTags.length > 0 || filters.minBudget || filters.maxBudget;
 
   const EmptyState = () => {
     if (hasActiveFilters) {
@@ -189,7 +223,7 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
                 : 'Sign up to access exclusive projects and start your freelancing journey.'}
             </p>
             {isAuthenticated && user?.role === 'employer' ? (
-              <Button onClick={() => navigate('/projects/create')}>
+              <Button onClick={() => navigate('/projects/new')}>
                 <Plus className="w-4 h-4 mr-2" />
                 Create Project
               </Button>
@@ -210,125 +244,44 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
   };
 
   return (
-    <div className="min-h-screen">
-      {/* Hero Section */}
-      <div className="relative bg-gradient-to-br from-primary-100/50 via-gray-50 to-white dark:from-primary-900/20 dark:via-dark-bg dark:to-dark-bg border-b border-gray-200 dark:border-dark-border">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnoiIHN0cm9rZT0iIzZCNzI4MCIgc3Ryb2tlLXdpZHRoPSIuNSIgb3BhY2l0eT0iLjEiLz48L2c+PC9zdmc+')] opacity-30"></div>
-        
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center max-w-3xl mx-auto"
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2, duration: 0.5 }}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-primary-500/10 border border-primary-500/20 rounded-full mb-6"
-            >
-              <Sparkles className="w-4 h-4 text-primary-600 dark:text-primary-400" />
-              <span className="text-sm font-medium text-primary-700 dark:text-primary-300">Discover Your Next Opportunity</span>
-            </motion.div>
-            
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 dark:text-white mb-4">
-              {showMyProjects ? (
-                <>
-                  My <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-indigo-400">Projects</span>
-                </>
-              ) : (
-                <>
-                  Browse <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-indigo-400">Blockchain-Powered</span> Projects
-                </>
-              )}
-            </h1>
-            <p className="text-lg text-gray-600 dark:text-gray-400 mb-8">
-              {showMyProjects
-                ? 'Manage your projects, track proposals, and monitor progress. All secured by blockchain technology.'
-                : 'Find projects that match your skills. Secure payments through smart contracts. Build your reputation on-chain.'}
-            </p>
-
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-4 sm:gap-8 max-w-2xl mx-auto">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3, duration: 0.5 }}
-                className="bg-white/50 dark:bg-dark-card/50 backdrop-blur-sm border border-gray-200 dark:border-dark-border rounded-xl p-4"
-              >
-                <div className="flex items-center justify-center gap-2 mb-1">
-                  <Briefcase className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-                </div>
-                <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{stats.totalProjects}</div>
-                <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total Projects</div>
-              </motion.div>
-              
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4, duration: 0.5 }}
-                className="bg-white/50 dark:bg-dark-card/50 backdrop-blur-sm border border-gray-200 dark:border-dark-border rounded-xl p-4"
-              >
-                <div className="flex items-center justify-center gap-2 mb-1">
-                  <Target className="w-5 h-5 text-green-600 dark:text-green-400" />
-                </div>
-                <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{stats.activeProjects}</div>
-                <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Active Now</div>
-              </motion.div>
-              
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5, duration: 0.5 }}
-                className="bg-white/50 dark:bg-dark-card/50 backdrop-blur-sm border border-gray-200 dark:border-dark-border rounded-xl p-4"
-              >
-                <div className="flex items-center justify-center gap-2 mb-1">
-                  <DollarSign className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-                </div>
-                <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">{stats.totalBudget.toFixed(2)}</div>
-                <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">ETH Available</div>
-              </motion.div>
-            </div>
-          </motion.div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {showMyProjects ? 'My Projects' : 'Browse Projects'}
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            {showMyProjects
+              ? 'Manage your projects, track proposals, and monitor progress'
+              : 'Find projects that match your skills and start building your reputation'}
+          </p>
         </div>
+        {isAuthenticated && user?.role === 'employer' && (
+          <Button onClick={() => navigate('/projects/new')}>
+            <Plus className="w-4 h-4 mr-2" />
+            Create Project
+          </Button>
+        )}
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        {/* Header with Actions */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
-              {showMyProjects ? 'My Projects' : 'All Projects'}
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              {projects.length > 0 ? `Showing ${projects.length} project${projects.length !== 1 ? 's' : ''}` : showMyProjects ? 'No projects created yet' : 'Find your next opportunity'}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            {isAuthenticated && user?.role === 'employer' && (
-              <Button onClick={() => navigate('/projects/create')}>
-                <Plus className="w-4 h-4 mr-2" />
-                Create Project
-              </Button>
-            )}
-            <Button
-              variant={viewMode === 'grid' ? 'primary' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('grid')}
-            >
-              <Grid3x3 className="w-4 h-4" />
-            </Button>
-            <Button
-              variant={viewMode === 'list' ? 'primary' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('list')}
-            >
-              <List className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
+      {/* View Mode Toggle */}
+      <div className="flex justify-end gap-2">
+        <Button
+          variant={viewMode === 'grid' ? 'primary' : 'ghost'}
+          size="sm"
+          onClick={() => setViewMode('grid')}
+        >
+          <Grid3x3 className="w-4 h-4" />
+        </Button>
+        <Button
+          variant={viewMode === 'list' ? 'primary' : 'ghost'}
+          size="sm"
+          onClick={() => setViewMode('list')}
+        >
+          <List className="w-4 h-4" />
+        </Button>
+      </div>
 
       {/* Search and Filters */}
       <motion.div
@@ -364,7 +317,7 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
                 Filters
                 {hasActiveFilters && (
                   <span className="ml-2 px-1.5 py-0.5 bg-primary-500 text-white text-xs rounded-full">
-                    {[searchTerm, ...selectedSkills, filters.minBudget, filters.maxBudget].filter(Boolean).length}
+                    {[searchTerm, ...selectedSkills, ...selectedTags, filters.minBudget, filters.maxBudget].filter(Boolean).length}
                   </span>
                 )}
               </Button>
@@ -415,6 +368,50 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
                         </Badge>
                       ) : null;
                     })}
+                  </div>
+                )}
+              </div>
+
+              {/* Tags Filter */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  <Tag className="w-4 h-4" />
+                  Project Tags
+                </label>
+                <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto p-2 bg-gray-50 dark:bg-dark-bg rounded-lg border border-gray-200 dark:border-dark-border">
+                  {availableTags.length === 0 ? (
+                    <p className="text-sm text-gray-600 dark:text-gray-500">No tags available</p>
+                  ) : (
+                    availableTags.map((tag) => (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => toggleTag(tag)}
+                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                          selectedTags.includes(tag)
+                            ? 'bg-secondary-500 text-white'
+                            : 'bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700'
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    ))
+                  )}
+                </div>
+                {selectedTags.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {selectedTags.map((tag) => (
+                      <Badge key={tag} variant="secondary" className="flex items-center gap-1">
+                        {tag}
+                        <button
+                          type="button"
+                          onClick={() => toggleTag(tag)}
+                          className="ml-1 hover:text-white"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </Badge>
+                    ))}
                   </div>
                 )}
               </div>
@@ -496,53 +493,100 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
                 transition={{ delay: index * 0.05, duration: 0.3 }}
               >
                 <Link to={`/projects/${project.id}`}>
-                  <Card hover className="transition-all hover:shadow-lg hover:shadow-primary-500/10 hover:border-primary-500/30">
+                  <Card className="cursor-pointer hover:border-primary-500 dark:hover:border-primary-500 transition-all duration-300 hover:shadow-lg group">
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+                        {/* Title and Status */}
+                        <div className="flex items-start justify-between gap-3 mb-2">
+                          <h3 className="text-xl font-bold text-gray-900 dark:text-white flex-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                             {project.title}
                           </h3>
-                          <StatusBadge status={project.status} />
+                          <StatusBadge status={project.status} className="flex-shrink-0" />
                         </div>
-                        <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2 mb-3">
-                          {project.description}
+                        
+                        {/* Description */}
+                        <p className="text-gray-600 dark:text-gray-400 text-sm mb-3 leading-relaxed">
+                          {project.description.length > 150
+                            ? `${project.description.substring(0, 150)}...`
+                            : project.description}
                         </p>
-                        <div className="flex flex-wrap gap-2 mb-3">
-                          {project.requiredSkills?.slice(0, 5).map((skill, idx) => (
-                            <Badge key={skill.skillId || idx} variant="primary" size="sm">
-                              {skill.skillName}
-                            </Badge>
-                          ))}
-                          {project.requiredSkills && project.requiredSkills.length > 5 && (
-                            <Badge variant="default" size="sm">
-                              +{project.requiredSkills.length - 5} more
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-                          <span className="flex items-center gap-1.5">
-                            <DollarSign className="w-4 h-4 text-green-600 dark:text-green-500" />
-                            <span className="font-medium text-gray-900 dark:text-white">{project.budget} ETH</span>
+                        
+                        {/* Tags */}
+                        {project.tags && project.tags.length > 0 && (
+                          <div className="mb-3">
+                            <div className="flex items-center gap-1.5 mb-1.5">
+                              <Tag className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+                              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Tags:</span>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {project.tags.slice(0, 3).map((tag, idx) => (
+                                <Badge key={idx} variant="secondary" size="sm" className="text-xs">
+                                  {tag}
+                                </Badge>
+                              ))}
+                              {project.tags.length > 3 && (
+                                <Badge variant="default" size="sm" className="text-xs">
+                                  +{project.tags.length - 3}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Skills */}
+                        {project.requiredSkills && project.requiredSkills.length > 0 && (
+                          <div className="mb-3">
+                            <div className="flex items-center gap-1.5 mb-1.5">
+                              <Wrench className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400" />
+                              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Required Skills:</span>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {project.requiredSkills.slice(0, 4).map((skill, idx) => (
+                                <Badge key={skill.skillId || idx} variant="primary" size="sm">
+                                  {skill.skillName}
+                                </Badge>
+                              ))}
+                              {project.requiredSkills.length > 4 && (
+                                <Badge variant="default" size="sm">
+                                  +{project.requiredSkills.length - 4}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Meta Info */}
+                        <div className="flex flex-wrap items-center gap-4 text-sm">
+                          <span className="flex items-center gap-1.5 font-semibold text-green-600 dark:text-green-400">
+                            <DollarSign className="w-4 h-4" />
+                            {project.budget} ETH
                           </span>
-                          <span className="flex items-center gap-1.5">
-                            <Clock className="w-4 h-4 text-blue-600 dark:text-blue-500" />
+                          <span className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400">
+                            <Clock className="w-4 h-4" />
                             {project.deadline
                               ? format(new Date(project.deadline), 'MMM d, yyyy')
                               : 'No deadline'}
                           </span>
                           {project.proposalCount !== undefined && (
-                            <span className="flex items-center gap-1.5">
-                              <TrendingUp className="w-4 h-4 text-purple-600 dark:text-purple-500" />
+                            <span className="flex items-center gap-1.5 text-gray-600 dark:text-gray-400">
+                              <TrendingUp className="w-4 h-4" />
                               {project.proposalCount} proposal{project.proposalCount !== 1 ? 's' : ''}
+                            </span>
+                          )}
+                          {project.attachments && project.attachments.length > 0 && (
+                            <span className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400">
+                              <Paperclip className="w-4 h-4" />
+                              {project.attachments.length} file{project.attachments.length !== 1 ? 's' : ''}
                             </span>
                           )}
                         </div>
                       </div>
-                      <div className="flex sm:flex-col items-center gap-2">
-                        <Button size="sm" variant="ghost" className="group">
+                      
+                      {/* Action Button */}
+                      <div className="flex sm:flex-col items-center gap-2 sm:justify-center">
+                        <Button size="sm" variant="ghost" className="whitespace-nowrap">
                           View Details
-                          <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                          <ArrowRight className="w-4 h-4 ml-2" />
                         </Button>
                       </div>
                     </div>
@@ -597,6 +641,5 @@ export function ProjectListPage({ showMyProjects = false }: { showMyProjects?: b
         </motion.div>
       )}
     </div>
-  </div>
   );
 }

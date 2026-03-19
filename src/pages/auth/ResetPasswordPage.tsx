@@ -8,7 +8,8 @@ import api from '../../lib/api';
 export function ResetPasswordPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const token = searchParams.get('token');
+  const searchParamsKey = searchParams.toString();
+  const [token, setToken] = useState<string | null>(null);
 
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -19,10 +20,33 @@ export function ResetPasswordPage() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    if (!token) {
-      setError('Invalid or missing reset token');
+    const currentSearchParams = new URLSearchParams(window.location.search);
+    const queryToken = currentSearchParams.get('token') || currentSearchParams.get('access_token');
+    if (queryToken) {
+      setToken(queryToken);
+      setError('');
+      return;
     }
-  }, [token]);
+
+    const hash = window.location.hash.startsWith('#')
+      ? window.location.hash.slice(1)
+      : window.location.hash;
+    const hashParams = new URLSearchParams(hash);
+    const hashToken = hashParams.get('access_token') || hashParams.get('token');
+
+    if (hashToken) {
+      setToken(hashToken);
+      setError('');
+
+      const nextParams = new URLSearchParams(currentSearchParams);
+      nextParams.set('token', hashToken);
+      window.history.replaceState({}, '', `${window.location.pathname}?${nextParams.toString()}`);
+      return;
+    }
+
+    setToken(null);
+    setError('Invalid or missing reset token');
+  }, [searchParamsKey]);
 
   const validatePassword = (password: string): string | null => {
     if (password.length < 8) {
@@ -71,8 +95,9 @@ export function ResetPasswordPage() {
       setTimeout(() => {
         navigate('/login');
       }, 3000);
-    } catch (err: any) {
-      setError(err.message || 'Failed to reset password');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to reset password';
+      setError(message);
     } finally {
       setLoading(false);
     }

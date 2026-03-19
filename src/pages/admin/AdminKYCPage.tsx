@@ -253,8 +253,8 @@ export function AdminKYCPage() {
                   </div>
                   
                   <div className="flex items-center gap-2">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={() => setSelectedKyc(kyc)}
                     >
@@ -262,16 +262,16 @@ export function AdminKYCPage() {
                     </Button>
                     {kyc.status === 'completed' && (
                       <>
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           size="sm"
                           onClick={() => handleApprove(kyc.id)}
                           className="text-green-400 border-green-600 hover:bg-green-600/20"
                         >
                           <FiCheck className="mr-1" /> Approve
                         </Button>
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           size="sm"
                           onClick={() => handleReject(kyc.id)}
                           className="text-red-400 border-red-600 hover:bg-red-600/20"

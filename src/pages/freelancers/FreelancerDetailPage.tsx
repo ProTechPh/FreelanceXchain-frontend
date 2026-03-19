@@ -10,6 +10,7 @@ import {
 import { Card, CardHeader, Button, PageLoader, StatusBadge } from '../../components/ui';
 import { ReputationCard } from '../../components/ReputationCard';
 import { useAuthStore } from '../../store';
+import { useChatContext } from '../../contexts/ChatContext';
 import api from '../../lib/api';
 import type { FreelancerProfile } from '../../types';
 import { format } from 'date-fns';
@@ -18,6 +19,7 @@ export function FreelancerDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const { setPreferredRecipient } = useChatContext();
   const [freelancer, setFreelancer] = useState<FreelancerProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -30,6 +32,25 @@ export function FreelancerDetailPage() {
       loadFreelancer();
     }
   }, [id]);
+
+  // Set preferred chat recipient when viewing freelancer profile
+  useEffect(() => {
+    if (freelancer && user && !isOwnProfile) {
+      setPreferredRecipient({
+        userId: freelancer.userId || freelancer.user_id || id || '',
+        name: freelancer.name || 'Freelancer',
+        role: 'Freelancer',
+        contextId: id
+      });
+    } else {
+      setPreferredRecipient(null);
+    }
+
+    // Clear on unmount
+    return () => {
+      setPreferredRecipient(null);
+    };
+  }, [freelancer, user, isOwnProfile, setPreferredRecipient, id]);
 
   const loadFreelancer = async () => {
     if (!id) return;
