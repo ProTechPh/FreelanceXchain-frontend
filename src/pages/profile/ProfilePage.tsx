@@ -321,26 +321,30 @@ export function ProfilePage() {
           description="Your personal details"
         />
         <div className="grid sm:grid-cols-2 gap-4">
-          <Input
-            label="Full Name"
-            value={isFreelancer ? freelancerForm.name : employerForm.name}
-            onChange={(e) => isFreelancer
-              ? setFreelancerForm({ ...freelancerForm, name: e.target.value })
-              : setEmployerForm({ ...employerForm, name: e.target.value })
-            }
-            placeholder="Your name"
-            disabled={!isKycApproved}
-          />
-          <Input
-            label="Nationality"
-            value={isFreelancer ? freelancerForm.nationality : employerForm.nationality}
-            onChange={(e) => isFreelancer
-              ? setFreelancerForm({ ...freelancerForm, nationality: e.target.value })
-              : setEmployerForm({ ...employerForm, nationality: e.target.value })
-            }
-            placeholder="Your nationality"
-            disabled={!isKycApproved}
-          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Full Name
+            </label>
+            <input
+              type="text"
+              value={isFreelancer ? freelancerForm.name : employerForm.name}
+              readOnly
+              disabled
+              className="w-full bg-gray-50 dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-lg px-4 py-2 text-gray-600 dark:text-gray-400 cursor-not-allowed"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Nationality
+            </label>
+            <input
+              type="text"
+              value={isFreelancer ? freelancerForm.nationality : employerForm.nationality}
+              readOnly
+              disabled
+              className="w-full bg-gray-50 dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-lg px-4 py-2 text-gray-600 dark:text-gray-400 cursor-not-allowed"
+            />
+          </div>
           <div className="sm:col-span-2">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Email
@@ -348,6 +352,7 @@ export function ProfilePage() {
             <input
               type="email"
               value={user?.email || ''}
+              readOnly
               disabled
               className="w-full bg-gray-50 dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-lg px-4 py-2 text-gray-600 dark:text-gray-400 cursor-not-allowed"
             />
