@@ -23,7 +23,51 @@ export function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [nameError, setNameError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
   const [captchaToken, setCaptchaToken] = useState<string>();
+
+  // SECURITY: whitelist — only characters valid in an email address
+  const ALLOWED_EMAIL_CHARS = /^[A-Za-z0-9._%+\-@]*$/;
+  const VALID_EMAIL_REGEX   = /^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$/;
+
+  const validateEmail = (value: string): string => {
+    if (!ALLOWED_EMAIL_CHARS.test(value)) return 'Only letters, numbers and . _ % + - @ are allowed';
+    if ((value.match(/@/g) || []).length > 1) return 'Only one @ symbol is allowed';
+    if (value.length > 0 && !VALID_EMAIL_REGEX.test(value)) return 'Enter a valid email address (e.g. user@example.com)';
+    return '';
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (!ALLOWED_EMAIL_CHARS.test(value)) {
+      setEmailError('Only letters, numbers and . _ % + - @ are allowed');
+      return;
+    }
+    setFormData((prev) => ({ ...prev, email: value }));
+    setEmailError(value.length > 3 ? validateEmail(value) : '');
+  };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (/\s/.test(value)) {
+      setPasswordError('Password must not contain spaces');
+      return;
+    }
+    setPasswordError('');
+    setFormData((prev) => ({ ...prev, password: value }));
+  };
+
+  const handleConfirmPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (/\s/.test(value)) {
+      setConfirmPasswordError('Password must not contain spaces');
+      return;
+    }
+    setConfirmPasswordError('');
+    setFormData((prev) => ({ ...prev, confirmPassword: value }));
+  };
 
   const passwordRules = [
     { label: 'At least 8 characters',        met: formData.password.length >= 8 },
@@ -50,6 +94,7 @@ export function RegisterPage() {
       return;
     }
 
+    // email, password, confirmPassword are handled by dedicated handlers
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -59,6 +104,21 @@ export function RegisterPage() {
 
     if (!captchaToken) {
       setError('Please complete the CAPTCHA verification');
+      return;
+    }
+
+    if (emailError || !ALLOWED_EMAIL_CHARS.test(formData.email) || !VALID_EMAIL_REGEX.test(formData.email)) {
+      setEmailError('Enter a valid email address (e.g. user@example.com)');
+      return;
+    }
+
+    if (passwordError || /\s/.test(formData.password)) {
+      setPasswordError('Password must not contain spaces');
+      return;
+    }
+
+    if (confirmPasswordError || /\s/.test(formData.confirmPassword)) {
+      setConfirmPasswordError('Password must not contain spaces');
       return;
     }
 
@@ -244,12 +304,14 @@ export function RegisterPage() {
                 />
 
                 <Input
-                  type="email"
+                  type="text"
+                  inputMode="email"
                   label="Email Address"
                   placeholder="you@example.com"
                   value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  onChange={handleEmailChange}
                   leftIcon={<Mail className="w-5 h-5" />}
+                  error={emailError}
                   required
                 />
 
@@ -259,8 +321,9 @@ export function RegisterPage() {
                     label="Password"
                     placeholder="Min 8 characters"
                     value={formData.password}
-                    onChange={(e) => handleInputChange('password', e.target.value)}
+                    onChange={handlePasswordChange}
                     leftIcon={<Lock className="w-5 h-5" />}
+                    error={passwordError}
                     rightIcon={
                       <button
                         type="button"
@@ -294,8 +357,9 @@ export function RegisterPage() {
                     label="Confirm Password"
                     placeholder="Repeat password"
                     value={formData.confirmPassword}
-                    onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                    onChange={handleConfirmPasswordChange}
                     leftIcon={<Lock className="w-5 h-5" />}
+                    error={confirmPasswordError}
                     required
                   />
                 </div>
