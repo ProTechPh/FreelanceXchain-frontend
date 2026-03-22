@@ -266,11 +266,16 @@ export function ProfilePage() {
   };
 
   const handleDeleteExperience = async (id: string) => {
+    if (!id) {
+      console.error('Cannot delete experience: missing id');
+      return;
+    }
     try {
       await api.deleteExperience(id);
       await fetchFreelancerProfile();
     } catch (error) {
       console.error('Error deleting experience:', error);
+      showToast({ type: 'error', title: 'Error', message: 'Failed to delete experience. Please try again.' });
     }
   };
 

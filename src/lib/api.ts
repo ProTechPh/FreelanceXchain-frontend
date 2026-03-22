@@ -587,12 +587,14 @@ class ApiClient {
   }
 
   async removeSkill(skillName: string): Promise<FreelancerProfile> {
+    await this.ensureCsrfToken();
     return this.request<FreelancerProfile>(`/freelancers/profile/skills/${encodeURIComponent(skillName)}`, {
       method: 'DELETE',
     });
   }
 
   async addExperience(experience: Omit<import('../types').WorkExperience, 'id'>): Promise<FreelancerProfile> {
+    await this.ensureCsrfToken();
     return this.request<FreelancerProfile>('/freelancers/profile/experience', {
       method: 'POST',
       body: JSON.stringify(experience),
@@ -600,6 +602,7 @@ class ApiClient {
   }
 
   async updateExperience(id: string, experience: Partial<import('../types').WorkExperience>): Promise<FreelancerProfile> {
+    await this.ensureCsrfToken();
     return this.request<FreelancerProfile>(`/freelancers/profile/experience/${id}`, {
       method: 'PUT',
       body: JSON.stringify(experience),
@@ -607,6 +610,7 @@ class ApiClient {
   }
 
   async deleteExperience(id: string): Promise<void> {
+    await this.ensureCsrfToken();
     return this.request<void>(`/freelancers/profile/experience/${id}`, {
       method: 'DELETE',
     });
