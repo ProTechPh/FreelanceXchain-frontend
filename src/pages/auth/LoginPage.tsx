@@ -12,9 +12,46 @@ export function LoginPage() {
   const [searchParams] = useSearchParams();
   const { login, isLoading } = useAuthStore();
   const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
   const [password, setPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (/\s/.test(value)) {
+      setPasswordError('Password must not contain spaces');
+      return;
+    }
+    setPasswordError('');
+    setPassword(value);
+  };
+
+  // SECURITY: whitelist approach — only permit characters that legitimately appear in email addresses.
+  // Allowed: A-Z a-z 0-9 . _ % + - (local part) and @ (exactly once) and domain chars.
+  // Everything else — ' " ; | ` ( ) = # ! ^ & * ~ \ / < > ? { } [ ] spaces, etc. — is rejected.
+  const ALLOWED_EMAIL_CHARS = /^[A-Za-z0-9._%+\-@]*$/;
+  const VALID_EMAIL_REGEX   = /^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$/;
+
+  const validateEmail = (value: string): string => {
+    if (!ALLOWED_EMAIL_CHARS.test(value)) return 'Only letters, numbers and . _ % + - @ are allowed';
+    if ((value.match(/@/g) || []).length > 1) return 'Only one @ symbol is allowed';
+    if (value.length > 0 && !VALID_EMAIL_REGEX.test(value)) return 'Enter a valid email address (e.g. user@example.com)';
+    return '';
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Hard block: if any character isn't in the whitelist, silently drop the keystroke/paste
+    if (!ALLOWED_EMAIL_CHARS.test(value)) {
+      setEmailError('Only letters, numbers and . _ % + - @ are allowed');
+      return;
+    }
+    setEmail(value);
+    // Show format errors once the user has typed something meaningful
+    setEmailError(value.length > 3 ? validateEmail(value) : '');
+  };
   const [successMessage, setSuccessMessage] = useState('');
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [captchaResetKey, setCaptchaResetKey] = useState(0);
@@ -30,6 +67,16 @@ export function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (emailError || !ALLOWED_EMAIL_CHARS.test(email) || !VALID_EMAIL_REGEX.test(email)) {
+      setEmailError('Enter a valid email address (e.g. user@example.com)');
+      return;
+    }
+
+    if (passwordError || /\s/.test(password)) {
+      setPasswordError('Password must not contain spaces');
+      return;
+    }
 
     if (!captchaToken) {
       setError('Please complete the CAPTCHA verification');
@@ -101,12 +148,14 @@ export function LoginPage() {
 
             <div className="space-y-4">
               <Input
-                type="email"
+                type="text"
+                inputMode="email"
                 label="Email Address"
                 placeholder="you@example.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={handleEmailChange}
                 leftIcon={<Mail className="w-5 h-5" />}
+                error={emailError}
                 required
               />
 
@@ -116,8 +165,9 @@ export function LoginPage() {
                   label="Password"
                   placeholder="••••••••"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={handlePasswordChange}
                   leftIcon={<Lock className="w-5 h-5" />}
+                  error={passwordError}
                   rightIcon={
                     <button
                       type="button"
