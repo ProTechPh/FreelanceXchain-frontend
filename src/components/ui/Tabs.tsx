@@ -1,71 +1,82 @@
-import { useState, type ReactNode } from 'react';
-import { motion } from 'framer-motion';
-import { clsx } from 'clsx';
+"use client"
 
-interface Tab {
-  id: string;
-  label: string;
-  icon?: ReactNode;
-  content: ReactNode;
-}
+import { Tabs as TabsPrimitive } from "@base-ui/react/tabs"
+import { cva, type VariantProps } from "class-variance-authority"
 
-interface TabsProps {
-  tabs: Tab[];
-  defaultTab?: string;
-  onChange?: (tabId: string) => void;
-  className?: string;
-}
+import { cn } from "@/lib/utils"
 
-export function Tabs({ tabs, defaultTab, onChange, className }: TabsProps) {
-  const [activeTab, setActiveTab] = useState(defaultTab || tabs[0]?.id);
-
-  const handleTabChange = (tabId: string) => {
-    setActiveTab(tabId);
-    onChange?.(tabId);
-  };
-
-  const activeTabContent = tabs.find(tab => tab.id === activeTab)?.content;
-
+function Tabs({
+  className,
+  orientation = "horizontal",
+  ...props
+}: TabsPrimitive.Root.Props) {
   return (
-    <div className={clsx('w-full', className)}>
-      {/* Tab Headers */}
-      <div className="flex gap-1 p-1 bg-gray-100 dark:bg-dark-surface/50 rounded-xl border border-gray-200 dark:border-white/5 mb-6">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => handleTabChange(tab.id)}
-            className={clsx(
-              'relative flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg',
-              'text-sm font-medium transition-colors flex-1',
-              activeTab === tab.id
-                ? 'text-gray-900 dark:text-white'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300'
-            )}
-          >
-            {activeTab === tab.id && (
-              <motion.div
-                layoutId="activeTab"
-                className="absolute inset-0 bg-primary-600/20 border border-primary-500/30 rounded-lg"
-                transition={{ type: 'spring', duration: 0.5 }}
-              />
-            )}
-            <span className="relative z-10 flex items-center gap-2">
-              {tab.icon}
-              {tab.label}
-            </span>
-          </button>
-        ))}
-      </div>
-
-      {/* Tab Content */}
-      <motion.div
-        key={activeTab}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        {activeTabContent}
-      </motion.div>
-    </div>
-  );
+    <TabsPrimitive.Root
+      data-slot="tabs"
+      data-orientation={orientation}
+      className={cn(
+        "group/tabs flex gap-2 data-horizontal:flex-col",
+        className
+      )}
+      {...props}
+    />
+  )
 }
+
+const tabsListVariants = cva(
+  "group/tabs-list inline-flex w-fit items-center justify-center rounded-lg p-[3px] text-muted-foreground group-data-horizontal/tabs:h-8 group-data-vertical/tabs:h-fit group-data-vertical/tabs:flex-col data-[variant=line]:rounded-none",
+  {
+    variants: {
+      variant: {
+        default: "bg-muted",
+        line: "gap-1 bg-transparent",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+)
+
+function TabsList({
+  className,
+  variant = "default",
+  ...props
+}: TabsPrimitive.List.Props & VariantProps<typeof tabsListVariants>) {
+  return (
+    <TabsPrimitive.List
+      data-slot="tabs-list"
+      data-variant={variant}
+      className={cn(tabsListVariants({ variant }), className)}
+      {...props}
+    />
+  )
+}
+
+function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
+  return (
+    <TabsPrimitive.Tab
+      data-slot="tabs-trigger"
+      className={cn(
+        "relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-1.5 py-0.5 text-sm font-medium whitespace-nowrap text-foreground/60 transition-all group-data-vertical/tabs:w-full group-data-vertical/tabs:justify-start hover:text-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50 has-data-[icon=inline-end]:pr-1 has-data-[icon=inline-start]:pl-1 aria-disabled:pointer-events-none aria-disabled:opacity-50 dark:text-muted-foreground dark:hover:text-foreground group-data-[variant=default]/tabs-list:data-active:shadow-sm group-data-[variant=line]/tabs-list:data-active:shadow-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "group-data-[variant=line]/tabs-list:bg-transparent group-data-[variant=line]/tabs-list:data-active:bg-transparent dark:group-data-[variant=line]/tabs-list:data-active:border-transparent dark:group-data-[variant=line]/tabs-list:data-active:bg-transparent",
+        "data-active:bg-background data-active:text-foreground dark:data-active:border-input dark:data-active:bg-input/30 dark:data-active:text-foreground",
+        "after:absolute after:bg-foreground after:opacity-0 after:transition-opacity group-data-horizontal/tabs:after:inset-x-0 group-data-horizontal/tabs:after:bottom-[-5px] group-data-horizontal/tabs:after:h-0.5 group-data-vertical/tabs:after:inset-y-0 group-data-vertical/tabs:after:-right-1 group-data-vertical/tabs:after:w-0.5 group-data-[variant=line]/tabs-list:data-active:after:opacity-100",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function TabsContent({ className, ...props }: TabsPrimitive.Panel.Props) {
+  return (
+    <TabsPrimitive.Panel
+      data-slot="tabs-content"
+      className={cn("flex-1 text-sm outline-none", className)}
+      {...props}
+    />
+  )
+}
+
+export { Tabs, TabsList, TabsTrigger, TabsContent, tabsListVariants }
