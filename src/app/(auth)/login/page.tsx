@@ -25,7 +25,14 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await login(email, password);
+      const result = await login(email, password);
+      
+      if (result.mfaRequired) {
+        // MFA is required — redirect to MFA verification page
+        router.push('/mfa/verify');
+        return;
+      }
+      
       toast.success('Welcome back!');
       router.push('/dashboard/freelancer');
     } catch {

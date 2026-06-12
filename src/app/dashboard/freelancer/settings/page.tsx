@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+import { useAuthStore } from '@/stores/authStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,6 +21,8 @@ import {
 } from 'lucide-react';
 
 export default function SettingsPage() {
+  const { user } = useAuthStore();
+  
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -91,17 +95,30 @@ export default function SettingsPage() {
             <CardContent>
               <div className="flex items-center justify-between p-4 rounded-xl bg-secondary/50 border border-border">
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                    <CheckCircle className="w-5 h-5 text-green-500" />
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${user?.mfa_enabled ? 'bg-green-500/10' : 'bg-muted'}`}>
+                    {user?.mfa_enabled ? (
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                    ) : (
+                      <Smartphone className="w-5 h-5 text-muted-foreground" />
+                    )}
                   </div>
                   <div>
                     <p className="font-medium">Two-Factor Authentication</p>
                     <p className="text-sm text-muted-foreground">
-                      Add an extra layer of security to your account
+                      {user?.mfa_enabled 
+                        ? 'Your account is protected with 2FA'
+                        : 'Add an extra layer of security to your account'
+                      }
                     </p>
                   </div>
                 </div>
-                <Badge className="bg-green-500/10 text-green-500">Enabled</Badge>
+                {user?.mfa_enabled ? (
+                  <Badge className="bg-green-500/10 text-green-500">Enabled</Badge>
+                ) : (
+                  <Link href="/mfa/setup">
+                    <Button variant="outline" size="sm">Enable</Button>
+                  </Link>
+                )}
               </div>
             </CardContent>
           </Card>

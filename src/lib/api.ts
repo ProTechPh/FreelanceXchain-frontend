@@ -19,6 +19,11 @@ import type {
   Dispute,
   ApiResponse,
   PaginatedResponse,
+  MfaVerifyRequest,
+  MfaEnrollRequest,
+  MfaEnrollResponse,
+  MfaFactorsResponse,
+  KycVerification,
 } from '@/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
@@ -84,6 +89,21 @@ export const authApi = {
   
   oauthLogin: (provider: 'google' | 'github') =>
     api.get<{ url: string }>(`/auth/oauth/${provider}`),
+  
+  mfaVerify: (data: MfaVerifyRequest) =>
+    api.post<AuthResponse>('/auth/login/mfa-verify', data),
+  
+  mfaEnroll: (data: MfaEnrollRequest) =>
+    api.post<MfaEnrollResponse>('/auth/mfa/enroll', data),
+  
+  mfaVerifyEnrollment: (factorType: string, code: string) =>
+    api.post('/auth/mfa/verify', { factorType, code }),
+  
+  mfaFactors: () =>
+    api.get<MfaFactorsResponse>('/auth/mfa/factors'),
+  
+  mfaDisable: (factorType: string) =>
+    api.post('/auth/mfa/disable', { factorType }),
 };
 
 export const freelancersApi = {
@@ -252,6 +272,35 @@ export const adminApi = {
   
   unsuspendUser: (id: string) =>
     api.post(`/admin/users/${id}/unsuspend`),
+};
+
+export const kycApi = {
+  initiate: () =>
+    api.post<KycVerification>('/kyc/initiate'),
+
+  getStatus: () =>
+    api.get<KycVerification>('/kyc/status'),
+
+  isVerified: () =>
+    api.get<{ verified: boolean }>('/kyc/verified'),
+
+  getHistory: () =>
+    api.get<KycVerification[]>('/kyc/history'),
+
+  refresh: (id: string) =>
+    api.post<KycVerification>(`/kyc/refresh/${id}`),
+
+  adminGetPending: () =>
+    api.get<KycVerification[]>('/kyc/admin/pending'),
+
+  adminGetByStatus: (status: string) =>
+    api.get<KycVerification[]>(`/kyc/admin/status/${status}`),
+
+  adminGetVerification: (id: string) =>
+    api.get<KycVerification>(`/kyc/admin/verification/${id}`),
+
+  adminReview: (id: string, decision: 'approved' | 'rejected', notes?: string) =>
+    api.post<KycVerification>(`/kyc/admin/review/${id}`, { decision, notes }),
 };
 
 export default api;

@@ -45,6 +45,7 @@ const freelancerNav: NavItem[] = [
   { label: 'Earnings', href: '/dashboard/freelancer/earnings', icon: Wallet },
   { label: 'Reputation', href: '/dashboard/freelancer/reputation', icon: Star },
   { label: 'Portfolio', href: '/dashboard/freelancer/portfolio', icon: Image },
+  { label: 'Verification', href: '/dashboard/freelancer/verification', icon: Shield },
   { label: 'Messages', href: '/dashboard/freelancer/messages', icon: MessageSquare },
   { label: 'Settings', href: '/dashboard/freelancer/settings', icon: Settings },
 ];
@@ -56,6 +57,7 @@ const employerNav: NavItem[] = [
   { label: 'Proposals', href: '/dashboard/employer/proposals', icon: ClipboardList },
   { label: 'Contracts', href: '/dashboard/employer/contracts', icon: FolderOpen },
   { label: 'Find Talent', href: '/dashboard/employer/freelancers', icon: Users },
+  { label: 'Verification', href: '/dashboard/employer/verification', icon: Shield },
   { label: 'Spending', href: '/dashboard/employer/spending', icon: DollarSign },
   { label: 'Reviews', href: '/dashboard/employer/reviews', icon: Star },
   { label: 'Disputes', href: '/dashboard/employer/disputes', icon: AlertTriangle },

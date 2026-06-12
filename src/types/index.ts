@@ -257,9 +257,37 @@ export interface RegisterRequest {
 }
 
 export interface AuthResponse {
-  user: User;
-  access_token: string;
-  refresh_token: string;
+  user?: User;
+  access_token?: string;
+  refresh_token?: string;
+  mfa_required?: boolean;
+  accessToken?: string;
+}
+
+export interface MfaVerifyRequest {
+  accessToken: string;
+  factorId: string;
+  code: string;
+}
+
+export interface MfaEnrollRequest {
+  factorType: 'totp' | 'email';
+}
+
+export interface MfaEnrollResponse {
+  success: boolean;
+  recoveryCodes?: string[];
+  secret?: string;
+  uri?: string;
+}
+
+export interface MfaFactor {
+  id: string;
+  type: 'totp' | 'email';
+}
+
+export interface MfaFactorsResponse {
+  factors: MfaFactor[];
 }
 
 export interface ApiResponse<T> {
@@ -273,4 +301,40 @@ export interface PaginatedResponse<T> {
   page: number;
   limit: number;
   total_pages: number;
+}
+
+// KYC Verification Types
+export type KycStatus = 'pending' | 'in_progress' | 'completed' | 'approved' | 'rejected' | 'expired';
+
+export interface KycVerification {
+  id: string;
+  user_id: string;
+  status: KycStatus;
+  didit_session_id: string;
+  didit_session_url: string | null;
+  didit_workflow_id: string;
+  decision: 'approved' | 'declined' | 'review' | null;
+  first_name: string | null;
+  last_name: string | null;
+  date_of_birth: string | null;
+  nationality: string | null;
+  document_type: string | null;
+  document_number: string | null;
+  issuing_country: string | null;
+  document_verified: boolean | null;
+  liveness_passed: boolean | null;
+  liveness_confidence_score: string | null;
+  face_matched: boolean | null;
+  face_similarity_score: string | null;
+  ip_address: string | null;
+  ip_country_code: string | null;
+  is_vpn: boolean | null;
+  is_proxy: boolean | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  admin_notes: string | null;
+  created_at: string;
+  updated_at: string;
+  completed_at: string | null;
+  expires_at: string | null;
 }
