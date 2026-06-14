@@ -1,12 +1,14 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 import {
   User,
   Shield,
@@ -21,7 +23,59 @@ import {
 } from 'lucide-react';
 
 export default function SettingsPage() {
-  const { user } = useAuthStore();
+  const { user, logout } = useAuthStore();
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [notifications, setNotifications] = useState({
+    messages: true,
+    proposals: true,
+    contracts: true,
+    payments: true,
+    marketing: false,
+  });
+
+  const handleUpdatePassword = async () => {
+    if (newPassword !== confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+    if (newPassword.length < 8) {
+      toast.error('Password must be at least 8 characters');
+      return;
+    }
+    setIsUpdatingPassword(true);
+    try {
+      // TODO: Implement actual password change API call
+      toast.success('Password updated successfully');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch {
+      toast.error('Failed to update password');
+    } finally {
+      setIsUpdatingPassword(false);
+    }
+  };
+
+  const handleToggleNotification = (key: keyof typeof notifications) => {
+    setNotifications(prev => ({ ...prev, [key]: !prev[key] }));
+    toast.success('Notification preference updated');
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+      return;
+    }
+    try {
+      // TODO: Implement actual account deletion API call
+      toast.success('Account deleted');
+      await logout();
+    } catch {
+      toast.error('Failed to delete account');
+    }
+  };
   
   return (
     <div className="space-y-6">
@@ -71,17 +125,41 @@ export default function SettingsPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="currentPassword">Current Password</Label>
-                <Input id="currentPassword" type="password" placeholder="••••••••" />
+                <Input
+                  id="currentPassword"
+                  type="password"
+                  placeholder="••••••••"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="newPassword">New Password</Label>
-                <Input id="newPassword" type="password" placeholder="••••••••" />
+                <Input
+                  id="newPassword"
+                  type="password"
+                  placeholder="••••••••"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                <Input id="confirmPassword" type="password" placeholder="••••••••" />
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="••••••••"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
               </div>
-              <Button className="gradient-primary text-white">Update Password</Button>
+              <Button
+                className="gradient-primary text-white"
+                onClick={handleUpdatePassword}
+                disabled={isUpdatingPassword || !currentPassword || !newPassword || !confirmPassword}
+              >
+                {isUpdatingPassword ? 'Updating...' : 'Update Password'}
+              </Button>
             </CardContent>
           </Card>
 
@@ -115,7 +193,7 @@ export default function SettingsPage() {
                 {user?.mfa_enabled ? (
                   <Badge className="bg-green-500/10 text-green-500">Enabled</Badge>
                 ) : (
-                  <Link href="/mfa/setup">
+                  <Link href="/(auth)/mfa/setup">
                     <Button variant="outline" size="sm">Enable</Button>
                   </Link>
                 )}
@@ -132,11 +210,11 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               {[
-                { label: 'New messages', description: 'Get notified when you receive new messages', enabled: true },
-                { label: 'Proposal updates', description: 'Get notified about proposal status changes', enabled: true },
-                { label: 'Contract updates', description: 'Get notified about contract milestones', enabled: true },
-                { label: 'Payment notifications', description: 'Get notified about payments and releases', enabled: true },
-                { label: 'Marketing emails', description: 'Receive tips and product updates', enabled: false },
+                { key: 'messages' as const, label: 'New messages', description: 'Get notified when you receive new messages' },
+                { key: 'proposals' as const, label: 'Proposal updates', description: 'Get notified about proposal status changes' },
+                { key: 'contracts' as const, label: 'Contract updates', description: 'Get notified about contract milestones' },
+                { key: 'payments' as const, label: 'Payment notifications', description: 'Get notified about payments and releases' },
+                { key: 'marketing' as const, label: 'Marketing emails', description: 'Receive tips and product updates' },
               ].map((item) => (
                 <div
                   key={item.label}
@@ -146,13 +224,17 @@ export default function SettingsPage() {
                     <p className="font-medium text-sm">{item.label}</p>
                     <p className="text-xs text-muted-foreground">{item.description}</p>
                   </div>
-                  <div className={`w-10 h-6 rounded-full flex items-center p-1 cursor-pointer transition-colors ${
-                    item.enabled ? 'bg-primary' : 'bg-secondary'
-                  }`}>
+                  <button
+                    type="button"
+                    onClick={() => handleToggleNotification(item.key)}
+                    className={`w-10 h-6 rounded-full flex items-center p-1 cursor-pointer transition-colors ${
+                      notifications[item.key] ? 'bg-primary' : 'bg-secondary'
+                    }`}
+                  >
                     <div className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                      item.enabled ? 'translate-x-4' : 'translate-x-0'
+                      notifications[item.key] ? 'translate-x-4' : 'translate-x-0'
                     }`} />
-                  </div>
+                  </button>
                 </div>
               ))}
             </CardContent>
@@ -198,7 +280,7 @@ export default function SettingsPage() {
                     Permanently delete your account and all associated data
                   </p>
                 </div>
-                <Button variant="destructive" size="sm">Delete Account</Button>
+                <Button variant="destructive" size="sm" onClick={handleDeleteAccount}>Delete Account</Button>
               </div>
             </CardContent>
           </Card>

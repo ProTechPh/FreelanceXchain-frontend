@@ -1,11 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { projectsApi } from '@/lib/api';
+import type { Project } from '@/types';
+import { toast } from 'sonner';
 import {
   Search,
   Filter,
@@ -14,66 +17,41 @@ import {
   Users,
   MapPin,
   Zap,
+  Loader2,
 } from 'lucide-react';
-
-const projects = [
-  {
-    id: '1',
-    title: 'Web3 Social Media Platform',
-    employer: 'TechVentures Inc.',
-    description: 'Build a decentralized social media platform with user-owned content and token-based governance.',
-    budget: '$6,000 - $10,000',
-    deadline: '60 days',
-    skills: ['React', 'Solidity', 'Web3.js'],
-    proposals: 12,
-    isRush: false,
-    posted: '1 day ago',
-    location: 'Remote',
-  },
-  {
-    id: '2',
-    title: 'Crypto Trading Bot Development',
-    employer: 'DeFi Solutions',
-    description: 'Develop an automated trading bot for DEX arbitrage with risk management.',
-    budget: '$4,000 - $7,000',
-    deadline: '45 days',
-    skills: ['Python', 'TypeScript', 'API'],
-    proposals: 8,
-    isRush: false,
-    posted: '2 days ago',
-    location: 'Remote',
-  },
-  {
-    id: '3',
-    title: 'DAO Governance Dashboard',
-    employer: 'CommunityDAO',
-    description: 'Create a comprehensive governance dashboard for DAO proposals and voting.',
-    budget: '$5,000 - $8,000',
-    deadline: '50 days',
-    skills: ['React', 'Solidity', 'GraphQL'],
-    proposals: 15,
-    isRush: true,
-    rushFee: 25,
-    posted: '3 days ago',
-    location: 'Remote',
-  },
-  {
-    id: '4',
-    title: 'NFT Marketplace with Auction',
-    employer: 'ArtBlock Studio',
-    description: 'Build an NFT marketplace supporting fixed-price and auction-style listings.',
-    budget: '$8,000 - $12,000',
-    deadline: '75 days',
-    skills: ['Next.js', 'Solidity', 'IPFS'],
-    proposals: 20,
-    isRush: false,
-    posted: '4 days ago',
-    location: 'Remote',
-  },
-];
 
 export default function ProjectsPage() {
   const [search, setSearch] = useState('');
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const res = await projectsApi.list({ status: 'open' });
+        setProjects(res.data.data);
+      } catch {
+        toast.error('Failed to load projects');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProjects();
+  }, []);
+
+  const filteredProjects = projects.filter(p =>
+    !search ||
+    p.title.toLowerCase().includes(search.toLowerCase()) ||
+    p.description.toLowerCase().includes(search.toLowerCase())
+  );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
@@ -106,12 +84,12 @@ export default function ProjectsPage() {
 
         {/* Results */}
         <p className="text-sm text-muted-foreground mb-6">
-          Showing {projects.length} projects
+          Showing {filteredProjects.length} projects
         </p>
 
         {/* Projects List */}
         <div className="space-y-4">
-          {projects.map((project) => (
+          {filteredProjects.map((project) => (
             <Link key={project.id} href={`/projects/${project.id}`}>
               <Card className="bg-card border-border hover:border-primary/20 transition-all cursor-pointer">
                 <CardContent className="p-6">
@@ -120,23 +98,23 @@ export default function ProjectsPage() {
                       <h3 className="text-xl font-semibold hover:text-primary transition-colors">
                         {project.title}
                       </h3>
-                      <p className="text-sm text-muted-foreground mt-1">{project.employer}</p>
+                      <p className="text-sm text-muted-foreground mt-1">{project.employer?.name || 'Unknown Employer'}</p>
                     </div>
-                    {project.isRush && (
+                    {project.is_rush && (
                       <Badge className="bg-amber-500/10 text-amber-500">
-                        <Zap className="w-3 h-3 mr-1" /> Rush +{project.rushFee}%
+                        <Zap className="w-3 h-3 mr-1" /> Rush +{project.rush_fee_percentage}%
                       </Badge>
                     )}
                   </div>
 
-                  <p className="text-muted-foreground mb-4">
+                  <p className="text-muted-foreground mb-4 line-clamp-2">
                     {project.description}
                   </p>
 
                   <div className="flex flex-wrap gap-2 mb-4">
-                    {project.skills.map((skill) => (
-                      <Badge key={skill} variant="secondary">
-                        {skill}
+                    {project.required_skills?.map((skill) => (
+                      <Badge key={skill.id} variant="secondary">
+                        {skill.name}
                       </Badge>
                     ))}
                   </div>
@@ -144,7 +122,7 @@ export default function ProjectsPage() {
                   <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
                     <div className="flex items-center gap-1">
                       <DollarSign className="w-4 h-4" />
-                      <span className="font-medium text-primary">{project.budget}</span>
+                      <span className="font-medium text-primary">${project.budget.toLocaleString()}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Clock className="w-4 h-4" />
@@ -152,18 +130,17 @@ export default function ProjectsPage() {
                     </div>
                     <div className="flex items-center gap-1">
                       <Users className="w-4 h-4" />
-                      {project.proposals} proposals
+                      {project.proposal_count || 0} proposals
                     </div>
-                    <div className="flex items-center gap-1">
-                      <MapPin className="w-4 h-4" />
-                      {project.location}
-                    </div>
-                    <span>{project.posted}</span>
+                    <span>{new Date(project.created_at).toLocaleDateString()}</span>
                   </div>
                 </CardContent>
               </Card>
             </Link>
           ))}
+          {filteredProjects.length === 0 && (
+            <p className="text-center text-muted-foreground py-8">No projects found</p>
+          )}
         </div>
       </div>
     </div>

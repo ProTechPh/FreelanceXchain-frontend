@@ -1,12 +1,16 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { freelancersApi } from '@/lib/api';
+import type { FreelancerProfile } from '@/types';
+import { toast } from 'sonner';
 import {
   User,
   MapPin,
@@ -17,48 +21,46 @@ import {
   X,
   Globe,
   Briefcase,
+  Loader2,
 } from 'lucide-react';
 
-const profile = {
-  name: 'Alex Thompson',
-  email: 'alex@example.com',
-  bio: 'Full-stack blockchain developer with 5+ years of experience in DeFi, NFTs, and Web3 applications. Passionate about building decentralized solutions that make a real impact.',
-  nationality: 'United States',
-  hourlyRate: 85,
-  availability: 'available',
-  skills: ['React', 'Solidity', 'TypeScript', 'Node.js', 'Web3.js', 'GraphQL', 'PostgreSQL'],
-  experience: [
-    {
-      id: '1',
-      title: 'Senior Blockchain Developer',
-      company: 'CryptoTech Solutions',
-      description: 'Led development of DeFi protocols and NFT marketplaces.',
-      startDate: 'Jan 2022',
-      endDate: 'Present',
-    },
-    {
-      id: '2',
-      title: 'Full Stack Developer',
-      company: 'WebAgency Pro',
-      description: 'Built web applications with React and Node.js.',
-      startDate: 'Mar 2019',
-      endDate: 'Dec 2021',
-    },
-  ],
-  portfolio: [
-    { id: '1', title: 'DeFi Dashboard', image: '/portfolio/1.jpg' },
-    { id: '2', title: 'NFT Marketplace', image: '/portfolio/2.jpg' },
-    { id: '3', title: 'DAO Governance', image: '/portfolio/3.jpg' },
-  ],
-  stats: {
-    projectsCompleted: 12,
-    totalEarned: '$45,000',
-    rating: 4.8,
-    reviews: 24,
-  },
-};
-
 export default function ProfilePage() {
+  const [profile, setProfile] = useState<FreelancerProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await freelancersApi.getProfile();
+        setProfile(res.data.data);
+      } catch {
+        setError('Failed to load profile');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error || !profile) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">{error || 'Profile not found'}</p>
+      </div>
+    );
+  }
+
+  const initials = profile.name.split(' ').map((n) => n[0]).join('');
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -78,20 +80,14 @@ export default function ProfilePage() {
           <CardContent className="p-6">
             <div className="text-center">
               <Avatar className="w-24 h-24 mx-auto mb-4">
-                <AvatarImage src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.name}`} />
                 <AvatarFallback className="gradient-primary text-white text-2xl">
-                  {profile.name.split(' ').map((n) => n[0]).join('')}
+                  {initials}
                 </AvatarFallback>
               </Avatar>
               <h2 className="text-xl font-bold">{profile.name}</h2>
               <p className="text-muted-foreground flex items-center justify-center gap-1 mt-1">
-                <MapPin className="w-4 h-4" /> {profile.nationality}
+                <MapPin className="w-4 h-4" /> {profile.nationality || 'Not specified'}
               </p>
-              <div className="flex items-center justify-center gap-1 mt-2">
-                <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                <span className="font-semibold">{profile.stats.rating}</span>
-                <span className="text-muted-foreground">({profile.stats.reviews} reviews)</span>
-              </div>
               <Badge className="mt-3 bg-green-500/10 text-green-500">
                 <Clock className="w-3 h-3 mr-1" /> {profile.availability}
               </Badge>
@@ -100,15 +96,7 @@ export default function ProfilePage() {
             <div className="mt-6 space-y-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Hourly Rate</span>
-                <span className="font-semibold text-primary">${profile.hourlyRate}/hr</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Projects Completed</span>
-                <span className="font-semibold">{profile.stats.projectsCompleted}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Total Earned</span>
-                <span className="font-semibold">{profile.stats.totalEarned}</span>
+                <span className="font-semibold text-primary">${profile.hourly_rate}/hr</span>
               </div>
             </div>
           </CardContent>
@@ -122,7 +110,7 @@ export default function ProfilePage() {
               <CardTitle>About Me</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground">{profile.bio}</p>
+              <p className="text-muted-foreground">{profile.bio || 'No bio provided'}</p>
             </CardContent>
           </Card>
 
@@ -136,12 +124,15 @@ export default function ProfilePage() {
             </CardHeader>
             <CardContent>
               <div className="flex flex-wrap gap-2">
-                {profile.skills.map((skill) => (
-                  <Badge key={skill} variant="secondary" className="text-sm py-1.5 px-3">
-                    {skill}
+                {profile.skills?.map((skill) => (
+                  <Badge key={skill.id} variant="secondary" className="text-sm py-1.5 px-3">
+                    {skill.name}
                     <X className="w-3 h-3 ml-2 cursor-pointer hover:text-destructive" />
                   </Badge>
                 ))}
+                {(!profile.skills || profile.skills.length === 0) && (
+                  <p className="text-sm text-muted-foreground">No skills added yet</p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -155,7 +146,7 @@ export default function ProfilePage() {
               </Button>
             </CardHeader>
             <CardContent className="space-y-4">
-              {profile.experience.map((exp) => (
+              {profile.experience?.map((exp) => (
                 <div key={exp.id} className="p-4 rounded-xl bg-secondary/50 border border-border">
                   <div className="flex items-start justify-between">
                     <div>
@@ -166,33 +157,14 @@ export default function ProfilePage() {
                       <p className="text-sm text-muted-foreground mt-1">{exp.description}</p>
                     </div>
                     <span className="text-xs text-muted-foreground">
-                      {exp.startDate} - {exp.endDate}
+                      {exp.start_date} - {exp.end_date || 'Present'}
                     </span>
                   </div>
                 </div>
               ))}
-            </CardContent>
-          </Card>
-
-          {/* Portfolio */}
-          <Card className="bg-card border-border">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Portfolio</CardTitle>
-              <Button variant="ghost" size="sm">
-                <Plus className="w-4 h-4 mr-1" /> Add Item
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-3 gap-4">
-                {profile.portfolio.map((item) => (
-                  <div
-                    key={item.id}
-                    className="aspect-video rounded-xl bg-secondary border border-border flex items-center justify-center cursor-pointer hover:border-primary/20 transition-all"
-                  >
-                    <Globe className="w-8 h-8 text-muted-foreground" />
-                  </div>
-                ))}
-              </div>
+              {(!profile.experience || profile.experience.length === 0) && (
+                <p className="text-sm text-muted-foreground">No experience added yet</p>
+              )}
             </CardContent>
           </Card>
         </div>

@@ -1,8 +1,12 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { transactionsApi } from '@/lib/api';
+import type { Transaction } from '@/types';
+import { toast } from 'sonner';
 import {
   DollarSign,
   TrendingUp,
@@ -12,72 +16,64 @@ import {
   ExternalLink,
   Copy,
   Check,
+  Loader2,
 } from 'lucide-react';
-import { useState } from 'react';
-
-const transactions = [
-  {
-    id: '1',
-    type: 'milestone_release',
-    project: 'E-commerce Platform Redesign',
-    amount: '$800',
-    status: 'completed',
-    date: 'Dec 1, 2024',
-    txHash: '0xabc123...def456',
-  },
-  {
-    id: '2',
-    type: 'escrow_deposit',
-    project: 'Mobile App Development',
-    amount: '$5,500',
-    status: 'completed',
-    date: 'Nov 28, 2024',
-    txHash: '0x789xyz...012abc',
-  },
-  {
-    id: '3',
-    type: 'milestone_release',
-    project: 'Smart Contract Audit',
-    amount: '$1,000',
-    status: 'completed',
-    date: 'Nov 25, 2024',
-    txHash: '0x345def...678ghi',
-  },
-  {
-    id: '4',
-    type: 'milestone_release',
-    project: 'Smart Contract Audit',
-    amount: '$1,000',
-    status: 'completed',
-    date: 'Nov 20, 2024',
-    txHash: '0x901jkl...234mno',
-  },
-  {
-    id: '5',
-    type: 'milestone_release',
-    project: 'Smart Contract Audit',
-    amount: '$800',
-    status: 'completed',
-    date: 'Nov 15, 2024',
-    txHash: '0x567pqr...890stu',
-  },
-];
 
 const typeLabels: Record<string, { label: string; color: string }> = {
-  milestone_release: { label: 'Milestone Release', color: 'text-green-500' },
+  escrow_release: { label: 'Milestone Release', color: 'text-green-500' },
   escrow_deposit: { label: 'Escrow Deposit', color: 'text-blue-500' },
+  deposit: { label: 'Deposit', color: 'text-blue-500' },
+  withdrawal: { label: 'Withdrawal', color: 'text-yellow-500' },
   refund: { label: 'Refund', color: 'text-yellow-500' },
 };
 
 export default function EarningsPage() {
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
-  const walletAddress = '0x1234567890abcdef1234567890abcdef12345678';
 
-  const copyAddress = () => {
-    navigator.clipboard.writeText(walletAddress);
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      try {
+        const res = await transactionsApi.list();
+        setTransactions(res.data.data);
+      } catch {
+        toast.error('Failed to load transactions');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTransactions();
+  }, []);
+
+  const copyAddress = (address: string) => {
+    navigator.clipboard.writeText(address);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const totalEarned = transactions
+    .filter(t => t.type === 'escrow_release' && t.status === 'completed')
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  const thisMonth = transactions
+    .filter(t => {
+      const txDate = new Date(t.created_at);
+      const now = new Date();
+      return t.type === 'escrow_release' && 
+             t.status === 'completed' &&
+             txDate.getMonth() === now.getMonth() &&
+             txDate.getFullYear() === now.getFullYear();
+    })
+    .reduce((sum, t) => sum + t.amount, 0);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -94,7 +90,7 @@ export default function EarningsPage() {
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm text-muted-foreground mb-1">Total Earned</p>
-              <p className="text-4xl font-bold gradient-text">$12,450</p>
+              <p className="text-4xl font-bold gradient-text">${totalEarned.toLocaleString()}</p>
               <p className="text-sm text-muted-foreground mt-2">Available for withdrawal</p>
             </div>
             <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center">
@@ -102,18 +98,6 @@ export default function EarningsPage() {
             </div>
           </div>
           <div className="mt-6 flex items-center gap-4">
-            <div className="flex-1 p-3 rounded-lg bg-background/50 border border-border">
-              <p className="text-xs text-muted-foreground mb-1">Wallet Address</p>
-              <div className="flex items-center gap-2">
-                <p className="font-mono text-sm truncate">{walletAddress}</p>
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={copyAddress}>
-                  {copied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
-                </Button>
-                <Button variant="ghost" size="icon" className="h-6 w-6">
-                  <ExternalLink className="w-3 h-3" />
-                </Button>
-              </div>
-            </div>
             <Button className="gradient-primary text-white">Withdraw</Button>
           </div>
         </CardContent>
@@ -128,7 +112,7 @@ export default function EarningsPage() {
                 <DollarSign className="w-5 h-5 text-green-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">$12,450</p>
+                <p className="text-2xl font-bold">${totalEarned.toLocaleString()}</p>
                 <p className="text-xs text-muted-foreground">Total Earned</p>
               </div>
             </div>
@@ -141,7 +125,7 @@ export default function EarningsPage() {
                 <TrendingUp className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold">$2,100</p>
+                <p className="text-2xl font-bold">${thisMonth.toLocaleString()}</p>
                 <p className="text-xs text-muted-foreground">This Month</p>
               </div>
             </div>
@@ -154,7 +138,7 @@ export default function EarningsPage() {
                 <ArrowUpRight className="w-5 h-5 text-cyan" />
               </div>
               <div>
-                <p className="text-2xl font-bold">5</p>
+                <p className="text-2xl font-bold">{transactions.length}</p>
                 <p className="text-xs text-muted-foreground">Transactions</p>
               </div>
             </div>
@@ -170,7 +154,7 @@ export default function EarningsPage() {
         <CardContent>
           <div className="space-y-3">
             {transactions.map((tx) => {
-              const typeInfo = typeLabels[tx.type];
+              const typeInfo = typeLabels[tx.type] || { label: tx.type, color: 'text-gray-500' };
               return (
                 <div
                   key={tx.id}
@@ -178,7 +162,7 @@ export default function EarningsPage() {
                 >
                   <div className="flex items-center gap-4">
                     <div className={`w-10 h-10 rounded-lg bg-background flex items-center justify-center ${typeInfo.color}`}>
-                      {tx.type === 'milestone_release' ? (
+                      {tx.type === 'escrow_release' || tx.type === 'deposit' ? (
                         <ArrowDownRight className="w-5 h-5" />
                       ) : (
                         <ArrowUpRight className="w-5 h-5" />
@@ -186,20 +170,26 @@ export default function EarningsPage() {
                     </div>
                     <div>
                       <p className="font-medium">{typeInfo.label}</p>
-                      <p className="text-sm text-muted-foreground">{tx.project}</p>
+                      <p className="text-sm text-muted-foreground">{tx.currency}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold text-green-500">{tx.amount}</p>
+                    <p className={`font-semibold ${tx.type === 'escrow_release' || tx.type === 'deposit' ? 'text-green-500' : ''}`}>
+                      {tx.type === 'escrow_release' || tx.type === 'deposit' ? '+' : '-'}${tx.amount.toLocaleString()}
+                    </p>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>{tx.date}</span>
-                      <span className="font-mono">{tx.txHash}</span>
-                      <ExternalLink className="w-3 h-3" />
+                      <span>{new Date(tx.created_at).toLocaleDateString()}</span>
+                      {tx.tx_hash && (
+                        <span className="font-mono">{tx.tx_hash.slice(0, 10)}...</span>
+                      )}
                     </div>
                   </div>
                 </div>
               );
             })}
+            {transactions.length === 0 && (
+              <p className="text-center text-muted-foreground py-8">No transactions yet</p>
+            )}
           </div>
         </CardContent>
       </Card>

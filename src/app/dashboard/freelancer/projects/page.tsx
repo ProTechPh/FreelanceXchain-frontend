@@ -1,10 +1,13 @@
 'use client';
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useState, useEffect } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { projectsApi } from '@/lib/api';
+import type { Project } from '@/types';
+import { toast } from 'sonner';
 import {
   Search,
   Filter,
@@ -14,100 +17,53 @@ import {
   Bookmark,
   MapPin,
   Zap,
+  Loader2,
 } from 'lucide-react';
 
-const projects = [
-  {
-    id: '1',
-    title: 'Web3 Social Media Platform',
-    employer: 'TechVentures Inc.',
-    avatar: 'TV',
-    description: 'Build a decentralized social media platform with user-owned content, NFT profiles, and token-based governance.',
-    budget: '$6,000 - $10,000',
-    deadline: '60 days',
-    skills: ['React', 'Solidity', 'Web3.js', 'Node.js'],
-    proposals: 12,
-    isRush: false,
-    posted: '1 day ago',
-    match: 95,
-    location: 'Remote',
-  },
-  {
-    id: '2',
-    title: 'Crypto Trading Bot Development',
-    employer: 'DeFi Solutions',
-    avatar: 'DS',
-    description: 'Develop an automated trading bot for DEX arbitrage with risk management and portfolio tracking.',
-    budget: '$4,000 - $7,000',
-    deadline: '45 days',
-    skills: ['Python', 'TypeScript', 'API Integration', 'Trading'],
-    proposals: 8,
-    isRush: false,
-    posted: '2 days ago',
-    match: 88,
-    location: 'Remote',
-  },
-  {
-    id: '3',
-    title: 'DAO Governance Dashboard',
-    employer: 'CommunityDAO',
-    avatar: 'CD',
-    description: 'Create a comprehensive governance dashboard for DAO proposals, voting, and treasury management.',
-    budget: '$5,000 - $8,000',
-    deadline: '50 days',
-    skills: ['React', 'Solidity', 'GraphQL', 'Tailwind'],
-    proposals: 15,
-    isRush: true,
-    rushFee: 25,
-    posted: '3 days ago',
-    match: 82,
-    location: 'Remote',
-  },
-  {
-    id: '4',
-    title: 'NFT Marketplace with Auction',
-    employer: 'ArtBlock Studio',
-    avatar: 'AS',
-    description: 'Build an NFT marketplace supporting both fixed-price and auction-style listings with royalty system.',
-    budget: '$8,000 - $12,000',
-    deadline: '75 days',
-    skills: ['Next.js', 'Solidity', 'IPFS', 'PostgreSQL'],
-    proposals: 20,
-    isRush: false,
-    posted: '4 days ago',
-    match: 76,
-    location: 'Remote',
-  },
-  {
-    id: '5',
-    title: 'Smart Contract Audit Platform',
-    employer: 'SecureChain',
-    avatar: 'SC',
-    description: 'Develop an automated smart contract audit tool with vulnerability detection and reporting.',
-    budget: '$10,000 - $15,000',
-    deadline: '90 days',
-    skills: ['Solidity', 'Security', 'Python', 'ML'],
-    proposals: 6,
-    isRush: true,
-    rushFee: 30,
-    posted: '5 days ago',
-    match: 71,
-    location: 'Remote',
-  },
-];
-
 const skillFilters = ['React', 'Solidity', 'Python', 'TypeScript', 'Node.js', 'Web3.js'];
-const budgetRanges = ['Under $5,000', '$5,000 - $10,000', '$10,000 - $20,000', '$20,000+'];
 
 export default function BrowseProjects() {
   const [search, setSearch] = useState('');
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const res = await projectsApi.list({ status: 'open' });
+        setProjects(res.data.data);
+      } catch {
+        toast.error('Failed to load projects');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchProjects();
+  }, []);
 
   const toggleSkill = (skill: string) => {
     setSelectedSkills((prev) =>
       prev.includes(skill) ? prev.filter((s) => s !== skill) : [...prev, skill]
     );
   };
+
+  const filteredProjects = projects.filter((project) => {
+    const matchesSearch = !search || 
+      project.title.toLowerCase().includes(search.toLowerCase()) ||
+      project.description.toLowerCase().includes(search.toLowerCase());
+    const matchesSkills = selectedSkills.length === 0 ||
+      project.required_skills?.some(skill => selectedSkills.includes(skill.name));
+    return matchesSearch && matchesSkills;
+  });
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -153,38 +109,30 @@ export default function BrowseProjects() {
 
       {/* Results Count */}
       <p className="text-sm text-muted-foreground">
-        Showing {projects.length} projects
+        Showing {filteredProjects.length} projects
         {selectedSkills.length > 0 && ` matching ${selectedSkills.join(', ')}`}
       </p>
 
       {/* Projects Grid */}
       <div className="space-y-4">
-        {projects.map((project) => (
+        {filteredProjects.map((project) => (
           <Card
             key={project.id}
             className="bg-card border-border hover:border-primary/20 transition-all cursor-pointer group"
           >
             <CardContent className="p-6">
               <div className="flex items-start justify-between mb-4">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
-                    {project.avatar}
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold group-hover:text-primary transition-colors">
-                      {project.title}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">{project.employer}</p>
-                  </div>
+                <div>
+                  <h3 className="text-lg font-semibold group-hover:text-primary transition-colors">
+                    {project.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">{project.employer?.name || 'Unknown Employer'}</p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge className="bg-green-500/10 text-green-500">
-                    <Zap className="w-3 h-3 mr-1" /> {project.match}% Match
+                {project.is_rush && (
+                  <Badge className="bg-amber-500/10 text-amber-500">
+                    <Zap className="w-3 h-3 mr-1" /> Rush +{project.rush_fee_percentage}%
                   </Badge>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <Bookmark className="w-4 h-4" />
-                  </Button>
-                </div>
+                )}
               </div>
 
               <p className="text-muted-foreground mb-4 line-clamp-2">
@@ -192,9 +140,9 @@ export default function BrowseProjects() {
               </p>
 
               <div className="flex flex-wrap gap-2 mb-4">
-                {project.skills.map((skill) => (
-                  <Badge key={skill} variant="secondary" className="text-xs">
-                    {skill}
+                {project.required_skills?.map((skill) => (
+                  <Badge key={skill.id} variant="secondary" className="text-xs">
+                    {skill.name}
                   </Badge>
                 ))}
               </div>
@@ -202,7 +150,7 @@ export default function BrowseProjects() {
               <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <DollarSign className="w-4 h-4" />
-                  <span className="font-medium text-primary">{project.budget}</span>
+                  <span className="font-medium text-primary">${project.budget.toLocaleString()}</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Clock className="w-4 h-4" />
@@ -210,18 +158,8 @@ export default function BrowseProjects() {
                 </div>
                 <div className="flex items-center gap-1">
                   <Users className="w-4 h-4" />
-                  {project.proposals} proposals
+                  {project.proposal_count || 0} proposals
                 </div>
-                <div className="flex items-center gap-1">
-                  <MapPin className="w-4 h-4" />
-                  {project.location}
-                </div>
-                <span className="text-xs">{project.posted}</span>
-                {project.isRush && (
-                  <Badge className="bg-amber-500/10 text-amber-500">
-                    <Zap className="w-3 h-3 mr-1" /> Rush +{project.rushFee}%
-                  </Badge>
-                )}
               </div>
 
               <div className="mt-4 flex items-center gap-3">
@@ -231,6 +169,9 @@ export default function BrowseProjects() {
             </CardContent>
           </Card>
         ))}
+        {filteredProjects.length === 0 && (
+          <p className="text-center text-muted-foreground py-8">No projects found matching your criteria</p>
+        )}
       </div>
     </div>
   );

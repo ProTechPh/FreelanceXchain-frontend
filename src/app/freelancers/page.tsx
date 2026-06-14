@@ -1,11 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { freelancersApi } from '@/lib/api';
+import type { FreelancerProfile } from '@/types';
+import { toast } from 'sonner';
 import {
   Search,
   Filter,
@@ -13,95 +16,8 @@ import {
   MapPin,
   Clock,
   DollarSign,
-  Users,
+  Loader2,
 } from 'lucide-react';
-
-const freelancers = [
-  {
-    id: '1',
-    name: 'Alex Thompson',
-    avatar: 'AT',
-    title: 'Full-Stack Blockchain Developer',
-    hourlyRate: 85,
-    rating: 4.8,
-    reviews: 24,
-    skills: ['React', 'Solidity', 'TypeScript', 'Node.js'],
-    availability: 'available',
-    location: 'United States',
-    completedProjects: 12,
-    bio: 'Experienced blockchain developer with 5+ years in DeFi and NFTs.',
-  },
-  {
-    id: '2',
-    name: 'Sarah Chen',
-    avatar: 'SC',
-    title: 'UI/UX Designer & Frontend Developer',
-    hourlyRate: 75,
-    rating: 4.9,
-    reviews: 31,
-    skills: ['Figma', 'React', 'CSS', 'Tailwind'],
-    availability: 'available',
-    location: 'Canada',
-    completedProjects: 18,
-    bio: 'Creating beautiful, user-centered digital experiences.',
-  },
-  {
-    id: '3',
-    name: 'Mike Johnson',
-    avatar: 'MJ',
-    title: 'Smart Contract Developer',
-    hourlyRate: 120,
-    rating: 4.7,
-    reviews: 15,
-    skills: ['Solidity', 'Security', 'Testing', 'DeFi'],
-    availability: 'busy',
-    location: 'United Kingdom',
-    completedProjects: 8,
-    bio: 'Security-focused smart contract developer specializing in DeFi protocols.',
-  },
-  {
-    id: '4',
-    name: 'Elena Rodriguez',
-    avatar: 'ER',
-    title: 'DevOps & Cloud Architect',
-    hourlyRate: 95,
-    rating: 4.8,
-    reviews: 20,
-    skills: ['AWS', 'Docker', 'Kubernetes', 'CI/CD'],
-    availability: 'available',
-    location: 'Spain',
-    completedProjects: 14,
-    bio: 'Building scalable cloud infrastructure for web3 applications.',
-  },
-  {
-    id: '5',
-    name: 'David Kim',
-    avatar: 'DK',
-    title: 'Mobile App Developer',
-    hourlyRate: 80,
-    rating: 4.6,
-    reviews: 22,
-    skills: ['React Native', 'Flutter', 'iOS', 'Android'],
-    availability: 'available',
-    location: 'South Korea',
-    completedProjects: 16,
-    bio: 'Cross-platform mobile developer with focus on performance.',
-  },
-  {
-    id: '6',
-    name: 'Lisa Wang',
-    avatar: 'LW',
-    title: 'Data Scientist & ML Engineer',
-    hourlyRate: 110,
-    rating: 4.9,
-    reviews: 12,
-    skills: ['Python', 'TensorFlow', 'SQL', 'Analytics'],
-    availability: 'busy',
-    location: 'Singapore',
-    completedProjects: 10,
-    bio: 'Turning data into actionable insights with machine learning.',
-  },
-];
 
 const availabilityColors: Record<string, string> = {
   available: 'bg-green-500/10 text-green-500',
@@ -111,6 +27,37 @@ const availabilityColors: Record<string, string> = {
 
 export default function FreelancersPage() {
   const [search, setSearch] = useState('');
+  const [freelancers, setFreelancers] = useState<FreelancerProfile[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchFreelancers = async () => {
+      try {
+        const res = await freelancersApi.search();
+        setFreelancers(res.data.data);
+      } catch {
+        toast.error('Failed to load freelancers');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchFreelancers();
+  }, []);
+
+  const filteredFreelancers = freelancers.filter(f => 
+    !search || 
+    f.name.toLowerCase().includes(search.toLowerCase()) ||
+    f.bio?.toLowerCase().includes(search.toLowerCase()) ||
+    f.skills?.some(s => s.name.toLowerCase().includes(search.toLowerCase()))
+  );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
@@ -143,22 +90,22 @@ export default function FreelancersPage() {
 
         {/* Results */}
         <p className="text-sm text-muted-foreground mb-6">
-          Showing {freelancers.length} freelancers
+          Showing {filteredFreelancers.length} freelancers
         </p>
 
         {/* Freelancers Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {freelancers.map((freelancer) => (
+          {filteredFreelancers.map((freelancer) => (
             <Link key={freelancer.id} href={`/freelancers/${freelancer.id}`}>
               <Card className="bg-card border-border hover:border-primary/20 transition-all cursor-pointer h-full">
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4 mb-4">
                     <div className="w-14 h-14 rounded-xl gradient-primary flex items-center justify-center text-white font-bold text-lg">
-                      {freelancer.avatar}
+                      {freelancer.name.split(' ').map(n => n[0]).join('')}
                     </div>
                     <div className="flex-1">
                       <h3 className="font-semibold text-lg">{freelancer.name}</h3>
-                      <p className="text-sm text-muted-foreground">{freelancer.title}</p>
+                      <p className="text-sm text-muted-foreground">{freelancer.bio?.slice(0, 50)}...</p>
                     </div>
                     <Badge className={availabilityColors[freelancer.availability]}>
                       <Clock className="w-3 h-3 mr-1" />
@@ -166,36 +113,30 @@ export default function FreelancersPage() {
                     </Badge>
                   </div>
 
-                  <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                    {freelancer.bio}
-                  </p>
-
                   <div className="flex flex-wrap gap-1.5 mb-4">
-                    {freelancer.skills.slice(0, 4).map((skill) => (
-                      <Badge key={skill} variant="secondary" className="text-xs">
-                        {skill}
+                    {freelancer.skills?.slice(0, 4).map((skill) => (
+                      <Badge key={skill.id} variant="secondary" className="text-xs">
+                        {skill.name}
                       </Badge>
                     ))}
                   </div>
 
                   <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                      <span className="font-semibold">{freelancer.rating}</span>
-                      <span className="text-muted-foreground">({freelancer.reviews})</span>
-                    </div>
                     <div className="flex items-center gap-1 text-muted-foreground">
                       <MapPin className="w-3 h-3" />
-                      {freelancer.location}
+                      {freelancer.nationality || 'Remote'}
                     </div>
                     <div className="font-semibold text-primary">
-                      ${freelancer.hourlyRate}/hr
+                      ${freelancer.hourly_rate}/hr
                     </div>
                   </div>
                 </CardContent>
               </Card>
             </Link>
           ))}
+          {filteredFreelancers.length === 0 && (
+            <p className="col-span-full text-center text-muted-foreground py-8">No freelancers found</p>
+          )}
         </div>
       </div>
     </div>

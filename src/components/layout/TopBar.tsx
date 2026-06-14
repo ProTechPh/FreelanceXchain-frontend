@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Bell, MessageSquare, Wallet, LogOut, User, Settings, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -16,6 +17,7 @@ import { useState, useEffect } from 'react';
 
 export function TopBar() {
   const { user, logout } = useAuthStore();
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -73,7 +75,6 @@ export function TopBar() {
           <DropdownMenu>
             <DropdownMenuTrigger className="flex items-center gap-2 h-9 px-2 rounded-lg hover:bg-accent transition-colors cursor-pointer">
               <Avatar className="w-7 h-7">
-                <AvatarImage src={user?.name ? `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}` : undefined} />
                 <AvatarFallback className="text-xs gradient-primary text-white">{initials}</AvatarFallback>
               </Avatar>
               <ChevronDown className="w-4 h-4 text-muted-foreground" />
@@ -84,10 +85,10 @@ export function TopBar() {
                 <p className="text-xs text-muted-foreground">{user?.email}</p>
               </div>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => window.location.href = `/dashboard/${user?.role || 'freelancer'}/profile`} className="flex items-center gap-2 cursor-pointer">
+              <DropdownMenuItem onClick={() => router.push(`/dashboard/${user?.role || 'freelancer'}/profile`)} className="flex items-center gap-2 cursor-pointer">
                 <User className="w-4 h-4" /> Profile
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => window.location.href = `/dashboard/${user?.role || 'freelancer'}/settings`} className="flex items-center gap-2 cursor-pointer">
+              <DropdownMenuItem onClick={() => router.push(`/dashboard/${user?.role || 'freelancer'}/settings`)} className="flex items-center gap-2 cursor-pointer">
                 <Settings className="w-4 h-4" /> Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />

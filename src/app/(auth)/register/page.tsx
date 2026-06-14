@@ -25,7 +25,7 @@ export default function RegisterPage() {
   const router = useRouter();
 
   const handleOAuth = (provider: 'google' | 'github') => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
     window.location.href = `${apiUrl}/auth/oauth/${provider}`;
   };
 

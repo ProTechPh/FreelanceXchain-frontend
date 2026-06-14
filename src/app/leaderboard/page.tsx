@@ -1,9 +1,13 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { reputationApi } from '@/lib/api';
+import type { ReputationScore } from '@/types';
+import { toast } from 'sonner';
 import {
   Trophy,
   Star,
@@ -14,98 +18,8 @@ import {
   Crown,
   Medal,
   Zap,
+  Loader2,
 } from 'lucide-react';
-
-const leaderboard = [
-  {
-    rank: 1,
-    name: 'Sarah Chen',
-    avatar: 'SC',
-    title: 'UI/UX Designer',
-    score: 4.95,
-    reviews: 31,
-    projects: 18,
-    badge: 'Platinum',
-    badgeColor: 'bg-purple-500/10 text-purple-500',
-  },
-  {
-    rank: 2,
-    name: 'Alex Thompson',
-    avatar: 'AT',
-    title: 'Blockchain Developer',
-    score: 4.88,
-    reviews: 24,
-    projects: 12,
-    badge: 'Gold',
-    badgeColor: 'bg-yellow-500/10 text-yellow-500',
-  },
-  {
-    rank: 3,
-    name: 'Elena Rodriguez',
-    avatar: 'ER',
-    title: 'Cloud Architect',
-    score: 4.82,
-    reviews: 20,
-    projects: 14,
-    badge: 'Silver',
-    badgeColor: 'bg-gray-500/10 text-gray-500',
-  },
-  {
-    rank: 4,
-    name: 'Mike Johnson',
-    avatar: 'MJ',
-    title: 'Smart Contract Dev',
-    score: 4.75,
-    reviews: 15,
-    projects: 8,
-    badge: 'Bronze',
-    badgeColor: 'bg-orange-500/10 text-orange-500',
-  },
-  {
-    rank: 5,
-    name: 'David Kim',
-    avatar: 'DK',
-    title: 'Mobile Developer',
-    score: 4.68,
-    reviews: 22,
-    projects: 16,
-    badge: null,
-    badgeColor: '',
-  },
-  {
-    rank: 6,
-    name: 'Lisa Wang',
-    avatar: 'LW',
-    title: 'Data Scientist',
-    score: 4.62,
-    reviews: 12,
-    projects: 10,
-    badge: null,
-    badgeColor: '',
-  },
-  {
-    rank: 7,
-    name: 'James Wilson',
-    avatar: 'JW',
-    title: 'DevOps Engineer',
-    score: 4.55,
-    reviews: 18,
-    projects: 11,
-    badge: null,
-    badgeColor: '',
-  },
-  {
-    rank: 8,
-    name: 'Maria Garcia',
-    avatar: 'MG',
-    title: 'Full Stack Dev',
-    score: 4.48,
-    reviews: 14,
-    projects: 9,
-    badge: null,
-    badgeColor: '',
-  },
-];
 
 const getRankIcon = (rank: number) => {
   switch (rank) {
@@ -121,6 +35,31 @@ const getRankIcon = (rank: number) => {
 };
 
 export default function LeaderboardPage() {
+  const [leaderboard, setLeaderboard] = useState<ReputationScore[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      try {
+        const res = await reputationApi.getLeaderboard();
+        setLeaderboard(res.data.data);
+      } catch {
+        toast.error('Failed to load leaderboard');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLeaderboard();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen">
       {/* Header */}
@@ -148,44 +87,61 @@ export default function LeaderboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {leaderboard.map((freelancer) => (
-                    <Link key={freelancer.rank} href={`/freelancers/${freelancer.rank}`}>
+                  {leaderboard.map((entry, index) => (
+                    <Link key={entry.user_id} href={`/freelancers/${entry.user_id}`}>
                       <div
                         className={`flex items-center gap-4 p-4 rounded-xl border transition-all cursor-pointer ${
-                          freelancer.rank <= 3
+                          index < 3
                             ? 'bg-gradient-to-r from-primary/5 to-transparent border-primary/20'
                             : 'bg-secondary/50 border-border hover:border-primary/20'
                         }`}
                       >
                         <div className="w-10 flex justify-center">
-                          {getRankIcon(freelancer.rank)}
+                          {getRankIcon(index + 1)}
                         </div>
                         <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center text-white font-bold">
-                          {freelancer.avatar}
+                          {(index + 1).toString()}
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <p className="font-semibold">{freelancer.name}</p>
-                            {freelancer.badge && (
-                              <Badge className={freelancer.badgeColor}>
-                                <Zap className="w-3 h-3 mr-1" /> {freelancer.badge}
+                            <p className="font-semibold">User {entry.user_id.slice(0, 8)}</p>
+                            {index === 0 && (
+                              <Badge className="bg-purple-500/10 text-purple-500">
+                                <Zap className="w-3 h-3 mr-1" /> Platinum
+                              </Badge>
+                            )}
+                            {index === 1 && (
+                              <Badge className="bg-yellow-500/10 text-yellow-500">
+                                <Zap className="w-3 h-3 mr-1" /> Gold
+                              </Badge>
+                            )}
+                            {index === 2 && (
+                              <Badge className="bg-gray-500/10 text-gray-500">
+                                <Zap className="w-3 h-3 mr-1" /> Silver
                               </Badge>
                             )}
                           </div>
-                          <p className="text-sm text-muted-foreground">{freelancer.title}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {entry.total_ratings} reviews
+                          </p>
                         </div>
                         <div className="text-right">
                           <div className="flex items-center gap-1 justify-end">
                             <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                            <span className="font-semibold">{freelancer.score}</span>
+                            <span className="font-semibold">{entry.overall_score.toFixed(2)}</span>
                           </div>
-                          <p className="text-xs text-muted-foreground">
-                            {freelancer.reviews} reviews • {freelancer.projects} projects
-                          </p>
+                          {entry.on_chain_verified && (
+                            <p className="text-xs text-green-500 flex items-center gap-1 justify-end">
+                              <CheckCircle className="w-3 h-3" /> Verified
+                            </p>
+                          )}
                         </div>
                       </div>
                     </Link>
                   ))}
+                  {leaderboard.length === 0 && (
+                    <p className="text-center text-muted-foreground py-8">No rankings available yet</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -193,52 +149,6 @@ export default function LeaderboardPage() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Your Ranking */}
-            <Card className="bg-card border-border overflow-hidden">
-              <div className="absolute inset-0 gradient-primary opacity-5" />
-              <CardHeader className="relative">
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5" /> Your Ranking
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="relative">
-                <div className="text-center mb-4">
-                  <div className="w-16 h-16 mx-auto rounded-xl gradient-primary flex items-center justify-center text-white font-bold text-2xl mb-3">
-                    AT
-                  </div>
-                  <p className="font-semibold">Alex Thompson</p>
-                  <p className="text-sm text-muted-foreground">Rank #2</p>
-                </div>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Score</span>
-                    <span className="font-semibold flex items-center gap-1">
-                      <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" /> 4.88
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Reviews</span>
-                    <span className="font-semibold">24</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Projects</span>
-                    <span className="font-semibold">12</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Badge</span>
-                    <Badge className="bg-yellow-500/10 text-yellow-500">
-                      <Zap className="w-3 h-3 mr-1" /> Gold
-                    </Badge>
-                  </div>
-                </div>
-                <Link href="/dashboard/freelancer/reputation">
-                  <Button variant="outline" className="w-full mt-4">
-                    View Full Profile
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-
             {/* Reputation Tiers */}
             <Card className="bg-card border-border">
               <CardHeader>

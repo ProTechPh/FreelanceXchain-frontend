@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,7 @@ import { authApi } from '@/lib/api';
 import { toast } from 'sonner';
 import { Shield, Copy, CheckCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import QRCode from 'qrcode';
 
 type Step = 'enroll' | 'verify' | 'complete';
 
@@ -17,6 +18,7 @@ export default function MfaSetupPage() {
   const [step, setStep] = useState<Step>('enroll');
   const [secret, setSecret] = useState('');
   const [uri, setUri] = useState('');
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
   const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
   const [code, setCode] = useState('');
   const [isEnrolling, setIsEnrolling] = useState(false);
@@ -24,6 +26,22 @@ export default function MfaSetupPage() {
   const [copied, setCopied] = useState(false);
   const { user, isAuthenticated } = useAuthStore();
   const router = useRouter();
+
+  const generateQrCode = useCallback(async (totpUri: string) => {
+    try {
+      const dataUrl = await QRCode.toDataURL(totpUri, {
+        width: 200,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#ffffff',
+        },
+      });
+      setQrCodeDataUrl(dataUrl);
+    } catch {
+      toast.error('Failed to generate QR code');
+    }
+  }, []);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -40,6 +58,9 @@ export default function MfaSetupPage() {
         setUri(data.uri || '');
         setRecoveryCodes(data.recoveryCodes || []);
         setStep('verify');
+        if (data.uri) {
+          await generateQrCode(data.uri);
+        }
       }
     } catch {
       toast.error('Failed to start MFA setup');
@@ -102,10 +123,10 @@ export default function MfaSetupPage() {
         <div className="space-y-4">
           <div className="p-4 rounded-lg bg-card border border-border">
             <p className="text-sm font-medium mb-2">1. Scan this QR code with your authenticator app</p>
-            {uri && (
+            {qrCodeDataUrl && (
               <div className="flex justify-center mb-4">
                 <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(uri)}`}
+                  src={qrCodeDataUrl}
                   alt="MFA QR Code"
                   className="rounded-lg"
                 />

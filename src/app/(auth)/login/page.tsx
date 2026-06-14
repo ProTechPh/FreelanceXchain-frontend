@@ -18,7 +18,7 @@ export default function LoginPage() {
   const router = useRouter();
 
   const handleOAuth = (provider: 'google' | 'github') => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
     window.location.href = `${apiUrl}/auth/oauth/${provider}`;
   };
 
@@ -29,12 +29,13 @@ export default function LoginPage() {
       
       if (result.mfaRequired) {
         // MFA is required — redirect to MFA verification page
-        router.push('/mfa/verify');
+        router.push('/(auth)/mfa/verify');
         return;
       }
       
       toast.success('Welcome back!');
-      router.push('/dashboard/freelancer');
+      const user = useAuthStore.getState().user;
+      router.push(`/dashboard/${user?.role || 'freelancer'}`);
     } catch {
       toast.error('Invalid email or password', { duration: 5000 });
     }

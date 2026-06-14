@@ -1,8 +1,12 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { contractsApi } from '@/lib/api';
+import type { Contract } from '@/types';
+import { toast } from 'sonner';
 import {
   FolderOpen,
   Clock,
@@ -11,66 +15,17 @@ import {
   ArrowUpRight,
   ExternalLink,
   AlertCircle,
+  Loader2,
 } from 'lucide-react';
 
-const contracts = [
-  {
-    id: '1',
-    project: 'E-commerce Platform Redesign',
-    employer: 'TechCorp Inc.',
-    totalAmount: '$3,200',
-    fundedAmount: '$3,200',
-    status: 'active',
-    escrowAddress: '0x1234...5678',
-    milestones: [
-      { name: 'UI Components', status: 'completed', amount: '$800' },
-      { name: 'Backend Integration', status: 'in_progress', amount: '$1,200' },
-      { name: 'Testing & QA', status: 'pending', amount: '$800' },
-      { name: 'Deployment', status: 'pending', amount: '$400' },
-    ],
-    deadline: 'Dec 20, 2024',
-    progress: 35,
-  },
-  {
-    id: '2',
-    project: 'Mobile App Development',
-    employer: 'StartupXYZ',
-    totalAmount: '$5,500',
-    fundedAmount: '$5,500',
-    status: 'active',
-    escrowAddress: '0xabcd...ef01',
-    milestones: [
-      { name: 'UI/UX Design', status: 'completed', amount: '$1,000' },
-      { name: 'iOS Development', status: 'in_progress', amount: '$2,000' },
-      { name: 'Android Development', status: 'pending', amount: '$1,500' },
-      { name: 'API Integration', status: 'pending', amount: '$1,000' },
-    ],
-    deadline: 'Jan 15, 2025',
-    progress: 25,
-  },
-  {
-    id: '3',
-    project: 'Smart Contract Audit',
-    employer: 'DeFi Protocol',
-    totalAmount: '$2,800',
-    fundedAmount: '$2,800',
-    status: 'completed',
-    escrowAddress: '0x5678...9abc',
-    milestones: [
-      { name: 'Code Review', status: 'completed', amount: '$1,000' },
-      { name: 'Security Analysis', status: 'completed', amount: '$1,000' },
-      { name: 'Report Generation', status: 'completed', amount: '$800' },
-    ],
-    deadline: 'Dec 10, 2024',
-    progress: 100,
-  },
-];
-
 const milestoneStatusColors: Record<string, string> = {
-  completed: 'bg-green-500/10 text-green-500',
+  approved: 'bg-green-500/10 text-green-500',
   in_progress: 'bg-blue-500/10 text-blue-500',
   pending: 'bg-gray-500/10 text-gray-500',
   disputed: 'bg-red-500/10 text-red-500',
+  submitted: 'bg-yellow-500/10 text-yellow-500',
+  funded: 'bg-purple-500/10 text-purple-500',
+  released: 'bg-green-500/10 text-green-500',
 };
 
 const contractStatusColors: Record<string, string> = {
@@ -78,9 +33,40 @@ const contractStatusColors: Record<string, string> = {
   completed: 'bg-primary/10 text-primary',
   pending: 'bg-yellow-500/10 text-yellow-500',
   cancelled: 'bg-red-500/10 text-red-500',
+  disputed: 'bg-red-500/10 text-red-500',
 };
 
 export default function ContractsPage() {
+  const [contracts, setContracts] = useState<Contract[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchContracts = async () => {
+      try {
+        const res = await contractsApi.list();
+        setContracts(res.data.data);
+      } catch {
+        toast.error('Failed to load contracts');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchContracts();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  const activeContracts = contracts.filter(c => c.status === 'active');
+  const totalInEscrow = activeContracts.reduce((sum, c) => sum + (c.total_amount - c.funded_amount), 0);
+  const completedMilestones = contracts.reduce((sum, c) => 
+    sum + (c.milestones?.filter(m => m.status === 'approved').length || 0), 0);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -100,7 +86,7 @@ export default function ContractsPage() {
                 <FolderOpen className="w-5 h-5 text-green-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">2</p>
+                <p className="text-2xl font-bold">{activeContracts.length}</p>
                 <p className="text-xs text-muted-foreground">Active Contracts</p>
               </div>
             </div>
@@ -113,7 +99,7 @@ export default function ContractsPage() {
                 <DollarSign className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold">$8,700</p>
+                <p className="text-2xl font-bold">${totalInEscrow.toLocaleString()}</p>
                 <p className="text-xs text-muted-foreground">In Escrow</p>
               </div>
             </div>
@@ -126,7 +112,7 @@ export default function ContractsPage() {
                 <CheckCircle className="w-5 h-5 text-yellow-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">5</p>
+                <p className="text-2xl font-bold">{completedMilestones}</p>
                 <p className="text-xs text-muted-foreground">Milestones Completed</p>
               </div>
             </div>
@@ -136,100 +122,106 @@ export default function ContractsPage() {
 
       {/* Contracts */}
       <div className="space-y-4">
-        {contracts.map((contract) => (
-          <Card key={contract.id} className="bg-card border-border">
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <div>
-                  <CardTitle className="text-lg">{contract.project}</CardTitle>
-                  <p className="text-sm text-muted-foreground">{contract.employer}</p>
-                </div>
-                <Badge className={contractStatusColors[contract.status]}>
-                  {contract.status}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Contract Info */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div>
-                  <p className="text-muted-foreground">Total Amount</p>
-                  <p className="font-semibold text-primary">{contract.totalAmount}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Funded</p>
-                  <p className="font-semibold">{contract.fundedAmount}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Escrow</p>
-                  <p className="font-mono text-xs flex items-center gap-1">
-                    {contract.escrowAddress}
-                    <ExternalLink className="w-3 h-3" />
-                  </p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Deadline</p>
-                  <p className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" /> {contract.deadline}
-                  </p>
-                </div>
-              </div>
-
-              {/* Progress */}
-              <div>
-                <div className="flex items-center justify-between text-xs mb-1">
-                  <span className="text-muted-foreground">Overall Progress</span>
-                  <span>{contract.progress}%</span>
-                </div>
-                <div className="h-2 bg-background rounded-full overflow-hidden">
-                  <div
-                    className="h-full gradient-primary rounded-full transition-all"
-                    style={{ width: `${contract.progress}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Milestones */}
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Milestones</p>
-                {contract.milestones.map((milestone, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 border border-border"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-2 h-2 rounded-full ${milestone.status === 'completed' ? 'bg-green-500' : milestone.status === 'in_progress' ? 'bg-blue-500' : 'bg-gray-500'}`} />
-                      <span className="text-sm">{milestone.name}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-medium">{milestone.amount}</span>
-                      <Badge className={milestoneStatusColors[milestone.status]}>
-                        {milestone.status.replace('_', ' ')}
-                      </Badge>
-                      {milestone.status === 'in_progress' && (
-                        <Button size="sm" className="gradient-primary text-white">
-                          Submit
-                        </Button>
-                      )}
-                    </div>
+        {contracts.map((contract) => {
+          const progress = contract.milestones?.length
+            ? Math.round((contract.milestones.filter(m => m.status === 'approved').length / contract.milestones.length) * 100)
+            : 0;
+          
+          return (
+            <Card key={contract.id} className="bg-card border-border">
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <CardTitle className="text-lg">{contract.project?.title || 'Untitled Project'}</CardTitle>
+                    <p className="text-sm text-muted-foreground">{contract.employer?.name || 'Unknown Employer'}</p>
                   </div>
-                ))}
-              </div>
+                  <Badge className={contractStatusColors[contract.status]}>
+                    {contract.status}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Contract Info */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Total Amount</p>
+                    <p className="font-semibold text-primary">${contract.total_amount.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Funded</p>
+                    <p className="font-semibold">${contract.funded_amount.toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Escrow</p>
+                    <p className="font-mono text-xs flex items-center gap-1">
+                      {contract.escrow_address ? `${contract.escrow_address.slice(0, 6)}...${contract.escrow_address.slice(-4)}` : 'N/A'}
+                      <ExternalLink className="w-3 h-3" />
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Status</p>
+                    <p className="flex items-center gap-1 capitalize">
+                      <Clock className="w-3 h-3" /> {contract.status}
+                    </p>
+                  </div>
+                </div>
 
-              {/* Actions */}
-              <div className="flex gap-3 pt-2">
-                <Button variant="outline" size="sm">
-                  <ArrowUpRight className="w-4 h-4 mr-2" /> View Contract
-                </Button>
-                {contract.status === 'active' && (
-                  <Button variant="outline" size="sm" className="text-yellow-500 border-yellow-500/50 hover:bg-yellow-500/10">
-                    <AlertCircle className="w-4 h-4 mr-2" /> Dispute
-                  </Button>
+                {/* Progress */}
+                <div>
+                  <div className="flex items-center justify-between text-xs mb-1">
+                    <span className="text-muted-foreground">Overall Progress</span>
+                    <span>{progress}%</span>
+                  </div>
+                  <div className="h-2 bg-background rounded-full overflow-hidden">
+                    <div
+                      className="h-full gradient-primary rounded-full transition-all"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Milestones */}
+                {contract.milestones && contract.milestones.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">Milestones</p>
+                    {contract.milestones.map((milestone) => (
+                      <div
+                        key={milestone.id}
+                        className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 border border-border"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-2 h-2 rounded-full ${milestone.status === 'approved' ? 'bg-green-500' : milestone.status === 'in_progress' ? 'bg-blue-500' : 'bg-gray-500'}`} />
+                          <span className="text-sm">{milestone.title}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-medium">${milestone.amount.toLocaleString()}</span>
+                          <Badge className={milestoneStatusColors[milestone.status] || 'bg-gray-500/10 text-gray-500'}>
+                            {milestone.status.replace('_', ' ')}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+
+                {/* Actions */}
+                <div className="flex gap-3 pt-2">
+                  <Button variant="outline" size="sm">
+                    <ArrowUpRight className="w-4 h-4 mr-2" /> View Contract
+                  </Button>
+                  {contract.status === 'active' && (
+                    <Button variant="outline" size="sm" className="text-yellow-500 border-yellow-500/50 hover:bg-yellow-500/10">
+                      <AlertCircle className="w-4 h-4 mr-2" /> Dispute
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+        {contracts.length === 0 && (
+          <p className="text-center text-muted-foreground py-8">No contracts found</p>
+        )}
       </div>
     </div>
   );
