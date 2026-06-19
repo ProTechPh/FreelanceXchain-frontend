@@ -1,56 +1,38 @@
-import Link from 'next/link';
-import { Hero, Features, HowItWorks, CTA, Footer } from '@/components/landing/Hero';
+import { Testimonials } from '@/components/ui/testimonials-columns-1';
+import { Logos3 } from '@/components/ui/logos3';
+import { FooterSection } from '@/components/ui/footer-section';
+import { CallToAction } from '@/components/ui/call-to-action';
+import AetherHero from '@/components/ui/aether-hero';
+import { HowItWorks } from '@/components/ui/how-it-works';
+import { WhySection } from '@/components/ui/vercep-feature-1';
+import Navbar from '@/components/ui/navbar';
 
 export default function Home() {
   return (
     <div className="min-h-screen">
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
-              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-              </svg>
-            </div>
-            <span className="font-bold text-lg gradient-text">FreelanceX</span>
-          </Link>
-          <div className="hidden md:flex items-center gap-8">
-            <Link href="/projects" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Projects
-            </Link>
-            <Link href="/freelancers" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Freelancers
-            </Link>
-            <Link href="/leaderboard" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Leaderboard
-            </Link>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link href="/login">
-              <button className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
-                Sign in
-              </button>
-            </Link>
-            <Link href="/register">
-              <button className="px-4 py-2 text-sm font-medium rounded-lg gradient-primary text-white hover:opacity-90 transition-opacity">
-                Get Started
-              </button>
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       {/* Main Content */}
-      <main className="pt-16">
-        <Hero />
-        <Features />
+      <main>
+        <AetherHero
+          title="Decentralize Your Freelance Career"
+          subtitle="The future of work is here. Get matched with projects using AI, secure payments with smart contracts, and build an immutable reputation on-chain."
+          ctaLabel="Find Work"
+          ctaHref="/register"
+          secondaryCtaLabel="Hire Talent"
+          secondaryCtaHref="/register"
+          overlayGradient="linear-gradient(180deg, #000000bb, #00000055 40%, transparent)"
+        />
+        <WhySection />
         <HowItWorks />
-        <CTA />
+        <Testimonials />
+        <Logos3 />
+        <CallToAction />
       </main>
 
       {/* Footer */}
-      <Footer />
+      <FooterSection />
     </div>
   );
 }
