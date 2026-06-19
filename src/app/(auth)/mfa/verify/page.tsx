@@ -57,7 +57,8 @@ export default function MfaVerifyPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen flex items-center justify-center p-8">
+      <div className="w-full max-w-md space-y-6">
       <div className="text-center">
         <div className="w-16 h-16 mx-auto mb-4 rounded-2xl gradient-primary flex items-center justify-center">
           <Shield className="w-8 h-8 text-white" />
@@ -99,6 +100,7 @@ export default function MfaVerifyPage() {
           Back to login
         </button>
       </div>
-    </div>
+      </div>
+      </div>
   );
 }

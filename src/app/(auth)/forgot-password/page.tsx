@@ -30,7 +30,8 @@ export default function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <div className="space-y-6 text-center">
+      <div className="min-h-screen flex items-center justify-center p-8">
+        <div className="w-full max-w-md space-y-6 text-center">
         <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
           <CheckCircle className="w-8 h-8 text-primary" />
         </div>
@@ -53,11 +54,13 @@ export default function ForgotPasswordPage() {
           </Button>
         </Link>
       </div>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen flex items-center justify-center p-8">
+      <div className="w-full max-w-md space-y-6">
       <div className="text-center">
         <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
           <Mail className="w-8 h-8 text-primary" />
@@ -91,6 +94,7 @@ export default function ForgotPasswordPage() {
           </Button>
         </Link>
       </form>
-    </div>
+      </div>
+      </div>
   );
 }

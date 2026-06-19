@@ -97,7 +97,8 @@ export default function MfaSetupPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen flex items-center justify-center p-8">
+      <div className="w-full max-w-md space-y-6">
       <div className="text-center">
         <div className="w-16 h-16 mx-auto mb-4 rounded-2xl gradient-primary flex items-center justify-center">
           <Shield className="w-8 h-8 text-white" />
@@ -208,6 +209,7 @@ export default function MfaSetupPage() {
         <ArrowLeft className="w-4 h-4" />
         Back to settings
       </Link>
-    </div>
+      </div>
+      </div>
   );
 }
