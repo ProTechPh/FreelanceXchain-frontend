@@ -9,7 +9,6 @@ import {
   FolderOpen,
   FileText,
   Users,
-  TrendingUp,
   Clock,
   ArrowUpRight,
   PlusCircle,

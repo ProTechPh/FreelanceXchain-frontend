@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,11 +8,9 @@ import {
   AlertTriangle,
   Clock,
   CheckCircle,
-  XCircle,
   FileText,
   MessageSquare,
   DollarSign,
-  ArrowUpRight,
 } from 'lucide-react';
 
 const disputes = [
@@ -81,8 +78,6 @@ const priorityColors: Record<string, string> = {
 };
 
 export default function DisputesPage() {
-  const [selectedDispute, setSelectedDispute] = useState<string | null>(null);
-
   return (
     <div className="space-y-6">
       {/* Header */}

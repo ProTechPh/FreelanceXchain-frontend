@@ -14,7 +14,6 @@ import {
   Star,
   Image,
   MessageSquare,
-  Bell,
   Settings,
   Shield,
   Users,
@@ -24,10 +23,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Link as LinkIcon,
-  Briefcase,
   DollarSign,
   PlusCircle,
-  UserCheck,
   ClipboardList,
   Mail,
 } from 'lucide-react';

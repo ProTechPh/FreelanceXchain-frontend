@@ -1,6 +1,6 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -12,7 +12,6 @@ import {
   Edit,
   Trash2,
   Eye,
-  MoreVertical,
 } from 'lucide-react';
 
 const projects = [

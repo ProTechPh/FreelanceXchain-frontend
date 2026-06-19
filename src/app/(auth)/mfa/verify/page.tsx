@@ -9,7 +9,6 @@ import { useAuthStore } from '@/stores/authStore';
 import { authApi } from '@/lib/api';
 import { toast } from 'sonner';
 import { Shield, ArrowLeft } from 'lucide-react';
-import Link from 'next/link';
 
 export default function MfaVerifyPage() {
   const [code, setCode] = useState('');

@@ -9,13 +9,9 @@ import {
   FolderOpen,
   DollarSign,
   AlertTriangle,
-  TrendingUp,
   Activity,
   ArrowUpRight,
   Shield,
-  Clock,
-  CheckCircle,
-  XCircle,
   BarChart3,
 } from 'lucide-react';
 

@@ -9,15 +9,9 @@ import { projectsApi } from '@/lib/api';
 import type { Project } from '@/types';
 import { toast } from 'sonner';
 import {
-  Clock,
-  DollarSign,
-  Users,
-  MapPin,
   Zap,
   Calendar,
   Target,
-  CheckCircle,
-  ExternalLink,
   Send,
   Heart,
   Share2,

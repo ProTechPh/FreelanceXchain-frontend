@@ -90,6 +90,7 @@ export default function AdminEmailPage() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchEmails();
     fetchUnreadCount();
   }, [fetchEmails, fetchUnreadCount]);

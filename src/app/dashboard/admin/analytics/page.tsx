@@ -10,7 +10,6 @@ import {
   DollarSign,
   FolderOpen,
   Activity,
-  BarChart3,
   ArrowUpRight,
 } from 'lucide-react';
 

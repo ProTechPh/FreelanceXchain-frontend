@@ -2,15 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { reputationApi, reviewsApi } from '@/lib/api';
 import type { ReputationScore, Review } from '@/types';
-import { toast } from 'sonner';
 import {
   Star,
   TrendingUp,
-  Award,
   ExternalLink,
   CheckCircle,
   Users,
@@ -19,13 +16,13 @@ import {
 
 export default function ReputationPage() {
   const [reputation, setReputation] = useState<ReputationScore | null>(null);
-  const [reviews, setReviews] = useState<Review[]>([]);
+  const [reviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [repRes, revRes] = await Promise.all([
+        const [repRes] = await Promise.all([
           reputationApi.getScore('me'),
           reviewsApi.submit({}) // This is a placeholder - in real app would fetch user's reviews
         ]);

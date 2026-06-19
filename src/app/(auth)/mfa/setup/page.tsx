@@ -10,6 +10,7 @@ import { authApi } from '@/lib/api';
 import { toast } from 'sonner';
 import { Shield, Copy, CheckCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import QRCode from 'qrcode';
 
 type Step = 'enroll' | 'verify' | 'complete';
@@ -17,14 +18,14 @@ type Step = 'enroll' | 'verify' | 'complete';
 export default function MfaSetupPage() {
   const [step, setStep] = useState<Step>('enroll');
   const [secret, setSecret] = useState('');
-  const [uri, setUri] = useState('');
+  const [, setUri] = useState('');
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
   const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
   const [code, setCode] = useState('');
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [copied, setCopied] = useState(false);
-  const { user, isAuthenticated } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
   const router = useRouter();
 
   const generateQrCode = useCallback(async (totpUri: string) => {
@@ -125,9 +126,11 @@ export default function MfaSetupPage() {
             <p className="text-sm font-medium mb-2">1. Scan this QR code with your authenticator app</p>
             {qrCodeDataUrl && (
               <div className="flex justify-center mb-4">
-                <img
+                <Image
                   src={qrCodeDataUrl}
                   alt="MFA QR Code"
+                  width={200}
+                  height={200}
                   className="rounded-lg"
                 />
               </div>

@@ -4,14 +4,12 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { reputationApi } from '@/lib/api';
 import type { ReputationScore } from '@/types';
 import { toast } from 'sonner';
 import {
   Trophy,
   Star,
-  TrendingUp,
   Award,
   Globe,
   CheckCircle,

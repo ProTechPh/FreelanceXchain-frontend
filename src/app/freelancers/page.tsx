@@ -12,10 +12,8 @@ import { toast } from 'sonner';
 import {
   Search,
   Filter,
-  Star,
   MapPin,
   Clock,
-  DollarSign,
   Loader2,
 } from 'lucide-react';
 

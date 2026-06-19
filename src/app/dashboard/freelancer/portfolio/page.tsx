@@ -1,6 +1,6 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -9,7 +9,7 @@ import {
   Edit,
   Trash2,
   Globe,
-  Image,
+  Image as ImageIcon,
   Star,
 } from 'lucide-react';
 
@@ -76,7 +76,7 @@ export default function PortfolioPage() {
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Image className="w-5 h-5 text-primary" />
+                <ImageIcon className="w-5 h-5 text-primary" />
               </div>
               <div>
                 <p className="text-2xl font-bold">4</p>

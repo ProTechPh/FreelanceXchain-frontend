@@ -17,7 +17,6 @@ import {
   Wallet,
   Key,
   Smartphone,
-  Lock,
   CheckCircle,
   AlertCircle,
 } from 'lucide-react';

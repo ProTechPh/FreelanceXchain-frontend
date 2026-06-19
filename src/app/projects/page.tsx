@@ -15,7 +15,6 @@ import {
   Clock,
   DollarSign,
   Users,
-  MapPin,
   Zap,
   Loader2,
 } from 'lucide-react';

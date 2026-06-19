@@ -9,13 +9,9 @@ import { freelancersApi } from '@/lib/api';
 import type { FreelancerProfile } from '@/types';
 import { toast } from 'sonner';
 import {
-  Star,
   MapPin,
   Clock,
-  DollarSign,
   Briefcase,
-  Globe,
-  CheckCircle,
   ExternalLink,
   Send,
   Loader2,

@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  Activity,
   Server,
   Database,
   Globe,
@@ -12,7 +11,6 @@ import {
   Cpu,
   MemoryStick,
   CheckCircle,
-  AlertTriangle,
   RefreshCw,
   Wifi,
 } from 'lucide-react';

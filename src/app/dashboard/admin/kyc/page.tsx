@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { kycApi } from '@/lib/api';
@@ -11,15 +11,11 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  Eye,
   FileText,
   Globe,
   AlertTriangle,
   ExternalLink,
   Loader2,
-  User,
-  Wifi,
-  WifiOff,
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
@@ -80,10 +76,12 @@ export default function KycReviewPage() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchStats();
   }, [fetchStats]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchVerifications(filter);
   }, [filter, fetchVerifications]);
 

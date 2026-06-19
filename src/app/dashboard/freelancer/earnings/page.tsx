@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { transactionsApi } from '@/lib/api';
 import type { Transaction } from '@/types';
@@ -13,9 +12,6 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   Wallet,
-  ExternalLink,
-  Copy,
-  Check,
   Loader2,
 } from 'lucide-react';
 
@@ -30,7 +26,6 @@ const typeLabels: Record<string, { label: string; color: string }> = {
 export default function EarningsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const fetchTransactions = async () => {
@@ -45,12 +40,6 @@ export default function EarningsPage() {
     };
     fetchTransactions();
   }, []);
-
-  const copyAddress = (address: string) => {
-    navigator.clipboard.writeText(address);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   const totalEarned = transactions
     .filter(t => t.type === 'escrow_release' && t.status === 'completed')
