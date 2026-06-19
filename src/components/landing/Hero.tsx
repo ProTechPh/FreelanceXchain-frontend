@@ -284,7 +284,7 @@ export function Footer() {
               <li><Link href="/projects" className="hover:text-foreground">Browse Projects</Link></li>
               <li><Link href="/freelancers" className="hover:text-foreground">Find Talent</Link></li>
               <li><Link href="/leaderboard" className="hover:text-foreground">Leaderboard</Link></li>
-              <li><Link href="/pricing" className="hover:text-foreground">Pricing</Link></li>
+              <li><Link href="/status" className="hover:text-foreground">Status</Link></li>
             </ul>
           </div>
           <div>
