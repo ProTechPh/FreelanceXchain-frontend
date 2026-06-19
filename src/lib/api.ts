@@ -260,6 +260,29 @@ export const matchingApi = {
     api.get<PaginatedResponse<FreelancerProfile>>(`/matching/freelancers/${projectId}`),
 };
 
+export const emailApi = {
+  list: (params?: { folder?: string; limit?: number; offset?: number; isRead?: boolean }) =>
+    api.get('/inbox', { params }),
+
+  getUnreadCount: (folder?: string) =>
+    api.get<{ count: number }>('/inbox/unread-count', { params: { folder } }),
+
+  getById: (id: string) =>
+    api.get(`/inbox/${id}`),
+
+  update: (id: string, data: { is_read?: boolean; is_starred?: boolean; folder?: string }) =>
+    api.patch(`/inbox/${id}`, data),
+
+  delete: (id: string) =>
+    api.delete(`/inbox/${id}`),
+
+  send: (data: { to: string; subject: string; text: string; html?: string }) =>
+    api.post('/inbox/send', data),
+
+  reply: (id: string, data: { text: string; html?: string }) =>
+    api.post(`/inbox/${id}/reply`, data),
+};
+
 export const adminApi = {
   getStats: () =>
     api.get<ApiResponse<PlatformStats>>('/admin/stats'),

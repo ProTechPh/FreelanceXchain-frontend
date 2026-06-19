@@ -29,6 +29,7 @@ import {
   PlusCircle,
   UserCheck,
   ClipboardList,
+  Mail,
 } from 'lucide-react';
 
 interface NavItem {
@@ -67,6 +68,7 @@ const employerNav: NavItem[] = [
 const adminNav: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard/admin', icon: LayoutDashboard },
   { label: 'Users', href: '/dashboard/admin/users', icon: Users },
+  { label: 'Email', href: '/dashboard/admin/email', icon: Mail },
   { label: 'Disputes', href: '/dashboard/admin/disputes', icon: AlertTriangle },
   { label: 'Analytics', href: '/dashboard/admin/analytics', icon: BarChart3 },
   { label: 'System Health', href: '/dashboard/admin/system', icon: Activity },
