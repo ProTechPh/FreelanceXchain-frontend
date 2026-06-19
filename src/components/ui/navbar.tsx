@@ -40,7 +40,7 @@ interface MenuItem {
   title: string;
   url: string;
   description?: string;
-  icon?: JSX.Element;
+  icon?: React.JSX.Element;
   items?: MenuItem[];
 }
 

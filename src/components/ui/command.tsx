@@ -1,6 +1,5 @@
 "use client";
 
-import { type DialogProps } from "@radix-ui/react-dialog";
 import { Command as CommandPrimitive } from "cmdk";
 import * as React from "react";
 
@@ -28,7 +27,13 @@ const Command = React.forwardRef<
 ));
 Command.displayName = CommandPrimitive.displayName;
 
-const CommandDialog = ({ children, ...props }: DialogProps) => {
+interface CommandDialogProps {
+  children: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+const CommandDialog = ({ children, ...props }: CommandDialogProps) => {
   return (
     <Dialog {...props}>
       <DialogTitle></DialogTitle>
@@ -47,7 +52,7 @@ const CommandInput = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof CommandPrimitive.Input>
 >(({ className, ...props }, ref) => (
   <div className="flex items-center border-b border-input px-5" cmdk-input-wrapper="">
-    <MagnifyingGlassIcon size={20} strokeWidth={2} className="me-3 text-muted-foreground/80" />
+    <MagnifyingGlassIcon width={20} height={20} className="me-3 text-muted-foreground/80" />
     <CommandPrimitive.Input
       ref={ref}
       className={cn(
