@@ -2,7 +2,7 @@
 import React from 'react';
 import type { ComponentProps, ReactNode } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { Globe, Mail, X } from 'lucide-react';
+import { Globe, Envelope, X } from '@phosphor-icons/react';
 import Link from 'next/link';
 
 interface FooterLink {
@@ -47,7 +47,7 @@ const footerLinks: FooterSection[] = [
 		label: 'Connect',
 		links: [
 			{ title: 'Website', href: '#', icon: Globe },
-			{ title: 'Email', href: '#', icon: Mail },
+			{ title: 'Email', href: '#', icon: Envelope },
 			{ title: 'X (Twitter)', href: '#', icon: X },
 		],
 	},
@@ -55,8 +55,8 @@ const footerLinks: FooterSection[] = [
 
 export function FooterSection() {
 	return (
-		<footer className="md:rounded-t-6xl relative w-full max-w-6xl mx-auto flex flex-col items-center justify-center rounded-t-4xl border-t bg-[radial-gradient(35%_128px_at_50%_0%,theme(backgroundColor.white/8%),transparent)] px-6 py-12 lg:py-16">
-			<div className="bg-foreground/20 absolute top-0 right-1/2 left-1/2 h-px w-1/3 -translate-x-1/2 -translate-y-1/2 rounded-full blur" />
+		<footer className="md:rounded-t-6xl relative w-full max-w-6xl mx-auto flex flex-col items-center justify-center rounded-t-4xl border-t bg-[radial-gradient(35%_128px_at_50%_0%,oklch(1_0_0/8%),transparent)] px-6 py-12 lg:py-16">
+			<div className="bg-foreground/20 absolute top-0 left-1/2 h-px w-1/3 -translate-x-1/2 rounded-full blur" />
 
 			<div className="grid w-full gap-8 xl:grid-cols-3 xl:gap-8">
 				<AnimatedContainer className="space-y-4">

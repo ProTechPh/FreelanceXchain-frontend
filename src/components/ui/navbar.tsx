@@ -1,6 +1,6 @@
 "use client"
 
-import { Menu, Search, Shield, Brain, TrendingUp, Globe, Zap, Users } from "lucide-react";
+import { List, MagnifyingGlass, ShieldCheck, Brain, TrendUp, Globe, Lightning, Users } from "@phosphor-icons/react";
 import * as React from "react";
 
 import {
@@ -25,7 +25,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-
 import {
   CommandDialog,
   CommandEmpty,
@@ -47,16 +46,21 @@ interface MenuItem {
 interface NavbarProps {
   menu?: MenuItem[];
   auth?: {
-    login: {
-      text: string;
-      url: string;
-    };
-    signup: {
-      text: string;
-      url: string;
-    };
+    login: { text: string; url: string };
+    signup: { text: string; url: string };
   };
 }
+
+const Logo = () => (
+  <Link href="/" className="flex items-center gap-2 shrink-0">
+    <div className="w-7 h-7 rounded-lg gradient-primary flex items-center justify-center">
+      <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+      </svg>
+    </div>
+    <span className="font-bold text-base gradient-text">FreelanceX</span>
+  </Link>
+);
 
 export default function Navbar({
   menu = [
@@ -68,25 +72,25 @@ export default function Navbar({
         {
           title: "Smart Escrow",
           description: "Secure milestone-based payments with Ethereum smart contracts",
-          icon: <Shield className="size-5 shrink-0" />,
+          icon: <ShieldCheck className="size-5 shrink-0" weight="light" />,
           url: "/#how-it-works",
         },
         {
           title: "AI Matching",
           description: "Advanced AI matches skills with project requirements",
-          icon: <Brain className="size-5 shrink-0" />,
+          icon: <Brain className="size-5 shrink-0" weight="light" />,
           url: "/#how-it-works",
         },
         {
           title: "On-Chain Reputation",
           description: "Build an immutable, transparent reputation on the blockchain",
-          icon: <TrendingUp className="size-5 shrink-0" />,
+          icon: <TrendUp className="size-5 shrink-0" weight="light" />,
           url: "/#about-section",
         },
         {
           title: "Global KYC",
           description: "Verified identity across 220+ countries with Didit integration",
-          icon: <Globe className="size-5 shrink-0" />,
+          icon: <Globe className="size-5 shrink-0" weight="light" />,
           url: "/#about-section",
         },
       ],
@@ -98,25 +102,25 @@ export default function Navbar({
         {
           title: "About Us",
           description: "Learn about FreelanceXchain and our mission",
-          icon: <Users className="size-5 shrink-0" />,
+          icon: <Users className="size-5 shrink-0" weight="light" />,
           url: "/about",
         },
         {
           title: "FAQs",
           description: "Frequently asked questions about the platform",
-          icon: <Zap className="size-5 shrink-0" />,
+          icon: <Lightning className="size-5 shrink-0" weight="light" />,
           url: "/faqs",
         },
         {
           title: "Blog",
           description: "Latest news and updates from FreelanceXchain",
-          icon: <Globe className="size-5 shrink-0" />,
+          icon: <Globe className="size-5 shrink-0" weight="light" />,
           url: "/blog",
         },
         {
           title: "Status",
           description: "Platform status and uptime information",
-          icon: <Shield className="size-5 shrink-0" />,
+          icon: <ShieldCheck className="size-5 shrink-0" weight="light" />,
           url: "/status",
         },
       ],
@@ -125,7 +129,6 @@ export default function Navbar({
     { title: "Freelancers", url: "/freelancers" },
     { title: "Leaderboard", url: "/leaderboard" },
   ],
-
   auth = {
     login: { text: "Sign in", url: "/login" },
     signup: { text: "Get Started", url: "/register" },
@@ -134,137 +137,103 @@ export default function Navbar({
   const [openSearch, setOpenSearch] = React.useState(false);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/80 backdrop-blur-xl">
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-        {/* Desktop Navbar */}
-        <div className="hidden lg:flex items-center gap-6">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
-              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-              </svg>
-            </div>
-            <span className="font-bold text-lg gradient-text">FreelanceX</span>
-          </Link>
-          <div className="flex items-center">
-            <NavigationMenu className="[&_[data-radix-navigation-menu-viewport]]:rounded-3xl">
-              <ul className="group flex flex-1 list-none items-center justify-center space-x-1 rounded-3xl">
-                {menu.map((item) => (
-                  <React.Fragment key={item.title}>
-                    {renderMenuItem(item)}
-                  </React.Fragment>
-                ))}
-              </ul>
-            </NavigationMenu>
-          </div>
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl">
+      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/40 to-transparent" />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+
+        {/* Logo — always visible */}
+        <Logo />
+
+        {/* Desktop nav links — hidden below lg */}
+        <div className="hidden lg:flex items-center flex-1 min-w-0">
+          <NavigationMenu>
+            <NavigationMenuList className="flex list-none items-center gap-1">
+              {menu.map((item) => (
+                <React.Fragment key={item.title}>
+                  {renderMenuItem(item)}
+                </React.Fragment>
+              ))}
+            </NavigationMenuList>
+          </NavigationMenu>
         </div>
 
-        {/* Desktop Auth */}
-        <div className="hidden lg:flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setOpenSearch(true)}
-          >
-            <Search className="size-4" />
+        {/* Desktop auth — hidden below lg */}
+        <div className="hidden lg:flex items-center gap-2 shrink-0">
+          <Button variant="ghost" size="icon" onClick={() => setOpenSearch(true)}>
+            <MagnifyingGlass className="size-4" weight="light" />
           </Button>
           <Link href={auth.login.url}>
-            <Button variant="outline" size="sm">
-              {auth.login.text}
-            </Button>
+            <Button variant="outline" size="sm">{auth.login.text}</Button>
           </Link>
           <Link href={auth.signup.url}>
-            <Button size="sm" className="gradient-primary text-white">
-              {auth.signup.text}
-            </Button>
+            <Button size="sm" className="gradient-primary text-white">{auth.signup.text}</Button>
           </Link>
         </div>
 
-        {/* Mobile Navbar */}
-        <div className="block lg:hidden">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
-                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                </svg>
-              </div>
-              <span className="font-bold text-lg gradient-text">FreelanceX</span>
-            </Link>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setOpenSearch(true)}
-              >
-                <Search className="size-4" />
-              </Button>
-              <Sheet>
-                <SheetTrigger className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10">
-                  <Menu className="size-4" />
-                </SheetTrigger>
-                <SheetContent className="overflow-y-auto">
-                  <SheetHeader>
-                    <SheetTitle>
-                      <Link href="/" className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
-                          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                          </svg>
-                        </div>
-                        <span className="font-bold text-lg gradient-text">FreelanceX</span>
-                      </Link>
-                    </SheetTitle>
-                  </SheetHeader>
-                  <div className="my-6 flex flex-col gap-6">
-                    <Accordion
-                      type="single"
-                      collapsible
-                      className="flex w-full flex-col gap-4"
-                    >
-                      {menu.map((item) => renderMobileMenuItem(item))}
-                    </Accordion>
-                    <div className="flex flex-col gap-3">
-                      <Link href={auth.login.url}>
-                        <Button variant="outline" className="w-full">
-                          {auth.login.text}
-                        </Button>
-                      </Link>
-                      <Link href={auth.signup.url}>
-                        <Button className="w-full gradient-primary text-white">
-                          {auth.signup.text}
-                        </Button>
-                      </Link>
-                    </div>
+        {/* Mobile right actions — visible below lg */}
+        <div className="flex lg:hidden items-center gap-1">
+          <Button variant="ghost" size="icon" onClick={() => setOpenSearch(true)}>
+            <MagnifyingGlass className="size-4" weight="light" />
+          </Button>
+
+          <Sheet>
+            <SheetTrigger className="inline-flex items-center justify-center h-10 w-10 rounded-xl text-sm hover:bg-accent transition-colors" aria-label="Open menu">
+              <List className="size-5" weight="light" />
+            </SheetTrigger>
+
+            <SheetContent side="right" className="w-full max-w-sm overflow-y-auto px-6">
+              <SheetHeader className="mb-6">
+                <SheetTitle className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg gradient-primary flex items-center justify-center">
+                    <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
                   </div>
-                </SheetContent>
-              </Sheet>
-            </div>
-          </div>
+                  <span className="font-bold text-base gradient-text">FreelanceX</span>
+                </SheetTitle>
+              </SheetHeader>
+
+              <div className="flex flex-col gap-6">
+                <Accordion type="single" collapsible className="flex w-full flex-col gap-1">
+                  {menu.map((item) => renderMobileMenuItem(item))}
+                </Accordion>
+
+                <div className="flex flex-col gap-3 pt-4 border-t border-border/50">
+                  <Link href={auth.login.url} className="w-full">
+                    <Button variant="outline" className="w-full">{auth.login.text}</Button>
+                  </Link>
+                  <Link href={auth.signup.url} className="w-full">
+                    <Button className="w-full gradient-primary text-white">{auth.signup.text}</Button>
+                  </Link>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
 
-      {/* Search Popup */}
+      {/* Search dialog */}
       <CommandDialog open={openSearch} onOpenChange={setOpenSearch}>
         <CommandInput placeholder="Search projects, freelancers, features..." />
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
           <CommandGroup className="text-muted-foreground" heading="Pages">
-            <CommandItem>
+            <CommandItem asChild>
               <a href="/projects" className="flex items-center gap-2">
-                <Zap className="size-4" />
+                <Lightning className="size-4" weight="light" />
                 Browse Projects
               </a>
             </CommandItem>
-            <CommandItem>
+            <CommandItem asChild>
               <a href="/freelancers" className="flex items-center gap-2">
-                <Users className="size-4" />
+                <Users className="size-4" weight="light" />
                 Find Talent
               </a>
             </CommandItem>
-            <CommandItem>
+            <CommandItem asChild>
               <a href="/leaderboard" className="flex items-center gap-2">
-                <TrendingUp className="size-4" />
+                <TrendUp className="size-4" weight="light" />
                 Leaderboard
               </a>
             </CommandItem>
@@ -278,23 +247,23 @@ export default function Navbar({
 const renderMenuItem = (item: MenuItem) => {
   if (item.items) {
     return (
-      <NavigationMenuItem key={item.title} className="text-muted-foreground !rounded-3xl">
-        <NavigationMenuTrigger className="!rounded-3xl">{item.title}</NavigationMenuTrigger>
-        <NavigationMenuContent className="!rounded-3xl">
-          <div className="w-80 p-3 space-y-1">
+      <NavigationMenuItem key={item.title}>
+        <NavigationMenuTrigger className="text-sm text-muted-foreground bg-transparent hover:bg-white/[0.05] rounded-lg h-9 px-3">
+          {item.title}
+        </NavigationMenuTrigger>
+        <NavigationMenuContent>
+          <div className="w-72 p-2 space-y-0.5">
             {item.items.map((subItem) => (
               <NavigationMenuLink
                 key={subItem.title}
                 href={subItem.url}
-                className="flex select-none gap-4 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-muted hover:text-accent-foreground"
+                className="flex select-none gap-3 rounded-lg p-3 leading-none no-underline outline-none transition-colors hover:bg-white/[0.05] hover:text-foreground"
               >
-                {subItem.icon}
+                <span className="text-foreground/50 mt-0.5">{subItem.icon}</span>
                 <div>
-                  <div className="text-sm font-semibold">
-                    {subItem.title}
-                  </div>
+                  <div className="text-sm font-medium text-foreground">{subItem.title}</div>
                   {subItem.description && (
-                    <p className="text-sm leading-snug text-muted-foreground">
+                    <p className="text-xs leading-relaxed text-muted-foreground mt-0.5">
                       {subItem.description}
                     </p>
                   )}
@@ -308,49 +277,57 @@ const renderMenuItem = (item: MenuItem) => {
   }
 
   return (
-    <a
-      key={item.title}
-      className="group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-accent-foreground"
-      href={item.url}
-    >
-      {item.title}
-    </a>
+    <NavigationMenuItem key={item.title}>
+      <NavigationMenuLink
+        href={item.url}
+        className="inline-flex h-9 items-center justify-center rounded-lg px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-white/[0.05] hover:text-foreground"
+      >
+        {item.title}
+      </NavigationMenuLink>
+    </NavigationMenuItem>
   );
 };
 
 const renderMobileMenuItem = (item: MenuItem) => {
   if (item.items) {
     return (
-      <AccordionItem key={item.title} value={item.title} className="border-b-0">
-        <AccordionTrigger className="py-0 font-semibold hover:no-underline">
+      <AccordionItem key={item.title} value={item.title} className="border-b border-border/40 last:border-b-0">
+        <AccordionTrigger className="py-3 text-sm font-medium hover:no-underline hover:text-foreground">
           {item.title}
         </AccordionTrigger>
-        <AccordionContent className="mt-2">
-          {item.items.map((subItem) => (
-            <Link
-              key={subItem.title}
-              className="flex select-none gap-4 rounded-md p-3 leading-none outline-none transition-colors hover:bg-muted hover:text-accent-foreground"
-              href={subItem.url}
-            >
-              {subItem.icon}
-              <div>
-                <div className="text-sm font-semibold">{subItem.title}</div>
-                {subItem.description && (
-                  <p className="text-sm leading-snug text-muted-foreground">
-                    {subItem.description}
-                  </p>
-                )}
-              </div>
-            </Link>
-          ))}
+        <AccordionContent className="pb-2">
+          <div className="flex flex-col gap-0.5">
+            {item.items.map((subItem) => (
+              <Link
+                key={subItem.title}
+                className="flex gap-3 rounded-lg p-3 text-sm transition-colors hover:bg-white/[0.05]"
+                href={subItem.url}
+              >
+                <span className="text-foreground/50 mt-0.5 shrink-0">{subItem.icon}</span>
+                <div>
+                  <div className="font-medium text-foreground">{subItem.title}</div>
+                  {subItem.description && (
+                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+                      {subItem.description}
+                    </p>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
         </AccordionContent>
       </AccordionItem>
     );
   }
 
   return (
-    <a key={item.title} href={item.url} className="font-semibold">
-      {item.title}
-    </a>
+    <div key={item.title} className="border-b border-border/40 last:border-b-0">
+      <a
+        href={item.url}
+        className="flex items-center py-3 text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
+      >
+        {item.title}
+      </a>
+    </div>
   );
 };

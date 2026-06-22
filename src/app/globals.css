@@ -7,7 +7,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -215,6 +215,9 @@
   }
   .glow-sm-cyan {
     box-shadow: 0 0 10px oklch(0.75 0.15 210 / 0.2);
+  }
+  .glow-lg-primary {
+    box-shadow: 0 0 60px oklch(0.62 0.26 280 / 0.25), 0 0 120px oklch(0.62 0.26 280 / 0.1);
   }
   .gradient-primary {
     background: linear-gradient(135deg, oklch(0.62 0.26 280), oklch(0.65 0.2 310));

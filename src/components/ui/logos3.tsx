@@ -85,10 +85,10 @@ const Logos3 = ({
           className="text-center mb-16"
         >
           <h2 className="text-4xl font-bold mb-4">
-            <span className="gradient-text">Powered</span> by Industry Leaders
+            Built on <span className="gradient-text">Proven Tech</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Built on battle-tested technologies for security, performance, and scale.
+            Every layer of FreelanceXchain is built on battle-tested open standards.
           </p>
         </motion.div>
 
@@ -110,11 +110,12 @@ const Logos3 = ({
                   className="flex basis-1/3 justify-center pl-0 sm:basis-1/4 md:basis-1/5 lg:basis-1/6"
                 >
                   <div className="mx-10 flex shrink-0 items-center justify-center">
-                    <div>
+                    <div className="glass border border-border/40 rounded-xl px-5 py-4 flex items-center justify-center hover:border-primary/30 transition-colors duration-300">
                       <img
                         src={logo.image}
                         alt={logo.description}
                         className={logo.className}
+                        onError={(e) => { (e.target as HTMLImageElement).style.opacity = '0.3'; }}
                       />
                     </div>
                   </div>

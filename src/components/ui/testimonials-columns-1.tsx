@@ -26,7 +26,7 @@ export const TestimonialsColumn = (props: {
           ...new Array(2).fill(0).map((_, index) => (
             <React.Fragment key={index}>
               {props.testimonials.map(({ text, image, name, role }, i) => (
-                <div className="p-10 rounded-3xl border shadow-lg shadow-primary/10 max-w-xs w-full" key={i}>
+                <div className="p-8 rounded-2xl border border-border/60 hover:border-primary/30 bg-card shadow-lg shadow-primary/10 max-w-xs w-full transition-colors duration-300 glass-hover" key={i}>
                   <div>{text}</div>
                   <div className="flex items-center gap-2 mt-5">
                     <img
@@ -53,58 +53,58 @@ export const TestimonialsColumn = (props: {
 
 const testimonials = [
   {
-    text: "This ERP revolutionized our operations, streamlining finance and inventory. The cloud-based platform keeps us productive, even remotely.",
+    text: "FreelanceXchain completely changed how I get paid. Smart contract escrow means I never have to chase a client for payment again.",
     image: "https://randomuser.me/api/portraits/women/1.jpg",
     name: "Briana Patton",
-    role: "Operations Manager",
+    role: "UI/UX Designer",
   },
   {
-    text: "Implementing this ERP was smooth and quick. The customizable, user-friendly interface made team training effortless.",
+    text: "The AI matching is scarily accurate. Within a day of posting my project I had three proposals from developers who actually fit what I needed.",
     image: "https://randomuser.me/api/portraits/men/2.jpg",
     name: "Bilal Ahmed",
-    role: "IT Manager",
+    role: "Startup Founder",
   },
   {
-    text: "The support team is exceptional, guiding us through setup and providing ongoing assistance, ensuring our satisfaction.",
+    text: "My on-chain reputation followed me from project to project. New clients can see my whole track record without me having to pitch myself.",
     image: "https://randomuser.me/api/portraits/women/3.jpg",
     name: "Saman Malik",
-    role: "Customer Support Lead",
+    role: "Full-Stack Developer",
   },
   {
-    text: "This ERP's seamless integration enhanced our business operations and efficiency. Highly recommend for its intuitive interface.",
+    text: "As someone who works with clients in three different countries, having a single crypto payment rail with no conversion fees is a game changer.",
     image: "https://randomuser.me/api/portraits/men/4.jpg",
     name: "Omar Raza",
-    role: "CEO",
+    role: "Motion Designer",
   },
   {
-    text: "Its robust features and quick support have transformed our workflow, making us significantly more efficient.",
+    text: "Dispute resolution through the platform is fair and transparent. Both sides see the same smart contract terms from day one.",
     image: "https://randomuser.me/api/portraits/women/5.jpg",
     name: "Zainab Hussain",
-    role: "Project Manager",
+    role: "Product Manager",
   },
   {
-    text: "The smooth implementation exceeded expectations. It streamlined processes, improving overall business performance.",
+    text: "I went from freelancing on three platforms to just this one. The reputation system and milestone payments give me everything I need in one place.",
     image: "https://randomuser.me/api/portraits/women/6.jpg",
     name: "Aliza Khan",
-    role: "Business Analyst",
+    role: "Content Strategist",
   },
   {
-    text: "Our business functions improved with a user-friendly design and positive customer feedback.",
+    text: "We hired four contractors through FreelanceXchain in a month. The on-chain reputation scores saved us hours of vetting.",
     image: "https://randomuser.me/api/portraits/men/7.jpg",
     name: "Farhan Siddiqui",
-    role: "Marketing Director",
+    role: "Engineering Lead",
   },
   {
-    text: "They delivered a solution that exceeded expectations, understanding our needs and enhancing our operations.",
+    text: "The milestone-based escrow protects both sides. I feel confident taking on new clients I've never worked with before.",
     image: "https://randomuser.me/api/portraits/women/8.jpg",
     name: "Sana Sheikh",
-    role: "Sales Manager",
+    role: "Brand Consultant",
   },
   {
-    text: "Using this ERP, our online presence and conversions significantly improved, boosting business performance.",
+    text: "I love that my reputation is mine — not tied to a platform that can deactivate my account. It's on the blockchain, it follows me anywhere.",
     image: "https://randomuser.me/api/portraits/men/9.jpg",
     name: "Hassan Ali",
-    role: "E-commerce Manager",
+    role: "Blockchain Developer",
   },
 ];
 
@@ -115,7 +115,7 @@ const thirdColumn = testimonials.slice(6, 9);
 export const Testimonials = () => {
   return (
     <section className="bg-background my-20 relative">
-      <div className="container z-10 mx-auto">
+      <div className="container z-10 mx-auto px-6 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -124,14 +124,14 @@ export const Testimonials = () => {
           className="flex flex-col items-center justify-center max-w-[540px] mx-auto"
         >
           <div className="flex justify-center">
-            <div className="border py-1 px-4 rounded-lg">Testimonials</div>
+            <div className="border border-white/[0.1] bg-white/[0.04] py-1 px-4 rounded-full text-foreground/60 text-sm">Testimonials</div>
           </div>
 
           <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold tracking-tighter mt-5">
-            What our users say
+            What freelancers &amp; employers say
           </h2>
           <p className="text-center mt-5 opacity-75">
-            See what our customers have to say about us.
+            Real results from people building their careers on-chain.
           </p>
         </motion.div>
 

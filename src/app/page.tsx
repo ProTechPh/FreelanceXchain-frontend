@@ -17,12 +17,13 @@ export default function Home() {
       <main>
         <AetherHero
           title="Decentralize Your Freelance Career"
-          subtitle="The future of work is here. Get matched with projects using AI, secure payments with smart contracts, and build an immutable reputation on-chain."
+          subtitle="Get matched with projects using AI, secure payments with smart contracts, and build an immutable reputation on-chain."
           ctaLabel="Find Work"
           ctaHref="/register"
           secondaryCtaLabel="Hire Talent"
           secondaryCtaHref="/register"
-          overlayGradient="linear-gradient(180deg, #000000bb, #00000055 40%, transparent)"
+          align="left"
+          overlayGradient="linear-gradient(105deg, #000000cc 0%, #000000aa 40%, #00000044 70%, transparent 100%)"
         />
         <WhySection />
         <HowItWorks />

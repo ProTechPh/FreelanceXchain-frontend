@@ -2,52 +2,18 @@
 
 import React, { useState } from "react";
 import { cn } from "@/lib/utils";
-import { FileText, Users, Wallet, Search, Brain, Shield } from "lucide-react";
+import {
+  FileText,
+  Users,
+  Wallet,
+  MagnifyingGlass,
+  Brain,
+  ShieldCheck,
+} from "@phosphor-icons/react";
 import { SlideTabs } from "./slide-tabs";
+import { motion, AnimatePresence } from "motion/react";
 
 interface HowItWorksProps extends React.HTMLAttributes<HTMLElement> {}
-
-interface StepCardProps {
-  icon: React.ReactNode;
-  stepNumber: number;
-  title: string;
-  description: string;
-  benefits: string[];
-}
-
-const StepCard: React.FC<StepCardProps> = ({
-  icon,
-  stepNumber,
-  title,
-  description,
-  benefits,
-}) => (
-  <div
-    className={cn(
-      "relative rounded-2xl border bg-card p-6 text-card-foreground transition-all duration-300 ease-in-out",
-      "hover:scale-105 hover:shadow-lg hover:border-primary/50 hover:bg-muted"
-    )}
-  >
-    <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-      {icon}
-    </div>
-    <div className="flex items-center gap-3 mb-2">
-      <span className="text-xs font-mono text-muted-foreground">0{stepNumber}</span>
-      <h3 className="text-xl font-semibold">{title}</h3>
-    </div>
-    <p className="mb-6 text-muted-foreground">{description}</p>
-    <ul className="space-y-3">
-      {benefits.map((benefit, index) => (
-        <li key={index} className="flex items-center gap-3">
-          <div className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-primary/20">
-            <div className="h-2 w-2 rounded-full bg-primary"></div>
-          </div>
-          <span className="text-muted-foreground">{benefit}</span>
-        </li>
-      ))}
-    </ul>
-  </div>
-);
 
 export const HowItWorks: React.FC<HowItWorksProps> = ({
   className,
@@ -59,7 +25,7 @@ export const HowItWorks: React.FC<HowItWorksProps> = ({
     // For Freelancers
     [
       {
-        icon: <Search className="h-6 w-6" />,
+        icon: <MagnifyingGlass className="h-5 w-5" weight="light" />,
         stepNumber: 1,
         title: "Create Your Profile",
         description:
@@ -71,7 +37,7 @@ export const HowItWorks: React.FC<HowItWorksProps> = ({
         ],
       },
       {
-        icon: <FileText className="h-6 w-6" />,
+        icon: <FileText className="h-5 w-5" weight="light" />,
         stepNumber: 2,
         title: "Find & Apply",
         description:
@@ -83,7 +49,7 @@ export const HowItWorks: React.FC<HowItWorksProps> = ({
         ],
       },
       {
-        icon: <Wallet className="h-6 w-6" />,
+        icon: <Wallet className="h-5 w-5" weight="light" />,
         stepNumber: 3,
         title: "Get Paid Securely",
         description:
@@ -98,7 +64,7 @@ export const HowItWorks: React.FC<HowItWorksProps> = ({
     // For Employers
     [
       {
-        icon: <FileText className="h-6 w-6" />,
+        icon: <FileText className="h-5 w-5" weight="light" />,
         stepNumber: 1,
         title: "Post a Project",
         description:
@@ -110,7 +76,7 @@ export const HowItWorks: React.FC<HowItWorksProps> = ({
         ],
       },
       {
-        icon: <Users className="h-6 w-6" />,
+        icon: <Users className="h-5 w-5" weight="light" />,
         stepNumber: 2,
         title: "AI Matches Talent",
         description:
@@ -122,7 +88,7 @@ export const HowItWorks: React.FC<HowItWorksProps> = ({
         ],
       },
       {
-        icon: <Shield className="h-6 w-6" />,
+        icon: <ShieldCheck className="h-5 w-5" weight="light" />,
         stepNumber: 3,
         title: "Secure Escrow Payment",
         description:
@@ -137,7 +103,7 @@ export const HowItWorks: React.FC<HowItWorksProps> = ({
     // For Both
     [
       {
-        icon: <Brain className="h-6 w-6" />,
+        icon: <Brain className="h-5 w-5" weight="light" />,
         stepNumber: 1,
         title: "Get Matched by AI",
         description:
@@ -149,7 +115,7 @@ export const HowItWorks: React.FC<HowItWorksProps> = ({
         ],
       },
       {
-        icon: <Users className="h-6 w-6" />,
+        icon: <Users className="h-5 w-5" weight="light" />,
         stepNumber: 2,
         title: "Collaborate On-Chain",
         description:
@@ -161,7 +127,7 @@ export const HowItWorks: React.FC<HowItWorksProps> = ({
         ],
       },
       {
-        icon: <Wallet className="h-6 w-6" />,
+        icon: <Wallet className="h-5 w-5" weight="light" />,
         stepNumber: 3,
         title: "Complete & Earn Trust",
         description:
@@ -180,55 +146,76 @@ export const HowItWorks: React.FC<HowItWorksProps> = ({
   return (
     <section
       id="how-it-works"
-      className={cn("w-full bg-card/30 py-16 sm:py-24", className)}
+      className={cn("w-full py-20 sm:py-32 relative bg-background", className)}
       {...props}
     >
-      <div className="container mx-auto px-4">
-        <div className="mx-auto mb-8 max-w-4xl text-center">
-          <h2 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_50%,oklch(0.62_0.26_280/0.05),transparent)] pointer-events-none" />
+
+      <div className="max-w-5xl mx-auto px-6 lg:px-8 relative">
+        <div className="mb-14">
+          <h2 className="text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl mb-4">
             How It <span className="gradient-text">Works</span>
           </h2>
-          <p className="mt-4 text-lg text-muted-foreground">
-            Three simple steps to get started on FreelanceXchain.
+          <p className="text-lg text-muted-foreground max-w-md">
+            Three steps between you and your next milestone.
           </p>
         </div>
 
-        <div className="mb-12">
+        <div className="mb-14">
           <SlideTabs
             tabs={["For Freelancers", "For Employers", "For Both"]}
             onSelect={setActiveTab}
           />
         </div>
 
-        <div className="relative mx-auto mb-8 w-full max-w-4xl">
-          <div
-            aria-hidden="true"
-            className="absolute left-[16.6667%] top-1/2 h-0.5 w-[66.6667%] -translate-y-1/2 bg-border"
-          ></div>
-          <div className="relative grid grid-cols-3">
-            {steps.map((step) => (
-              <div
-                key={step.stepNumber}
-                className="flex h-8 w-8 items-center justify-center justify-self-center rounded-full bg-primary/10 font-semibold text-primary ring-4 ring-background"
-              >
-                {step.stepNumber}
-              </div>
-            ))}
-          </div>
-        </div>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            className="relative"
+          >
+            <div className="absolute left-[1.25rem] top-8 bottom-8 w-px bg-gradient-to-b from-white/[0.12] via-white/[0.06] to-transparent hidden sm:block" aria-hidden="true" />
 
-        <div className="mx-auto grid max-w-4xl grid-cols-1 gap-8 md:grid-cols-3">
-          {steps.map((step) => (
-            <StepCard
-              key={step.stepNumber}
-              icon={step.icon}
-              stepNumber={step.stepNumber}
-              title={step.title}
-              description={step.description}
-              benefits={step.benefits}
-            />
-          ))}
-        </div>
+            <div className="flex flex-col">
+              {steps.map((step, index) => (
+                <motion.div
+                  key={step.stepNumber}
+                  initial={{ opacity: 0, x: -12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.4, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] }}
+                  className="group relative flex gap-6 sm:gap-10 py-8 sm:py-10 border-b border-white/[0.06] last:border-b-0 hover:bg-white/[0.02] -mx-4 px-4 rounded-xl transition-colors duration-300"
+                >
+                  <div className="relative flex-shrink-0 flex h-10 w-10 items-center justify-center rounded-lg bg-white/[0.06] border border-white/[0.08] text-foreground/60">
+                    {step.icon}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline gap-3 mb-2">
+                      <span className="text-xs font-mono text-foreground/25 tabular-nums">0{step.stepNumber}</span>
+                      <h3 className="text-xl sm:text-2xl font-semibold tracking-tight">{step.title}</h3>
+                    </div>
+                    <p className="text-muted-foreground leading-relaxed mb-5 max-w-lg text-sm">
+                      {step.description}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {step.benefits.map((benefit) => (
+                        <span
+                          key={benefit}
+                          className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary/[0.08] border border-primary/15 text-primary/80"
+                        >
+                          {benefit}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        </AnimatePresence>
       </div>
     </section>
   );

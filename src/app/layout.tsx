@@ -1,17 +1,8 @@
 import type { Metadata } from 'next';
-import { Inter, JetBrains_Mono } from 'next/font/google';
+import { GeistSans } from 'geist/font/sans';
+import { GeistMono } from 'geist/font/mono';
 import { Toaster } from 'sonner';
 import './globals.css';
-
-const inter = Inter({
-  variable: '--font-sans',
-  subsets: ['latin'],
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-});
 
 export const metadata: Metadata = {
   title: 'FreelanceXchain - Decentralized Freelance Marketplace',
@@ -24,7 +15,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable} dark`}>
+    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable} dark`}>
       <body className="min-h-screen bg-background text-foreground antialiased">
         {children}
         <Toaster theme="dark" position="top-right" richColors />

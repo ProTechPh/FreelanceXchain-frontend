@@ -1,21 +1,20 @@
 import {
-  Shield,
+  ShieldCheck,
   Brain,
-  TrendingUp,
+  TrendUp,
   Globe,
-  Zap,
+  Lightning,
   Users,
   Lock,
   Link,
-  type LucideIcon,
-} from "lucide-react";
+} from "@phosphor-icons/react";
 
 export const Icons = {
-  shield: Shield,
+  shield: ShieldCheck,
   brain: Brain,
-  trendingUp: TrendingUp,
+  trendingUp: TrendUp,
   globe: Globe,
-  zap: Zap,
+  zap: Lightning,
   users: Users,
   lock: Lock,
   link: Link,
@@ -30,5 +29,5 @@ interface IconProps {
 
 export const Icon = ({ name, className }: IconProps) => {
   const IconComponent = Icons[name];
-  return <IconComponent className={className} />;
+  return <IconComponent className={className} weight="light" />;
 };

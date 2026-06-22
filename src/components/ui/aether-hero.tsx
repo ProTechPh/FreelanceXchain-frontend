@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 export type AetherHeroProps = {
   title?: string;
@@ -85,7 +86,7 @@ export default function AetherHero({
   dprMax = 2,
   clearColor = [0, 0, 0, 1],
 
-  height = '100vh',
+  height = '100dvh',
   className = '',
   ariaLabel = 'Aurora hero background',
 }: AetherHeroProps) {
@@ -205,9 +206,6 @@ export default function AetherHero({
       style={{ height, position: 'relative', overflow: 'hidden' }}
       aria-label="Hero"
     >
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap');
-      `}</style>
 
       <canvas
         ref={canvasRef}
@@ -244,35 +242,17 @@ export default function AetherHero({
           height: '100%',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: justify,
-          padding: 'min(6vw, 64px)',
           color: textColor,
-          fontFamily: "'Space Grotesk', ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial",
         }}
       >
         <div
+          className="w-full px-6 sm:px-10 md:px-16 py-24"
           style={{
-            width: '100%',
             maxWidth,
             marginInline: align === 'center' ? 'auto' : undefined,
-            textAlign,
           }}
         >
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '8px 16px',
-              borderRadius: '9999px',
-              background: 'rgba(139, 92, 246, 0.15)',
-              border: '1px solid rgba(139, 92, 246, 0.3)',
-              marginBottom: '1.5rem',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              color: '#c4b5fd',
-            }}
-          >
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.08] border border-white/15 mb-6 text-sm font-medium text-white/80">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
             </svg>
@@ -280,56 +260,30 @@ export default function AetherHero({
           </div>
 
           <h1
-            style={{
-              margin: 0,
-              fontSize: 'clamp(2.2rem, 6vw, 4.5rem)',
-              lineHeight: 1.04,
-              letterSpacing: '-0.02em',
-              fontWeight: 700,
-              textShadow: '0 6px 36px rgba(0,0,0,0.45)',
-            }}
+            className={cn(
+              'mt-0 text-[clamp(2.4rem,7vw,5.5rem)] leading-[1.02] tracking-[-0.03em] font-extrabold drop-shadow-2xl text-white',
+              'text-center md:text-left'
+            )}
           >
             {title}
           </h1>
 
           {subtitle ? (
             <p
-              style={{
-                marginTop: '1rem',
-                fontSize: 'clamp(1rem, 2vw, 1.25rem)',
-                lineHeight: 1.6,
-                opacity: 0.9,
-                textShadow: '0 4px 24px rgba(0,0,0,0.35)',
-                maxWidth: 700,
-                marginInline: align === 'center' ? 'auto' : undefined,
-              }}
+              className={cn(
+                'mt-4 text-[clamp(0.95rem,2vw,1.2rem)] leading-relaxed opacity-90 drop-shadow-lg max-w-[600px]',
+                'text-center md:text-left mx-auto md:mx-0'
+              )}
             >
               {subtitle}
             </p>
           ) : null}
 
-          <div
-            style={{
-              display: 'inline-flex',
-              gap: '12px',
-              marginTop: '2rem',
-              flexWrap: 'wrap',
-            }}
-          >
+          <div className={cn('flex flex-wrap gap-3 mt-8', 'justify-center md:justify-start')}>
             {ctaLabel ? (
               <Link
                 href={ctaHref}
-                style={{
-                  padding: '14px 28px',
-                  borderRadius: 12,
-                  background: 'linear-gradient(135deg, #8b5cf6, #6366f1)',
-                  color: '#ffffff',
-                  textDecoration: 'none',
-                  fontWeight: 600,
-                  fontSize: '1rem',
-                  boxShadow: '0 10px 30px rgba(139, 92, 246, 0.3)',
-                  transition: 'transform 0.2s, box-shadow 0.2s',
-                }}
+                className="inline-flex items-center justify-center px-7 py-3.5 rounded-xl gradient-primary text-white font-semibold text-base transition-all duration-200 hover:scale-[1.02] hover:opacity-90 active:scale-[0.98]"
               >
                 {ctaLabel}
               </Link>
@@ -338,26 +292,28 @@ export default function AetherHero({
             {secondaryCtaLabel ? (
               <Link
                 href={secondaryCtaHref}
-                style={{
-                  padding: '14px 28px',
-                  borderRadius: 12,
-                  background: 'transparent',
-                  color: textColor,
-                  opacity: 0.9,
-                  textDecoration: 'none',
-                  fontWeight: 600,
-                  fontSize: '1rem',
-                  boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.28)',
-                  backdropFilter: 'blur(2px)',
-                  transition: 'transform 0.2s, opacity 0.2s',
-                }}
+                className="inline-flex items-center justify-center px-7 py-3.5 rounded-xl glass border-white/20 text-white font-semibold text-base transition-all duration-200 hover:bg-white/10 hover:border-white/30"
               >
                 {secondaryCtaLabel}
               </Link>
             ) : null}
           </div>
+
+          <div className={cn('flex flex-wrap gap-8 mt-10 pt-8 border-t border-white/10', 'justify-center md:justify-start')}>
+            {[
+              { value: '2,400+', label: 'Freelancers' },
+              { value: '$1.2M+', label: 'Secured in Escrow' },
+              { value: '180+', label: 'Countries' },
+            ].map((stat) => (
+              <div key={stat.label} className="flex flex-col gap-0.5">
+                <span className="text-2xl font-bold text-white tracking-tight">{stat.value}</span>
+                <span className="text-xs text-white/50 uppercase tracking-widest">{stat.label}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
+
     </section>
   );
 }
