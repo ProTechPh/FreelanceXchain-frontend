@@ -35,8 +35,8 @@ export default function MfaVerifyPage() {
         code,
       });
 
-      if (data.user && data.access_token) {
-        completeMfa(data.user, data.access_token);
+      if (data.user && data.accessToken) {
+        completeMfa(data.user, data.accessToken);
         toast.success('MFA verified!');
         router.push('/dashboard/freelancer');
       }

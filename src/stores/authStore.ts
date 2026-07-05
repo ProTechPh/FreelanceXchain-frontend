@@ -31,16 +31,16 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
         try {
           const { data } = await authApi.login({ email, password });
-          
+
           // Check if MFA is required
-          if (data.mfa_required && data.accessToken) {
-            set({ isLoading: false, mfaPending: true, mfaAccessToken: data.accessToken });
-            return { mfaRequired: true, accessToken: data.accessToken };
+          if (data.mfaRequired && data.mfaSessionToken) {
+            set({ isLoading: false, mfaPending: true, mfaAccessToken: data.mfaSessionToken });
+            return { mfaRequired: true, accessToken: data.mfaSessionToken };
           }
-          
+
           // Normal login success
-          localStorage.setItem('access_token', data.access_token!);
-          localStorage.setItem('refresh_token', data.refresh_token!);
+          localStorage.setItem('access_token', data.accessToken!);
+          localStorage.setItem('refresh_token', data.refreshToken!);
           set({ user: data.user!, isAuthenticated: true, isLoading: false });
           return {};
         } catch (error) {
@@ -53,8 +53,8 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
         try {
           const { data } = await authApi.register({ email, password, name, role });
-          localStorage.setItem('access_token', data.access_token!);
-          localStorage.setItem('refresh_token', data.refresh_token!);
+          localStorage.setItem('access_token', data.accessToken!);
+          localStorage.setItem('refresh_token', data.refreshToken!);
           set({ user: data.user!, isAuthenticated: true, isLoading: false });
         } catch (error) {
           set({ isLoading: false });

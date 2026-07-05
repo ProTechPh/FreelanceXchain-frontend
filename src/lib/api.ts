@@ -78,8 +78,8 @@ export const authApi = {
   getMe: () =>
     api.get<ApiResponse<User>>('/auth/me'),
   
-  refreshToken: (refresh_token: string) =>
-    api.post<AuthResponse>('/auth/refresh', { refresh_token }),
+  refreshToken: (refreshToken: string) =>
+    api.post<AuthResponse>('/auth/refresh', { refreshToken }),
   
   forgotPassword: (email: string) =>
     api.post('/auth/forgot-password', { email }),
