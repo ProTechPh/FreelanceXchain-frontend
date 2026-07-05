@@ -26,7 +26,7 @@ export default function FreelancerProfilePage() {
     const fetchFreelancer = async () => {
       try {
         const res = await freelancersApi.getPublicProfile(params.id as string);
-        setFreelancer(res.data.data);
+        setFreelancer(res.data);
       } catch {
         toast.error('Failed to load freelancer profile');
       } finally {

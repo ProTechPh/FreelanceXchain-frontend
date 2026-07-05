@@ -40,7 +40,17 @@ export default function LeaderboardPage() {
     const fetchLeaderboard = async () => {
       try {
         const res = await reputationApi.getLeaderboard();
-        setLeaderboard(res.data.data);
+        // Backend returns { userId, userName, averageRating, totalRatings } —
+        // map to the ReputationScore shape this page renders.
+        setLeaderboard(
+          res.data.map((entry) => ({
+            user_id: entry.userId,
+            overall_score: entry.averageRating,
+            total_ratings: entry.totalRatings,
+            breakdown: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+            on_chain_verified: false,
+          }))
+        );
       } catch {
         toast.error('Failed to load leaderboard');
       } finally {

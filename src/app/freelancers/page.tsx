@@ -32,7 +32,7 @@ export default function FreelancersPage() {
     const fetchFreelancers = async () => {
       try {
         const res = await freelancersApi.search();
-        setFreelancers(res.data.data);
+        setFreelancers(res.data.items);
       } catch {
         toast.error('Failed to load freelancers');
       } finally {

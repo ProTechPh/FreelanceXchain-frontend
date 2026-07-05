@@ -72,7 +72,7 @@ export default function AdminEmailPage() {
     setLoading(true);
     try {
       const res = await emailApi.list({ folder: currentFolder, limit: 50 });
-      setEmails(res.data.data || []);
+      setEmails(res.data.items || []);
     } catch {
       toast.error('Failed to load emails');
     } finally {

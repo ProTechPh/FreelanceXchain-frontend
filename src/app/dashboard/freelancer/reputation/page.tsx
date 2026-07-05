@@ -4,29 +4,36 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { reputationApi, reviewsApi } from '@/lib/api';
-import type { ReputationScore, Review } from '@/types';
+import { useAuthStore } from '@/stores/authStore';
+import type { Review } from '@/types';
 import {
   Star,
   TrendingUp,
   ExternalLink,
-  CheckCircle,
   Users,
   Loader2,
 } from 'lucide-react';
 
 export default function ReputationPage() {
-  const [reputation, setReputation] = useState<ReputationScore | null>(null);
-  const [reviews] = useState<Review[]>([]);
+  const { user } = useAuthStore();
+  const [overallScore, setOverallScore] = useState(0);
+  const [totalRatings, setTotalRatings] = useState(0);
+  const [completedContracts, setCompletedContracts] = useState(0);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!user) return;
     const fetchData = async () => {
       try {
-        const [repRes] = await Promise.all([
-          reputationApi.getScore('me'),
-          reviewsApi.submit({}) // This is a placeholder - in real app would fetch user's reviews
+        const [repRes, reviewsRes] = await Promise.all([
+          reputationApi.getScore(user.id),
+          reviewsApi.getForUser(user.id),
         ]);
-        setReputation(repRes.data.data);
+        setOverallScore(repRes.data.averageRating || 0);
+        setTotalRatings(repRes.data.totalRatings || 0);
+        setCompletedContracts(repRes.data.completedContracts || 0);
+        setReviews(reviewsRes.data);
       } catch {
         // Reputation might not exist yet for new users
       } finally {
@@ -34,7 +41,7 @@ export default function ReputationPage() {
       }
     };
     fetchData();
-  }, []);
+  }, [user]);
 
   if (loading) {
     return (
@@ -44,9 +51,11 @@ export default function ReputationPage() {
     );
   }
 
-  const overallScore = reputation?.overall_score || 0;
-  const totalRatings = reputation?.total_ratings || 0;
-  const breakdown = reputation?.breakdown || { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  const breakdown = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  for (const review of reviews) {
+    const stars = Math.round(review.overall_rating) as 1 | 2 | 3 | 4 | 5;
+    if (stars >= 1 && stars <= 5) breakdown[stars] += 1;
+  }
 
   return (
     <div className="space-y-6">
@@ -106,16 +115,6 @@ export default function ReputationPage() {
                   </div>
                 ))}
               </div>
-
-              {/* On-chain badge */}
-              {reputation?.on_chain_verified && (
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                  <span className="text-sm font-medium text-green-500">
-                    On-Chain Verified Reputation
-                  </span>
-                </div>
-              )}
             </div>
           </div>
         </CardContent>
@@ -156,8 +155,8 @@ export default function ReputationPage() {
                 <TrendingUp className="w-5 h-5 text-green-500" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{reputation?.on_chain_verified ? 'Verified' : 'Pending'}</p>
-                <p className="text-xs text-muted-foreground">On-Chain Status</p>
+                <p className="text-2xl font-bold">{completedContracts}</p>
+                <p className="text-xs text-muted-foreground">Completed Contracts</p>
               </div>
             </div>
           </CardContent>

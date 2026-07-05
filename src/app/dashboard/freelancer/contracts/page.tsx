@@ -44,7 +44,7 @@ export default function ContractsPage() {
     const fetchContracts = async () => {
       try {
         const res = await contractsApi.list();
-        setContracts(res.data.data);
+        setContracts(res.data.items);
       } catch {
         toast.error('Failed to load contracts');
       } finally {

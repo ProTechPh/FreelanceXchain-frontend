@@ -27,7 +27,7 @@ export default function ProjectDetailPage() {
     const fetchProject = async () => {
       try {
         const res = await projectsApi.get(params.id as string);
-        setProject(res.data.data);
+        setProject(res.data);
       } catch {
         toast.error('Failed to load project');
       } finally {

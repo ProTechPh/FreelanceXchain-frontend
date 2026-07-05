@@ -108,16 +108,19 @@ export const authApi = {
 
 export const freelancersApi = {
   getProfile: () =>
-    api.get<ApiResponse<FreelancerProfile>>('/freelancers/profile'),
-  
+    api.get<FreelancerProfile>('/freelancers/profile'),
+
   updateProfile: (data: Partial<FreelancerProfile>) =>
-    api.patch<ApiResponse<FreelancerProfile>>('/freelancers/profile', data),
-  
+    api.patch<FreelancerProfile>('/freelancers/profile', data),
+
   getPublicProfile: (id: string) =>
-    api.get<ApiResponse<FreelancerProfile>>(`/freelancers/${id}`),
+    api.get<FreelancerProfile>(`/freelancers/${id}`),
   
   search: (params?: Record<string, string | number>) =>
-    api.get<PaginatedResponse<FreelancerProfile>>('/freelancers', { params }),
+    api.get<{ items: FreelancerProfile[]; metadata: { pageSize: number; hasMore: boolean; offset?: number } }>(
+      '/search/freelancers',
+      { params }
+    ),
 };
 
 export const employersApi = {
@@ -133,7 +136,7 @@ export const projectsApi = {
     api.get<PaginatedResponse<Project>>('/projects', { params }),
   
   get: (id: string) =>
-    api.get<ApiResponse<Project>>(`/projects/${id}`),
+    api.get<Project>(`/projects/${id}`),
   
   create: (data: Partial<Project>) =>
     api.post<ApiResponse<Project>>('/projects', data),
@@ -225,15 +228,31 @@ export const transactionsApi = {
 
 export const reputationApi = {
   getScore: (userId: string) =>
-    api.get<ApiResponse<ReputationScore>>(`/reputation/${userId}/score`),
-  
+    api.get<{
+      userId: string;
+      averageRating: number;
+      totalRatings: number;
+      workQuality: number;
+      communication: number;
+      professionalism: number;
+      wouldWorkAgainPercentage: number;
+      completedContracts: number;
+      onTimeDeliveryRate: number;
+    }>(`/reputation/${userId}/score`),
+
   getLeaderboard: (params?: Record<string, string | number>) =>
-    api.get<PaginatedResponse<ReputationScore>>('/reputation/leaderboard', { params }),
+    api.get<Array<{ userId: string; userName: string; averageRating: number; totalRatings: number }>>(
+      '/reputation/leaderboard',
+      { params }
+    ),
 };
 
 export const reviewsApi = {
   submit: (data: Partial<Review>) =>
     api.post<ApiResponse<Review>>('/reviews', data),
+
+  getForUser: (userId: string) =>
+    api.get<Review[]>(`/reviews/user/${userId}`),
 };
 
 export const disputesApi = {

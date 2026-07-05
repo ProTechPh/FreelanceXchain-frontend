@@ -26,7 +26,7 @@ export default function ProfilePage() {
     const fetchProfile = async () => {
       try {
         const res = await freelancersApi.getProfile();
-        setProfile(res.data.data);
+        setProfile(res.data);
       } catch {
         setError('Failed to load profile');
       } finally {

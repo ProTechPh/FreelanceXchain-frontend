@@ -31,7 +31,7 @@ export default function EarningsPage() {
     const fetchTransactions = async () => {
       try {
         const res = await transactionsApi.list();
-        setTransactions(res.data.data);
+        setTransactions(res.data.items);
       } catch {
         toast.error('Failed to load transactions');
       } finally {
