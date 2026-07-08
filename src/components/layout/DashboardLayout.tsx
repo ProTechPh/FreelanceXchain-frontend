@@ -7,20 +7,22 @@ import { TopBar } from './TopBar';
 import { useAuthStore } from '@/stores/authStore';
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading, loadUser } = useAuthStore();
+  const { isAuthenticated, isLoading, loadUser, hasHydrated } = useAuthStore();
   const router = useRouter();
 
   useEffect(() => {
-    loadUser();
-  }, [loadUser]);
+    if (hasHydrated) {
+      loadUser();
+    }
+  }, [hasHydrated, loadUser]);
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (hasHydrated && !isLoading && !isAuthenticated) {
       router.push('/login');
     }
-  }, [isLoading, isAuthenticated, router]);
+  }, [hasHydrated, isLoading, isAuthenticated, router]);
 
-  if (isLoading) {
+  if (!hasHydrated || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center gap-4">

@@ -9,6 +9,7 @@ interface AuthState {
   isLoading: boolean;
   mfaPending: boolean;
   mfaAccessToken: string | null;
+  hasHydrated: boolean;
   login: (email: string, password: string) => Promise<{ mfaRequired?: boolean; accessToken?: string }>;
   register: (email: string, password: string, name: string, role: UserRole) => Promise<void>;
   logout: () => Promise<void>;
@@ -16,6 +17,7 @@ interface AuthState {
   setUser: (user: User | null) => void;
   completeMfa: (user: User, accessToken: string) => void;
   clearMfa: () => void;
+  setHasHydrated: (value: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -26,6 +28,7 @@ export const useAuthStore = create<AuthState>()(
       isLoading: false,
       mfaPending: false,
       mfaAccessToken: null,
+      hasHydrated: false,
 
       login: async (email: string, password: string) => {
         set({ isLoading: true });
@@ -84,7 +87,7 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
         try {
           const { data } = await authApi.getMe();
-          set({ user: data.data, isAuthenticated: true, isLoading: false });
+          set({ user: data.user, isAuthenticated: true, isLoading: false });
         } catch {
           localStorage.removeItem('access_token');
           localStorage.removeItem('refresh_token');
@@ -103,6 +106,8 @@ export const useAuthStore = create<AuthState>()(
       },
 
       setUser: (user) => set({ user }),
+
+      setHasHydrated: (value: boolean) => set({ hasHydrated: value }),
     }),
     {
       name: 'auth-storage',
@@ -110,6 +115,9 @@ export const useAuthStore = create<AuthState>()(
         user: state.user,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
   )
 );

@@ -25,7 +25,7 @@ export default function MfaSetupPage() {
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [copied, setCopied] = useState(false);
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, hasHydrated } = useAuthStore();
   const router = useRouter();
 
   const generateQrCode = useCallback(async (totpUri: string) => {
@@ -45,10 +45,10 @@ export default function MfaSetupPage() {
   }, []);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (hasHydrated && !isAuthenticated) {
       router.push('/login');
     }
-  }, [isAuthenticated, router]);
+  }, [hasHydrated, isAuthenticated, router]);
 
   const handleEnroll = async () => {
     setIsEnrolling(true);
@@ -92,7 +92,7 @@ export default function MfaSetupPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (!isAuthenticated) {
+  if (!hasHydrated || !isAuthenticated) {
     return null;
   }
 
@@ -115,7 +115,7 @@ export default function MfaSetupPage() {
             Two-factor authentication adds an additional layer of security to your account. 
             Once enabled, you will need to enter a code from your authenticator app when signing in.
           </p>
-          <Button onClick={handleEnroll} className="w-full gradient-primary text-white" disabled={isEnrolling}>
+          <Button onClick={handleEnroll} variant="gradient" className="w-full" disabled={isEnrolling}>
             {isEnrolling ? 'Setting up...' : 'Enable Two-Factor Authentication'}
           </Button>
         </div>
@@ -183,7 +183,7 @@ export default function MfaSetupPage() {
                 autoFocus
               />
             </div>
-            <Button type="submit" className="w-full gradient-primary text-white" disabled={isVerifying || code.length !== 6}>
+            <Button type="submit" variant="gradient" className="w-full" disabled={isVerifying || code.length !== 6}>
               {isVerifying ? 'Verifying...' : 'Verify & Enable'}
             </Button>
           </form>
@@ -199,7 +199,7 @@ export default function MfaSetupPage() {
           <p className="text-sm text-muted-foreground">
             Your account is now protected with two-factor authentication.
           </p>
-          <Button onClick={() => router.push('/dashboard/freelancer/settings')} className="w-full gradient-primary text-white">
+          <Button onClick={() => router.push('/dashboard/freelancer/settings')} variant="gradient" className="w-full">
             Go to Settings
           </Button>
         </div>
