@@ -341,13 +341,13 @@ export default function CreateProjectPage() {
         </Button>
         {currentStep < 4 ? (
           <Button
-            className="gradient-primary text-white"
+            variant="gradient"
             onClick={() => setCurrentStep(Math.min(4, currentStep + 1))}
           >
             Next <ChevronRight className="w-4 h-4 ml-2" />
           </Button>
         ) : (
-          <Button className="gradient-primary text-white">
+          <Button variant="gradient">
             Post Project
           </Button>
         )}

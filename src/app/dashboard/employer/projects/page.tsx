@@ -3,6 +3,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { getStatusColor } from '@/lib/status-styles';
 import Link from 'next/link';
 import {
   PlusCircle,
@@ -61,14 +62,6 @@ const projects = [
   },
 ];
 
-const statusColors: Record<string, string> = {
-  draft: 'bg-gray-500/10 text-gray-500',
-  open: 'bg-green-500/10 text-green-500',
-  in_progress: 'bg-blue-500/10 text-blue-500',
-  completed: 'bg-primary/10 text-primary',
-  cancelled: 'bg-red-500/10 text-red-500',
-};
-
 export default function EmployerProjectsPage() {
   return (
     <div className="space-y-6">
@@ -79,7 +72,7 @@ export default function EmployerProjectsPage() {
           <p className="text-muted-foreground">Manage your project listings</p>
         </div>
         <Link href="/dashboard/employer/projects/new">
-          <Button className="gradient-primary text-white">
+          <Button variant="gradient">
             <PlusCircle className="w-4 h-4 mr-2" /> Post Project
           </Button>
         </Link>
@@ -123,7 +116,7 @@ export default function EmployerProjectsPage() {
                   <h3 className="text-lg font-semibold">{project.title}</h3>
                   <p className="text-sm text-muted-foreground mt-1">{project.description}</p>
                 </div>
-                <Badge className={statusColors[project.status]}>
+                <Badge className={getStatusColor(project.status)}>
                   {project.status.replace('_', ' ')}
                 </Badge>
               </div>

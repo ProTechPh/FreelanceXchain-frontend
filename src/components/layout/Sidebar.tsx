@@ -23,7 +23,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Link as LinkIcon,
-  DollarSign,
   PlusCircle,
   ClipboardList,
   Mail,
@@ -52,14 +51,7 @@ const employerNav: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard/employer', icon: LayoutDashboard },
   { label: 'My Projects', href: '/dashboard/employer/projects', icon: FolderOpen },
   { label: 'Post Project', href: '/dashboard/employer/projects/new', icon: PlusCircle },
-  { label: 'Proposals', href: '/dashboard/employer/proposals', icon: ClipboardList },
-  { label: 'Contracts', href: '/dashboard/employer/contracts', icon: FolderOpen },
-  { label: 'Find Talent', href: '/dashboard/employer/freelancers', icon: Users },
   { label: 'Verification', href: '/dashboard/employer/verification', icon: Shield },
-  { label: 'Spending', href: '/dashboard/employer/spending', icon: DollarSign },
-  { label: 'Reviews', href: '/dashboard/employer/reviews', icon: Star },
-  { label: 'Disputes', href: '/dashboard/employer/disputes', icon: AlertTriangle },
-  { label: 'Settings', href: '/dashboard/employer/settings', icon: Settings },
 ];
 
 const adminNav: NavItem[] = [
@@ -98,7 +90,7 @@ export function Sidebar() {
             <LinkIcon className="w-4 h-4 text-white" />
           </div>
           {!collapsed && (
-            <span className="font-bold text-lg gradient-text">FreelanceX</span>
+            <span className="font-bold text-lg gradient-text">FreelanceXchain</span>
           )}
         </Link>
       </div>

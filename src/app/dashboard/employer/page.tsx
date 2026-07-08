@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { getStatusColor } from '@/lib/status-styles';
 import Link from 'next/link';
 import {
   DollarSign,
@@ -113,12 +114,6 @@ const recentProposals = [
   },
 ];
 
-const statusColors: Record<string, string> = {
-  open: 'bg-green-500/10 text-green-500',
-  in_progress: 'bg-blue-500/10 text-blue-500',
-  completed: 'bg-primary/10 text-primary',
-};
-
 export default function EmployerDashboard() {
   return (
     <div className="space-y-6">
@@ -129,7 +124,7 @@ export default function EmployerDashboard() {
           <p className="text-muted-foreground">Manage your projects and find talent</p>
         </div>
         <Link href="/dashboard/employer/projects/new">
-          <Button className="gradient-primary text-white">
+          <Button variant="gradient">
             <PlusCircle className="w-4 h-4 mr-2" /> Post Project
           </Button>
         </Link>
@@ -185,7 +180,7 @@ export default function EmployerDashboard() {
                     </div>
                     <div className="text-right">
                       <p className="font-semibold text-primary">{project.budget}</p>
-                      <Badge className={statusColors[project.status]}>
+                      <Badge className={getStatusColor(project.status)}>
                         {project.status.replace('_', ' ')}
                       </Badge>
                     </div>
@@ -214,7 +209,7 @@ export default function EmployerDashboard() {
         <Card className="bg-card border-border">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg">Recent Proposals</CardTitle>
-            <Link href="/dashboard/employer/proposals">
+            <Link href="/dashboard/employer/projects">
               <Button variant="ghost" size="sm">
                 View All <ArrowUpRight className="w-4 h-4 ml-1" />
               </Button>
@@ -262,7 +257,7 @@ export default function EmployerDashboard() {
             </CardContent>
           </Card>
         </Link>
-        <Link href="/dashboard/employer/freelancers">
+        <Link href="/freelancers">
           <Card className="bg-card border-border hover:border-primary/20 transition-all cursor-pointer">
             <CardContent className="p-4 flex items-center gap-4">
               <div className="w-10 h-10 rounded-lg bg-cyan/10 flex items-center justify-center">
@@ -275,15 +270,15 @@ export default function EmployerDashboard() {
             </CardContent>
           </Card>
         </Link>
-        <Link href="/dashboard/employer/contracts">
+        <Link href="/dashboard/employer/verification">
           <Card className="bg-card border-border hover:border-primary/20 transition-all cursor-pointer">
             <CardContent className="p-4 flex items-center gap-4">
               <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
                 <Briefcase className="w-5 h-5 text-green-500" />
               </div>
               <div>
-                <p className="font-medium">Manage Contracts</p>
-                <p className="text-xs text-muted-foreground">Review milestones & payments</p>
+                <p className="font-medium">Verification</p>
+                <p className="text-xs text-muted-foreground">Complete identity verification</p>
               </div>
             </CardContent>
           </Card>

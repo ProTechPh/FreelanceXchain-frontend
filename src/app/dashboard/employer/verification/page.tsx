@@ -138,7 +138,7 @@ export default function EmployerVerificationPage() {
               <Button
                 onClick={handleInitiate}
                 disabled={initiating}
-                className="gradient-primary text-white"
+                variant="gradient"
               >
                 {initiating ? (
                   <>
@@ -178,7 +178,7 @@ export default function EmployerVerificationPage() {
                     </Button>
                     <Button
                       size="sm"
-                      className="gradient-primary text-white"
+                      variant="gradient"
                       onClick={() => window.open(verification.didit_session_url!, '_blank')}
                     >
                       <ExternalLink className="w-4 h-4 mr-2" /> Continue Verification
@@ -189,7 +189,7 @@ export default function EmployerVerificationPage() {
                   <Button
                     onClick={handleInitiate}
                     disabled={initiating}
-                    className="gradient-primary text-white"
+                    variant="gradient"
                   >
                     {initiating ? (
                       <>
