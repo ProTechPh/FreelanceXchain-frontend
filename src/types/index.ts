@@ -1,134 +1,193 @@
 export type UserRole = 'freelancer' | 'employer' | 'admin';
 
-export type ProjectStatus = 'draft' | 'open' | 'in_progress' | 'completed' | 'cancelled';
+export type ProjectStatus = 'draft' | 'open' | 'in_progress' | 'completed' | 'cancelled' | 'disputed';
 
 export type ProposalStatus = 'pending' | 'accepted' | 'rejected' | 'withdrawn';
 
-export type ContractStatus = 'pending' | 'active' | 'completed' | 'cancelled' | 'disputed';
+export type ContractStatus = 'pending' | 'active' | 'completed' | 'disputed' | 'resolved' | 'cancelled';
 
-export type MilestoneStatus = 'pending' | 'funded' | 'in_progress' | 'submitted' | 'approved' | 'disputed' | 'released';
+export type MilestoneStatus =
+  | 'pending'
+  | 'in_progress'
+  | 'submitted'
+  | 'releasing'
+  | 'approved'
+  | 'rejected'
+  | 'disputed'
+  | 'refunded'
+  | 'completed';
 
 export type Availability = 'available' | 'busy' | 'unavailable';
 
-export type DisputeStatus = 'open' | 'under_review' | 'resolved' | 'escalated';
+export type DisputeStatus = 'open' | 'under_review' | 'resolved';
 
 export type EvidenceType = 'document' | 'screenshot' | 'message' | 'contract' | 'other';
+
+export type NotificationType =
+  | 'proposal_received'
+  | 'proposal_accepted'
+  | 'proposal_rejected'
+  | 'milestone_submitted'
+  | 'milestone_approved'
+  | 'milestone_rejected'
+  | 'payment_released'
+  | 'dispute_created'
+  | 'dispute_resolved'
+  | 'dispute_evidence_submitted'
+  | 'refund_requested'
+  | 'refund_approved'
+  | 'refund_rejected'
+  | 'rating_received'
+  | 'rush_upgrade_requested'
+  | 'rush_upgrade_accepted'
+  | 'rush_upgrade_declined'
+  | 'rush_upgrade_counter_offered'
+  | 'message';
 
 export interface User {
   id: string;
   email: string;
   name: string;
   role: UserRole;
-  wallet_address: string;
-  is_suspended: boolean;
-  mfa_enabled: boolean;
-  created_at: string;
-  updated_at: string;
+  walletAddress: string;
+  kycStatus?: KycStatus;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface FreelancerProfile {
-  id: string;
-  user_id: string;
-  name: string;
-  nationality: string;
-  bio: string;
-  hourly_rate: number;
-  skills: Skill[];
-  experience: Experience[];
-  availability: Availability;
-  created_at: string;
-  updated_at: string;
-  user?: User;
-}
-
-export interface EmployerProfile {
-  id: string;
-  user_id: string;
-  name: string;
-  nationality: string;
-  company_name: string;
-  description: string;
-  industry: string;
-  created_at: string;
-  updated_at: string;
-  user?: User;
-}
-
-export interface Skill {
-  id: string;
-  name: string;
-  category?: string;
-}
-
-export interface Experience {
+export interface WorkExperience {
   id: string;
   title: string;
   company: string;
   description: string;
-  start_date: string;
-  end_date?: string;
+  startDate: string;
+  endDate: string | null;
+}
+
+export interface FreelancerProfile {
+  id: string;
+  userId: string;
+  name: string | null;
+  nationality: string | null;
+  bio: string;
+  hourlyRate: number;
+  skills: SkillReference[];
+  experience: WorkExperience[];
+  availability: Availability;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EmployerProfile {
+  id: string;
+  userId: string;
+  name: string | null;
+  nationality: string | null;
+  companyName: string;
+  description: string;
+  industry: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Full skill catalog entry
+export interface Skill {
+  id: string;
+  categoryId: string;
+  name: string;
+  description: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// A freelancer's claimed skill (FreelancerProfile.skills)
+export interface SkillReference {
+  name: string;
+  yearsOfExperience: number;
+}
+
+// A skill required by a project (Project.requiredSkills)
+export interface ProjectSkillReference {
+  skillId?: string;
+  skillName: string;
+  categoryId?: string;
+  yearsOfExperience?: number;
 }
 
 export interface Project {
   id: string;
-  employer_id: string;
+  employerId: string;
   title: string;
   description: string;
-  required_skills: Skill[];
+  requiredSkills: ProjectSkillReference[];
   budget: number;
   deadline: string;
-  is_rush: boolean;
-  rush_fee_percentage: number;
+  isRush: boolean;
+  rushFeePercentage: number;
   status: ProjectStatus;
   milestones: Milestone[];
-  freelancer_limit: number;
+  freelancerLimit: number;
   tags: string[];
   attachments: Attachment[];
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
   employer?: EmployerProfile;
-  proposal_count?: number;
+  proposalCount?: number;
 }
 
 export interface Milestone {
   id: string;
+  contractId?: string;
   title: string;
   description: string;
   amount: number;
+  dueDate: string;
   status: MilestoneStatus;
-  deliverables: Attachment[];
-  deadline?: string;
-  completed_at?: string;
+  submittedAt?: string;
+  approvedAt?: string;
+  rejectedAt?: string;
+  completedAt?: string;
+  deliverableFiles?: Attachment[];
+  rejectionReason?: string;
+  revisionCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Proposal {
   id: string;
-  project_id: string;
-  freelancer_id: string;
-  cover_letter: string;
+  projectId: string;
+  freelancerId: string;
+  coverLetter: string | null;
   attachments: Attachment[];
-  proposed_rate: number;
-  estimated_duration: number;
+  proposedRate: number;
+  estimatedDuration: number;
   status: ProposalStatus;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
   project?: Project;
   freelancer?: FreelancerProfile;
 }
 
 export interface Contract {
   id: string;
-  project_id: string;
-  proposal_id: string;
-  freelancer_id: string;
-  employer_id: string;
-  escrow_address: string;
-  total_amount: number;
-  funded_amount: number;
+  projectId: string;
+  proposalId: string;
+  freelancerId: string;
+  employerId: string;
+  escrowAddress: string;
+  baseAmount: number;
+  rushFee: number;
+  totalAmount: number;
   status: ContractStatus;
-  milestones: Milestone[];
-  created_at: string;
-  updated_at: string;
+  title?: string;
+  description?: string;
+  startDate?: string;
+  endDate?: string;
+  milestones?: Milestone[];
+  createdAt: string;
+  updatedAt: string;
   project?: Project;
   freelancer?: FreelancerProfile;
   employer?: EmployerProfile;
@@ -136,78 +195,105 @@ export interface Contract {
 
 export interface Review {
   id: string;
-  reviewer_id: string;
-  reviewee_id: string;
-  contract_id: string;
-  overall_rating: number;
-  work_quality: number;
-  communication: number;
-  professionalism: number;
-  would_rehire: boolean;
-  comment: string;
-  created_at: string;
+  contractId: string;
+  projectId?: string;
+  reviewerId: string;
+  revieweeId: string;
+  rating: number;
+  comment?: string;
+  reviewerRole?: string;
+  workQuality?: number;
+  communication?: number;
+  professionalism?: number;
+  wouldWorkAgain?: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Evidence embedded directly on a Dispute
+export interface Evidence {
+  id: string;
+  submitterId: string;
+  type: 'text' | 'file' | 'link';
+  content: string;
+  submittedAt: string;
+}
+
+export interface DisputeResolution {
+  decision: 'freelancer_favor' | 'employer_favor' | 'split';
+  reasoning: string;
+  resolvedBy: string;
+  resolvedAt: string;
 }
 
 export interface Dispute {
   id: string;
-  contract_id: string;
-  milestone_id: string;
-  raised_by: string;
+  contractId: string;
+  milestoneId: string;
+  initiatorId: string;
   reason: string;
+  evidence: Evidence[];
   status: DisputeStatus;
-  evidence: DisputeEvidence[];
-  resolution?: string;
-  resolved_by?: string;
-  created_at: string;
-  updated_at: string;
+  resolution: DisputeResolution | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
+// Standalone dispute-evidence entity (separate submission/verification workflow)
 export interface DisputeEvidence {
   id: string;
-  type: EvidenceType;
-  content: string;
-  file_url?: string;
-  submitted_by: string;
-  created_at: string;
+  disputeId: string;
+  submittedBy: string;
+  evidenceType: EvidenceType;
+  fileUrl?: string;
+  description: string;
+  verifiedBy?: string;
+  verifiedAt?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Attachment {
-  id: string;
   filename: string;
   url: string;
   size: number;
-  type: string;
-  created_at: string;
+  mimeType: string;
 }
 
 export interface Message {
   id: string;
-  conversation_id: string;
-  sender_id: string;
+  conversationId: string;
+  senderId: string;
+  receiverId: string;
   content: string;
-  attachments: Attachment[];
-  read_at?: string;
-  created_at: string;
-  sender?: User;
+  isRead: boolean;
+  attachments?: Attachment[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Conversation {
   id: string;
-  participants: User[];
-  last_message?: Message;
-  unread_count: number;
-  created_at: string;
-  updated_at: string;
+  participant1Id: string;
+  participant2Id: string;
+  lastMessageAt: string;
+  lastMessagePreview?: string;
+  unreadCount1: number;
+  unreadCount2: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Notification {
   id: string;
-  type: string;
+  userId: string;
+  type: NotificationType;
   title: string;
   message: string;
-  read: boolean;
   data?: Record<string, unknown>;
-  created_at: string;
+  isRead: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Transaction {
@@ -301,7 +387,7 @@ export interface PaginatedResponse<T> {
   total?: number;
 }
 
-// KYC Verification Types
+// KYC Verification Types (backend returns these as-is, snake_case — not mapped to camelCase)
 export type KycStatus = 'pending' | 'in_progress' | 'completed' | 'approved' | 'rejected' | 'expired';
 
 export interface KycVerification {

@@ -25,7 +25,7 @@ export default function FreelancerProfilePage() {
   useEffect(() => {
     const fetchFreelancer = async () => {
       try {
-        const res = await freelancersApi.getPublicProfile(params.id as string);
+        const res = await freelancersApi.getPublicProfile(params?.id as string);
         setFreelancer(res.data);
       } catch {
         toast.error('Failed to load freelancer profile');
@@ -33,10 +33,10 @@ export default function FreelancerProfilePage() {
         setLoading(false);
       }
     };
-    if (params.id) {
+    if (params?.id) {
       fetchFreelancer();
     }
-  }, [params.id]);
+  }, [params?.id]);
 
   if (loading) {
     return (
@@ -54,7 +54,7 @@ export default function FreelancerProfilePage() {
     );
   }
 
-  const initials = freelancer.name.split(' ').map(n => n[0]).join('');
+  const initials = (freelancer.name ?? 'U').split(' ').map(n => n[0]).join('');
 
   return (
     <div className="min-h-screen">
@@ -77,7 +77,7 @@ export default function FreelancerProfilePage() {
                 <span className="flex items-center gap-1">
                   <MapPin className="w-4 h-4" /> {freelancer.nationality || 'Remote'}
                 </span>
-                <span className="font-semibold text-primary text-lg">${freelancer.hourly_rate}/hr</span>
+                <span className="font-semibold text-primary text-lg">${freelancer.hourlyRate}/hr</span>
               </div>
             </div>
             <Button className="gradient-primary text-white">
@@ -111,7 +111,7 @@ export default function FreelancerProfilePage() {
               <CardContent>
                 <div className="flex flex-wrap gap-2">
                   {freelancer.skills?.map((skill) => (
-                    <Badge key={skill.id} variant="secondary" className="text-sm py-1.5 px-3">
+                    <Badge key={skill.name} variant="secondary" className="text-sm py-1.5 px-3">
                       {skill.name}
                     </Badge>
                   ))}
@@ -139,7 +139,7 @@ export default function FreelancerProfilePage() {
                         <p className="text-sm text-muted-foreground mt-1">{exp.description}</p>
                       </div>
                       <span className="text-xs text-muted-foreground">
-                        {exp.start_date} - {exp.end_date || 'Present'}
+                        {exp.startDate} - {exp.endDate || 'Present'}
                       </span>
                     </div>
                   </div>
@@ -158,7 +158,7 @@ export default function FreelancerProfilePage() {
               <CardContent className="p-6 space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Hourly Rate</span>
-                  <span className="font-semibold text-primary">${freelancer.hourly_rate}/hr</span>
+                  <span className="font-semibold text-primary">${freelancer.hourlyRate}/hr</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Availability</span>
@@ -166,7 +166,7 @@ export default function FreelancerProfilePage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Member Since</span>
-                  <span className="font-semibold">{new Date(freelancer.created_at).toLocaleDateString()}</span>
+                  <span className="font-semibold">{new Date(freelancer.createdAt).toLocaleDateString()}</span>
                 </div>
               </CardContent>
             </Card>

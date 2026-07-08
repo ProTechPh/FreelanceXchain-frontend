@@ -42,9 +42,9 @@ export default function FreelancersPage() {
     fetchFreelancers();
   }, []);
 
-  const filteredFreelancers = freelancers.filter(f => 
-    !search || 
-    f.name.toLowerCase().includes(search.toLowerCase()) ||
+  const filteredFreelancers = freelancers.filter(f =>
+    !search ||
+    (f.name ?? '').toLowerCase().includes(search.toLowerCase()) ||
     f.bio?.toLowerCase().includes(search.toLowerCase()) ||
     f.skills?.some(s => s.name.toLowerCase().includes(search.toLowerCase()))
   );
@@ -99,7 +99,7 @@ export default function FreelancersPage() {
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4 mb-4">
                     <div className="w-14 h-14 rounded-xl gradient-primary flex items-center justify-center text-white font-bold text-lg">
-                      {freelancer.name.split(' ').map(n => n[0]).join('')}
+                      {(freelancer.name ?? 'U').split(' ').map(n => n[0]).join('')}
                     </div>
                     <div className="flex-1">
                       <h3 className="font-semibold text-lg">{freelancer.name}</h3>
@@ -113,7 +113,7 @@ export default function FreelancersPage() {
 
                   <div className="flex flex-wrap gap-1.5 mb-4">
                     {freelancer.skills?.slice(0, 4).map((skill) => (
-                      <Badge key={skill.id} variant="secondary" className="text-xs">
+                      <Badge key={skill.name} variant="secondary" className="text-xs">
                         {skill.name}
                       </Badge>
                     ))}
@@ -125,7 +125,7 @@ export default function FreelancersPage() {
                       {freelancer.nationality || 'Remote'}
                     </div>
                     <div className="font-semibold text-primary">
-                      ${freelancer.hourly_rate}/hr
+                      ${freelancer.hourlyRate}/hr
                     </div>
                   </div>
                 </CardContent>
