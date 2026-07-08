@@ -2,8 +2,8 @@ import Link from 'next/link';
 import { ArrowLeft, ExternalLink, Activity, Shield, Clock } from 'lucide-react';
 
 export const metadata = {
-  title: 'System Status | FreelanceX',
-  description: 'Check the current operational status of FreelanceX services.',
+  title: 'System Status | FreelanceXchain',
+  description: 'Check the current operational status of FreelanceXchain services.',
 };
 
 const STATUS_URL = 'https://stats.uptimerobot.com/6VI6R2PTC5';
@@ -19,7 +19,7 @@ export default function StatusPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
               </svg>
             </div>
-            <span className="font-bold text-lg gradient-text">FreelanceX</span>
+            <span className="font-bold text-lg gradient-text">FreelanceXchain</span>
           </Link>
           <Link href="/" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="w-4 h-4" />
@@ -32,7 +32,7 @@ export default function StatusPage() {
         <div className="text-center mb-12">
           <h1 className="text-3xl font-bold gradient-text mb-3">System Status</h1>
           <p className="text-muted-foreground">
-            Real-time operational status of FreelanceX services.
+            Real-time operational status of FreelanceXchain services.
           </p>
         </div>
 
@@ -42,7 +42,7 @@ export default function StatusPage() {
               <Activity className="w-5 h-5 text-emerald-500" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold">FreelanceX API</h3>
+              <h3 className="font-semibold">FreelanceXchain API</h3>
               <p className="text-sm text-muted-foreground">Core backend services</p>
             </div>
             <a

@@ -42,7 +42,7 @@ const Blog7 = ({
       summary:
         "Explore how Ethereum smart contracts eliminate payment disputes and ensure freelancers get paid on time. Learn about our escrow system and milestone-based releases.",
       label: "Blockchain",
-      author: "FreelanceX Team",
+      author: "FreelanceXchain Team",
       published: "15 Jun 2026",
       url: "#",
       image: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&q=80",
@@ -53,7 +53,7 @@ const Blog7 = ({
       summary:
         "Your reputation is your most valuable asset. Learn how our on-chain reputation system works and how to build a trustworthy profile that attracts top employers.",
       label: "Guide",
-      author: "FreelanceX Team",
+      author: "FreelanceXchain Team",
       published: "10 Jun 2026",
       url: "#",
       image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80",
@@ -64,7 +64,7 @@ const Blog7 = ({
       summary:
         "Our AI analyzes your skills, experience, and preferences to match you with the ideal projects. Discover how machine learning is transforming the freelance marketplace.",
       label: "AI",
-      author: "FreelanceX Team",
+      author: "FreelanceXchain Team",
       published: "5 Jun 2026",
       url: "#",
       image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&q=80",
