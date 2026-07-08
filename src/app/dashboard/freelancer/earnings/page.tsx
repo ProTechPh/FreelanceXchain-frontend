@@ -73,7 +73,7 @@ export default function EarningsPage() {
       </div>
 
       {/* Wallet Card */}
-      <Card className="bg-card border-border overflow-hidden">
+      <Card className="bg-card border-border overflow-hidden relative">
         <div className="absolute inset-0 gradient-primary opacity-5" />
         <CardContent className="p-6 relative">
           <div className="flex items-start justify-between">
@@ -87,7 +87,7 @@ export default function EarningsPage() {
             </div>
           </div>
           <div className="mt-6 flex items-center gap-4">
-            <Button className="gradient-primary text-white">Withdraw</Button>
+            <Button variant="gradient">Withdraw</Button>
           </div>
         </CardContent>
       </Card>
@@ -177,7 +177,12 @@ export default function EarningsPage() {
               );
             })}
             {transactions.length === 0 && (
-              <p className="text-center text-muted-foreground py-8">No transactions yet</p>
+              <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+                <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center">
+                  <DollarSign className="w-6 h-6 text-muted-foreground" />
+                </div>
+                <p className="text-muted-foreground">No transactions yet</p>
+              </div>
             )}
           </div>
         </CardContent>

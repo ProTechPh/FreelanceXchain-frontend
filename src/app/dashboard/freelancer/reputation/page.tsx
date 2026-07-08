@@ -12,6 +12,7 @@ import {
   ExternalLink,
   Users,
   Loader2,
+  MessageSquareOff,
 } from 'lucide-react';
 
 export default function ReputationPage() {
@@ -22,14 +23,18 @@ export default function ReputationPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const userId = user?.id;
+
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
+    let cancelled = false;
     const fetchData = async () => {
       try {
         const [repRes, reviewsRes] = await Promise.all([
-          reputationApi.getScore(user.id),
-          reviewsApi.getForUser(user.id),
+          reputationApi.getScore(userId),
+          reviewsApi.getForUser(userId),
         ]);
+        if (cancelled) return;
         setOverallScore(repRes.data.averageRating || 0);
         setTotalRatings(repRes.data.totalRatings || 0);
         setCompletedContracts(repRes.data.completedContracts || 0);
@@ -37,11 +42,14 @@ export default function ReputationPage() {
       } catch {
         // Reputation might not exist yet for new users
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
     fetchData();
-  }, [user]);
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
 
   if (loading) {
     return (
@@ -53,7 +61,7 @@ export default function ReputationPage() {
 
   const breakdown = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
   for (const review of reviews) {
-    const stars = Math.round(review.overall_rating) as 1 | 2 | 3 | 4 | 5;
+    const stars = Math.round(review.rating) as 1 | 2 | 3 | 4 | 5;
     if (stars >= 1 && stars <= 5) breakdown[stars] += 1;
   }
 
@@ -71,7 +79,7 @@ export default function ReputationPage() {
       </div>
 
       {/* Score Card */}
-      <Card className="bg-card border-border overflow-hidden">
+      <Card className="bg-card border-border overflow-hidden relative">
         <div className="absolute inset-0 gradient-primary opacity-5" />
         <CardContent className="p-6 relative">
           <div className="flex items-center gap-8">
@@ -170,7 +178,12 @@ export default function ReputationPage() {
         </CardHeader>
         <CardContent>
           {reviews.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">No reviews yet</p>
+            <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+              <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center">
+                <MessageSquareOff className="w-6 h-6 text-muted-foreground" />
+              </div>
+              <p className="text-muted-foreground">No reviews yet</p>
+            </div>
           ) : (
             <div className="space-y-4">
               {reviews.map((review) => (
@@ -187,7 +200,7 @@ export default function ReputationPage() {
                         <Star
                           key={star}
                           className={`w-4 h-4 ${
-                            star <= review.overall_rating
+                            star <= review.rating
                               ? 'text-yellow-500 fill-yellow-500'
                               : 'text-gray-500'
                           }`}
@@ -196,7 +209,7 @@ export default function ReputationPage() {
                     </div>
                   </div>
                   <p className="text-sm text-muted-foreground">{review.comment}</p>
-                  <p className="text-xs text-muted-foreground mt-2">{new Date(review.created_at).toLocaleDateString()}</p>
+                  <p className="text-xs text-muted-foreground mt-2">{new Date(review.createdAt).toLocaleDateString()}</p>
                 </div>
               ))}
             </div>
