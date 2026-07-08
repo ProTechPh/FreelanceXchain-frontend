@@ -151,7 +151,7 @@ export default function FreelancerDashboard() {
           <p className="text-muted-foreground">Here&apos;s what&apos;s happening with your work</p>
         </div>
         <Link href="/dashboard/freelancer/projects">
-          <Button className="gradient-primary text-white">
+          <Button variant="gradient">
             <Briefcase className="w-4 h-4 mr-2" /> Browse Projects
           </Button>
         </Link>

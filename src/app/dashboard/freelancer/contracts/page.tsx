@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { contractsApi } from '@/lib/api';
 import type { Contract } from '@/types';
+import { getStatusColor } from '@/lib/status-styles';
 import { toast } from 'sonner';
 import {
   FolderOpen,
@@ -17,24 +18,6 @@ import {
   AlertCircle,
   Loader2,
 } from 'lucide-react';
-
-const milestoneStatusColors: Record<string, string> = {
-  approved: 'bg-green-500/10 text-green-500',
-  in_progress: 'bg-blue-500/10 text-blue-500',
-  pending: 'bg-gray-500/10 text-gray-500',
-  disputed: 'bg-red-500/10 text-red-500',
-  submitted: 'bg-yellow-500/10 text-yellow-500',
-  funded: 'bg-purple-500/10 text-purple-500',
-  released: 'bg-green-500/10 text-green-500',
-};
-
-const contractStatusColors: Record<string, string> = {
-  active: 'bg-green-500/10 text-green-500',
-  completed: 'bg-primary/10 text-primary',
-  pending: 'bg-yellow-500/10 text-yellow-500',
-  cancelled: 'bg-red-500/10 text-red-500',
-  disputed: 'bg-red-500/10 text-red-500',
-};
 
 export default function ContractsPage() {
   const [contracts, setContracts] = useState<Contract[]>([]);
@@ -63,8 +46,11 @@ export default function ContractsPage() {
   }
 
   const activeContracts = contracts.filter(c => c.status === 'active');
-  const totalInEscrow = activeContracts.reduce((sum, c) => sum + (c.total_amount - c.funded_amount), 0);
-  const completedMilestones = contracts.reduce((sum, c) => 
+  const totalInEscrow = activeContracts.reduce((sum, c) => {
+    const released = (c.milestones ?? []).filter(m => m.status === 'approved').reduce((s, m) => s + m.amount, 0);
+    return sum + (c.totalAmount - released);
+  }, 0);
+  const completedMilestones = contracts.reduce((sum, c) =>
     sum + (c.milestones?.filter(m => m.status === 'approved').length || 0), 0);
 
   return (
@@ -126,7 +112,10 @@ export default function ContractsPage() {
           const progress = contract.milestones?.length
             ? Math.round((contract.milestones.filter(m => m.status === 'approved').length / contract.milestones.length) * 100)
             : 0;
-          
+          const releasedAmount = (contract.milestones ?? [])
+            .filter(m => m.status === 'approved')
+            .reduce((sum, m) => sum + m.amount, 0);
+
           return (
             <Card key={contract.id} className="bg-card border-border">
               <CardHeader className="pb-3">
@@ -135,7 +124,7 @@ export default function ContractsPage() {
                     <CardTitle className="text-lg">{contract.project?.title || 'Untitled Project'}</CardTitle>
                     <p className="text-sm text-muted-foreground">{contract.employer?.name || 'Unknown Employer'}</p>
                   </div>
-                  <Badge className={contractStatusColors[contract.status]}>
+                  <Badge className={getStatusColor(contract.status)}>
                     {contract.status}
                   </Badge>
                 </div>
@@ -145,16 +134,16 @@ export default function ContractsPage() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                   <div>
                     <p className="text-muted-foreground">Total Amount</p>
-                    <p className="font-semibold text-primary">${contract.total_amount.toLocaleString()}</p>
+                    <p className="font-semibold text-primary">${contract.totalAmount.toLocaleString()}</p>
                   </div>
                   <div>
-                    <p className="text-muted-foreground">Funded</p>
-                    <p className="font-semibold">${contract.funded_amount.toLocaleString()}</p>
+                    <p className="text-muted-foreground">Released</p>
+                    <p className="font-semibold">${releasedAmount.toLocaleString()}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Escrow</p>
                     <p className="font-mono text-xs flex items-center gap-1">
-                      {contract.escrow_address ? `${contract.escrow_address.slice(0, 6)}...${contract.escrow_address.slice(-4)}` : 'N/A'}
+                      {contract.escrowAddress ? `${contract.escrowAddress.slice(0, 6)}...${contract.escrowAddress.slice(-4)}` : 'N/A'}
                       <ExternalLink className="w-3 h-3" />
                     </p>
                   </div>
@@ -195,7 +184,7 @@ export default function ContractsPage() {
                         </div>
                         <div className="flex items-center gap-3">
                           <span className="text-sm font-medium">${milestone.amount.toLocaleString()}</span>
-                          <Badge className={milestoneStatusColors[milestone.status] || 'bg-gray-500/10 text-gray-500'}>
+                          <Badge className={getStatusColor(milestone.status)}>
                             {milestone.status.replace('_', ' ')}
                           </Badge>
                         </div>
@@ -220,7 +209,12 @@ export default function ContractsPage() {
           );
         })}
         {contracts.length === 0 && (
-          <p className="text-center text-muted-foreground py-8">No contracts found</p>
+          <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+            <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center">
+              <FolderOpen className="w-6 h-6 text-muted-foreground" />
+            </div>
+            <p className="text-muted-foreground">No contracts found</p>
+          </div>
         )}
       </div>
     </div>

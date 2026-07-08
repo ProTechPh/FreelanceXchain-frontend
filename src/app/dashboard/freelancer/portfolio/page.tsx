@@ -65,7 +65,7 @@ export default function PortfolioPage() {
           <h1 className="text-2xl font-bold">Portfolio</h1>
           <p className="text-muted-foreground">Showcase your best work</p>
         </div>
-        <Button className="gradient-primary text-white">
+        <Button variant="gradient">
           <Plus className="w-4 h-4 mr-2" /> Add Portfolio Item
         </Button>
       </div>

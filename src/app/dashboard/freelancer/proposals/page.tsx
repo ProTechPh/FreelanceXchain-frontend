@@ -179,7 +179,7 @@ export default function ProposalsPage() {
                   <span>Accepted {proposal.acceptedAt}</span>
                 </div>
                 <div className="mt-4 flex gap-3">
-                  <Button className="gradient-primary text-white" size="sm">
+                  <Button variant="gradient" size="sm">
                     <FileText className="w-4 h-4 mr-2" /> View Contract
                   </Button>
                 </div>

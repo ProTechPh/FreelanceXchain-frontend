@@ -208,7 +208,7 @@ export default function MessagesPage() {
               onChange={(e) => setNewMessage(e.target.value)}
               className="flex-1"
             />
-            <Button className="gradient-primary text-white" size="icon">
+            <Button variant="gradient" size="icon">
               <Send className="w-5 h-5" />
             </Button>
           </div>

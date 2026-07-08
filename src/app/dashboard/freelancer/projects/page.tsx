@@ -16,6 +16,7 @@ import {
   Users,
   Zap,
   Loader2,
+  FolderSearch,
 } from 'lucide-react';
 
 const skillFilters = ['React', 'Solidity', 'Python', 'TypeScript', 'Node.js', 'Web3.js'];
@@ -51,7 +52,7 @@ export default function BrowseProjects() {
       project.title.toLowerCase().includes(search.toLowerCase()) ||
       project.description.toLowerCase().includes(search.toLowerCase());
     const matchesSkills = selectedSkills.length === 0 ||
-      project.required_skills?.some(skill => selectedSkills.includes(skill.name));
+      project.requiredSkills?.some(skill => selectedSkills.includes(skill.skillName));
     return matchesSearch && matchesSkills;
   });
 
@@ -126,9 +127,9 @@ export default function BrowseProjects() {
                   </h3>
                   <p className="text-sm text-muted-foreground">{project.employer?.name || 'Unknown Employer'}</p>
                 </div>
-                {project.is_rush && (
+                {project.isRush && (
                   <Badge className="bg-amber-500/10 text-amber-500">
-                    <Zap className="w-3 h-3 mr-1" /> Rush +{project.rush_fee_percentage}%
+                    <Zap className="w-3 h-3 mr-1" /> Rush +{project.rushFeePercentage}%
                   </Badge>
                 )}
               </div>
@@ -138,9 +139,9 @@ export default function BrowseProjects() {
               </p>
 
               <div className="flex flex-wrap gap-2 mb-4">
-                {project.required_skills?.map((skill) => (
-                  <Badge key={skill.id} variant="secondary" className="text-xs">
-                    {skill.name}
+                {project.requiredSkills?.map((skill) => (
+                  <Badge key={skill.skillId ?? skill.skillName} variant="secondary" className="text-xs">
+                    {skill.skillName}
                   </Badge>
                 ))}
               </div>
@@ -156,19 +157,24 @@ export default function BrowseProjects() {
                 </div>
                 <div className="flex items-center gap-1">
                   <Users className="w-4 h-4" />
-                  {project.proposal_count || 0} proposals
+                  {project.proposalCount || 0} proposals
                 </div>
               </div>
 
               <div className="mt-4 flex items-center gap-3">
-                <Button className="gradient-primary text-white">Submit Proposal</Button>
+                <Button variant="gradient">Submit Proposal</Button>
                 <Button variant="outline">View Details</Button>
               </div>
             </CardContent>
           </Card>
         ))}
         {filteredProjects.length === 0 && (
-          <p className="text-center text-muted-foreground py-8">No projects found matching your criteria</p>
+          <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+            <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center">
+              <FolderSearch className="w-6 h-6 text-muted-foreground" />
+            </div>
+            <p className="text-muted-foreground">No projects found matching your criteria</p>
+          </div>
         )}
       </div>
     </div>

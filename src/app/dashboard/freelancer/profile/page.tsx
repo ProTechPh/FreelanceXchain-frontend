@@ -15,6 +15,7 @@ import {
   X,
   Briefcase,
   Loader2,
+  UserX,
 } from 'lucide-react';
 
 export default function ProfilePage() {
@@ -46,13 +47,16 @@ export default function ProfilePage() {
 
   if (error || !profile) {
     return (
-      <div className="text-center py-12">
+      <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+        <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center">
+          <UserX className="w-6 h-6 text-muted-foreground" />
+        </div>
         <p className="text-muted-foreground">{error || 'Profile not found'}</p>
       </div>
     );
   }
 
-  const initials = profile.name.split(' ').map((n) => n[0]).join('');
+  const initials = (profile.name ?? 'U').split(' ').map((n) => n[0]).join('');
 
   return (
     <div className="space-y-6">
@@ -62,7 +66,7 @@ export default function ProfilePage() {
           <h1 className="text-2xl font-bold">Profile</h1>
           <p className="text-muted-foreground">Manage your public profile</p>
         </div>
-        <Button className="gradient-primary text-white">
+        <Button variant="gradient">
           <Edit className="w-4 h-4 mr-2" /> Edit Profile
         </Button>
       </div>
@@ -89,7 +93,7 @@ export default function ProfilePage() {
             <div className="mt-6 space-y-3">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Hourly Rate</span>
-                <span className="font-semibold text-primary">${profile.hourly_rate}/hr</span>
+                <span className="font-semibold text-primary">${profile.hourlyRate}/hr</span>
               </div>
             </div>
           </CardContent>
@@ -118,7 +122,7 @@ export default function ProfilePage() {
             <CardContent>
               <div className="flex flex-wrap gap-2">
                 {profile.skills?.map((skill) => (
-                  <Badge key={skill.id} variant="secondary" className="text-sm py-1.5 px-3">
+                  <Badge key={skill.name} variant="secondary" className="text-sm py-1.5 px-3">
                     {skill.name}
                     <X className="w-3 h-3 ml-2 cursor-pointer hover:text-destructive" />
                   </Badge>
@@ -150,7 +154,7 @@ export default function ProfilePage() {
                       <p className="text-sm text-muted-foreground mt-1">{exp.description}</p>
                     </div>
                     <span className="text-xs text-muted-foreground">
-                      {exp.start_date} - {exp.end_date || 'Present'}
+                      {exp.startDate} - {exp.endDate || 'Present'}
                     </span>
                   </div>
                 </div>
