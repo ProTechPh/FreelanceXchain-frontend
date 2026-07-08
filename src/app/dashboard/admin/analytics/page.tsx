@@ -88,7 +88,7 @@ export default function AnalyticsPage() {
         </div>
         <div className="flex gap-3">
           <Button variant="outline" size="sm">Last 7 days</Button>
-          <Button variant="outline" size="sm" className="gradient-primary text-white">Last 30 days</Button>
+          <Button variant="gradient" size="sm">Last 30 days</Button>
           <Button variant="outline" size="sm">Last 90 days</Button>
         </div>
       </div>

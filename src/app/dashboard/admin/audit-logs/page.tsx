@@ -179,10 +179,9 @@ export default function AuditLogsPage() {
           {['all', 'auth', 'project', 'payment', 'admin', 'kyc', 'dispute', 'system'].map((type) => (
             <Button
               key={type}
-              variant={typeFilter === type ? 'default' : 'outline'}
+              variant={typeFilter === type ? 'gradient' : 'outline'}
               size="sm"
               onClick={() => setTypeFilter(type)}
-              className={typeFilter === type ? 'gradient-primary text-white' : ''}
             >
               {type === 'all' ? 'All' : type.charAt(0).toUpperCase() + type.slice(1)}
             </Button>

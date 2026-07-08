@@ -164,10 +164,9 @@ export default function UsersPage() {
           {['all', 'freelancer', 'employer'].map((role) => (
             <Button
               key={role}
-              variant={roleFilter === role ? 'default' : 'outline'}
+              variant={roleFilter === role ? 'gradient' : 'outline'}
               size="sm"
               onClick={() => setRoleFilter(role)}
-              className={roleFilter === role ? 'gradient-primary text-white' : ''}
             >
               {role === 'all' ? 'All' : role.charAt(0).toUpperCase() + role.slice(1)}
             </Button>

@@ -185,7 +185,7 @@ export default function DisputesPage() {
                 <div className="space-y-3">
                   <Textarea placeholder="Admin resolution notes..." rows={2} />
                   <div className="flex gap-3">
-                    <Button className="gradient-primary text-white" size="sm">
+                    <Button variant="gradient" size="sm">
                       <CheckCircle className="w-4 h-4 mr-2" /> Resolve in Favor of Freelancer
                     </Button>
                     <Button variant="outline" size="sm" className="text-green-500 border-green-500/50">
