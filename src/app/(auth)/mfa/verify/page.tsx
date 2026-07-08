@@ -85,7 +85,7 @@ export default function MfaVerifyPage() {
           />
         </div>
 
-        <Button type="submit" className="w-full gradient-primary text-white" disabled={isVerifying || code.length !== 6}>
+        <Button type="submit" variant="gradient" className="w-full" disabled={isVerifying || code.length !== 6}>
           {isVerifying ? 'Verifying...' : 'Verify'}
         </Button>
       </form>

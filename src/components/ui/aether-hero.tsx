@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useMemo } from 'react';
 import Link from 'next/link';
+import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 
 export type AetherHeroProps = {
@@ -79,17 +80,44 @@ export default function AetherHero({
 
   align = 'center',
   maxWidth = 960,
-  overlayGradient = 'linear-gradient(180deg, #000000bb, #00000055 40%, transparent)',
-  textColor = '#ffffff',
+  overlayGradient,
+  textColor,
 
   fragmentSource = DEFAULT_FRAG,
   dprMax = 2,
-  clearColor = [0, 0, 0, 1],
+  clearColor,
 
   height = '100dvh',
   className = '',
   ariaLabel = 'Aurora hero background',
 }: AetherHeroProps) {
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
+  // Default to dark until mounted (matches the app's default theme, avoids a flash)
+  const isDark = !mounted || resolvedTheme !== 'light';
+
+  const resolvedOverlayGradient = overlayGradient ?? (isDark
+    ? 'linear-gradient(180deg, #000000bb, #00000055 40%, transparent)'
+    : 'linear-gradient(180deg, #ffffffcc, #ffffff66 40%, transparent)');
+  const resolvedTextColor = textColor ?? (isDark ? '#ffffff' : '#0a0a0a');
+  const resolvedClearColor = useMemo<[number, number, number, number]>(
+    () => clearColor ?? (isDark ? [0, 0, 0, 1] : [0.98, 0.98, 0.98, 1]),
+    [clearColor, isDark]
+  );
+
+  const badgeClass = isDark
+    ? 'bg-white/[0.08] border-white/15 text-white/80'
+    : 'bg-black/[0.05] border-black/10 text-black/70';
+  const secondaryBtnClass = isDark
+    ? 'glass border-white/20 text-white hover:bg-white/10 hover:border-white/30'
+    : 'glass border-black/10 text-black hover:bg-black/5 hover:border-black/20';
+  const dividerBorderClass = isDark ? 'border-white/10' : 'border-black/10';
+  const statLabelClass = isDark ? 'text-white/50' : 'text-black/50';
+
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const glRef = useRef<WebGL2RenderingContext | null>(null);
   const programRef = useRef<WebGLProgram | null>(null);
@@ -155,7 +183,7 @@ export default function AetherHero({
     uniTimeRef.current = gl.getUniformLocation(prog, 'time');
     uniResRef.current = gl.getUniformLocation(prog, 'resolution');
 
-    gl.clearColor(clearColor[0], clearColor[1], clearColor[2], clearColor[3]);
+    gl.clearColor(resolvedClearColor[0], resolvedClearColor[1], resolvedClearColor[2], resolvedClearColor[3]);
 
     const fit = () => {
       const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, dprMax));
@@ -193,7 +221,7 @@ export default function AetherHero({
       if (bufRef.current) gl.deleteBuffer(bufRef.current);
       if (programRef.current) gl.deleteProgram(programRef.current);
     };
-  }, [fragmentSource, dprMax, clearColor]);
+  }, [fragmentSource, dprMax, resolvedClearColor]);
 
   const justify =
     align === 'left' ? 'flex-start' : align === 'right' ? 'flex-end' : 'center';
@@ -229,7 +257,7 @@ export default function AetherHero({
         style={{
           position: 'absolute',
           inset: 0,
-          background: overlayGradient,
+          background: resolvedOverlayGradient,
           pointerEvents: 'none',
         }}
       />
@@ -242,7 +270,7 @@ export default function AetherHero({
           height: '100%',
           display: 'flex',
           alignItems: 'center',
-          color: textColor,
+          color: resolvedTextColor,
         }}
       >
         <div
@@ -252,7 +280,7 @@ export default function AetherHero({
             marginInline: align === 'center' ? 'auto' : undefined,
           }}
         >
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.08] border border-white/15 mb-6 text-sm font-medium text-white/80">
+          <div className={cn('inline-flex items-center gap-2 px-4 py-2 rounded-full border mb-6 text-sm font-medium', badgeClass)}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
             </svg>
@@ -261,7 +289,7 @@ export default function AetherHero({
 
           <h1
             className={cn(
-              'mt-0 text-[clamp(2.4rem,7vw,5.5rem)] leading-[1.02] tracking-[-0.03em] font-extrabold drop-shadow-2xl text-white',
+              'mt-0 text-[clamp(2.4rem,7vw,5.5rem)] leading-[1.02] tracking-[-0.03em] font-extrabold drop-shadow-2xl',
               'text-center md:text-left'
             )}
           >
@@ -292,22 +320,22 @@ export default function AetherHero({
             {secondaryCtaLabel ? (
               <Link
                 href={secondaryCtaHref}
-                className="inline-flex items-center justify-center px-7 py-3.5 rounded-xl glass border-white/20 text-white font-semibold text-base transition-all duration-200 hover:bg-white/10 hover:border-white/30"
+                className={cn('inline-flex items-center justify-center px-7 py-3.5 rounded-xl font-semibold text-base transition-all duration-200', secondaryBtnClass)}
               >
                 {secondaryCtaLabel}
               </Link>
             ) : null}
           </div>
 
-          <div className={cn('flex flex-wrap gap-8 mt-10 pt-8 border-t border-white/10', 'justify-center md:justify-start')}>
+          <div className={cn('flex flex-wrap gap-8 mt-10 pt-8 border-t', dividerBorderClass, 'justify-center md:justify-start')}>
             {[
               { value: '2,400+', label: 'Freelancers' },
               { value: '$1.2M+', label: 'Secured in Escrow' },
               { value: '180+', label: 'Countries' },
             ].map((stat) => (
               <div key={stat.label} className="flex flex-col gap-0.5">
-                <span className="text-2xl font-bold text-white tracking-tight">{stat.value}</span>
-                <span className="text-xs text-white/50 uppercase tracking-widest">{stat.label}</span>
+                <span className="text-2xl font-bold tracking-tight">{stat.value}</span>
+                <span className={cn('text-xs uppercase tracking-widest', statLabelClass)}>{stat.label}</span>
               </div>
             ))}
           </div>

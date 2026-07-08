@@ -23,7 +23,6 @@ export default function Home() {
           secondaryCtaLabel="Hire Talent"
           secondaryCtaHref="/register"
           align="left"
-          overlayGradient="linear-gradient(105deg, #000000cc 0%, #000000aa 40%, #00000044 70%, transparent 100%)"
         />
         <WhySection />
         <HowItWorks />

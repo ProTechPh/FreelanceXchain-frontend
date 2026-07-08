@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Bell, MessageSquare, Wallet, LogOut, User, Settings, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -29,9 +30,14 @@ export function TopBar() {
     ? user.name.split(' ').map((n) => n[0]).join('').toUpperCase()
     : 'U';
 
-  const truncatedAddress = mounted && user?.wallet_address
-    ? `${user.wallet_address.slice(0, 6)}...${user.wallet_address.slice(-4)}`
+  const truncatedAddress = mounted && user?.walletAddress
+    ? `${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}`
     : null;
+
+  // Messages, notifications, profile, and settings pages currently only exist
+  // for the freelancer dashboard — hide these controls for other roles rather
+  // than link to a dead route.
+  const hasFullDashboard = user?.role === 'freelancer';
 
   return (
     <header className="h-16 border-b border-border bg-card/80 backdrop-blur-xl sticky top-0 z-40">
@@ -49,20 +55,27 @@ export function TopBar() {
 
         {/* Right Actions */}
         <div className="flex items-center gap-3">
+          {/* Theme toggle */}
+          <ThemeToggle />
+
           {/* Notifications */}
-          <Link href={`/dashboard/${user?.role || 'freelancer'}/notifications`}>
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
-            </Button>
-          </Link>
+          {hasFullDashboard && (
+            <Link href={`/dashboard/${user?.role || 'freelancer'}/notifications`}>
+              <Button variant="ghost" size="icon" className="relative">
+                <Bell className="w-5 h-5" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
+              </Button>
+            </Link>
+          )}
 
           {/* Messages */}
-          <Link href={`/dashboard/${user?.role || 'freelancer'}/messages`}>
-            <Button variant="ghost" size="icon">
-              <MessageSquare className="w-5 h-5" />
-            </Button>
-          </Link>
+          {hasFullDashboard && (
+            <Link href={`/dashboard/${user?.role || 'freelancer'}/messages`}>
+              <Button variant="ghost" size="icon">
+                <MessageSquare className="w-5 h-5" />
+              </Button>
+            </Link>
+          )}
 
           {/* Wallet */}
           {truncatedAddress && (
@@ -85,13 +98,17 @@ export function TopBar() {
                 <p className="text-sm font-medium">{user?.name || 'User'}</p>
                 <p className="text-xs text-muted-foreground">{user?.email}</p>
               </div>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => router.push(`/dashboard/${user?.role || 'freelancer'}/profile`)} className="flex items-center gap-2 cursor-pointer">
-                <User className="w-4 h-4" /> Profile
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push(`/dashboard/${user?.role || 'freelancer'}/settings`)} className="flex items-center gap-2 cursor-pointer">
-                <Settings className="w-4 h-4" /> Settings
-              </DropdownMenuItem>
+              {hasFullDashboard && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => router.push(`/dashboard/${user?.role || 'freelancer'}/profile`)} className="flex items-center gap-2 cursor-pointer">
+                    <User className="w-4 h-4" /> Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push(`/dashboard/${user?.role || 'freelancer'}/settings`)} className="flex items-center gap-2 cursor-pointer">
+                    <Settings className="w-4 h-4" /> Settings
+                  </DropdownMenuItem>
+                </>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => logout()} className="flex items-center gap-2 cursor-pointer text-destructive">
                 <LogOut className="w-4 h-4" /> Log out

@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuthStore } from '@/stores/authStore';
+import { authApi } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,7 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [mfaEnabled, setMfaEnabled] = useState(false);
   const [notifications, setNotifications] = useState({
     messages: true,
     proposals: true,
@@ -34,6 +36,12 @@ export default function SettingsPage() {
     payments: true,
     marketing: false,
   });
+
+  useEffect(() => {
+    authApi.mfaFactors()
+      .then((res) => setMfaEnabled(res.data.factors.length > 0))
+      .catch(() => setMfaEnabled(false));
+  }, []);
 
   const handleUpdatePassword = async () => {
     if (newPassword !== confirmPassword) {
@@ -153,7 +161,7 @@ export default function SettingsPage() {
                 />
               </div>
               <Button
-                className="gradient-primary text-white"
+                variant="gradient"
                 onClick={handleUpdatePassword}
                 disabled={isUpdatingPassword || !currentPassword || !newPassword || !confirmPassword}
               >
@@ -172,8 +180,8 @@ export default function SettingsPage() {
             <CardContent>
               <div className="flex items-center justify-between p-4 rounded-xl bg-secondary/50 border border-border">
                 <div className="flex items-center gap-4">
-                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${user?.mfa_enabled ? 'bg-green-500/10' : 'bg-muted'}`}>
-                    {user?.mfa_enabled ? (
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${mfaEnabled ? 'bg-green-500/10' : 'bg-muted'}`}>
+                    {mfaEnabled ? (
                       <CheckCircle className="w-5 h-5 text-green-500" />
                     ) : (
                       <Smartphone className="w-5 h-5 text-muted-foreground" />
@@ -182,17 +190,17 @@ export default function SettingsPage() {
                   <div>
                     <p className="font-medium">Two-Factor Authentication</p>
                     <p className="text-sm text-muted-foreground">
-                      {user?.mfa_enabled 
+                      {mfaEnabled
                         ? 'Your account is protected with 2FA'
                         : 'Add an extra layer of security to your account'
                       }
                     </p>
                   </div>
                 </div>
-                {user?.mfa_enabled ? (
+                {mfaEnabled ? (
                   <Badge className="bg-green-500/10 text-green-500">Enabled</Badge>
                 ) : (
-                  <Link href="/(auth)/mfa/setup">
+                  <Link href="/mfa/setup">
                     <Button variant="outline" size="sm">Enable</Button>
                   </Link>
                 )}
