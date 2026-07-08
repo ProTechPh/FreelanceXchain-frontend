@@ -17,6 +17,7 @@ import {
   Users,
   Zap,
   Loader2,
+  FolderSearch,
 } from 'lucide-react';
 
 export default function ProjectsPage() {
@@ -57,7 +58,9 @@ export default function ProjectsPage() {
       {/* Header */}
       <div className="border-b border-border bg-card/50 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 py-8">
-          <h1 className="text-3xl font-bold mb-2">Browse Projects</h1>
+          <h1 className="text-3xl font-bold mb-2">
+            Browse <span className="gradient-text">Projects</span>
+          </h1>
           <p className="text-muted-foreground">
             Find projects that match your skills and earn securely
           </p>
@@ -90,7 +93,7 @@ export default function ProjectsPage() {
         <div className="space-y-4">
           {filteredProjects.map((project) => (
             <Link key={project.id} href={`/projects/${project.id}`}>
-              <Card className="bg-card border-border hover:border-primary/20 transition-all cursor-pointer">
+              <Card className="bg-card border-border hover:border-primary/30 hover:glow-sm-primary transition-all cursor-pointer">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <div>
@@ -99,9 +102,9 @@ export default function ProjectsPage() {
                       </h3>
                       <p className="text-sm text-muted-foreground mt-1">{project.employer?.name || 'Unknown Employer'}</p>
                     </div>
-                    {project.is_rush && (
+                    {project.isRush && (
                       <Badge className="bg-amber-500/10 text-amber-500">
-                        <Zap className="w-3 h-3 mr-1" /> Rush +{project.rush_fee_percentage}%
+                        <Zap className="w-3 h-3 mr-1" /> Rush +{project.rushFeePercentage}%
                       </Badge>
                     )}
                   </div>
@@ -111,9 +114,9 @@ export default function ProjectsPage() {
                   </p>
 
                   <div className="flex flex-wrap gap-2 mb-4">
-                    {project.required_skills?.map((skill) => (
-                      <Badge key={skill.id} variant="secondary">
-                        {skill.name}
+                    {project.requiredSkills?.map((skill) => (
+                      <Badge key={skill.skillId ?? skill.skillName} variant="secondary">
+                        {skill.skillName}
                       </Badge>
                     ))}
                   </div>
@@ -129,16 +132,21 @@ export default function ProjectsPage() {
                     </div>
                     <div className="flex items-center gap-1">
                       <Users className="w-4 h-4" />
-                      {project.proposal_count || 0} proposals
+                      {project.proposalCount || 0} proposals
                     </div>
-                    <span>{new Date(project.created_at).toLocaleDateString()}</span>
+                    <span>{new Date(project.createdAt).toLocaleDateString()}</span>
                   </div>
                 </CardContent>
               </Card>
             </Link>
           ))}
           {filteredProjects.length === 0 && (
-            <p className="text-center text-muted-foreground py-8">No projects found</p>
+            <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+              <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center">
+                <FolderSearch className="w-6 h-6 text-muted-foreground" />
+              </div>
+              <p className="text-muted-foreground">No projects found</p>
+            </div>
           )}
         </div>
       </div>

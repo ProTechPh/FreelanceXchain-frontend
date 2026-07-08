@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { projectsApi } from '@/lib/api';
 import type { Project } from '@/types';
+import { getStatusColor } from '@/lib/status-styles';
 import { toast } from 'sonner';
 import {
   Zap,
@@ -16,6 +17,7 @@ import {
   Heart,
   Share2,
   Loader2,
+  SearchX,
 } from 'lucide-react';
 
 export default function ProjectDetailPage() {
@@ -26,7 +28,7 @@ export default function ProjectDetailPage() {
   useEffect(() => {
     const fetchProject = async () => {
       try {
-        const res = await projectsApi.get(params.id as string);
+        const res = await projectsApi.get(params?.id as string);
         setProject(res.data);
       } catch {
         toast.error('Failed to load project');
@@ -34,10 +36,10 @@ export default function ProjectDetailPage() {
         setLoading(false);
       }
     };
-    if (params.id) {
+    if (params?.id) {
       fetchProject();
     }
-  }, [params.id]);
+  }, [params?.id]);
 
   if (loading) {
     return (
@@ -49,7 +51,10 @@ export default function ProjectDetailPage() {
 
   if (!project) {
     return (
-      <div className="text-center py-12">
+      <div className="flex flex-col items-center justify-center gap-3 py-24 text-center">
+        <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center">
+          <SearchX className="w-6 h-6 text-muted-foreground" />
+        </div>
         <p className="text-muted-foreground">Project not found</p>
       </div>
     );
@@ -64,14 +69,14 @@ export default function ProjectDetailPage() {
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <h1 className="text-3xl font-bold">{project.title}</h1>
-                <Badge className="bg-green-500/10 text-green-500">{project.status}</Badge>
-                {project.is_rush && (
+                <Badge className={getStatusColor(project.status)}>{project.status.replace('_', ' ')}</Badge>
+                {project.isRush && (
                   <Badge className="bg-amber-500/10 text-amber-500">
-                    <Zap className="w-3 h-3 mr-1" /> Rush +{project.rush_fee_percentage}%
+                    <Zap className="w-3 h-3 mr-1" /> Rush +{project.rushFeePercentage}%
                   </Badge>
                 )}
               </div>
-              <p className="text-muted-foreground">Posted by {project.employer?.name || 'Unknown'} • {new Date(project.created_at).toLocaleDateString()}</p>
+              <p className="text-muted-foreground">Posted by {project.employer?.name || 'Unknown'} • {new Date(project.createdAt).toLocaleDateString()}</p>
             </div>
             <div className="flex gap-3">
               <Button variant="outline">
@@ -80,7 +85,7 @@ export default function ProjectDetailPage() {
               <Button variant="outline">
                 <Share2 className="w-4 h-4 mr-2" /> Share
               </Button>
-              <Button className="gradient-primary text-white">
+              <Button variant="gradient" className="glow-sm-primary">
                 <Send className="w-4 h-4 mr-2" /> Submit Proposal
               </Button>
             </div>
@@ -125,7 +130,10 @@ export default function ProjectDetailPage() {
                           <p className="text-sm text-muted-foreground">{milestone.description}</p>
                         </div>
                       </div>
-                      <p className="font-semibold text-primary">${milestone.amount.toLocaleString()}</p>
+                      <div className="flex items-center gap-3">
+                        <Badge className={getStatusColor(milestone.status)}>{milestone.status.replace('_', ' ')}</Badge>
+                        <p className="font-semibold text-primary">${milestone.amount.toLocaleString()}</p>
+                      </div>
                     </div>
                   ))}
                 </CardContent>
@@ -139,9 +147,9 @@ export default function ProjectDetailPage() {
               </CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
-                  {project.required_skills?.map((skill) => (
-                    <Badge key={skill.id} variant="secondary" className="text-sm py-1.5 px-3">
-                      {skill.name}
+                  {project.requiredSkills?.map((skill) => (
+                    <Badge key={skill.skillId ?? skill.skillName} variant="secondary" className="text-sm py-1.5 px-3">
+                      {skill.skillName}
                     </Badge>
                   ))}
                 </div>
@@ -164,12 +172,12 @@ export default function ProjectDetailPage() {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Proposals</span>
-                  <span className="font-semibold">{project.proposal_count || 0}</span>
+                  <span className="font-semibold">{project.proposalCount || 0}</span>
                 </div>
                 <div className="border-t border-border pt-4">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Calendar className="w-4 h-4" />
-                    Posted {new Date(project.created_at).toLocaleDateString()}
+                    Posted {new Date(project.createdAt).toLocaleDateString()}
                   </div>
                 </div>
               </CardContent>
@@ -188,7 +196,7 @@ export default function ProjectDetailPage() {
                     </div>
                     <div>
                       <p className="font-semibold">{project.employer.name}</p>
-                      <p className="text-sm text-muted-foreground">{project.employer.company_name || 'Company'}</p>
+                      <p className="text-sm text-muted-foreground">{project.employer.companyName || 'Company'}</p>
                     </div>
                   </div>
                 </CardContent>
