@@ -5,6 +5,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { toast } from 'sonner';
 import { SignUpPage } from '@/components/ui/sign-up';
 import type { UserRole } from '@/types';
+import { getApiErrorMessage } from '@/lib/auth-contract';
 
 export default function RegisterPage() {
   const { register, isLoading } = useAuthStore();
@@ -15,13 +16,13 @@ export default function RegisterPage() {
     window.location.href = `${apiUrl}/auth/oauth/${provider}`;
   };
 
-  const handleSubmit = async (data: { name: string; email: string; password: string; role: UserRole }) => {
+  const handleSubmit = async (data: { email: string; password: string; role: UserRole }) => {
     try {
-      await register(data.email, data.password, data.name, data.role);
+      await register(data.email, data.password, data.role);
       toast.success('Account created successfully!');
       router.push(`/dashboard/${data.role}`);
-    } catch {
-      toast.error('Registration failed. Please try again.');
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Registration failed. Please try again.'));
     }
   };
 

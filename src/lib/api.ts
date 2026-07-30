@@ -1,6 +1,8 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import type {
+  AuthSuccessResponse,
   AuthResponse,
+  AuthApiUser,
   LoginRequest,
   RegisterRequest,
   User,
@@ -70,16 +72,16 @@ export const authApi = {
     api.post<AuthResponse>('/auth/login', data),
   
   register: (data: RegisterRequest) =>
-    api.post<AuthResponse>('/auth/register', data),
+    api.post<AuthSuccessResponse>('/auth/register', data),
   
   logout: () =>
     api.post('/auth/logout'),
   
   getMe: () =>
-    api.get<{ user: User }>('/auth/me'),
+    api.get<{ user: AuthApiUser }>('/auth/me'),
   
   refreshToken: (refreshToken: string) =>
-    api.post<AuthResponse>('/auth/refresh', { refreshToken }),
+    api.post<AuthSuccessResponse>('/auth/refresh', { refreshToken }),
   
   forgotPassword: (email: string) =>
     api.post('/auth/forgot-password', { email }),
@@ -91,7 +93,7 @@ export const authApi = {
     api.get<{ url: string }>(`/auth/oauth/${provider}`),
   
   mfaVerify: (data: MfaVerifyRequest) =>
-    api.post<AuthResponse>('/auth/login/mfa-verify', data),
+    api.post<AuthSuccessResponse>('/auth/login/mfa-verify', data),
   
   mfaEnroll: (data: MfaEnrollRequest) =>
     api.post<MfaEnrollResponse>('/auth/mfa/enroll', data),

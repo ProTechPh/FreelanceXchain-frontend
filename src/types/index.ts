@@ -338,20 +338,34 @@ export interface LoginRequest {
 export interface RegisterRequest {
   email: string;
   password: string;
-  name: string;
   role: UserRole;
 }
 
-export interface AuthResponse {
-  user?: User;
-  accessToken?: string;
-  refreshToken?: string;
-  mfaRequired?: boolean;
-  mfaSessionToken?: string;
+export interface AuthApiUser {
+  id: string;
+  email: string;
+  role: UserRole;
+  walletAddress: string;
+  kycStatus?: KycStatus;
+  createdAt: string;
+  authProvider?: 'email' | 'oauth';
 }
 
-export interface MfaVerifyRequest {
+export interface AuthSuccessResponse {
+  user: AuthApiUser;
   accessToken: string;
+  refreshToken: string;
+}
+
+export interface MfaRequiredResponse {
+  mfaRequired: true;
+  mfaSessionToken: string;
+}
+
+export type AuthResponse = AuthSuccessResponse | MfaRequiredResponse;
+
+export interface MfaVerifyRequest {
+  mfaSessionToken: string;
   factorId: string;
   code: string;
 }

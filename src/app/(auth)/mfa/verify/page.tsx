@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,39 +9,44 @@ import { useAuthStore } from '@/stores/authStore';
 import { authApi } from '@/lib/api';
 import { toast } from 'sonner';
 import { Shield, ArrowLeft } from 'lucide-react';
+import { getApiErrorMessage, isAuthSuccessResponse } from '@/lib/auth-contract';
 
 export default function MfaVerifyPage() {
   const [code, setCode] = useState('');
   const [factorId] = useState('totp');
   const [isVerifying, setIsVerifying] = useState(false);
-  const { mfaPending, mfaAccessToken, completeMfa, clearMfa } = useAuthStore();
+  const verificationCompleted = useRef(false);
+  const { mfaPending, mfaSessionToken, completeMfa, clearMfa } = useAuthStore();
   const router = useRouter();
 
   useEffect(() => {
-    if (!mfaPending || !mfaAccessToken) {
+    if (!verificationCompleted.current && (!mfaPending || !mfaSessionToken)) {
       router.push('/login');
     }
-  }, [mfaPending, mfaAccessToken, router]);
+  }, [mfaPending, mfaSessionToken, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!mfaAccessToken) return;
+    if (!mfaSessionToken) return;
 
     setIsVerifying(true);
     try {
       const { data } = await authApi.mfaVerify({
-        accessToken: mfaAccessToken,
+        mfaSessionToken,
         factorId,
         code,
       });
 
-      if (data.user && data.accessToken) {
-        completeMfa(data.user, data.accessToken);
-        toast.success('MFA verified!');
-        router.push('/dashboard/freelancer');
+      if (!isAuthSuccessResponse(data)) {
+        throw new Error('The server returned an invalid MFA response');
       }
-    } catch {
-      toast.error('Invalid verification code', { duration: 5000 });
+
+      verificationCompleted.current = true;
+      completeMfa(data);
+      toast.success('MFA verified!');
+      router.push(`/dashboard/${data.user.role}`);
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Invalid verification code'), { duration: 5000 });
     } finally {
       setIsVerifying(false);
     }
@@ -52,7 +57,7 @@ export default function MfaVerifyPage() {
     router.push('/login');
   };
 
-  if (!mfaPending || !mfaAccessToken) {
+  if (!mfaPending || !mfaSessionToken) {
     return null;
   }
 

@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { toast } from 'sonner';
 import { SignInPage, Testimonial } from '@/components/ui/sign-in';
+import { getApiErrorMessage } from '@/lib/auth-contract';
 
 const testimonials: Testimonial[] = [
   {
@@ -45,15 +46,15 @@ export default function LoginPage() {
       const result = await login(email, password);
 
       if (result.mfaRequired) {
-        router.push('/(auth)/mfa/verify');
+        router.push('/mfa/verify');
         return;
       }
 
       toast.success('Welcome back!');
       const user = useAuthStore.getState().user;
       router.push(`/dashboard/${user?.role || 'freelancer'}`);
-    } catch {
-      toast.error('Invalid email or password', { duration: 5000 });
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Unable to sign in. Please try again.'), { duration: 5000 });
     }
   };
 

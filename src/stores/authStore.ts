@@ -1,21 +1,26 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { User, UserRole } from '@/types';
+import type { AuthSuccessResponse, User, UserRole } from '@/types';
 import { authApi } from '@/lib/api';
+import {
+  isAuthSuccessResponse,
+  isMfaRequiredResponse,
+  normalizeAuthUser,
+} from '@/lib/auth-contract';
 
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   mfaPending: boolean;
-  mfaAccessToken: string | null;
+  mfaSessionToken: string | null;
   hasHydrated: boolean;
-  login: (email: string, password: string) => Promise<{ mfaRequired?: boolean; accessToken?: string }>;
-  register: (email: string, password: string, name: string, role: UserRole) => Promise<void>;
+  login: (email: string, password: string) => Promise<{ mfaRequired?: boolean }>;
+  register: (email: string, password: string, role: UserRole) => Promise<void>;
   logout: () => Promise<void>;
   loadUser: () => Promise<void>;
   setUser: (user: User | null) => void;
-  completeMfa: (user: User, accessToken: string) => void;
+  completeMfa: (response: AuthSuccessResponse) => void;
   clearMfa: () => void;
   setHasHydrated: (value: boolean) => void;
 }
@@ -27,24 +32,32 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isLoading: false,
       mfaPending: false,
-      mfaAccessToken: null,
+      mfaSessionToken: null,
       hasHydrated: false,
 
       login: async (email: string, password: string) => {
-        set({ isLoading: true });
+        set({ isLoading: true, mfaPending: false, mfaSessionToken: null });
         try {
           const { data } = await authApi.login({ email, password });
 
-          // Check if MFA is required
-          if (data.mfaRequired && data.mfaSessionToken) {
-            set({ isLoading: false, mfaPending: true, mfaAccessToken: data.mfaSessionToken });
-            return { mfaRequired: true, accessToken: data.mfaSessionToken };
+          if (isMfaRequiredResponse(data)) {
+            set({ isLoading: false, mfaPending: true, mfaSessionToken: data.mfaSessionToken });
+            return { mfaRequired: true };
           }
 
-          // Normal login success
-          localStorage.setItem('access_token', data.accessToken!);
-          localStorage.setItem('refresh_token', data.refreshToken!);
-          set({ user: data.user!, isAuthenticated: true, isLoading: false });
+          if (!isAuthSuccessResponse(data)) {
+            throw new Error('The server returned an invalid authentication response');
+          }
+
+          localStorage.setItem('access_token', data.accessToken);
+          localStorage.setItem('refresh_token', data.refreshToken);
+          set({
+            user: normalizeAuthUser(data.user),
+            isAuthenticated: true,
+            isLoading: false,
+            mfaPending: false,
+            mfaSessionToken: null,
+          });
           return {};
         } catch (error) {
           set({ isLoading: false });
@@ -52,13 +65,17 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      register: async (email: string, password: string, name: string, role: UserRole) => {
+      register: async (email: string, password: string, role: UserRole) => {
         set({ isLoading: true });
         try {
-          const { data } = await authApi.register({ email, password, name, role });
-          localStorage.setItem('access_token', data.accessToken!);
-          localStorage.setItem('refresh_token', data.refreshToken!);
-          set({ user: data.user!, isAuthenticated: true, isLoading: false });
+          const { data } = await authApi.register({ email, password, role });
+          if (!isAuthSuccessResponse(data)) {
+            throw new Error('The server returned an invalid registration response');
+          }
+
+          localStorage.setItem('access_token', data.accessToken);
+          localStorage.setItem('refresh_token', data.refreshToken);
+          set({ user: normalizeAuthUser(data.user), isAuthenticated: true, isLoading: false });
         } catch (error) {
           set({ isLoading: false });
           throw error;
@@ -73,7 +90,7 @@ export const useAuthStore = create<AuthState>()(
         } finally {
           localStorage.removeItem('access_token');
           localStorage.removeItem('refresh_token');
-          set({ user: null, isAuthenticated: false, mfaPending: false, mfaAccessToken: null });
+          set({ user: null, isAuthenticated: false, mfaPending: false, mfaSessionToken: null });
         }
       },
 
@@ -87,7 +104,7 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true });
         try {
           const { data } = await authApi.getMe();
-          set({ user: data.user, isAuthenticated: true, isLoading: false });
+          set({ user: normalizeAuthUser(data.user), isAuthenticated: true, isLoading: false });
         } catch {
           localStorage.removeItem('access_token');
           localStorage.removeItem('refresh_token');
@@ -95,14 +112,19 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      completeMfa: (user: User, accessToken: string) => {
-        localStorage.setItem('access_token', accessToken);
-        localStorage.setItem('refresh_token', accessToken);
-        set({ user, isAuthenticated: true, mfaPending: false, mfaAccessToken: null });
+      completeMfa: (response: AuthSuccessResponse) => {
+        localStorage.setItem('access_token', response.accessToken);
+        localStorage.setItem('refresh_token', response.refreshToken);
+        set({
+          user: normalizeAuthUser(response.user),
+          isAuthenticated: true,
+          mfaPending: false,
+          mfaSessionToken: null,
+        });
       },
 
       clearMfa: () => {
-        set({ mfaPending: false, mfaAccessToken: null });
+        set({ mfaPending: false, mfaSessionToken: null });
       },
 
       setUser: (user) => set({ user }),
