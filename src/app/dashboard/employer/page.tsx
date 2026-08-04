@@ -1,10 +1,15 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getStatusColor } from '@/lib/status-styles';
 import Link from 'next/link';
+import { projectsApi, analyticsApi, freelancersApi, reputationApi } from '@/lib/api';
+import { useAuthStore } from '@/stores/authStore';
+import type { Project, Proposal } from '@/types';
+import { toast } from 'sonner';
 import {
   DollarSign,
   FolderOpen,
@@ -14,113 +19,156 @@ import {
   ArrowUpRight,
   PlusCircle,
   Briefcase,
+  Loader2,
 } from 'lucide-react';
 
-const stats = [
-  {
-    title: 'Active Projects',
-    value: '3',
-    change: '1 new this week',
-    icon: FolderOpen,
-    color: 'text-primary',
-    bg: 'bg-primary/10',
-  },
-  {
-    title: 'Total Spent',
-    value: '$24,500',
-    change: '+$5,200 this month',
-    icon: DollarSign,
-    color: 'text-green-500',
-    bg: 'bg-green-500/10',
-  },
-  {
-    title: 'Pending Proposals',
-    value: '18',
-    change: '5 new today',
-    icon: FileText,
-    color: 'text-cyan',
-    bg: 'bg-cyan/10',
-  },
-  {
-    title: 'Active Contracts',
-    value: '4',
-    change: '2 completing soon',
-    icon: Briefcase,
-    color: 'text-yellow-500',
-    bg: 'bg-yellow-500/10',
-  },
-];
+interface RecentProposalView {
+  proposal: Proposal;
+  projectTitle: string;
+  freelancerName: string;
+  rating: number | null;
+}
 
-const activeProjects = [
-  {
-    id: '1',
-    title: 'E-commerce Platform Redesign',
-    budget: '$3,200',
-    proposals: 8,
-    status: 'in_progress',
-    deadline: 'Dec 20, 2024',
-    progress: 65,
-  },
-  {
-    id: '2',
-    title: 'Mobile App Development',
-    budget: '$5,500',
-    proposals: 12,
-    status: 'in_progress',
-    deadline: 'Jan 15, 2025',
-    progress: 40,
-  },
-  {
-    id: '3',
-    title: 'Smart Contract Audit',
-    budget: '$2,800',
-    proposals: 5,
-    status: 'completed',
-    deadline: 'Dec 10, 2024',
-    progress: 100,
-  },
-];
+function relativeTime(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const diffSec = Math.round(diffMs / 1000);
+  const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+  if (Math.abs(diffSec) < 60) return rtf.format(-diffSec, 'second');
+  const diffMin = Math.round(diffSec / 60);
+  if (Math.abs(diffMin) < 60) return rtf.format(-diffMin, 'minute');
+  const diffHour = Math.round(diffMin / 60);
+  if (Math.abs(diffHour) < 24) return rtf.format(-diffHour, 'hour');
+  const diffDay = Math.round(diffHour / 24);
+  return rtf.format(-diffDay, 'day');
+}
 
-const recentProposals = [
-  {
-    id: '1',
-    freelancer: 'Alex Thompson',
-    avatar: 'AT',
-    project: 'E-commerce Platform Redesign',
-    amount: '$3,200',
-    rating: 4.8,
-    submitted: '2 hours ago',
-    match: 95,
-  },
-  {
-    id: '2',
-    freelancer: 'Sarah Chen',
-    avatar: 'SC',
-    project: 'Mobile App Development',
-    amount: '$5,000',
-    rating: 4.9,
-    submitted: '5 hours ago',
-    match: 92,
-  },
-  {
-    id: '3',
-    freelancer: 'Mike Johnson',
-    avatar: 'MJ',
-    project: 'DAO Governance Tool',
-    amount: '$4,500',
-    rating: 4.7,
-    submitted: '1 day ago',
-    match: 88,
-  },
-];
+function initials(name: string): string {
+  return name.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join('') || '?';
+}
 
 export default function EmployerDashboard() {
+  const currentUser = useAuthStore((state) => state.user);
+  const [loading, setLoading] = useState(true);
+  const [totalSpent, setTotalSpent] = useState<number | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [pendingProposalCount, setPendingProposalCount] = useState(0);
+  const [activeContractCount, setActiveContractCount] = useState<number | null>(null);
+  const [recentProposals, setRecentProposals] = useState<RecentProposalView[]>([]);
+
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const load = async () => {
+      try {
+        const [analyticsRes, projectsRes] = await Promise.allSettled([
+          analyticsApi.getEmployer(),
+          projectsApi.getMyProjects(),
+        ]);
+
+        if (analyticsRes.status === 'fulfilled') {
+          setTotalSpent(analyticsRes.value.data.totalSpent);
+          setActiveContractCount(analyticsRes.value.data.projectsCompleted);
+        }
+
+        let myProjects: Project[] = [];
+        if (projectsRes.status === 'fulfilled') {
+          myProjects = projectsRes.value.data.items;
+          setProjects(myProjects);
+        }
+
+        const openOrActive = myProjects
+          .filter((p) => p.status === 'open' || p.status === 'in_progress')
+          .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+          .slice(0, 5);
+
+        const proposalLists = await Promise.all(
+          openOrActive.map((p) => projectsApi.getProposals(p.id).then((r) => r.data.items).catch(() => []))
+        );
+
+        const allProposals = openOrActive.flatMap((project, i) =>
+          proposalLists[i].map((proposal) => ({ proposal, project }))
+        );
+        setPendingProposalCount(allProposals.filter((p) => p.proposal.status === 'pending').length);
+
+        const recent = allProposals
+          .sort((a, b) => new Date(b.proposal.createdAt).getTime() - new Date(a.proposal.createdAt).getTime())
+          .slice(0, 3);
+
+        const details = await Promise.all(
+          recent.map(async ({ proposal }) => {
+            const [profile, score] = await Promise.all([
+              freelancersApi.getPublicProfile(proposal.freelancerId).catch(() => null),
+              reputationApi.getScore(proposal.freelancerId).catch(() => null),
+            ]);
+            return { profile, score };
+          })
+        );
+
+        setRecentProposals(
+          recent.map(({ proposal, project }, i) => ({
+            proposal,
+            projectTitle: project.title,
+            freelancerName: details[i].profile?.data.name ?? 'Freelancer',
+            rating: details[i].score?.data.averageRating ?? null,
+          }))
+        );
+      } catch {
+        toast.error('Failed to load dashboard data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+  }, [currentUser]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  const activeProjects = projects.filter((p) => p.status === 'open' || p.status === 'in_progress');
+
+  const stats = [
+    {
+      title: 'Active Projects',
+      value: String(activeProjects.length),
+      icon: FolderOpen,
+      color: 'text-primary',
+      bg: 'bg-primary/10',
+    },
+    {
+      title: 'Total Spent',
+      value: totalSpent !== null ? `$${totalSpent.toLocaleString()}` : '—',
+      icon: DollarSign,
+      color: 'text-green-500',
+      bg: 'bg-green-500/10',
+    },
+    {
+      title: 'Pending Proposals',
+      value: String(pendingProposalCount),
+      icon: FileText,
+      color: 'text-cyan',
+      bg: 'bg-cyan/10',
+    },
+    {
+      title: 'Completed Contracts',
+      value: activeContractCount !== null ? String(activeContractCount) : '—',
+      icon: Briefcase,
+      color: 'text-yellow-500',
+      bg: 'bg-yellow-500/10',
+    },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Welcome back, TechCorp!</h1>
+          <h1 className="text-2xl font-bold">Welcome back{currentUser?.name ? `, ${currentUser.name}` : ''}!</h1>
           <p className="text-muted-foreground">Manage your projects and find talent</p>
         </div>
         <Link href="/dashboard/employer/projects/new">
@@ -139,7 +187,6 @@ export default function EmployerDashboard() {
                 <div>
                   <p className="text-sm text-muted-foreground">{stat.title}</p>
                   <p className="text-2xl font-bold mt-1">{stat.value}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{stat.change}</p>
                 </div>
                 <div className={`w-10 h-10 rounded-lg ${stat.bg} flex items-center justify-center`}>
                   <stat.icon className={`w-5 h-5 ${stat.color}`} />
@@ -163,44 +210,51 @@ export default function EmployerDashboard() {
               </Link>
             </CardHeader>
             <CardContent className="space-y-4">
-              {activeProjects.map((project) => (
-                <div
-                  key={project.id}
-                  className="p-4 rounded-xl bg-secondary/50 border border-border hover:border-primary/20 transition-all cursor-pointer"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <h3 className="font-medium">{project.title}</h3>
-                      <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
-                        <span>{project.proposals} proposals</span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" /> {project.deadline}
-                        </span>
+              {activeProjects.length === 0 && (
+                <p className="text-sm text-muted-foreground py-8 text-center">
+                  No active projects yet — post one to start receiving proposals
+                </p>
+              )}
+              {activeProjects.map((project) => {
+                const milestones = project.milestones ?? [];
+                const completedCount = milestones.filter((m) => m.status === 'completed').length;
+                const progress = milestones.length > 0 ? Math.round((completedCount / milestones.length) * 100) : 0;
+                return (
+                  <div
+                    key={project.id}
+                    className="p-4 rounded-xl bg-secondary/50 border border-border hover:border-primary/20 transition-all cursor-pointer"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <h3 className="font-medium">{project.title}</h3>
+                        <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
+                          <span>{project.proposalCount ?? 0} proposals</span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="w-3 h-3" /> {new Date(project.deadline).toLocaleDateString()}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold text-primary">${project.budget.toLocaleString()}</p>
+                        <Badge className={getStatusColor(project.status)}>
+                          {project.status.replace('_', ' ')}
+                        </Badge>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-primary">{project.budget}</p>
-                      <Badge className={getStatusColor(project.status)}>
-                        {project.status.replace('_', ' ')}
-                      </Badge>
-                    </div>
+                    {project.status === 'in_progress' && milestones.length > 0 && (
+                      <div>
+                        <div className="flex items-center justify-between text-xs mb-1">
+                          <span className="text-muted-foreground">Progress</span>
+                          <span>{progress}%</span>
+                        </div>
+                        <div className="h-1.5 bg-background rounded-full overflow-hidden">
+                          <div className="h-full gradient-primary rounded-full transition-all" style={{ width: `${progress}%` }} />
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  {project.status === 'in_progress' && (
-                    <div>
-                      <div className="flex items-center justify-between text-xs mb-1">
-                        <span className="text-muted-foreground">Progress</span>
-                        <span>{project.progress}%</span>
-                      </div>
-                      <div className="h-1.5 bg-background rounded-full overflow-hidden">
-                        <div
-                          className="h-full gradient-primary rounded-full transition-all"
-                          style={{ width: `${project.progress}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </CardContent>
           </Card>
         </div>
@@ -216,25 +270,24 @@ export default function EmployerDashboard() {
             </Link>
           </CardHeader>
           <CardContent className="space-y-3">
-            {recentProposals.map((proposal) => (
-              <div
-                key={proposal.id}
-                className="p-3 rounded-xl bg-secondary/50 border border-border"
-              >
+            {recentProposals.length === 0 && (
+              <p className="text-sm text-muted-foreground py-8 text-center">No proposals yet</p>
+            )}
+            {recentProposals.map(({ proposal, projectTitle, freelancerName, rating }) => (
+              <div key={proposal.id} className="p-3 rounded-xl bg-secondary/50 border border-border">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center text-white text-xs font-bold">
-                    {proposal.avatar}
+                    {initials(freelancerName)}
                   </div>
                   <div className="flex-1">
-                    <p className="font-medium text-sm">{proposal.freelancer}</p>
-                    <p className="text-xs text-muted-foreground">{proposal.project}</p>
+                    <p className="font-medium text-sm">{freelancerName}</p>
+                    <p className="text-xs text-muted-foreground">{projectTitle}</p>
                   </div>
-                  <Badge className="bg-green-500/10 text-green-500">{proposal.match}%</Badge>
                 </div>
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span className="font-medium text-primary">{proposal.amount}</span>
-                  <span>★ {proposal.rating}</span>
-                  <span>{proposal.submitted}</span>
+                  <span className="font-medium text-primary">${proposal.proposedRate.toLocaleString()}</span>
+                  {rating !== null && <span>★ {rating.toFixed(1)}</span>}
+                  <span>{relativeTime(proposal.createdAt)}</span>
                 </div>
               </div>
             ))}

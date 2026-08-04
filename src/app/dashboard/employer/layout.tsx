@@ -7,5 +7,5 @@ export default function EmployerDashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <DashboardLayout>{children}</DashboardLayout>;
+  return <DashboardLayout allowedRoles={['employer']}>{children}</DashboardLayout>;
 }

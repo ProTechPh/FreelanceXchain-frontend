@@ -1,9 +1,21 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import {
+  contractsApi,
+  proposalsApi,
+  matchingApi,
+  projectsApi,
+  reputationApi,
+  analyticsApi,
+} from '@/lib/api';
+import { useAuthStore } from '@/stores/authStore';
+import type { Contract, Proposal, Project } from '@/types';
+import { toast } from 'sonner';
 import {
   DollarSign,
   FolderOpen,
@@ -14,140 +26,173 @@ import {
   ArrowUpRight,
   Briefcase,
   Wallet,
+  Loader2,
 } from 'lucide-react';
-
-const stats = [
-  {
-    title: 'Total Earned',
-    value: '$12,450',
-    change: '+$2,100 this month',
-    icon: DollarSign,
-    color: 'text-green-500',
-    bg: 'bg-green-500/10',
-  },
-  {
-    title: 'Active Contracts',
-    value: '3',
-    change: '2 in progress',
-    icon: FolderOpen,
-    color: 'text-primary',
-    bg: 'bg-primary/10',
-  },
-  {
-    title: 'Pending Proposals',
-    value: '5',
-    change: '2 new views',
-    icon: FileText,
-    color: 'text-cyan',
-    bg: 'bg-cyan/10',
-  },
-  {
-    title: 'Reputation Score',
-    value: '4.8',
-    change: 'Top 5% on platform',
-    icon: Star,
-    color: 'text-yellow-500',
-    bg: 'bg-yellow-500/10',
-  },
-];
-
-const activeContracts = [
-  {
-    id: '1',
-    project: 'E-commerce Platform Redesign',
-    employer: 'TechCorp Inc.',
-    amount: '$3,200',
-    milestone: 'UI Components',
-    progress: 65,
-    deadline: 'Dec 20, 2024',
-  },
-  {
-    id: '2',
-    project: 'Mobile App Development',
-    employer: 'StartupXYZ',
-    amount: '$5,500',
-    milestone: 'API Integration',
-    progress: 40,
-    deadline: 'Jan 15, 2025',
-  },
-  {
-    id: '3',
-    project: 'Smart Contract Audit',
-    employer: 'DeFi Protocol',
-    amount: '$2,800',
-    milestone: 'Security Review',
-    progress: 85,
-    deadline: 'Dec 10, 2024',
-  },
-];
-
-const recentProposals = [
-  {
-    id: '1',
-    project: 'Blockchain Wallet Integration',
-    status: 'pending',
-    submitted: '2 hours ago',
-    amount: '$4,000',
-  },
-  {
-    id: '2',
-    project: 'NFT Marketplace Development',
-    status: 'viewed',
-    submitted: '1 day ago',
-    amount: '$8,500',
-  },
-  {
-    id: '3',
-    project: 'DeFi Dashboard UI',
-    status: 'shortlisted',
-    submitted: '3 days ago',
-    amount: '$3,200',
-  },
-];
-
-const recommendedProjects = [
-  {
-    id: '1',
-    title: 'Web3 Social Media Platform',
-    budget: '$6,000 - $10,000',
-    skills: ['React', 'Solidity', 'Web3.js'],
-    match: '95%',
-    posted: '1 day ago',
-    proposals: 12,
-  },
-  {
-    id: '2',
-    title: 'Crypto Trading Bot',
-    budget: '$4,000 - $7,000',
-    skills: ['Python', 'TypeScript', 'API'],
-    match: '88%',
-    posted: '2 days ago',
-    proposals: 8,
-  },
-  {
-    id: '3',
-    title: 'DAO Governance Tool',
-    budget: '$5,000 - $8,000',
-    skills: ['React', 'Solidity', 'GraphQL'],
-    match: '82%',
-    posted: '3 days ago',
-    proposals: 15,
-  },
-];
 
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-500/10 text-yellow-500',
-  viewed: 'bg-blue-500/10 text-blue-500',
-  shortlisted: 'bg-green-500/10 text-green-500',
+  accepted: 'bg-green-500/10 text-green-500',
+  rejected: 'bg-red-500/10 text-red-500',
+  withdrawn: 'bg-muted text-muted-foreground',
 };
 
+function relativeTime(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const diffSec = Math.round(diffMs / 1000);
+  const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+  if (Math.abs(diffSec) < 60) return rtf.format(-diffSec, 'second');
+  const diffMin = Math.round(diffSec / 60);
+  if (Math.abs(diffMin) < 60) return rtf.format(-diffMin, 'minute');
+  const diffHour = Math.round(diffMin / 60);
+  if (Math.abs(diffHour) < 24) return rtf.format(-diffHour, 'hour');
+  const diffDay = Math.round(diffHour / 24);
+  return rtf.format(-diffDay, 'day');
+}
+
+interface ActiveContractView {
+  contract: Contract;
+  project: Project | null;
+}
+
+interface RecentProposalView {
+  proposal: Proposal;
+  project: Project | null;
+}
+
+interface RecommendedProjectView {
+  project: Project;
+  matchScore: number;
+  matchedSkills: string[];
+}
+
 export default function FreelancerDashboard() {
+  const currentUser = useAuthStore((state) => state.user);
+  const [loading, setLoading] = useState(true);
+  const [totalEarnings, setTotalEarnings] = useState<number | null>(null);
+  const [projectsCompleted, setProjectsCompleted] = useState<number | null>(null);
+  const [averageRating, setAverageRating] = useState<number | null>(null);
+  const [totalRatings, setTotalRatings] = useState<number>(0);
+  const [activeContracts, setActiveContracts] = useState<ActiveContractView[]>([]);
+  const [pendingProposalCount, setPendingProposalCount] = useState(0);
+  const [recentProposals, setRecentProposals] = useState<RecentProposalView[]>([]);
+  const [recommended, setRecommended] = useState<RecommendedProjectView[]>([]);
+
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const load = async () => {
+      try {
+        const [analyticsRes, contractsRes, proposalsRes, recommendationsRes, reputationRes] =
+          await Promise.allSettled([
+            analyticsApi.getFreelancer(),
+            contractsApi.list(),
+            proposalsApi.getMine(),
+            matchingApi.getProjectRecommendations(3),
+            reputationApi.getScore(currentUser.id),
+          ]);
+
+        if (analyticsRes.status === 'fulfilled') {
+          setTotalEarnings(analyticsRes.value.data.totalEarnings);
+          setProjectsCompleted(analyticsRes.value.data.projectsCompleted);
+        }
+
+        if (reputationRes.status === 'fulfilled') {
+          setAverageRating(reputationRes.value.data.averageRating);
+          setTotalRatings(reputationRes.value.data.totalRatings);
+        }
+
+        if (contractsRes.status === 'fulfilled') {
+          const active = contractsRes.value.data.items.filter((c) => c.status === 'active');
+          const projects = await Promise.all(
+            active.map((c) => projectsApi.get(c.projectId).then((r) => r.data).catch(() => null))
+          );
+          setActiveContracts(active.map((contract, i) => ({ contract, project: projects[i] })));
+        }
+
+        if (proposalsRes.status === 'fulfilled') {
+          const all = proposalsRes.value.data;
+          setPendingProposalCount(all.filter((p) => p.status === 'pending').length);
+
+          const recent = all
+            .slice()
+            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+            .slice(0, 3);
+          const projects = await Promise.all(
+            recent.map((p) => projectsApi.get(p.projectId).then((r) => r.data).catch(() => null))
+          );
+          setRecentProposals(recent.map((proposal, i) => ({ proposal, project: projects[i] })));
+        }
+
+        if (recommendationsRes.status === 'fulfilled') {
+          const recs = recommendationsRes.value.data;
+          const projects = await Promise.all(
+            recs.map((r) => projectsApi.get(r.projectId).then((res) => res.data).catch(() => null))
+          );
+          setRecommended(
+            recs
+              .map((r, i) => ({ project: projects[i], matchScore: r.matchScore, matchedSkills: r.matchedSkills }))
+              .filter((r): r is RecommendedProjectView => r.project !== null)
+          );
+        }
+      } catch {
+        toast.error('Failed to load dashboard data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+  }, [currentUser]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  const stats = [
+    {
+      title: 'Total Earned',
+      value: totalEarnings !== null ? `$${totalEarnings.toLocaleString()}` : '—',
+      change: projectsCompleted !== null ? `${projectsCompleted} completed contracts` : undefined,
+      icon: DollarSign,
+      color: 'text-green-500',
+      bg: 'bg-green-500/10',
+    },
+    {
+      title: 'Active Contracts',
+      value: String(activeContracts.length),
+      change: undefined,
+      icon: FolderOpen,
+      color: 'text-primary',
+      bg: 'bg-primary/10',
+    },
+    {
+      title: 'Pending Proposals',
+      value: String(pendingProposalCount),
+      change: undefined,
+      icon: FileText,
+      color: 'text-cyan',
+      bg: 'bg-cyan/10',
+    },
+    {
+      title: 'Reputation Score',
+      value: averageRating !== null && totalRatings > 0 ? averageRating.toFixed(1) : 'Not yet rated',
+      change: totalRatings > 0 ? `${totalRatings} ratings` : undefined,
+      icon: Star,
+      color: 'text-yellow-500',
+      bg: 'bg-yellow-500/10',
+    },
+  ];
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Welcome back, Alex!</h1>
+          <h1 className="text-2xl font-bold">Welcome back{currentUser?.name ? `, ${currentUser.name}` : ''}!</h1>
           <p className="text-muted-foreground">Here&apos;s what&apos;s happening with your work</p>
         </div>
         <Link href="/dashboard/freelancer/projects">
@@ -166,7 +211,7 @@ export default function FreelancerDashboard() {
                 <div>
                   <p className="text-sm text-muted-foreground">{stat.title}</p>
                   <p className="text-2xl font-bold mt-1">{stat.value}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{stat.change}</p>
+                  {stat.change && <p className="text-xs text-muted-foreground mt-1">{stat.change}</p>}
                 </div>
                 <div className={`w-10 h-10 rounded-lg ${stat.bg} flex items-center justify-center`}>
                   <stat.icon className={`w-5 h-5 ${stat.color}`} />
@@ -190,38 +235,48 @@ export default function FreelancerDashboard() {
               </Link>
             </CardHeader>
             <CardContent className="space-y-4">
-              {activeContracts.map((contract) => (
-                <div
-                  key={contract.id}
-                  className="p-4 rounded-xl bg-secondary/50 border border-border hover:border-primary/20 transition-all cursor-pointer"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <p className="font-medium">{contract.project}</p>
-                      <p className="text-sm text-muted-foreground">{contract.employer}</p>
-                    </div>
-                    <p className="font-semibold text-primary">{contract.amount}</p>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between text-xs mb-1">
-                        <span className="text-muted-foreground">{contract.milestone}</span>
-                        <span className="text-muted-foreground">{contract.progress}%</span>
+              {activeContracts.length === 0 && (
+                <p className="text-sm text-muted-foreground py-8 text-center">
+                  No active contracts yet — browse projects to get started
+                </p>
+              )}
+              {activeContracts.map(({ contract, project }) => {
+                const milestones = project?.milestones ?? [];
+                const completedCount = milestones.filter((m) => m.status === 'completed').length;
+                const progress = milestones.length > 0 ? Math.round((completedCount / milestones.length) * 100) : 0;
+                const currentMilestone = milestones.find((m) => m.status !== 'completed');
+                return (
+                  <div
+                    key={contract.id}
+                    className="p-4 rounded-xl bg-secondary/50 border border-border hover:border-primary/20 transition-all cursor-pointer"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <p className="font-medium">{project?.title ?? 'Untitled project'}</p>
+                        <p className="text-sm text-muted-foreground">{project?.employer?.name ?? project?.employer?.companyName ?? ''}</p>
                       </div>
-                      <div className="h-1.5 bg-background rounded-full overflow-hidden">
-                        <div
-                          className="h-full gradient-primary rounded-full transition-all"
-                          style={{ width: `${contract.progress}%` }}
-                        />
-                      </div>
+                      <p className="font-semibold text-primary">${contract.totalAmount.toLocaleString()}</p>
                     </div>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Clock className="w-3 h-3" />
-                      {contract.deadline}
+                    <div className="flex items-center gap-4">
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between text-xs mb-1">
+                          <span className="text-muted-foreground">{currentMilestone?.title ?? 'All milestones complete'}</span>
+                          <span className="text-muted-foreground">{progress}%</span>
+                        </div>
+                        <div className="h-1.5 bg-background rounded-full overflow-hidden">
+                          <div className="h-full gradient-primary rounded-full transition-all" style={{ width: `${progress}%` }} />
+                        </div>
+                      </div>
+                      {project?.deadline && (
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Clock className="w-3 h-3" />
+                          {new Date(project.deadline).toLocaleDateString()}
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </CardContent>
           </Card>
         </div>
@@ -237,20 +292,18 @@ export default function FreelancerDashboard() {
             </Link>
           </CardHeader>
           <CardContent className="space-y-3">
-            {recentProposals.map((proposal) => (
-              <div
-                key={proposal.id}
-                className="p-3 rounded-xl bg-secondary/50 border border-border"
-              >
+            {recentProposals.length === 0 && (
+              <p className="text-sm text-muted-foreground py-8 text-center">No proposals yet</p>
+            )}
+            {recentProposals.map(({ proposal, project }) => (
+              <div key={proposal.id} className="p-3 rounded-xl bg-secondary/50 border border-border">
                 <div className="flex items-start justify-between mb-2">
-                  <p className="font-medium text-sm">{proposal.project}</p>
-                  <Badge className={statusColors[proposal.status]}>
-                    {proposal.status}
-                  </Badge>
+                  <p className="font-medium text-sm">{project?.title ?? 'Untitled project'}</p>
+                  <Badge className={statusColors[proposal.status]}>{proposal.status}</Badge>
                 </div>
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{proposal.amount}</span>
-                  <span>{proposal.submitted}</span>
+                  <span>${proposal.proposedRate.toLocaleString()}</span>
+                  <span>{relativeTime(proposal.createdAt)}</span>
                 </div>
               </div>
             ))}
@@ -269,31 +322,37 @@ export default function FreelancerDashboard() {
           </Link>
         </CardHeader>
         <CardContent>
-          <div className="grid md:grid-cols-3 gap-4">
-            {recommendedProjects.map((project) => (
-              <div
-                key={project.id}
-                className="p-4 rounded-xl bg-secondary/50 border border-border hover:border-primary/20 transition-all cursor-pointer"
-              >
-                <div className="flex items-start justify-between mb-3">
-                  <h3 className="font-medium">{project.title}</h3>
-                  <Badge className="bg-green-500/10 text-green-500">{project.match} Match</Badge>
+          {recommended.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-8 text-center">
+              No recommendations yet — add skills to your profile to get matched with projects
+            </p>
+          ) : (
+            <div className="grid md:grid-cols-3 gap-4">
+              {recommended.map(({ project, matchScore, matchedSkills }) => (
+                <div
+                  key={project.id}
+                  className="p-4 rounded-xl bg-secondary/50 border border-border hover:border-primary/20 transition-all cursor-pointer"
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <h3 className="font-medium">{project.title}</h3>
+                    <Badge className="bg-green-500/10 text-green-500">{Math.round(matchScore)}% Match</Badge>
+                  </div>
+                  <p className="text-sm text-primary font-medium mb-2">${project.budget.toLocaleString()}</p>
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    {matchedSkills.map((skill) => (
+                      <Badge key={skill} variant="secondary" className="text-xs">
+                        {skill}
+                      </Badge>
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{relativeTime(project.createdAt)}</span>
+                    <span>{project.proposalCount ?? 0} proposals</span>
+                  </div>
                 </div>
-                <p className="text-sm text-primary font-medium mb-2">{project.budget}</p>
-                <div className="flex flex-wrap gap-1.5 mb-3">
-                  {project.skills.map((skill) => (
-                    <Badge key={skill} variant="secondary" className="text-xs">
-                      {skill}
-                    </Badge>
-                  ))}
-                </div>
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{project.posted}</span>
-                  <span>{project.proposals} proposals</span>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 

@@ -5,10 +5,19 @@ import { useRouter } from 'next/navigation';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { useAuthStore } from '@/stores/authStore';
+import type { UserRole } from '@/types';
 
-export function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading, loadUser, hasHydrated } = useAuthStore();
+interface DashboardLayoutProps {
+  children: React.ReactNode;
+  /** If provided, only these roles may view this section — everyone else is redirected to their own dashboard home. */
+  allowedRoles?: UserRole[];
+}
+
+export function DashboardLayout({ children, allowedRoles }: DashboardLayoutProps) {
+  const { user, isAuthenticated, isLoading, loadUser, hasHydrated } = useAuthStore();
   const router = useRouter();
+
+  const isWrongRole = !!(allowedRoles && user && !allowedRoles.includes(user.role));
 
   useEffect(() => {
     if (hasHydrated) {
@@ -22,6 +31,12 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     }
   }, [hasHydrated, isLoading, isAuthenticated, router]);
 
+  useEffect(() => {
+    if (hasHydrated && !isLoading && isAuthenticated && isWrongRole && user) {
+      router.push(`/dashboard/${user.role}`);
+    }
+  }, [hasHydrated, isLoading, isAuthenticated, isWrongRole, user, router]);
+
   if (!hasHydrated || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -33,7 +48,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || isWrongRole) {
     return null;
   }
 

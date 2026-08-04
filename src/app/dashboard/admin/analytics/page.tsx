@@ -1,96 +1,98 @@
 'use client';
 
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-  TrendingUp,
-  TrendingDown,
-  Users,
-  DollarSign,
-  FolderOpen,
-  Activity,
-  ArrowUpRight,
-} from 'lucide-react';
+import { adminApi, analyticsApi, reputationApi } from '@/lib/api';
+import type { AdminAnalytics, SkillTrend } from '@/types';
+import { toast } from 'sonner';
+import { TrendingUp, Users, DollarSign, FolderOpen, Loader2, Star } from 'lucide-react';
 
-const metrics = [
-  {
-    title: 'Monthly Revenue',
-    value: '$48,500',
-    change: '+12.5%',
-    trend: 'up',
-    icon: DollarSign,
-    color: 'text-green-500',
-    bg: 'bg-green-500/10',
-  },
-  {
-    title: 'New Users',
-    value: '2,450',
-    change: '+18.2%',
-    trend: 'up',
-    icon: Users,
-    color: 'text-primary',
-    bg: 'bg-primary/10',
-  },
-  {
-    title: 'Active Projects',
-    value: '1,280',
-    change: '+8.7%',
-    trend: 'up',
-    icon: FolderOpen,
-    color: 'text-cyan',
-    bg: 'bg-cyan/10',
-  },
-  {
-    title: 'Platform Activity',
-    value: '45,200',
-    change: '-2.1%',
-    trend: 'down',
-    icon: Activity,
-    color: 'text-yellow-500',
-    bg: 'bg-yellow-500/10',
-  },
-];
-
-const revenueData = [
-  { month: 'Jul', revenue: 32000 },
-  { month: 'Aug', revenue: 35000 },
-  { month: 'Sep', revenue: 38000 },
-  { month: 'Oct', revenue: 42000 },
-  { month: 'Nov', revenue: 45000 },
-  { month: 'Dec', revenue: 48500 },
-];
-
-const topFreelancers = [
-  { name: 'Sarah Chen', earnings: '$12,500', projects: 18, rating: 4.9 },
-  { name: 'Alex Thompson', earnings: '$10,200', projects: 12, rating: 4.8 },
-  { name: 'Elena Rodriguez', earnings: '$9,800', projects: 14, rating: 4.8 },
-  { name: 'Mike Johnson', earnings: '$8,500', projects: 8, rating: 4.7 },
-  { name: 'David Kim', earnings: '$7,200', projects: 16, rating: 4.6 },
-];
-
-const topCategories = [
-  { name: 'Web Development', projects: 450, percentage: 35 },
-  { name: 'Blockchain', projects: 320, percentage: 25 },
-  { name: 'Mobile Development', projects: 250, percentage: 20 },
-  { name: 'Design', projects: 180, percentage: 14 },
-  { name: 'Other', projects: 80, percentage: 6 },
-];
+interface LeaderboardEntry {
+  userId: string;
+  userName: string;
+  averageRating: number;
+  totalRatings: number;
+}
 
 export default function AnalyticsPage() {
+  const [loading, setLoading] = useState(true);
+  const [analytics, setAnalytics] = useState<AdminAnalytics | null>(null);
+  const [skillTrends, setSkillTrends] = useState<SkillTrend[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+
+  const load = useCallback(async () => {
+    try {
+      const [analyticsRes, skillsRes, leaderboardRes] = await Promise.allSettled([
+        adminApi.getAnalytics(),
+        analyticsApi.getSkillTrends(),
+        reputationApi.getLeaderboard({ limit: 5 }),
+      ]);
+      if (analyticsRes.status === 'fulfilled') setAnalytics(analyticsRes.value.data);
+      if (skillsRes.status === 'fulfilled') setSkillTrends(skillsRes.value.data.slice(0, 5));
+      if (leaderboardRes.status === 'fulfilled') setLeaderboard(leaderboardRes.value.data);
+    } catch {
+      toast.error('Failed to load analytics');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    load();
+  }, [load]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  const metrics = [
+    {
+      title: 'Total Revenue (platform fees)',
+      value: analytics ? `$${analytics.totalRevenue.toLocaleString()}` : '—',
+      icon: DollarSign,
+      color: 'text-green-500',
+      bg: 'bg-green-500/10',
+    },
+    {
+      title: 'Total Users',
+      value: analytics ? analytics.totalUsers.toLocaleString() : '—',
+      change: analytics ? `+${analytics.userGrowth} last 30 days` : undefined,
+      icon: Users,
+      color: 'text-primary',
+      bg: 'bg-primary/10',
+    },
+    {
+      title: 'Total Projects',
+      value: analytics ? analytics.totalProjects.toLocaleString() : '—',
+      change: analytics ? `+${analytics.projectGrowth} last 30 days` : undefined,
+      icon: FolderOpen,
+      color: 'text-cyan',
+      bg: 'bg-cyan/10',
+    },
+    {
+      title: 'Active Contracts',
+      value: analytics ? analytics.activeContracts.toLocaleString() : '—',
+      icon: TrendingUp,
+      color: 'text-yellow-500',
+      bg: 'bg-yellow-500/10',
+    },
+  ];
+
+  const growthData = analytics?.userGrowthData ?? [];
+  const maxGrowth = Math.max(1, ...growthData.map((d) => d.count));
+
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Analytics</h1>
-          <p className="text-muted-foreground">Platform performance and insights</p>
-        </div>
-        <div className="flex gap-3">
-          <Button variant="outline" size="sm">Last 7 days</Button>
-          <Button variant="gradient" size="sm">Last 30 days</Button>
-          <Button variant="outline" size="sm">Last 90 days</Button>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold">Analytics</h1>
+        <p className="text-muted-foreground">Platform performance and insights</p>
       </div>
 
       {/* Metrics */}
@@ -102,16 +104,7 @@ export default function AnalyticsPage() {
                 <div>
                   <p className="text-sm text-muted-foreground">{metric.title}</p>
                   <p className="text-2xl font-bold mt-1">{metric.value}</p>
-                  <div className="flex items-center gap-1 mt-1">
-                    {metric.trend === 'up' ? (
-                      <TrendingUp className="w-4 h-4 text-green-500" />
-                    ) : (
-                      <TrendingDown className="w-4 h-4 text-red-500" />
-                    )}
-                    <span className={`text-xs ${metric.trend === 'up' ? 'text-green-500' : 'text-red-500'}`}>
-                      {metric.change}
-                    </span>
-                  </div>
+                  {metric.change && <p className="text-xs text-green-500 mt-1">{metric.change}</p>}
                 </div>
                 <div className={`w-10 h-10 rounded-lg ${metric.bg} flex items-center justify-center`}>
                   <metric.icon className={`w-5 h-5 ${metric.color}`} />
@@ -123,96 +116,104 @@ export default function AnalyticsPage() {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* Revenue Chart Placeholder */}
+        {/* User Growth Chart */}
         <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>Revenue Trend</span>
-              <Badge className="bg-green-500/10 text-green-500">
-                <TrendingUp className="w-3 h-3 mr-1" /> +12.5%
-              </Badge>
-            </CardTitle>
+            <CardTitle>User Growth (last 12 months)</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-64 flex items-end gap-2">
-              {revenueData.map((data) => (
-                <div key={data.month} className="flex-1 flex flex-col items-center gap-2">
-                  <div
-                    className="w-full gradient-primary rounded-t-lg transition-all hover:opacity-80"
-                    style={{ height: `${(data.revenue / 50000) * 200}px` }}
-                  />
-                  <span className="text-xs text-muted-foreground">{data.month}</span>
-                </div>
-              ))}
-            </div>
+            {growthData.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-16 text-center">No growth data yet</p>
+            ) : (
+              <div className="h-64 flex items-end gap-2">
+                {growthData.map((data) => (
+                  <div key={data.month} className="flex-1 flex flex-col items-center gap-2">
+                    <div
+                      className="w-full gradient-primary rounded-t-lg transition-all hover:opacity-80"
+                      style={{ height: `${Math.max(4, (data.count / maxGrowth) * 200)}px` }}
+                      title={`${data.count} new users`}
+                    />
+                    <span className="text-xs text-muted-foreground">{data.month.slice(5)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Top Categories */}
+        {/* Top Skills in Demand */}
         <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle>Top Categories</CardTitle>
+            <CardTitle>Top Skills in Demand</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {topCategories.map((category) => (
-              <div key={category.name}>
-                <div className="flex items-center justify-between text-sm mb-1">
-                  <span>{category.name}</span>
-                  <span className="text-muted-foreground">{category.projects} projects</span>
+            {skillTrends.length === 0 && (
+              <p className="text-sm text-muted-foreground py-8 text-center">No skill data yet</p>
+            )}
+            {skillTrends.map((skill) => {
+              const maxProjects = Math.max(1, ...skillTrends.map((s) => s.projectCount));
+              return (
+                <div key={skill.skillId}>
+                  <div className="flex items-center justify-between text-sm mb-1">
+                    <span>{skill.skillName}</span>
+                    <span className="text-muted-foreground">{skill.projectCount} projects</span>
+                  </div>
+                  <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                    <div
+                      className="h-full gradient-primary rounded-full"
+                      style={{ width: `${(skill.projectCount / maxProjects) * 100}%` }}
+                    />
+                  </div>
                 </div>
-                <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                  <div
-                    className="h-full gradient-primary rounded-full"
-                    style={{ width: `${category.percentage}%` }}
-                  />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </CardContent>
         </Card>
       </div>
 
-      {/* Top Freelancers */}
+      {/* Top Rated Freelancers */}
       <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <span>Top Freelancers by Earnings</span>
-            <Button variant="ghost" size="sm">
-              View Leaderboard <ArrowUpRight className="w-4 h-4 ml-1" />
-            </Button>
+          <CardTitle>
+            <span>Top Rated Freelancers</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">#</th>
-                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">Freelancer</th>
-                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">Earnings</th>
-                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">Projects</th>
-                  <th className="text-left p-3 text-sm font-medium text-muted-foreground">Rating</th>
-                </tr>
-              </thead>
-              <tbody>
-                {topFreelancers.map((freelancer, i) => (
-                  <tr key={freelancer.name} className="border-b border-border">
-                    <td className="p-3">
-                      <span className="font-medium text-muted-foreground">#{i + 1}</span>
-                    </td>
-                    <td className="p-3 font-medium">{freelancer.name}</td>
-                    <td className="p-3 text-primary font-semibold">{freelancer.earnings}</td>
-                    <td className="p-3">{freelancer.projects}</td>
-                    <td className="p-3">
-                      <span className="flex items-center gap-1">
-                        <TrendingUp className="w-3 h-3 text-yellow-500" /> {freelancer.rating}
-                      </span>
-                    </td>
+          {leaderboard.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-8 text-center">No ratings yet</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">#</th>
+                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">Freelancer</th>
+                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">Rating</th>
+                    <th className="text-left p-3 text-sm font-medium text-muted-foreground">Total Ratings</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {leaderboard.map((freelancer, i) => (
+                    <tr key={freelancer.userId} className="border-b border-border">
+                      <td className="p-3">
+                        <span className="font-medium text-muted-foreground">#{i + 1}</span>
+                      </td>
+                      <td className="p-3 font-medium">{freelancer.userName}</td>
+                      <td className="p-3">
+                        <span className="flex items-center gap-1">
+                          <Star className="w-3 h-3 text-yellow-500" /> {freelancer.averageRating.toFixed(1)}
+                        </span>
+                      </td>
+                      <td className="p-3 text-muted-foreground">{freelancer.totalRatings}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <Badge className="mt-4 bg-muted text-muted-foreground text-xs">
+            Ranked by average rating, not revenue
+          </Badge>
         </CardContent>
       </Card>
     </div>

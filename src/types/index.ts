@@ -260,28 +260,55 @@ export interface Attachment {
   mimeType: string;
 }
 
-export interface Message {
+// Portfolio responses are camelCase (service layer maps snake_case entities before
+// returning), unlike Message/Conversation which are returned as raw snake_case entities.
+export interface PortfolioItem {
   id: string;
-  conversationId: string;
-  senderId: string;
-  receiverId: string;
-  content: string;
-  isRead: boolean;
-  attachments?: Attachment[];
+  freelancerId: string;
+  title: string;
+  description: string;
+  projectUrl?: string;
+  images: Attachment[];
+  skills: string[];
+  completedAt?: string;
   createdAt: string;
   updatedAt: string;
 }
 
+// Messaging types (backend returns these as-is, snake_case — not mapped to camelCase,
+// same precedent as KycVerification below)
+export interface Message {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  receiver_id: string;
+  content: string;
+  is_read: boolean;
+  attachments?: Attachment[];
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Conversation {
   id: string;
-  participant1Id: string;
-  participant2Id: string;
-  lastMessageAt: string;
-  lastMessagePreview?: string;
-  unreadCount1: number;
-  unreadCount2: number;
-  createdAt: string;
-  updatedAt: string;
+  participant1_id: string;
+  participant2_id: string;
+  last_message_at: string;
+  last_message_preview?: string;
+  unread_count_1: number;
+  unread_count_2: number;
+  created_at: string;
+  updated_at: string;
+}
+
+// getConversations() enriches each conversation with the other participant's basic
+// info server-side — this enrichment does not exist on any other endpoint's response.
+export interface ConversationWithDetails extends Conversation {
+  otherUser: {
+    id: string;
+    name: string;
+    email: string;
+  };
 }
 
 export interface Notification {
@@ -322,12 +349,88 @@ export interface ReputationScore {
 }
 
 export interface PlatformStats {
-  total_freelancers: number;
-  total_employers: number;
-  total_projects: number;
-  total_earned: number;
-  active_contracts: number;
-  countries: number;
+  totalUsers: number;
+  totalFreelancers: number;
+  totalEmployers: number;
+  totalProjects: number;
+  totalContracts: number;
+  totalDisputes: number;
+  totalTransactionVolume: number;
+  activeProjects: number;
+  completedProjects: number;
+  averageProjectBudget: number;
+}
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  role: UserRole;
+  walletAddress: string;
+  createdAt: string;
+  name: string;
+  kycVerified: boolean;
+  isActive: boolean;
+}
+
+export interface DisputeManagementData {
+  disputes: Dispute[];
+  total: number;
+  pendingCount: number;
+  resolvedCount: number;
+}
+
+export interface SystemHealth {
+  database: 'healthy' | 'unhealthy';
+  storage: 'healthy' | 'unhealthy';
+  uptime: number;
+  timestamp: string;
+}
+
+export interface AdminAnalytics {
+  totalUsers: number;
+  totalProjects: number;
+  totalRevenue: number;
+  activeContracts: number;
+  userGrowth: number;
+  projectGrowth: number;
+  userGrowthData: { month: string; count: number }[];
+  projectActivityData: { month: string; count: number }[];
+}
+
+export interface FreelancerAnalytics {
+  totalEarnings: number;
+  projectsCompleted: number;
+  averageRating: number;
+  earningsByMonth: { month: string; amount: number }[];
+  topSkills: { skill: string; projectCount: number }[];
+  proposalAcceptanceRate: number;
+}
+
+export interface EmployerAnalytics {
+  totalSpent: number;
+  projectsPosted: number;
+  projectsCompleted: number;
+  averageProjectBudget: number;
+  spendingByMonth: { month: string; amount: number }[];
+  topHiredSkills: { skill: string; projectCount: number }[];
+}
+
+export interface SkillTrend {
+  skillId: string;
+  skillName: string;
+  demandLevel: 'high' | 'medium' | 'low';
+  projectCount: number;
+  averageBudget: number;
+  growthRate: number;
+}
+
+export interface PlatformMetrics {
+  totalUsers: number;
+  totalProjects: number;
+  totalContracts: number;
+  totalTransactionVolume: number;
+  activeUsers: number;
+  completionRate: number;
 }
 
 export interface LoginRequest {
@@ -435,4 +538,20 @@ export interface KycVerification {
   updated_at: string;
   completed_at: string | null;
   expires_at: string | null;
+}
+
+// Audit log entry (backend returns these as-is, snake_case — not mapped to camelCase)
+export interface AuditLogEntry {
+  id: string;
+  user_id: string | null;
+  actor_id: string | null;
+  action: string;
+  resource_type: string;
+  resource_id: string | null;
+  payload: Record<string, unknown>;
+  ip_address: string | null;
+  user_agent: string | null;
+  status: 'success' | 'failure' | 'pending';
+  error_message: string | null;
+  created_at: string;
 }

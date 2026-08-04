@@ -1,91 +1,77 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Clock,
-  CheckCircle,
-  XCircle,
-  Eye,
-  FileText,
-} from 'lucide-react';
+import { proposalsApi, projectsApi } from '@/lib/api';
+import type { Proposal, Project, ProposalStatus } from '@/types';
+import { toast } from 'sonner';
+import { Clock, CheckCircle, XCircle, FileText, Loader2 } from 'lucide-react';
 
-const proposals = {
-  pending: [
-    {
-      id: '1',
-      project: 'Blockchain Wallet Integration',
-      employer: 'CryptoWallet Corp',
-      amount: '$4,000',
-      duration: '30 days',
-      submitted: '2 hours ago',
-      viewed: false,
-    },
-    {
-      id: '2',
-      project: 'DeFi Yield Optimizer',
-      employer: 'YieldMax Protocol',
-      amount: '$6,500',
-      duration: '45 days',
-      submitted: '1 day ago',
-      viewed: true,
-    },
-  ],
-  accepted: [
-    {
-      id: '3',
-      project: 'E-commerce Platform Redesign',
-      employer: 'TechCorp Inc.',
-      amount: '$3,200',
-      duration: '25 days',
-      acceptedAt: 'Dec 1, 2024',
-      contractId: 'c1',
-    },
-    {
-      id: '4',
-      project: 'Mobile App Development',
-      employer: 'StartupXYZ',
-      amount: '$5,500',
-      duration: '60 days',
-      acceptedAt: 'Nov 28, 2024',
-      contractId: 'c2',
-    },
-  ],
-  rejected: [
-    {
-      id: '5',
-      project: 'NFT Game Development',
-      employer: 'GameStudio',
-      amount: '$12,000',
-      duration: '90 days',
-      rejectedAt: 'Nov 25, 2024',
-      reason: 'Budget constraints',
-    },
-  ],
-  withdrawn: [
-    {
-      id: '6',
-      project: 'Token Launch Platform',
-      employer: 'LaunchPad Inc.',
-      amount: '$7,000',
-      duration: '50 days',
-      withdrawnAt: 'Nov 20, 2024',
-    },
-  ],
+const statusConfig: Record<ProposalStatus, { icon: typeof Clock; color: string; bg: string; label: string }> = {
+  pending: { icon: Clock, color: 'text-yellow-500', bg: 'bg-yellow-500/10', label: 'Pending' },
+  accepted: { icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-500/10', label: 'Accepted' },
+  rejected: { icon: XCircle, color: 'text-red-500', bg: 'bg-red-500/10', label: 'Rejected' },
+  withdrawn: { icon: XCircle, color: 'text-gray-500', bg: 'bg-gray-500/10', label: 'Withdrawn' },
 };
 
-const statusConfig = {
-  pending: { icon: Clock, color: 'text-yellow-500', bg: 'bg-yellow-500/10' },
-  accepted: { icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-500/10' },
-  rejected: { icon: XCircle, color: 'text-red-500', bg: 'bg-red-500/10' },
-  withdrawn: { icon: XCircle, color: 'text-gray-500', bg: 'bg-gray-500/10' },
-};
+interface ProposalView {
+  proposal: Proposal;
+  project: Project | null;
+}
 
 export default function ProposalsPage() {
-  const [activeTab, setActiveTab] = useState('pending');
+  const [proposals, setProposals] = useState<ProposalView[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<ProposalStatus>('pending');
+  const [withdrawingId, setWithdrawingId] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    try {
+      const { data: all } = await proposalsApi.getMine();
+      const projects = await Promise.all(
+        all.map((p) => projectsApi.get(p.projectId).then((r) => r.data).catch(() => null))
+      );
+      setProposals(all.map((proposal, i) => ({ proposal, project: projects[i] })));
+    } catch {
+      toast.error('Failed to load proposals');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    load();
+  }, [load]);
+
+  const handleWithdraw = async (id: string) => {
+    setWithdrawingId(id);
+    try {
+      const { data: updated } = await proposalsApi.withdraw(id);
+      setProposals((prev) => prev.map((p) => (p.proposal.id === id ? { ...p, proposal: updated } : p)));
+      toast.success('Proposal withdrawn');
+    } catch {
+      toast.error('Failed to withdraw proposal');
+    } finally {
+      setWithdrawingId(null);
+    }
+  };
+
+  const byStatus = (status: ProposalStatus) => proposals.filter((p) => p.proposal.status === status);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  const statuses: ProposalStatus[] = ['pending', 'accepted', 'rejected', 'withdrawn'];
 
   return (
     <div className="space-y-6">
@@ -99,8 +85,9 @@ export default function ProposalsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {Object.entries(proposals).map(([status, items]) => {
-          const config = statusConfig[status as keyof typeof statusConfig];
+        {statuses.map((status) => {
+          const config = statusConfig[status];
+          const count = byStatus(status).length;
           return (
             <Card key={status} className="bg-card border-border">
               <CardContent className="p-4">
@@ -109,7 +96,7 @@ export default function ProposalsPage() {
                     <config.icon className={`w-5 h-5 ${config.color}`} />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{items.length}</p>
+                    <p className="text-2xl font-bold">{count}</p>
                     <p className="text-xs text-muted-foreground capitalize">{status}</p>
                   </div>
                 </div>
@@ -120,116 +107,75 @@ export default function ProposalsPage() {
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ProposalStatus)}>
         <TabsList>
-          <TabsTrigger value="pending">Pending ({proposals.pending.length})</TabsTrigger>
-          <TabsTrigger value="accepted">Accepted ({proposals.accepted.length})</TabsTrigger>
-          <TabsTrigger value="rejected">Rejected ({proposals.rejected.length})</TabsTrigger>
-          <TabsTrigger value="withdrawn">Withdrawn ({proposals.withdrawn.length})</TabsTrigger>
+          {statuses.map((status) => (
+            <TabsTrigger key={status} value={status}>
+              {statusConfig[status].label} ({byStatus(status).length})
+            </TabsTrigger>
+          ))}
         </TabsList>
 
-        <TabsContent value="pending" className="space-y-4">
-          {proposals.pending.map((proposal) => (
-            <Card key={proposal.id} className="bg-card border-border">
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h3 className="font-semibold text-lg">{proposal.project}</h3>
-                    <p className="text-sm text-muted-foreground">{proposal.employer}</p>
+        {statuses.map((status) => (
+          <TabsContent key={status} value={status} className="space-y-4">
+            {byStatus(status).length === 0 && (
+              <p className="text-sm text-muted-foreground py-12 text-center">
+                No {statusConfig[status].label.toLowerCase()} proposals
+              </p>
+            )}
+            {byStatus(status).map(({ proposal, project }) => (
+              <Card key={proposal.id} className="bg-card border-border">
+                <CardContent className="p-5">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h3 className="font-semibold text-lg">{project?.title ?? 'Untitled project'}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {project?.employer?.companyName ?? project?.employer?.name ?? ''}
+                      </p>
+                    </div>
+                    <Badge className={`${statusConfig[status].bg} ${statusConfig[status].color}`}>
+                      {statusConfig[status].label}
+                    </Badge>
                   </div>
-                  <Badge className={statusConfig.pending.bg + ' ' + statusConfig.pending.color}>
-                    {proposal.viewed ? 'Viewed' : 'Pending'}
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                  <span className="font-medium text-primary">{proposal.amount}</span>
-                  <span>{proposal.duration}</span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3 h-3" /> {proposal.submitted}
-                  </span>
-                  {proposal.viewed && (
-                    <span className="flex items-center gap-1 text-green-500">
-                      <Eye className="w-3 h-3" /> Employer viewed
+                  <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                    <span className="font-medium text-primary">${proposal.proposedRate.toLocaleString()}</span>
+                    <span>{proposal.estimatedDuration} days</span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {status === 'pending' ? 'Submitted' : statusConfig[status].label}{' '}
+                      {new Date(status === 'pending' ? proposal.createdAt : proposal.updatedAt).toLocaleDateString()}
                     </span>
-                  )}
-                </div>
-                <div className="mt-4 flex gap-3">
-                  <Button variant="outline" size="sm">View Proposal</Button>
-                  <Button variant="ghost" size="sm" className="text-destructive">Withdraw</Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </TabsContent>
-
-        <TabsContent value="accepted" className="space-y-4">
-          {proposals.accepted.map((proposal) => (
-            <Card key={proposal.id} className="bg-card border-border">
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h3 className="font-semibold text-lg">{proposal.project}</h3>
-                    <p className="text-sm text-muted-foreground">{proposal.employer}</p>
                   </div>
-                  <Badge className="bg-green-500/10 text-green-500">Accepted</Badge>
-                </div>
-                <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                  <span className="font-medium text-primary">{proposal.amount}</span>
-                  <span>{proposal.duration}</span>
-                  <span>Accepted {proposal.acceptedAt}</span>
-                </div>
-                <div className="mt-4 flex gap-3">
-                  <Button variant="gradient" size="sm">
-                    <FileText className="w-4 h-4 mr-2" /> View Contract
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </TabsContent>
-
-        <TabsContent value="rejected" className="space-y-4">
-          {proposals.rejected.map((proposal) => (
-            <Card key={proposal.id} className="bg-card border-border">
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h3 className="font-semibold text-lg">{proposal.project}</h3>
-                    <p className="text-sm text-muted-foreground">{proposal.employer}</p>
+                  <div className="mt-4 flex gap-3">
+                    {project && (
+                      <Link href={`/projects/${project.id}`}>
+                        <Button variant="outline" size="sm">View Project</Button>
+                      </Link>
+                    )}
+                    {status === 'pending' && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive"
+                        disabled={withdrawingId === proposal.id}
+                        onClick={() => handleWithdraw(proposal.id)}
+                      >
+                        {withdrawingId === proposal.id ? 'Withdrawing…' : 'Withdraw'}
+                      </Button>
+                    )}
+                    {status === 'accepted' && (
+                      <Link href="/dashboard/freelancer/contracts">
+                        <Button variant="gradient" size="sm">
+                          <FileText className="w-4 h-4 mr-2" /> View Contract
+                        </Button>
+                      </Link>
+                    )}
                   </div>
-                  <Badge className="bg-red-500/10 text-red-500">Rejected</Badge>
-                </div>
-                <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                  <span>{proposal.amount}</span>
-                  <span>{proposal.duration}</span>
-                  <span>Rejected {proposal.rejectedAt}</span>
-                  <span className="text-red-500">Reason: {proposal.reason}</span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </TabsContent>
-
-        <TabsContent value="withdrawn" className="space-y-4">
-          {proposals.withdrawn.map((proposal) => (
-            <Card key={proposal.id} className="bg-card border-border">
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h3 className="font-semibold text-lg">{proposal.project}</h3>
-                    <p className="text-sm text-muted-foreground">{proposal.employer}</p>
-                  </div>
-                  <Badge className="bg-gray-500/10 text-gray-500">Withdrawn</Badge>
-                </div>
-                <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                  <span>{proposal.amount}</span>
-                  <span>{proposal.duration}</span>
-                  <span>Withdrawn {proposal.withdrawnAt}</span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </TabsContent>
+                </CardContent>
+              </Card>
+            ))}
+          </TabsContent>
+        ))}
       </Tabs>
     </div>
   );

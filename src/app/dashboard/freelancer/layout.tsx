@@ -7,5 +7,5 @@ export default function FreelancerDashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <DashboardLayout>{children}</DashboardLayout>;
+  return <DashboardLayout allowedRoles={['freelancer']}>{children}</DashboardLayout>;
 }

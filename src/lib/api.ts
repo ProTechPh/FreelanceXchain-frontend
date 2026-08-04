@@ -5,20 +5,21 @@ import type {
   AuthApiUser,
   LoginRequest,
   RegisterRequest,
-  User,
   FreelancerProfile,
   EmployerProfile,
   Project,
   Proposal,
   Contract,
   Message,
-  Conversation,
+  ConversationWithDetails,
   Notification,
+  AuditLogEntry,
   Transaction,
   ReputationScore,
   PlatformStats,
   Review,
   Dispute,
+  Attachment,
   ApiResponse,
   PaginatedResponse,
   MfaVerifyRequest,
@@ -26,9 +27,18 @@ import type {
   MfaEnrollResponse,
   MfaFactorsResponse,
   KycVerification,
+  PortfolioItem,
+  AdminUser,
+  DisputeManagementData,
+  SystemHealth,
+  AdminAnalytics,
+  FreelancerAnalytics,
+  EmployerAnalytics,
+  SkillTrend,
+  PlatformMetrics,
 } from '@/types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -155,22 +165,22 @@ export const projectsApi = {
 
 export const proposalsApi = {
   submit: (data: Partial<Proposal>) =>
-    api.post<ApiResponse<Proposal>>('/proposals', data),
-  
-  getMine: (params?: Record<string, string | number>) =>
-    api.get<PaginatedResponse<Proposal>>('/proposals/freelancer/me', { params }),
-  
+    api.post<Proposal>('/proposals', data),
+
+  getMine: () =>
+    api.get<Proposal[]>('/proposals/freelancer/me'),
+
   get: (id: string) =>
-    api.get<ApiResponse<Proposal>>(`/proposals/${id}`),
-  
+    api.get<Proposal>(`/proposals/${id}`),
+
   accept: (id: string) =>
-    api.post<ApiResponse<Contract>>(`/proposals/${id}/accept`),
-  
+    api.post<{ proposal: Proposal; contract: Contract }>(`/proposals/${id}/accept`),
+
   reject: (id: string) =>
-    api.post(`/proposals/${id}/reject`),
-  
+    api.post<Proposal>(`/proposals/${id}/reject`),
+
   withdraw: (id: string) =>
-    api.post(`/proposals/${id}/withdraw`),
+    api.post<Proposal>(`/proposals/${id}/withdraw`),
 };
 
 export const contractsApi = {
@@ -178,8 +188,8 @@ export const contractsApi = {
     api.get<PaginatedResponse<Contract>>('/contracts', { params }),
   
   get: (id: string) =>
-    api.get<ApiResponse<Contract>>(`/contracts/${id}`),
-  
+    api.get<Contract>(`/contracts/${id}`),
+
   fund: (id: string) =>
     api.post<ApiResponse<Contract>>(`/contracts/${id}/fund`),
   
@@ -203,24 +213,41 @@ export const paymentsApi = {
 
 export const messagesApi = {
   getConversations: () =>
-    api.get<PaginatedResponse<Conversation>>('/messages/conversations'),
-  
-  getMessages: (conversationId: string, params?: Record<string, string | number>) =>
-    api.get<PaginatedResponse<Message>>(`/messages/${conversationId}`, { params }),
-  
-  send: (conversationId: string, content: string) =>
-    api.post<ApiResponse<Message>>(`/messages/${conversationId}`, { content }),
+    api.get<{ items: ConversationWithDetails[]; total: number; hasMore: boolean }>(
+      '/messages/conversations'
+    ),
+
+  getConversationMessages: (conversationId: string, params?: { page?: number; limit?: number }) =>
+    api.get<{ items: Message[]; total: number; hasMore: boolean }>(
+      `/messages/conversations/${conversationId}`,
+      { params }
+    ),
+
+  send: (receiverId: string, content: string, attachments?: Attachment[]) =>
+    api.post<Message>('/messages/send', { receiverId, content, attachments }),
+
+  markConversationRead: (conversationId: string) =>
+    api.patch<{ message: string }>(`/messages/conversations/${conversationId}/read`),
+
+  getUnreadCount: () =>
+    api.get<{ count: number }>('/messages/unread-count'),
 };
 
 export const notificationsApi = {
-  list: (params?: Record<string, string | number>) =>
-    api.get<PaginatedResponse<Notification>>('/notifications', { params }),
-  
+  list: (params?: { maxItemCount?: number; continuationToken?: string }) =>
+    api.get<{ items: Notification[]; continuationToken?: string; hasMore: boolean }>(
+      '/notifications',
+      { params }
+    ),
+
   markRead: (id: string) =>
-    api.patch(`/notifications/${id}/read`),
-  
+    api.patch<Notification>(`/notifications/${id}/read`),
+
   markAllRead: () =>
-    api.patch('/notifications/read-all'),
+    api.patch<{ count: number }>('/notifications/read-all'),
+
+  getUnreadCount: () =>
+    api.get<{ count: number }>('/notifications/unread-count'),
 };
 
 export const transactionsApi = {
@@ -259,26 +286,48 @@ export const reviewsApi = {
 
 export const disputesApi = {
   list: (params?: Record<string, string | number>) =>
-    api.get<PaginatedResponse<Dispute>>('/disputes', { params }),
-  
+    api.get<{ items: Dispute[]; continuationToken?: string | null }>('/disputes', { params }),
+
   create: (data: Partial<Dispute>) =>
     api.post<ApiResponse<Dispute>>('/disputes', data),
-  
+
   get: (id: string) =>
     api.get<ApiResponse<Dispute>>(`/disputes/${id}`),
-  
+
   submitEvidence: (id: string, data: FormData) =>
     api.post(`/disputes/${id}/evidence`, data, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
+
+  resolve: (disputeId: string, decision: 'freelancer_favor' | 'employer_favor', reasoning: string) =>
+    api.post<Dispute>(`/disputes/${disputeId}/resolve`, { decision, reasoning }),
 };
 
+export interface ProjectRecommendation {
+  projectId: string;
+  matchScore: number;
+  matchedSkills: string[];
+  missingSkills: string[];
+  reasoning: string;
+}
+
+export interface FreelancerRecommendation {
+  freelancerId: string;
+  matchScore: number;
+  reputationScore: number;
+  combinedScore: number;
+  matchedSkills: string[];
+  reasoning: string;
+}
+
 export const matchingApi = {
-  getProjectRecommendations: () =>
-    api.get<PaginatedResponse<Project>>('/matching/projects'),
-  
-  getFreelancerRecommendations: (projectId: string) =>
-    api.get<PaginatedResponse<FreelancerProfile>>(`/matching/freelancers/${projectId}`),
+  getProjectRecommendations: (limit?: number) =>
+    api.get<ProjectRecommendation[]>('/matching/projects', { params: limit ? { limit } : undefined }),
+
+  getFreelancerRecommendations: (projectId: string, limit?: number) =>
+    api.get<FreelancerRecommendation[]>(`/matching/freelancers/${projectId}`, {
+      params: limit ? { limit } : undefined,
+    }),
 };
 
 export const emailApi = {
@@ -306,16 +355,93 @@ export const emailApi = {
 
 export const adminApi = {
   getStats: () =>
-    api.get<ApiResponse<PlatformStats>>('/admin/stats'),
-  
-  getUsers: (params?: Record<string, string | number>) =>
-    api.get<PaginatedResponse<User>>('/admin/users', { params }),
-  
+    api.get<PlatformStats>('/admin/stats'),
+
+  getUsers: (params?: { status?: string; role?: string }) =>
+    api.get<{ users: AdminUser[]; total: number }>('/admin/users', { params }),
+
+  updateUser: (userId: string, data: { name?: string; role?: string; isActive?: boolean }) =>
+    api.patch<AdminUser>(`/admin/users/${userId}`, data),
+
   suspendUser: (id: string, reason: string) =>
     api.post(`/admin/users/${id}/suspend`, { reason }),
-  
+
   unsuspendUser: (id: string) =>
     api.post(`/admin/users/${id}/unsuspend`),
+
+  verifyUser: (id: string) =>
+    api.post(`/admin/users/${id}/verify`),
+
+  getAnalytics: () =>
+    api.get<AdminAnalytics>('/admin/analytics'),
+
+  getDisputeManagement: (status?: string) =>
+    api.get<DisputeManagementData>('/admin/disputes', { params: status ? { status } : undefined }),
+
+  getSystemHealth: () =>
+    api.get<SystemHealth>('/admin/system/health'),
+};
+
+export const portfolioApi = {
+  create: (data: FormData) =>
+    api.post<PortfolioItem>('/portfolio', data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+
+  getByFreelancer: (freelancerId: string) =>
+    api.get<PortfolioItem[]>(`/portfolio/freelancer/${freelancerId}`),
+
+  get: (id: string) =>
+    api.get<PortfolioItem>(`/portfolio/${id}`),
+
+  update: (id: string, data: Partial<{ title: string; description: string; projectUrl: string; images: Attachment[]; skills: string[]; completedAt: string }>) =>
+    api.patch<PortfolioItem>(`/portfolio/${id}`, data),
+
+  delete: (id: string) =>
+    api.delete(`/portfolio/${id}`),
+};
+
+export const auditLogsApi = {
+  getMine: (limit?: number) =>
+    api.get<{ logs: AuditLogEntry[] }>('/audit-logs/me', { params: limit ? { limit } : undefined }),
+
+  getByUser: (userId: string, limit?: number) =>
+    api.get<{ logs: AuditLogEntry[] }>(`/audit-logs/user/${userId}`, { params: limit ? { limit } : undefined }),
+
+  getByResource: (resourceType: string, resourceId: string) =>
+    api.get<{ logs: AuditLogEntry[] }>(`/audit-logs/resource/${resourceType}/${resourceId}`),
+
+  getByAction: (action: string, limit?: number) =>
+    api.get<{ logs: AuditLogEntry[] }>(`/audit-logs/action/${action}`, { params: limit ? { limit } : undefined }),
+
+  getFailed: (limit?: number) =>
+    api.get<{ logs: AuditLogEntry[] }>('/audit-logs/failed', { params: limit ? { limit } : undefined }),
+
+  getByDateRange: (startDate: string, endDate: string) =>
+    api.get<{ logs: AuditLogEntry[] }>('/audit-logs/range', { params: { startDate, endDate } }),
+
+  getSystemReport: (startDate: string, endDate: string) =>
+    api.get('/audit-logs/report/system', { params: { startDate, endDate } }),
+
+  getUserReport: (userId: string, startDate: string, endDate: string) =>
+    api.get(`/audit-logs/report/user/${userId}`, { params: { startDate, endDate } }),
+
+  getById: (id: string) =>
+    api.get<AuditLogEntry>(`/audit-logs/${id}`),
+};
+
+export const analyticsApi = {
+  getFreelancer: (params?: { startDate?: string; endDate?: string }) =>
+    api.get<FreelancerAnalytics>('/analytics/freelancer', { params }),
+
+  getEmployer: (params?: { startDate?: string; endDate?: string }) =>
+    api.get<EmployerAnalytics>('/analytics/employer', { params }),
+
+  getSkillTrends: () =>
+    api.get<SkillTrend[]>('/analytics/skill-trends'),
+
+  getPlatform: () =>
+    api.get<PlatformMetrics>('/analytics/platform'),
 };
 
 export const kycApi = {
