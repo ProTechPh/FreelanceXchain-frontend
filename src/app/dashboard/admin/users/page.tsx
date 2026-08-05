@@ -73,9 +73,19 @@ export default function UsersPage() {
   };
 
   const handleVerify = async (user: AdminUser) => {
+    const reason = window.prompt(`Reason for manually verifying ${user.name || user.email}:`);
+    const trimmedReason = reason?.trim();
+
+    if (!trimmedReason) return;
+    if (trimmedReason.length < 10) {
+      toast.error('Verification reason must be at least 10 characters');
+      return;
+    }
+
     setPendingActionId(user.id);
     try {
-      await adminApi.verifyUser(user.id);
+      await adminApi.verifyUser(user.id, trimmedReason);
+      setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, kycVerified: true } : u)));
       toast.success(`${user.name || user.email} manually verified`);
     } catch {
       toast.error('Failed to verify user');
@@ -202,8 +212,9 @@ export default function UsersPage() {
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 text-primary"
-                          title="Manually verify"
-                          disabled={pendingActionId === user.id}
+                          title={user.kycVerified ? 'KYC verified' : 'Manually verify KYC'}
+                          aria-label={user.kycVerified ? 'KYC verified' : `Manually verify KYC for ${user.name || user.email}`}
+                          disabled={pendingActionId === user.id || user.kycVerified}
                           onClick={() => handleVerify(user)}
                         >
                           <ShieldCheck className="w-4 h-4" />

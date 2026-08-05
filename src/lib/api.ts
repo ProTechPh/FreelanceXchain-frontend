@@ -42,19 +42,59 @@ export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000
 
 const api = axios.create({
   baseURL: API_URL,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
+// The backend requires a double-submit CSRF token on every non-GET request except a
+// short exempt list (login/register/refresh/etc). The token is delivered as a
+// non-httpOnly cookie by POST /auth/csrf-token and must be echoed back on mutating
+// requests as the `x-csrf-token` header. Read the cookie name is either
+// `psifi.x-csrf-token` (dev) or `__Host-psifi.x-csrf-token` (prod) — match either.
+function getCsrfTokenFromCookie(): string | null {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(/(?:^|;\s*)(?:__Host-)?psifi\.x-csrf-token=([^;]+)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+let csrfTokenPromise: Promise<void> | null = null;
+
+async function ensureCsrfToken(): Promise<void> {
+  if (getCsrfTokenFromCookie()) return;
+  if (!csrfTokenPromise) {
+    // Use a plain axios call (not the `api` instance) so this request doesn't
+    // recurse back through the interceptor that calls ensureCsrfToken().
+    csrfTokenPromise = axios
+      .post(`${API_URL}/auth/csrf-token`, undefined, { withCredentials: true })
+      .then(() => undefined)
+      .catch(() => undefined)
+      .finally(() => {
+        csrfTokenPromise = null;
+      });
+  }
+  await csrfTokenPromise;
+}
+
 api.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
+  async (config: InternalAxiosRequestConfig) => {
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('access_token');
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
       }
     }
+
+    const method = (config.method ?? 'get').toUpperCase();
+    if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
+      await ensureCsrfToken();
+      const csrfToken = getCsrfTokenFromCookie();
+      if (csrfToken && config.headers) {
+        config.headers['x-csrf-token'] = csrfToken;
+      }
+    }
+
     return config;
   },
   (error) => Promise.reject(error)
@@ -369,8 +409,8 @@ export const adminApi = {
   unsuspendUser: (id: string) =>
     api.post(`/admin/users/${id}/unsuspend`),
 
-  verifyUser: (id: string) =>
-    api.post(`/admin/users/${id}/verify`),
+  verifyUser: (id: string, reason: string) =>
+    api.post(`/admin/users/${id}/verify`, { reason }),
 
   getAnalytics: () =>
     api.get<AdminAnalytics>('/admin/analytics'),

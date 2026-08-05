@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { kycApi } from '@/lib/api';
+import { classifyKycStatusError } from '@/lib/kyc-status-error';
 import type { KycVerification } from '@/types';
 import {
   Shield,
@@ -36,14 +37,22 @@ export default function VerificationPage() {
   const [initiating, setInitiating] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [statusError, setStatusError] = useState<string | null>(null);
 
   const fetchStatus = useCallback(async () => {
+    setLoading(true);
     try {
       const res = await kycApi.getStatus();
       setVerification(res.data);
+      setStatusError(null);
       setError(null);
-    } catch {
+    } catch (statusRequestError: unknown) {
       setVerification(null);
+      setStatusError(
+        classifyKycStatusError(statusRequestError) === 'not-found'
+          ? null
+          : 'We could not load your verification status. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
@@ -124,7 +133,20 @@ export default function VerificationPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {!verification ? (
+          {statusError ? (
+            <div role="alert" className="text-center py-8 space-y-4">
+              <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto">
+                <AlertTriangle className="w-8 h-8 text-red-500" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold">Unable to Load Verification Status</h3>
+                <p className="text-sm text-muted-foreground max-w-md mx-auto">{statusError}</p>
+              </div>
+              <Button onClick={fetchStatus} variant="outline">
+                <RefreshCw className="w-4 h-4 mr-2" /> Try Again
+              </Button>
+            </div>
+          ) : !verification ? (
             <div className="text-center py-8 space-y-4">
               <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mx-auto">
                 <Shield className="w-8 h-8 text-muted-foreground" />
