@@ -36,7 +36,16 @@ import type {
   EmployerAnalytics,
   SkillTrend,
   PlatformMetrics,
+  SkillTaxonomy,
 } from '@/types';
+import type {
+  CreateProjectPayload,
+  SetProjectMilestonesPayload,
+} from '@/lib/project-submission';
+import {
+  createCsrfTokenManager,
+  isCsrfValidationFailure,
+} from '@/lib/csrf-token';
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 
@@ -48,34 +57,25 @@ const api = axios.create({
   },
 });
 
-// The backend requires a double-submit CSRF token on every non-GET request except a
-// short exempt list (login/register/refresh/etc). The token is delivered as a
-// non-httpOnly cookie by POST /auth/csrf-token and must be echoed back on mutating
-// requests as the `x-csrf-token` header. Read the cookie name is either
-// `psifi.x-csrf-token` (dev) or `__Host-psifi.x-csrf-token` (prod) — match either.
-function getCsrfTokenFromCookie(): string | null {
-  if (typeof document === 'undefined') return null;
-  const match = document.cookie.match(/(?:^|;\s*)(?:__Host-)?psifi\.x-csrf-token=([^;]+)/);
-  return match ? decodeURIComponent(match[1]) : null;
-}
+// Generate once before the first mutation instead of trusting a cookie left by an
+// older API process. The response tells us which environment-specific cookie to
+// echo, and a CSRF rejection triggers one forced refresh below.
+const csrfTokenManager = createCsrfTokenManager({
+  readCookies: () => (typeof document === 'undefined' ? '' : document.cookie),
+  requestToken: async () => {
+    // Use plain axios so the token request cannot recurse through this interceptor.
+    const response = await axios.post<{ cookieName: string }>(
+      `${API_URL}/auth/csrf-token`,
+      undefined,
+      { withCredentials: true },
+    );
+    return response.data;
+  },
+});
 
-let csrfTokenPromise: Promise<void> | null = null;
-
-async function ensureCsrfToken(): Promise<void> {
-  if (getCsrfTokenFromCookie()) return;
-  if (!csrfTokenPromise) {
-    // Use a plain axios call (not the `api` instance) so this request doesn't
-    // recurse back through the interceptor that calls ensureCsrfToken().
-    csrfTokenPromise = axios
-      .post(`${API_URL}/auth/csrf-token`, undefined, { withCredentials: true })
-      .then(() => undefined)
-      .catch(() => undefined)
-      .finally(() => {
-        csrfTokenPromise = null;
-      });
-  }
-  await csrfTokenPromise;
-}
+type CsrfRetryConfig = InternalAxiosRequestConfig & {
+  csrfRetryAttempted?: boolean;
+};
 
 api.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
@@ -88,11 +88,8 @@ api.interceptors.request.use(
 
     const method = (config.method ?? 'get').toUpperCase();
     if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
-      await ensureCsrfToken();
-      const csrfToken = getCsrfTokenFromCookie();
-      if (csrfToken && config.headers) {
-        config.headers['x-csrf-token'] = csrfToken;
-      }
+      const csrfToken = await csrfTokenManager.ensureToken();
+      config.headers['x-csrf-token'] = csrfToken;
     }
 
     return config;
@@ -103,6 +100,18 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
+    const requestConfig = error.config as CsrfRetryConfig | undefined;
+    if (
+      isCsrfValidationFailure(error)
+      && requestConfig
+      && !requestConfig.csrfRetryAttempted
+    ) {
+      requestConfig.csrfRetryAttempted = true;
+      const csrfToken = await csrfTokenManager.ensureToken({ forceRefresh: true });
+      requestConfig.headers['x-csrf-token'] = csrfToken;
+      return api.request(requestConfig);
+    }
+
     if (error.response?.status === 401) {
       if (typeof window !== 'undefined') {
         const currentPath = window.location.pathname;
@@ -190,8 +199,11 @@ export const projectsApi = {
   get: (id: string) =>
     api.get<Project>(`/projects/${id}`),
   
-  create: (data: Partial<Project>) =>
-    api.post<ApiResponse<Project>>('/projects', data),
+  create: (data: CreateProjectPayload) =>
+    api.post<Project>('/projects', data),
+
+  setMilestones: (id: string, data: SetProjectMilestonesPayload) =>
+    api.post<Project>(`/projects/${id}/milestones`, data),
   
   update: (id: string, data: Partial<Project>) =>
     api.patch<ApiResponse<Project>>(`/projects/${id}`, data),
@@ -201,6 +213,10 @@ export const projectsApi = {
   
   getProposals: (id: string) =>
     api.get<PaginatedResponse<Proposal>>(`/projects/${id}/proposals`),
+};
+
+export const skillsApi = {
+  getTaxonomy: () => api.get<SkillTaxonomy>('/skills'),
 };
 
 export const proposalsApi = {

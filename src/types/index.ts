@@ -101,6 +101,20 @@ export interface Skill {
   updatedAt: string;
 }
 
+export interface SkillCategory {
+  id: string;
+  name: string;
+  description: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  skills: Skill[];
+}
+
+export interface SkillTaxonomy {
+  categories: SkillCategory[];
+}
+
 // A freelancer's claimed skill (FreelancerProfile.skills)
 export interface SkillReference {
   name: string;

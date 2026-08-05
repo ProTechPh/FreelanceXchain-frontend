@@ -1,12 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Badge, badgeVariants } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { projectsApi, skillsApi } from '@/lib/api';
+import { getApiErrorMessage } from '@/lib/auth-contract';
+import {
+  ProjectFormValidationError,
+  submitProject,
+  validateProjectStep,
+  type ProjectSubmissionForm,
+  type ProjectSubmissionSkill,
+} from '@/lib/project-submission';
+import { toast } from 'sonner';
 import {
   ChevronRight,
   ChevronLeft,
@@ -17,6 +28,7 @@ import {
   DollarSign,
   Clock,
   Target,
+  Loader2,
 } from 'lucide-react';
 
 const steps = [
@@ -26,32 +38,72 @@ const steps = [
   { id: 4, title: 'Review & Post', icon: FileText },
 ];
 
-const skillSuggestions = [
-  'React', 'Next.js', 'Vue.js', 'Angular',
-  'Node.js', 'Python', 'TypeScript', 'Solidity',
-  'Web3.js', 'GraphQL', 'PostgreSQL', 'MongoDB',
-  'AWS', 'Docker', 'Kubernetes', 'CI/CD',
-];
-
 export default function CreateProjectPage() {
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [skills, setSkills] = useState<string[]>([]);
+  const [skills, setSkills] = useState<ProjectSubmissionSkill[]>([]);
+  const [skillOptions, setSkillOptions] = useState<ProjectSubmissionSkill[]>([]);
+  const [skillsLoading, setSkillsLoading] = useState(true);
   const [budget, setBudget] = useState('');
   const [deadline, setDeadline] = useState('');
   const [milestones, setMilestones] = useState([
     { title: '', description: '', amount: '' },
   ]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
-  const addSkill = (skill: string) => {
-    if (!skills.includes(skill)) {
-      setSkills([...skills, skill]);
-    }
+  useEffect(() => {
+    let active = true;
+
+    const loadSkills = async () => {
+      try {
+        const { data } = await skillsApi.getTaxonomy();
+        if (active) {
+          setSkillOptions(
+            data.categories.flatMap((category) =>
+              category.skills.map((skill) => ({ id: skill.id, name: skill.name })),
+            ),
+          );
+        }
+      } catch (error) {
+        if (active) {
+          toast.error(getApiErrorMessage(error, 'Unable to load the skill list. Please refresh and try again.'));
+        }
+      } finally {
+        if (active) setSkillsLoading(false);
+      }
+    };
+
+    void loadSkills();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const getForm = (): ProjectSubmissionForm => ({
+    title,
+    description,
+    skills,
+    budget,
+    deadline,
+    milestones,
+  });
+
+  const showFormError = (message: string) => {
+    setFormError(message);
+    toast.error(message);
   };
 
-  const removeSkill = (skill: string) => {
-    setSkills(skills.filter((s) => s !== skill));
+  const addSkill = (skill: ProjectSubmissionSkill) => {
+    setSkills((current) => current.some((item) => item.id === skill.id)
+      ? current
+      : [...current, skill]);
+  };
+
+  const removeSkill = (skillId: string) => {
+    setSkills((current) => current.filter((skill) => skill.id !== skillId));
   };
 
   const addMilestone = () => {
@@ -68,6 +120,50 @@ export default function CreateProjectPage() {
     setMilestones(updated);
   };
 
+  const handleNext = () => {
+    const error = validateProjectStep(currentStep, getForm());
+    if (error) {
+      showFormError(error);
+      return;
+    }
+
+    setFormError(null);
+    setCurrentStep((step) => Math.min(4, step + 1));
+  };
+
+  const handlePrevious = () => {
+    setFormError(null);
+    setCurrentStep((step) => Math.max(1, step - 1));
+  };
+
+  const handleSubmit = async () => {
+    if (isSubmitting) return;
+
+    const validationError = validateProjectStep(4, getForm());
+    if (validationError) {
+      showFormError(validationError);
+      return;
+    }
+
+    setFormError(null);
+    setIsSubmitting(true);
+    try {
+      await submitProject(projectsApi, getForm());
+      toast.success('Project posted successfully.');
+      router.push('/dashboard/employer/projects');
+      router.refresh();
+    } catch (error) {
+      const fallback = error instanceof ProjectFormValidationError
+        ? error.message
+        : 'Unable to post the project. Please try again.';
+      const message = getApiErrorMessage(error, fallback);
+      setFormError(message);
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
@@ -77,24 +173,21 @@ export default function CreateProjectPage() {
       </div>
 
       {/* Progress Steps */}
-      <div className="flex items-center justify-between">
-        {steps.map((step, i) => (
-          <div key={step.id} className="flex items-center">
-            <div
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
-                currentStep === step.id
-                  ? 'gradient-primary text-white'
-                  : currentStep > step.id
-                  ? 'bg-green-500/10 text-green-500'
-                  : 'bg-secondary text-muted-foreground'
-              }`}
-            >
-              <step.icon className="w-4 h-4" />
-              <span className="text-sm font-medium">{step.title}</span>
-            </div>
-            {i < steps.length - 1 && (
-              <ChevronRight className="w-4 h-4 mx-2 text-muted-foreground" />
-            )}
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {steps.map((step) => (
+          <div
+            key={step.id}
+            aria-current={currentStep === step.id ? 'step' : undefined}
+            className={`flex min-h-10 items-center justify-center gap-2 rounded-lg px-2 py-2 text-center ${
+              currentStep === step.id
+                ? 'gradient-primary text-white'
+                : currentStep > step.id
+                ? 'bg-green-500/10 text-green-500'
+                : 'bg-secondary text-muted-foreground'
+            }`}
+          >
+            <step.icon className="h-4 w-4 shrink-0" />
+            <span className="text-sm font-medium">{step.title}</span>
           </div>
         ))}
       </div>
@@ -127,31 +220,43 @@ export default function CreateProjectPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Required Skills</Label>
+                    <Label id="required-skills-label">Required Skills</Label>
                     <div className="flex flex-wrap gap-2 mb-3">
                       {skills.map((skill) => (
-                        <Badge key={skill} variant="secondary" className="text-sm py-1.5 px-3">
-                          {skill}
-                          <X
-                            className="w-3 h-3 ml-2 cursor-pointer hover:text-destructive"
-                            onClick={() => removeSkill(skill)}
-                          />
+                        <Badge key={skill.id} variant="secondary" className="text-sm py-1.5 px-3">
+                          {skill.name}
+                          <button
+                            type="button"
+                            aria-label={`Remove ${skill.name}`}
+                            className="ml-1 rounded-sm hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            onClick={() => removeSkill(skill.id)}
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
                         </Badge>
                       ))}
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      {skillSuggestions
-                        .filter((s) => !skills.includes(s))
+                    <div className="flex flex-wrap gap-2" aria-labelledby="required-skills-label">
+                      {skillsLoading && (
+                        <span role="status" className="inline-flex items-center text-sm text-muted-foreground">
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading skills...
+                        </span>
+                      )}
+                      {!skillsLoading && skillOptions
+                        .filter((option) => !skills.some((skill) => skill.id === option.id))
                         .slice(0, 8)
                         .map((skill) => (
-                          <Badge
-                            key={skill}
-                            variant="outline"
-                            className="cursor-pointer hover:bg-primary/10"
+                          <button
+                            key={skill.id}
+                            type="button"
+                            className={badgeVariants({
+                              variant: 'outline',
+                              className: 'h-auto cursor-pointer hover:bg-primary/10',
+                            })}
                             onClick={() => addSkill(skill)}
                           >
-                            + {skill}
-                          </Badge>
+                            + {skill.name}
+                          </button>
                         ))}
                     </div>
                   </div>
@@ -173,7 +278,7 @@ export default function CreateProjectPage() {
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold">Milestones</h2>
-                <Button variant="outline" size="sm" onClick={addMilestone}>
+                <Button type="button" variant="outline" size="sm" onClick={addMilestone}>
                   <Plus className="w-4 h-4 mr-2" /> Add Milestone
                 </Button>
               </div>
@@ -187,8 +292,10 @@ export default function CreateProjectPage() {
                       <span className="font-medium">Milestone {index + 1}</span>
                       {milestones.length > 1 && (
                         <Button
+                          type="button"
                           variant="ghost"
                           size="icon"
+                          aria-label={`Remove milestone ${index + 1}`}
                           className="h-8 w-8 text-destructive"
                           onClick={() => removeMilestone(index)}
                         >
@@ -198,25 +305,30 @@ export default function CreateProjectPage() {
                     </div>
                     <div className="grid md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label>Title</Label>
+                        <Label htmlFor={`milestone-${index}-title`}>Title</Label>
                         <Input
+                          id={`milestone-${index}-title`}
                           placeholder="e.g., UI Design"
                           value={milestone.title}
                           onChange={(e) => updateMilestone(index, 'title', e.target.value)}
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Amount ($)</Label>
+                        <Label htmlFor={`milestone-${index}-amount`}>Amount ($)</Label>
                         <Input
+                          id={`milestone-${index}-amount`}
                           type="number"
+                          min="0.01"
+                          step="0.01"
                           placeholder="0.00"
                           value={milestone.amount}
                           onChange={(e) => updateMilestone(index, 'amount', e.target.value)}
                         />
                       </div>
                       <div className="md:col-span-2 space-y-2">
-                        <Label>Description</Label>
+                        <Label htmlFor={`milestone-${index}-description`}>Description</Label>
                         <Textarea
+                          id={`milestone-${index}-description`}
                           placeholder="Describe the deliverables..."
                           rows={2}
                           value={milestone.description}
@@ -240,6 +352,8 @@ export default function CreateProjectPage() {
                     <Input
                       id="budget"
                       type="number"
+                      min="0.01"
+                      step="0.01"
                       placeholder="0.00"
                       value={budget}
                       onChange={(e) => setBudget(e.target.value)}
@@ -309,7 +423,7 @@ export default function CreateProjectPage() {
                   <h3 className="font-medium mb-2">Skills</h3>
                   <div className="flex flex-wrap gap-2">
                     {skills.map((skill) => (
-                      <Badge key={skill} variant="secondary">{skill}</Badge>
+                      <Badge key={skill.id} variant="secondary">{skill.name}</Badge>
                     ))}
                   </div>
                 </div>
@@ -330,25 +444,43 @@ export default function CreateProjectPage() {
         </CardContent>
       </Card>
 
+      {formError && (
+        <p id="project-form-error" role="alert" className="text-sm font-medium text-destructive">
+          {formError}
+        </p>
+      )}
+
       {/* Navigation */}
       <div className="flex items-center justify-between">
         <Button
+          type="button"
           variant="outline"
-          onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
-          disabled={currentStep === 1}
+          onClick={handlePrevious}
+          disabled={currentStep === 1 || isSubmitting}
         >
           <ChevronLeft className="w-4 h-4 mr-2" /> Previous
         </Button>
         {currentStep < 4 ? (
           <Button
+            type="button"
             variant="gradient"
-            onClick={() => setCurrentStep(Math.min(4, currentStep + 1))}
+            onClick={handleNext}
           >
             Next <ChevronRight className="w-4 h-4 ml-2" />
           </Button>
         ) : (
-          <Button variant="gradient">
-            Post Project
+          <Button
+            type="button"
+            variant="gradient"
+            aria-describedby={formError ? 'project-form-error' : undefined}
+            disabled={isSubmitting}
+            onClick={() => void handleSubmit()}
+          >
+            {isSubmitting ? (
+              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Posting...</>
+            ) : (
+              'Post Project'
+            )}
           </Button>
         )}
       </div>
