@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { projectsApi } from '@/lib/api';
+import { ProposalDialog } from '@/components/projects/ProposalDialog';
 import type { Project } from '@/types';
 import { toast } from 'sonner';
 import {
@@ -26,6 +28,7 @@ export default function BrowseProjects() {
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [proposalProject, setProposalProject] = useState<Project | null>(null);
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -117,7 +120,7 @@ export default function BrowseProjects() {
         {filteredProjects.map((project) => (
           <Card
             key={project.id}
-            className="bg-card border-border hover:border-primary/20 transition-all cursor-pointer group"
+            className="bg-card border-border hover:border-primary/20 transition-all group"
           >
             <CardContent className="p-6">
               <div className="flex items-start justify-between mb-4">
@@ -162,8 +165,16 @@ export default function BrowseProjects() {
               </div>
 
               <div className="mt-4 flex items-center gap-3">
-                <Button variant="gradient">Submit Proposal</Button>
-                <Button variant="outline">View Details</Button>
+                <Button
+                  variant="gradient"
+                  onClick={() => setProposalProject(project)}
+                  disabled={project.status !== 'open'}
+                >
+                  Submit Proposal
+                </Button>
+                <Button asChild variant="outline">
+                  <Link href={`/projects/${project.id}`}>View Details</Link>
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -177,6 +188,22 @@ export default function BrowseProjects() {
           </div>
         )}
       </div>
+
+      <ProposalDialog
+        open={proposalProject !== null}
+        onOpenChange={(open) => {
+          if (!open) setProposalProject(null);
+        }}
+        onSubmitted={() => {
+          if (!proposalProject) return;
+          setProjects((current) => current.map((project) => (
+            project.id === proposalProject.id
+              ? { ...project, proposalCount: (project.proposalCount ?? 0) + 1 }
+              : project
+          )));
+        }}
+        project={proposalProject}
+      />
     </div>
   );
 }

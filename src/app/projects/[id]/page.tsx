@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { projectsApi } from '@/lib/api';
+import { ProposalDialog } from '@/components/projects/ProposalDialog';
 import type { Project } from '@/types';
 import { getStatusColor } from '@/lib/status-styles';
 import { toast } from 'sonner';
@@ -24,6 +25,7 @@ export default function ProjectDetailPage() {
   const params = useParams();
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
+  const [proposalOpen, setProposalOpen] = useState(false);
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -85,7 +87,12 @@ export default function ProjectDetailPage() {
               <Button variant="outline">
                 <Share2 className="w-4 h-4 mr-2" /> Share
               </Button>
-              <Button variant="gradient" className="glow-sm-primary">
+              <Button
+                variant="gradient"
+                className="glow-sm-primary"
+                onClick={() => setProposalOpen(true)}
+                disabled={project.status !== 'open'}
+              >
                 <Send className="w-4 h-4 mr-2" /> Submit Proposal
               </Button>
             </div>
@@ -205,6 +212,15 @@ export default function ProjectDetailPage() {
           </div>
         </div>
       </div>
+
+      <ProposalDialog
+        open={proposalOpen}
+        onOpenChange={setProposalOpen}
+        onSubmitted={() => setProject((current) => current
+          ? { ...current, proposalCount: (current.proposalCount ?? 0) + 1 }
+          : current)}
+        project={project}
+      />
     </div>
   );
 }

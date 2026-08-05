@@ -15,7 +15,6 @@ import type {
   Notification,
   AuditLogEntry,
   Transaction,
-  ReputationScore,
   PlatformStats,
   Review,
   Dispute,
@@ -222,6 +221,11 @@ export const skillsApi = {
 export const proposalsApi = {
   submit: (data: Partial<Proposal>) =>
     api.post<Proposal>('/proposals', data),
+
+  submitWithFiles: (data: FormData) =>
+    api.post<Proposal>('/proposals', data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
 
   getMine: () =>
     api.get<Proposal[]>('/proposals/freelancer/me'),
