@@ -10,6 +10,7 @@ import {
   DollarSign,
   FileText,
   Loader2,
+  MessageSquare,
   Paperclip,
   SearchX,
   UserRound,
@@ -34,6 +35,7 @@ import {
   type ProposalDecision,
 } from '@/lib/proposal-management';
 import { getStatusColor } from '@/lib/status-styles';
+import { getDirectMessageRoute } from '@/lib/dashboard-message-route';
 import type { FreelancerProfile, Project, Proposal } from '@/types';
 
 interface PendingDecision {
@@ -279,6 +281,15 @@ export default function EmployerProjectProposalsPage() {
                         onClick={() => setDecision({ proposal, action: 'accept' })}
                       >
                         <Check className="mr-2 h-4 w-4" /> Accept Proposal
+                      </Button>
+                    </div>
+                  )}
+                  {proposal.status === 'accepted' && (
+                    <div className="flex justify-end border-t border-border pt-4">
+                      <Button asChild variant="gradient">
+                        <Link href={getDirectMessageRoute('employer', proposal.freelancerId)}>
+                          <MessageSquare className="mr-2 h-4 w-4" /> Message Freelancer
+                        </Link>
                       </Button>
                     </div>
                   )}

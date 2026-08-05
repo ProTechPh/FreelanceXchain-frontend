@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/authStore';
+import { getDashboardMessageRoute } from '@/lib/dashboard-message-route';
 import {
   LayoutDashboard,
   Search,
@@ -43,7 +44,7 @@ const freelancerNav: NavItem[] = [
   { label: 'Reputation', href: '/dashboard/freelancer/reputation', icon: Star },
   { label: 'Portfolio', href: '/dashboard/freelancer/portfolio', icon: Image },
   { label: 'Verification', href: '/dashboard/freelancer/verification', icon: Shield },
-  { label: 'Messages', href: '/dashboard/freelancer/messages', icon: MessageSquare },
+  { label: 'Messages', href: getDashboardMessageRoute('freelancer'), icon: MessageSquare },
   { label: 'Settings', href: '/dashboard/freelancer/settings', icon: Settings },
 ];
 
@@ -52,6 +53,7 @@ const employerNav: NavItem[] = [
   { label: 'My Projects', href: '/dashboard/employer/projects', icon: FolderOpen },
   { label: 'Post Project', href: '/dashboard/employer/projects/new', icon: PlusCircle },
   { label: 'Verification', href: '/dashboard/employer/verification', icon: Shield },
+  { label: 'Messages', href: getDashboardMessageRoute('employer'), icon: MessageSquare },
 ];
 
 const adminNav: NavItem[] = [
