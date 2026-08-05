@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,8 @@ import { projectsApi } from '@/lib/api';
 import { ProposalDialog } from '@/components/projects/ProposalDialog';
 import type { Project } from '@/types';
 import { getStatusColor } from '@/lib/status-styles';
+import { getProjectPrimaryAction } from '@/lib/project-actions';
+import { useAuthStore } from '@/stores/authStore';
 import { toast } from 'sonner';
 import {
   Zap,
@@ -19,6 +22,7 @@ import {
   Share2,
   Loader2,
   SearchX,
+  ClipboardList,
 } from 'lucide-react';
 
 export default function ProjectDetailPage() {
@@ -26,6 +30,7 @@ export default function ProjectDetailPage() {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [proposalOpen, setProposalOpen] = useState(false);
+  const user = useAuthStore((state) => state.user);
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -62,12 +67,14 @@ export default function ProjectDetailPage() {
     );
   }
 
+  const primaryAction = getProjectPrimaryAction(user, project);
+
   return (
     <div className="min-h-screen">
       {/* Header */}
       <div className="border-b border-border bg-card/50 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 py-8">
-          <div className="flex items-start justify-between">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <h1 className="text-3xl font-bold">{project.title}</h1>
@@ -80,21 +87,30 @@ export default function ProjectDetailPage() {
               </div>
               <p className="text-muted-foreground">Posted by {project.employer?.name || 'Unknown'} • {new Date(project.createdAt).toLocaleDateString()}</p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
               <Button variant="outline">
                 <Heart className="w-4 h-4 mr-2" /> Save
               </Button>
               <Button variant="outline">
                 <Share2 className="w-4 h-4 mr-2" /> Share
               </Button>
-              <Button
-                variant="gradient"
-                className="glow-sm-primary"
-                onClick={() => setProposalOpen(true)}
-                disabled={project.status !== 'open'}
-              >
-                <Send className="w-4 h-4 mr-2" /> Submit Proposal
-              </Button>
+              {primaryAction === 'manage-proposals' && (
+                <Button asChild variant="gradient" className="glow-sm-primary">
+                  <Link href={`/dashboard/employer/projects/${project.id}/proposals`}>
+                    <ClipboardList className="w-4 h-4 mr-2" />
+                    View Proposals ({project.proposalCount ?? 0})
+                  </Link>
+                </Button>
+              )}
+              {primaryAction === 'submit-proposal' && (
+                <Button
+                  variant="gradient"
+                  className="glow-sm-primary"
+                  onClick={() => setProposalOpen(true)}
+                >
+                  <Send className="w-4 h-4 mr-2" /> Submit Proposal
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -213,14 +229,16 @@ export default function ProjectDetailPage() {
         </div>
       </div>
 
-      <ProposalDialog
-        open={proposalOpen}
-        onOpenChange={setProposalOpen}
-        onSubmitted={() => setProject((current) => current
-          ? { ...current, proposalCount: (current.proposalCount ?? 0) + 1 }
-          : current)}
-        project={project}
-      />
+      {primaryAction === 'submit-proposal' && (
+        <ProposalDialog
+          open={proposalOpen}
+          onOpenChange={setProposalOpen}
+          onSubmitted={() => setProject((current) => current
+            ? { ...current, proposalCount: (current.proposalCount ?? 0) + 1 }
+            : current)}
+          project={project}
+        />
+      )}
     </div>
   );
 }

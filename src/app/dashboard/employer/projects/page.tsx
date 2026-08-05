@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { projectsApi } from '@/lib/api';
 import type { Project, ProjectStatus } from '@/types';
 import { toast } from 'sonner';
-import { PlusCircle, Clock, DollarSign, Users, Eye, Loader2, FolderSearch } from 'lucide-react';
+import { PlusCircle, Clock, DollarSign, Users, Eye, Loader2, FolderSearch, ClipboardList } from 'lucide-react';
 
 export default function EmployerProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -140,6 +140,12 @@ export default function EmployerProjectsPage() {
                   <Link href={`/projects/${project.id}`}>
                     <Button variant="outline" size="sm">
                       <Eye className="w-4 h-4 mr-2" /> View
+                    </Button>
+                  </Link>
+                  <Link href={`/dashboard/employer/projects/${project.id}/proposals`}>
+                    <Button variant="outline" size="sm">
+                      <ClipboardList className="w-4 h-4 mr-2" />
+                      Proposals ({project.proposalCount ?? 0})
                     </Button>
                   </Link>
                 </div>
