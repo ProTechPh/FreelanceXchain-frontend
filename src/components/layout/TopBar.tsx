@@ -15,17 +15,43 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuthStore } from '@/stores/authStore';
 import { useState, useEffect } from 'react';
+import { notificationsApi } from '@/lib/api';
+import { subscribeToNotificationStream } from '@/lib/sse';
 
 export function TopBar() {
   const { user, logout } = useAuthStore();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    let active = true;
+    void notificationsApi.getUnreadCount().then(({ data }) => {
+      if (active) setUnreadNotifications(data.count);
+    }).catch(() => {
+      // Notification counts are non-blocking navigation chrome.
+    });
+    const unsubscribe = subscribeToNotificationStream(() => {
+      if (active) setUnreadNotifications((count) => count + 1);
+    });
+    const handleCountChange = (event: Event) => {
+      const delta = (event as CustomEvent<{ delta?: number }>).detail?.delta;
+      if (typeof delta === 'number') setUnreadNotifications((count) => Math.max(0, count + delta));
+    };
+    window.addEventListener('notification-count-change', handleCountChange);
+    return () => {
+      active = false;
+      unsubscribe();
+      window.removeEventListener('notification-count-change', handleCountChange);
+    };
+  }, [user]);
 
   const initials = mounted && user?.name
     ? user.name.split(' ').map((n) => n[0]).join('').toUpperCase()
@@ -73,11 +99,11 @@ export function TopBar() {
           <ThemeToggle />
 
           {/* Notifications */}
-          {hasParticipantDashboard && (
-            <Link href={`/dashboard/${user?.role || 'freelancer'}/notifications`}>
-              <Button variant="ghost" size="icon" className="relative">
+          {user && (
+            <Link href={`/dashboard/${user.role}/notifications`} aria-label={`Notifications${unreadNotifications > 0 ? ` (${unreadNotifications} unread)` : ''}`}>
+              <Button variant="ghost" size="icon" className="relative" tabIndex={-1}>
                 <Bell className="w-5 h-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full" />
+                {unreadNotifications > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">{unreadNotifications > 99 ? '99+' : unreadNotifications}</span>}
               </Button>
             </Link>
           )}

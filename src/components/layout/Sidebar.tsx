@@ -81,6 +81,7 @@ const employerNav: NavItem[] = [
 
 const adminNav: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard/admin', icon: LayoutDashboard },
+  { label: 'Notifications', href: '/dashboard/admin/notifications', icon: Bell },
   { label: 'Users', href: '/dashboard/admin/users', icon: Users },
   { label: 'Email', href: '/dashboard/admin/email', icon: Mail },
   { label: 'Disputes', href: '/dashboard/admin/disputes', icon: AlertTriangle },

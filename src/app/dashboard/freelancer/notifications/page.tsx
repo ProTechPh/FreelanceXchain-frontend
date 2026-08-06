@@ -1,10 +1,13 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { notificationsApi } from '@/lib/api';
 import { subscribeToNotificationStream } from '@/lib/sse';
+import { getNotificationDestination } from '@/lib/notification-route';
+import { useAuthStore } from '@/stores/authStore';
 import type { Notification, NotificationType } from '@/types';
 import { toast } from 'sonner';
 import {
@@ -61,6 +64,7 @@ function relativeTime(iso: string): string {
 type Tab = 'all' | 'unread';
 
 export function NotificationsCenter() {
+  const role = useAuthStore((state) => state.user?.role);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [continuationToken, setContinuationToken] = useState<string | undefined>();
   const [hasMore, setHasMore] = useState(false);
@@ -108,7 +112,9 @@ export function NotificationsCenter() {
   };
 
   const markRead = async (id: string) => {
+    const wasUnread = notifications.some((notification) => notification.id === id && !notification.isRead);
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)));
+    if (wasUnread) window.dispatchEvent(new CustomEvent('notification-count-change', { detail: { delta: -1 } }));
     try {
       await notificationsApi.markRead(id);
     } catch {
@@ -118,11 +124,14 @@ export function NotificationsCenter() {
 
   const markAllRead = async () => {
     const previous = notifications;
+    const previousUnreadCount = previous.filter((notification) => !notification.isRead).length;
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    window.dispatchEvent(new CustomEvent('notification-count-change', { detail: { delta: -previousUnreadCount } }));
     try {
       await notificationsApi.markAllRead();
     } catch {
       setNotifications(previous);
+      window.dispatchEvent(new CustomEvent('notification-count-change', { detail: { delta: previousUnreadCount } }));
       toast.error('Failed to mark all as read');
     }
   };
@@ -187,33 +196,21 @@ export function NotificationsCenter() {
         <div className="space-y-2">
           {visible.map((notification) => {
             const { icon: Icon, color, bg } = ICON_BY_TYPE[notification.type];
+            const destination = role ? getNotificationDestination(notification, role) : null;
+            const notificationContent = (
+              <div className="flex items-start gap-4">
+                <div className={`w-10 h-10 rounded-lg ${bg} flex items-center justify-center shrink-0`}><Icon className={`w-5 h-5 ${color}`} /></div>
+                <div className="flex-1 min-w-0"><div className="flex items-center gap-2"><p className={`font-medium ${!notification.isRead ? 'text-foreground' : 'text-muted-foreground'}`}>{notification.title}</p>{!notification.isRead && <div className="w-2 h-2 rounded-full bg-primary" />}</div><p className="text-sm text-muted-foreground mt-0.5">{notification.message}</p><p className="text-xs text-muted-foreground mt-1 flex items-center gap-1"><Clock className="w-3 h-3" /> {relativeTime(notification.createdAt)}</p></div>
+              </div>
+            );
             return (
               <Card
                 key={notification.id}
-                className={`bg-card border-border cursor-pointer transition-all hover:border-primary/20 ${
+                className={`bg-card border-border transition-all hover:border-primary/20 ${
                   !notification.isRead ? 'border-l-2 border-l-primary' : ''
                 }`}
-                onClick={() => !notification.isRead && markRead(notification.id)}
               >
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-4">
-                    <div className={`w-10 h-10 rounded-lg ${bg} flex items-center justify-center shrink-0`}>
-                      <Icon className={`w-5 h-5 ${color}`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className={`font-medium ${!notification.isRead ? 'text-foreground' : 'text-muted-foreground'}`}>
-                          {notification.title}
-                        </p>
-                        {!notification.isRead && <div className="w-2 h-2 rounded-full bg-primary" />}
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-0.5">{notification.message}</p>
-                      <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                        <Clock className="w-3 h-3" /> {relativeTime(notification.createdAt)}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
+                <CardContent className="p-0">{destination ? <Link href={destination} className="block rounded-xl p-4 outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={() => { if (!notification.isRead) void markRead(notification.id); }}>{notificationContent}</Link> : <button type="button" className="block w-full rounded-xl p-4 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={() => { if (!notification.isRead) void markRead(notification.id); }}>{notificationContent}</button>}</CardContent>
               </Card>
             );
           })}

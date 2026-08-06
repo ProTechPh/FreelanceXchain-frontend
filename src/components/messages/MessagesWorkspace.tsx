@@ -6,7 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { contractsApi, freelancersApi, messagesApi } from '@/lib/api';
+import { contractsApi, fileUploadsApi, freelancersApi, messagesApi } from '@/lib/api';
+import { formatFileSize, safeAttachmentUrl } from '@/lib/attachment-presentation';
+import { MessageAttachmentValidationError, sendMessageWithAttachments, validateMessageAttachments } from '@/lib/message-attachment';
 import {
   getRealtimeMessage,
   getConversationlessContacts,
@@ -20,11 +22,14 @@ import { toast } from 'sonner';
 import {
   Send,
   Search,
-  MoreVertical,
   Check,
   CheckCheck,
   Loader2,
   MessageSquare,
+  ExternalLink,
+  FileText,
+  Paperclip,
+  X,
 } from 'lucide-react';
 
 function initials(name: string): string {
@@ -58,6 +63,7 @@ export function MessagesWorkspace() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
+  const [messageFiles, setMessageFiles] = useState<File[]>([]);
   const [search, setSearch] = useState('');
   const [loadingConversations, setLoadingConversations] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
@@ -222,16 +228,17 @@ export function MessagesWorkspace() {
 
     setSending(true);
     try {
-      const { data: sent } = await messagesApi.send(chatRecipient.id, content);
+      const sent = await sendMessageWithAttachments(fileUploadsApi, messagesApi, chatRecipient.id, content, messageFiles);
       setMessages((prev) => [...prev, sent]);
       setNewMessage('');
+      setMessageFiles([]);
       if (!selectedConversation) {
         selectedIdRef.current = sent.conversation_id;
         setSelectedId(sent.conversation_id);
       }
       loadConversations(false);
-    } catch {
-      toast.error('Failed to send message');
+    } catch (error) {
+      toast.error(error instanceof MessageAttachmentValidationError ? error.message : 'Failed to send message');
     } finally {
       setSending(false);
     }
@@ -375,9 +382,6 @@ export function MessagesWorkspace() {
                   )}
                 </div>
               </div>
-              <Button variant="ghost" size="icon">
-                <MoreVertical className="w-5 h-5" />
-              </Button>
             </div>
 
             {/* Messages */}
@@ -403,6 +407,14 @@ export function MessagesWorkspace() {
                         }`}
                       >
                         <p className="text-sm">{msg.content}</p>
+                        {(msg.attachments ?? []).length > 0 && (
+                          <ul className="mt-2 space-y-1.5" aria-label="Message attachments">
+                            {(msg.attachments ?? []).map((attachment) => {
+                              const url = safeAttachmentUrl(attachment.url);
+                              return <li key={`${msg.id}-${attachment.filename}-${attachment.url}`}>{url ? <a href={url} target="_blank" rel="noreferrer" className={`flex items-center gap-2 rounded-lg border px-2 py-1.5 text-xs ${isMine ? 'border-white/30 hover:bg-white/10' : 'border-border hover:bg-background'}`}><FileText className="h-3.5 w-3.5 shrink-0" /><span className="min-w-0 flex-1 truncate">{attachment.filename}</span><span className={isMine ? 'text-white/70' : 'text-muted-foreground'}>{formatFileSize(attachment.size)}</span><ExternalLink className="h-3 w-3 shrink-0" /></a> : <span className="flex items-center gap-2 text-xs"><FileText className="h-3.5 w-3.5" />Attachment unavailable</span>}</li>;
+                            })}
+                          </ul>
+                        )}
                         <div className={`flex items-center gap-1 mt-1 ${isMine ? 'justify-end' : ''}`}>
                           <span className={`text-xs ${isMine ? 'text-white/70' : 'text-muted-foreground'}`}>
                             {relativeTime(msg.created_at)}
@@ -424,8 +436,20 @@ export function MessagesWorkspace() {
 
             {/* Message Input */}
             <div className="p-4 border-t border-border">
+              {messageFiles.length > 0 && <ul className="mb-3 flex flex-wrap gap-2" aria-label="Selected message attachments">{messageFiles.map((file) => <li key={`${file.name}-${file.size}-${file.lastModified}`} className="flex max-w-60 items-center gap-2 rounded-lg border border-border px-2 py-1 text-xs"><Paperclip className="h-3.5 w-3.5 shrink-0" /><span className="min-w-0 truncate">{file.name}</span><span className="shrink-0 text-muted-foreground">{formatFileSize(file.size)}</span><button type="button" aria-label={`Remove ${file.name}`} className="rounded-sm hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={() => setMessageFiles((current) => current.filter((candidate) => candidate !== file))}><X className="h-3.5 w-3.5" /></button></li>)}</ul>}
               <div className="flex items-center gap-3">
+                <label htmlFor="message-attachments" className="inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-md border border-border hover:bg-accent focus-within:ring-2 focus-within:ring-ring" aria-label="Attach files">
+                  <Paperclip className="h-4 w-4" />
+                  <input id="message-attachments" type="file" multiple className="sr-only" accept=".pdf,.doc,.docx,.xlsx,.pptx,.txt,.csv,.png,.jpg,.jpeg,.gif,.webp,.zip,.rar,.7z,.mp4,.webm,.mov" onChange={(event) => {
+                    const next = [...messageFiles, ...Array.from(event.target.files ?? [])];
+                    const error = validateMessageAttachments(next);
+                    if (error) toast.error(error); else setMessageFiles(next);
+                    event.target.value = '';
+                  }} />
+                </label>
+                <label htmlFor="new-message" className="sr-only">Message</label>
                 <Input
+                  id="new-message"
                   placeholder="Type a message..."
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
@@ -438,7 +462,7 @@ export function MessagesWorkspace() {
                   className="flex-1"
                   disabled={sending}
                 />
-                <Button variant="gradient" size="icon" onClick={handleSend} disabled={sending || !newMessage.trim()}>
+                <Button variant="gradient" size="icon" aria-label="Send message" onClick={handleSend} disabled={sending || !newMessage.trim()}>
                   {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                 </Button>
               </div>

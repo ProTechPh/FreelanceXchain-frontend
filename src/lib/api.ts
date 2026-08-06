@@ -717,6 +717,12 @@ export const fileManagementApi = {
     api.delete<{ message: string }>(`/file-management/${encodeURIComponent(bucket)}/${encodeURIComponent(path)}`),
 };
 
+export const fileUploadsApi = {
+  upload: (data: FormData) => api.post<{ success: boolean; url: string; path: string }>('/files/upload', data, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  }),
+};
+
 export const auditLogsApi = {
   getMine: (limit?: number) =>
     api.get<{ logs: AuditLogEntry[] }>('/audit-logs/me', { params: limit ? { limit } : undefined }),
