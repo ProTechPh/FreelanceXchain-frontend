@@ -339,13 +339,17 @@ export interface Notification {
 
 export interface Transaction {
   id: string;
-  user_id: string;
-  type: 'deposit' | 'withdrawal' | 'escrow_deposit' | 'escrow_release' | 'refund';
+  contract_id?: string;
+  milestone_id?: string;
+  from_user_id?: string;
+  to_user_id?: string;
+  type: string;
   amount: number;
-  currency: string;
-  tx_hash?: string;
-  status: 'pending' | 'completed' | 'failed';
+  status: string;
+  transaction_hash?: string;
+  metadata?: Record<string, unknown> | string;
   created_at: string;
+  updated_at: string;
 }
 
 export interface ReputationScore {

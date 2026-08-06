@@ -2,20 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { reputationApi, reviewsApi } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
 import type { Review } from '@/types';
 import {
   Star,
   TrendingUp,
-  ExternalLink,
   Users,
   Loader2,
   MessageSquareOff,
 } from 'lucide-react';
 
-export default function ReputationPage() {
+export function ReputationOverview() {
   const { user } = useAuthStore();
   const [overallScore, setOverallScore] = useState(0);
   const [totalRatings, setTotalRatings] = useState(0);
@@ -68,14 +66,11 @@ export default function ReputationPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div>
         <div>
           <h1 className="text-2xl font-bold">Reputation</h1>
           <p className="text-muted-foreground">Your on-chain reputation and reviews</p>
         </div>
-        <Button variant="outline">
-          <ExternalLink className="w-4 h-4 mr-2" /> View on Blockchain
-        </Button>
       </div>
 
       {/* Score Card */}
@@ -218,4 +213,8 @@ export default function ReputationPage() {
       </Card>
     </div>
   );
+}
+
+export default function FreelancerReputationPage() {
+  return <ReputationOverview />;
 }

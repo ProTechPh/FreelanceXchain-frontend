@@ -447,11 +447,21 @@ export const reputationApi = {
 };
 
 export const reviewsApi = {
-  submit: (data: Partial<Review>) =>
-    api.post<ApiResponse<Review>>('/reviews', data),
+  submit: (data: {
+    contractId: string;
+    rating: number;
+    comment: string;
+    workQuality: number;
+    communication: number;
+    professionalism: number;
+    wouldWorkAgain: boolean;
+  }) => api.post<Review>('/reviews', data),
 
   getForUser: (userId: string) =>
     api.get<Review[]>(`/reviews/user/${userId}`),
+
+  canReview: (contractId: string, rateeId: string) =>
+    api.get<{ canRate: boolean; reason?: string }>(`/reviews/can-review/${contractId}`, { params: { rateeId } }),
 };
 
 export const disputesApi = {

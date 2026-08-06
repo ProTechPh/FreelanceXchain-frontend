@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import {
   contractsApi,
   milestonesApi,
+  reviewsApi,
   transactionsApi,
 } from '@/lib/api';
 import {
@@ -16,6 +17,8 @@ import {
 } from '@/lib/contract-workflow';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { getStatusColor } from '@/lib/status-styles';
+import { getTransactionDetailRoute } from '@/lib/transaction-view';
+import { validateReviewDraft, type ReviewDraft } from '@/lib/review-form';
 import { useAuthStore } from '@/stores/authStore';
 import type { Contract, Dispute, Milestone, Transaction, UserRole } from '@/types';
 import { Badge } from '@/components/ui/badge';
@@ -23,8 +26,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 type ParticipantRole = Extract<UserRole, 'employer' | 'freelancer'>;
+const initialReview: ReviewDraft = { rating: 5, comment: '', workQuality: 5, communication: 5, professionalism: 5, wouldWorkAgain: true };
 
 export function ContractWorkspace({ contractId, role }: { contractId: string; role: ParticipantRole }) {
   const user = useAuthStore((state) => state.user);
@@ -37,6 +42,8 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [rejectionReasons, setRejectionReasons] = useState<Record<string, string>>({});
   const [files, setFiles] = useState<Record<string, File[]>>({});
+  const [reviewEligibility, setReviewEligibility] = useState<{ canRate: boolean; reason?: string } | null>(null);
+  const [review, setReview] = useState<ReviewDraft>(initialReview);
 
   const loadWorkspace = useCallback(async () => {
     try {
@@ -56,12 +63,24 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
       setMilestones(rawMilestones.map(normalizeMilestone));
       setTransactions(transactionResult.status === 'fulfilled' ? transactionResult.value.data : []);
       setDisputes(disputeResult.status === 'fulfilled' ? disputeResult.value.data : []);
+
+      if (loadedContract.status === 'completed') {
+        const rateeId = role === 'employer' ? loadedContract.freelancerId : loadedContract.employerId;
+        try {
+          const { data } = await reviewsApi.canReview(loadedContract.id, rateeId);
+          setReviewEligibility(data);
+        } catch {
+          setReviewEligibility(null);
+        }
+      } else {
+        setReviewEligibility(null);
+      }
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Unable to load this contract.'));
     } finally {
       setLoading(false);
     }
-  }, [contractId]);
+  }, [contractId, role]);
 
   useEffect(() => {
     // The workspace state is populated from authenticated backend resources after mount.
@@ -111,6 +130,26 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
     );
   };
 
+  const submitReview = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const validationError = validateReviewDraft(review);
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
+    setActionId('review');
+    try {
+      await reviewsApi.submit({ ...review, contractId: contract.id, comment: review.comment.trim() });
+      setReviewEligibility({ canRate: false, reason: 'You have reviewed this contract.' });
+      setReview(initialReview);
+      toast.success('Review submitted.');
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Unable to submit this review.'));
+    } finally {
+      setActionId(null);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <Button asChild variant="ghost" className="-ml-3"><Link href={`/dashboard/${role}/contracts`}><ArrowLeft className="mr-2 size-4" />Back to contracts</Link></Button>
@@ -123,7 +162,7 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
         <Badge className={getStatusColor(contract.status)}>{contract.status.replace('_', ' ')}</Badge>
       </div>
 
-      {!isVerified && ['pending', 'active'].includes(contract.status) && (
+      {!isVerified && ['pending', 'active', 'completed'].includes(contract.status) && (
         <Card className="border-amber-500/40 bg-amber-500/5">
           <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="flex items-center gap-2 text-sm"><ShieldCheck className="size-5 text-amber-500" />Identity verification is required before contract mutations.</p>
@@ -167,6 +206,31 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
           </div>
         </CardContent>
       </Card>
+
+      {contract.status === 'completed' && reviewEligibility && (
+        <Card>
+          <CardHeader><CardTitle>Contract review</CardTitle></CardHeader>
+          <CardContent>
+            {reviewEligibility.canRate && isVerified ? (
+              <form className="grid gap-4 sm:grid-cols-2" onSubmit={submitReview}>
+                {([
+                  ['rating', 'Overall rating'],
+                  ['workQuality', 'Work quality'],
+                  ['communication', 'Communication'],
+                  ['professionalism', 'Professionalism'],
+                ] as const).map(([field, label]) => (
+                  <div key={field} className="space-y-2"><Label htmlFor={`review-${field}`}>{label}</Label><select id={`review-${field}`} className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm" value={review[field]} onChange={(event) => setReview((current) => ({ ...current, [field]: Number(event.target.value) }))}>{[5, 4, 3, 2, 1].map((value) => <option key={value} value={value}>{value} star{value === 1 ? '' : 's'}</option>)}</select></div>
+                ))}
+                <div className="space-y-2 sm:col-span-2"><Label htmlFor="review-comment">Comment</Label><Textarea id="review-comment" rows={4} value={review.comment} onChange={(event) => setReview((current) => ({ ...current, comment: event.target.value }))} /></div>
+                <label className="flex items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" checked={review.wouldWorkAgain} onChange={(event) => setReview((current) => ({ ...current, wouldWorkAgain: event.target.checked }))} />I would work with this person again</label>
+                <Button className="sm:w-fit" type="submit" disabled={actionId === 'review'}>{actionId === 'review' ? 'Submitting…' : 'Submit review'}</Button>
+              </form>
+            ) : (
+              <p className="text-sm text-muted-foreground">{reviewEligibility.reason || (isVerified ? 'A review is not available for this contract.' : 'Complete identity verification to submit a review.')}</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <section className="space-y-3" aria-labelledby="milestones-title">
         <h2 id="milestones-title" className="text-xl font-semibold">Milestones</h2>
@@ -221,7 +285,7 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
           <CardHeader><CardTitle>Transactions</CardTitle></CardHeader>
           <CardContent>
             {transactions.length === 0 ? <p className="text-sm text-muted-foreground">No transactions recorded.</p> : (
-              <ul className="space-y-3">{transactions.map((transaction) => <li key={transaction.id} className="flex items-center justify-between border-b border-border pb-3 text-sm last:border-0"><div><p className="font-medium">{transaction.type.replaceAll('_', ' ')}</p><p className="text-xs text-muted-foreground">{new Date(transaction.created_at).toLocaleString()}</p></div><div className="text-right"><p>{transaction.amount} {transaction.currency}</p><Badge variant="secondary">{transaction.status}</Badge></div></li>)}</ul>
+              <ul className="space-y-3">{transactions.map((transaction) => <li key={transaction.id} className="border-b border-border pb-3 text-sm last:border-0"><Link href={getTransactionDetailRoute(role, transaction.id)} className="flex items-center justify-between rounded-md outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"><div><p className="font-medium">{transaction.type.replaceAll('_', ' ')}</p><p className="text-xs text-muted-foreground">{new Date(transaction.created_at).toLocaleString()}</p></div><div className="text-right"><p>${transaction.amount.toLocaleString()}</p><Badge variant="secondary">{transaction.status}</Badge></div></Link></li>)}</ul>
             )}
           </CardContent>
         </Card>
