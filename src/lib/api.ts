@@ -200,8 +200,26 @@ export const freelancersApi = {
   getProfile: () =>
     api.get<FreelancerProfile>('/freelancers/profile'),
 
-  updateProfile: (data: Partial<FreelancerProfile>) =>
+  createProfile: (data: Pick<FreelancerProfile, 'bio' | 'hourlyRate' | 'availability'>) =>
+    api.post<FreelancerProfile>('/freelancers/profile', data),
+
+  updateProfile: (data: Partial<Pick<FreelancerProfile, 'bio' | 'hourlyRate' | 'availability'>>) =>
     api.patch<FreelancerProfile>('/freelancers/profile', data),
+
+  addSkills: (skills: FreelancerProfile['skills']) =>
+    api.post<FreelancerProfile>('/freelancers/profile/skills', { skills }),
+
+  removeSkill: (name: string) =>
+    api.delete<FreelancerProfile>(`/freelancers/profile/skills/${encodeURIComponent(name)}`),
+
+  addExperience: (experience: Omit<FreelancerProfile['experience'][number], 'id'>) =>
+    api.post<FreelancerProfile>('/freelancers/profile/experience', experience),
+
+  updateExperience: (id: string, experience: Partial<Omit<FreelancerProfile['experience'][number], 'id'>>) =>
+    api.patch<FreelancerProfile>(`/freelancers/profile/experience/${id}`, experience),
+
+  removeExperience: (id: string) =>
+    api.delete<FreelancerProfile>(`/freelancers/profile/experience/${id}`),
 
   getPublicProfile: (id: string) =>
     api.get<FreelancerProfile>(`/freelancers/${id}`),
@@ -215,10 +233,13 @@ export const freelancersApi = {
 
 export const employersApi = {
   getProfile: () =>
-    api.get<ApiResponse<EmployerProfile>>('/employers/profile'),
+    api.get<EmployerProfile>('/employers/profile'),
   
-  updateProfile: (data: Partial<EmployerProfile>) =>
-    api.patch<ApiResponse<EmployerProfile>>('/employers/profile', data),
+  updateProfile: (data: Partial<Pick<EmployerProfile, 'companyName' | 'description' | 'industry'>>) =>
+    api.patch<EmployerProfile>('/employers/profile', data),
+
+  getPublicProfile: (id: string) =>
+    api.get<EmployerProfile>(`/employers/${id}`),
 };
 
 export const projectsApi = {

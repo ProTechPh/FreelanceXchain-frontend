@@ -34,10 +34,8 @@ export function TopBar() {
     ? `${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}`
     : null;
 
-  // Messages, notifications, profile, and settings pages currently only exist
-  // for the freelancer dashboard — hide these controls for other roles rather
-  // than link to a dead route.
-  const hasFullDashboard = user?.role === 'freelancer';
+  const hasParticipantDashboard = user?.role === 'freelancer' || user?.role === 'employer';
+  const hasNotifications = user?.role === 'freelancer';
 
   return (
     <header className="h-16 border-b border-border bg-card/80 backdrop-blur-xl sticky top-0 z-40">
@@ -59,7 +57,7 @@ export function TopBar() {
           <ThemeToggle />
 
           {/* Notifications */}
-          {hasFullDashboard && (
+          {hasNotifications && (
             <Link href={`/dashboard/${user?.role || 'freelancer'}/notifications`}>
               <Button variant="ghost" size="icon" className="relative">
                 <Bell className="w-5 h-5" />
@@ -69,7 +67,7 @@ export function TopBar() {
           )}
 
           {/* Messages */}
-          {hasFullDashboard && (
+          {hasParticipantDashboard && (
             <Link href={`/dashboard/${user?.role || 'freelancer'}/messages`}>
               <Button variant="ghost" size="icon">
                 <MessageSquare className="w-5 h-5" />
@@ -98,7 +96,7 @@ export function TopBar() {
                 <p className="text-sm font-medium">{user?.name || 'User'}</p>
                 <p className="text-xs text-muted-foreground">{user?.email}</p>
               </div>
-              {hasFullDashboard && (
+              {hasParticipantDashboard && (
                 <>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => router.push(`/dashboard/${user?.role || 'freelancer'}/profile`)} className="flex items-center gap-2 cursor-pointer">
