@@ -1,14 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { CheckCircle, KeyRound, Mail, Shield, Wallet } from 'lucide-react';
+import { CheckCircle, ExternalLink, HardDrive, KeyRound, Mail, Shield, Trash2, Wallet } from 'lucide-react';
 import { toast } from 'sonner';
-import { authApi, emailPreferencesApi } from '@/lib/api';
+import { authApi, emailPreferencesApi, fileManagementApi } from '@/lib/api';
 import { connectWallet, formatWalletAddress, type WalletConnection } from '@/lib/wallet';
+import { formatFileSize } from '@/lib/file-storage';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { useAuthStore } from '@/stores/authStore';
-import type { EmailPreferences, EmailPreferencesUpdate, MfaFactor } from '@/types';
+import type { EmailPreferences, EmailPreferencesUpdate, FileInfo, FileQuota, MfaFactor } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,6 +39,25 @@ export function AccountSettings() {
   const [wallet, setWallet] = useState<WalletConnection | null>(null);
   const [isConnectingWallet, setIsConnectingWallet] = useState(false);
   const [isDisablingMfa, setIsDisablingMfa] = useState(false);
+  const [files, setFiles] = useState<FileInfo[]>([]);
+  const [quota, setQuota] = useState<FileQuota | null>(null);
+  const [storageLoading, setStorageLoading] = useState(true);
+  const [storageAvailable, setStorageAvailable] = useState(true);
+  const [deletingFile, setDeletingFile] = useState<string | null>(null);
+
+  const loadStorage = useCallback(async () => {
+    setStorageLoading(true);
+    try {
+      const [fileResponse, quotaResponse] = await Promise.all([fileManagementApi.list(), fileManagementApi.getQuota()]);
+      setFiles(fileResponse.data);
+      setQuota(quotaResponse.data);
+      setStorageAvailable(true);
+    } catch {
+      setStorageAvailable(false);
+    } finally {
+      setStorageLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     Promise.all([emailPreferencesApi.get(), authApi.mfaFactors()])
@@ -47,6 +67,11 @@ export function AccountSettings() {
       })
       .catch(() => toast.error('Some account settings could not be loaded.'));
   }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadStorage();
+  }, [loadStorage]);
 
   const updatePreference = async (
     key: (typeof preferenceRows)[number]['key'],
@@ -98,6 +123,20 @@ export function AccountSettings() {
       toast.error(getApiErrorMessage(error, error instanceof Error ? error.message : 'Unable to connect wallet.'));
     } finally {
       setIsConnectingWallet(false);
+    }
+  };
+
+  const deleteFile = async (file: FileInfo) => {
+    if (!window.confirm(`Delete “${file.name}” from your storage?`)) return;
+    setDeletingFile(file.path);
+    try {
+      await fileManagementApi.remove(file.bucket, file.path);
+      await loadStorage();
+      toast.success('File deleted.');
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Unable to delete this file.'));
+    } finally {
+      setDeletingFile(null);
     }
   };
 
@@ -195,6 +234,23 @@ export function AccountSettings() {
           <Button onClick={connect} disabled={isConnectingWallet}>
             {isConnectingWallet ? 'Connecting…' : user?.walletAddress ? 'Replace wallet' : 'Connect wallet'}
           </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle className="flex items-center gap-2"><HardDrive className="size-5" />File storage</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+          {storageLoading && <p role="status" className="text-sm text-muted-foreground">Loading storage usage…</p>}
+          {!storageLoading && !storageAvailable && <p className="text-sm text-muted-foreground">Storage information is temporarily unavailable.</p>}
+          {!storageLoading && storageAvailable && quota && (
+            <>
+              <div>
+                <div className="mb-2 flex items-center justify-between gap-3 text-sm"><span>{formatFileSize(quota.used)} of {formatFileSize(quota.limit)} used</span><span className="text-muted-foreground">{quota.files} file{quota.files === 1 ? '' : 's'}</span></div>
+                <div className="h-2 overflow-hidden rounded-full bg-muted" role="progressbar" aria-label="Storage used" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(quota.percentage)}><div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, quota.percentage)}%` }} /></div>
+              </div>
+              {files.length === 0 ? <p className="text-sm text-muted-foreground">No proposal or portfolio files stored.</p> : <ul className="divide-y divide-border rounded-lg border border-border">{files.map((file) => <li key={`${file.bucket}:${file.path}`} className="flex items-center justify-between gap-3 p-3"><div className="min-w-0"><p className="truncate text-sm font-medium">{file.name}</p><p className="text-xs text-muted-foreground">{formatFileSize(file.size)} · {file.bucket.replaceAll('_', ' ')}</p></div><div className="flex gap-1">{file.publicUrl && <Button asChild type="button" variant="ghost" size="icon"><a href={file.publicUrl} target="_blank" rel="noreferrer" aria-label={`Open ${file.name}`}><ExternalLink className="size-4" /></a></Button>}<Button type="button" variant="ghost" size="icon" aria-label={`Delete ${file.name}`} disabled={deletingFile === file.path} onClick={() => void deleteFile(file)}><Trash2 className="size-4 text-destructive" /></Button></div></li>)}</ul>}
+            </>
+          )}
         </CardContent>
       </Card>
 

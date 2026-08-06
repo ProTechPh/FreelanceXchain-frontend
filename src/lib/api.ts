@@ -49,6 +49,8 @@ import type {
   RefundRequest,
   UserCustomSkill,
   SkillSuggestion,
+  FileInfo,
+  FileQuota,
 } from '@/types';
 import type {
   CreateProjectPayload,
@@ -673,6 +675,15 @@ export const portfolioApi = {
 
   delete: (id: string) =>
     api.delete(`/portfolio/${id}`),
+};
+
+export const fileManagementApi = {
+  list: (bucket?: string) => api.get<FileInfo[]>('/file-management', { params: bucket ? { bucket } : undefined }),
+
+  getQuota: () => api.get<FileQuota>('/file-management/quota'),
+
+  remove: (bucket: string, path: string) =>
+    api.delete<{ message: string }>(`/file-management/${encodeURIComponent(bucket)}/${encodeURIComponent(path)}`),
 };
 
 export const auditLogsApi = {

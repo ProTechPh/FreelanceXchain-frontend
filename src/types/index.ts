@@ -644,6 +644,23 @@ export interface SavedSearch {
   updatedAt: string;
 }
 
+export interface FileInfo {
+  name: string;
+  bucket: string;
+  path: string;
+  size: number;
+  createdAt: string;
+  updatedAt: string;
+  publicUrl?: string;
+}
+
+export interface FileQuota {
+  used: number;
+  limit: number;
+  percentage: number;
+  files: number;
+}
+
 // KYC Verification Types (backend returns these as-is, snake_case — not mapped to camelCase)
 export type KycStatus = 'pending' | 'in_progress' | 'completed' | 'approved' | 'rejected' | 'expired';
 
