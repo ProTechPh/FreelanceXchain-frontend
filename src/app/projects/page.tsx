@@ -1,6 +1,8 @@
 'use client';
 
+import { Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Clock, DollarSign, Users, Zap } from 'lucide-react';
 import { MarketplaceBrowser } from '@/components/marketplace/marketplace-browser';
 import { Badge } from '@/components/ui/badge';
@@ -35,10 +37,15 @@ function ProjectResult({ project }: { project: Project }) {
   );
 }
 
-export default function ProjectsPage() {
+function ProjectsMarketplace() {
+  const searchParams = useSearchParams();
+  const initialKeyword = searchParams?.get('keyword') || '';
+
   return (
     <MarketplaceBrowser<Project>
+      key={initialKeyword}
       kind="project"
+      initialKeyword={initialKeyword}
       title="Browse Projects"
       description="Search open work by keyword, skill, and budget, then save the searches you care about."
       emptyMessage="No open projects match these filters."
@@ -46,4 +53,8 @@ export default function ProjectsPage() {
       renderItem={(project) => <ProjectResult project={project} />}
     />
   );
+}
+
+export default function ProjectsPage() {
+  return <Suspense><ProjectsMarketplace /></Suspense>;
 }

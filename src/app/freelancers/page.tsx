@@ -1,6 +1,8 @@
 'use client';
 
+import { Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Clock, MapPin } from 'lucide-react';
 import { MarketplaceBrowser } from '@/components/marketplace/marketplace-browser';
 import { Badge } from '@/components/ui/badge';
@@ -40,10 +42,15 @@ function FreelancerResult({ freelancer }: { freelancer: FreelancerProfile }) {
   );
 }
 
-export default function FreelancersPage() {
+function FreelancersMarketplace() {
+  const searchParams = useSearchParams();
+  const initialKeyword = searchParams?.get('keyword') || '';
+
   return (
     <MarketplaceBrowser<FreelancerProfile>
+      key={initialKeyword}
       kind="freelancer"
+      initialKeyword={initialKeyword}
       title="Find Talent"
       description="Search freelancer profiles by specialty and keep a shortlist of favorites."
       emptyMessage="No freelancers match these filters."
@@ -52,4 +59,8 @@ export default function FreelancersPage() {
       renderItem={(freelancer) => <FreelancerResult freelancer={freelancer} />}
     />
   );
+}
+
+export default function FreelancersPage() {
+  return <Suspense><FreelancersMarketplace /></Suspense>;
 }

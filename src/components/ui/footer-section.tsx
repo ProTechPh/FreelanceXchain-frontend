@@ -2,7 +2,7 @@
 import React from 'react';
 import type { ComponentProps, ReactNode } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { Globe, Envelope, X } from '@phosphor-icons/react';
+import { Globe, Envelope } from '@phosphor-icons/react';
 import Link from 'next/link';
 
 interface FooterLink {
@@ -31,8 +31,9 @@ const footerLinks: FooterSection[] = [
 		links: [
 			{ title: 'About Us', href: '/about' },
 			{ title: 'Blog', href: '/blog' },
-			{ title: 'Careers', href: '/careers' },
-			{ title: 'Contact', href: '/contact' },
+			{ title: 'How It Works', href: '/how-it-works' },
+			{ title: 'Tutorials', href: '/tutorials' },
+			{ title: 'Help Center', href: '/help' },
 		],
 	},
 	{
@@ -40,15 +41,13 @@ const footerLinks: FooterSection[] = [
 		links: [
 			{ title: 'Terms of Service', href: '/terms' },
 			{ title: 'Privacy Policy', href: '/privacy' },
-			{ title: 'Cookie Policy', href: '/cookies' },
 		],
 	},
 	{
 		label: 'Connect',
 		links: [
-			{ title: 'Website', href: '#', icon: Globe },
-			{ title: 'Email', href: '#', icon: Envelope },
-			{ title: 'X (Twitter)', href: '#', icon: X },
+			{ title: 'Website', href: '/', icon: Globe },
+			{ title: 'Support', href: '/help', icon: Envelope },
 		],
 	},
 ];

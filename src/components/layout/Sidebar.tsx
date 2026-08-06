@@ -29,6 +29,8 @@ import {
   Mail,
   UserRound,
   Bell,
+  BrainCircuit,
+  Tags,
 } from 'lucide-react';
 
 interface NavItem {
@@ -45,6 +47,7 @@ const freelancerNav: NavItem[] = [
   { label: 'Disputes', href: '/dashboard/freelancer/disputes', icon: AlertTriangle },
   { label: 'Earnings', href: '/dashboard/freelancer/earnings', icon: Wallet },
   { label: 'Reputation', href: '/dashboard/freelancer/reputation', icon: Star },
+  { label: 'Skill Analysis', href: '/dashboard/freelancer/skill-analysis', icon: BrainCircuit },
   { label: 'Portfolio', href: '/dashboard/freelancer/portfolio', icon: Image },
   { label: 'Profile', href: '/dashboard/freelancer/profile', icon: UserRound },
   { label: 'Verification', href: '/dashboard/freelancer/verification', icon: Shield },
@@ -76,6 +79,7 @@ const adminNav: NavItem[] = [
   { label: 'Analytics', href: '/dashboard/admin/analytics', icon: BarChart3 },
   { label: 'System Health', href: '/dashboard/admin/system', icon: Activity },
   { label: 'KYC Review', href: '/dashboard/admin/kyc', icon: Shield },
+  { label: 'Skills', href: '/dashboard/admin/skills', icon: Tags },
   { label: 'Audit Logs', href: '/dashboard/admin/audit-logs', icon: ClipboardList },
 ];
 

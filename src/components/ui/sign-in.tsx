@@ -37,7 +37,9 @@ interface SignInPageProps {
   onGoogleSignIn?: () => void;
   onGithubSignIn?: () => void;
   onResetPassword?: () => void;
+  onResendConfirmation?: () => void;
   onCreateAccount?: () => void;
+  onPasswordlessSignIn?: () => void;
 }
 
 // --- SUB-COMPONENTS ---
@@ -70,7 +72,9 @@ export const SignInPage: React.FC<SignInPageProps> = ({
   onGoogleSignIn,
   onGithubSignIn,
   onResetPassword,
+  onResendConfirmation,
   onCreateAccount,
+  onPasswordlessSignIn,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -131,6 +135,14 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                   GitHub
               </button>
             </div>
+
+            <button type="button" onClick={onPasswordlessSignIn} className="w-full rounded-2xl border border-border py-3 text-sm font-medium transition-colors hover:bg-secondary">
+              Sign in with email code or magic link
+            </button>
+
+            <button type="button" onClick={onResendConfirmation} className="text-sm text-muted-foreground transition-colors hover:text-foreground hover:underline">
+              Didn&apos;t receive your account confirmation email?
+            </button>
 
             <p className="animate-element animate-delay-900 text-center text-sm text-muted-foreground">
               New to our platform? <a href="#" onClick={(e) => { e.preventDefault(); onCreateAccount?.(); }} className="text-violet-400 hover:underline transition-colors">Create Account</a>

@@ -40,6 +40,7 @@ import type {
   SkillTrend,
   PlatformMetrics,
   SkillTaxonomy,
+  Skill,
   UserRole,
   Favorite,
   SavedSearch,
@@ -166,6 +167,15 @@ export const authApi = {
 
   resendConfirmation: (email: string) =>
     api.post<{ message: string }>('/auth/resend-confirmation', { email }),
+
+  requestEmailOtp: (email: string) =>
+    api.post<{ userId: string }>('/auth/login/email-otp', { email }),
+
+  requestMagicUrl: (email: string) =>
+    api.post<{ userId: string }>('/auth/login/magic-url', { email }),
+
+  verifyPasswordlessToken: (userId: string, secret: string) =>
+    api.post<OAuthCallbackResponse>('/auth/login/verify-token', { userId, secret }),
   
   mfaVerify: (data: MfaVerifyRequest) =>
     api.post<AuthSuccessResponse>('/auth/login/mfa-verify', data),
@@ -259,7 +269,7 @@ export const projectsApi = {
     api.post<Project>(`/projects/${id}/milestones`, data),
   
   update: (id: string, data: Partial<Project>) =>
-    api.patch<ApiResponse<Project>>(`/projects/${id}`, data),
+    api.patch<Project>(`/projects/${id}`, data),
   
   getMyProjects: (params?: Record<string, string | number>) =>
     api.get<PaginatedResponse<Project>>('/projects/my-projects', { params }),
@@ -301,6 +311,15 @@ export const savedSearchesApi = {
 
 export const skillsApi = {
   getTaxonomy: () => api.get<SkillTaxonomy>('/skills'),
+
+  createCategory: (name: string, description: string) =>
+    api.post<SkillTaxonomy['categories'][number]>('/skills/categories', { name, description }),
+
+  createSkill: (categoryId: string, name: string, description: string) =>
+    api.post<Skill>('/skills', { categoryId, name, description }),
+
+  deprecate: (id: string) =>
+    api.patch<Skill>(`/skills/${id}/deprecate`),
 };
 
 export const proposalsApi = {
@@ -503,6 +522,19 @@ export interface FreelancerRecommendation {
   reasoning: string;
 }
 
+export interface ExtractedSkill {
+  skillId: string;
+  skillName: string;
+  confidence: number;
+}
+
+export interface SkillGapAnalysis {
+  currentSkills: string[];
+  recommendedSkills: string[];
+  marketDemand: Array<{ skillName: string; demandLevel: 'high' | 'medium' | 'low' }>;
+  reasoning: string;
+}
+
 export const matchingApi = {
   getProjectRecommendations: (limit?: number) =>
     api.get<ProjectRecommendation[]>('/matching/projects', { params: limit ? { limit } : undefined }),
@@ -511,6 +543,12 @@ export const matchingApi = {
     api.get<FreelancerRecommendation[]>(`/matching/freelancers/${projectId}`, {
       params: limit ? { limit } : undefined,
     }),
+
+  extractSkills: (text: string) =>
+    api.post<ExtractedSkill[]>('/matching/extract-skills', { text }),
+
+  getSkillGaps: () =>
+    api.get<SkillGapAnalysis>('/matching/skill-gaps'),
 };
 
 export const emailApi = {

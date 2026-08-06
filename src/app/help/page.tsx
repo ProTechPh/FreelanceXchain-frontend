@@ -1,0 +1,6 @@
+import Link from 'next/link';
+import { InfoPage } from '@/components/public/info-page';
+
+export default function HelpPage() {
+  return <InfoPage title="Help Center" intro="Quick routes for the most common account and marketplace tasks."><section><h2>Account access</h2><p>Use <Link href="/forgot-password">password recovery</Link> for a forgotten password, <Link href="/passwordless">passwordless sign in</Link> for an email code or magic link, and dashboard settings for MFA or wallet connection.</p></section><section><h2>Verification</h2><p>Payment, review, project mutation, and dispute actions may require an approved identity verification. Open the Verification page from your role dashboard to start or resume the process.</p></section><section><h2>Contracts and payments</h2><p>Open Contracts from your dashboard to fund, cancel, submit milestones, approve deliverables, inspect disputes, and review transaction records. Funding is performed by the backend escrow workflow.</p></section><section><h2>Disputes</h2><p>A verified participant can open a dispute only for a submitted milestone on an active contract. Add clear notes and relevant evidence; administrators resolve the case after review.</p></section><section><h2>Service status</h2><p>Check the <Link href="/status">status page</Link> when an API-backed action is unavailable.</p></section></InfoPage>;
+}

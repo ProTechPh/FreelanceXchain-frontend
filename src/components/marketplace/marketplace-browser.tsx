@@ -28,9 +28,12 @@ type MarketplaceBrowserProps<T extends Project | FreelancerProfile> = {
   layout: 'list' | 'grid';
   renderItem: (item: T) => ReactNode;
   getTargetId?: (item: T) => string;
+  initialKeyword?: string;
 };
 
-const initialFilters: MarketplaceFilters = { keyword: '', skillIds: [] };
+function createInitialFilters(keyword = ''): MarketplaceFilters {
+  return { keyword: keyword.trim(), skillIds: [] };
+}
 
 function updateBudget(
   filters: MarketplaceFilters,
@@ -51,10 +54,11 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
   layout,
   renderItem,
   getTargetId = (item) => item.id,
+  initialKeyword = '',
 }: MarketplaceBrowserProps<T>) {
   const user = useAuthStore((state) => state.user);
   const [items, setItems] = useState<T[]>([]);
-  const [filters, setFilters] = useState<MarketplaceFilters>(initialFilters);
+  const [filters, setFilters] = useState<MarketplaceFilters>(() => createInitialFilters(initialKeyword));
   const [skills, setSkills] = useState<Skill[]>([]);
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
@@ -98,8 +102,8 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
   useEffect(() => {
     // Initial marketplace results come from the server search contract.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    void loadResults(initialFilters);
-  }, [loadResults]);
+    void loadResults(createInitialFilters(initialKeyword));
+  }, [initialKeyword, loadResults]);
 
   useEffect(() => {
     skillsApi.getTaxonomy()

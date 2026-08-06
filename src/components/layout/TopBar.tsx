@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Bell, MessageSquare, Wallet, LogOut, User, Settings, ChevronDown } from 'lucide-react';
+import { Bell, MessageSquare, Wallet, LogOut, User, Settings, ChevronDown, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -20,6 +20,7 @@ export function TopBar() {
   const { user, logout } = useAuthStore();
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -35,19 +36,35 @@ export function TopBar() {
     : null;
 
   const hasParticipantDashboard = user?.role === 'freelancer' || user?.role === 'employer';
+  const searchTarget = user?.role === 'employer' ? '/freelancers' : '/projects';
+  const searchLabel = user?.role === 'employer' ? 'Search freelancers' : 'Search projects';
+
+  const submitSearch = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const keyword = searchQuery.trim();
+    router.push(keyword ? `${searchTarget}?keyword=${encodeURIComponent(keyword)}` : searchTarget);
+  };
 
   return (
     <header className="h-16 border-b border-border bg-card/80 backdrop-blur-xl sticky top-0 z-40">
       <div className="flex items-center justify-between h-full px-6">
-        {/* Search */}
-        <div className="flex-1 max-w-md">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search projects, freelancers..."
-              className="w-full h-9 pl-4 pr-4 rounded-lg bg-secondary border border-border text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
-            />
-          </div>
+        <div className="max-w-md flex-1">
+          {hasParticipantDashboard && (
+            <form className="relative" role="search" onSubmit={submitSearch}>
+              <label htmlFor="dashboard-marketplace-search" className="sr-only">{searchLabel}</label>
+              <input
+                id="dashboard-marketplace-search"
+                type="text"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder={`${searchLabel}…`}
+                className="h-9 w-full rounded-lg border border-border bg-secondary pl-4 pr-10 text-sm text-foreground transition-all placeholder:text-muted-foreground focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
+              <button type="submit" className="absolute inset-y-0 right-0 flex w-10 items-center justify-center rounded-r-lg text-muted-foreground transition-colors hover:text-foreground" aria-label={searchLabel}>
+                <Search className="size-4" aria-hidden="true" />
+              </button>
+            </form>
+          )}
         </div>
 
         {/* Right Actions */}

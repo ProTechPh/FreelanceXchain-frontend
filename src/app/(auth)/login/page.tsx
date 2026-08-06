@@ -66,7 +66,9 @@ export default function LoginPage() {
       onGoogleSignIn={() => handleOAuth('google')}
       onGithubSignIn={() => handleOAuth('github')}
       onResetPassword={() => router.push('/forgot-password')}
+      onResendConfirmation={() => router.push('/resend-confirmation')}
       onCreateAccount={() => router.push('/register')}
+      onPasswordlessSignIn={() => router.push('/passwordless')}
     />
   );
 }

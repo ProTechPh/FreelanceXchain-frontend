@@ -1,0 +1,5 @@
+import { InfoPage } from '@/components/public/info-page';
+
+export default function HowItWorksPage() {
+  return <InfoPage title="How it works" intro="A clear path from marketplace discovery to verified delivery and payment."><ol><li><strong>Create and verify your account.</strong> Choose an employer or freelancer role, complete identity verification, and connect a wallet when a payment action requires it.</li><li><strong>Find the right match.</strong> Employers post scoped projects; freelancers search projects and submit proposals. Saved searches, favorites, skill matching, and reputation help with discovery.</li><li><strong>Fund the contract.</strong> After a proposal is accepted, the employer funds escrow through the contract workspace.</li><li><strong>Deliver and approve milestones.</strong> Freelancers upload deliverables and employers approve or request a revision.</li><li><strong>Resolve and review.</strong> Either party can open a verified dispute for an eligible milestone. Completed contracts can be reviewed by both participants.</li></ol></InfoPage>;
+}
