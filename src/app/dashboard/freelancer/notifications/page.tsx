@@ -60,7 +60,7 @@ function relativeTime(iso: string): string {
 
 type Tab = 'all' | 'unread';
 
-export default function NotificationsPage() {
+export function NotificationsCenter() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [continuationToken, setContinuationToken] = useState<string | undefined>();
   const [hasMore, setHasMore] = useState(false);
@@ -229,4 +229,8 @@ export default function NotificationsPage() {
       )}
     </div>
   );
+}
+
+export default function FreelancerNotificationsPage() {
+  return <NotificationsCenter />;
 }

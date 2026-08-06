@@ -35,7 +35,6 @@ export function TopBar() {
     : null;
 
   const hasParticipantDashboard = user?.role === 'freelancer' || user?.role === 'employer';
-  const hasNotifications = user?.role === 'freelancer';
 
   return (
     <header className="h-16 border-b border-border bg-card/80 backdrop-blur-xl sticky top-0 z-40">
@@ -57,7 +56,7 @@ export function TopBar() {
           <ThemeToggle />
 
           {/* Notifications */}
-          {hasNotifications && (
+          {hasParticipantDashboard && (
             <Link href={`/dashboard/${user?.role || 'freelancer'}/notifications`}>
               <Button variant="ghost" size="icon" className="relative">
                 <Bell className="w-5 h-5" />

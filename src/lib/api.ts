@@ -458,16 +458,19 @@ export const disputesApi = {
   list: (params?: Record<string, string | number>) =>
     api.get<{ items: Dispute[]; continuationToken?: string | null }>('/disputes', { params }),
 
-  create: (data: Partial<Dispute>) =>
-    api.post<ApiResponse<Dispute>>('/disputes', data),
+  create: (data: Pick<Dispute, 'contractId' | 'milestoneId' | 'reason'>) =>
+    api.post<Dispute>('/disputes', data),
 
   get: (id: string) =>
-    api.get<ApiResponse<Dispute>>(`/disputes/${id}`),
+    api.get<Dispute>(`/disputes/${id}`),
 
-  submitEvidence: (id: string, data: FormData) =>
-    api.post(`/disputes/${id}/evidence`, data, {
+  submitEvidenceFiles: (id: string, data: FormData) =>
+    api.post<Dispute>(`/disputes/${id}/evidence`, data, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
+
+  submitEvidence: (id: string, type: 'text' | 'link', content: string) =>
+    api.post<Dispute>(`/disputes/${id}/evidence`, { type, content }),
 
   resolve: (disputeId: string, decision: 'freelancer_favor' | 'employer_favor', reasoning: string) =>
     api.post<Dispute>(`/disputes/${disputeId}/resolve`, { decision, reasoning }),

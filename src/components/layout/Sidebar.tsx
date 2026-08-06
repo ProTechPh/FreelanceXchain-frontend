@@ -28,6 +28,7 @@ import {
   ClipboardList,
   Mail,
   UserRound,
+  Bell,
 } from 'lucide-react';
 
 interface NavItem {
@@ -41,12 +42,14 @@ const freelancerNav: NavItem[] = [
   { label: 'Browse Projects', href: '/dashboard/freelancer/projects', icon: Search },
   { label: 'My Proposals', href: '/dashboard/freelancer/proposals', icon: FileText },
   { label: 'Contracts', href: '/dashboard/freelancer/contracts', icon: FolderOpen },
+  { label: 'Disputes', href: '/dashboard/freelancer/disputes', icon: AlertTriangle },
   { label: 'Earnings', href: '/dashboard/freelancer/earnings', icon: Wallet },
   { label: 'Reputation', href: '/dashboard/freelancer/reputation', icon: Star },
   { label: 'Portfolio', href: '/dashboard/freelancer/portfolio', icon: Image },
   { label: 'Profile', href: '/dashboard/freelancer/profile', icon: UserRound },
   { label: 'Verification', href: '/dashboard/freelancer/verification', icon: Shield },
   { label: 'Messages', href: getDashboardMessageRoute('freelancer'), icon: MessageSquare },
+  { label: 'Notifications', href: '/dashboard/freelancer/notifications', icon: Bell },
   { label: 'Settings', href: '/dashboard/freelancer/settings', icon: Settings },
 ];
 
@@ -55,9 +58,11 @@ const employerNav: NavItem[] = [
   { label: 'My Projects', href: '/dashboard/employer/projects', icon: FolderOpen },
   { label: 'Post Project', href: '/dashboard/employer/projects/new', icon: PlusCircle },
   { label: 'Contracts', href: '/dashboard/employer/contracts', icon: FileText },
+  { label: 'Disputes', href: '/dashboard/employer/disputes', icon: AlertTriangle },
   { label: 'Profile', href: '/dashboard/employer/profile', icon: UserRound },
   { label: 'Verification', href: '/dashboard/employer/verification', icon: Shield },
   { label: 'Messages', href: getDashboardMessageRoute('employer'), icon: MessageSquare },
+  { label: 'Notifications', href: '/dashboard/employer/notifications', icon: Bell },
   { label: 'Settings', href: '/dashboard/employer/settings', icon: Settings },
 ];
 
