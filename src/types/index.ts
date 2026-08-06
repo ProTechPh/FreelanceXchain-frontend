@@ -212,6 +212,20 @@ export interface Proposal {
   freelancer?: FreelancerProfile;
 }
 
+export interface EmployerHistory {
+  completedProjectsCount: number;
+  averageRating: number;
+  reviewCount: number;
+  companyName?: string | null;
+  industry?: string | null;
+}
+
+export interface ProposalWithEmployerHistory {
+  proposal: Proposal;
+  project: Project;
+  employerHistory: EmployerHistory;
+}
+
 export interface Contract {
   id: string;
   projectId: string;

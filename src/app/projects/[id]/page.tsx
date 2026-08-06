@@ -12,6 +12,7 @@ import { FavoriteButton } from '@/components/marketplace/favorite-button';
 import type { Project } from '@/types';
 import { getStatusColor } from '@/lib/status-styles';
 import { getProjectPrimaryAction } from '@/lib/project-actions';
+import { formatFileSize, safeAttachmentUrl } from '@/lib/attachment-presentation';
 import { useAuthStore } from '@/stores/authStore';
 import { toast } from 'sonner';
 import {
@@ -23,6 +24,8 @@ import {
   Loader2,
   SearchX,
   ClipboardList,
+  ExternalLink,
+  Paperclip,
 } from 'lucide-react';
 
 export default function ProjectDetailPage() {
@@ -141,6 +144,16 @@ export default function ProjectDetailPage() {
                 <p>{project.description}</p>
               </CardContent>
             </Card>
+
+            {project.attachments.length > 0 && (
+              <Card className="bg-card border-border">
+                <CardHeader><CardTitle className="flex items-center gap-2"><Paperclip className="h-5 w-5" />Reference Attachments</CardTitle></CardHeader>
+                <CardContent><ul className="space-y-2">{project.attachments.map((attachment) => {
+                  const url = safeAttachmentUrl(attachment.url);
+                  return <li key={`${attachment.filename}-${attachment.url}`} className="flex items-center justify-between gap-3 rounded-lg border border-border p-3"><span className="min-w-0 truncate text-sm">{attachment.filename} <span className="text-xs text-muted-foreground">({formatFileSize(attachment.size)})</span></span>{url ? <Button asChild variant="ghost" size="sm"><a href={url} target="_blank" rel="noreferrer">Open<ExternalLink className="ml-2 h-3 w-3" /></a></Button> : <span className="text-xs text-muted-foreground">Unavailable</span>}</li>;
+                })}</ul></CardContent>
+              </Card>
+            )}
 
             {/* Milestones */}
             {project.milestones && project.milestones.length > 0 && (

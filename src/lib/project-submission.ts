@@ -16,6 +16,7 @@ export interface ProjectSubmissionForm {
   budget: string;
   deadline: string;
   milestones: ProjectSubmissionMilestone[];
+  files: File[];
 }
 
 export interface CreateProjectPayload {
@@ -42,6 +43,7 @@ interface CreatedProject {
 
 export interface ProjectSubmissionApi {
   create(data: CreateProjectPayload): Promise<{ data: CreatedProject }>;
+  createWithAttachments?(data: FormData): Promise<{ data: CreatedProject }>;
   setMilestones(
     projectId: string,
     data: SetProjectMilestonesPayload,
@@ -53,6 +55,19 @@ export class ProjectFormValidationError extends Error {
     super(message);
     this.name = 'ProjectFormValidationError';
   }
+}
+
+export function validateProjectFiles(files: File[]): string | null {
+  if (files.length > 10) {
+    return 'You can attach up to 10 project files.';
+  }
+  if (files.some((file) => file.size > 10 * 1024 * 1024)) {
+    return 'Each project attachment must be 10 MB or smaller.';
+  }
+  if (files.reduce((total, file) => total + file.size, 0) > 25 * 1024 * 1024) {
+    return 'Project attachments must total 25 MB or less.';
+  }
+  return null;
 }
 
 function getDeadlineTimestamp(deadline: string): string {
@@ -73,6 +88,8 @@ export function validateProjectStep(
     if (form.skills.length === 0) {
       return 'Select at least one required skill.';
     }
+    const fileError = validateProjectFiles(form.files);
+    if (fileError) return fileError;
   }
 
   if (step === 2) {
@@ -128,14 +145,31 @@ export async function submitProject(
   }
 
   const deadline = getDeadlineTimestamp(form.deadline);
-  const { data: createdProject } = await api.create({
+  const projectPayload: CreateProjectPayload = {
     title: form.title.trim(),
     description: form.description.trim(),
     requiredSkills: form.skills.map((skill) => ({ skillId: skill.id })),
     budget: Number(form.budget),
     deadline,
     isRush: false,
-  });
+  };
+
+  let createdProject: CreatedProject;
+  if (form.files.length > 0) {
+    if (!api.createWithAttachments) {
+      throw new Error('Project attachment uploads are unavailable.');
+    }
+    const formData = new FormData();
+    formData.set('title', projectPayload.title);
+    formData.set('description', projectPayload.description);
+    formData.set('requiredSkills', JSON.stringify(projectPayload.requiredSkills));
+    formData.set('budget', String(projectPayload.budget));
+    formData.set('deadline', projectPayload.deadline);
+    form.files.forEach((file) => formData.append('files', file));
+    ({ data: createdProject } = await api.createWithAttachments(formData));
+  } else {
+    ({ data: createdProject } = await api.create(projectPayload));
+  }
 
   const { data: projectWithMilestones } = await api.setMilestones(
     createdProject.id,

@@ -8,11 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { projectsApi, skillsApi } from '@/lib/api';
+import { matchingApi, projectsApi, skillsApi } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/auth-contract';
+import { formatFileSize } from '@/lib/attachment-presentation';
 import {
   ProjectFormValidationError,
   submitProject,
+  validateProjectFiles,
   validateProjectStep,
   type ProjectSubmissionForm,
   type ProjectSubmissionSkill,
@@ -29,6 +31,7 @@ import {
   Clock,
   Target,
   Loader2,
+  Sparkles,
 } from 'lucide-react';
 
 const steps = [
@@ -51,6 +54,8 @@ export default function CreateProjectPage() {
   const [milestones, setMilestones] = useState([
     { title: '', description: '', amount: '' },
   ]);
+  const [files, setFiles] = useState<File[]>([]);
+  const [extractingSkills, setExtractingSkills] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -89,6 +94,7 @@ export default function CreateProjectPage() {
     budget,
     deadline,
     milestones,
+    files,
   });
 
   const showFormError = (message: string) => {
@@ -104,6 +110,49 @@ export default function CreateProjectPage() {
 
   const removeSkill = (skillId: string) => {
     setSkills((current) => current.filter((skill) => skill.id !== skillId));
+  };
+
+  const suggestSkills = async () => {
+    if (!description.trim()) {
+      showFormError('Add a project description before suggesting skills.');
+      return;
+    }
+
+    setExtractingSkills(true);
+    setFormError(null);
+    try {
+      const { data } = await matchingApi.extractSkills(description);
+      const extractedIds = new Set(data.map((skill) => skill.skillId));
+      const suggestions = skillOptions.filter((skill) => extractedIds.has(skill.id));
+      setSkills((current) => {
+        const selectedIds = new Set(current.map((skill) => skill.id));
+        return [...current, ...suggestions.filter((skill) => !selectedIds.has(skill.id))];
+      });
+      toast.success(
+        suggestions.length > 0
+          ? `Added ${suggestions.length} suggested skill${suggestions.length === 1 ? '' : 's'}.`
+          : 'No additional taxonomy skills were found in the description.',
+      );
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Unable to suggest skills right now.'));
+    } finally {
+      setExtractingSkills(false);
+    }
+  };
+
+  const addFiles = (selected: File[]) => {
+    const next = [...files, ...selected].filter(
+      (file, index, all) => all.findIndex((candidate) => (
+        candidate.name === file.name && candidate.size === file.size && candidate.lastModified === file.lastModified
+      )) === index,
+    );
+    const error = validateProjectFiles(next);
+    if (error) {
+      showFormError(error);
+      return;
+    }
+    setFormError(null);
+    setFiles(next);
   };
 
   const addMilestone = () => {
@@ -220,7 +269,19 @@ export default function CreateProjectPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label id="required-skills-label">Required Skills</Label>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <Label id="required-skills-label">Required Skills</Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={extractingSkills || skillsLoading || !description.trim()}
+                        onClick={() => void suggestSkills()}
+                      >
+                        {extractingSkills ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                        Suggest from description
+                      </Button>
+                    </div>
                     <div className="flex flex-wrap gap-2 mb-3">
                       {skills.map((skill) => (
                         <Badge key={skill.id} variant="secondary" className="text-sm py-1.5 px-3">
@@ -261,13 +322,43 @@ export default function CreateProjectPage() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label>Attachments</Label>
-                    <div className="border-2 border-dashed border-border rounded-xl p-8 text-center cursor-pointer hover:border-primary/50 transition-colors">
-                      <Upload className="w-8 h-8 mx-auto mb-3 text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground">
-                        Drag & drop files or click to upload
-                      </p>
-                    </div>
+                    <Label htmlFor="project-files">Reference attachments (optional)</Label>
+                    <label
+                      htmlFor="project-files"
+                      className="block cursor-pointer rounded-xl border-2 border-dashed border-border p-8 text-center transition-colors hover:border-primary/50 focus-within:border-primary"
+                      onDragOver={(event) => event.preventDefault()}
+                      onDrop={(event) => {
+                        event.preventDefault();
+                        addFiles(Array.from(event.dataTransfer.files));
+                      }}
+                    >
+                      <Upload className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">Drag files here or choose files</span>
+                      <span className="mt-1 block text-xs text-muted-foreground">Up to 10 files, 10 MB each and 25 MB total</span>
+                      <input
+                        id="project-files"
+                        type="file"
+                        multiple
+                        className="sr-only"
+                        accept=".pdf,.doc,.docx,.xlsx,.pptx,.txt,.csv,.png,.jpg,.jpeg,.gif,.webp,.zip,.rar,.7z,.mp4,.webm,.mov"
+                        onChange={(event) => {
+                          addFiles(Array.from(event.target.files ?? []));
+                          event.target.value = '';
+                        }}
+                      />
+                    </label>
+                    {files.length > 0 && (
+                      <ul className="space-y-2" aria-label="Selected project attachments">
+                        {files.map((file) => (
+                          <li key={`${file.name}-${file.size}-${file.lastModified}`} className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2 text-sm">
+                            <span className="min-w-0 truncate">{file.name} <span className="text-muted-foreground">({formatFileSize(file.size)})</span></span>
+                            <Button type="button" size="icon" variant="ghost" aria-label={`Remove ${file.name}`} onClick={() => setFiles((current) => current.filter((candidate) => candidate !== file))}>
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 </div>
               </div>
@@ -415,6 +506,12 @@ export default function CreateProjectPage() {
                   <h3 className="font-medium mb-2">Project Title</h3>
                   <p className="text-muted-foreground">{title || 'Not set'}</p>
                 </div>
+                {files.length > 0 && (
+                  <div className="p-4 rounded-xl bg-secondary/50 border border-border">
+                    <h3 className="font-medium mb-2">Reference attachments</h3>
+                    <p className="text-sm text-muted-foreground">{files.length} file{files.length === 1 ? '' : 's'} will be shared with freelancers.</p>
+                  </div>
+                )}
                 <div className="p-4 rounded-xl bg-secondary/50 border border-border">
                   <h3 className="font-medium mb-2">Description</h3>
                   <p className="text-muted-foreground">{description || 'Not set'}</p>

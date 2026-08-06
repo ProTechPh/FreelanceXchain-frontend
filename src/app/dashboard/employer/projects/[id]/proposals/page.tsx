@@ -28,8 +28,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { freelancersApi, projectsApi, proposalsApi } from '@/lib/api';
+import { freelancersApi, matchingApi, projectsApi, proposalsApi, type FreelancerRecommendation } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/auth-contract';
+import { formatFileSize, safeAttachmentUrl } from '@/lib/attachment-presentation';
 import {
   updateProposalDecision,
   type ProposalDecision,
@@ -43,27 +44,13 @@ interface PendingDecision {
   action: ProposalDecision;
 }
 
-function safeAttachmentUrl(value: string): string | null {
-  try {
-    const url = new URL(value);
-    return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : null;
-  } catch {
-    return null;
-  }
-}
-
-function formatFileSize(size: number): string {
-  if (size < 1024) return `${size} B`;
-  if (size < 1024 * 1024) return `${Math.round(size / 1024)} KB`;
-  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
-}
-
 export default function EmployerProjectProposalsPage() {
   const params = useParams<{ id: string }>();
   const projectId = params?.id;
   const [project, setProject] = useState<Project | null>(null);
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [profiles, setProfiles] = useState<Record<string, FreelancerProfile | null>>({});
+  const [recommendations, setRecommendations] = useState<FreelancerRecommendation[]>([]);
   const [loading, setLoading] = useState(true);
   const [decision, setDecision] = useState<PendingDecision | null>(null);
   const [updating, setUpdating] = useState(false);
@@ -72,12 +59,17 @@ export default function EmployerProjectProposalsPage() {
     if (!projectId) return;
 
     try {
-      const [projectResponse, proposalResponse] = await Promise.all([
+      const [projectResponse, proposalResponse, recommendationResponse] = await Promise.all([
         projectsApi.get(projectId),
         projectsApi.getProposals(projectId),
+        matchingApi.getFreelancerRecommendations(projectId, 5).catch(() => ({ data: [] as FreelancerRecommendation[] })),
       ]);
       const loadedProposals = proposalResponse.data.items;
-      const freelancerIds = [...new Set(loadedProposals.map((proposal) => proposal.freelancerId))];
+      const loadedRecommendations = recommendationResponse.data;
+      const freelancerIds = [...new Set([
+        ...loadedProposals.map((proposal) => proposal.freelancerId),
+        ...loadedRecommendations.map((recommendation) => recommendation.freelancerId),
+      ])];
       const profileEntries = await Promise.all(
         freelancerIds.map(async (freelancerId) => {
           try {
@@ -91,6 +83,7 @@ export default function EmployerProjectProposalsPage() {
 
       setProject(projectResponse.data);
       setProposals(loadedProposals);
+      setRecommendations(loadedRecommendations);
       setProfiles(Object.fromEntries(profileEntries));
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Failed to load project proposals'));
@@ -171,6 +164,17 @@ export default function EmployerProjectProposalsPage() {
           </Badge>
         </div>
       </div>
+
+      {recommendations.length > 0 && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader><CardTitle className="text-lg">Recommended talent</CardTitle><p className="text-sm text-muted-foreground">AI-ranked freelancers whose skills and reputation fit this project.</p></CardHeader>
+          <CardContent><div className="grid gap-3 lg:grid-cols-2">{recommendations.map((recommendation) => {
+            const profile = profiles[recommendation.freelancerId];
+            const name = profile?.name || `Freelancer ${recommendation.freelancerId.slice(0, 8)}`;
+            return <div key={recommendation.freelancerId} className="rounded-xl border border-border bg-card p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-medium">{name}</p><p className="mt-1 text-xs text-muted-foreground">Reputation {Math.round(recommendation.reputationScore)}%</p></div><Badge className="bg-green-500/10 text-green-500">{Math.round(recommendation.combinedScore)}% fit</Badge></div><div className="mt-3 flex flex-wrap gap-1.5">{recommendation.matchedSkills.map((skill) => <Badge key={skill} variant="secondary" className="text-xs">{skill}</Badge>)}</div><p className="mt-3 text-sm text-muted-foreground">{recommendation.reasoning}</p><div className="mt-4 flex gap-2"><Button asChild size="sm" variant="outline"><Link href={`/freelancers/${recommendation.freelancerId}`}>View profile</Link></Button><Button asChild size="sm" variant="ghost"><Link href={getDirectMessageRoute('employer', recommendation.freelancerId)}>Message</Link></Button></div></div>;
+          })}</div></CardContent>
+        </Card>
+      )}
 
       {proposals.length === 0 ? (
         <Card className="border-border bg-card">

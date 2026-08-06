@@ -10,6 +10,7 @@ import type {
   EmployerProfile,
   Project,
   Proposal,
+  ProposalWithEmployerHistory,
   Contract,
   Milestone,
   Message,
@@ -271,6 +272,11 @@ export const projectsApi = {
   create: (data: CreateProjectPayload) =>
     api.post<Project>('/projects', data),
 
+  createWithAttachments: (data: FormData) =>
+    api.post<Project>('/projects/with-attachments', data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+
   setMilestones: (id: string, data: SetProjectMilestonesPayload) =>
     api.post<Project>(`/projects/${id}/milestones`, data),
   
@@ -357,6 +363,9 @@ export const proposalsApi = {
 
   get: (id: string) =>
     api.get<Proposal>(`/proposals/${id}`),
+
+  getWithEmployerHistory: (id: string) =>
+    api.get<ProposalWithEmployerHistory>(`/proposals/${id}/with-employer-history`),
 
   accept: (id: string) =>
     api.post<{ proposal: Proposal; contract: Contract }>(`/proposals/${id}/accept`),

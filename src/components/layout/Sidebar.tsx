@@ -33,6 +33,7 @@ import {
   Tags,
   History,
   Bookmark,
+  Sparkles,
 } from 'lucide-react';
 
 interface NavItem {
@@ -44,6 +45,7 @@ interface NavItem {
 const freelancerNav: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard/freelancer', icon: LayoutDashboard },
   { label: 'Browse Projects', href: '/dashboard/freelancer/projects', icon: Search },
+  { label: 'Recommended', href: '/dashboard/freelancer/recommendations', icon: Sparkles },
   { label: 'My Proposals', href: '/dashboard/freelancer/proposals', icon: FileText },
   { label: 'Contracts', href: '/dashboard/freelancer/contracts', icon: FolderOpen },
   { label: 'Disputes', href: '/dashboard/freelancer/disputes', icon: AlertTriangle },

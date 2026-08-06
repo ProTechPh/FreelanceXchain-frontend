@@ -147,9 +147,12 @@ export default function ProposalsPage() {
                     </span>
                   </div>
                   <div className="mt-4 flex gap-3">
+                    <Link href={`/dashboard/freelancer/proposals/${proposal.id}`}>
+                      <Button variant="outline" size="sm">View Proposal</Button>
+                    </Link>
                     {project && (
                       <Link href={`/projects/${project.id}`}>
-                        <Button variant="outline" size="sm">View Project</Button>
+                        <Button variant="ghost" size="sm">View Project</Button>
                       </Link>
                     )}
                     {status === 'pending' && (

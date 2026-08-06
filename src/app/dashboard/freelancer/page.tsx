@@ -315,7 +315,7 @@ export default function FreelancerDashboard() {
       <Card className="bg-card border-border">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-lg">AI Recommended Projects</CardTitle>
-          <Link href="/dashboard/freelancer/projects">
+          <Link href="/dashboard/freelancer/recommendations">
             <Button variant="ghost" size="sm">
               View All <ArrowUpRight className="w-4 h-4 ml-1" />
             </Button>
