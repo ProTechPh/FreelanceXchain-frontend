@@ -1,5 +1,5 @@
 import { AccountSettings } from '@/components/dashboard/account-settings';
 
-export default function FreelancerSettingsPage() {
+export default function EmployerSettingsPage() {
   return <AccountSettings />;
 }

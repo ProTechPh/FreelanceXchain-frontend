@@ -25,7 +25,7 @@ export default function MfaSetupPage() {
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [copied, setCopied] = useState(false);
-  const { isAuthenticated, hasHydrated } = useAuthStore();
+  const { user, isAuthenticated, hasHydrated } = useAuthStore();
   const router = useRouter();
 
   const generateQrCode = useCallback(async (totpUri: string) => {
@@ -74,11 +74,9 @@ export default function MfaSetupPage() {
     e.preventDefault();
     setIsVerifying(true);
     try {
-      const { data } = await authApi.mfaVerifyEnrollment('totp', code);
-      if (data.success) {
-        setStep('complete');
-        toast.success('Two-factor authentication enabled!');
-      }
+      await authApi.mfaVerifyEnrollment('totp', code);
+      setStep('complete');
+      toast.success('Two-factor authentication enabled!');
     } catch {
       toast.error('Invalid verification code', { duration: 5000 });
     } finally {
@@ -199,13 +197,13 @@ export default function MfaSetupPage() {
           <p className="text-sm text-muted-foreground">
             Your account is now protected with two-factor authentication.
           </p>
-          <Button onClick={() => router.push('/dashboard/freelancer/settings')} variant="gradient" className="w-full">
+          <Button onClick={() => router.push(`/dashboard/${user?.role ?? 'freelancer'}/settings`)} variant="gradient" className="w-full">
             Go to Settings
           </Button>
         </div>
       )}
 
-      <Link href="/dashboard/freelancer/settings" className="flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+      <Link href={`/dashboard/${user?.role ?? 'freelancer'}/settings`} className="flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground">
         <ArrowLeft className="w-4 h-4" />
         Back to settings
       </Link>

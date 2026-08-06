@@ -54,6 +54,7 @@ const employerNav: NavItem[] = [
   { label: 'Post Project', href: '/dashboard/employer/projects/new', icon: PlusCircle },
   { label: 'Verification', href: '/dashboard/employer/verification', icon: Shield },
   { label: 'Messages', href: getDashboardMessageRoute('employer'), icon: MessageSquare },
+  { label: 'Settings', href: '/dashboard/employer/settings', icon: Settings },
 ];
 
 const adminNav: NavItem[] = [

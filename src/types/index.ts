@@ -515,6 +515,30 @@ export interface MfaFactorsResponse {
   factors: MfaFactor[];
 }
 
+export interface EmailPreferences {
+  id: string;
+  userId: string;
+  proposalReceived: boolean;
+  proposalAccepted: boolean;
+  milestoneUpdates: boolean;
+  paymentNotifications: boolean;
+  disputeNotifications: boolean;
+  marketingEmails: boolean;
+  weeklyDigest: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type EmailPreferencesUpdate = Partial<{
+  proposal_received: boolean;
+  proposal_accepted: boolean;
+  milestone_updates: boolean;
+  payment_notifications: boolean;
+  dispute_notifications: boolean;
+  marketing_emails: boolean;
+  weekly_digest: boolean;
+}>;
+
 export interface ApiResponse<T> {
   data: T;
   message?: string;

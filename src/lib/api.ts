@@ -34,6 +34,8 @@ import type {
   AdminAnalytics,
   FreelancerAnalytics,
   EmployerAnalytics,
+  EmailPreferences,
+  EmailPreferencesUpdate,
   SkillTrend,
   PlatformMetrics,
   SkillTaxonomy,
@@ -168,13 +170,26 @@ export const authApi = {
     api.post<MfaEnrollResponse>('/auth/mfa/enroll', data),
   
   mfaVerifyEnrollment: (factorType: string, code: string) =>
-    api.post('/auth/mfa/verify', { factorType, code }),
+    api.post<{ message: string }>('/auth/mfa/verify-enrollment', { factorId: factorType, code }),
   
   mfaFactors: () =>
     api.get<MfaFactorsResponse>('/auth/mfa/factors'),
   
-  mfaDisable: (factorType: string) =>
-    api.post('/auth/mfa/disable', { factorType }),
+  mfaDisable: (factorId: string, otpCode: string) =>
+    api.post<{ message: string }>('/auth/mfa/disable', { factorId, otpCode }),
+
+  updateWallet: (walletAddress: string) =>
+    api.patch<{ walletAddress: string }>('/auth/wallet', { walletAddress }),
+};
+
+export const emailPreferencesApi = {
+  get: () => api.get<EmailPreferences>('/email-preferences'),
+
+  update: (data: EmailPreferencesUpdate) =>
+    api.patch<EmailPreferences>('/email-preferences', data),
+
+  unsubscribeAll: () =>
+    api.post<{ message: string }>('/email-preferences/unsubscribe-all'),
 };
 
 export const freelancersApi = {
