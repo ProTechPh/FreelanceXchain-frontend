@@ -61,6 +61,11 @@ test('project discovery sends backend filters and persists favorites and saved s
     contentType: 'application/json',
     body: JSON.stringify({ items: [project], metadata: { pageSize: 12, hasMore: false, offset: 0 } }),
   }));
+  await page.route('**/api/projects/stats/categories**', (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ categories: [{ categoryId: 'category-1', categoryName: 'Development', projectCount: 8, totalBudget: 12000 }] }),
+  }));
   await page.route('**/api/skills', (route) => route.fulfill({
     status: 200,
     contentType: 'application/json',
@@ -91,6 +96,8 @@ test('project discovery sends backend filters and persists favorites and saved s
 
   await page.goto('/projects');
   await expect(page.getByRole('heading', { name: 'React dashboard build' })).toBeVisible();
+  await expect(page.getByText('Development')).toBeVisible();
+  await expect(page.getByText('8 open projects')).toBeVisible();
 
   await page.getByLabel('Skill').selectOption('skill-react');
   await page.getByLabel('Minimum budget').fill('500');
@@ -116,4 +123,23 @@ test('project discovery sends backend filters and persists favorites and saved s
     filters: { skills: ['React'], skillIds: ['skill-react'], minBudget: 500 },
     notifyOnNew: true,
   });
+});
+
+test('freelancer dashboard browse page uses the server search contract', async ({ page }) => {
+  let searchCalls = 0;
+  await page.route('**/api/search/projects**', async (route) => {
+    searchCalls += 1;
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ items: [], metadata: { pageSize: 12, hasMore: false, offset: 0 } }) });
+  });
+  await page.route('**/api/projects/stats/categories**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ categories: [] }) }));
+  await page.route('**/api/skills', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ categories: [] }) }));
+  await page.route('**/api/favorites', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }));
+  await page.route('**/api/saved-searches', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }));
+  await page.route('**/api/notifications/unread-count', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ count: 0 }) }));
+  await page.route('**/api/notifications/stream', (route) => route.fulfill({ status: 200, contentType: 'text/event-stream', body: '' }));
+
+  await page.goto('/dashboard/freelancer/projects');
+
+  await expect(page.getByText('No open projects match these filters.')).toBeVisible();
+  expect(searchCalls).toBeGreaterThan(0);
 });

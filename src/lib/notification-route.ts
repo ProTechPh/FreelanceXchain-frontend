@@ -18,7 +18,10 @@ export function getNotificationDestination(notification: Notification, role: Use
   const contractId = stringData(notification, 'contractId') ?? stringData(notification, 'relatedId');
   if (notification.type === 'message') return `/dashboard/${role}/messages`;
   if (notification.type === 'rating_received') return `/dashboard/${role}/reputation`;
-  if (notification.type.startsWith('dispute_')) return `/dashboard/${role}/disputes`;
+  if (notification.type.startsWith('dispute_')) {
+    const disputeId = stringData(notification, 'disputeId') ?? stringData(notification, 'relatedId');
+    return disputeId ? `/dashboard/${role}/disputes/${encodeURIComponent(disputeId)}` : `/dashboard/${role}/disputes`;
+  }
 
   if (notification.type === 'proposal_received' && role === 'employer') {
     const projectId = stringData(notification, 'projectId');

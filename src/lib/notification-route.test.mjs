@@ -15,5 +15,7 @@ test('maps messages, ratings, and disputes without inventing missing resource id
   assert.equal(getNotificationDestination({ ...base, type: 'message' }, 'freelancer'), '/dashboard/freelancer/messages');
   assert.equal(getNotificationDestination({ ...base, type: 'rating_received' }, 'employer'), '/dashboard/employer/reputation');
   assert.equal(getNotificationDestination({ ...base, type: 'dispute_created', data: { disputeId: 'dispute-1' } }, 'admin'), '/dashboard/admin/disputes');
+  assert.equal(getNotificationDestination({ ...base, type: 'dispute_created', data: { disputeId: 'dispute-1' } }, 'employer'), '/dashboard/employer/disputes/dispute-1');
+  assert.equal(getNotificationDestination({ ...base, type: 'dispute_evidence_submitted', data: { relatedId: 'dispute-2', relatedType: 'dispute' } }, 'freelancer'), '/dashboard/freelancer/disputes/dispute-2');
   assert.equal(getNotificationDestination({ ...base, type: 'milestone_submitted', data: { milestoneId: 'milestone-1' } }, 'employer'), null);
 });

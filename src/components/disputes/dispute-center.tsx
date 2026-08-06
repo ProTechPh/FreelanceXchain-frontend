@@ -22,7 +22,7 @@ import { Textarea } from '@/components/ui/textarea';
 type ParticipantRole = Extract<UserRole, 'employer' | 'freelancer'>;
 const emptyDraft: DisputeDraft = { contractId: '', milestoneId: '', reason: '' };
 
-export function DisputeCenter({ role }: { role: ParticipantRole }) {
+export function DisputeCenter({ role, disputeId }: { role: ParticipantRole; disputeId?: string }) {
   const user = useAuthStore((state) => state.user);
   const [disputes, setDisputes] = useState<Dispute[]>([]);
   const [contracts, setContracts] = useState<Contract[]>([]);
@@ -46,13 +46,15 @@ export function DisputeCenter({ role }: { role: ParticipantRole }) {
     }
     setLoading(true);
     try {
-      const [disputeResponse, contractResponse] = await Promise.all([
-        disputesApi.list({ limit: 100 }),
+      const [disputeItems, contractResponse] = await Promise.all([
+        disputeId
+          ? disputesApi.get(disputeId).then(({ data }) => [data])
+          : disputesApi.list({ limit: 100 }).then(({ data }) => data.items),
         contractsApi.list({ limit: 100 }),
       ]);
-      setDisputes(disputeResponse.data.items);
+      setDisputes(disputeItems);
       setContracts(contractResponse.data.items);
-      const evidenceEntries = await Promise.all(disputeResponse.data.items.map(async (dispute) => {
+      const evidenceEntries = await Promise.all(disputeItems.map(async (dispute) => {
         try {
           const { data } = await disputesApi.listEvidence(dispute.id);
           return [dispute.id, data] as const;
@@ -75,7 +77,7 @@ export function DisputeCenter({ role }: { role: ParticipantRole }) {
     } finally {
       setLoading(false);
     }
-  }, [verified]);
+  }, [disputeId, verified]);
 
   useEffect(() => {
     // Dispute data is available only after the authenticated user's KYC state is known.
@@ -223,9 +225,13 @@ export function DisputeCenter({ role }: { role: ParticipantRole }) {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
-      <div><h1 className="text-2xl font-bold">Disputes</h1><p className="text-muted-foreground">Open a case for a submitted milestone and provide evidence for review.</p></div>
+      <div>
+        {disputeId && <Button asChild variant="ghost" className="-ml-3 mb-2"><Link href={`/dashboard/${role}/disputes`}>Back to disputes</Link></Button>}
+        <h1 className="text-2xl font-bold">{disputeId ? 'Dispute details' : 'Disputes'}</h1>
+        <p className="text-muted-foreground">{disputeId ? 'Review the case, linked contract, resolution, and submitted evidence.' : 'Open a case for a submitted milestone and provide evidence for review.'}</p>
+      </div>
 
-      <Card>
+      {!disputeId && <Card>
         <CardHeader><CardTitle className="flex items-center gap-2"><Plus className="size-5" />Open a dispute</CardTitle></CardHeader>
         <CardContent>
           <form className="grid gap-4 sm:grid-cols-2" onSubmit={createDispute}>
@@ -235,10 +241,10 @@ export function DisputeCenter({ role }: { role: ParticipantRole }) {
             <Button className="sm:col-span-2 sm:w-fit" type="submit" disabled={actionId === 'create'}><Scale className="mr-2 size-4" />{actionId === 'create' ? 'Opening…' : 'Open dispute'}</Button>
           </form>
         </CardContent>
-      </Card>
+      </Card>}
 
       <section className="space-y-4" aria-labelledby="cases-heading">
-        <h2 id="cases-heading" className="text-xl font-semibold">Your cases</h2>
+        <h2 id="cases-heading" className="text-xl font-semibold">{disputeId ? 'Case' : 'Your cases'}</h2>
         {disputes.length === 0 && <Card><CardContent className="py-10 text-center text-muted-foreground">No disputes found.</CardContent></Card>}
         {disputes.map((dispute) => {
           const contract = contractsById.get(dispute.contractId);
@@ -250,7 +256,10 @@ export function DisputeCenter({ role }: { role: ParticipantRole }) {
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="rounded-lg bg-muted p-3 text-sm"><span className="font-medium">Reason:</span> {dispute.reason}</p>
-                <Button asChild variant="outline" size="sm"><Link href={`/dashboard/${role}/contracts/${dispute.contractId}`}>View contract</Link></Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button asChild variant="outline" size="sm"><Link href={`/dashboard/${role}/contracts/${dispute.contractId}`}>View contract</Link></Button>
+                  {!disputeId && <Button asChild variant="ghost" size="sm"><Link href={`/dashboard/${role}/disputes/${dispute.id}`}>View case</Link></Button>}
+                </div>
 
                 {evidenceRecords.length > 0 && (
                   <ul className="space-y-2" aria-label="Submitted evidence">

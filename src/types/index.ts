@@ -178,6 +178,13 @@ export interface Project {
   proposalCount?: number;
 }
 
+export interface ProjectCategoryStat {
+  categoryId: string;
+  categoryName: string;
+  projectCount: number;
+  totalBudget: number;
+}
+
 export interface Milestone {
   id: string;
   contractId?: string;

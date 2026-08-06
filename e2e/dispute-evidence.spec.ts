@@ -42,6 +42,25 @@ test('participant deletes their own unverified evidence', async ({ page }) => {
   expect(deleted).toBe(true);
 });
 
+test('participant opens a dispute detail route backed by the current detail endpoint', async ({ page }) => {
+  const user = await authenticate(page, 'employer');
+  const dispute = makeDispute(user.id);
+  let detailCalls = 0;
+  await page.route(`**/api/disputes/${disputeId}`, async (route) => {
+    detailCalls += 1;
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(dispute) });
+  });
+  await page.route('**/api/contracts?**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ items: [makeContract(user.id)], hasMore: false, total: 1 }) }));
+  await page.route(`**/api/disputes/${disputeId}/evidence`, (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) }));
+
+  await page.goto(`/dashboard/employer/disputes/${disputeId}`);
+
+  await expect(page.getByRole('heading', { name: 'Dispute details' })).toBeVisible();
+  await expect(page.getByText('The delivery is missing required reports.')).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Back to disputes' })).toHaveAttribute('href', '/dashboard/employer/disputes');
+  expect(detailCalls).toBeGreaterThan(0);
+});
+
 test('administrator verifies dispute evidence before resolution', async ({ page }) => {
   await authenticate(page, 'admin');
   const dispute = makeDispute('employer-1');

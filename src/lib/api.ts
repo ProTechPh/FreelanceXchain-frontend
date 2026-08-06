@@ -9,6 +9,7 @@ import type {
   FreelancerProfile,
   EmployerProfile,
   Project,
+  ProjectCategoryStat,
   Proposal,
   ProposalWithEmployerHistory,
   Contract,
@@ -273,6 +274,9 @@ export const projectsApi = {
 
   search: (params?: Record<string, string | number>) =>
     api.get<SearchResult<Project>>('/search/projects', { params }),
+
+  getCategoryStats: () =>
+    api.get<{ categories: ProjectCategoryStat[] }>('/projects/stats/categories'),
   
   get: (id: string) =>
     api.get<Project>(`/projects/${id}`),

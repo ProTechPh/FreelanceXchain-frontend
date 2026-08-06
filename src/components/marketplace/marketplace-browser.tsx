@@ -13,7 +13,7 @@ import {
   type MarketplaceFilters,
 } from '@/lib/marketplace-search';
 import { useAuthStore } from '@/stores/authStore';
-import type { FreelancerProfile, Project, SavedSearch, Skill } from '@/types';
+import type { FreelancerProfile, Project, ProjectCategoryStat, SavedSearch, Skill } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -61,6 +61,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
   const [items, setItems] = useState<T[]>([]);
   const [filters, setFilters] = useState<MarketplaceFilters>(() => createInitialFilters(initialFilters));
   const [skills, setSkills] = useState<Skill[]>([]);
+  const [categoryStats, setCategoryStats] = useState<ProjectCategoryStat[]>([]);
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const [favoriteActionId, setFavoriteActionId] = useState<string | null>(null);
@@ -111,6 +112,13 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
       .then(({ data }) => setSkills(data.categories.flatMap((category) => category.skills)))
       .catch(() => setSkills([]));
   }, []);
+
+  useEffect(() => {
+    if (kind !== 'project') return;
+    projectsApi.getCategoryStats()
+      .then(({ data }) => setCategoryStats(data.categories))
+      .catch(() => setCategoryStats([]));
+  }, [kind]);
 
   useEffect(() => {
     if (!user) return;
@@ -229,6 +237,23 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
       </div>
 
       <div className="mx-auto max-w-7xl space-y-6 px-6 py-8">
+        {kind === 'project' && categoryStats.length > 0 && (
+          <section aria-labelledby="project-categories-heading">
+            <h2 id="project-categories-heading" className="mb-3 text-lg font-semibold">Popular categories</h2>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {categoryStats.slice(0, 8).map((category) => (
+                <Card key={category.categoryId}>
+                  <CardContent className="p-4">
+                    <p className="font-medium">{category.categoryName}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{category.projectCount} open project{category.projectCount === 1 ? '' : 's'}</p>
+                    <p className="mt-2 text-xs text-muted-foreground">${category.totalBudget.toLocaleString()} total budget</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
+        )}
+
         <Card>
           <CardContent className="p-5">
             <form className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px_auto]" onSubmit={submitSearch}>

@@ -348,7 +348,7 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
         <Card>
           <CardHeader><CardTitle>Disputes</CardTitle></CardHeader>
           <CardContent className="space-y-3">
-            {disputes.length === 0 ? <p className="text-sm text-muted-foreground">No disputes for this contract.</p> : disputes.map((dispute) => <div key={dispute.id} className="flex items-start gap-2 rounded-lg border border-border p-3 text-sm"><AlertTriangle className="mt-0.5 size-4 text-amber-500" /><div><p className="font-medium">{dispute.reason}</p><p className="text-muted-foreground">{dispute.status.replace('_', ' ')}</p></div></div>)}
+            {disputes.length === 0 ? <p className="text-sm text-muted-foreground">No disputes for this contract.</p> : disputes.map((dispute) => <Link key={dispute.id} href={`/dashboard/${role}/disputes/${dispute.id}`} className="flex items-start gap-2 rounded-lg border border-border p-3 text-sm transition-colors hover:border-primary/30"><AlertTriangle className="mt-0.5 size-4 text-amber-500" /><div><p className="font-medium">{dispute.reason}</p><p className="text-muted-foreground">{dispute.status.replace('_', ' ')}</p></div></Link>)}
           </CardContent>
         </Card>
       </div>
