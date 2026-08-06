@@ -11,6 +11,7 @@ import type {
   Project,
   Proposal,
   Contract,
+  Milestone,
   Message,
   ConversationWithDetails,
   Notification,
@@ -277,21 +278,40 @@ export const contractsApi = {
     api.get<Contract>(`/contracts/${id}`),
 
   fund: (id: string) =>
-    api.post<ApiResponse<Contract>>(`/contracts/${id}/fund`),
+    api.post<{ message: string; escrowAddress: string; contractStatus: Contract['status'] }>(`/contracts/${id}/fund`),
   
   cancel: (id: string) =>
-    api.post(`/contracts/${id}/cancel`),
+    api.post<{ message: string }>(`/contracts/${id}/cancel`),
+
+  getDisputes: (id: string) =>
+    api.get<Dispute[]>(`/contracts/${id}/disputes`),
+};
+
+export const milestonesApi = {
+  listForContract: (contractId: string) =>
+    api.get<Milestone[]>(`/milestones/contract/${contractId}`),
+
+  submitWithFiles: (milestoneId: string, data: FormData) =>
+    api.post<Milestone>(`/milestones/${milestoneId}/submit-with-files`, data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+
+  approve: (milestoneId: string, feedback?: string) =>
+    api.post<Milestone>(`/milestones/${milestoneId}/approve`, { feedback }),
+
+  reject: (milestoneId: string, reason: string, requestRevision = true) =>
+    api.post<Milestone>(`/milestones/${milestoneId}/reject`, { reason, requestRevision }),
 };
 
 export const paymentsApi = {
-  completeMilestone: (milestoneId: string) =>
-    api.post(`/payments/milestones/${milestoneId}/complete`),
+  completeMilestone: (contractId: string, milestoneId: string) =>
+    api.post(`/payments/milestones/${milestoneId}/complete`, undefined, { params: { contractId } }),
   
-  approveMilestone: (milestoneId: string) =>
-    api.post(`/payments/milestones/${milestoneId}/approve`),
+  approveMilestone: (contractId: string, milestoneId: string) =>
+    api.post(`/payments/milestones/${milestoneId}/approve`, undefined, { params: { contractId } }),
   
-  disputeMilestone: (milestoneId: string, reason: string) =>
-    api.post(`/payments/milestones/${milestoneId}/dispute`, { reason }),
+  disputeMilestone: (contractId: string, milestoneId: string, reason: string) =>
+    api.post(`/payments/milestones/${milestoneId}/dispute`, { reason }, { params: { contractId } }),
   
   getStatus: (contractId: string) =>
     api.get<ApiResponse<Contract>>(`/payments/contracts/${contractId}/status`),
@@ -339,6 +359,12 @@ export const notificationsApi = {
 export const transactionsApi = {
   list: (params?: Record<string, string | number>) =>
     api.get<PaginatedResponse<Transaction>>('/transactions', { params }),
+
+  get: (id: string) =>
+    api.get<Transaction>(`/transactions/${id}`),
+
+  getForContract: (contractId: string) =>
+    api.get<Transaction[]>(`/transactions/contract/${contractId}`),
 };
 
 export const reputationApi = {
