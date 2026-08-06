@@ -71,11 +71,42 @@ test('freelancer adds a taxonomy skill with years of experience', async ({ page 
     contentType: 'application/json',
     body: JSON.stringify({ categories: [{ id: 'category-1', name: 'Development', description: '', isActive: true, createdAt: '', updatedAt: '', skills: [{ id: 'skill-react', categoryId: 'category-1', name: 'React', description: '', isActive: true, createdAt: '', updatedAt: '' }] }] }),
   }));
+  await page.route('**/api/skills/custom', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }));
 
   await page.goto('/dashboard/freelancer/profile');
   await page.getByLabel('Add skill').selectOption('skill-react');
-  await page.getByLabel('Years').fill('3');
+  await page.locator('#skill-years').fill('3');
   await page.getByRole('button', { name: 'Add', exact: true }).click();
   await expect(page.getByText('React · 3y')).toBeVisible();
   expect(skillBody).toEqual({ skills: [{ name: 'React', yearsOfExperience: 3 }] });
+});
+
+test('freelancer creates a custom skill and suggests it globally', async ({ page }) => {
+  const user = { id: 'freelancer-1', email: 'dev@example.com', name: 'Developer', role: 'freelancer', walletAddress: '', kycStatus: 'approved', ...timestamps };
+  const profile = { id: 'profile-2', userId: user.id, name: 'Developer', nationality: 'PH', bio: 'I build accessible web applications.', hourlyRate: 30, skills: [], experience: [], availability: 'available', ...timestamps };
+  let createBody: unknown;
+  let customSkills: unknown[] = [];
+  await authenticate(page, user);
+  await page.route('**/api/freelancers/profile', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(profile) }));
+  await page.route('**/api/skills', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ categories: [] }) }));
+  await page.route('**/api/skills/custom', async (route) => {
+    if (route.request().method() === 'POST') {
+      createBody = route.request().postDataJSON();
+      customSkills = [{ id: 'custom-1', userId: user.id, ...(createBody as object), suggestedForGlobal: true, isApproved: false, ...timestamps }];
+      await route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify(customSkills[0]) });
+      return;
+    }
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(customSkills) });
+  });
+
+  await page.goto('/dashboard/freelancer/profile');
+  await page.locator('#custom-skill-name').fill('Prompt engineering');
+  await page.locator('#custom-skill-description').fill('Designs and evaluates reliable language-model prompts.');
+  await page.locator('#custom-skill-years').fill('2');
+  await page.getByLabel('Suggest for the global taxonomy').check();
+  await page.getByRole('button', { name: 'Add custom skill' }).click();
+
+  await expect(page.getByText('Custom skill created and suggested to administrators.')).toBeVisible();
+  await expect(page.getByText('Prompt engineering', { exact: true })).toBeVisible();
+  expect(createBody).toEqual({ name: 'Prompt engineering', description: 'Designs and evaluates reliable language-model prompts.', yearsOfExperience: 2, suggestForGlobal: true });
 });

@@ -96,3 +96,21 @@ test('administrator creates a taxonomy skill', async ({ page }) => {
   await expect(page.getByText('Skill created.')).toBeVisible();
   expect(skillBody).toEqual({ categoryId, name: 'TypeScript', description: 'Typed JavaScript' });
 });
+
+test('administrator approves a freelancer skill suggestion', async ({ page }) => {
+  await authenticate(page, 'admin');
+  const suggestionId = '123e4567-e89b-12d3-a456-426614174032';
+  let moderationBody: unknown;
+  await page.route('**/api/skills', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ categories: [] }) }));
+  await page.route('**/api/skills/suggestions', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([{ id: suggestionId, userId: 'freelancer-1', skillName: 'Prompt engineering', skillDescription: 'Designs reliable language-model prompts.', suggestedBy: 'dev@example.com', timesRequested: 3, status: 'pending', createdAt, updatedAt: createdAt }]) }));
+  await page.route(`**/api/skills/suggestions/${suggestionId}/status`, async (route) => {
+    moderationBody = route.request().postDataJSON();
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ id: suggestionId, status: 'approved' }) });
+  });
+
+  await page.goto('/dashboard/admin/skills');
+  await expect(page.getByText('Prompt engineering')).toBeVisible();
+  await page.getByRole('button', { name: 'Approve' }).click();
+  await expect(page.getByText('Suggestion approved.')).toBeVisible();
+  expect(moderationBody).toEqual({ status: 'approved' });
+});

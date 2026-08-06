@@ -117,6 +117,32 @@ export interface SkillTaxonomy {
   categories: SkillCategory[];
 }
 
+export interface UserCustomSkill {
+  id: string;
+  userId: string;
+  name: string;
+  description: string;
+  yearsOfExperience: number;
+  categoryName?: string;
+  isApproved: boolean;
+  suggestedForGlobal: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SkillSuggestion {
+  id: string;
+  userId: string;
+  skillName: string;
+  skillDescription: string;
+  categoryName?: string;
+  suggestedBy: string;
+  timesRequested: number;
+  status: 'pending' | 'approved' | 'rejected';
+  createdAt: string;
+  updatedAt: string;
+}
+
 // A freelancer's claimed skill (FreelancerProfile.skills)
 export interface SkillReference {
   name: string;

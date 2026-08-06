@@ -47,6 +47,8 @@ import type {
   SearchResult,
   RushUpgradeRequest,
   RefundRequest,
+  UserCustomSkill,
+  SkillSuggestion,
 } from '@/types';
 import type {
   CreateProjectPayload,
@@ -322,6 +324,21 @@ export const skillsApi = {
 
   deprecate: (id: string) =>
     api.patch<Skill>(`/skills/${id}/deprecate`),
+
+  listCustom: () => api.get<UserCustomSkill[]>('/skills/custom'),
+
+  createCustom: (data: { name: string; description: string; yearsOfExperience: number; categoryName?: string; suggestForGlobal?: boolean }) =>
+    api.post<UserCustomSkill>('/skills/custom', data),
+
+  updateCustom: (id: string, data: { name?: string; description?: string; yearsOfExperience?: number; categoryName?: string }) =>
+    api.put<UserCustomSkill>(`/skills/custom/${id}`, data),
+
+  deleteCustom: (id: string) => api.delete(`/skills/custom/${id}`),
+
+  listSuggestions: () => api.get<SkillSuggestion[]>('/skills/suggestions'),
+
+  moderateSuggestion: (id: string, status: 'approved' | 'rejected') =>
+    api.put<SkillSuggestion>(`/skills/suggestions/${id}/status`, { status }),
 };
 
 export const proposalsApi = {
