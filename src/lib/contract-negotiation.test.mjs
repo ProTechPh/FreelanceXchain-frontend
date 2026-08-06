@@ -16,7 +16,7 @@ test('rush upgrades require an active non-rush contract, the correct role, and v
 });
 
 test('rush responses are limited to the verified party and current negotiation state', () => {
-  assert.equal(canRespondToRushUpgrade('freelancer', 'pending', 'completed'), true);
+  assert.equal(canRespondToRushUpgrade('freelancer', 'pending', 'completed'), false);
   assert.equal(canRespondToRushUpgrade('employer', 'counter_offered', 'approved'), true);
   assert.equal(canRespondToRushUpgrade('employer', 'pending', 'approved'), false);
   assert.equal(canRespondToRushUpgrade('freelancer', 'accepted', 'approved'), false);

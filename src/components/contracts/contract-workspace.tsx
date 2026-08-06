@@ -20,6 +20,7 @@ import {
 } from '@/lib/contract-workflow';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { getStatusColor } from '@/lib/status-styles';
+import { hasApprovedKyc } from '@/lib/kyc-eligibility';
 import { getTransactionDetailRoute } from '@/lib/transaction-view';
 import { validateReviewDraft, type ReviewDraft } from '@/lib/review-form';
 import { useAuthStore } from '@/stores/authStore';
@@ -117,7 +118,7 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
   }
 
   const contractPermissions = getContractPermissions(contract.status, role, user.kycStatus);
-  const isVerified = user.kycStatus === 'approved' || user.kycStatus === 'completed';
+  const isVerified = hasApprovedKyc(user.kycStatus);
   const verificationPath = `/dashboard/${role}/verification`;
 
   const runAction = async (id: string, action: () => Promise<unknown>, success: string) => {

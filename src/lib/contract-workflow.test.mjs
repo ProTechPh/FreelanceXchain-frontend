@@ -43,7 +43,7 @@ test('milestone actions follow role and status transitions', () => {
   });
   assert.deepEqual(getMilestonePermissions('submitted', 'employer', 'completed', 'active'), {
     canSubmit: false,
-    canApprove: true,
-    canReject: true,
+    canApprove: false,
+    canReject: false,
   });
 });

@@ -5,7 +5,7 @@ import { canUseDisputeActions, validateDisputeDraft, validateEvidenceLink } from
 
 test('requires verified KYC for dispute actions', () => {
   assert.equal(canUseDisputeActions('approved'), true);
-  assert.equal(canUseDisputeActions('completed'), true);
+  assert.equal(canUseDisputeActions('completed'), false);
   assert.equal(canUseDisputeActions('pending'), false);
   assert.equal(canUseDisputeActions(undefined), false);
 });

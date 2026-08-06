@@ -1,8 +1,5 @@
 import type { ContractStatus, KycStatus, RushUpgradeRequestStatus } from '@/types';
-
-function hasVerifiedKyc(status: KycStatus | undefined): boolean {
-  return status === 'approved' || status === 'completed';
-}
+import { hasApprovedKyc } from './kyc-eligibility.ts';
 
 export function canRequestRushUpgrade(input: {
   role: 'employer' | 'freelancer';
@@ -14,7 +11,7 @@ export function canRequestRushUpgrade(input: {
   return input.role === 'employer'
     && input.contractStatus === 'active'
     && input.rushFee === 0
-    && hasVerifiedKyc(input.kycStatus)
+    && hasApprovedKyc(input.kycStatus)
     && !input.hasOpenRequest;
 }
 
@@ -23,7 +20,7 @@ export function canRespondToRushUpgrade(
   status: RushUpgradeRequestStatus,
   kycStatus?: KycStatus,
 ): boolean {
-  if (!hasVerifiedKyc(kycStatus)) return false;
+  if (!hasApprovedKyc(kycStatus)) return false;
   if (role === 'freelancer') return status === 'pending';
   return status === 'counter_offered';
 }
@@ -33,7 +30,7 @@ export function canRequestRefund(
   kycStatus: KycStatus | undefined,
   hasPendingRequest: boolean,
 ): boolean {
-  return contractStatus === 'active' && hasVerifiedKyc(kycStatus) && !hasPendingRequest;
+  return contractStatus === 'active' && hasApprovedKyc(kycStatus) && !hasPendingRequest;
 }
 
 export function canActOnRefund(input: {
@@ -44,5 +41,5 @@ export function canActOnRefund(input: {
 }): boolean {
   return input.status === 'pending'
     && input.requestedBy !== input.currentUserId
-    && hasVerifiedKyc(input.kycStatus);
+    && hasApprovedKyc(input.kycStatus);
 }

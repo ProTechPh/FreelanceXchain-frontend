@@ -1,4 +1,5 @@
 import type { KycStatus } from '@/types';
+import { hasApprovedKyc } from './kyc-eligibility.ts';
 
 export type DisputeDraft = {
   contractId: string;
@@ -7,7 +8,7 @@ export type DisputeDraft = {
 };
 
 export function canUseDisputeActions(kycStatus: KycStatus | undefined) {
-  return kycStatus === 'approved' || kycStatus === 'completed';
+  return hasApprovedKyc(kycStatus);
 }
 
 export function validateDisputeDraft(draft: DisputeDraft): string | null {

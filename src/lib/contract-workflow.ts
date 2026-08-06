@@ -5,6 +5,7 @@ import type {
   MilestoneStatus,
   UserRole,
 } from '@/types';
+import { hasApprovedKyc } from './kyc-eligibility.ts';
 
 function stringValue(record: Record<string, unknown>, camel: string, snake: string): string | undefined {
   const value = record[camel] ?? record[snake];
@@ -36,16 +37,12 @@ export function normalizeMilestone(value: unknown): Milestone {
   };
 }
 
-function hasVerifiedKyc(kycStatus: KycStatus | undefined): boolean {
-  return kycStatus === 'approved' || kycStatus === 'completed';
-}
-
 export function getContractPermissions(
   status: ContractStatus,
   role: UserRole,
   kycStatus: KycStatus | undefined,
 ) {
-  const verified = hasVerifiedKyc(kycStatus);
+  const verified = hasApprovedKyc(kycStatus);
   return {
     canFund: role === 'employer' && status === 'pending' && verified,
     canCancel: role !== 'admin' && status === 'pending' && verified,
@@ -58,7 +55,7 @@ export function getMilestonePermissions(
   kycStatus: KycStatus | undefined,
   contractStatus: ContractStatus,
 ) {
-  const actionable = hasVerifiedKyc(kycStatus) && contractStatus === 'active';
+  const actionable = hasApprovedKyc(kycStatus) && contractStatus === 'active';
   return {
     canSubmit: actionable
       && role === 'freelancer'

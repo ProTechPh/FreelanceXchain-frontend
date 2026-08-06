@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { projectsApi } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { useAuthStore } from '@/stores/authStore';
+import { hasApprovedKyc } from '@/lib/kyc-eligibility';
 import type { Project, ProjectStatus } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -67,7 +68,7 @@ export default function EditProjectPage() {
 
   if (loading) return <div className="flex min-h-64 items-center justify-center" role="status"><Loader2 className="size-8 animate-spin text-primary" /></div>;
   if (!project) return <Card><CardContent className="py-12 text-center text-muted-foreground">Project unavailable.</CardContent></Card>;
-  const verified = user?.kycStatus === 'approved' || user?.kycStatus === 'completed';
+  const verified = hasApprovedKyc(user?.kycStatus);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
