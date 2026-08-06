@@ -8,6 +8,7 @@ import { getApiErrorMessage } from '@/lib/auth-contract';
 import {
   buildMarketplaceSearchParams,
   createSavedSearchFilters,
+  marketplaceFiltersToSearchParams,
   restoreSavedSearchFilters,
   type MarketplaceFilters,
 } from '@/lib/marketplace-search';
@@ -28,11 +29,11 @@ type MarketplaceBrowserProps<T extends Project | FreelancerProfile> = {
   layout: 'list' | 'grid';
   renderItem: (item: T) => ReactNode;
   getTargetId?: (item: T) => string;
-  initialKeyword?: string;
+  initialFilters?: MarketplaceFilters;
 };
 
-function createInitialFilters(keyword = ''): MarketplaceFilters {
-  return { keyword: keyword.trim(), skillIds: [] };
+function createInitialFilters(filters?: MarketplaceFilters): MarketplaceFilters {
+  return filters ? { ...filters, skillIds: [...filters.skillIds] } : { keyword: '', skillIds: [] };
 }
 
 function updateBudget(
@@ -54,11 +55,11 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
   layout,
   renderItem,
   getTargetId = (item) => item.id,
-  initialKeyword = '',
+  initialFilters,
 }: MarketplaceBrowserProps<T>) {
   const user = useAuthStore((state) => state.user);
   const [items, setItems] = useState<T[]>([]);
-  const [filters, setFilters] = useState<MarketplaceFilters>(() => createInitialFilters(initialKeyword));
+  const [filters, setFilters] = useState<MarketplaceFilters>(() => createInitialFilters(initialFilters));
   const [skills, setSkills] = useState<Skill[]>([]);
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
@@ -102,8 +103,8 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
   useEffect(() => {
     // Initial marketplace results come from the server search contract.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    void loadResults(createInitialFilters(initialKeyword));
-  }, [initialKeyword, loadResults]);
+    void loadResults(createInitialFilters(initialFilters));
+  }, [initialFilters, loadResults]);
 
   useEffect(() => {
     skillsApi.getTaxonomy()
@@ -130,6 +131,9 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
 
   const submitSearch = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const searchParams = marketplaceFiltersToSearchParams(filters);
+    const query = searchParams.toString();
+    window.history.replaceState(null, '', `${window.location.pathname}${query ? `?${query}` : ''}`);
     void loadResults(filters);
   };
 
@@ -186,10 +190,23 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
     }
   };
 
-  const runSavedSearch = (savedSearch: SavedSearch) => {
+  const runSavedSearch = async (savedSearch: SavedSearch) => {
     const restored = restoreSavedSearchFilters(savedSearch.filters, savedSkillOptions);
     setFilters(restored);
-    void loadResults(restored);
+    setLoading(true);
+    try {
+      const { data } = await savedSearchesApi.execute(savedSearch.id);
+      setItems(data.results as T[]);
+      setHasMore(false);
+      const searchParams = marketplaceFiltersToSearchParams(restored);
+      const query = searchParams.toString();
+      window.history.replaceState(null, '', `${window.location.pathname}${query ? `?${query}` : ''}`);
+      toast.success(`Saved search executed: ${data.count} result${data.count === 1 ? '' : 's'}.`);
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Unable to execute this saved search.'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const deleteSavedSearch = async (id: string) => {
@@ -294,7 +311,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
                   <ul className="mt-3 space-y-2">
                     {savedSearches.map((savedSearch) => (
                       <li key={savedSearch.id} className="flex items-center justify-between gap-3 rounded-lg border border-border p-2">
-                        <Button type="button" variant="ghost" className="h-auto justify-start px-2" onClick={() => runSavedSearch(savedSearch)}>{savedSearch.name}</Button>
+                        <Button type="button" variant="ghost" className="h-auto justify-start px-2" onClick={() => void runSavedSearch(savedSearch)}>{savedSearch.name}</Button>
                         <Button type="button" size="icon" variant="ghost" aria-label={`Delete saved search ${savedSearch.name}`} onClick={() => void deleteSavedSearch(savedSearch.id)}><Trash2 className="size-4" /></Button>
                       </li>
                     ))}

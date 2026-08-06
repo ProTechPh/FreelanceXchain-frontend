@@ -8,6 +8,7 @@ import { MarketplaceBrowser } from '@/components/marketplace/marketplace-browser
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import type { FreelancerProfile } from '@/types';
+import { marketplaceFiltersFromSearchParams } from '@/lib/marketplace-search';
 
 const availabilityColors: Record<string, string> = {
   available: 'bg-green-500/10 text-green-500',
@@ -44,13 +45,14 @@ function FreelancerResult({ freelancer }: { freelancer: FreelancerProfile }) {
 
 function FreelancersMarketplace() {
   const searchParams = useSearchParams();
-  const initialKeyword = searchParams?.get('keyword') || '';
+  const serializedFilters = searchParams?.toString() ?? '';
+  const initialFilters = marketplaceFiltersFromSearchParams(new URLSearchParams(serializedFilters));
 
   return (
     <MarketplaceBrowser<FreelancerProfile>
-      key={initialKeyword}
+      key={serializedFilters}
       kind="freelancer"
-      initialKeyword={initialKeyword}
+      initialFilters={initialFilters}
       title="Find Talent"
       description="Search freelancer profiles by specialty and keep a shortlist of favorites."
       emptyMessage="No freelancers match these filters."

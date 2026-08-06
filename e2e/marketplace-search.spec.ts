@@ -99,6 +99,7 @@ test('project discovery sends backend filters and persists favorites and saved s
   const requestUrl = new URL((await filteredRequest).url());
   expect(requestUrl.searchParams.get('skills')).toBe('skill-react');
   expect(requestUrl.searchParams.get('minBudget')).toBe('500');
+  await expect(page).toHaveURL(/skills=skill-react.*minBudget=500/);
 
   const favoriteRequest = page.waitForRequest((request) => request.url().endsWith('/api/favorites') && request.method() === 'POST');
   await page.getByRole('button', { name: 'Save project to favorites' }).click();

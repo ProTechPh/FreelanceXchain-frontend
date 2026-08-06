@@ -32,6 +32,7 @@ import {
   BrainCircuit,
   Tags,
   History,
+  Bookmark,
 } from 'lucide-react';
 
 interface NavItem {
@@ -54,6 +55,7 @@ const freelancerNav: NavItem[] = [
   { label: 'Verification', href: '/dashboard/freelancer/verification', icon: Shield },
   { label: 'Messages', href: getDashboardMessageRoute('freelancer'), icon: MessageSquare },
   { label: 'Notifications', href: '/dashboard/freelancer/notifications', icon: Bell },
+  { label: 'Saved', href: '/dashboard/freelancer/saved', icon: Bookmark },
   { label: 'Activity', href: '/dashboard/freelancer/activity', icon: History },
   { label: 'Settings', href: '/dashboard/freelancer/settings', icon: Settings },
 ];
@@ -70,6 +72,7 @@ const employerNav: NavItem[] = [
   { label: 'Verification', href: '/dashboard/employer/verification', icon: Shield },
   { label: 'Messages', href: getDashboardMessageRoute('employer'), icon: MessageSquare },
   { label: 'Notifications', href: '/dashboard/employer/notifications', icon: Bell },
+  { label: 'Saved', href: '/dashboard/employer/saved', icon: Bookmark },
   { label: 'Activity', href: '/dashboard/employer/activity', icon: History },
   { label: 'Settings', href: '/dashboard/employer/settings', icon: Settings },
 ];

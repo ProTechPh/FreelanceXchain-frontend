@@ -7,6 +7,33 @@ export type MarketplaceFilters = {
 
 type SkillOption = { id: string; name: string };
 
+function optionalNonNegativeNumber(value: string | null): number | undefined {
+  if (value === null || value.trim() === '') return undefined;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
+}
+
+export function marketplaceFiltersFromSearchParams(searchParams: URLSearchParams): MarketplaceFilters {
+  const minBudget = optionalNonNegativeNumber(searchParams.get('minBudget'));
+  const maxBudget = optionalNonNegativeNumber(searchParams.get('maxBudget'));
+  return {
+    keyword: searchParams.get('keyword')?.trim() ?? '',
+    skillIds: (searchParams.get('skills') ?? '').split(',').map((value) => value.trim()).filter(Boolean),
+    ...(minBudget === undefined ? {} : { minBudget }),
+    ...(maxBudget === undefined ? {} : { maxBudget }),
+  };
+}
+
+export function marketplaceFiltersToSearchParams(filters: MarketplaceFilters): URLSearchParams {
+  const searchParams = new URLSearchParams();
+  const keyword = filters.keyword.trim();
+  if (keyword) searchParams.set('keyword', keyword);
+  if (filters.skillIds.length > 0) searchParams.set('skills', filters.skillIds.join(','));
+  if (filters.minBudget !== undefined) searchParams.set('minBudget', String(filters.minBudget));
+  if (filters.maxBudget !== undefined) searchParams.set('maxBudget', String(filters.maxBudget));
+  return searchParams;
+}
+
 export function buildMarketplaceSearchParams(filters: MarketplaceFilters, offset = 0) {
   const params: Record<string, string | number> = { pageSize: 12 };
   const keyword = filters.keyword.trim();

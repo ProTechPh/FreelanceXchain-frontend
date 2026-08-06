@@ -5,6 +5,8 @@ import {
   buildMarketplaceSearchParams,
   createSavedSearchFilters,
   restoreSavedSearchFilters,
+  marketplaceFiltersFromSearchParams,
+  marketplaceFiltersToSearchParams,
 } from './marketplace-search.ts';
 
 const skills = [
@@ -30,6 +32,12 @@ test('builds the backend search contract without blank filters', () => {
   assert.deepEqual(buildMarketplaceSearchParams({ keyword: '  ', skillIds: [] }), {
     pageSize: 12,
   });
+});
+
+test('round-trips shareable marketplace filters through the URL', () => {
+  const filters = marketplaceFiltersFromSearchParams(new URLSearchParams('keyword=api&skills=skill-react%2Cskill-node&minBudget=500&maxBudget=2500'));
+  assert.deepEqual(filters, { keyword: 'api', skillIds: ['skill-react', 'skill-node'], minBudget: 500, maxBudget: 2500 });
+  assert.equal(marketplaceFiltersToSearchParams(filters).toString(), 'keyword=api&skills=skill-react%2Cskill-node&minBudget=500&maxBudget=2500');
 });
 
 test('saved searches retain skill names for backend notifications and ids for the UI', () => {

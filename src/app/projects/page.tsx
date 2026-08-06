@@ -8,6 +8,7 @@ import { MarketplaceBrowser } from '@/components/marketplace/marketplace-browser
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import type { Project } from '@/types';
+import { marketplaceFiltersFromSearchParams } from '@/lib/marketplace-search';
 
 function ProjectResult({ project }: { project: Project }) {
   return (
@@ -39,13 +40,14 @@ function ProjectResult({ project }: { project: Project }) {
 
 function ProjectsMarketplace() {
   const searchParams = useSearchParams();
-  const initialKeyword = searchParams?.get('keyword') || '';
+  const serializedFilters = searchParams?.toString() ?? '';
+  const initialFilters = marketplaceFiltersFromSearchParams(new URLSearchParams(serializedFilters));
 
   return (
     <MarketplaceBrowser<Project>
-      key={initialKeyword}
+      key={serializedFilters}
       kind="project"
-      initialKeyword={initialKeyword}
+      initialFilters={initialFilters}
       title="Browse Projects"
       description="Search open work by keyword, skill, and budget, then save the searches you care about."
       emptyMessage="No open projects match these filters."
