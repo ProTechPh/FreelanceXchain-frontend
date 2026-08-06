@@ -6,7 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { kycApi } from '@/lib/api';
 import { classifyKycStatusError } from '@/lib/kyc-status-error';
-import type { KycVerification } from '@/types';
+import { getKycRetryAvailability } from '@/lib/kyc-retry';
+import { getApiErrorMessage } from '@/lib/auth-contract';
+import type { KycVerification, UserRole } from '@/types';
 import {
   Shield,
   CheckCircle,
@@ -31,8 +33,11 @@ const statusConfig: Record<string, { label: string; color: string; icon: React.E
   expired: { label: 'Expired', color: 'bg-gray-500/10 text-gray-500', icon: AlertTriangle },
 };
 
-export default function VerificationPage() {
+type ParticipantRole = Extract<UserRole, 'freelancer' | 'employer'>;
+
+export function VerificationCenter({ role }: { role: ParticipantRole }) {
   const [verification, setVerification] = useState<KycVerification | null>(null);
+  const [history, setHistory] = useState<KycVerification[]>([]);
   const [loading, setLoading] = useState(true);
   const [initiating, setInitiating] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -53,6 +58,12 @@ export default function VerificationPage() {
           ? null
           : 'We could not load your verification status. Please try again.'
       );
+    }
+    try {
+      const { data } = await kycApi.getHistory();
+      setHistory(data);
+    } catch {
+      // Current status remains usable when historical attempts are unavailable.
     } finally {
       setLoading(false);
     }
@@ -70,12 +81,12 @@ export default function VerificationPage() {
       const res = await kycApi.initiate();
       const data = res.data;
       setVerification(data);
+      setHistory((current) => [data, ...current.filter((item) => item.id !== data.id)]);
       if (data.didit_session_url) {
-        window.open(data.didit_session_url, '_blank');
+        window.open(data.didit_session_url, '_blank', 'noopener,noreferrer');
       }
     } catch (err: unknown) {
-      const axiosErr = err as { response?: { data?: { error?: { message?: string } } } };
-      setError(axiosErr.response?.data?.error?.message ?? 'Failed to start verification');
+      setError(getApiErrorMessage(err, 'Failed to start verification'));
     } finally {
       setInitiating(false);
     }
@@ -87,8 +98,9 @@ export default function VerificationPage() {
     try {
       const res = await kycApi.refresh(verification.id);
       setVerification(res.data);
-    } catch {
-      // silently fail
+      setHistory((current) => current.map((item) => item.id === res.data.id ? res.data : item));
+    } catch (refreshError) {
+      setError(getApiErrorMessage(refreshError, 'Unable to refresh verification status.'));
     } finally {
       setRefreshing(false);
     }
@@ -104,13 +116,20 @@ export default function VerificationPage() {
 
   const config = verification ? statusConfig[verification.status] ?? statusConfig.pending : null;
   const StatusIcon = config?.icon ?? Shield;
+  const retryAvailability = verification ? getKycRetryAvailability(verification) : null;
+  const roleDescription = role === 'employer'
+    ? 'Complete KYC verification to hire freelancers and post projects'
+    : 'Complete KYC verification to access all platform features';
+  const unlockDescription = role === 'employer'
+    ? 'Complete identity verification to hire freelancers and manage contracts.'
+    : 'Complete identity verification to unlock project proposals, contracts, and payments.';
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Identity Verification</h1>
-          <p className="text-muted-foreground">Complete KYC verification to access all platform features</p>
+          <p className="text-muted-foreground">{roleDescription}</p>
         </div>
       </div>
 
@@ -154,7 +173,7 @@ export default function VerificationPage() {
               <div>
                 <h3 className="text-lg font-semibold">Not Verified Yet</h3>
                 <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                  Complete identity verification to unlock project proposals, contracts, and payments.
+                  {unlockDescription}
                   The process takes about 2 minutes.
                 </p>
               </div>
@@ -203,7 +222,7 @@ export default function VerificationPage() {
                     <Button
                       size="sm"
                       variant="gradient"
-                      onClick={() => window.open(verification.didit_session_url!, '_blank')}
+                      onClick={() => window.open(verification.didit_session_url!, '_blank', 'noopener,noreferrer')}
                     >
                       <ExternalLink className="w-4 h-4 mr-2" /> Continue Verification
                     </Button>
@@ -212,7 +231,7 @@ export default function VerificationPage() {
                 {(verification.status === 'rejected' || verification.status === 'expired') && (
                   <Button
                     onClick={handleInitiate}
-                    disabled={initiating}
+                    disabled={initiating || retryAvailability?.canRetry === false}
                     variant="gradient"
                   >
                     {initiating ? (
@@ -221,7 +240,7 @@ export default function VerificationPage() {
                       </>
                     ) : (
                       <>
-                        <RefreshCw className="w-4 h-4 mr-2" /> Retry Verification
+                        <RefreshCw className="w-4 h-4 mr-2" /> {retryAvailability?.canRetry === false ? `Retry in ${retryAvailability.hoursRemaining}h` : 'Retry Verification'}
                       </>
                     )}
                   </Button>
@@ -285,8 +304,23 @@ export default function VerificationPage() {
           )}
         </CardContent>
       </Card>
+
+      <Card className="bg-card border-border">
+        <CardHeader><CardTitle className="flex items-center gap-2"><Calendar className="h-5 w-5" />Verification history</CardTitle></CardHeader>
+        <CardContent>
+          {history.length === 0 ? <p className="py-6 text-center text-sm text-muted-foreground">No previous verification attempts.</p> : <ol className="space-y-3">{history.map((attempt) => {
+            const attemptConfig = statusConfig[attempt.status] ?? statusConfig.pending;
+            const AttemptIcon = attemptConfig.icon;
+            return <li key={`${attempt.id}-${attempt.updated_at}`} className="flex flex-col gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-center sm:justify-between"><div><div className="flex items-center gap-2"><Badge className={attemptConfig.color}><AttemptIcon className="mr-1 h-3 w-3" />{attemptConfig.label}</Badge>{verification?.id === attempt.id && <Badge variant="outline">Current</Badge>}</div><p className="mt-2 text-xs text-muted-foreground">Started {new Date(attempt.created_at).toLocaleString()} · updated {new Date(attempt.updated_at).toLocaleString()}</p>{attempt.admin_notes && <p className="mt-2 text-sm text-muted-foreground">{attempt.admin_notes}</p>}</div>{attempt.didit_session_url && (attempt.status === 'pending' || attempt.status === 'in_progress') && <Button type="button" size="sm" variant="outline" onClick={() => window.open(attempt.didit_session_url!, '_blank', 'noopener,noreferrer')}>Continue<ExternalLink className="ml-2 h-4 w-4" /></Button>}</li>;
+          })}</ol>}
+        </CardContent>
+      </Card>
     </div>
   );
+}
+
+export default function VerificationPage() {
+  return <VerificationCenter role="freelancer" />;
 }
 
 function CheckItem({ label, passed }: { label: string; passed: boolean | null }) {
