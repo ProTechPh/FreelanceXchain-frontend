@@ -2,15 +2,16 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { FileText, Loader2, Plus, Scale, ShieldCheck, Upload } from 'lucide-react';
+import { FileText, Link2, Loader2, Plus, Scale, ShieldCheck, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { contractsApi, disputesApi, milestonesApi } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/auth-contract';
-import { canUseDisputeActions, validateDisputeDraft, type DisputeDraft } from '@/lib/dispute-form';
+import { canUseDisputeActions, validateDisputeDraft, validateEvidenceLink, type DisputeDraft } from '@/lib/dispute-form';
+import { safeAttachmentUrl } from '@/lib/attachment-presentation';
 import { normalizeMilestone } from '@/lib/contract-workflow';
 import { getStatusColor } from '@/lib/status-styles';
 import { useAuthStore } from '@/stores/authStore';
-import type { Contract, Dispute, Milestone, UserRole } from '@/types';
+import type { Contract, Dispute, DisputeEvidence, Milestone, UserRole } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,7 +29,9 @@ export function DisputeCenter({ role }: { role: ParticipantRole }) {
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [draft, setDraft] = useState<DisputeDraft>(emptyDraft);
   const [evidenceText, setEvidenceText] = useState<Record<string, string>>({});
+  const [evidenceLinks, setEvidenceLinks] = useState<Record<string, string>>({});
   const [evidenceFiles, setEvidenceFiles] = useState<Record<string, File | null>>({});
+  const [evidenceByDispute, setEvidenceByDispute] = useState<Record<string, DisputeEvidence[]>>({});
   const [loading, setLoading] = useState(true);
   const [loadingMilestones, setLoadingMilestones] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
@@ -49,6 +52,24 @@ export function DisputeCenter({ role }: { role: ParticipantRole }) {
       ]);
       setDisputes(disputeResponse.data.items);
       setContracts(contractResponse.data.items);
+      const evidenceEntries = await Promise.all(disputeResponse.data.items.map(async (dispute) => {
+        try {
+          const { data } = await disputesApi.listEvidence(dispute.id);
+          return [dispute.id, data] as const;
+        } catch {
+          return [dispute.id, dispute.evidence.map((evidence) => ({
+            id: evidence.id,
+            disputeId: dispute.id,
+            submittedBy: evidence.submitterId,
+            evidenceType: evidence.type,
+            description: evidence.content,
+            fileUrl: evidence.type === 'text' ? undefined : evidence.content,
+            createdAt: evidence.submittedAt,
+            updatedAt: evidence.submittedAt,
+          }))] as const;
+        }
+      }));
+      setEvidenceByDispute(Object.fromEntries(evidenceEntries));
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Unable to load disputes.'));
     } finally {
@@ -78,6 +99,15 @@ export function DisputeCenter({ role }: { role: ParticipantRole }) {
       toast.error(getApiErrorMessage(error, 'Unable to load submitted milestones.'));
     } finally {
       setLoadingMilestones(false);
+    }
+  };
+
+  const refreshEvidence = async (disputeId: string) => {
+    try {
+      const { data } = await disputesApi.listEvidence(disputeId);
+      setEvidenceByDispute((current) => ({ ...current, [disputeId]: data }));
+    } catch {
+      // The embedded dispute response remains visible if the standalone evidence read is unavailable.
     }
   };
 
@@ -113,10 +143,32 @@ export function DisputeCenter({ role }: { role: ParticipantRole }) {
     try {
       const { data } = await disputesApi.submitEvidence(disputeId, 'text', content);
       setDisputes((current) => current.map((dispute) => dispute.id === disputeId ? data : dispute));
+      await refreshEvidence(disputeId);
       setEvidenceText((current) => ({ ...current, [disputeId]: '' }));
       toast.success('Evidence submitted.');
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Unable to submit evidence.'));
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  const submitLinkEvidence = async (disputeId: string) => {
+    const value = evidenceLinks[disputeId] ?? '';
+    const error = validateEvidenceLink(value);
+    if (error) {
+      toast.error(error);
+      return;
+    }
+    setActionId(`link:${disputeId}`);
+    try {
+      const { data } = await disputesApi.submitEvidence(disputeId, 'link', value.trim());
+      setDisputes((current) => current.map((dispute) => dispute.id === disputeId ? data : dispute));
+      await refreshEvidence(disputeId);
+      setEvidenceLinks((current) => ({ ...current, [disputeId]: '' }));
+      toast.success('Evidence link submitted.');
+    } catch (apiError) {
+      toast.error(getApiErrorMessage(apiError, 'Unable to submit the evidence link.'));
     } finally {
       setActionId(null);
     }
@@ -135,10 +187,25 @@ export function DisputeCenter({ role }: { role: ParticipantRole }) {
     try {
       const { data } = await disputesApi.submitEvidenceFiles(disputeId, formData);
       setDisputes((current) => current.map((dispute) => dispute.id === disputeId ? data : dispute));
+      await refreshEvidence(disputeId);
       setEvidenceFiles((current) => ({ ...current, [disputeId]: null }));
       toast.success('Evidence file uploaded.');
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Unable to upload evidence.'));
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  const deleteEvidence = async (disputeId: string, evidenceId: string) => {
+    if (!window.confirm('Delete this unverified evidence?')) return;
+    setActionId(`delete:${evidenceId}`);
+    try {
+      await disputesApi.deleteEvidence(disputeId, evidenceId);
+      setEvidenceByDispute((current) => ({ ...current, [disputeId]: (current[disputeId] ?? []).filter((evidence) => evidence.id !== evidenceId) }));
+      toast.success('Evidence deleted.');
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Unable to delete this evidence.'));
     } finally {
       setActionId(null);
     }
@@ -175,6 +242,7 @@ export function DisputeCenter({ role }: { role: ParticipantRole }) {
         {disputes.length === 0 && <Card><CardContent className="py-10 text-center text-muted-foreground">No disputes found.</CardContent></Card>}
         {disputes.map((dispute) => {
           const contract = contractsById.get(dispute.contractId);
+          const evidenceRecords = evidenceByDispute[dispute.id] ?? [];
           return (
             <Card key={dispute.id}>
               <CardHeader>
@@ -184,16 +252,21 @@ export function DisputeCenter({ role }: { role: ParticipantRole }) {
                 <p className="rounded-lg bg-muted p-3 text-sm"><span className="font-medium">Reason:</span> {dispute.reason}</p>
                 <Button asChild variant="outline" size="sm"><Link href={`/dashboard/${role}/contracts/${dispute.contractId}`}>View contract</Link></Button>
 
-                {dispute.evidence.length > 0 && (
+                {evidenceRecords.length > 0 && (
                   <ul className="space-y-2" aria-label="Submitted evidence">
-                    {dispute.evidence.map((evidence) => <li key={evidence.id} className="flex items-start gap-2 text-sm"><FileText className="mt-0.5 size-4 text-muted-foreground" />{evidence.type === 'text' ? evidence.content : <a href={evidence.content} target="_blank" rel="noreferrer" className="text-primary underline">View {evidence.type} evidence</a>}</li>)}
+                    {evidenceRecords.map((evidence) => {
+                      const evidenceUrl = safeAttachmentUrl(evidence.fileUrl || evidence.description);
+                      const textOnly = evidence.evidenceType === 'text' || evidence.evidenceType === 'message';
+                      return <li key={evidence.id} className="flex items-start gap-3 rounded-lg border border-border p-3 text-sm"><FileText className="mt-0.5 size-4 shrink-0 text-muted-foreground" /><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><span className="font-medium capitalize">{evidence.evidenceType} evidence</span><Badge variant="secondary">{evidence.verifiedBy ? 'Verified' : 'Unverified'}</Badge></div>{textOnly ? <p className="mt-1 break-words text-muted-foreground">{evidence.description}</p> : evidenceUrl ? <a href={evidenceUrl} target="_blank" rel="noreferrer" className="mt-1 inline-flex text-primary underline">Open evidence</a> : <p className="mt-1 break-words text-muted-foreground">Attachment unavailable</p>}</div>{evidence.submittedBy === user?.id && !evidence.verifiedBy && <Button type="button" size="icon" variant="ghost" aria-label={`Delete ${evidence.evidenceType} evidence`} disabled={actionId === `delete:${evidence.id}`} onClick={() => void deleteEvidence(dispute.id, evidence.id)}><Trash2 className="size-4 text-destructive" /></Button>}</li>;
+                    })}
                   </ul>
                 )}
 
                 {dispute.status !== 'resolved' && (
-                  <div className="grid gap-4 rounded-lg border border-border p-4 lg:grid-cols-2">
+                  <div className="grid gap-4 rounded-lg border border-border p-4 lg:grid-cols-3">
                     <div className="space-y-2"><Label htmlFor={`evidence-text-${dispute.id}`}>Evidence notes</Label><Textarea id={`evidence-text-${dispute.id}`} value={evidenceText[dispute.id] ?? ''} onChange={(event) => setEvidenceText((current) => ({ ...current, [dispute.id]: event.target.value }))} /><Button type="button" size="sm" disabled={actionId === `evidence:${dispute.id}`} onClick={() => void submitTextEvidence(dispute.id)}>Submit notes</Button></div>
                     <div className="space-y-2"><Label htmlFor={`evidence-file-${dispute.id}`}>Evidence file</Label><Input id={`evidence-file-${dispute.id}`} type="file" onChange={(event) => setEvidenceFiles((current) => ({ ...current, [dispute.id]: event.target.files?.[0] ?? null }))} /><Button type="button" size="sm" variant="outline" disabled={actionId === `file:${dispute.id}`} onClick={() => void submitFileEvidence(dispute.id)}><Upload className="mr-2 size-4" />Upload file</Button></div>
+                    <div className="space-y-2"><Label htmlFor={`evidence-link-${dispute.id}`}>Evidence link</Label><Input id={`evidence-link-${dispute.id}`} type="url" placeholder="https://…" value={evidenceLinks[dispute.id] ?? ''} onChange={(event) => setEvidenceLinks((current) => ({ ...current, [dispute.id]: event.target.value }))} /><Button type="button" size="sm" variant="outline" disabled={actionId === `link:${dispute.id}`} onClick={() => void submitLinkEvidence(dispute.id)}><Link2 className="mr-2 size-4" />Submit link</Button></div>
                   </div>
                 )}
 

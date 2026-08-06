@@ -16,3 +16,13 @@ export function validateDisputeDraft(draft: DisputeDraft): string | null {
   if (draft.reason.trim().length < 10) return 'Describe the issue in at least 10 characters.';
   return null;
 }
+
+export function validateEvidenceLink(value: string): string | null {
+  if (!value.trim()) return 'Enter an evidence link.';
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === 'https:' ? null : 'Enter a valid HTTPS evidence link.';
+  } catch {
+    return 'Enter a valid HTTPS evidence link.';
+  }
+}

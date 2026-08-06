@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { adminApi, disputesApi, contractsApi } from '@/lib/api';
+import { safeAttachmentUrl } from '@/lib/attachment-presentation';
+import { getApiErrorMessage } from '@/lib/auth-contract';
 import type { Dispute, Contract, DisputeStatus } from '@/types';
 import { toast } from 'sonner';
 import { AlertTriangle, Clock, CheckCircle, FileText, DollarSign, Loader2 } from 'lucide-react';
@@ -41,6 +43,8 @@ export default function DisputesPage() {
   const [tab, setTab] = useState<DisputeStatus>('open');
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const [reasoning, setReasoning] = useState<Record<string, string>>({});
+  const [verifyingEvidenceId, setVerifyingEvidenceId] = useState<string | null>(null);
+  const [verifiedEvidenceIds, setVerifiedEvidenceIds] = useState<Set<string>>(new Set());
 
   const load = useCallback(async () => {
     try {
@@ -84,6 +88,19 @@ export default function DisputesPage() {
       toast.error('Failed to resolve dispute — if this is unexpected, verify the admin account has the admin role on its JWT');
     } finally {
       setResolvingId(null);
+    }
+  };
+
+  const handleVerifyEvidence = async (disputeId: string, evidenceId: string) => {
+    setVerifyingEvidenceId(evidenceId);
+    try {
+      await disputesApi.verifyEvidence(disputeId, evidenceId);
+      setVerifiedEvidenceIds((current) => new Set(current).add(evidenceId));
+      toast.success('Evidence verified.');
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Unable to verify this evidence.'));
+    } finally {
+      setVerifyingEvidenceId(null);
     }
   };
 
@@ -204,18 +221,23 @@ export default function DisputesPage() {
 
                   {dispute.evidence.length > 0 && (
                     <div className="space-y-2 mb-4">
-                      {dispute.evidence.map((ev) => (
-                        <div key={ev.id} className="text-sm text-muted-foreground flex items-start gap-2">
+                      {dispute.evidence.map((ev) => {
+                        const evidenceUrl = safeAttachmentUrl(ev.content);
+                        const verified = verifiedEvidenceIds.has(ev.id);
+                        return (
+                        <div key={ev.id} className="flex items-start gap-2 rounded-lg border border-border p-3 text-sm text-muted-foreground">
                           <FileText className="w-3 h-3 mt-0.5 shrink-0" />
                           {ev.type === 'text' ? (
-                            <span>{ev.content}</span>
-                          ) : (
-                            <a href={ev.content} target="_blank" rel="noopener noreferrer" className="underline">
+                            <span className="min-w-0 flex-1 break-words">{ev.content}</span>
+                          ) : evidenceUrl ? (
+                            <a href={evidenceUrl} target="_blank" rel="noopener noreferrer" className="min-w-0 flex-1 underline">
                               {ev.type === 'file' ? 'View file' : ev.content}
                             </a>
-                          )}
+                          ) : <span className="min-w-0 flex-1">Attachment unavailable</span>}
+                          {verified ? <Badge variant="secondary">Verified</Badge> : <Button type="button" size="sm" variant="outline" disabled={verifyingEvidenceId === ev.id} onClick={() => void handleVerifyEvidence(dispute.id, ev.id)}>{verifyingEvidenceId === ev.id ? 'Verifying…' : 'Verify evidence'}</Button>}
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
 

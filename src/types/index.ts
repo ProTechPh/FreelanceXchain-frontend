@@ -352,7 +352,7 @@ export interface DisputeEvidence {
   id: string;
   disputeId: string;
   submittedBy: string;
-  evidenceType: EvidenceType;
+  evidenceType: EvidenceType | Evidence['type'];
   fileUrl?: string;
   description: string;
   verifiedBy?: string;
