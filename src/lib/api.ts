@@ -3,6 +3,7 @@ import type {
   AuthSuccessResponse,
   AuthResponse,
   AuthApiUser,
+  OAuthCallbackResponse,
   LoginRequest,
   RegisterRequest,
   FreelancerProfile,
@@ -36,6 +37,7 @@ import type {
   SkillTrend,
   PlatformMetrics,
   SkillTaxonomy,
+  UserRole,
 } from '@/types';
 import type {
   CreateProjectPayload,
@@ -149,6 +151,15 @@ export const authApi = {
   
   oauthLogin: (provider: 'google' | 'github') =>
     api.get<{ url: string }>(`/auth/oauth/${provider}`),
+
+  oauthCallback: (accessToken: string) =>
+    api.post<OAuthCallbackResponse>('/auth/oauth/callback', { access_token: accessToken }),
+
+  oauthRegister: (accessToken: string, role: Exclude<UserRole, 'admin'>) =>
+    api.post<AuthSuccessResponse>('/auth/oauth/register', { accessToken, role }),
+
+  resendConfirmation: (email: string) =>
+    api.post<{ message: string }>('/auth/resend-confirmation', { email }),
   
   mfaVerify: (data: MfaVerifyRequest) =>
     api.post<AuthSuccessResponse>('/auth/login/mfa-verify', data),

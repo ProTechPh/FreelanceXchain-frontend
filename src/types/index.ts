@@ -481,6 +481,14 @@ export interface MfaRequiredResponse {
 
 export type AuthResponse = AuthSuccessResponse | MfaRequiredResponse;
 
+export interface RegistrationRequiredResponse {
+  status: 'registration_required';
+  message?: string;
+  access_token?: string;
+}
+
+export type OAuthCallbackResponse = AuthResponse | RegistrationRequiredResponse;
+
 export interface MfaVerifyRequest {
   mfaSessionToken: string;
   factorId: string;

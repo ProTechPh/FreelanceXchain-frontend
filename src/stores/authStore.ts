@@ -21,6 +21,7 @@ interface AuthState {
   loadUser: () => Promise<void>;
   setUser: (user: User | null) => void;
   completeMfa: (response: AuthSuccessResponse) => void;
+  beginMfa: (mfaSessionToken: string) => void;
   clearMfa: () => void;
   setHasHydrated: (value: boolean) => void;
 }
@@ -120,6 +121,14 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: true,
           mfaPending: false,
           mfaSessionToken: null,
+        });
+      },
+
+      beginMfa: (mfaSessionToken: string) => {
+        set({
+          isAuthenticated: false,
+          mfaPending: true,
+          mfaSessionToken,
         });
       },
 
