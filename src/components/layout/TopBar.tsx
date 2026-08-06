@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Bell, MessageSquare, Wallet, LogOut, User, Settings, ChevronDown, Search } from 'lucide-react';
+import { Bell, MessageSquare, Wallet, LogOut, User, Settings, ChevronDown, Search, Shield, Bookmark, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -17,6 +17,15 @@ import { useAuthStore } from '@/stores/authStore';
 import { useState, useEffect } from 'react';
 import { notificationsApi } from '@/lib/api';
 import { subscribeToNotificationStream } from '@/lib/sse';
+
+const participantAccountItems = [
+  { label: 'Profile', path: 'profile', icon: User },
+  { label: 'Verification', path: 'verification', icon: Shield },
+  { label: 'Notifications', path: 'notifications', icon: Bell },
+  { label: 'Saved', path: 'saved', icon: Bookmark },
+  { label: 'Activity', path: 'activity', icon: History },
+  { label: 'Settings', path: 'settings', icon: Settings },
+] as const;
 
 export function TopBar() {
   const { user, logout } = useAuthStore();
@@ -61,7 +70,8 @@ export function TopBar() {
     ? `${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}`
     : null;
 
-  const hasParticipantDashboard = user?.role === 'freelancer' || user?.role === 'employer';
+  const participantRole = user?.role === 'freelancer' || user?.role === 'employer' ? user.role : null;
+  const hasParticipantDashboard = participantRole !== null;
   const searchTarget = user?.role === 'employer' ? '/freelancers' : '/projects';
   const searchLabel = user?.role === 'employer' ? 'Search freelancers' : 'Search projects';
 
@@ -127,7 +137,7 @@ export function TopBar() {
 
           {/* User Menu */}
           <DropdownMenu>
-            <DropdownMenuTrigger className="flex items-center gap-2 h-9 px-2 rounded-lg hover:bg-accent transition-colors cursor-pointer">
+            <DropdownMenuTrigger aria-label="Open account menu" className="flex items-center gap-2 h-9 px-2 rounded-lg hover:bg-accent transition-colors cursor-pointer">
               <Avatar className="w-7 h-7">
                 <AvatarFallback className="text-xs gradient-primary text-white">{initials}</AvatarFallback>
               </Avatar>
@@ -141,12 +151,15 @@ export function TopBar() {
               {hasParticipantDashboard && (
                 <>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => router.push(`/dashboard/${user?.role || 'freelancer'}/profile`)} className="flex items-center gap-2 cursor-pointer">
-                    <User className="w-4 h-4" /> Profile
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push(`/dashboard/${user?.role || 'freelancer'}/settings`)} className="flex items-center gap-2 cursor-pointer">
-                    <Settings className="w-4 h-4" /> Settings
-                  </DropdownMenuItem>
+                  {participantAccountItems.map((item) => (
+                    <DropdownMenuItem
+                      key={item.path}
+                      onClick={() => router.push(`/dashboard/${participantRole}/${item.path}`)}
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <item.icon className="w-4 h-4" /> {item.label}
+                    </DropdownMenuItem>
+                  ))}
                 </>
               )}
               <DropdownMenuSeparator />

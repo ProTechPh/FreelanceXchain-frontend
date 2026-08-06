@@ -15,7 +15,6 @@ import {
   Star,
   Image,
   MessageSquare,
-  Settings,
   Shield,
   Users,
   AlertTriangle,
@@ -27,12 +26,9 @@ import {
   PlusCircle,
   ClipboardList,
   Mail,
-  UserRound,
   Bell,
   BrainCircuit,
   Tags,
-  History,
-  Bookmark,
   Sparkles,
 } from 'lucide-react';
 
@@ -53,13 +49,7 @@ const freelancerNav: NavItem[] = [
   { label: 'Reputation', href: '/dashboard/freelancer/reputation', icon: Star },
   { label: 'Skill Analysis', href: '/dashboard/freelancer/skill-analysis', icon: BrainCircuit },
   { label: 'Portfolio', href: '/dashboard/freelancer/portfolio', icon: Image },
-  { label: 'Profile', href: '/dashboard/freelancer/profile', icon: UserRound },
-  { label: 'Verification', href: '/dashboard/freelancer/verification', icon: Shield },
   { label: 'Messages', href: getDashboardMessageRoute('freelancer'), icon: MessageSquare },
-  { label: 'Notifications', href: '/dashboard/freelancer/notifications', icon: Bell },
-  { label: 'Saved', href: '/dashboard/freelancer/saved', icon: Bookmark },
-  { label: 'Activity', href: '/dashboard/freelancer/activity', icon: History },
-  { label: 'Settings', href: '/dashboard/freelancer/settings', icon: Settings },
 ];
 
 const employerNav: NavItem[] = [
@@ -69,14 +59,8 @@ const employerNav: NavItem[] = [
   { label: 'Contracts', href: '/dashboard/employer/contracts', icon: FileText },
   { label: 'Transactions', href: '/dashboard/employer/transactions', icon: Wallet },
   { label: 'Disputes', href: '/dashboard/employer/disputes', icon: AlertTriangle },
-  { label: 'Profile', href: '/dashboard/employer/profile', icon: UserRound },
   { label: 'Reputation', href: '/dashboard/employer/reputation', icon: Star },
-  { label: 'Verification', href: '/dashboard/employer/verification', icon: Shield },
   { label: 'Messages', href: getDashboardMessageRoute('employer'), icon: MessageSquare },
-  { label: 'Notifications', href: '/dashboard/employer/notifications', icon: Bell },
-  { label: 'Saved', href: '/dashboard/employer/saved', icon: Bookmark },
-  { label: 'Activity', href: '/dashboard/employer/activity', icon: History },
-  { label: 'Settings', href: '/dashboard/employer/settings', icon: Settings },
 ];
 
 const adminNav: NavItem[] = [
