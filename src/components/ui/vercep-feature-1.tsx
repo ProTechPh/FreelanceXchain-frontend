@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { Icons } from "./icons";
 import { Marquee } from "./marquee";
 import { motion } from "motion/react";
@@ -55,7 +54,7 @@ export function WhySection() {
   );
 
   return (
-    <section className="relative bg-background py-20 sm:py-32">
+    <section id="about-section" className="relative bg-background py-20 sm:py-32">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto flex max-w-3xl flex-col items-start justify-center space-y-4 mb-6">
           <h2 className="max-w-3xl font-bold text-4xl sm:text-5xl lg:text-6xl tracking-tight">

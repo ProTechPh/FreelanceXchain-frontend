@@ -16,10 +16,11 @@ const availabilityColors: Record<string, string> = {
   unavailable: 'bg-gray-500/10 text-gray-500',
 };
 
-function FreelancerResult({ freelancer }: { freelancer: FreelancerProfile }) {
+function FreelancerResult({ freelancer, listingQuery }: { freelancer: FreelancerProfile; listingQuery: string }) {
   const initials = (freelancer.name ?? 'U').split(' ').map((name) => name[0]).join('');
+  const returnPath = `/freelancers${listingQuery ? `?${listingQuery}` : ''}`;
   return (
-    <Link href={`/freelancers/${freelancer.userId}`} className="block h-full">
+    <Link href={`/freelancers/${freelancer.userId}?returnTo=${encodeURIComponent(returnPath)}`} className="block h-full">
       <Card className="h-full cursor-pointer transition-all hover:border-primary/20">
         <CardContent className="p-6 pt-16">
           <div className="mb-4 flex items-start gap-4">
@@ -58,7 +59,7 @@ function FreelancersMarketplace() {
       emptyMessage="No freelancers match these filters."
       layout="grid"
       getTargetId={(freelancer) => freelancer.userId}
-      renderItem={(freelancer) => <FreelancerResult freelancer={freelancer} />}
+      renderItem={(freelancer, listingQuery) => <FreelancerResult freelancer={freelancer} listingQuery={listingQuery} />}
     />
   );
 }

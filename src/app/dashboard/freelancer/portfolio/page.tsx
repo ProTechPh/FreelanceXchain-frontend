@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { portfolioApi } from '@/lib/api';
+import { safeAttachmentUrl } from '@/lib/attachment-presentation';
 import { useAuthStore } from '@/stores/authStore';
 import type { PortfolioItem } from '@/types';
 import { toast } from 'sonner';
@@ -256,12 +257,12 @@ export default function PortfolioPage() {
                       </p>
                     )}
                   </div>
-                  {item.projectUrl && (
-                    <a href={item.projectUrl} target="_blank" rel="noopener noreferrer">
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                  {item.projectUrl && safeAttachmentUrl(item.projectUrl) && (
+                    <Button asChild variant="ghost" size="icon" className="h-8 w-8">
+                      <a href={safeAttachmentUrl(item.projectUrl)!} target="_blank" rel="noopener noreferrer" aria-label={`Open ${item.title} project link`}>
                         <ExternalLink className="w-4 h-4" />
-                      </Button>
-                    </a>
+                      </a>
+                    </Button>
                   )}
                 </div>
 

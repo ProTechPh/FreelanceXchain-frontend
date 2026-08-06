@@ -97,6 +97,7 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
     [freelancerProfile?.skills],
   );
   const availableSkills = skills.filter((skill) => !claimedSkillNames.has(skill.name.toLowerCase()));
+  const identityProfile = role === 'freelancer' ? freelancerProfile : employerProfile;
 
   const saveProfile = async () => {
     const validationError = role === 'freelancer'
@@ -233,8 +234,9 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
 
       <Card>
         <CardHeader><CardTitle className="flex items-center gap-2"><UserRound className="size-5" />Account identity</CardTitle></CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-2"><Label htmlFor="profile-name">Name</Label><Input id="profile-name" value={user?.name ?? ''} disabled /></div>
+        <CardContent className="grid gap-4 sm:grid-cols-3">
+          <div className="space-y-2"><Label htmlFor="profile-name">Verified name</Label><Input id="profile-name" value={identityProfile?.name || user?.name || ''} disabled /></div>
+          <div className="space-y-2"><Label htmlFor="profile-nationality">Nationality</Label><Input id="profile-nationality" value={identityProfile?.nationality || 'Not available'} disabled /></div>
           <div className="space-y-2"><Label htmlFor="profile-email">Email</Label><Input id="profile-email" value={user?.email ?? ''} disabled /></div>
         </CardContent>
       </Card>

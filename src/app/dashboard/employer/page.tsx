@@ -220,9 +220,10 @@ export default function EmployerDashboard() {
                 const completedCount = milestones.filter((m) => m.status === 'completed').length;
                 const progress = milestones.length > 0 ? Math.round((completedCount / milestones.length) * 100) : 0;
                 return (
-                  <div
+                  <Link
                     key={project.id}
-                    className="p-4 rounded-xl bg-secondary/50 border border-border hover:border-primary/20 transition-all cursor-pointer"
+                    href={`/projects/${project.id}`}
+                    className="block rounded-xl border border-border bg-secondary/50 p-4 transition-all hover:border-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div>
@@ -252,7 +253,7 @@ export default function EmployerDashboard() {
                         </div>
                       </div>
                     )}
-                  </div>
+                  </Link>
                 );
               })}
             </CardContent>

@@ -27,7 +27,7 @@ type MarketplaceBrowserProps<T extends Project | FreelancerProfile> = {
   description: string;
   emptyMessage: string;
   layout: 'list' | 'grid';
-  renderItem: (item: T) => ReactNode;
+  renderItem: (item: T, listingQuery: string) => ReactNode;
   getTargetId?: (item: T) => string;
   initialFilters?: MarketplaceFilters;
 };
@@ -60,6 +60,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
   const user = useAuthStore((state) => state.user);
   const [items, setItems] = useState<T[]>([]);
   const [filters, setFilters] = useState<MarketplaceFilters>(() => createInitialFilters(initialFilters));
+  const [appliedFilters, setAppliedFilters] = useState<MarketplaceFilters>(() => createInitialFilters(initialFilters));
   const [skills, setSkills] = useState<Skill[]>([]);
   const [categoryStats, setCategoryStats] = useState<ProjectCategoryStat[]>([]);
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
@@ -93,6 +94,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
         : await freelancersApi.search(params);
       const nextItems = response.data.items as T[];
       setItems((current) => append ? [...current, ...nextItems] : nextItems);
+      setAppliedFilters(nextFilters);
       setHasMore(response.data.metadata.hasMore);
     } catch (error) {
       toast.error(getApiErrorMessage(error, `Unable to search ${kind}s.`));
@@ -205,6 +207,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
     try {
       const { data } = await savedSearchesApi.execute(savedSearch.id);
       setItems(data.results as T[]);
+      setAppliedFilters(restored);
       setHasMore(false);
       const searchParams = marketplaceFiltersToSearchParams(restored);
       const query = searchParams.toString();
@@ -358,9 +361,10 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
             {items.map((item) => {
               const targetId = getTargetId(item);
               const favorite = favoriteIds.has(targetId);
+              const listingQuery = marketplaceFiltersToSearchParams(appliedFilters).toString();
               return (
                 <div key={targetId} className="relative">
-                  {renderItem(item)}
+                  {renderItem(item, listingQuery)}
                   {user && (
                     <Button
                       type="button"

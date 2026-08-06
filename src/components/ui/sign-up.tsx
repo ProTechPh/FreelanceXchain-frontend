@@ -128,7 +128,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
 
                 <p className="animate-element animate-delay-600 text-center text-sm text-muted-foreground">
                   Already have an account?{' '}
-                  <a href="#" onClick={(e) => { e.preventDefault(); onSignIn?.(); }} className="text-violet-400 hover:underline transition-colors">Sign in</a>
+                  <button type="button" onClick={onSignIn} className="text-violet-400 transition-colors hover:underline">Sign in</button>
                 </p>
               </>
             ) : (

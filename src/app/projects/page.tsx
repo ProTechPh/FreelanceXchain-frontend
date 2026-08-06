@@ -10,9 +10,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import type { Project } from '@/types';
 import { marketplaceFiltersFromSearchParams } from '@/lib/marketplace-search';
 
-function ProjectResult({ project }: { project: Project }) {
+function ProjectResult({ project, listingQuery }: { project: Project; listingQuery: string }) {
+  const returnPath = `/projects${listingQuery ? `?${listingQuery}` : ''}`;
   return (
-    <Link href={`/projects/${project.id}`} className="block">
+    <Link href={`/projects/${project.id}?returnTo=${encodeURIComponent(returnPath)}`} className="block">
       <Card className="cursor-pointer transition-all hover:border-primary/30 hover:glow-sm-primary">
         <CardContent className="p-6 pr-16">
           <div className="mb-4 flex items-start justify-between">
@@ -52,7 +53,7 @@ function ProjectsMarketplace() {
       description="Search open work by keyword, skill, and budget, then save the searches you care about."
       emptyMessage="No open projects match these filters."
       layout="list"
-      renderItem={(project) => <ProjectResult project={project} />}
+      renderItem={(project, listingQuery) => <ProjectResult project={project} listingQuery={listingQuery} />}
     />
   );
 }

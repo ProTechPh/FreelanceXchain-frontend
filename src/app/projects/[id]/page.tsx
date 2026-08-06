@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +14,7 @@ import { getStatusColor } from '@/lib/status-styles';
 import { getProjectPrimaryAction } from '@/lib/project-actions';
 import { formatFileSize, safeAttachmentUrl } from '@/lib/attachment-presentation';
 import { useAuthStore } from '@/stores/authStore';
+import { getMarketplaceReturnPath } from '@/lib/marketplace-return';
 import { toast } from 'sonner';
 import {
   Zap,
@@ -30,6 +31,7 @@ import {
 
 export default function ProjectDetailPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [proposalOpen, setProposalOpen] = useState(false);
@@ -71,6 +73,7 @@ export default function ProjectDetailPage() {
   }
 
   const primaryAction = getProjectPrimaryAction(user, project);
+  const marketplaceBackPath = getMarketplaceReturnPath(searchParams?.get('returnTo') ?? null, '/projects');
 
   const shareProject = async () => {
     try {
@@ -91,6 +94,7 @@ export default function ProjectDetailPage() {
       {/* Header */}
       <div className="border-b border-border bg-card/50 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 py-8">
+          <Button asChild variant="ghost" className="-ml-3 mb-4"><Link href={marketplaceBackPath}>Back to project search</Link></Button>
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <div className="flex items-center gap-3 mb-2">

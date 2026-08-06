@@ -136,6 +136,7 @@ export default function Navbar({
   },
 }: NavbarProps) {
   const [openSearch, setOpenSearch] = React.useState(false);
+  const [globalSearchQuery, setGlobalSearchQuery] = React.useState('');
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl">
@@ -218,9 +219,23 @@ export default function Navbar({
 
       {/* Search dialog */}
       <CommandDialog open={openSearch} onOpenChange={setOpenSearch}>
-        <CommandInput placeholder="Search projects, freelancers, features..." />
+        <CommandInput value={globalSearchQuery} onValueChange={setGlobalSearchQuery} placeholder="Search projects, freelancers, features..." />
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
+          {globalSearchQuery.trim() && (
+            <CommandGroup className="text-muted-foreground" heading="Search marketplace">
+              <CommandItem asChild value={`Search projects ${globalSearchQuery}`}>
+                <Link href={`/projects?keyword=${encodeURIComponent(globalSearchQuery.trim())}`} onClick={() => setOpenSearch(false)}>
+                  <Lightning className="size-4" weight="light" />Search projects for “{globalSearchQuery.trim()}”
+                </Link>
+              </CommandItem>
+              <CommandItem asChild value={`Search freelancers ${globalSearchQuery}`}>
+                <Link href={`/freelancers?keyword=${encodeURIComponent(globalSearchQuery.trim())}`} onClick={() => setOpenSearch(false)}>
+                  <Users className="size-4" weight="light" />Search freelancers for “{globalSearchQuery.trim()}”
+                </Link>
+              </CommandItem>
+            </CommandGroup>
+          )}
           <CommandGroup className="text-muted-foreground" heading="Pages">
             <CommandItem asChild>
               <Link href="/projects" className="flex items-center gap-2">

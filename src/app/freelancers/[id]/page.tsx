@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +10,7 @@ import { freelancersApi } from '@/lib/api';
 import { FavoriteButton } from '@/components/marketplace/favorite-button';
 import { useAuthStore } from '@/stores/authStore';
 import type { FreelancerProfile } from '@/types';
+import { getMarketplaceReturnPath } from '@/lib/marketplace-return';
 import { toast } from 'sonner';
 import {
   MapPin,
@@ -21,6 +22,7 @@ import {
 
 export default function FreelancerProfilePage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const [freelancer, setFreelancer] = useState<FreelancerProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const user = useAuthStore((state) => state.user);
@@ -58,12 +60,14 @@ export default function FreelancerProfilePage() {
   }
 
   const initials = (freelancer.name ?? 'U').split(' ').map(n => n[0]).join('');
+  const marketplaceBackPath = getMarketplaceReturnPath(searchParams?.get('returnTo') ?? null, '/freelancers');
 
   return (
     <div className="min-h-screen">
       {/* Header */}
       <div className="border-b border-border bg-card/50 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 py-8">
+          <Button asChild variant="ghost" className="-ml-3 mb-4"><Link href={marketplaceBackPath}>Back to freelancer search</Link></Button>
           <div className="flex items-start gap-6">
             <div className="w-20 h-20 rounded-2xl gradient-primary flex items-center justify-center text-white font-bold text-2xl">
               {initials}

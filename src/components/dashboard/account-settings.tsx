@@ -8,6 +8,7 @@ import { authApi, emailPreferencesApi, fileManagementApi } from '@/lib/api';
 import { connectWallet, formatWalletAddress, type WalletConnection } from '@/lib/wallet';
 import { formatFileSize } from '@/lib/file-storage';
 import { getApiErrorMessage } from '@/lib/auth-contract';
+import { safeAttachmentUrl } from '@/lib/attachment-presentation';
 import { useAuthStore } from '@/stores/authStore';
 import type { EmailPreferences, EmailPreferencesUpdate, FileInfo, FileQuota, MfaFactor } from '@/types';
 import { Badge } from '@/components/ui/badge';
@@ -248,7 +249,7 @@ export function AccountSettings() {
                 <div className="mb-2 flex items-center justify-between gap-3 text-sm"><span>{formatFileSize(quota.used)} of {formatFileSize(quota.limit)} used</span><span className="text-muted-foreground">{quota.files} file{quota.files === 1 ? '' : 's'}</span></div>
                 <div className="h-2 overflow-hidden rounded-full bg-muted" role="progressbar" aria-label="Storage used" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(quota.percentage)}><div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, quota.percentage)}%` }} /></div>
               </div>
-              {files.length === 0 ? <p className="text-sm text-muted-foreground">No proposal or portfolio files stored.</p> : <ul className="divide-y divide-border rounded-lg border border-border">{files.map((file) => <li key={`${file.bucket}:${file.path}`} className="flex items-center justify-between gap-3 p-3"><div className="min-w-0"><p className="truncate text-sm font-medium">{file.name}</p><p className="text-xs text-muted-foreground">{formatFileSize(file.size)} · {file.bucket.replaceAll('_', ' ')}</p></div><div className="flex gap-1">{file.publicUrl && <Button asChild type="button" variant="ghost" size="icon"><a href={file.publicUrl} target="_blank" rel="noreferrer" aria-label={`Open ${file.name}`}><ExternalLink className="size-4" /></a></Button>}<Button type="button" variant="ghost" size="icon" aria-label={`Delete ${file.name}`} disabled={deletingFile === file.path} onClick={() => void deleteFile(file)}><Trash2 className="size-4 text-destructive" /></Button></div></li>)}</ul>}
+              {files.length === 0 ? <p className="text-sm text-muted-foreground">No proposal or portfolio files stored.</p> : <ul className="divide-y divide-border rounded-lg border border-border">{files.map((file) => { const publicUrl = file.publicUrl ? safeAttachmentUrl(file.publicUrl) : null; return <li key={`${file.bucket}:${file.path}`} className="flex items-center justify-between gap-3 p-3"><div className="min-w-0"><p className="truncate text-sm font-medium">{file.name}</p><p className="text-xs text-muted-foreground">{formatFileSize(file.size)} · {file.bucket.replaceAll('_', ' ')}</p></div><div className="flex gap-1">{publicUrl && <Button asChild type="button" variant="ghost" size="icon"><a href={publicUrl} target="_blank" rel="noreferrer" aria-label={`Open ${file.name}`}><ExternalLink className="size-4" /></a></Button>}<Button type="button" variant="ghost" size="icon" aria-label={`Delete ${file.name}`} disabled={deletingFile === file.path} onClick={() => void deleteFile(file)}><Trash2 className="size-4 text-destructive" /></Button></div></li>; })}</ul>}
             </>
           )}
         </CardContent>

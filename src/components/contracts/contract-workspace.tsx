@@ -21,6 +21,7 @@ import {
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { getStatusColor } from '@/lib/status-styles';
 import { hasApprovedKyc } from '@/lib/kyc-eligibility';
+import { safeAttachmentUrl } from '@/lib/attachment-presentation';
 import { getTransactionDetailRoute } from '@/lib/transaction-view';
 import { validateReviewDraft, type ReviewDraft } from '@/lib/review-form';
 import { useAuthStore } from '@/stores/authStore';
@@ -310,9 +311,10 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
                 {milestone.rejectionReason && <p className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">Revision requested: {milestone.rejectionReason}</p>}
                 {(milestone.deliverableFiles ?? []).length > 0 && (
                   <ul className="space-y-2" aria-label="Deliverable files">
-                    {(milestone.deliverableFiles ?? []).map((file) => (
-                      <li key={file.url}><a href={file.url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-primary hover:underline"><FileText className="size-4" />{file.filename}</a></li>
-                    ))}
+                    {(milestone.deliverableFiles ?? []).map((file) => {
+                      const url = safeAttachmentUrl(file.url);
+                      return <li key={file.url}>{url ? <a href={url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-primary hover:underline"><FileText className="size-4" />{file.filename}</a> : <span className="flex items-center gap-2 text-sm text-muted-foreground"><FileText className="size-4" />{file.filename} unavailable</span>}</li>;
+                    })}
                   </ul>
                 )}
 

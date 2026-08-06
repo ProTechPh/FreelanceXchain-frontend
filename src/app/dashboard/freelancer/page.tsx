@@ -246,9 +246,10 @@ export default function FreelancerDashboard() {
                 const progress = milestones.length > 0 ? Math.round((completedCount / milestones.length) * 100) : 0;
                 const currentMilestone = milestones.find((m) => m.status !== 'completed');
                 return (
-                  <div
+                  <Link
                     key={contract.id}
-                    className="p-4 rounded-xl bg-secondary/50 border border-border hover:border-primary/20 transition-all cursor-pointer"
+                    href={`/dashboard/freelancer/contracts/${contract.id}`}
+                    className="block rounded-xl border border-border bg-secondary/50 p-4 transition-all hover:border-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div>
@@ -274,7 +275,7 @@ export default function FreelancerDashboard() {
                         </div>
                       )}
                     </div>
-                  </div>
+                  </Link>
                 );
               })}
             </CardContent>
@@ -329,9 +330,10 @@ export default function FreelancerDashboard() {
           ) : (
             <div className="grid md:grid-cols-3 gap-4">
               {recommended.map(({ project, matchScore, matchedSkills }) => (
-                <div
+                <Link
                   key={project.id}
-                  className="p-4 rounded-xl bg-secondary/50 border border-border hover:border-primary/20 transition-all cursor-pointer"
+                  href={`/projects/${project.id}`}
+                  className="block rounded-xl border border-border bg-secondary/50 p-4 transition-all hover:border-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <h3 className="font-medium">{project.title}</h3>
@@ -349,7 +351,7 @@ export default function FreelancerDashboard() {
                     <span>{relativeTime(project.createdAt)}</span>
                     <span>{project.proposalCount ?? 0} proposals</span>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}

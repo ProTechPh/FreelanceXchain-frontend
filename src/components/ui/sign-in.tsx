@@ -112,7 +112,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                   <input type="checkbox" name="rememberMe" className="custom-checkbox" />
                   <span className="text-foreground/90">Keep me signed in</span>
                 </label>
-                <a href="#" onClick={(e) => { e.preventDefault(); onResetPassword?.(); }} className="hover:underline text-violet-400 transition-colors">Reset password</a>
+                <button type="button" onClick={onResetPassword} className="text-violet-400 transition-colors hover:underline">Reset password</button>
               </div>
 
               <button type="submit" className="animate-element animate-delay-600 w-full rounded-2xl bg-primary py-4 font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
@@ -145,7 +145,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
             </button>
 
             <p className="animate-element animate-delay-900 text-center text-sm text-muted-foreground">
-              New to our platform? <a href="#" onClick={(e) => { e.preventDefault(); onCreateAccount?.(); }} className="text-violet-400 hover:underline transition-colors">Create Account</a>
+              New to our platform? <button type="button" onClick={onCreateAccount} className="text-violet-400 transition-colors hover:underline">Create Account</button>
             </p>
           </div>
         </div>

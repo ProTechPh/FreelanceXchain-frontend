@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { kycApi } from '@/lib/api';
+import { safeAttachmentUrl } from '@/lib/attachment-presentation';
 import type { KycVerification } from '@/types';
 import {
   Shield,
@@ -241,7 +242,7 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
             {expanded ? 'Hide Details' : 'View Details'}
           </Button>
           {v.didit_session_url && (
-            <Button variant="outline" size="sm" onClick={() => window.open(v.didit_session_url!, '_blank')}>
+            <Button variant="outline" size="sm" onClick={() => { const url = safeAttachmentUrl(v.didit_session_url!); if (url) window.open(url, '_blank', 'noopener,noreferrer'); }}>
               <ExternalLink className="w-4 h-4 mr-2" /> Open in Didit
             </Button>
           )}

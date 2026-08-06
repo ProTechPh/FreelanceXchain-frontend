@@ -105,7 +105,11 @@ export function getApiErrorMessage(error: unknown, fallback: string): string {
   if (!isRecord(error) || !isRecord(error.response)) return fallback;
 
   const data = error.response.data;
-  if (!isRecord(data) || !isRecord(data.error)) return fallback;
+  if (!isRecord(data)) return fallback;
+
+  if (typeof data.error === 'string' && data.error.trim()) return data.error;
+  if (typeof data.message === 'string' && data.message.trim()) return data.message;
+  if (!isRecord(data.error)) return fallback;
 
   return typeof data.error.message === 'string' && data.error.message.trim()
     ? data.error.message

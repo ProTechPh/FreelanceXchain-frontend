@@ -42,6 +42,8 @@ test('employer edits the company profile through the supported profile endpoint'
   });
 
   await page.goto('/dashboard/employer/profile');
+  await expect(page.getByLabel('Verified name')).toHaveValue('Owner');
+  await expect(page.getByLabel('Nationality')).toHaveValue('PH');
   await page.getByLabel('Company name').fill('Acme Studio');
   await page.getByRole('button', { name: 'Save profile' }).click();
   await expect(page.getByText('Profile saved.')).toBeVisible();
@@ -74,6 +76,7 @@ test('freelancer adds a taxonomy skill with years of experience', async ({ page 
   await page.route('**/api/skills/custom', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }));
 
   await page.goto('/dashboard/freelancer/profile');
+  await expect(page.getByLabel('Nationality')).toHaveValue('PH');
   await page.getByLabel('Add skill').selectOption('skill-react');
   await page.locator('#skill-years').fill('3');
   await page.getByRole('button', { name: 'Add', exact: true }).click();

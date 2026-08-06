@@ -92,6 +92,17 @@ test('uses the structured API error message for rate limits and validation error
   );
 });
 
+test('uses string errors returned by current refund, milestone, and upload routes', () => {
+  assert.equal(
+    getApiErrorMessage({ response: { data: { error: 'Refund reason is required' } } }, 'Unable to request refund'),
+    'Refund reason is required',
+  );
+  assert.equal(
+    getApiErrorMessage({ response: { data: { message: 'Attachment is too large' } } }, 'Unable to upload'),
+    'Attachment is too large',
+  );
+});
+
 test('falls back when an error does not match the API error contract', () => {
   assert.equal(getApiErrorMessage(new Error('network failed'), 'Unable to sign in'), 'Unable to sign in');
 });

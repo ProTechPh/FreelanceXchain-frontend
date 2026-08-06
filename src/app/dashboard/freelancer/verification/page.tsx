@@ -8,6 +8,7 @@ import { kycApi } from '@/lib/api';
 import { classifyKycStatusError } from '@/lib/kyc-status-error';
 import { getKycRetryAvailability } from '@/lib/kyc-retry';
 import { getApiErrorMessage } from '@/lib/auth-contract';
+import { safeAttachmentUrl } from '@/lib/attachment-presentation';
 import type { KycVerification, UserRole } from '@/types';
 import {
   Shield,
@@ -34,6 +35,11 @@ const statusConfig: Record<string, { label: string; color: string; icon: React.E
 };
 
 type ParticipantRole = Extract<UserRole, 'freelancer' | 'employer'>;
+
+function openVerificationUrl(value: string | null) {
+  const url = value ? safeAttachmentUrl(value) : null;
+  if (url) window.open(url, '_blank', 'noopener,noreferrer');
+}
 
 export function VerificationCenter({ role }: { role: ParticipantRole }) {
   const [verification, setVerification] = useState<KycVerification | null>(null);
@@ -83,7 +89,7 @@ export function VerificationCenter({ role }: { role: ParticipantRole }) {
       setVerification(data);
       setHistory((current) => [data, ...current.filter((item) => item.id !== data.id)]);
       if (data.didit_session_url) {
-        window.open(data.didit_session_url, '_blank', 'noopener,noreferrer');
+        openVerificationUrl(data.didit_session_url);
       }
     } catch (err: unknown) {
       setError(getApiErrorMessage(err, 'Failed to start verification'));
@@ -222,7 +228,7 @@ export function VerificationCenter({ role }: { role: ParticipantRole }) {
                     <Button
                       size="sm"
                       variant="gradient"
-                      onClick={() => window.open(verification.didit_session_url!, '_blank', 'noopener,noreferrer')}
+                      onClick={() => openVerificationUrl(verification.didit_session_url)}
                     >
                       <ExternalLink className="w-4 h-4 mr-2" /> Continue Verification
                     </Button>
@@ -311,7 +317,7 @@ export function VerificationCenter({ role }: { role: ParticipantRole }) {
           {history.length === 0 ? <p className="py-6 text-center text-sm text-muted-foreground">No previous verification attempts.</p> : <ol className="space-y-3">{history.map((attempt) => {
             const attemptConfig = statusConfig[attempt.status] ?? statusConfig.pending;
             const AttemptIcon = attemptConfig.icon;
-            return <li key={`${attempt.id}-${attempt.updated_at}`} className="flex flex-col gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-center sm:justify-between"><div><div className="flex items-center gap-2"><Badge className={attemptConfig.color}><AttemptIcon className="mr-1 h-3 w-3" />{attemptConfig.label}</Badge>{verification?.id === attempt.id && <Badge variant="outline">Current</Badge>}</div><p className="mt-2 text-xs text-muted-foreground">Started {new Date(attempt.created_at).toLocaleString()} · updated {new Date(attempt.updated_at).toLocaleString()}</p>{attempt.admin_notes && <p className="mt-2 text-sm text-muted-foreground">{attempt.admin_notes}</p>}</div>{attempt.didit_session_url && (attempt.status === 'pending' || attempt.status === 'in_progress') && <Button type="button" size="sm" variant="outline" onClick={() => window.open(attempt.didit_session_url!, '_blank', 'noopener,noreferrer')}>Continue<ExternalLink className="ml-2 h-4 w-4" /></Button>}</li>;
+            return <li key={`${attempt.id}-${attempt.updated_at}`} className="flex flex-col gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-center sm:justify-between"><div><div className="flex items-center gap-2"><Badge className={attemptConfig.color}><AttemptIcon className="mr-1 h-3 w-3" />{attemptConfig.label}</Badge>{verification?.id === attempt.id && <Badge variant="outline">Current</Badge>}</div><p className="mt-2 text-xs text-muted-foreground">Started {new Date(attempt.created_at).toLocaleString()} · updated {new Date(attempt.updated_at).toLocaleString()}</p>{attempt.admin_notes && <p className="mt-2 text-sm text-muted-foreground">{attempt.admin_notes}</p>}</div>{attempt.didit_session_url && (attempt.status === 'pending' || attempt.status === 'in_progress') && <Button type="button" size="sm" variant="outline" onClick={() => openVerificationUrl(attempt.didit_session_url)}>Continue<ExternalLink className="ml-2 h-4 w-4" /></Button>}</li>;
           })}</ol>}
         </CardContent>
       </Card>
