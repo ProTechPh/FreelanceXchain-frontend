@@ -6,6 +6,8 @@ export type ProposalStatus = 'pending' | 'accepted' | 'rejected' | 'withdrawn';
 
 export type ContractStatus = 'pending' | 'active' | 'completed' | 'disputed' | 'resolved' | 'cancelled';
 
+export type RushUpgradeRequestStatus = 'pending' | 'accepted' | 'declined' | 'counter_offered' | 'expired';
+
 export type MilestoneStatus =
   | 'pending'
   | 'in_progress'
@@ -205,6 +207,39 @@ export interface Contract {
   project?: Project;
   freelancer?: FreelancerProfile;
   employer?: EmployerProfile;
+}
+
+export interface RushUpgradeRequest {
+  id: string;
+  contractId: string;
+  requestedBy: string;
+  proposedPercentage: number;
+  counterPercentage: number | null;
+  status: RushUpgradeRequestStatus;
+  respondedBy: string | null;
+  respondedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// The refund service currently returns its repository entity without a response
+// mapper, so this contract intentionally mirrors the backend's snake_case fields.
+export interface RefundRequest {
+  id: string;
+  contract_id: string;
+  requested_by: string;
+  amount: number;
+  is_partial: boolean;
+  reason: string;
+  status: 'pending' | 'approved' | 'rejected' | 'completed' | 'cancelled';
+  approved_by?: string;
+  approved_at?: string;
+  rejected_by?: string;
+  rejected_at?: string;
+  rejection_reason?: string;
+  transaction_hash?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Review {

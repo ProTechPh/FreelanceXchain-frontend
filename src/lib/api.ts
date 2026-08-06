@@ -45,6 +45,8 @@ import type {
   Favorite,
   SavedSearch,
   SearchResult,
+  RushUpgradeRequest,
+  RefundRequest,
 } from '@/types';
 import type {
   CreateProjectPayload,
@@ -362,6 +364,40 @@ export const contractsApi = {
 
   getDisputes: (id: string) =>
     api.get<Dispute[]>(`/contracts/${id}/disputes`),
+};
+
+export const rushUpgradesApi = {
+  list: (contractId: string) =>
+    api.get<RushUpgradeRequest[]>(`/contracts/${contractId}/rush-upgrade-requests`),
+
+  request: (contractId: string, proposedPercentage: number) =>
+    api.post<RushUpgradeRequest>(`/contracts/${contractId}/rush-upgrade`, { proposedPercentage }),
+
+  respond: (requestId: string, action: 'accept' | 'decline' | 'counter_offer', counterPercentage?: number) =>
+    api.post<RushUpgradeRequest | { request: RushUpgradeRequest; contract: Contract }>(
+      `/rush-upgrade-requests/${requestId}/respond`,
+      { action, ...(counterPercentage === undefined ? {} : { counterPercentage }) },
+    ),
+
+  acceptCounter: (requestId: string) =>
+    api.post<{ request: RushUpgradeRequest; contract: Contract }>(`/rush-upgrade-requests/${requestId}/accept-counter`),
+
+  declineCounter: (requestId: string) =>
+    api.post<RushUpgradeRequest>(`/rush-upgrade-requests/${requestId}/decline-counter`),
+};
+
+export const refundsApi = {
+  list: (contractId: string) =>
+    api.get<RefundRequest[]>(`/escrow/${contractId}/refunds`),
+
+  request: (contractId: string, data: { reason: string; amount?: number }) =>
+    api.post<RefundRequest>(`/escrow/${contractId}/refund-request`, data),
+
+  approve: (refundId: string) =>
+    api.post<RefundRequest>(`/escrow/refunds/${refundId}/approve`),
+
+  reject: (refundId: string, reason: string) =>
+    api.post<RefundRequest>(`/escrow/refunds/${refundId}/reject`, { reason }),
 };
 
 export const milestonesApi = {

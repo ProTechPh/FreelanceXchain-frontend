@@ -7,7 +7,9 @@ import { toast } from 'sonner';
 import {
   contractsApi,
   milestonesApi,
+  refundsApi,
   reviewsApi,
+  rushUpgradesApi,
   transactionsApi,
 } from '@/lib/api';
 import {
@@ -20,7 +22,8 @@ import { getStatusColor } from '@/lib/status-styles';
 import { getTransactionDetailRoute } from '@/lib/transaction-view';
 import { validateReviewDraft, type ReviewDraft } from '@/lib/review-form';
 import { useAuthStore } from '@/stores/authStore';
-import type { Contract, Dispute, Milestone, Transaction, UserRole } from '@/types';
+import type { Contract, Dispute, Milestone, RefundRequest, RushUpgradeRequest, Transaction, UserRole } from '@/types';
+import { ContractNegotiationPanel } from '@/components/contracts/contract-negotiation-panel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,6 +40,8 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [disputes, setDisputes] = useState<Dispute[]>([]);
+  const [rushRequests, setRushRequests] = useState<RushUpgradeRequest[]>([]);
+  const [refunds, setRefunds] = useState<RefundRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionId, setActionId] = useState<string | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
@@ -51,10 +56,12 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
       const loadedContract = contractResponse.data;
       setContract(loadedContract);
 
-      const [milestoneResult, transactionResult, disputeResult] = await Promise.allSettled([
+      const [milestoneResult, transactionResult, disputeResult, rushResult, refundResult] = await Promise.allSettled([
         milestonesApi.listForContract(contractId),
         transactionsApi.getForContract(contractId),
         contractsApi.getDisputes(contractId),
+        rushUpgradesApi.list(contractId),
+        refundsApi.list(contractId),
       ]);
 
       const rawMilestones = milestoneResult.status === 'fulfilled'
@@ -63,6 +70,8 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
       setMilestones(rawMilestones.map(normalizeMilestone));
       setTransactions(transactionResult.status === 'fulfilled' ? transactionResult.value.data : []);
       setDisputes(disputeResult.status === 'fulfilled' ? disputeResult.value.data : []);
+      setRushRequests(rushResult.status === 'fulfilled' ? rushResult.value.data : []);
+      setRefunds(refundResult.status === 'fulfilled' ? refundResult.value.data : []);
 
       if (loadedContract.status === 'completed') {
         const rateeId = role === 'employer' ? loadedContract.freelancerId : loadedContract.employerId;
@@ -206,6 +215,16 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
           </div>
         </CardContent>
       </Card>
+
+      <ContractNegotiationPanel
+        contract={contract}
+        role={role}
+        currentUserId={user.id}
+        kycStatus={user.kycStatus}
+        rushRequests={rushRequests}
+        refunds={refunds}
+        onRefresh={loadWorkspace}
+      />
 
       {contract.status === 'completed' && reviewEligibility && (
         <Card>
