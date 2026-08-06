@@ -52,6 +52,7 @@ const employerNav: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard/employer', icon: LayoutDashboard },
   { label: 'My Projects', href: '/dashboard/employer/projects', icon: FolderOpen },
   { label: 'Post Project', href: '/dashboard/employer/projects/new', icon: PlusCircle },
+  { label: 'Contracts', href: '/dashboard/employer/contracts', icon: FileText },
   { label: 'Verification', href: '/dashboard/employer/verification', icon: Shield },
   { label: 'Messages', href: getDashboardMessageRoute('employer'), icon: MessageSquare },
   { label: 'Settings', href: '/dashboard/employer/settings', icon: Settings },
