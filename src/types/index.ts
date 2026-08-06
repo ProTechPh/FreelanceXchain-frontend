@@ -550,6 +550,35 @@ export interface PaginatedResponse<T> {
   total?: number;
 }
 
+export interface SearchResult<T> {
+  items: T[];
+  metadata: {
+    pageSize: number;
+    hasMore: boolean;
+    offset?: number;
+  };
+}
+
+export interface Favorite<T = unknown> {
+  id: string;
+  userId: string;
+  targetType: 'project' | 'freelancer';
+  targetId: string;
+  createdAt: string;
+  target?: T | null;
+}
+
+export interface SavedSearch {
+  id: string;
+  userId: string;
+  name: string;
+  searchType: 'project' | 'freelancer';
+  filters: Record<string, unknown>;
+  notifyOnNew: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // KYC Verification Types (backend returns these as-is, snake_case — not mapped to camelCase)
 export type KycStatus = 'pending' | 'in_progress' | 'completed' | 'approved' | 'rejected' | 'expired';
 

@@ -2,17 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { freelancersApi } from '@/lib/api';
+import { FavoriteButton } from '@/components/marketplace/favorite-button';
+import { useAuthStore } from '@/stores/authStore';
 import type { FreelancerProfile } from '@/types';
 import { toast } from 'sonner';
 import {
   MapPin,
   Clock,
   Briefcase,
-  ExternalLink,
   Send,
   Loader2,
 } from 'lucide-react';
@@ -21,6 +23,7 @@ export default function FreelancerProfilePage() {
   const params = useParams();
   const [freelancer, setFreelancer] = useState<FreelancerProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const user = useAuthStore((state) => state.user);
 
   useEffect(() => {
     const fetchFreelancer = async () => {
@@ -80,9 +83,14 @@ export default function FreelancerProfilePage() {
                 <span className="font-semibold text-primary text-lg">${freelancer.hourlyRate}/hr</span>
               </div>
             </div>
-            <Button className="gradient-primary text-white">
-              <Send className="w-4 h-4 mr-2" /> Contact
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <FavoriteButton targetType="freelancer" targetId={freelancer.userId} />
+              {user?.role === 'employer' && (
+                <Button asChild className="gradient-primary text-white">
+                  <Link href={`/dashboard/employer/messages?recipientId=${freelancer.userId}`}><Send className="w-4 h-4 mr-2" />Contact</Link>
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -174,12 +182,13 @@ export default function FreelancerProfilePage() {
             {/* Quick Actions */}
             <Card className="bg-card border-border">
               <CardContent className="p-6 space-y-3">
-                <Button className="w-full gradient-primary text-white">
-                  <Send className="w-4 h-4 mr-2" /> Send Message
-                </Button>
-                <Button variant="outline" className="w-full">
-                  <ExternalLink className="w-4 h-4 mr-2" /> View Portfolio
-                </Button>
+                {user?.role === 'employer' ? (
+                  <Button asChild className="w-full gradient-primary text-white">
+                    <Link href={`/dashboard/employer/messages?recipientId=${freelancer.userId}`}><Send className="w-4 h-4 mr-2" />Send Message</Link>
+                  </Button>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Employers can contact this freelancer from their account.</p>
+                )}
               </CardContent>
             </Card>
           </div>

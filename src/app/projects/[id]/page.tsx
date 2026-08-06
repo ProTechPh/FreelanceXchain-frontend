@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { projectsApi } from '@/lib/api';
 import { ProposalDialog } from '@/components/projects/ProposalDialog';
+import { FavoriteButton } from '@/components/marketplace/favorite-button';
 import type { Project } from '@/types';
 import { getStatusColor } from '@/lib/status-styles';
 import { getProjectPrimaryAction } from '@/lib/project-actions';
@@ -18,7 +19,6 @@ import {
   Calendar,
   Target,
   Send,
-  Heart,
   Share2,
   Loader2,
   SearchX,
@@ -69,6 +69,20 @@ export default function ProjectDetailPage() {
 
   const primaryAction = getProjectPrimaryAction(user, project);
 
+  const shareProject = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: project.title, url: window.location.href });
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success('Project link copied.');
+      }
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') return;
+      toast.error('Unable to share this project.');
+    }
+  };
+
   return (
     <div className="min-h-screen">
       {/* Header */}
@@ -88,10 +102,8 @@ export default function ProjectDetailPage() {
               <p className="text-muted-foreground">Posted by {project.employer?.name || 'Unknown'} • {new Date(project.createdAt).toLocaleDateString()}</p>
             </div>
             <div className="flex flex-wrap gap-3">
-              <Button variant="outline">
-                <Heart className="w-4 h-4 mr-2" /> Save
-              </Button>
-              <Button variant="outline">
+              <FavoriteButton targetType="project" targetId={project.id} />
+              <Button type="button" variant="outline" onClick={() => void shareProject()}>
                 <Share2 className="w-4 h-4 mr-2" /> Share
               </Button>
               {primaryAction === 'manage-proposals' && (

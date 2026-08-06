@@ -41,6 +41,9 @@ import type {
   PlatformMetrics,
   SkillTaxonomy,
   UserRole,
+  Favorite,
+  SavedSearch,
+  SearchResult,
 } from '@/types';
 import type {
   CreateProjectPayload,
@@ -204,7 +207,7 @@ export const freelancersApi = {
     api.get<FreelancerProfile>(`/freelancers/${id}`),
   
   search: (params?: Record<string, string | number>) =>
-    api.get<{ items: FreelancerProfile[]; metadata: { pageSize: number; hasMore: boolean; offset?: number } }>(
+    api.get<SearchResult<FreelancerProfile>>(
       '/search/freelancers',
       { params }
     ),
@@ -221,6 +224,9 @@ export const employersApi = {
 export const projectsApi = {
   list: (params?: Record<string, string | number>) =>
     api.get<PaginatedResponse<Project>>('/projects', { params }),
+
+  search: (params?: Record<string, string | number>) =>
+    api.get<SearchResult<Project>>('/search/projects', { params }),
   
   get: (id: string) =>
     api.get<Project>(`/projects/${id}`),
@@ -239,6 +245,37 @@ export const projectsApi = {
   
   getProposals: (id: string) =>
     api.get<PaginatedResponse<Proposal>>(`/projects/${id}/proposals`),
+};
+
+export const favoritesApi = {
+  list: <T = unknown>(targetType?: 'project' | 'freelancer') =>
+    api.get<Favorite<T>[]>('/favorites', { params: targetType ? { targetType } : undefined }),
+
+  add: (targetType: 'project' | 'freelancer', targetId: string) =>
+    api.post<Favorite>('/favorites', { targetType, targetId }),
+
+  remove: (targetType: 'project' | 'freelancer', targetId: string) =>
+    api.delete<{ message: string }>(`/favorites/${targetType}/${targetId}`),
+
+  check: (targetType: 'project' | 'freelancer', targetId: string) =>
+    api.get<{ isFavorited: boolean }>(`/favorites/check/${targetType}/${targetId}`),
+};
+
+export const savedSearchesApi = {
+  list: (searchType?: 'project' | 'freelancer') =>
+    api.get<SavedSearch[]>('/saved-searches', { params: searchType ? { searchType } : undefined }),
+
+  create: (data: Pick<SavedSearch, 'name' | 'searchType' | 'filters' | 'notifyOnNew'>) =>
+    api.post<SavedSearch>('/saved-searches', data),
+
+  update: (id: string, data: Partial<Pick<SavedSearch, 'name' | 'filters' | 'notifyOnNew'>>) =>
+    api.patch<SavedSearch>(`/saved-searches/${id}`, data),
+
+  remove: (id: string) =>
+    api.delete<{ message: string }>(`/saved-searches/${id}`),
+
+  execute: (id: string) =>
+    api.post<{ results: unknown[]; count: number }>(`/saved-searches/${id}/execute`),
 };
 
 export const skillsApi = {
