@@ -22,7 +22,6 @@ import type {
   Review,
   Dispute,
   Attachment,
-  ApiResponse,
   PaginatedResponse,
   MfaVerifyRequest,
   MfaEnrollRequest,
@@ -52,6 +51,14 @@ import type {
   SkillSuggestion,
   FileInfo,
   FileQuota,
+  ContractFundInfo,
+  ContractPaymentStatus,
+  AggregatedReputationScore,
+  ReputationBreakdown,
+  ReputationHistoryEntry,
+  ReputationMetadata,
+  ReputationWorkHistoryEntry,
+  ReputationLeaderboardEntry,
 } from '@/types';
 import type {
   CreateProjectPayload,
@@ -386,6 +393,9 @@ export const contractsApi = {
 
   fund: (id: string) =>
     api.post<{ message: string; escrowAddress: string; contractStatus: Contract['status'] }>(`/contracts/${id}/fund`),
+
+  getFundInfo: (id: string) =>
+    api.get<ContractFundInfo>(`/contracts/${id}/fund-info`),
   
   cancel: (id: string) =>
     api.post<{ message: string }>(`/contracts/${id}/cancel`),
@@ -455,7 +465,7 @@ export const paymentsApi = {
     api.post(`/payments/milestones/${milestoneId}/dispute`, { reason }, { params: { contractId } }),
   
   getStatus: (contractId: string) =>
-    api.get<ApiResponse<Contract>>(`/payments/contracts/${contractId}/status`),
+    api.get<ContractPaymentStatus>(`/payments/contracts/${contractId}/status`),
 };
 
 export const messagesApi = {
@@ -510,20 +520,22 @@ export const transactionsApi = {
 
 export const reputationApi = {
   getScore: (userId: string) =>
-    api.get<{
-      userId: string;
-      averageRating: number;
-      totalRatings: number;
-      workQuality: number;
-      communication: number;
-      professionalism: number;
-      wouldWorkAgainPercentage: number;
-      completedContracts: number;
-      onTimeDeliveryRate: number;
-    }>(`/reputation/${userId}/score`),
+    api.get<AggregatedReputationScore>(`/reputation/${userId}/score`),
+
+  getBreakdown: (userId: string) =>
+    api.get<ReputationBreakdown>(`/reputation/${userId}/breakdown`),
+
+  getHistory: (userId: string, months = 12) =>
+    api.get<ReputationHistoryEntry[]>(`/reputation/${userId}/reputation-history`, { params: { months } }),
+
+  getMetadata: (userId: string) =>
+    api.get<ReputationMetadata>(`/reputation/${userId}`),
+
+  getWorkHistory: (userId: string) =>
+    api.get<ReputationWorkHistoryEntry[]>(`/reputation/${userId}/history`),
 
   getLeaderboard: (params?: Record<string, string | number>) =>
-    api.get<Array<{ userId: string; userName: string; averageRating: number; totalRatings: number }>>(
+    api.get<ReputationLeaderboardEntry[]>(
       '/reputation/leaderboard',
       { params }
     ),

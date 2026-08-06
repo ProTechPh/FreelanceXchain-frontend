@@ -1,216 +1,88 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { Award, BriefcaseBusiness, History, Loader2, MessageSquareOff, ShieldCheck, Star, TrendingUp, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { reputationApi, reviewsApi } from '@/lib/api';
+import { reputationApi } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
-import type { Review } from '@/types';
-import {
-  Star,
-  TrendingUp,
-  Users,
-  Loader2,
-  MessageSquareOff,
-} from 'lucide-react';
+import type { AggregatedReputationScore, ReputationBreakdown, ReputationHistoryEntry, ReputationLeaderboardEntry, ReputationMetadata, ReputationWorkHistoryEntry } from '@/types';
+
+const starKeys = [
+  [5, 'fiveStars'],
+  [4, 'fourStars'],
+  [3, 'threeStars'],
+  [2, 'twoStars'],
+  [1, 'oneStar'],
+] as const;
 
 export function ReputationOverview() {
-  const { user } = useAuthStore();
-  const [overallScore, setOverallScore] = useState(0);
-  const [totalRatings, setTotalRatings] = useState(0);
-  const [completedContracts, setCompletedContracts] = useState(0);
-  const [reviews, setReviews] = useState<Review[]>([]);
+  const userId = useAuthStore((state) => state.user?.id);
+  const [score, setScore] = useState<AggregatedReputationScore | null>(null);
+  const [breakdown, setBreakdown] = useState<ReputationBreakdown | null>(null);
+  const [history, setHistory] = useState<ReputationHistoryEntry[]>([]);
+  const [workHistory, setWorkHistory] = useState<ReputationWorkHistoryEntry[]>([]);
+  const [leaderboard, setLeaderboard] = useState<ReputationLeaderboardEntry[]>([]);
+  const [metadata, setMetadata] = useState<ReputationMetadata | null>(null);
   const [loading, setLoading] = useState(true);
-
-  const userId = user?.id;
 
   useEffect(() => {
     if (!userId) return;
-    let cancelled = false;
-    const fetchData = async () => {
-      try {
-        const [repRes, reviewsRes] = await Promise.all([
-          reputationApi.getScore(userId),
-          reviewsApi.getForUser(userId),
-        ]);
-        if (cancelled) return;
-        setOverallScore(repRes.data.averageRating || 0);
-        setTotalRatings(repRes.data.totalRatings || 0);
-        setCompletedContracts(repRes.data.completedContracts || 0);
-        setReviews(reviewsRes.data);
-      } catch {
-        // Reputation might not exist yet for new users
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+    let active = true;
+    const load = async () => {
+      const results = await Promise.allSettled([
+        reputationApi.getScore(userId),
+        reputationApi.getBreakdown(userId),
+        reputationApi.getHistory(userId),
+        reputationApi.getWorkHistory(userId),
+        reputationApi.getLeaderboard({ limit: 5 }),
+        reputationApi.getMetadata(userId),
+      ]);
+      if (!active) return;
+      if (results[0].status === 'fulfilled') setScore(results[0].value.data);
+      if (results[1].status === 'fulfilled') setBreakdown(results[1].value.data);
+      if (results[2].status === 'fulfilled') setHistory(results[2].value.data);
+      if (results[3].status === 'fulfilled') setWorkHistory(results[3].value.data);
+      if (results[4].status === 'fulfilled') setLeaderboard(results[4].value.data);
+      if (results[5].status === 'fulfilled') setMetadata(results[5].value.data);
+      setLoading(false);
     };
-    fetchData();
-    return () => {
-      cancelled = true;
-    };
+    void load();
+    return () => { active = false; };
   }, [userId]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
+  if (loading) return <div className="flex h-64 items-center justify-center" role="status"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
 
-  const breakdown = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-  for (const review of reviews) {
-    const stars = Math.round(review.rating) as 1 | 2 | 3 | 4 | 5;
-    if (stars >= 1 && stars <= 5) breakdown[stars] += 1;
-  }
+  const overall = score?.averageRating ?? 0;
+  const totalRatings = score?.totalRatings ?? 0;
+  const syncedRatings = metadata?.ratings.filter((rating) => /^0x[0-9a-f]{64}$/i.test(rating.transactionHash)).length ?? 0;
+  const dimensions = [
+    { label: 'Work quality', value: (score?.workQuality ?? 0).toFixed(1), icon: Star },
+    { label: 'Communication', value: (score?.communication ?? 0).toFixed(1), icon: Users },
+    { label: 'Professionalism', value: (score?.professionalism ?? 0).toFixed(1), icon: Award },
+    { label: 'Would work again', value: `${score?.wouldWorkAgainPercentage ?? 0}%`, icon: TrendingUp },
+  ];
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <div>
-          <h1 className="text-2xl font-bold">Reputation</h1>
-          <p className="text-muted-foreground">Your on-chain reputation and reviews</p>
-        </div>
+      <div><h1 className="text-2xl font-bold">Reputation</h1><p className="text-muted-foreground">Backend-verified ratings, delivery signals, and completed work.</p></div>
+
+      <Card className="relative overflow-hidden border-border bg-card"><div className="absolute inset-0 gradient-primary opacity-5" /><CardContent className="relative grid gap-8 p-6 md:grid-cols-[auto_1fr] md:items-center"><div className="text-center"><div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full gradient-primary"><span className="text-3xl font-bold text-white">{overall.toFixed(1)}</span></div><div className="mt-2 flex items-center justify-center gap-1">{[1, 2, 3, 4, 5].map((star) => <Star key={star} className={`h-4 w-4 ${star <= Math.round(overall) ? 'fill-yellow-500 text-yellow-500' : 'text-gray-500'}`} />)}</div><p className="mt-1 text-sm text-muted-foreground">{totalRatings} review{totalRatings === 1 ? '' : 's'}</p></div><div className="space-y-2">{starKeys.map(([stars, key]) => { const count = breakdown?.[key] ?? 0; return <div key={stars} className="flex items-center gap-3"><span className="w-4 text-sm">{stars}</span><Star className="h-4 w-4 fill-yellow-500 text-yellow-500" /><div className="h-2 flex-1 overflow-hidden rounded-full bg-background"><div className="h-full rounded-full bg-yellow-500" style={{ width: totalRatings > 0 ? `${(count / totalRatings) * 100}%` : '0%' }} /></div><span className="w-8 text-sm text-muted-foreground">{count}</span></div>; })}</div></CardContent></Card>
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {dimensions.map(({ label, value, icon: Icon }) => <Card key={label}><CardContent className="flex items-center gap-3 p-4"><div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10"><Icon className="h-5 w-5 text-primary" /></div><div><p className="text-2xl font-bold">{value}</p><p className="text-xs text-muted-foreground">{label}</p></div></CardContent></Card>)}
       </div>
 
-      {/* Score Card */}
-      <Card className="bg-card border-border overflow-hidden relative">
-        <div className="absolute inset-0 gradient-primary opacity-5" />
-        <CardContent className="p-6 relative">
-          <div className="flex items-center gap-8">
-            <div className="text-center">
-              <div className="w-24 h-24 rounded-full gradient-primary flex items-center justify-center">
-                <span className="text-3xl font-bold text-white">{overallScore.toFixed(1)}</span>
-              </div>
-              <div className="flex items-center justify-center gap-1 mt-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star
-                    key={star}
-                    className={`w-4 h-4 ${
-                      star <= Math.round(overallScore)
-                        ? 'text-yellow-500 fill-yellow-500'
-                        : 'text-gray-500'
-                    }`}
-                  />
-                ))}
-              </div>
-              <p className="text-sm text-muted-foreground mt-1">{totalRatings} reviews</p>
-            </div>
-
-            <div className="flex-1 space-y-4">
-              {/* Breakdown */}
-              <div className="space-y-2">
-                {[5, 4, 3, 2, 1].map((stars) => (
-                  <div key={stars} className="flex items-center gap-3">
-                    <span className="text-sm w-4">{stars}</span>
-                    <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                    <div className="flex-1 h-2 bg-background rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-yellow-500 rounded-full"
-                        style={{
-                          width: totalRatings > 0 ? `${(breakdown[stars as keyof typeof breakdown] / totalRatings) * 100}%` : '0%',
-                        }}
-                      />
-                    </div>
-                    <span className="text-sm text-muted-foreground w-8">
-                      {breakdown[stars as keyof typeof breakdown]}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-card border-border">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-yellow-500/10 flex items-center justify-center">
-                <Star className="w-5 h-5 text-yellow-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{overallScore.toFixed(1)}</p>
-                <p className="text-xs text-muted-foreground">Overall Rating</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-card border-border">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Users className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{totalRatings}</p>
-                <p className="text-xs text-muted-foreground">Total Reviews</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-card border-border">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-green-500" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold">{completedContracts}</p>
-                <p className="text-xs text-muted-foreground">Completed Contracts</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card><CardHeader><CardTitle className="flex items-center gap-2"><History className="h-5 w-5" />Rating history</CardTitle></CardHeader><CardContent>{history.length === 0 ? <p className="py-8 text-center text-sm text-muted-foreground">No rating history yet.</p> : <ul className="space-y-3">{history.map((entry) => <li key={entry.month} className="grid grid-cols-[5rem_1fr_auto] items-center gap-3 text-sm"><span>{new Date(`${entry.month}-01T00:00:00Z`).toLocaleDateString(undefined, { month: 'short', year: 'numeric', timeZone: 'UTC' })}</span><div className="h-2 overflow-hidden rounded-full bg-secondary"><div className="h-full rounded-full bg-primary" style={{ width: `${(entry.averageRating / 5) * 100}%` }} /></div><span>{entry.averageRating.toFixed(1)} ({entry.count})</span></li>)}</ul>}</CardContent></Card>
+        <Card><CardHeader><CardTitle>Delivery record</CardTitle></CardHeader><CardContent className="grid grid-cols-2 gap-4"><div className="rounded-lg border border-border p-4"><BriefcaseBusiness className="mb-3 h-5 w-5 text-primary" /><p className="text-2xl font-bold">{score?.completedContracts ?? 0}</p><p className="text-xs text-muted-foreground">Completed contracts</p></div><div className="rounded-lg border border-border p-4"><TrendingUp className="mb-3 h-5 w-5 text-green-500" /><p className="text-2xl font-bold">{score?.onTimeDeliveryRate ?? 0}%</p><p className="text-xs text-muted-foreground">On-time delivery</p></div><div className="col-span-2 flex items-center gap-2 rounded-lg bg-secondary/40 p-3 text-sm text-muted-foreground"><ShieldCheck className="h-5 w-5 text-primary" />{syncedRatings > 0 ? `${syncedRatings} rating${syncedRatings === 1 ? '' : 's'} include a valid blockchain transaction reference.` : 'No blockchain transaction references are available for these ratings.'}</div></CardContent></Card>
       </div>
 
-      {/* Reviews */}
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle>Recent Reviews</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {reviews.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-              <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center">
-                <MessageSquareOff className="w-6 h-6 text-muted-foreground" />
-              </div>
-              <p className="text-muted-foreground">No reviews yet</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {reviews.map((review) => (
-                <div
-                  key={review.id}
-                  className="p-4 rounded-xl bg-secondary/50 border border-border"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <p className="font-medium">Review</p>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                          key={star}
-                          className={`w-4 h-4 ${
-                            star <= review.rating
-                              ? 'text-yellow-500 fill-yellow-500'
-                              : 'text-gray-500'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{review.comment}</p>
-                  <p className="text-xs text-muted-foreground mt-2">{new Date(review.createdAt).toLocaleDateString()}</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card><CardHeader><CardTitle>Recent rating details</CardTitle></CardHeader><CardContent>{!breakdown || breakdown.recentRatings.length === 0 ? <div className="flex flex-col items-center gap-2 py-10 text-center"><MessageSquareOff className="h-8 w-8 text-muted-foreground" /><p className="text-sm text-muted-foreground">No reviews yet.</p></div> : <ul className="space-y-4">{breakdown.recentRatings.map((rating, index) => <li key={`${rating.projectTitle}-${rating.createdAt}-${index}`} className="rounded-lg border border-border p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-medium">{rating.projectTitle}</p><p className="text-xs text-muted-foreground">{rating.reviewerName} · {new Date(rating.createdAt).toLocaleDateString()}</p></div><span className="flex items-center gap-1 text-sm"><Star className="h-4 w-4 fill-yellow-500 text-yellow-500" />{rating.rating}</span></div>{rating.comment && <p className="mt-3 text-sm text-muted-foreground">{rating.comment}</p>}</li>)}</ul>}</CardContent></Card>
+        <Card><CardHeader><CardTitle>Completed work</CardTitle></CardHeader><CardContent>{workHistory.length === 0 ? <p className="py-8 text-center text-sm text-muted-foreground">No completed contracts yet.</p> : <ul className="space-y-3">{workHistory.map((item) => <li key={item.contractId} className="rounded-lg border border-border p-3"><div className="flex justify-between gap-3"><div><p className="font-medium">{item.projectTitle}</p><p className="text-xs text-muted-foreground">As {item.role} · {new Date(item.completedAt).toLocaleDateString()}</p></div>{item.rating && <span className="text-sm">{item.rating} / 5</span>}</div>{item.ratingComment && <p className="mt-2 text-sm text-muted-foreground">{item.ratingComment}</p>}</li>)}</ul>}</CardContent></Card>
+      </div>
+
+      <Card><CardHeader><CardTitle>Community leaderboard</CardTitle></CardHeader><CardContent>{leaderboard.length === 0 ? <p className="text-sm text-muted-foreground">No users have enough ratings to rank yet.</p> : <ol className="grid gap-3 md:grid-cols-2">{leaderboard.map((entry, index) => <li key={entry.userId} className="flex items-center gap-3 rounded-lg border border-border p-3"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 font-semibold text-primary">{index + 1}</span><div className="min-w-0 flex-1"><p className="truncate font-medium">{entry.userName}</p><p className="text-xs text-muted-foreground">{entry.totalRatings} ratings</p></div><span className="font-semibold">{entry.averageRating.toFixed(1)}</span></li>)}</ol>}</CardContent></Card>
     </div>
   );
 }

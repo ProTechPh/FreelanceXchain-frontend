@@ -85,6 +85,16 @@ test('employer funds a pending contract through the backend escrow endpoint', as
       }),
     });
   });
+  await page.route(`**/api/contracts/${contractId}/fund-info`, (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ contractId, freelancerWallet: '0x3333333333333333333333333333333333333333', platformWallet: '0x4444444444444444444444444444444444444444', milestoneAmounts: ['1000000000000000000000'], milestoneDescriptions: ['Launch'], totalAmount: '1000000000000000000000' }),
+  }));
+  await page.route(`**/api/payments/contracts/${contractId}/status`, (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ contractId, escrowAddress: status === 'active' ? '0x2222222222222222222222222222222222222222' : '', totalAmount: 1000, releasedAmount: 250, pendingAmount: 750, milestones: [{ id: 'milestone-1', title: 'Launch', amount: 1000, status: 'in_progress' }], contractStatus: status }),
+  }));
   await page.route(`**/api/milestones/contract/${contractId}`, (route) => route.fulfill({
     status: 200,
     contentType: 'application/json',
@@ -103,6 +113,9 @@ test('employer funds a pending contract through the backend escrow endpoint', as
 
   await page.goto(`/dashboard/employer/contracts/${contractId}`);
   await expect(page.getByRole('heading', { name: 'Production landing page' })).toBeVisible();
+  await expect(page.getByText('$250')).toBeVisible();
+  await expect(page.getByText('25%')).toBeVisible();
+  await expect(page.getByText('0x3333333333333333333333333333333333333333')).toBeVisible();
   await page.getByRole('button', { name: 'Fund contract securely' }).click();
 
   await expect(page.getByText('Contract funded and activated.')).toBeVisible();

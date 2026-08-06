@@ -249,6 +249,25 @@ export interface Contract {
   employer?: EmployerProfile;
 }
 
+export interface ContractFundInfo {
+  contractId: string;
+  freelancerWallet: string;
+  platformWallet: string;
+  milestoneAmounts: string[];
+  milestoneDescriptions: string[];
+  totalAmount: string;
+}
+
+export interface ContractPaymentStatus {
+  contractId: string;
+  escrowAddress: string;
+  totalAmount: number;
+  releasedAmount: number;
+  pendingAmount: number;
+  milestones: Array<Pick<Milestone, 'id' | 'title' | 'amount' | 'status'>>;
+  contractStatus: string;
+}
+
 export interface RushUpgradeRequest {
   id: string;
   contractId: string;
@@ -439,6 +458,73 @@ export interface ReputationScore {
     5: number;
   };
   on_chain_verified: boolean;
+}
+
+export interface AggregatedReputationScore {
+  userId: string;
+  averageRating: number;
+  totalRatings: number;
+  workQuality: number;
+  communication: number;
+  professionalism: number;
+  wouldWorkAgainPercentage: number;
+  completedContracts: number;
+  onTimeDeliveryRate: number;
+}
+
+export interface ReputationBreakdown {
+  fiveStars: number;
+  fourStars: number;
+  threeStars: number;
+  twoStars: number;
+  oneStar: number;
+  recentRatings: Array<{
+    rating: number;
+    comment: string;
+    reviewerName: string;
+    projectTitle: string;
+    createdAt: string;
+  }>;
+}
+
+export interface ReputationHistoryEntry {
+  month: string;
+  averageRating: number;
+  count: number;
+}
+
+export interface ReputationMetadata {
+  userId: string;
+  score: number;
+  totalRatings: number;
+  averageRating: number;
+  ratings: Array<{
+    id: string;
+    contractId: string;
+    raterId: string;
+    rateeId: string;
+    rating: number;
+    comment?: string;
+    timestamp: number;
+    transactionHash: string;
+  }>;
+}
+
+export interface ReputationWorkHistoryEntry {
+  contractId: string;
+  projectId: string;
+  projectTitle: string;
+  role: 'freelancer' | 'employer';
+  completedAt: string;
+  rating?: number;
+  ratingComment?: string;
+}
+
+export interface ReputationLeaderboardEntry {
+  userId: string;
+  userName: string;
+  averageRating: number;
+  totalRatings: number;
 }
 
 export interface PlatformStats {
