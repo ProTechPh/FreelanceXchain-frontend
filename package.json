@@ -8,6 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "node --test --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON src/lib/*.test.mjs",
+    "test:e2e": "playwright test",
     "test:auth": "node --test --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON src/lib/auth-contract.test.mjs",
     "test:csrf": "node --test --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON src/lib/csrf-token.test.mjs",
     "test:project-submission": "node --test --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON src/lib/project-submission.test.mjs",
@@ -46,6 +48,7 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4.3.0",
     "@types/node": "^25.9.2",
     "@types/qrcode": "^1.5.6",

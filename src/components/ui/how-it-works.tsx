@@ -13,7 +13,7 @@ import {
 import { SlideTabs } from "./slide-tabs";
 import { motion, AnimatePresence } from "motion/react";
 
-interface HowItWorksProps extends React.HTMLAttributes<HTMLElement> {}
+type HowItWorksProps = React.HTMLAttributes<HTMLElement>;
 
 export const HowItWorks: React.FC<HowItWorksProps> = ({
   className,

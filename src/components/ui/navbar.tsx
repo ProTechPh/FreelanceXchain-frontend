@@ -223,22 +223,22 @@ export default function Navbar({
           <CommandEmpty>No results found.</CommandEmpty>
           <CommandGroup className="text-muted-foreground" heading="Pages">
             <CommandItem asChild>
-              <a href="/projects" className="flex items-center gap-2">
+              <Link href="/projects" className="flex items-center gap-2">
                 <Lightning className="size-4" weight="light" />
                 Browse Projects
-              </a>
+              </Link>
             </CommandItem>
             <CommandItem asChild>
-              <a href="/freelancers" className="flex items-center gap-2">
+              <Link href="/freelancers" className="flex items-center gap-2">
                 <Users className="size-4" weight="light" />
                 Find Talent
-              </a>
+              </Link>
             </CommandItem>
             <CommandItem asChild>
-              <a href="/leaderboard" className="flex items-center gap-2">
+              <Link href="/leaderboard" className="flex items-center gap-2">
                 <TrendUp className="size-4" weight="light" />
                 Leaderboard
-              </a>
+              </Link>
             </CommandItem>
           </CommandGroup>
         </CommandList>

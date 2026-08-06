@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState, useEffect, useRef } from "react"
+import { useEffect, useRef } from "react"
 import {
   Shield,
   Brain,
@@ -11,7 +11,6 @@ import {
   TrendingUp,
   Users,
   Award,
-  Calendar,
   CheckCircle,
   Sparkles,
   Star,
@@ -22,7 +21,6 @@ import {
 import { motion, useScroll, useTransform, useInView, useSpring, type Variants } from "framer-motion"
 
 export default function AboutUsSection() {
-  const [isVisible, setIsVisible] = useState(false)
   const sectionRef = useRef<HTMLDivElement>(null)
   const statsRef = useRef<HTMLDivElement>(null)
   const isInView = useInView(sectionRef, { once: false, amount: 0.1 })
@@ -37,10 +35,6 @@ export default function AboutUsSection() {
   const y2 = useTransform(scrollYProgress, [0, 1], [0, 50])
   const rotate1 = useTransform(scrollYProgress, [0, 1], [0, 20])
   const rotate2 = useTransform(scrollYProgress, [0, 1], [0, -20])
-
-  useEffect(() => {
-    setIsVisible(true)
-  }, [])
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -426,7 +420,6 @@ interface StatCounterProps {
 function StatCounter({ icon, value, label, suffix, delay }: StatCounterProps) {
   const countRef = useRef(null)
   const isInView = useInView(countRef, { once: false })
-  const [hasAnimated, setHasAnimated] = useState(false)
 
   const springValue = useSpring(0, {
     stiffness: 50,
@@ -434,14 +427,8 @@ function StatCounter({ icon, value, label, suffix, delay }: StatCounterProps) {
   })
 
   useEffect(() => {
-    if (isInView && !hasAnimated) {
-      springValue.set(value)
-      setHasAnimated(true)
-    } else if (!isInView && hasAnimated) {
-      springValue.set(0)
-      setHasAnimated(false)
-    }
-  }, [isInView, value, springValue, hasAnimated])
+    springValue.set(isInView ? value : 0)
+  }, [isInView, value, springValue])
 
   const displayValue = useTransform(springValue, (latest) => Math.floor(latest))
 

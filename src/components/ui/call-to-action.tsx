@@ -33,7 +33,7 @@ function CallToAction() {
               today.
             </h2>
             <p className="text-lg text-white/60 leading-relaxed max-w-md mb-10">
-              Join thousands of freelancers and employers who've moved their work on-chain. No platform lock-in, no hidden fees — just work that pays.
+              Join thousands of freelancers and employers who&apos;ve moved their work on-chain. No platform lock-in, no hidden fees — just work that pays.
             </p>
             <div className="flex flex-col sm:flex-row flex-wrap gap-4">
               <Link href="/register">
