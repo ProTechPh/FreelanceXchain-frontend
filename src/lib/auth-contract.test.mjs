@@ -3,9 +3,12 @@ import test from 'node:test';
 
 import {
   getApiErrorMessage,
+  getAuthCallbackToken,
+  getPasswordResetToken,
   getRegistrationFormError,
   isAuthSuccessResponse,
   isMfaRequiredResponse,
+  isRegistrationRequiredResponse,
   normalizeAuthUser,
 } from './auth-contract.ts';
 
@@ -110,4 +113,35 @@ test('requires matching passwords and acceptance of the terms', () => {
     getRegistrationFormError('StrongPass1!', 'StrongPass1!', false),
     'You must agree to the Terms of Service and Privacy Policy.',
   );
+});
+
+test('reads the Appwrite recovery secret as the backend reset access token', () => {
+  assert.equal(
+    getPasswordResetToken(new URLSearchParams('userId=user-1&secret=recovery-secret')),
+    'recovery-secret',
+  );
+  assert.equal(getPasswordResetToken(new URLSearchParams('accessToken=direct-token')), 'direct-token');
+  assert.equal(getPasswordResetToken(new URLSearchParams('secret=')), null);
+});
+
+test('reads OAuth tokens from Appwrite callback query or fragment parameters', () => {
+  assert.equal(
+    getAuthCallbackToken(
+      new URLSearchParams('userId=user-1&secret=oauth-secret'),
+      new URLSearchParams(),
+    ),
+    'oauth-secret',
+  );
+  assert.equal(
+    getAuthCallbackToken(
+      new URLSearchParams(),
+      new URLSearchParams('access_token=fragment-token'),
+    ),
+    'fragment-token',
+  );
+});
+
+test('recognizes OAuth users that still need to choose a role', () => {
+  assert.equal(isRegistrationRequiredResponse({ status: 'registration_required' }), true);
+  assert.equal(isRegistrationRequiredResponse({ status: 'authenticated' }), false);
 });

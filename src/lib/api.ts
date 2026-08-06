@@ -144,8 +144,8 @@ export const authApi = {
   forgotPassword: (email: string) =>
     api.post('/auth/forgot-password', { email }),
   
-  resetPassword: (token: string, password: string) =>
-    api.post('/auth/reset-password', { token, password }),
+  resetPassword: (accessToken: string, password: string) =>
+    api.post<{ message: string }>('/auth/reset-password', { accessToken, password }),
   
   oauthLogin: (provider: 'google' | 'github') =>
     api.get<{ url: string }>(`/auth/oauth/${provider}`),

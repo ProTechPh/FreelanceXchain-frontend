@@ -30,6 +30,40 @@ export function isMfaRequiredResponse(response: unknown): response is MfaRequire
     && response.mfaSessionToken.length > 0;
 }
 
+export function isRegistrationRequiredResponse(
+  response: unknown,
+): response is { status: 'registration_required'; message?: string } {
+  return isRecord(response) && response.status === 'registration_required';
+}
+
+function firstNonEmptyParameter(
+  sources: URLSearchParams[],
+  names: string[],
+): string | null {
+  for (const source of sources) {
+    for (const name of names) {
+      const value = source.get(name)?.trim();
+      if (value) return value;
+    }
+  }
+
+  return null;
+}
+
+export function getPasswordResetToken(searchParams: URLSearchParams): string | null {
+  return firstNonEmptyParameter([searchParams], ['accessToken', 'secret', 'token']);
+}
+
+export function getAuthCallbackToken(
+  searchParams: URLSearchParams,
+  fragmentParams: URLSearchParams,
+): string | null {
+  return firstNonEmptyParameter(
+    [searchParams, fragmentParams],
+    ['access_token', 'accessToken', 'secret'],
+  );
+}
+
 export function isAuthSuccessResponse(response: unknown): response is AuthSuccessResponse {
   if (!isRecord(response) || !isRecord(response.user)) return false;
 
