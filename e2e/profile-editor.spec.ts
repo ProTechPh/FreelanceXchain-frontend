@@ -84,6 +84,39 @@ test('freelancer adds a taxonomy skill with years of experience', async ({ page 
   expect(skillBody).toEqual({ skills: [{ name: 'React', yearsOfExperience: 3 }] });
 });
 
+test('freelancer profile tolerates legacy and nameless skill entries from the API', async ({ page }) => {
+  const user = { id: 'freelancer-1', email: 'dev@example.com', name: 'Developer', role: 'freelancer', walletAddress: '', kycStatus: 'approved', ...timestamps };
+  const profile = {
+    id: 'profile-2',
+    userId: user.id,
+    name: 'Developer',
+    nationality: 'PH',
+    bio: 'I build accessible web applications.',
+    hourlyRate: 30,
+    skills: [
+      { skill_name: 'React', years_of_experience: 3 },
+      { yearsOfExperience: 8 },
+    ],
+    experience: [],
+    availability: 'available',
+    ...timestamps,
+  };
+  await authenticate(page, user);
+  await page.route('**/api/freelancers/profile', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(profile) }));
+  await page.route('**/api/skills', (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ categories: [{ id: 'category-1', name: 'Development', description: '', isActive: true, createdAt: '', updatedAt: '', skills: [{ id: 'skill-react', categoryId: 'category-1', name: 'React', description: '', isActive: true, createdAt: '', updatedAt: '' }] }] }),
+  }));
+  await page.route('**/api/skills/custom', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }));
+
+  await page.goto('/dashboard/freelancer/profile');
+
+  await expect(page.getByText('React · 3y')).toBeVisible();
+  await expect(page.getByLabel('Add skill')).not.toContainText('React');
+  await expect(page.getByText('No skills added yet.')).not.toBeVisible();
+});
+
 test('freelancer creates a custom skill and suggests it globally', async ({ page }) => {
   const user = { id: 'freelancer-1', email: 'dev@example.com', name: 'Developer', role: 'freelancer', walletAddress: '', kycStatus: 'approved', ...timestamps };
   const profile = { id: 'profile-2', userId: user.id, name: 'Developer', nationality: 'PH', bio: 'I build accessible web applications.', hourlyRate: 30, skills: [], experience: [], availability: 'available', ...timestamps };

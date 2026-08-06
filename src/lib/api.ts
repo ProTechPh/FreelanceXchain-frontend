@@ -1,4 +1,4 @@
-import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import axios, { AxiosError, InternalAxiosRequestConfig, type AxiosResponse } from 'axios';
 import type {
   AuthSuccessResponse,
   AuthResponse,
@@ -70,6 +70,7 @@ import {
   createCsrfTokenManager,
   isCsrfValidationFailure,
 } from '@/lib/csrf-token';
+import { normalizeFreelancerProfile } from '@/lib/freelancer-profile-contract';
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 
@@ -222,39 +223,57 @@ export const emailPreferencesApi = {
     api.post<{ message: string }>('/email-preferences/unsubscribe-all'),
 };
 
+function normalizeFreelancerProfileResponse(
+  response: AxiosResponse<FreelancerProfile>,
+): AxiosResponse<FreelancerProfile> {
+  return { ...response, data: normalizeFreelancerProfile(response.data) };
+}
+
+function normalizeFreelancerSearchResponse(
+  response: AxiosResponse<SearchResult<FreelancerProfile>>,
+): AxiosResponse<SearchResult<FreelancerProfile>> {
+  return {
+    ...response,
+    data: {
+      ...response.data,
+      items: response.data.items.map(normalizeFreelancerProfile),
+    },
+  };
+}
+
 export const freelancersApi = {
   getProfile: () =>
-    api.get<FreelancerProfile>('/freelancers/profile'),
+    api.get<FreelancerProfile>('/freelancers/profile').then(normalizeFreelancerProfileResponse),
 
   createProfile: (data: Pick<FreelancerProfile, 'bio' | 'hourlyRate' | 'availability'>) =>
-    api.post<FreelancerProfile>('/freelancers/profile', data),
+    api.post<FreelancerProfile>('/freelancers/profile', data).then(normalizeFreelancerProfileResponse),
 
   updateProfile: (data: Partial<Pick<FreelancerProfile, 'bio' | 'hourlyRate' | 'availability'>>) =>
-    api.patch<FreelancerProfile>('/freelancers/profile', data),
+    api.patch<FreelancerProfile>('/freelancers/profile', data).then(normalizeFreelancerProfileResponse),
 
   addSkills: (skills: FreelancerProfile['skills']) =>
-    api.post<FreelancerProfile>('/freelancers/profile/skills', { skills }),
+    api.post<FreelancerProfile>('/freelancers/profile/skills', { skills }).then(normalizeFreelancerProfileResponse),
 
   removeSkill: (name: string) =>
-    api.delete<FreelancerProfile>(`/freelancers/profile/skills/${encodeURIComponent(name)}`),
+    api.delete<FreelancerProfile>(`/freelancers/profile/skills/${encodeURIComponent(name)}`).then(normalizeFreelancerProfileResponse),
 
   addExperience: (experience: Omit<FreelancerProfile['experience'][number], 'id'>) =>
-    api.post<FreelancerProfile>('/freelancers/profile/experience', experience),
+    api.post<FreelancerProfile>('/freelancers/profile/experience', experience).then(normalizeFreelancerProfileResponse),
 
   updateExperience: (id: string, experience: Partial<Omit<FreelancerProfile['experience'][number], 'id'>>) =>
-    api.patch<FreelancerProfile>(`/freelancers/profile/experience/${id}`, experience),
+    api.patch<FreelancerProfile>(`/freelancers/profile/experience/${id}`, experience).then(normalizeFreelancerProfileResponse),
 
   removeExperience: (id: string) =>
-    api.delete<FreelancerProfile>(`/freelancers/profile/experience/${id}`),
+    api.delete<FreelancerProfile>(`/freelancers/profile/experience/${id}`).then(normalizeFreelancerProfileResponse),
 
   getPublicProfile: (id: string) =>
-    api.get<FreelancerProfile>(`/freelancers/${id}`),
+    api.get<FreelancerProfile>(`/freelancers/${id}`).then(normalizeFreelancerProfileResponse),
   
   search: (params?: Record<string, string | number>) =>
     api.get<SearchResult<FreelancerProfile>>(
       '/search/freelancers',
       { params }
-    ),
+    ).then(normalizeFreelancerSearchResponse),
 };
 
 export const employersApi = {
