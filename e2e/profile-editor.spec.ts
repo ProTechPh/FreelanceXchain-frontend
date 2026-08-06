@@ -117,6 +117,58 @@ test('freelancer profile tolerates legacy and nameless skill entries from the AP
   await expect(page.getByText('No skills added yet.')).not.toBeVisible();
 });
 
+test('freelancer profile renders legacy experiences with unique React keys', async ({ page }) => {
+  const user = { id: 'freelancer-1', email: 'dev@example.com', name: 'Developer', role: 'freelancer', walletAddress: '', kycStatus: 'approved', ...timestamps };
+  const profile = {
+    id: 'profile-2',
+    userId: user.id,
+    name: 'Developer',
+    nationality: 'PH',
+    bio: 'I build accessible web applications.',
+    hourlyRate: 30,
+    skills: [],
+    experience: [
+      { id: 'experience-1', title: 'Engineer', company: 'Current Co', description: 'Current contract', startDate: '2024-01-01', endDate: null },
+      { id: 'experience-1', title: 'Developer', company: 'Duplicate Co', description: 'Duplicate persisted id', start_date: '2022-01-01', end_date: '2023-12-31' },
+      { experience_id: 'experience-3', title: 'Consultant', company: 'Legacy Co', description: 'Legacy identifier', start_date: '2020-01-01', end_date: null },
+      { title: 'Intern', company: 'Old Co', description: 'Missing persisted id', startDate: '2019-01-01', endDate: '2019-12-31' },
+    ],
+    availability: 'available',
+    ...timestamps,
+  };
+  const keyWarnings: string[] = [];
+  let removedExperienceId: string | undefined;
+  page.on('console', (message) => {
+    if (message.text().includes('Each child in a list should have a unique')) {
+      keyWarnings.push(message.text());
+    }
+  });
+  await authenticate(page, user);
+  await page.route('**/api/freelancers/profile', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(profile) }));
+  await page.route('**/api/freelancers/profile/experience/*', (route) => {
+    removedExperienceId = decodeURIComponent(new URL(route.request().url()).pathname.split('/').at(-1) ?? '');
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ ...profile, experience: profile.experience.slice(0, -1) }),
+    });
+  });
+  await page.route('**/api/skills', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ categories: [] }) }));
+  await page.route('**/api/skills/custom', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }));
+
+  await page.goto('/dashboard/freelancer/profile');
+
+  await expect(page.getByText('Engineer', { exact: true })).toBeVisible();
+  await expect(page.getByText('Developer', { exact: true })).toBeVisible();
+  await expect(page.getByText('Consultant', { exact: true })).toBeVisible();
+  await expect(page.getByText('Intern', { exact: true })).toBeVisible();
+  expect(keyWarnings).toEqual([]);
+
+  await page.getByRole('button', { name: 'Delete Intern' }).click();
+  await expect(page.getByText('Experience removed.')).toBeVisible();
+  expect(removedExperienceId).toBe('legacy-experience-3');
+});
+
 test('freelancer creates a custom skill and suggests it globally', async ({ page }) => {
   const user = { id: 'freelancer-1', email: 'dev@example.com', name: 'Developer', role: 'freelancer', walletAddress: '', kycStatus: 'approved', ...timestamps };
   const profile = { id: 'profile-2', userId: user.id, name: 'Developer', nationality: 'PH', bio: 'I build accessible web applications.', hourlyRate: 30, skills: [], experience: [], availability: 'available', ...timestamps };

@@ -261,10 +261,10 @@ export const freelancersApi = {
     api.post<FreelancerProfile>('/freelancers/profile/experience', experience).then(normalizeFreelancerProfileResponse),
 
   updateExperience: (id: string, experience: Partial<Omit<FreelancerProfile['experience'][number], 'id'>>) =>
-    api.patch<FreelancerProfile>(`/freelancers/profile/experience/${id}`, experience).then(normalizeFreelancerProfileResponse),
+    api.patch<FreelancerProfile>(`/freelancers/profile/experience/${encodeURIComponent(id)}`, experience).then(normalizeFreelancerProfileResponse),
 
   removeExperience: (id: string) =>
-    api.delete<FreelancerProfile>(`/freelancers/profile/experience/${id}`).then(normalizeFreelancerProfileResponse),
+    api.delete<FreelancerProfile>(`/freelancers/profile/experience/${encodeURIComponent(id)}`).then(normalizeFreelancerProfileResponse),
 
   getPublicProfile: (id: string) =>
     api.get<FreelancerProfile>(`/freelancers/${id}`).then(normalizeFreelancerProfileResponse),
