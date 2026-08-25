@@ -20,7 +20,7 @@ import { useAuthStore } from '@/stores/authStore';
 import type { ConversationWithDetails, Message } from '@/types';
 import { toast } from 'sonner';
 import { Send, Search, Check, CheckCheck, MessageSquare, ExternalLink, FileText, Paperclip, X } from 'lucide-react';
-import { ListSkeleton } from '@/components/dashboard/skeletons';
+import { MessagesWorkspaceSkeleton, MessageThreadSkeleton } from '@/components/messages/messages-workspace-skeleton';
 
 function initials(name: string): string {
   return name
@@ -235,9 +235,7 @@ export function MessagesWorkspace() {
   };
 
   if (loadingConversations) {
-    return (
-      <ListSkeleton rows={5} label="Loading conversations" />
-    );
+    return <MessagesWorkspaceSkeleton />;
   }
 
   return (
@@ -375,9 +373,7 @@ export function MessagesWorkspace() {
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {loadingMessages ? (
-                <div className="flex items-center justify-center h-full">
-                  <ListSkeleton rows={3} label="Loading messages" />
-                </div>
+                <MessageThreadSkeleton />
               ) : messages.length === 0 ? (
                 <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
                   No messages yet — say hello

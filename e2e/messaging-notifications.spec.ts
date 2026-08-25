@@ -16,6 +16,40 @@ async function authenticate(page: Page, role: 'employer' | 'admin') {
   return user;
 }
 
+test('messages loading state preserves the two-pane workspace', async ({ page }) => {
+  await authenticate(page, 'employer');
+  let releaseConversations: (() => void) | undefined;
+  const conversationsPending = new Promise<void>((resolve) => {
+    releaseConversations = resolve;
+  });
+
+  await page.route('**/api/messages/conversations', async (route) => {
+    await conversationsPending;
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ items: [], total: 0, hasMore: false }),
+    });
+  });
+  await page.route('**/api/contracts?**', (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ items: [], hasMore: false, total: 0 }),
+  }));
+
+  await page.goto('/dashboard/employer/messages');
+
+  const loadingWorkspace = page.locator('[data-slot="messages-workspace-skeleton"][role="status"]');
+  await expect(loadingWorkspace).toBeVisible();
+  await expect(loadingWorkspace.getByText('Loading messages')).toBeAttached();
+  await expect(loadingWorkspace).toHaveAttribute('aria-busy', 'true');
+  await expect(loadingWorkspace.locator('[data-slot="conversation-list-skeleton"]')).toBeVisible();
+  await expect(loadingWorkspace.locator('[data-slot="chat-pane-skeleton"]')).toBeVisible();
+  await expect.poll(async () => (await loadingWorkspace.boundingBox())?.height ?? 0).toBeGreaterThan(500);
+
+  releaseConversations?.();
+});
+
 test('employer uploads a file before sending message attachment metadata', async ({ page }) => {
   const user = await authenticate(page, 'employer');
   await page.route('**/api/messages/conversations', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ items: [], total: 0, hasMore: false }) }));
