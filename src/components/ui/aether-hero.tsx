@@ -33,7 +33,7 @@ const mockContracts = [
     location: "Remote • Worldwide",
     budget: "$4,500 USDC",
     stage: "Escrow Funded (Milestone 2/3)",
-    stageColor: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+    stageColor: "bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border-emerald-500/20",
     match: "99% Skill Match",
     skills: ["Solidity", "Next.js", "Foundry", "Smart Escrow"],
     notes: "Employer funded $4,500 into contract escrow. Milestone 1 deliverable verified and $1,500 auto-released to wallet.",
@@ -45,7 +45,7 @@ const mockContracts = [
     location: "Remote • Global",
     budget: "$3,200",
     stage: "Proposal Accepted",
-    stageColor: "bg-blue-500/10 text-blue-600 border-blue-500/20",
+    stageColor: "bg-blue-500/10 text-blue-800 dark:text-blue-300 border-blue-500/20",
     match: "98% Skill Match",
     skills: ["Python", "FastAPI", "Vector DB", "LLM Agents"],
     notes: "Proposal tailored by AI assistant matched client requirements perfectly. Contract workspace created and awaiting escrow deposit.",
@@ -57,7 +57,7 @@ const mockContracts = [
     location: "Remote • US / EU",
     budget: "$6,000 ETH",
     stage: "Milestone Paid 🎉",
-    stageColor: "bg-purple-500/10 text-purple-600 border-purple-500/20",
+    stageColor: "bg-purple-500/10 text-purple-800 dark:text-purple-300 border-purple-500/20",
     match: "99% Skill Match",
     skills: ["EVM Internals", "Security Audit", "Slither", "Formal Proofs"],
     notes: "Deliverable approved by employer. Funds released instantly on-chain and verified reputation score updated to 99.8%.",
@@ -69,7 +69,7 @@ const mockContracts = [
     location: "Remote • Global",
     budget: "$2,800",
     stage: "In Progress",
-    stageColor: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+    stageColor: "bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-500/20",
     match: "96% Skill Match",
     skills: ["Figma", "Tailwind CSS", "React 19", "UX Tokens"],
     notes: "Milestone 1 submitted for client review. Milestone 2 escrow active.",
@@ -301,7 +301,7 @@ export default function AetherHero() {
                 {/* Header bar */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border/50">
                   <div>
-                    <h3 className="text-base font-bold text-foreground">Contracts & Projects Workspace</h3>
+                    <p className="text-base font-bold text-foreground">Contracts & Projects Workspace</p>
                     <p className="text-xs text-muted-foreground">Milestone-based smart contract escrow with automatic releases</p>
                   </div>
 
@@ -353,7 +353,7 @@ export default function AetherHero() {
                       </div>
 
                       <div className="flex items-center gap-2.5 self-start sm:self-auto">
-                        <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                        <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300">
                           {c.match}
                         </span>
                         <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${c.stageColor}`}>

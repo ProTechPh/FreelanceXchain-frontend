@@ -97,7 +97,7 @@ export default function Navbar({
         {/* Logo — always visible */}
         <Logo />
 
-        {/* Desktop nav links — hidden below lg */}
+        {/* Desktop nav links — hidden below md */}
         <div className="hidden md:flex items-center gap-1">
           {menu.map((item) => (
             <Link
@@ -111,10 +111,10 @@ export default function Navbar({
           ))}
         </div>
 
-        {/* Desktop auth — hidden below lg */}
+        {/* Desktop auth — hidden below sm */}
         <div className="hidden sm:flex items-center gap-2 shrink-0">
           <ThemeToggle />
-          <Button variant="ghost" size="icon" className="rounded-full h-8 w-8" onClick={() => setOpenSearch(true)}>
+          <Button variant="ghost" size="icon" aria-label="Open search dialog" className="rounded-full h-8 w-8" onClick={() => setOpenSearch(true)}>
             <MagnifyingGlass className="size-3.5" weight="bold" />
           </Button>
           <Link href={auth.login.url}>
@@ -125,10 +125,10 @@ export default function Navbar({
           </Link>
         </div>
 
-        {/* Mobile right actions — visible below lg */}
+        {/* Mobile right actions — visible below sm */}
         <div className="flex sm:hidden items-center gap-1">
           <ThemeToggle />
-          <Button variant="ghost" size="icon" className="rounded-full h-8 w-8" onClick={() => setOpenSearch(true)}>
+          <Button variant="ghost" size="icon" aria-label="Open search dialog" className="rounded-full h-8 w-8" onClick={() => setOpenSearch(true)}>
             <MagnifyingGlass className="size-3.5" weight="bold" />
           </Button>
 
@@ -191,28 +191,25 @@ export default function Navbar({
                </CommandItem>
                <CommandItem asChild value={`Search freelancers ${globalSearchQuery}`}>
                  <Link href={`/freelancers?keyword=${encodeURIComponent(globalSearchQuery.trim())}`} onClick={() => setOpenSearch(false)}>
-                   <Users className="size-4" weight="light" />Search freelancers for &quot;{globalSearchQuery.trim()}&quot;
+                   <Users className="size-4" weight="light" />Search talent for &quot;{globalSearchQuery.trim()}&quot;
                  </Link>
                </CommandItem>
             </CommandGroup>
           )}
-          <CommandGroup className="text-muted-foreground" heading="Pages">
-            <CommandItem asChild>
-              <Link href="/projects" className="flex items-center gap-2">
-                <Lightning className="size-4" weight="light" />
-                Browse Projects
+          <CommandGroup className="text-muted-foreground" heading="Quick Links">
+            <CommandItem asChild value="browse projects">
+              <Link href="/projects" onClick={() => setOpenSearch(false)}>
+                <Lightning className="size-4" weight="light" />Browse Projects
               </Link>
             </CommandItem>
-            <CommandItem asChild>
-              <Link href="/freelancers" className="flex items-center gap-2">
-                <Users className="size-4" weight="light" />
-                Find Talent
+            <CommandItem asChild value="find freelancers">
+              <Link href="/freelancers" onClick={() => setOpenSearch(false)}>
+                <Users className="size-4" weight="light" />Find Talent
               </Link>
             </CommandItem>
-            <CommandItem asChild>
-              <Link href="/leaderboard" className="flex items-center gap-2">
-                <TrendUp className="size-4" weight="light" />
-                Leaderboard
+            <CommandItem asChild value="leaderboard">
+              <Link href="/leaderboard" onClick={() => setOpenSearch(false)}>
+                <TrendUp className="size-4" weight="light" />Reputation Leaderboard
               </Link>
             </CommandItem>
           </CommandGroup>

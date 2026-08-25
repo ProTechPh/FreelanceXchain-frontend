@@ -304,6 +304,9 @@ function AnimatedColumn({
             key={`${item.name}-${idx}`}
             whileHover={{ scale: 1.15 }}
             transition={{ type: "spring", stiffness: 400, damping: 15 }}
+            aria-label={item.name}
+            title={item.name}
+            role="img"
             className="group relative w-13 h-13 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-2xl sm:rounded-3xl bg-card border border-border/80 shadow-md shadow-black/5 hover:border-primary/60 hover:shadow-xl flex items-center justify-center p-2.5 sm:p-3.5 transition-all duration-200 cursor-pointer shrink-0"
           >
             <div className="w-full h-full flex items-center justify-center pointer-events-none">
