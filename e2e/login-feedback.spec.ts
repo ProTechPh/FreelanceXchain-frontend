@@ -1,5 +1,17 @@
 import { expect, test } from '@playwright/test';
 
+test('the sign-in page provides a keyboard-accessible path back home', async ({ page }) => {
+  await page.goto('/login');
+
+  const homeLink = page.getByRole('link', { name: 'Back to home' });
+  await expect(homeLink).toHaveAttribute('href', '/');
+  await homeLink.focus();
+  await expect(homeLink).toBeFocused();
+  await homeLink.click();
+
+  await expect(page).toHaveURL(/\/$/);
+});
+
 // Signing in can take a couple of seconds against a cold backend. Before this,
 // the submit button gave no feedback at all, so the natural reaction was to
 // click it again — against a request that was already in flight.

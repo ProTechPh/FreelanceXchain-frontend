@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
+import Link from 'next/link';
+import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 
@@ -32,6 +33,7 @@ export interface Testimonial {
 interface SignInPageProps {
   title?: React.ReactNode;
   description?: React.ReactNode;
+  homeHref?: string;
   heroImageSrc?: string;
   testimonials?: Testimonial[];
   onSignIn?: (event: React.FormEvent<HTMLFormElement>) => void;
@@ -80,6 +82,7 @@ const GlassInputWrapper = ({ children }: { children: React.ReactNode }) => (
 export const SignInPage: React.FC<SignInPageProps> = ({
   title = <span className="font-light text-foreground tracking-tighter">Welcome</span>,
   description = "Access your account and continue your journey with us",
+  homeHref,
   heroImageSrc,
   testimonials = [],
   onSignIn,
@@ -99,6 +102,15 @@ export const SignInPage: React.FC<SignInPageProps> = ({
       <section className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
           <div className="flex flex-col gap-6">
+            {homeHref && (
+              <Link
+                href={homeHref}
+                className="animate-element inline-flex w-fit items-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:text-foreground active:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              >
+                <ArrowLeft className="size-4" aria-hidden="true" />
+                Back to home
+              </Link>
+            )}
             <h1 className="animate-element animate-delay-100 text-4xl md:text-5xl font-semibold leading-tight">{title}</h1>
             <p className="animate-element animate-delay-200 text-muted-foreground">{description}</p>
 
