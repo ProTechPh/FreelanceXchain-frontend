@@ -22,7 +22,6 @@ import {
   Activity,
   ChevronLeft,
   ChevronRight,
-  Link as LinkIcon,
   PlusCircle,
   ClipboardList,
   Mail,
@@ -31,7 +30,7 @@ import {
   Tags,
   Sparkles,
 } from 'lucide-react';
-import { FreelanceXchainIcon, FreelanceXchainLogo } from '@/components/ui/freelancexchain-logo';
+import { FreelanceXchainIcon } from '@/components/ui/freelancexchain-logo';
 
 interface NavItem {
   label: string;

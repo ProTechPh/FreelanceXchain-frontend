@@ -1,6 +1,6 @@
 "use client"
 
-import { List, MagnifyingGlass, TrendUp, Lightning, Users, Newspaper } from "@phosphor-icons/react";
+import { List, MagnifyingGlass, Lightning, Users, Newspaper } from "@phosphor-icons/react";
 import * as React from "react";
 
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import Link from "next/link";
-import { FreelanceXchainIcon, FreelanceXchainLogo } from "@/components/ui/freelancexchain-logo";
+import { FreelanceXchainLogo } from "@/components/ui/freelancexchain-logo";
 
 interface MenuItem {
   title: string;

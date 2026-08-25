@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import React, { useState, useEffect, useTransition, useCallback } from "react";
@@ -116,9 +117,52 @@ export default function NewsPage() {
 
   // Initial load
   useEffect(() => {
-    loadCryptoNews();
-    loadMarketIndicators();
-  }, [loadCryptoNews, loadMarketIndicators]);
+    let ignore = false;
+
+    async function initFeed() {
+      try {
+        const [newsRes, fgRes, pricesRes] = await Promise.allSettled([
+          cryptoNewsApi.getNews({ limit: 24 }),
+          cryptoNewsApi.getFearGreed(),
+          cryptoNewsApi.getPrices("bitcoin,ethereum,solana,polygon,tether"),
+        ]);
+
+        if (ignore) return;
+
+        if (newsRes.status === "fulfilled" && newsRes.value.data?.articles && Array.isArray(newsRes.value.data.articles)) {
+          setArticles(newsRes.value.data.articles);
+        } else {
+          setArticles([]);
+        }
+
+        if (fgRes.status === "fulfilled" && fgRes.value.data && typeof fgRes.value.data.value === "number") {
+          setFearGreed(fgRes.value.data);
+        }
+
+        if (pricesRes.status === "fulfilled" && pricesRes.value.data && typeof pricesRes.value.data === "object") {
+          const parsed = normalizeCryptoPriceMap(pricesRes.value.data);
+          if (Object.keys(parsed).length > 0) {
+            setPrices(parsed);
+          }
+        }
+      } catch {
+        if (!ignore) {
+          setArticles([]);
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+          setLastRefreshed(new Date());
+        }
+      }
+    }
+
+    initFeed();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   // Handle Category selection
   const handleSelectCategory = (catObj: typeof CATEGORIES[number]) => {
