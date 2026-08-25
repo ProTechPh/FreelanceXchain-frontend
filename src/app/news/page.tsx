@@ -28,7 +28,12 @@ import {
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { cryptoNewsApi } from "@/lib/api";
-import { normalizeCryptoPriceMap, extractCryptoArticleImage } from "@/lib/crypto-news-contract";
+import {
+  normalizeCryptoPriceMap,
+  extractCryptoArticleImage,
+  formatNewsDate,
+  formatNewsTimeAgo,
+} from "@/lib/crypto-news-contract";
 import type {
   CryptoNewsArticle,
   FearGreedIndexData,
@@ -456,7 +461,7 @@ export default function NewsPage() {
                     <span>•</span>
                     <span className="flex items-center gap-1">
                       <Clock className="size-3.5" />
-                      {featuredArticle.pubDate || "Just now"}
+                      {formatNewsTimeAgo(featuredArticle.pubDate)}
                     </span>
                   </div>
 
@@ -479,7 +484,7 @@ export default function NewsPage() {
                         {featuredArticle.source || "Crypto Feed"}
                       </p>
                       <p className="text-[10px] text-muted-foreground">
-                        {featuredArticle.pubDate || "Live Report"}
+                        {formatNewsDate(featuredArticle.pubDate)}
                       </p>
                     </div>
                   </div>
@@ -596,12 +601,12 @@ export default function NewsPage() {
                         <div className="flex items-center gap-2 text-[11px] text-muted-foreground mb-2.5">
                           <span className="flex items-center gap-1">
                             <CalendarBlank className="size-3" />
-                            {article.pubDate || "Today"}
+                            {formatNewsDate(article.pubDate)}
                           </span>
                           <span>•</span>
                           <span className="flex items-center gap-1">
                             <Clock className="size-3" />
-                            Live Feed
+                            {formatNewsTimeAgo(article.pubDate)}
                           </span>
                         </div>
 

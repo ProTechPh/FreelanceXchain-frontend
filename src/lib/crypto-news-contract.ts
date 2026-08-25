@@ -80,3 +80,46 @@ export function extractCryptoArticleImage(
   return 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&auto=format&fit=crop&q=80';
 }
 
+/**
+ * Convert ISO date string (e.g. "2026-08-25T10:43:39.281Z") to clean formatted date:
+ * e.g. "Aug 25, 2026"
+ */
+export function formatNewsDate(dateStr?: string | null): string {
+  if (!dateStr) return 'Recently';
+  try {
+    const d = new Date(dateStr);
+    if (Number.isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
+/**
+ * Convert ISO date string to human-friendly relative time string:
+ * e.g. "Just now", "15m ago", "2h ago", or "Aug 25, 2026"
+ */
+export function formatNewsTimeAgo(dateStr?: string | null): string {
+  if (!dateStr) return 'Just now';
+  try {
+    const d = new Date(dateStr);
+    if (Number.isNaN(d.getTime())) return dateStr;
+    const now = Date.now();
+    const diffMs = now - d.getTime();
+    if (diffMs < 0) return 'Just now';
+    const diffMins = Math.floor(diffMs / (60 * 1000));
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return formatNewsDate(dateStr);
+  } catch {
+    return dateStr;
+  }
+}
