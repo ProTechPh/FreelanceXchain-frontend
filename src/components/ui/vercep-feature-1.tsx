@@ -29,13 +29,13 @@ export function WhySection() {
             <Sparkle className="size-3.5 fill-primary" weight="fill" />
             <span>Decentralized Freelance Engine</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-foreground">
-            Built for real results: <br />
+          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-foreground break-words">
+            Built for real results: <br className="hidden sm:inline" />
             <span className="text-primary font-bold">
               Everything freelancing should’ve been.
             </span>
           </h2>
-          <p className="mt-4 text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+          <p className="mt-3 sm:mt-4 text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed break-words">
             A high-trust marketplace combining AI skill discovery, tailored milestone proposals, and Ethereum smart contract escrow.
           </p>
         </motion.div>

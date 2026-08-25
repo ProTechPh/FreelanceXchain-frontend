@@ -59,10 +59,10 @@ const testimonialsRow2 = [
 
 function TestimonialCard({ t }: { t: (typeof testimonialsRow1)[number] }) {
   return (
-    <div className="shrink-0 w-[310px] sm:w-[360px] rounded-2xl border border-border/80 bg-card p-5 mx-2.5 shadow-xs hover:border-primary/40 hover:bg-muted/20 transition-colors flex flex-col justify-between">
+    <div className="shrink-0 w-[270px] sm:w-[340px] rounded-2xl border border-border/80 bg-card p-4 sm:p-5 mx-2 shadow-xs hover:border-primary/40 hover:bg-muted/20 transition-colors flex flex-col justify-between">
       <div>
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-0.5">
+        <div className="flex items-center justify-between mb-3 gap-2">
+          <div className="flex items-center gap-0.5 shrink-0">
             {[...Array(5)].map((_, j) => (
               <Star
                 key={j}
@@ -71,19 +71,19 @@ function TestimonialCard({ t }: { t: (typeof testimonialsRow1)[number] }) {
               />
             ))}
           </div>
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full">
-            <CheckCircle className="size-3" weight="fill" />
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 bg-emerald-500/10 px-2 py-0.5 rounded-full truncate">
+            <CheckCircle className="size-3 shrink-0" weight="fill" />
             {t.badge}
           </span>
         </div>
-        <p className="text-xs sm:text-sm text-foreground/90 leading-relaxed mb-4">
+        <p className="text-xs sm:text-sm text-foreground/90 leading-relaxed mb-4 break-words">
           &ldquo;{t.text}&rdquo;
         </p>
       </div>
 
       <div className="pt-2 border-t border-border/40">
-        <p className="text-xs sm:text-sm font-bold text-foreground">{t.name}</p>
-        <p className="text-[11px] text-muted-foreground">{t.role}</p>
+        <p className="text-xs sm:text-sm font-bold text-foreground truncate">{t.name}</p>
+        <p className="text-[11px] text-muted-foreground truncate">{t.role}</p>
       </div>
     </div>
   );
@@ -105,13 +105,13 @@ export function TestimonialsMarquee() {
             <Sparkle className="size-3.5 fill-primary" weight="fill" />
             <span>Real Results</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight">
-            <span className="text-foreground">Real feedback, real contracts: </span>
+          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight break-words">
+            <span className="text-foreground">Real feedback, real contracts: </span> <br className="hidden sm:inline" />
             <span className="text-[#717680] dark:text-muted-foreground">
               How talent & employers thrive with FreelanceXchain.
             </span>
           </h2>
-          <p className="mt-3 text-sm sm:text-base text-muted-foreground max-w-xl mx-auto">
+          <p className="mt-3 text-xs sm:text-base text-muted-foreground max-w-xl mx-auto break-words leading-relaxed">
             See what verified freelancers and hiring companies are saying about smart contract escrow, AI proposal matching, and instant payouts.
           </p>
         </motion.div>

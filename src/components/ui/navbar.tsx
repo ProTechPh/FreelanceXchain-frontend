@@ -1,6 +1,6 @@
 "use client"
 
-import { List, MagnifyingGlass, TrendUp, Lightning, Users } from "@phosphor-icons/react";
+import { List, MagnifyingGlass, Lightning, Users, Newspaper } from "@phosphor-icons/react";
 import * as React from "react";
 
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import Link from "next/link";
+import { FreelanceXchainLogo } from "@/components/ui/freelancexchain-logo";
 
 interface MenuItem {
   title: string;
@@ -39,13 +40,8 @@ interface NavbarProps {
 }
 
 const Logo = () => (
-  <Link href="/" className="flex items-center gap-2.5 shrink-0">
-    <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shadow-xs">
-      <svg className="w-4 h-4 text-primary-foreground fill-current" viewBox="0 0 24 24">
-        <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" />
-      </svg>
-    </div>
-    <span className="font-extrabold text-lg text-foreground tracking-tight">FreelanceXchain</span>
+  <Link href="/" className="group flex items-center shrink-0">
+    <FreelanceXchainLogo iconSize={32} />
   </Link>
 );
 
@@ -58,6 +54,7 @@ export default function Navbar({
     { title: "FAQ", url: "/#faq" },
     { title: "Projects", url: "/projects" },
     { title: "Talent", url: "/freelancers" },
+    { title: "Crypto News", url: "/news" },
   ],
   auth = {
     login: { text: "Sign in", url: "/login" },
@@ -139,13 +136,8 @@ export default function Navbar({
 
             <SheetContent side="right" className="w-full max-w-sm overflow-y-auto px-6">
               <SheetHeader className="mb-6">
-                <SheetTitle className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shadow-xs">
-                    <svg className="w-4 h-4 text-primary-foreground fill-current" viewBox="0 0 24 24">
-                      <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" />
-                    </svg>
-                  </div>
-                  <span className="font-extrabold text-lg text-foreground tracking-tight">FreelanceXchain</span>
+                <SheetTitle className="flex items-center">
+                  <FreelanceXchainLogo iconSize={32} />
                 </SheetTitle>
               </SheetHeader>
 
@@ -207,9 +199,9 @@ export default function Navbar({
                 <Users className="size-4" weight="light" />Find Talent
               </Link>
             </CommandItem>
-            <CommandItem asChild value="leaderboard">
-              <Link href="/leaderboard" onClick={() => setOpenSearch(false)}>
-                <TrendUp className="size-4" weight="light" />Reputation Leaderboard
+            <CommandItem asChild value="crypto news">
+              <Link href="/news" onClick={() => setOpenSearch(false)}>
+                <Newspaper className="size-4" weight="light" />Crypto News
               </Link>
             </CommandItem>
           </CommandGroup>

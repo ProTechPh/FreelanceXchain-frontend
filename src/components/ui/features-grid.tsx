@@ -71,10 +71,10 @@ export function FeaturesGrid() {
           <p className="text-xs font-bold text-primary uppercase tracking-wider mb-2">
             Powerful Platform Architecture
           </p>
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight leading-tight text-foreground">
+          <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight text-foreground break-words">
             The freelance engine built for trust
           </h2>
-          <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
+          <p className="mt-3 text-xs sm:text-sm text-muted-foreground leading-relaxed break-words">
             Everything you need to discover high-value projects, submit winning proposals, and get paid with zero escrow risk.
           </p>
         </motion.div>

@@ -160,17 +160,6 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
     [skills],
   );
 
-  const toggleSkill = (skillId: string) => {
-    setFilters((current) => {
-      const exists = current.skillIds.includes(skillId);
-      return {
-        ...current,
-        skillIds: exists
-          ? current.skillIds.filter((id) => id !== skillId)
-          : [...current.skillIds, skillId],
-      };
-    });
-  };
 
   const submitSearch = (event: React.FormEvent) => {
     event.preventDefault();
@@ -334,47 +323,35 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
                     className="pl-11 pr-4 py-2.5 rounded-full bg-background border-border/80 text-sm focus-visible:ring-primary/40"
                   />
                 </div>
-                <div className="flex gap-2">
-                  <Button type="submit" className="rounded-full bg-primary text-primary-foreground text-xs font-bold px-6 shadow-xs cursor-pointer">
-                    <Search className="mr-2 size-4" />Search
-                  </Button>
-                  <Button type="button" variant="outline" className="rounded-full text-xs font-bold cursor-pointer" onClick={resetFilters}>
-                    Reset
-                  </Button>
-                </div>
               </div>
 
-              {/* Skills Selector */}
-              {skills.length > 0 && (
-                <div className="space-y-2">
-                  <Label className="text-xs font-bold text-foreground">Filter by Required Skills</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {skills.slice(0, 14).map((skill) => {
-                      const selected = filters.skillIds.includes(skill.id);
-                      return (
-                        <button
-                          key={skill.id}
-                          type="button"
-                          onClick={() => toggleSkill(skill.id)}
-                          className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                            selected
-                              ? "bg-primary text-primary-foreground shadow-xs"
-                              : "bg-background border border-border/80 text-muted-foreground hover:text-foreground hover:bg-muted/60"
-                          }`}
-                        >
-                          {skill.name}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+              {/* Skill selector */}
+              <div className="space-y-1.5">
+                <Label htmlFor="skill-select" className="text-xs font-bold text-foreground">Skill</Label>
+                <select
+                  id="skill-select"
+                  aria-label="Skill"
+                  value={filters.skillIds[0] ?? ""}
+                  onChange={(event) => {
+                    const val = event.target.value;
+                    setFilters((current) => ({ ...current, skillIds: val ? [val] : [] }));
+                  }}
+                  className="w-full rounded-xl bg-background border border-border/80 text-sm px-3 py-2"
+                >
+                  <option value="">All skills</option>
+                  {skills.map((skill) => (
+                    <option key={skill.id} value={skill.id}>
+                      {skill.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
               {/* Budget Range (for Projects) */}
               {kind === "project" && (
                 <div className="grid gap-4 sm:grid-cols-2 pt-2 border-t border-border/50">
                   <div className="space-y-1.5">
-                    <Label htmlFor="minimum-budget" className="text-xs font-bold text-foreground">Minimum Budget ($)</Label>
+                    <Label htmlFor="minimum-budget" className="text-xs font-bold text-foreground">Minimum budget</Label>
                     <Input
                       id="minimum-budget"
                       type="number"
@@ -386,7 +363,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="maximum-budget" className="text-xs font-bold text-foreground">Maximum Budget ($)</Label>
+                    <Label htmlFor="maximum-budget" className="text-xs font-bold text-foreground">Maximum budget</Label>
                     <Input
                       id="maximum-budget"
                       type="number"
@@ -399,6 +376,15 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
                   </div>
                 </div>
               )}
+
+              <div className="flex gap-2 pt-2">
+                <Button type="submit" className="rounded-full bg-primary text-primary-foreground text-xs font-bold px-6 shadow-xs cursor-pointer">
+                  Apply filters
+                </Button>
+                <Button type="button" variant="outline" className="rounded-full text-xs font-bold cursor-pointer" onClick={resetFilters}>
+                  Reset
+                </Button>
+              </div>
             </form>
           </div>
 
@@ -412,14 +398,18 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
                     <p className="text-xs text-muted-foreground mt-0.5">Quickly return to this search criteria or receive match alerts.</p>
                   </div>
                   <div className="flex flex-col gap-2 sm:flex-row">
-                    <Input
-                      value={savedSearchName}
-                      onChange={(event) => setSavedSearchName(event.target.value)}
-                      placeholder="e.g. React & Solidity Gigs"
-                      className="rounded-full bg-background border-border/80 text-xs"
-                    />
+                    <div className="flex-1 space-y-1">
+                      <Label htmlFor="saved-search-name" className="sr-only">Search name</Label>
+                      <Input
+                        id="saved-search-name"
+                        value={savedSearchName}
+                        onChange={(event) => setSavedSearchName(event.target.value)}
+                        placeholder="e.g. React & Solidity Gigs"
+                        className="rounded-full bg-background border-border/80 text-xs"
+                      />
+                    </div>
                     <Button size="sm" className="rounded-full bg-primary text-primary-foreground text-xs font-bold shrink-0" type="submit" disabled={savingSearch}>
-                      <BookmarkPlus className="mr-1.5 size-3.5" />{savingSearch ? "Saving…" : "Save Search"}
+                      <BookmarkPlus className="mr-1.5 size-3.5" />{savingSearch ? "Saving…" : "Save search"}
                     </Button>
                   </div>
                 </form>
@@ -477,7 +467,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
                         size="icon"
                         variant="secondary"
                         className="absolute right-4 top-4 z-10 rounded-full h-8 w-8 bg-card/90 backdrop-blur-xs border border-border/80 shadow-xs hover:scale-110 transition-transform"
-                        aria-label={favorite ? `Remove from favorites` : `Save to favorites`}
+                        aria-label={favorite ? `Remove ${kind} from favorites` : `Save ${kind} to favorites`}
                         disabled={favoriteActionId === targetId}
                         onClick={() => void toggleFavorite(targetId)}
                       >

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { ArrowRight, Zap, Shield, Brain, Globe, TrendingUp, Users } from 'lucide-react';
+import { FreelanceXchainLogo } from '@/components/ui/freelancexchain-logo';
 
 const stats = [
   { label: 'Total Earned', value: '$2.4M+' },
@@ -266,13 +267,8 @@ export function Footer() {
       <div className="max-w-7xl mx-auto">
         <div className="grid md:grid-cols-4 gap-8 mb-8">
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
-                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                </svg>
-              </div>
-              <span className="font-bold text-lg">FreelanceXchain</span>
+            <div className="mb-4">
+              <FreelanceXchainLogo iconSize={32} />
             </div>
             <p className="text-sm text-muted-foreground">
               The decentralized freelance marketplace powered by blockchain and AI.
@@ -291,7 +287,7 @@ export function Footer() {
             <h4 className="font-semibold mb-4">Company</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link href="/about" className="hover:text-foreground">About Us</Link></li>
-              <li><Link href="/blog" className="hover:text-foreground">Blog</Link></li>
+              <li><Link href="/news" className="hover:text-foreground">Crypto News</Link></li>
               <li><Link href="/careers" className="hover:text-foreground">Careers</Link></li>
               <li><Link href="/contact" className="hover:text-foreground">Contact</Link></li>
             </ul>

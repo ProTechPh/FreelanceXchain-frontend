@@ -819,3 +819,77 @@ export interface AuditLogEntry {
   error_message: string | null;
   created_at: string;
 }
+
+// Crypto News & Market Types
+export interface CryptoNewsArticle {
+  id?: string;
+  title: string;
+  link?: string;
+  url?: string;
+  pubDate?: string;
+  published_on?: number | string;
+  source?: string;
+  category?: string;
+  sentiment?: 'positive' | 'negative' | 'neutral' | string;
+  summary?: string;
+  description?: string;
+  image?: string;
+  imageurl?: string;
+  imageUrl?: string;
+  image_url?: string;
+  thumbnail?: string;
+  thumb?: string;
+  urlToImage?: string;
+  author?: string;
+  source_info?: { img?: string; [key: string]: unknown } | null;
+  [key: string]: unknown;
+}
+
+export interface CryptoNewsFeed {
+  articles: CryptoNewsArticle[];
+  count?: number;
+  source?: string;
+  results?: CryptoNewsArticle[];
+}
+
+export interface CryptoCoinPrice {
+  usd: number;
+  usd_24h_change?: number;
+  usd_24h_vol?: number;
+  usd_market_cap?: number;
+  last_updated_at?: number;
+}
+
+export type CryptoPricesResponse = Record<string, CryptoCoinPrice | number>;
+
+export interface FearGreedIndexData {
+  value: number;
+  classification?: string;
+  value_classification?: string;
+  timestamp?: string;
+  time_until_update?: string;
+}
+
+export interface GlobalMarketStats {
+  total_market_cap?: number | Record<string, number>;
+  total_volume?: number | Record<string, number>;
+  market_cap_percentage?: Record<string, number>;
+  market_cap_change_percentage_24h_usd?: number;
+  updated_at?: number;
+}
+
+export interface CryptoMarketMoverCoin {
+  id?: string;
+  symbol: string;
+  name?: string;
+  price?: number;
+  usd?: number;
+  percent_change_24h?: number;
+  usd_24h_change?: number;
+}
+
+export interface CryptoMarketMoversResponse {
+  direction?: 'gainers' | 'losers';
+  coins: CryptoMarketMoverCoin[];
+}
+

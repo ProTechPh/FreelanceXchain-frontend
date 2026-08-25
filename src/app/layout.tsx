@@ -13,6 +13,14 @@ const nunitoSans = Nunito_Sans({
 export const metadata: Metadata = {
   title: 'FreelanceXchain - Decentralized Freelance Marketplace & Smart Escrow',
   description: 'The AI-powered freelance marketplace with Ethereum smart contract escrow. Connect with verified employers, generate tailored milestone proposals, and get paid with zero escrow risk.',
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/images/logo-icon.svg', type: 'image/svg+xml' },
+    ],
+    shortcut: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({

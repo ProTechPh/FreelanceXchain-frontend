@@ -267,10 +267,12 @@ function AnimatedColumn({
   items,
   direction = "up",
   duration = 20,
+  className = "",
 }: {
   items: EcosystemItem[];
   direction?: "up" | "down";
   duration?: number;
+  className?: string;
 }) {
   const reduce = useReducedMotion();
   // Triple the items to ensure seamless infinite looping
@@ -280,7 +282,7 @@ function AnimatedColumn({
   const totalShift = items.length * itemHeight;
 
   return (
-    <div className="relative overflow-hidden h-[340px] sm:h-[400px] md:h-[460px] w-14 sm:w-18 md:w-20 shrink-0">
+    <div className={`relative overflow-hidden h-[300px] sm:h-[400px] md:h-[460px] w-12 sm:w-16 md:w-20 shrink-0 ${className}`}>
       <motion.div
         animate={
           reduce
@@ -355,32 +357,32 @@ export function EcosystemShowcase() {
           </div>
 
           {/* Two-tone headline */}
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-foreground">
-            Top Web3 Chains & Integrations, <br />
+          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-foreground break-words">
+            Top Web3 Chains & Integrations, <br className="hidden sm:inline" />
             <span className="text-[#717680] dark:text-muted-foreground font-semibold">
               all in one marketplace.
             </span>
           </h2>
 
-          <p className="mt-4 text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+          <p className="mt-3 sm:mt-4 text-xs sm:text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed break-words">
             Connect your wallet, verify your identity with Didit KYC, and execute milestone escrow contracts seamlessly across leading Layer 1 and Layer 2 networks.
           </p>
         </motion.div>
       </div>
 
       {/* Infinite Scrolling Honeycomb / Diamond Icon Cloud (Zero Scrollbar with Gradient Fade Masks) */}
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 relative">
+      <div className="mx-auto max-w-5xl px-3 sm:px-6 relative">
         {/* Top and Bottom Gradient Fade Masks for seamless cycling */}
-        <div className="absolute top-0 left-0 right-0 h-16 bg-gradient-to-b from-background to-transparent z-20 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent z-20 pointer-events-none" />
+        <div className="absolute top-0 left-0 right-0 h-14 sm:h-16 bg-gradient-to-b from-background to-transparent z-20 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 right-0 h-14 sm:h-16 bg-gradient-to-t from-background to-transparent z-20 pointer-events-none" />
 
         {/* Outer Left & Right Fade Masks */}
-        <div className="absolute top-0 bottom-0 left-0 w-12 bg-gradient-to-r from-background to-transparent z-20 pointer-events-none" />
-        <div className="absolute top-0 bottom-0 right-0 w-12 bg-gradient-to-l from-background to-transparent z-20 pointer-events-none" />
+        <div className="absolute top-0 bottom-0 left-0 w-8 sm:w-12 bg-gradient-to-r from-background to-transparent z-20 pointer-events-none" />
+        <div className="absolute top-0 bottom-0 right-0 w-8 sm:w-12 bg-gradient-to-l from-background to-transparent z-20 pointer-events-none" />
 
         {/* Multi-Column Animated Container - Completely hidden scrollbar */}
         <div
-          className="flex items-center justify-center gap-2.5 sm:gap-4 md:gap-5 overflow-hidden py-2"
+          className="flex items-center justify-center gap-2 sm:gap-4 md:gap-5 overflow-hidden py-2"
           style={{
             maskImage:
               "linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)",
@@ -388,14 +390,27 @@ export function EcosystemShowcase() {
               "linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)",
           }}
         >
-          {baseColumns.map((col, idx) => (
-            <AnimatedColumn
-              key={`col-${idx}`}
-              items={col}
-              direction={colConfigs[idx]?.direction || "up"}
-              duration={colConfigs[idx]?.duration || 22}
-            />
-          ))}
+          {baseColumns.map((col, idx) => {
+            // Mobile (< 640px): 3 center columns (idx 2, 3, 4)
+            // Tablet (640px-1024px): 5 columns (idx 1, 2, 3, 4, 5)
+            // Desktop (>= 1024px): All 7 columns
+            const visibilityClass =
+              idx === 0 || idx === 6
+                ? "hidden lg:block"
+                : idx === 1 || idx === 5
+                ? "hidden sm:block"
+                : "block";
+
+            return (
+              <AnimatedColumn
+                key={`col-${idx}`}
+                items={col}
+                direction={colConfigs[idx]?.direction || "up"}
+                duration={colConfigs[idx]?.duration || 22}
+                className={visibilityClass}
+              />
+            );
+          })}
         </div>
       </div>
     </section>

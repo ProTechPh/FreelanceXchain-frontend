@@ -22,7 +22,6 @@ import {
   Activity,
   ChevronLeft,
   ChevronRight,
-  Link as LinkIcon,
   PlusCircle,
   ClipboardList,
   Mail,
@@ -31,6 +30,7 @@ import {
   Tags,
   Sparkles,
 } from 'lucide-react';
+import { FreelanceXchainIcon } from '@/components/ui/freelancexchain-logo';
 
 interface NavItem {
   label: string;
@@ -96,12 +96,14 @@ export function Sidebar() {
     >
       {/* Logo */}
       <div className="flex items-center h-16 px-4 border-b border-sidebar-border">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
-            <LinkIcon className="w-4 h-4 text-white" />
+        <Link href="/" className="flex items-center gap-2.5 group">
+          <div className="flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105">
+            <FreelanceXchainIcon size={32} />
           </div>
           {!collapsed && (
-            <span className="font-bold text-lg gradient-text">FreelanceXchain</span>
+            <span className="font-bold text-lg text-foreground flex items-center">
+              Freelance<span className="text-[#10B981] font-black px-0.5 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]">X</span>chain
+            </span>
           )}
         </Link>
       </div>
