@@ -461,7 +461,7 @@ export default function NewsPage() {
                     <span>•</span>
                     <span className="flex items-center gap-1">
                       <Clock className="size-3.5" />
-                      {formatNewsTimeAgo(featuredArticle.pubDate)}
+                      {formatNewsTimeAgo(featuredArticle)}
                     </span>
                   </div>
 
@@ -484,7 +484,7 @@ export default function NewsPage() {
                         {featuredArticle.source || "Crypto Feed"}
                       </p>
                       <p className="text-[10px] text-muted-foreground">
-                        {formatNewsDate(featuredArticle.pubDate)}
+                        {formatNewsDate(featuredArticle)}
                       </p>
                     </div>
                   </div>
@@ -601,12 +601,12 @@ export default function NewsPage() {
                         <div className="flex items-center gap-2 text-[11px] text-muted-foreground mb-2.5">
                           <span className="flex items-center gap-1">
                             <CalendarBlank className="size-3" />
-                            {formatNewsDate(article.pubDate)}
+                            {formatNewsDate(article)}
                           </span>
                           <span>•</span>
                           <span className="flex items-center gap-1">
                             <Clock className="size-3" />
-                            {formatNewsTimeAgo(article.pubDate)}
+                            {formatNewsTimeAgo(article)}
                           </span>
                         </div>
 

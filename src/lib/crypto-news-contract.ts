@@ -81,15 +81,36 @@ export function extractCryptoArticleImage(
 }
 
 /**
- * Convert ISO date string (e.g. "2026-08-25T10:43:39.281Z") to clean formatted date:
+ * Extract date string from various possible API field names
+ */
+export function extractArticleDate(article?: CryptoNewsArticle | Record<string, unknown> | null): string | undefined {
+  if (!article || typeof article !== 'object') return undefined;
+  const art = article as Record<string, unknown>;
+  const possible = [
+    art.pubDate,
+    art.published_at,
+    art.publishedAt,
+    art.date,
+    art.time,
+    art.createdAt,
+    art.created_at,
+    art.pub_date,
+  ].find((d) => typeof d === 'string' && d.trim().length > 0);
+  return typeof possible === 'string' ? possible : undefined;
+}
+
+/**
+ * Convert ISO / UTC date string to the user's device local formatted date:
  * e.g. "Aug 25, 2026"
  */
-export function formatNewsDate(dateStr?: string | null): string {
+export function formatNewsDate(dateInput?: string | Record<string, unknown> | null): string {
+  const dateStr = typeof dateInput === 'string' ? dateInput : extractArticleDate(dateInput as Record<string, unknown>);
   if (!dateStr) return 'Recently';
   try {
     const d = new Date(dateStr);
     if (Number.isNaN(d.getTime())) return dateStr;
-    return d.toLocaleDateString('en-US', {
+    // Uses the client browser/device's local timezone
+    return d.toLocaleDateString(undefined, {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
@@ -100,14 +121,40 @@ export function formatNewsDate(dateStr?: string | null): string {
 }
 
 /**
- * Convert ISO date string to human-friendly relative time string:
+ * Convert ISO / UTC date string to the user's device local date & time:
+ * e.g. "Aug 25, 2026, 6:45 PM"
+ */
+export function formatNewsDateTime(dateInput?: string | Record<string, unknown> | null): string {
+  const dateStr = typeof dateInput === 'string' ? dateInput : extractArticleDate(dateInput as Record<string, unknown>);
+  if (!dateStr) return 'Recently';
+  try {
+    const d = new Date(dateStr);
+    if (Number.isNaN(d.getTime())) return dateStr;
+    // Uses the client browser/device's local timezone and clock
+    return d.toLocaleString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  } catch {
+    return dateStr;
+  }
+}
+
+/**
+ * Convert ISO date string to human-friendly relative time based on user's device clock:
  * e.g. "Just now", "15m ago", "2h ago", or "Aug 25, 2026"
  */
-export function formatNewsTimeAgo(dateStr?: string | null): string {
+export function formatNewsTimeAgo(dateInput?: string | Record<string, unknown> | null): string {
+  const dateStr = typeof dateInput === 'string' ? dateInput : extractArticleDate(dateInput as Record<string, unknown>);
   if (!dateStr) return 'Just now';
   try {
     const d = new Date(dateStr);
     if (Number.isNaN(d.getTime())) return dateStr;
+    // Uses client device's current time in milliseconds
     const now = Date.now();
     const diffMs = now - d.getTime();
     if (diffMs < 0) return 'Just now';
