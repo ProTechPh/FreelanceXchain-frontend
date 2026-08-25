@@ -109,23 +109,18 @@ export default function AetherHero() {
             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-card border border-border/80 text-xs font-semibold text-foreground mb-6 shadow-xs hover:border-primary/40 transition-colors"
           >
             <Sparkle className="size-3.5 text-primary fill-primary" weight="fill" />
-            <span>AI Skill Matching & Smart Contract Escrow</span>
+            <span>AI Skill Matching &amp; Smart Contract Escrow</span>
             <ArrowRight className="size-3 text-muted-foreground" weight="bold" />
           </motion.div>
 
-          {/* Two-tone Headline */}
+          {/* Main Headline */}
           <motion.h1
             initial={reduce ? false : { opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, delay: 0.08 }}
             className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.12] sm:leading-[1.08] break-words"
           >
-            <span className="text-[#717680] dark:text-muted-foreground font-normal">
-              Stop chasing payments.{" "}
-            </span>
-            <span className="text-[#181d27] dark:text-foreground font-extrabold">
-              Work securely on-chain.
-            </span>
+            Decentralize Your Freelance Career
           </motion.h1>
 
           {/* Subheading */}
@@ -161,6 +156,12 @@ export default function AetherHero() {
             >
               <Briefcase className="size-4 text-muted-foreground" weight="duotone" />
               <span>Browse Projects</span>
+            </Link>
+            <Link
+              href="/freelancers"
+              className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full border border-border/80 bg-card text-foreground font-semibold text-sm transition-all duration-150 hover:bg-muted/70 hover:border-border active:scale-[0.98]"
+            >
+              <span>Find Talent</span>
             </Link>
           </motion.div>
 
@@ -304,7 +305,7 @@ export default function AetherHero() {
                 {/* Header bar */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border/50">
                   <div>
-                    <p className="text-base font-bold text-foreground">Contracts & Projects Workspace</p>
+                    <p className="text-base font-bold text-foreground">Contracts &amp; Projects Workspace</p>
                     <p className="text-xs text-muted-foreground">Milestone-based smart contract escrow with automatic releases</p>
                   </div>
 
