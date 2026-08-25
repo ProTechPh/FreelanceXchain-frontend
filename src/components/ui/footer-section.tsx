@@ -3,8 +3,8 @@
 import React from 'react';
 import type { ComponentProps, ReactNode } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { Sparkle } from '@phosphor-icons/react';
 import Link from 'next/link';
+import { FreelanceXchainLogo } from '@/components/ui/freelancexchain-logo';
 
 interface FooterLink {
 	title: string;
@@ -84,13 +84,8 @@ export function FooterSection() {
 			<div className="max-w-6xl mx-auto">
 				<div className="grid w-full gap-8 xl:grid-cols-3 xl:gap-12">
 					<AnimatedContainer className="space-y-4">
-						<Link href="/" className="flex items-center gap-2.5">
-							<div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shadow-xs">
-								<Sparkle className="w-4 h-4 text-primary-foreground fill-primary-foreground" weight="fill" />
-							</div>
-							<span className="font-extrabold text-lg text-foreground tracking-tight">
-								FreelanceXchain
-							</span>
+						<Link href="/" className="group inline-flex items-center">
+							<FreelanceXchainLogo iconSize={32} />
 						</Link>
 						<p className="text-muted-foreground text-xs sm:text-sm leading-relaxed max-w-sm">
 							Helping candidates and freelancers land dream roles and high-value contracts faster with AI-native tailoring and instant smart escrow.

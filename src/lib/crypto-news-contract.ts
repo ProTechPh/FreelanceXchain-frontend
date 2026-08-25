@@ -42,19 +42,24 @@ export function getCryptoNewsSentimentLabel(sentiment?: string): 'positive' | 'n
 }
 
 export function extractCryptoArticleImage(
-  article: Partial<CryptoNewsArticle> & Record<string, unknown>,
+  article?: CryptoNewsArticle | Partial<CryptoNewsArticle> | Record<string, unknown> | null,
   categoryHint?: string
 ): string {
+  if (!article || typeof article !== 'object') {
+    return 'https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&auto=format&fit=crop&q=80';
+  }
+
+  const art = article as Record<string, unknown>;
   const possibleUrls = [
-    article.image,
-    article.imageurl,
-    article.imageUrl,
-    article.image_url,
-    article.urlToImage,
-    article.thumbnail,
-    article.thumb,
-    typeof article.source_info === 'object' && article.source_info !== null
-      ? (article.source_info as { img?: string }).img
+    art.image,
+    art.imageurl,
+    art.imageUrl,
+    art.image_url,
+    art.urlToImage,
+    art.thumbnail,
+    art.thumb,
+    typeof art.source_info === 'object' && art.source_info !== null
+      ? (art.source_info as { img?: string }).img
       : undefined,
   ].filter((url): url is string => typeof url === 'string' && url.trim().length > 0 && (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/')));
 
@@ -62,7 +67,7 @@ export function extractCryptoArticleImage(
     return possibleUrls[0];
   }
 
-  const cat = (categoryHint || article.category || article.title || '').toLowerCase();
+  const cat = (categoryHint || (typeof art.category === 'string' ? art.category : '') || (typeof art.title === 'string' ? art.title : '')).toLowerCase();
   if (cat.includes('btc') || cat.includes('bitcoin')) {
     return 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&auto=format&fit=crop&q=80';
   }

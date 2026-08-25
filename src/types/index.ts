@@ -841,6 +841,8 @@ export interface CryptoNewsArticle {
   thumb?: string;
   urlToImage?: string;
   author?: string;
+  source_info?: { img?: string; [key: string]: unknown } | null;
+  [key: string]: unknown;
 }
 
 export interface CryptoNewsFeed {

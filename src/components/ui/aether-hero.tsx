@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
+import { FreelanceXchainIcon } from "@/components/ui/freelancexchain-logo";
 import {
   ArrowRight,
   Sparkle,
@@ -223,10 +224,12 @@ export default function AetherHero() {
               <div>
                 {/* Brand Header in sidebar */}
                 <div className="flex items-center gap-2 mb-6 px-2">
-                  <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center shadow-xs">
-                    <Sparkle className="w-3.5 h-3.5 text-primary-foreground fill-primary-foreground" weight="fill" />
+                  <div className="flex items-center justify-center shrink-0">
+                    <FreelanceXchainIcon size={24} />
                   </div>
-                  <span className="font-extrabold text-sm text-foreground tracking-tight">FreelanceXchain</span>
+                  <span className="font-extrabold text-sm text-foreground tracking-tight flex items-center">
+                    Freelance<span className="text-[#10B981] font-black px-0.5 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]">X</span>chain
+                  </span>
                 </div>
 
                 {/* Sidebar Search */}
