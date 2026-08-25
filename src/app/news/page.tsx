@@ -34,21 +34,14 @@ import type {
   FearGreedIndexData,
 } from "@/types";
 
-const CATEGORIES = [
-  { label: "All News", coin: undefined, filter: undefined },
-  { label: "Bitcoin (BTC)", coin: "BTC", filter: "btc" },
-  { label: "Ethereum (ETH)", coin: "ETH", filter: "eth" },
-  { label: "Solana (SOL)", coin: "SOL", filter: "solana" },
-  { label: "DeFi", coin: undefined, filter: "defi" },
-  { label: "Layer 2", coin: undefined, filter: "layer" },
-  { label: "Web3 & AI", coin: undefined, filter: "ai" },
-];
+type NewsCategory = { label: string; coin?: string; filter?: string };
 
 export default function NewsPage() {
   const reduce = useReducedMotion();
   const [, startTransition] = useTransition();
 
-  const [selectedCategory, setSelectedCategory] = useState("All News");
+  const [categories, setCategories] = useState<NewsCategory[]>([{ label: 'All News' }]);
+  const [selectedCategory, setSelectedCategory] = useState('All News');
   const [searchQuery, setSearchQuery] = useState("");
   const [subscribed, setSubscribed] = useState(false);
   const [emailInput, setEmailInput] = useState("");
@@ -121,10 +114,11 @@ export default function NewsPage() {
 
     async function initFeed() {
       try {
-        const [newsRes, fgRes, pricesRes] = await Promise.allSettled([
+        const [newsRes, fgRes, pricesRes, catRes] = await Promise.allSettled([
           cryptoNewsApi.getNews({ limit: 24 }),
           cryptoNewsApi.getFearGreed(),
           cryptoNewsApi.getPrices("bitcoin,ethereum,solana,polygon,tether"),
+          cryptoNewsApi.getCategories(),
         ]);
 
         if (ignore) return;
@@ -144,6 +138,10 @@ export default function NewsPage() {
           if (Object.keys(parsed).length > 0) {
             setPrices(parsed);
           }
+        }
+
+        if (catRes.status === "fulfilled" && Array.isArray(catRes.value.data?.categories) && catRes.value.data.categories.length > 0) {
+          setCategories(catRes.value.data.categories);
         }
       } catch {
         if (!ignore) {
@@ -165,7 +163,7 @@ export default function NewsPage() {
   }, []);
 
   // Handle Category selection
-  const handleSelectCategory = (catObj: typeof CATEGORIES[number]) => {
+  const handleSelectCategory = (catObj: NewsCategory) => {
     setSelectedCategory(catObj.label);
     setSearchQuery("");
     startTransition(() => {
@@ -206,7 +204,6 @@ export default function NewsPage() {
   });
 
   const featuredArticle = displayArticles[0];
-  const gridArticles = displayArticles.slice(1);
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
@@ -338,7 +335,7 @@ export default function NewsPage() {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => {
-                    const active = CATEGORIES.find((c) => c.label === selectedCategory);
+                    const active = categories.find((c) => c.label === selectedCategory);
                     loadCryptoNews(active?.coin, active?.filter, searchQuery);
                     loadMarketIndicators();
                   }}
@@ -378,7 +375,7 @@ export default function NewsPage() {
 
             {/* Category & News Filter Pills */}
             <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
-              {CATEGORIES.map((cat) => (
+              {categories.map((cat) => (
                 <button
                   key={cat.label}
                   onClick={() => handleSelectCategory(cat)}
@@ -392,6 +389,10 @@ export default function NewsPage() {
                   {cat.label.includes("ETH") && <CurrencyEth className="size-3.5 text-blue-500" weight="bold" />}
                   {cat.label.includes("SOL") && <Coins className="size-3.5 text-purple-500" weight="bold" />}
                   {cat.label === "All News" && <Broadcast className="size-3.5 text-rose-500" weight="bold" />}
+                  {cat.coin && !cat.label.includes("BTC") && !cat.label.includes("ETH") && !cat.label.includes("SOL") && (
+                    <Coins className="size-3.5 text-emerald-500" weight="bold" />
+                  )}
+                  {cat.filter && !cat.coin && <Sparkle className="size-3.5 text-indigo-500" weight="bold" />}
                   <span>{cat.label}</span>
                 </button>
               ))}
@@ -542,7 +543,7 @@ export default function NewsPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-              {(searchQuery ? displayArticles : gridArticles).map((article, idx) => {
+              {displayArticles.map((article, idx) => {
                 const imageUrl = extractCryptoArticleImage(article, article.category);
 
                 return (

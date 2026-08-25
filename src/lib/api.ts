@@ -854,6 +854,11 @@ export const cryptoNewsApi = {
     api.get<CryptoMarketMoversResponse>('/crypto-news/movers', {
       params: { direction, ...options },
     }),
+
+  getCategories: (limit?: number) =>
+    api.get<{ categories: Array<{ label: string; coin?: string; filter?: string }> }>('/crypto-news/categories', {
+      params: limit ? { limit } : undefined,
+    }),
 };
 
 export default api;
