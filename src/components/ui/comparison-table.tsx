@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
-import { Check, X, Sparkle } from "@phosphor-icons/react";
+import { Check, Sparkle } from "@phosphor-icons/react";
 
 const matrixRows = [
   {

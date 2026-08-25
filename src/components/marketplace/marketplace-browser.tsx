@@ -2,18 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import {
-  Bell,
   BookmarkPlus,
   Heart,
   Loader2,
   Search,
-  SlidersHorizontal,
   Trash2,
   Sparkles,
-  DollarSign,
-  Clock,
   Briefcase,
-  CheckCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/ui/navbar";
@@ -30,7 +25,6 @@ import {
 import { useAuthStore } from "@/stores/authStore";
 import type { FreelancerProfile, Project, ProjectCategoryStat, SavedSearch, Skill } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -64,7 +58,6 @@ function updateBudget(
 
 export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
   kind,
-  title,
   description,
   emptyMessage,
   layout,
@@ -82,7 +75,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const [favoriteActionId, setFavoriteActionId] = useState<string | null>(null);
   const [savedSearchName, setSavedSearchName] = useState("");
-  const [notifyOnNew, setNotifyOnNew] = useState(true);
+  const [notifyOnNew] = useState(true);
   const [loading, setLoading] = useState(true);
   const [savingSearch, setSavingSearch] = useState(false);
   const [hasMore, setHasMore] = useState(false);
@@ -119,6 +112,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
   }, [kind]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadResults(appliedFilters);
   }, [appliedFilters, loadResults]);
 

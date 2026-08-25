@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Clock, DollarSign, Users, Zap, ShieldCheck } from "lucide-react";
 import { MarketplaceBrowser } from "@/components/marketplace/marketplace-browser";
-import { Badge } from "@/components/ui/badge";
 import type { Project } from "@/types";
 import { marketplaceFiltersFromSearchParams } from "@/lib/marketplace-search";
 

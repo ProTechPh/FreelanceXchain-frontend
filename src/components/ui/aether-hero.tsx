@@ -8,12 +8,8 @@ import {
   Sparkle,
   CheckCircle,
   ShieldCheck,
-  Lightning,
   Briefcase,
-  CurrencyDollar,
-  Buildings,
   List,
-  User,
   Gear,
   Question,
   MagnifyingGlass,
@@ -78,17 +74,6 @@ const mockContracts = [
     skills: ["Figma", "Tailwind CSS", "React 19", "UX Tokens"],
     notes: "Milestone 1 submitted for client review. Milestone 2 escrow active.",
   },
-];
-
-const ecosystemLogos = [
-  "Ethereum",
-  "Polygon",
-  "Stripe",
-  "OpenAI",
-  "Didit KYC",
-  "Vercel",
-  "Supabase",
-  "IPFS",
 ];
 
 export default function AetherHero() {

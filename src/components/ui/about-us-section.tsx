@@ -8,12 +8,6 @@ import {
   ShieldCheck,
   Brain,
   Globe,
-  Coins,
-  Scales,
-  ArrowsClockwise,
-  Users,
-  CheckCircle,
-  ArrowRight,
   LockKey,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
@@ -85,7 +79,7 @@ export default function AboutUsSection() {
       {/* Stats Counter Bar */}
       <section className="mx-auto max-w-5xl px-6 lg:px-8 mb-16">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {STATS.map((stat, idx) => (
+          {STATS.map((stat) => (
             <div
               key={stat.label}
               className="p-6 rounded-3xl bg-card border border-border/80 shadow-md shadow-black/5 text-center"

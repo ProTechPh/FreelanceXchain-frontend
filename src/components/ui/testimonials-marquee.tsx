@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
-import { Star, Sparkle, CheckCircle, ShieldCheck } from "@phosphor-icons/react";
+import { Star, Sparkle, CheckCircle } from "@phosphor-icons/react";
 
 const testimonialsRow1 = [
   {

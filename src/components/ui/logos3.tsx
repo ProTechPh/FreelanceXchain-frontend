@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
+import Image from "next/image";
 
 const logos = [
   {
@@ -52,12 +53,13 @@ export function Logos3() {
           className="flex flex-wrap items-center justify-center gap-x-10 gap-y-5"
         >
           {logos.map((logo) => (
-            <img
+            <Image
               key={logo.name}
               src={logo.src}
               alt={logo.name}
+              width={96}
+              height={24}
               className="h-6 w-auto opacity-35 hover:opacity-60 transition-opacity duration-200"
-              loading="lazy"
             />
           ))}
         </motion.div>

@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { Globe, Sparkle } from "@phosphor-icons/react";
+import { Globe } from "@phosphor-icons/react";
 
 interface EcosystemItem {
   name: string;

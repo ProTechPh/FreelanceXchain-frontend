@@ -1,24 +1,10 @@
 "use client"
 
-import { List, MagnifyingGlass, ShieldCheck, Brain, TrendUp, Globe, Lightning, Users } from "@phosphor-icons/react";
+import { List, MagnifyingGlass, TrendUp, Lightning, Users } from "@phosphor-icons/react";
 import * as React from "react";
 
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu";
 import {
   Sheet,
   SheetContent,
@@ -198,16 +184,16 @@ export default function Navbar({
           <CommandEmpty>No results found.</CommandEmpty>
           {globalSearchQuery.trim() && (
             <CommandGroup className="text-muted-foreground" heading="Search marketplace">
-              <CommandItem asChild value={`Search projects ${globalSearchQuery}`}>
-                <Link href={`/projects?keyword=${encodeURIComponent(globalSearchQuery.trim())}`} onClick={() => setOpenSearch(false)}>
-                  <Lightning className="size-4" weight="light" />Search projects for "{globalSearchQuery.trim()}"
-                </Link>
-              </CommandItem>
-              <CommandItem asChild value={`Search freelancers ${globalSearchQuery}`}>
-                <Link href={`/freelancers?keyword=${encodeURIComponent(globalSearchQuery.trim())}`} onClick={() => setOpenSearch(false)}>
-                  <Users className="size-4" weight="light" />Search freelancers for "{globalSearchQuery.trim()}"
-                </Link>
-              </CommandItem>
+               <CommandItem asChild value={`Search projects ${globalSearchQuery}`}>
+                 <Link href={`/projects?keyword=${encodeURIComponent(globalSearchQuery.trim())}`} onClick={() => setOpenSearch(false)}>
+                   <Lightning className="size-4" weight="light" />Search projects for &quot;{globalSearchQuery.trim()}&quot;
+                 </Link>
+               </CommandItem>
+               <CommandItem asChild value={`Search freelancers ${globalSearchQuery}`}>
+                 <Link href={`/freelancers?keyword=${encodeURIComponent(globalSearchQuery.trim())}`} onClick={() => setOpenSearch(false)}>
+                   <Users className="size-4" weight="light" />Search freelancers for &quot;{globalSearchQuery.trim()}&quot;
+                 </Link>
+               </CommandItem>
             </CommandGroup>
           )}
           <CommandGroup className="text-muted-foreground" heading="Pages">
@@ -235,91 +221,3 @@ export default function Navbar({
     </nav>
   );
 }
-
-const renderMenuItem = (item: MenuItem) => {
-  if (item.items) {
-    return (
-      <NavigationMenuItem key={item.title}>
-        <NavigationMenuTrigger className="text-sm text-muted-foreground bg-transparent hover:bg-muted rounded-lg h-9 px-3">
-          {item.title}
-        </NavigationMenuTrigger>
-        <NavigationMenuContent>
-          <div className="w-72 p-2 space-y-0.5">
-            {item.items.map((subItem) => (
-              <NavigationMenuLink
-                key={subItem.title}
-                href={subItem.url}
-                className="flex select-none gap-3 rounded-lg p-3 leading-none no-underline outline-none transition-colors hover:bg-muted hover:text-foreground"
-              >
-                <span className="text-muted-foreground mt-0.5">{subItem.icon}</span>
-                <div>
-                  <div className="text-sm font-semibold text-foreground">{subItem.title}</div>
-                  {subItem.description && (
-                    <p className="text-xs leading-relaxed text-muted-foreground mt-0.5">
-                      {subItem.description}
-                    </p>
-                  )}
-                </div>
-              </NavigationMenuLink>
-            ))}
-          </div>
-        </NavigationMenuContent>
-      </NavigationMenuItem>
-    );
-  }
-
-  return (
-    <NavigationMenuItem key={item.title}>
-      <NavigationMenuLink
-        href={item.url}
-        className="inline-flex h-9 items-center justify-center rounded-lg px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-      >
-        {item.title}
-      </NavigationMenuLink>
-    </NavigationMenuItem>
-  );
-};
-
-const renderMobileMenuItem = (item: MenuItem) => {
-  if (item.items) {
-    return (
-      <AccordionItem key={item.title} value={item.title} className="border-b border-border/40 last:border-b-0">
-        <AccordionTrigger className="py-3 text-sm font-semibold hover:no-underline hover:text-foreground">
-          {item.title}
-        </AccordionTrigger>
-        <AccordionContent className="pb-2">
-          <div className="flex flex-col gap-0.5">
-            {item.items.map((subItem) => (
-              <Link
-                key={subItem.title}
-                className="flex gap-3 rounded-lg p-3 text-sm transition-colors hover:bg-muted"
-                href={subItem.url}
-              >
-                <span className="text-muted-foreground mt-0.5 shrink-0">{subItem.icon}</span>
-                <div>
-                  <div className="font-semibold text-foreground">{subItem.title}</div>
-                  {subItem.description && (
-                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                      {subItem.description}
-                    </p>
-                  )}
-                </div>
-              </Link>
-            ))}
-          </div>
-        </AccordionContent>
-      </AccordionItem>
-    );
-  }
-
-  return (
-    <div key={item.title} className="border-b border-border/40 last:border-b-0">
-      <a
-        href={item.url}
-        className="flex items-center py-3 text-sm font-semibold text-foreground/80 hover:text-foreground transition-colors"
-      >
-        {item.title}
-      </a>
-    </div>
-  );
-};

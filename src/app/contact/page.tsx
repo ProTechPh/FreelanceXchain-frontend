@@ -7,13 +7,10 @@ import Navbar from "@/components/ui/navbar";
 import { FooterSection } from "@/components/ui/footer-section";
 import {
   Sparkle,
-  ChatCircleDots,
   ShieldCheck,
-  EnvelopeSimple,
   Question,
   PaperPlaneTilt,
   CheckCircle,
-  FileText,
   LockKey,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";

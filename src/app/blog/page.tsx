@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 import Navbar from "@/components/ui/navbar";
 import { FooterSection } from "@/components/ui/footer-section";
@@ -12,8 +11,6 @@ import {
   BookOpen,
   Clock,
   CalendarBlank,
-  Tag,
-  ShieldCheck,
   CheckCircle,
   PaperPlaneTilt,
 } from "@phosphor-icons/react";
@@ -245,6 +242,7 @@ export default function BlogPage() {
             >
               {/* Image Banner */}
               <div className="lg:col-span-7 relative h-64 sm:h-80 lg:h-auto overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={featuredPost.image}
                   alt={featuredPost.title}
@@ -282,6 +280,7 @@ export default function BlogPage() {
 
                 <div className="mt-6 pt-6 border-t border-border/60 flex items-center justify-between">
                   <div className="flex items-center gap-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={featuredPost.author.avatar}
                       alt={featuredPost.author.name}
@@ -350,6 +349,7 @@ export default function BlogPage() {
                   <div>
                     {/* Card Thumbnail */}
                     <div className="relative aspect-[16/10] overflow-hidden">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={post.image}
                         alt={post.title}
@@ -388,12 +388,13 @@ export default function BlogPage() {
 
                   {/* Card Footer */}
                   <div className="px-6 pb-6 pt-0 border-t border-border/40 mt-4 flex items-center justify-between">
-                    <div className="flex items-center gap-2.5 pt-3">
-                      <img
-                        src={post.author.avatar}
-                        alt={post.author.name}
-                        className="w-7 h-7 rounded-full object-cover border border-border"
-                      />
+                  <div className="flex items-center gap-2.5 pt-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={post.author.avatar}
+                      alt={post.author.name}
+                      className="w-7 h-7 rounded-full object-cover border border-border"
+                    />
                       <span className="text-xs font-semibold text-foreground">
                         {post.author.name}
                       </span>

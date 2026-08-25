@@ -76,6 +76,7 @@ export function Testimonials() {
               </p>
 
               <div className="flex items-center gap-3 pt-4 border-t border-border">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={t.image}
                   alt={t.name}

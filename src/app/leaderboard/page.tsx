@@ -11,16 +11,9 @@ import { toast } from "sonner";
 import {
   Trophy,
   Star,
-  Award,
-  Globe,
-  CheckCircle,
-  Crown,
-  Medal,
-  Zap,
-  Loader2,
-  Sparkles,
   ShieldCheck,
-  ArrowRight,
+  Crown,
+  Loader2,
 } from "lucide-react";
 
 export default function LeaderboardPage() {

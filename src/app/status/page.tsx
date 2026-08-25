@@ -4,7 +4,6 @@ import React from "react";
 import Navbar from "@/components/ui/navbar";
 import { FooterSection } from "@/components/ui/footer-section";
 import {
-  Sparkle,
   CheckCircle,
   ShieldCheck,
   Pulse,
@@ -12,7 +11,6 @@ import {
   Database,
   CloudCheck,
   LockKey,
-  ArrowsClockwise,
   ArrowSquareOut,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";

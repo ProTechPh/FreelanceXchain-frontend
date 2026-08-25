@@ -12,11 +12,6 @@ import {
   Briefcase,
   ShieldCheck,
   ArrowRight,
-  Lightning,
-  LockKey,
-  Coins,
-  FileText,
-  ChatCircleDots,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 

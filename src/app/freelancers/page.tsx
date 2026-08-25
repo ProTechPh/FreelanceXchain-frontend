@@ -3,9 +3,8 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Clock, MapPin, ShieldCheck, Star } from "lucide-react";
+import { MapPin, ShieldCheck } from "lucide-react";
 import { MarketplaceBrowser } from "@/components/marketplace/marketplace-browser";
-import { Badge } from "@/components/ui/badge";
 import type { FreelancerProfile } from "@/types";
 import { marketplaceFiltersFromSearchParams } from "@/lib/marketplace-search";
 

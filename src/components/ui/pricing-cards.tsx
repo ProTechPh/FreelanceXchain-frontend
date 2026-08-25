@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
-import { Check, Sparkle, Lightning, ShieldCheck } from "@phosphor-icons/react";
+import { Check, Sparkle, Lightning } from "@phosphor-icons/react";
 
 export function PricingCards() {
   const reduce = useReducedMotion();

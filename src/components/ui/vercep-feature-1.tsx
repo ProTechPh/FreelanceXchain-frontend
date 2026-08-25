@@ -8,11 +8,7 @@ import {
   ShieldCheck,
   Sparkle,
   CheckCircle,
-  FileText,
   PaperPlaneTilt,
-  Coins,
-  TrendUp,
-  GlobeHemisphereWest,
 } from "@phosphor-icons/react";
 
 export function WhySection() {
