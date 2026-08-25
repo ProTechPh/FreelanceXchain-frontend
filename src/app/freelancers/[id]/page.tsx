@@ -12,13 +12,7 @@ import { useAuthStore } from '@/stores/authStore';
 import type { FreelancerProfile } from '@/types';
 import { getMarketplaceReturnPath } from '@/lib/marketplace-return';
 import { toast } from 'sonner';
-import {
-  MapPin,
-  Clock,
-  Briefcase,
-  Send,
-  Loader2,
-} from 'lucide-react';
+import { MapPin, Clock, Briefcase, Send, Loader2 } from 'lucide-react';
 
 export default function FreelancerProfilePage() {
   const params = useParams();
@@ -69,13 +63,13 @@ export default function FreelancerProfilePage() {
         <div className="max-w-7xl mx-auto px-6 py-8">
           <Button asChild variant="ghost" className="-ml-3 mb-4"><Link href={marketplaceBackPath}>Back to freelancer search</Link></Button>
           <div className="flex items-start gap-6">
-            <div className="w-20 h-20 rounded-2xl gradient-primary flex items-center justify-center text-white font-bold text-2xl">
+            <div className="w-20 h-20 rounded-2xl gradient-primary flex items-center justify-center text-primary-foreground font-bold text-2xl">
               {initials}
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
                 <h1 className="text-3xl font-bold">{freelancer.name}</h1>
-                <Badge className="bg-green-500/10 text-green-500">
+                <Badge className="bg-success-subtle text-success">
                   <Clock className="w-3 h-3 mr-1" /> {freelancer.availability}
                 </Badge>
               </div>
@@ -90,7 +84,7 @@ export default function FreelancerProfilePage() {
             <div className="flex flex-wrap gap-2">
               <FavoriteButton targetType="freelancer" targetId={freelancer.userId} />
               {user?.role === 'employer' && (
-                <Button asChild className="gradient-primary text-white">
+                <Button asChild className="gradient-primary text-primary-foreground">
                   <Link href={`/dashboard/employer/messages?recipientId=${freelancer.userId}`}><Send className="w-4 h-4 mr-2" />Contact</Link>
                 </Button>
               )}
@@ -187,7 +181,7 @@ export default function FreelancerProfilePage() {
             <Card className="bg-card border-border">
               <CardContent className="p-6 space-y-3">
                 {user?.role === 'employer' ? (
-                  <Button asChild className="w-full gradient-primary text-white">
+                  <Button asChild className="w-full gradient-primary text-primary-foreground">
                     <Link href={`/dashboard/employer/messages?recipientId=${freelancer.userId}`}><Send className="w-4 h-4 mr-2" />Send Message</Link>
                   </Button>
                 ) : (

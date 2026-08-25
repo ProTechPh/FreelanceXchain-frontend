@@ -6,9 +6,8 @@ import { CircleDollarSign, FileCheck2, FolderOpen, LoaderCircle } from 'lucide-r
 import { toast } from 'sonner';
 import { contractsApi } from '@/lib/api';
 import { getContractDetailRoute } from '@/lib/contract-route';
-import { getStatusColor } from '@/lib/status-styles';
+import { StatusBadge } from '@/components/ui/status-badge';
 import type { Contract, UserRole } from '@/types';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -79,7 +78,7 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
                       <CardTitle className="text-lg">{contract.project?.title || contract.title || 'Contract'}</CardTitle>
                       <p className="mt-1 text-sm text-muted-foreground">Working with {counterparty}</p>
                     </div>
-                    <Badge className={getStatusColor(contract.status)}>{contract.status.replace('_', ' ')}</Badge>
+                    <StatusBadge status={contract.status} domain="contract" />
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">

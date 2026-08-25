@@ -6,8 +6,10 @@ interface LogoIconProps extends React.SVGProps<SVGSVGElement> {
 }
 
 /**
- * Official FreelanceXchain Crystalline Sparkle 'X' Icon
- * 100% Transparent background - perfectly adaptive to Light and Dark modes.
+ * FreelanceXchain sparkle 'X' mark.
+ *
+ * Gradient stops read from the --brand-* ramp rather than fixed emerald, so the
+ * mark tracks --primary and re-lights itself for the dark surface.
  */
 export function FreelanceXchainIcon({ size = 32, className = '', ...props }: LogoIconProps) {
   return (
@@ -23,30 +25,30 @@ export function FreelanceXchainIcon({ size = 32, className = '', ...props }: Log
       <defs>
         {/* Glowing radial core */}
         <radialGradient id="fxcCoreGlow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#A7F3D0" stopOpacity="1" />
-          <stop offset="35%" stopColor="#34D399" stopOpacity="0.85" />
-          <stop offset="70%" stopColor="#10B981" stopOpacity="0.4" />
-          <stop offset="100%" stopColor="#059669" stopOpacity="0" />
+          <stop offset="0%" stopColor="var(--brand-1)" stopOpacity="1" />
+          <stop offset="35%" stopColor="var(--brand-2)" stopOpacity="0.85" />
+          <stop offset="70%" stopColor="var(--brand-3)" stopOpacity="0.4" />
+          <stop offset="100%" stopColor="var(--brand-3)" stopOpacity="0" />
         </radialGradient>
 
         {/* Primary Emerald Gradient */}
         <linearGradient id="fxcEmeraldGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#6EE7B7" />
-          <stop offset="45%" stopColor="#10B981" />
-          <stop offset="100%" stopColor="#047857" />
+          <stop offset="0%" stopColor="var(--brand-1)" />
+          <stop offset="45%" stopColor="var(--brand-2)" />
+          <stop offset="100%" stopColor="var(--brand-3)" />
         </linearGradient>
 
         <linearGradient id="fxcEmeraldGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" stopColor="#34D399" />
-          <stop offset="50%" stopColor="#059669" />
-          <stop offset="100%" stopColor="#064E3B" />
+          <stop offset="0%" stopColor="var(--brand-1)" />
+          <stop offset="50%" stopColor="var(--brand-2)" />
+          <stop offset="100%" stopColor="var(--brand-3)" />
         </linearGradient>
 
         {/* Crystalline Facet Highlight */}
         <linearGradient id="fxcFacetLight" x1="50%" y1="0%" x2="50%" y2="100%">
           <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.95" />
-          <stop offset="60%" stopColor="#A7F3D0" stopOpacity="0.6" />
-          <stop offset="100%" stopColor="#10B981" stopOpacity="0.1" />
+          <stop offset="60%" stopColor="var(--brand-1)" stopOpacity="0.6" />
+          <stop offset="100%" stopColor="var(--brand-2)" stopOpacity="0.1" />
         </linearGradient>
 
         {/* Filter Glow */}
@@ -90,10 +92,10 @@ export function FreelanceXchainIcon({ size = 32, className = '', ...props }: Log
         <polygon points="50,30 50,70 30,50" fill="url(#fxcFacetLight)" />
 
         {/* Top/Bottom Diamond Satellite Accent Nodes */}
-        <polygon points="50,16 55,23 50,30 45,23" fill="#A7F3D0" />
-        <polygon points="50,70 55,77 50,84 45,77" fill="#A7F3D0" />
-        <polygon points="16,50 23,45 30,50 23,55" fill="#A7F3D0" />
-        <polygon points="70,50 77,45 84,50 77,55" fill="#A7F3D0" />
+        <polygon points="50,16 55,23 50,30 45,23" fill="var(--brand-1)" />
+        <polygon points="50,70 55,77 50,84 45,77" fill="var(--brand-1)" />
+        <polygon points="16,50 23,45 30,50 23,55" fill="var(--brand-1)" />
+        <polygon points="70,50 77,45 84,50 77,55" fill="var(--brand-1)" />
 
         {/* Ultra-Bright Center Core Star Sparkle */}
         <circle cx="50" cy="50" r="4.5" fill="#FFFFFF" />
@@ -128,7 +130,7 @@ export function FreelanceXchainLogo({
       )}
       <span className="font-extrabold text-lg text-foreground tracking-tight flex items-center">
         Freelance
-        <span className="text-[#10B981] font-black px-0.5 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]">
+        <span className="text-primary font-black px-0.5">
           X
         </span>
         chain

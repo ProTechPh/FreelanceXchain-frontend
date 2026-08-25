@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { getStatusColor } from '@/lib/status-styles';
+import { StatusBadge } from '@/components/ui/status-badge';
 import Link from 'next/link';
 import { projectsApi } from '@/lib/api';
 import type { Project, ProjectStatus } from '@/types';
@@ -66,13 +66,13 @@ export default function EmployerProjectsPage() {
         </Card>
         <Card className="bg-card border-border">
           <CardContent className="p-4">
-            <p className="text-2xl font-bold text-green-500">{countByStatus('open')}</p>
+            <p className="text-2xl font-bold text-success">{countByStatus('open')}</p>
             <p className="text-xs text-muted-foreground">Open</p>
           </CardContent>
         </Card>
         <Card className="bg-card border-border">
           <CardContent className="p-4">
-            <p className="text-2xl font-bold text-blue-500">{countByStatus('in_progress')}</p>
+            <p className="text-2xl font-bold text-info">{countByStatus('in_progress')}</p>
             <p className="text-xs text-muted-foreground">In Progress</p>
           </CardContent>
         </Card>
@@ -107,9 +107,7 @@ export default function EmployerProjectsPage() {
                     <h3 className="text-lg font-semibold">{project.title}</h3>
                     <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{project.description}</p>
                   </div>
-                  <Badge className={getStatusColor(project.status)}>
-                    {project.status.replace('_', ' ')}
-                  </Badge>
+                  <StatusBadge status={project.status} domain="project" />
                 </div>
 
                 <div className="flex flex-wrap gap-1.5 mb-4">

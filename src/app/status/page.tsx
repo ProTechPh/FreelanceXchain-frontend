@@ -1,18 +1,9 @@
 "use client";
 
 import React from "react";
-import Navbar from "@/components/ui/navbar";
-import { FooterSection } from "@/components/ui/footer-section";
-import {
-  CheckCircle,
-  ShieldCheck,
-  Pulse,
-  Cpu,
-  Database,
-  CloudCheck,
-  LockKey,
-  ArrowSquareOut,
-} from "@phosphor-icons/react";
+import Navbar from "@/components/layout/navbar";
+import { FooterSection } from "@/components/layout/footer-section";
+import { CircleCheck as CheckCircle, ShieldCheck, Activity as Pulse, Cpu, Database, CloudCheck, Lock as LockKey, ExternalLink as ArrowSquareOut } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 
 const STATUS_URL = "https://stats.uptimerobot.com/6VI6R2PTC5";
@@ -23,42 +14,42 @@ const SERVICES = [
     description: "Mainnet escrow contracts, milestone locks & automated fund releases",
     status: "Operational",
     uptime: "100%",
-    icon: <LockKey className="size-5 text-emerald-500" weight="bold" />,
+    icon: <LockKey className="size-5 text-success" strokeWidth={2.5} />,
   },
   {
     name: "Polygon & L2 Settlement Relayers",
     description: "Low-cost Layer 2 gasless transactions and instant bridging",
     status: "Operational",
     uptime: "99.99%",
-    icon: <Cpu className="size-5 text-emerald-500" weight="bold" />,
+    icon: <Cpu className="size-5 text-success" strokeWidth={2.5} />,
   },
   {
     name: "Didit Identity & Biometric KYC",
     description: "Global identity verification across 220+ countries and fraud prevention",
     status: "Operational",
     uptime: "99.98%",
-    icon: <ShieldCheck className="size-5 text-emerald-500" weight="bold" />,
+    icon: <ShieldCheck className="size-5 text-success" strokeWidth={2.5} />,
   },
   {
     name: "FreelanceXchain Core API & Database",
     description: "User authentication, profile management, proposals, and contracts API",
     status: "Operational",
     uptime: "99.95%",
-    icon: <Database className="size-5 text-emerald-500" weight="bold" />,
+    icon: <Database className="size-5 text-success" strokeWidth={2.5} />,
   },
   {
     name: "AI Proposal & Skill Matching Engine",
     description: "Automated candidate matching, skill gap analysis, and proposal generator",
     status: "Operational",
     uptime: "99.90%",
-    icon: <Pulse className="size-5 text-emerald-500" weight="bold" />,
+    icon: <Pulse className="size-5 text-success" strokeWidth={2.5} />,
   },
   {
     name: "IPFS & Decentralized Deliverable Storage",
     description: "Encrypted milestone files, evidence attachments, and portfolio storage",
     status: "Operational",
     uptime: "99.99%",
-    icon: <CloudCheck className="size-5 text-emerald-500" weight="bold" />,
+    icon: <CloudCheck className="size-5 text-success" strokeWidth={2.5} />,
   },
 ];
 
@@ -70,14 +61,14 @@ export default function StatusPage() {
       <main className="grow pt-28 sm:pt-36 pb-20">
         {/* Header Hero */}
         <section className="mx-auto max-w-5xl px-6 lg:px-8 mb-12 text-center">
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold mb-4 border border-emerald-500/20 shadow-xs">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-success-subtle text-success dark:text-success text-xs font-bold mb-4 border border-success-border shadow-xs">
+            <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
             <span>All Systems Operational</span>
           </div>
 
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-foreground">
             System Status & <br />
-            <span className="text-[#717680] dark:text-muted-foreground font-semibold">
+            <span className="text-muted-foreground dark:text-muted-foreground font-semibold">
               infrastructure health.
             </span>
           </h1>
@@ -91,8 +82,8 @@ export default function StatusPage() {
         <section className="mx-auto max-w-5xl px-6 lg:px-8 mb-10">
           <div className="rounded-3xl bg-card border border-border/80 p-6 sm:p-8 shadow-md shadow-black/5 flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-4 text-center sm:text-left">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center shrink-0">
-                <CheckCircle className="size-6 text-emerald-500" weight="fill" />
+              <div className="w-12 h-12 rounded-2xl bg-success-subtle flex items-center justify-center shrink-0">
+                <CheckCircle className="size-6 text-success" fill="currentColor" />
               </div>
               <div>
                 <h2 className="text-lg font-bold text-foreground">99.98% Average Platform Uptime</h2>
@@ -136,11 +127,11 @@ export default function StatusPage() {
                 </div>
 
                 <div className="text-right shrink-0">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-success-subtle text-success dark:text-success text-2xs font-bold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-success" />
                     {service.status}
                   </span>
-                  <p className="text-[10px] text-muted-foreground mt-1 font-semibold">
+                  <p className="text-2xs text-muted-foreground mt-1 font-semibold">
                     {service.uptime}
                   </p>
                 </div>

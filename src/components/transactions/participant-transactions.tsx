@@ -109,7 +109,7 @@ export function ParticipantTransactions({ role }: { role: ParticipantRole }) {
                   <li key={transaction.id}>
                     <Link href={getTransactionDetailRoute(role, transaction.id)} className="flex flex-col gap-3 rounded-lg px-2 py-4 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-3"><div className="flex size-10 items-center justify-center rounded-lg bg-muted"><ReceiptText className="size-5 text-primary" /></div><div><p className="font-medium">{typeLabels[transaction.type] || transaction.type.replaceAll('_', ' ')}</p><p className="text-sm text-muted-foreground">{new Date(transaction.created_at).toLocaleString()}</p></div></div>
-                      <div className="text-left sm:text-right"><p className={signedAmount > 0 ? 'font-semibold text-green-500' : 'font-semibold'}>{signedAmount > 0 ? '+' : signedAmount < 0 ? '−' : ''}${Math.abs(transaction.amount).toLocaleString()}</p><Badge variant="secondary">{transaction.status}</Badge></div>
+                      <div className="text-left sm:text-right"><p className={signedAmount > 0 ? 'font-semibold text-success' : 'font-semibold'}>{signedAmount > 0 ? '+' : signedAmount < 0 ? '−' : ''}${Math.abs(transaction.amount).toLocaleString()}</p><Badge variant="secondary">{transaction.status}</Badge></div>
                     </Link>
                   </li>
                 );

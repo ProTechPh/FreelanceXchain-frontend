@@ -4,81 +4,245 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ==========================================================================
+   FreelanceXchain design tokens
+   Rules from SKILL.md (design-system-sprout):
+     - Components consume semantic tokens only. No raw hex, no palette classes.
+     - Every text/background pair below is verified >= 4.5:1 (WCAG 2.2 AA).
+     - UI component boundaries (--input, --ring) are verified >= 3:1 (1.4.11).
+   Token order: typography -> weight -> spacing -> radius -> elevation ->
+                motion -> color aliases.
+   ========================================================================== */
+
 @theme inline {
+  /* ---- Typography scale -------------------------------------------------
+     SKILL.md's literal sizes (base 12px, xs 6px) were captured at the wrong
+     scale and are unreadable. The ratio structure is preserved; the scale is
+     re-anchored at base = 16px. `sm` stays the dense-UI default.
+     `2xs` is the sanctioned home for what used to be text-[11px]/[10px]. */
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1rem;
+  --text-2xs--letter-spacing: 0.01em;
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1.125rem;
+  --text-xs--letter-spacing: 0.005em;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.375rem;
+  --text-sm--letter-spacing: 0em;
+  --text-base: 1rem;
+  --text-base--line-height: 1.5rem;
+  --text-base--letter-spacing: 0em;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.75rem;
+  --text-lg--letter-spacing: -0.005em;
+  --text-xl: 1.25rem;
+  --text-xl--line-height: 1.875rem;
+  --text-xl--letter-spacing: -0.01em;
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 2rem;
+  --text-2xl--letter-spacing: -0.015em;
+  --text-3xl: 1.875rem;
+  --text-3xl--line-height: 2.25rem;
+  --text-3xl--letter-spacing: -0.02em;
+  --text-4xl: 2.25rem;
+  --text-4xl--line-height: 2.5rem;
+  --text-4xl--letter-spacing: -0.022em;
+  --text-5xl: 3rem;
+  --text-5xl--line-height: 3.25rem;
+  --text-5xl--letter-spacing: -0.025em;
+  --text-6xl: 3.75rem;
+  --text-6xl--line-height: 3.9rem;
+  --text-6xl--letter-spacing: -0.028em;
+  --text-7xl: 4.5rem;
+  --text-7xl--line-height: 4.6rem;
+  --text-7xl--letter-spacing: -0.03em;
+
+  /* ---- Font families ----------------------------------------------------
+     SKILL.md names a single family. Heading/body contrast comes from weight,
+     tracking and line-height (see @layer base), not a second typeface. */
+  --font-sans: var(--font-nunito);
+  --font-heading: var(--font-nunito);
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  /* ---- Weight scale ----------------------------------------------------- */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+
+  /* ---- Spacing ----------------------------------------------------------
+     Base step drives the padding, margin and gap utilities. The named tokens
+     below carry layout rhythm: shells and pages consume these, not ad-hoc pads. */
+  --spacing: 0.25rem;
+  --space-page-x: 1.5rem;
+  --space-section-y: 4rem;
+  --space-card: 1.25rem;
+  --space-stack: 1rem;
+  --space-field: 0.5rem;
+
+  /* ---- Radius -----------------------------------------------------------
+     Four-step vocabulary: sm = chips/small inputs, md = buttons/inputs,
+     lg = cards, full = pills/avatars. The xl+ steps exist so large surfaces
+     stay on-system rather than drifting into arbitrary values. */
+  --radius: 0.625rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+  --radius-3xl: 1.5rem;
+  --radius-4xl: 2rem;
+
+  /* ---- Elevation --------------------------------------------------------
+     Values resolve per theme (see :root / .dark). Drop shadows read as noise
+     on near-black, so dark mode trades them for border contrast + ambient. */
+  --shadow-xs: var(--elevation-xs);
+  --shadow-sm: var(--elevation-sm);
+  --shadow-md: var(--elevation-md);
+  --shadow-lg: var(--elevation-lg);
+  --shadow-xl: var(--elevation-xl);
+  --shadow-2xl: var(--elevation-2xl);
+
+  /* ---- Motion -----------------------------------------------------------
+     Neutralized wholesale under prefers-reduced-motion (see end of file). */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+
+  /* ---- Color aliases ---------------------------------------------------- */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-nunito);
-  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-  --font-heading: var(--font-nunito);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
+  --color-foreground-subtle: var(--foreground-subtle);
   --color-card: var(--card);
-  --color-cyan: var(--cyan);
-  --color-cyan-foreground: var(--cyan-foreground);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
+  --color-primary-subtle: var(--primary-subtle);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Semantic status — the trust signal for contracts, milestones, escrow,
+     proposals, disputes and KYC. Both roles must read state identically. */
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-subtle: var(--success-subtle);
+  --color-success-border: var(--success-border);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-warning-border: var(--warning-border);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-info-subtle: var(--info-subtle);
+  --color-info-border: var(--info-border);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-subtle: var(--destructive-subtle);
+  --color-destructive-border: var(--destructive-border);
+  --color-neutral: var(--neutral);
+  --color-neutral-foreground: var(--neutral-foreground);
+  --color-neutral-subtle: var(--neutral-subtle);
+  --color-neutral-border: var(--neutral-border);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Deprecated: --cyan predates the palette and now duplicates --primary.
+     Kept as an alias so existing call sites keep compiling; remove once the
+     route pass has migrated them to primary. */
+  --color-cyan: var(--primary);
+  --color-cyan-foreground: var(--primary-foreground);
 }
 
-/* Sprout Light Mode — Sprout exact palette: primary=#0f4c3d, text.primary=#181d27, text.muted=#717680, border=#e9eaeb, bg=#fdfdfd */
+/* --------------------------------------------------------------------------
+   LIGHT — canonical surface. Primary #0f4c3d.
+   -------------------------------------------------------------------------- */
 :root {
   --background: #fdfdfd;
   --foreground: #181d27;
+  --foreground-subtle: #535862;
   --card: #ffffff;
   --card-foreground: #181d27;
   --popover: #ffffff;
   --popover-foreground: #181d27;
+
   --primary: #0f4c3d;
   --primary-foreground: #ffffff;
+  --primary-hover: #0c3d31;
+  --primary-active: #0a3329;
+  --primary-subtle: #eaf5f2;
+
   --secondary: #f4f5f6;
   --secondary-foreground: #181d27;
   --muted: #f4f5f6;
-  --muted-foreground: #717680;
+  /* was #717680 — measured 4.48:1, below AA. Darkened to clear it. */
+  --muted-foreground: #61646e;
   --accent: #eaf5f2;
   --accent-foreground: #0f4c3d;
-  --destructive: #d92d20;
+
+  /* --border is decorative (card edges, dividers). --input is a UI component
+     boundary and must hold 3:1 on its own. They are deliberately different. */
   --border: #e9eaeb;
-  --input: #e9eaeb;
+  --border-strong: #d5d7da;
+  --input: #8a8e96;
   --ring: #0f4c3d;
-  --cyan: #0f4c3d;
-  --cyan-foreground: #ffffff;
+
+  --success: #0a6e46;
+  --success-foreground: #ffffff;
+  --success-subtle: #e6f6ee;
+  --success-border: #b7e3cd;
+  --warning: #8f5700;
+  --warning-foreground: #ffffff;
+  --warning-subtle: #fdf3e2;
+  --warning-border: #f0d9a8;
+  --info: #0b4fb8;
+  --info-foreground: #ffffff;
+  --info-subtle: #e8f0fd;
+  --info-border: #b8d1f7;
+  --destructive: #c4271b;
+  --destructive-foreground: #ffffff;
+  --destructive-subtle: #fdeceb;
+  --destructive-border: #f5c2be;
+  --neutral: #535862;
+  --neutral-foreground: #ffffff;
+  --neutral-subtle: #f1f2f4;
+  --neutral-border: #d5d7da;
+
   --chart-1: #0f4c3d;
   --chart-2: #166e58;
-  --chart-3: #717680;
-  --chart-4: #a4a7ae;
-  --chart-5: #e9eaeb;
-  --radius: 0.75rem;
-  --sidebar: #fdfdfd;
+  --chart-3: #2f9c7c;
+  --chart-4: #8a8e96;
+  --chart-5: #d5d7da;
+
+  --sidebar: #ffffff;
   --sidebar-foreground: #181d27;
   --sidebar-primary: #0f4c3d;
   --sidebar-primary-foreground: #ffffff;
@@ -86,43 +250,217 @@
   --sidebar-accent-foreground: #181d27;
   --sidebar-border: #e9eaeb;
   --sidebar-ring: #0f4c3d;
+
+  /* Brand ramp — consumed by the logo SVG gradients so the mark tracks the
+     palette instead of hardcoding its own emerald. */
+  --brand-1: #2f9c7c;
+  --brand-2: #166e58;
+  --brand-3: #0f4c3d;
+
+  --elevation-xs: 0 1px 2px 0 rgb(16 24 40 / 0.04);
+  --elevation-sm: 0 1px 3px 0 rgb(16 24 40 / 0.06), 0 1px 2px -1px rgb(16 24 40 / 0.04);
+  --elevation-md: 0 4px 8px -2px rgb(16 24 40 / 0.07), 0 2px 4px -2px rgb(16 24 40 / 0.04);
+  --elevation-lg: 0 12px 16px -4px rgb(16 24 40 / 0.08), 0 4px 6px -2px rgb(16 24 40 / 0.03);
+  --elevation-xl: 0 20px 24px -4px rgb(16 24 40 / 0.10), 0 8px 8px -4px rgb(16 24 40 / 0.03);
+  --elevation-2xl: 0 24px 48px -12px rgb(16 24 40 / 0.18);
 }
 
-/* Sprout Dark Mode — surface.base=#000000 */
+/* --------------------------------------------------------------------------
+   DARK — parity surface. Primary lifts to #3ec9a7 for contrast on near-black.
+   -------------------------------------------------------------------------- */
 .dark {
   --background: #0a0a0a;
   --foreground: #fafafa;
+  --foreground-subtle: #a4a7ae;
   --card: #111113;
   --card-foreground: #fafafa;
   --popover: #111113;
   --popover-foreground: #fafafa;
+
   --primary: #3ec9a7;
-  --primary-foreground: #000000;
+  --primary-foreground: #05201a;
+  --primary-hover: #59d6b8;
+  --primary-active: #6fdec4;
+  --primary-subtle: #12241e;
+
   --secondary: #1c1c1f;
   --secondary-foreground: #fafafa;
   --muted: #1c1c1f;
   --muted-foreground: #a4a7ae;
   --accent: #1c2e28;
   --accent-foreground: #3ec9a7;
-  --destructive: #ef5350;
+
   --border: #27272a;
-  --input: #27272a;
+  --border-strong: #3f3f46;
+  --input: #6b6b75;
   --ring: #3ec9a7;
-  --cyan: #3ec9a7;
-  --cyan-foreground: #000000;
+
+  --success: #5bd48f;
+  --success-foreground: #062015;
+  --success-subtle: #0f2a1e;
+  --success-border: #1e5238;
+  --warning: #f5b23e;
+  --warning-foreground: #231703;
+  --warning-subtle: #2b2113;
+  --warning-border: #5c4415;
+  --info: #7cb4fb;
+  --info-foreground: #04182e;
+  --info-subtle: #101f33;
+  --info-border: #1e4373;
+  --destructive: #fb8a86;
+  --destructive-foreground: #2a0806;
+  --destructive-subtle: #2c1414;
+  --destructive-border: #6b2723;
+  --neutral: #b3b6bd;
+  --neutral-foreground: #131316;
+  --neutral-subtle: #1c1c1f;
+  --neutral-border: #3f3f46;
+
   --chart-1: #3ec9a7;
   --chart-2: #2d7a5f;
-  --chart-3: #a4a7ae;
-  --chart-4: #535862;
-  --chart-5: #27272a;
+  --chart-3: #7cb4fb;
+  --chart-4: #a4a7ae;
+  --chart-5: #3f3f46;
+
   --sidebar: #111113;
   --sidebar-foreground: #fafafa;
   --sidebar-primary: #3ec9a7;
-  --sidebar-primary-foreground: #000000;
+  --sidebar-primary-foreground: #05201a;
   --sidebar-accent: #1c1c1f;
   --sidebar-accent-foreground: #fafafa;
   --sidebar-border: #27272a;
   --sidebar-ring: #3ec9a7;
+
+  /* Shadows are near-invisible on #0a0a0a; elevation reads through a hairline
+     highlight plus a deeper ambient cast. */
+  /* Lifted so the mark stays legible on near-black. */
+  --brand-1: #8fe7cd;
+  --brand-2: #3ec9a7;
+  --brand-3: #2d7a5f;
+
+  --elevation-xs: 0 1px 2px 0 rgb(0 0 0 / 0.5);
+  --elevation-sm: 0 1px 3px 0 rgb(0 0 0 / 0.6), inset 0 1px 0 0 rgb(255 255 255 / 0.03);
+  --elevation-md: 0 4px 10px -2px rgb(0 0 0 / 0.65), inset 0 1px 0 0 rgb(255 255 255 / 0.04);
+  --elevation-lg: 0 14px 24px -6px rgb(0 0 0 / 0.7), inset 0 1px 0 0 rgb(255 255 255 / 0.05);
+  --elevation-xl: 0 24px 40px -8px rgb(0 0 0 / 0.75), inset 0 1px 0 0 rgb(255 255 255 / 0.06);
+  --elevation-2xl: 0 32px 64px -12px rgb(0 0 0 / 0.85);
+}
+
+/* ==========================================================================
+   Base layer
+   ========================================================================== */
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply font-sans;
+    scroll-behavior: smooth;
+    scroll-padding-top: 5.5rem;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground text-base;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Heading contrast without a second typeface: heavier weight, tighter
+     tracking, balanced wrapping. */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading text-foreground;
+    font-weight: var(--font-weight-extrabold);
+    text-wrap: balance;
+  }
+  h5, h6 {
+    font-weight: var(--font-weight-bold);
+  }
+
+  p, li {
+    text-wrap: pretty;
+  }
+
+  /* Universal focus fallback. SKILL.md makes a visible focus indicator
+     non-negotiable; this guarantees no element can be focus-invisible even if
+     a component forgets its own treatment. Components may override, never
+     remove. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  /* Never allow a bare outline removal to leave nothing behind. */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  ::selection {
+    background: var(--primary);
+    color: var(--primary-foreground);
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+}
+
+/* ==========================================================================
+   Utilities
+   ========================================================================== */
+
+@layer utilities {
+  /* These three were referenced across the app but never defined, so every
+     call site rendered unstyled — including the Button `gradient` variant,
+     which was white text on no background. Defined here from tokens. */
+  .gradient-primary {
+    background-image: linear-gradient(135deg, var(--primary) 0%, var(--chart-2) 55%, var(--chart-3) 100%);
+  }
+
+  .gradient-text {
+    background-image: linear-gradient(135deg, var(--primary) 0%, var(--chart-3) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .glow-sm-primary {
+    box-shadow: 0 0 0 1px color-mix(in oklab, var(--primary) 22%, transparent),
+                0 2px 12px -2px color-mix(in oklab, var(--primary) 28%, transparent);
+  }
+
+  .glow-primary {
+    box-shadow: 0 0 0 1px color-mix(in oklab, var(--primary) 30%, transparent),
+                0 8px 28px -4px color-mix(in oklab, var(--primary) 38%, transparent);
+  }
+
+  .animate-element {
+    opacity: 0;
+    transform: translateY(8px);
+    animation: fadeSlideIn var(--duration-slow) var(--ease-out) forwards;
+  }
+
+  /* Page and section rhythm, so shells stop hand-rolling padding. */
+  .page-x {
+    padding-inline: var(--space-page-x);
+  }
+  .section-y {
+    padding-block: var(--space-section-y);
+  }
+}
+
+/* ==========================================================================
+   Keyframes
+   ========================================================================== */
+
+@theme inline {
+  --animate-marquee: marquee var(--duration, 30s) infinite linear;
+  --animate-marquee-reverse: marquee-reverse var(--duration, 30s) infinite linear;
+  --animate-accordion-down: accordion-down var(--duration-base) var(--ease-out);
+  --animate-accordion-up: accordion-up var(--duration-base) var(--ease-out);
+  --animate-shimmer: shimmer 1.6s ease-in-out infinite;
 }
 
 @keyframes fadeSlideIn {
@@ -132,73 +470,56 @@
   }
 }
 
-@theme inline {
-  --animate-marquee: marquee var(--duration, 30s) infinite linear;
-  --animate-marquee-reverse: marquee-reverse var(--duration, 30s) infinite linear;
-}
-
 @keyframes marquee {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(calc(-100% - var(--gap, 0.75rem)));
-  }
+  from { transform: translateX(0); }
+  to { transform: translateX(calc(-100% - var(--gap, 0.75rem))); }
 }
 
 @keyframes marquee-reverse {
-  from {
-    transform: translateX(calc(-100% - var(--gap, 0.75rem)));
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-
-@theme inline {
-  --animate-accordion-down: accordion-down 0.2s ease-out;
-  --animate-accordion-up: accordion-up 0.2s ease-out;
+  from { transform: translateX(calc(-100% - var(--gap, 0.75rem))); }
+  to { transform: translateX(0); }
 }
 
 @keyframes accordion-down {
-  from {
-    height: 0;
-  }
-  to {
-    height: var(--radix-accordion-content-height);
-  }
+  from { height: 0; }
+  to { height: var(--radix-accordion-content-height); }
 }
 
 @keyframes accordion-up {
-  from {
-    height: var(--radix-accordion-content-height);
-  }
-  to {
-    height: 0;
-  }
+  from { height: var(--radix-accordion-content-height); }
+  to { height: 0; }
 }
 
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
+@keyframes shimmer {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+/* ==========================================================================
+   Reduced motion — WCAG 2.2. Neutralizes the marquees, entrance animations
+   and hover-scale transforms rather than merely shortening them.
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
   html {
-    @apply font-sans;
-    scroll-behavior: smooth;
-    scroll-padding-top: 5.5rem;
+    scroll-behavior: auto;
   }
-  h1, h2, h3, h4 {
-    @apply font-heading;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
-}
-
-@layer utilities {
   .animate-element {
-    opacity: 0;
-    transform: translateY(8px);
-    animation: fadeSlideIn 0.5s ease forwards;
+    opacity: 1;
+    transform: none;
+  }
+  /* Scale-on-hover reads as motion sickness for some users; flatten it. */
+  .hover\:scale-\[1\.02\]:hover,
+  .hover\:scale-105:hover,
+  .group-hover\:scale-105 {
+    transform: none !important;
   }
 }

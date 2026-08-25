@@ -8,19 +8,7 @@ import Link from 'next/link';
 import { adminApi, auditLogsApi, kycApi } from '@/lib/api';
 import type { AuditLogEntry, Dispute, SystemHealth } from '@/types';
 import { toast } from 'sonner';
-import {
-  Users,
-  FolderOpen,
-  DollarSign,
-  AlertTriangle,
-  Activity,
-  ArrowUpRight,
-  Shield,
-  BarChart3,
-  CheckCircle,
-  Clock,
-  Loader2,
-} from 'lucide-react';
+import { Users, FolderOpen, DollarSign, AlertTriangle, Activity, ArrowUpRight, Shield, BarChart3, CheckCircle, Clock, Loader2 } from 'lucide-react';
 
 function relativeTime(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -124,15 +112,15 @@ export default function AdminDashboard() {
       title: 'Total Transaction Volume',
       value: stats ? `$${stats.totalTransactionVolume.toLocaleString()}` : '—',
       icon: DollarSign,
-      color: 'text-green-500',
-      bg: 'bg-green-500/10',
+      color: 'text-success',
+      bg: 'bg-success-subtle',
     },
     {
       title: 'Open Disputes',
       value: String(openDisputes.length),
       icon: AlertTriangle,
-      color: 'text-yellow-500',
-      bg: 'bg-yellow-500/10',
+      color: 'text-warning',
+      bg: 'bg-warning-subtle',
     },
   ];
 
@@ -209,7 +197,7 @@ export default function AdminDashboard() {
                 <div className="p-4 rounded-xl bg-secondary/50 border border-border hover:border-primary/20 transition-all cursor-pointer">
                   <div className="flex items-center justify-between mb-2">
                     <p className="font-medium">{action.title}</p>
-                    <Badge className="bg-yellow-500/10 text-yellow-500">{action.count}</Badge>
+                    <Badge className="bg-warning-subtle text-warning">{action.count}</Badge>
                   </div>
                   <p className="text-sm text-muted-foreground">{action.description}</p>
                 </div>
@@ -234,7 +222,7 @@ export default function AdminDashboard() {
             )}
             {recentActivity.map((log) => {
               const Icon = log.status === 'failure' ? AlertTriangle : log.status === 'pending' ? Clock : CheckCircle;
-              const color = log.status === 'failure' ? 'text-red-500' : log.status === 'pending' ? 'text-yellow-500' : 'text-green-500';
+              const color = log.status === 'failure' ? 'text-destructive' : log.status === 'pending' ? 'text-warning' : 'text-success';
               return (
                 <div key={log.id} className="flex items-center gap-3 p-3 rounded-xl bg-secondary/50 border border-border">
                   <div className={`w-8 h-8 rounded-lg bg-background flex items-center justify-center ${color}`}>
@@ -273,7 +261,7 @@ export default function AdminDashboard() {
               <div key={item.name} className="p-4 rounded-xl bg-secondary/50 border border-border">
                 <div className="flex items-center gap-2 mb-2">
                   {item.status && (
-                    <div className={`w-2 h-2 rounded-full ${item.status === 'healthy' ? 'bg-green-500' : 'bg-red-500'}`} />
+                    <div className={`w-2 h-2 rounded-full ${item.status === 'healthy' ? 'bg-success' : 'bg-destructive'}`} />
                   )}
                   <p className="text-sm text-muted-foreground">{item.name}</p>
                 </div>
@@ -302,8 +290,8 @@ export default function AdminDashboard() {
         <Link href="/dashboard/admin/disputes">
           <Card className="bg-card border-border hover:border-primary/20 transition-all cursor-pointer">
             <CardContent className="p-4 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-lg bg-yellow-500/10 flex items-center justify-center">
-                <AlertTriangle className="w-5 h-5 text-yellow-500" />
+              <div className="w-10 h-10 rounded-lg bg-warning-subtle flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-warning" />
               </div>
               <div>
                 <p className="font-medium">Disputes</p>
@@ -328,8 +316,8 @@ export default function AdminDashboard() {
         <Link href="/dashboard/admin/kyc">
           <Card className="bg-card border-border hover:border-primary/20 transition-all cursor-pointer">
             <CardContent className="p-4 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                <Shield className="w-5 h-5 text-green-500" />
+              <div className="w-10 h-10 rounded-lg bg-success-subtle flex items-center justify-center">
+                <Shield className="w-5 h-5 text-success" />
               </div>
               <div>
                 <p className="font-medium">KYC Review</p>

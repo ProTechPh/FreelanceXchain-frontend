@@ -10,28 +10,15 @@ import { getKycRetryAvailability } from '@/lib/kyc-retry';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { safeAttachmentUrl } from '@/lib/attachment-presentation';
 import type { KycVerification, UserRole } from '@/types';
-import {
-  Shield,
-  CheckCircle,
-  XCircle,
-  Clock,
-  AlertTriangle,
-  ExternalLink,
-  RefreshCw,
-  Loader2,
-  Globe,
-  FileText,
-  User,
-  Calendar,
-} from 'lucide-react';
+import { Shield, CheckCircle, XCircle, Clock, AlertTriangle, ExternalLink, RefreshCw, Loader2, Globe, FileText, User, Calendar } from 'lucide-react';
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
-  approved: { label: 'Approved', color: 'bg-green-500/10 text-green-500', icon: CheckCircle },
-  rejected: { label: 'Rejected', color: 'bg-red-500/10 text-red-500', icon: XCircle },
-  completed: { label: 'Under Review', color: 'bg-blue-500/10 text-blue-500', icon: Clock },
-  pending: { label: 'Pending', color: 'bg-yellow-500/10 text-yellow-500', icon: Clock },
-  in_progress: { label: 'In Progress', color: 'bg-blue-500/10 text-blue-500', icon: Loader2 },
-  expired: { label: 'Expired', color: 'bg-gray-500/10 text-gray-500', icon: AlertTriangle },
+  approved: { label: 'Approved', color: 'bg-success-subtle text-success', icon: CheckCircle },
+  rejected: { label: 'Rejected', color: 'bg-destructive-subtle text-destructive', icon: XCircle },
+  completed: { label: 'Under Review', color: 'bg-info-subtle text-info', icon: Clock },
+  pending: { label: 'Pending', color: 'bg-warning-subtle text-warning', icon: Clock },
+  in_progress: { label: 'In Progress', color: 'bg-info-subtle text-info', icon: Loader2 },
+  expired: { label: 'Expired', color: 'bg-neutral-subtle text-neutral', icon: AlertTriangle },
 };
 
 type ParticipantRole = Extract<UserRole, 'freelancer' | 'employer'>;
@@ -140,9 +127,9 @@ export function VerificationCenter({ role }: { role: ParticipantRole }) {
       </div>
 
       {error && (
-        <Card className="bg-red-500/5 border-red-500/20">
+        <Card className="bg-destructive-subtle border-destructive-border">
           <CardContent className="p-4">
-            <p className="text-sm text-red-500">{error}</p>
+            <p className="text-sm text-destructive">{error}</p>
           </CardContent>
         </Card>
       )}
@@ -160,8 +147,8 @@ export function VerificationCenter({ role }: { role: ParticipantRole }) {
         <CardContent className="space-y-6">
           {statusError ? (
             <div role="alert" className="text-center py-8 space-y-4">
-              <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto">
-                <AlertTriangle className="w-8 h-8 text-red-500" />
+              <div className="w-16 h-16 rounded-full bg-destructive-subtle flex items-center justify-center mx-auto">
+                <AlertTriangle className="w-8 h-8 text-destructive" />
               </div>
               <div>
                 <h3 className="text-lg font-semibold">Unable to Load Verification Status</h3>
@@ -334,9 +321,9 @@ function CheckItem({ label, passed }: { label: string; passed: boolean | null })
   return (
     <div className="flex items-center gap-2">
       {passed ? (
-        <CheckCircle className="w-4 h-4 text-green-500" />
+        <CheckCircle className="w-4 h-4 text-success" />
       ) : (
-        <XCircle className="w-4 h-4 text-red-500" />
+        <XCircle className="w-4 h-4 text-destructive" />
       )}
       <span className="text-sm">{label}</span>
     </div>

@@ -3,29 +3,9 @@
 
 import React, { useState, useEffect, useTransition, useCallback } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import Navbar from "@/components/ui/navbar";
-import { FooterSection } from "@/components/ui/footer-section";
-import {
-  Sparkle,
-  ArrowSquareOut,
-  MagnifyingGlass,
-  BookOpen,
-  Clock,
-  CalendarBlank,
-  CheckCircle,
-  PaperPlaneTilt,
-  ArrowsClockwise,
-  TrendUp,
-  TrendDown,
-  Newspaper,
-  Fire,
-  CurrencyBtc,
-  CurrencyEth,
-  Coins,
-  Globe,
-  Broadcast,
-  Tag,
-} from "@phosphor-icons/react";
+import Navbar from "@/components/layout/navbar";
+import { FooterSection } from "@/components/layout/footer-section";
+import { Sparkles as Sparkle, ExternalLink as ArrowSquareOut, Search as MagnifyingGlass, BookOpen, Clock, Calendar as CalendarBlank, CircleCheck as CheckCircle, Send as PaperPlaneTilt, RefreshCw as ArrowsClockwise, TrendingUp as TrendUp, TrendingDown as TrendDown, Newspaper, Flame as Fire, Bitcoin as CurrencyBtc, Coins as CurrencyEth, Coins, Globe, Radio as Broadcast, Tag } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { cryptoNewsApi } from "@/lib/api";
 import {
@@ -219,10 +199,10 @@ export default function NewsPage() {
   };
 
   const getFearGreedColor = (val: number) => {
-    if (val >= 75) return "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30";
-    if (val >= 55) return "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/30";
-    if (val >= 45) return "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30";
-    return "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30";
+    if (val >= 75) return "bg-success text-success-foreground border-success";
+    if (val >= 55) return "bg-success-subtle text-success border-success-border";
+    if (val >= 45) return "bg-warning-subtle text-warning border-warning-border";
+    return "bg-destructive text-destructive-foreground border-destructive";
   };
 
   return (
@@ -243,14 +223,14 @@ export default function NewsPage() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
               </span>
-              <Broadcast className="size-3.5" weight="fill" />
+              <Broadcast className="size-3.5" fill="currentColor" />
               <span>Live Cryptocurrency News Feed</span>
             </div>
 
             {/* Main Headline */}
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight text-foreground break-words">
               Real-Time Crypto News & <br className="hidden sm:inline" />
-              <span className="text-[#717680] dark:text-muted-foreground font-semibold">
+              <span className="text-muted-foreground dark:text-muted-foreground font-semibold">
                 Market Intelligence.
               </span>
             </h1>
@@ -265,11 +245,11 @@ export default function NewsPage() {
               {fearGreed && typeof fearGreed.value === "number" && (
                 <div className="flex items-center gap-2.5">
                   <span className="text-muted-foreground font-medium flex items-center gap-1">
-                    <Fire className="size-4 text-amber-500" weight="fill" />
+                    <Fire className="size-4 text-warning" fill="currentColor" />
                     Market Sentiment:
                   </span>
                   <span
-                    className={`px-2.5 py-0.5 rounded-full font-bold border text-[11px] ${getFearGreedColor(
+                    className={`px-2.5 py-0.5 rounded-full font-bold border text-2xs ${getFearGreedColor(
                       fearGreed.value
                     )}`}
                   >
@@ -282,14 +262,14 @@ export default function NewsPage() {
               <div className="flex flex-wrap items-center gap-3 text-muted-foreground font-medium">
                 {prices.bitcoin && (
                   <div className="inline-flex items-center gap-1.5 bg-muted/50 px-2.5 py-1 rounded-lg border border-border/60">
-                    <CurrencyBtc className="size-3.5 text-amber-500" weight="bold" />
+                    <CurrencyBtc className="size-3.5 text-warning" strokeWidth={2.5} />
                     <span className="text-foreground font-bold">
                       ${prices.bitcoin.usd.toLocaleString()}
                     </span>
                     {prices.bitcoin.change24h !== undefined && (
                       <span
-                        className={`text-[10px] font-semibold flex items-center ${
-                          prices.bitcoin.change24h >= 0 ? "text-emerald-500" : "text-rose-500"
+                        className={`text-2xs font-semibold flex items-center ${
+                          prices.bitcoin.change24h >= 0 ? "text-success" : "text-destructive"
                         }`}
                       >
                         {prices.bitcoin.change24h >= 0 ? (
@@ -305,14 +285,14 @@ export default function NewsPage() {
 
                 {prices.ethereum && (
                   <div className="inline-flex items-center gap-1.5 bg-muted/50 px-2.5 py-1 rounded-lg border border-border/60">
-                    <CurrencyEth className="size-3.5 text-blue-500" weight="bold" />
+                    <CurrencyEth className="size-3.5 text-info" strokeWidth={2.5} />
                     <span className="text-foreground font-bold">
                       ${prices.ethereum.usd.toLocaleString()}
                     </span>
                     {prices.ethereum.change24h !== undefined && (
                       <span
-                        className={`text-[10px] font-semibold flex items-center ${
-                          prices.ethereum.change24h >= 0 ? "text-emerald-500" : "text-rose-500"
+                        className={`text-2xs font-semibold flex items-center ${
+                          prices.ethereum.change24h >= 0 ? "text-success" : "text-destructive"
                         }`}
                       >
                         {prices.ethereum.change24h >= 0 ? (
@@ -328,7 +308,7 @@ export default function NewsPage() {
 
                 {prices.solana && (
                   <div className="hidden sm:inline-flex items-center gap-1.5 bg-muted/50 px-2.5 py-1 rounded-lg border border-border/60">
-                    <Coins className="size-3.5 text-purple-500" weight="bold" />
+                    <Coins className="size-3.5 text-info" strokeWidth={2.5} />
                     <span className="text-foreground font-bold">
                       ${prices.solana.usd.toLocaleString()}
                     </span>
@@ -346,11 +326,11 @@ export default function NewsPage() {
                   }}
                   disabled={loading}
                   title="Refresh Live Crypto News Feed"
-                  className="inline-flex items-center gap-1 text-[11px] font-bold text-primary hover:text-primary/80 transition-colors cursor-pointer bg-primary/10 px-2.5 py-1 rounded-lg border border-primary/20"
+                  className="inline-flex items-center gap-1 text-2xs font-bold text-primary hover:text-primary/80 transition-colors cursor-pointer bg-primary/10 px-2.5 py-1 rounded-lg border border-primary/20"
                 >
                   <ArrowsClockwise
                     className={`size-3.5 ${loading ? "animate-spin" : ""}`}
-                    weight="bold"
+                    strokeWidth={2.5}
                   />
                   <span>{loading ? "Syncing..." : "Live Feed"}</span>
                 </button>
@@ -390,14 +370,14 @@ export default function NewsPage() {
                       : "bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:bg-muted/60"
                   }`}
                 >
-                  {cat.label.includes("BTC") && <CurrencyBtc className="size-3.5 text-amber-500" weight="bold" />}
-                  {cat.label.includes("ETH") && <CurrencyEth className="size-3.5 text-blue-500" weight="bold" />}
-                  {cat.label.includes("SOL") && <Coins className="size-3.5 text-purple-500" weight="bold" />}
-                  {cat.label === "All News" && <Broadcast className="size-3.5 text-rose-500" weight="bold" />}
+                  {cat.label.includes("BTC") && <CurrencyBtc className="size-3.5 text-warning" strokeWidth={2.5} />}
+                  {cat.label.includes("ETH") && <CurrencyEth className="size-3.5 text-info" strokeWidth={2.5} />}
+                  {cat.label.includes("SOL") && <Coins className="size-3.5 text-info" strokeWidth={2.5} />}
+                  {cat.label === "All News" && <Broadcast className="size-3.5 text-destructive" strokeWidth={2.5} />}
                   {cat.coin && !cat.label.includes("BTC") && !cat.label.includes("ETH") && !cat.label.includes("SOL") && (
-                    <Coins className="size-3.5 text-emerald-500" weight="bold" />
+                    <Coins className="size-3.5 text-success" strokeWidth={2.5} />
                   )}
-                  {cat.filter && !cat.coin && <Sparkle className="size-3.5 text-indigo-500" weight="bold" />}
+                  {cat.filter && !cat.coin && <Sparkle className="size-3.5 text-info" strokeWidth={2.5} />}
                   <span>{cat.label}</span>
                 </button>
               ))}
@@ -444,7 +424,7 @@ export default function NewsPage() {
                 />
                 <div className="absolute top-4 left-4 flex items-center gap-2">
                   <span className="px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-bold shadow-md flex items-center gap-1">
-                    <Broadcast className="size-3.5 animate-pulse" weight="fill" />
+                    <Broadcast className="size-3.5 animate-pulse" fill="currentColor" />
                     Breaking News
                   </span>
                 </div>
@@ -455,7 +435,7 @@ export default function NewsPage() {
                 <div>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3">
                     <span className="px-2.5 py-0.5 rounded-md bg-primary/10 text-primary font-bold flex items-center gap-1">
-                      <Tag className="size-3" weight="bold" />
+                      <Tag className="size-3" strokeWidth={2.5} />
                       {featuredArticle.category || "Crypto"}
                     </span>
                     <span>•</span>
@@ -477,13 +457,13 @@ export default function NewsPage() {
                 <div className="mt-6 pt-6 border-t border-border/60 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-xs">
-                      <Newspaper className="size-4" weight="bold" />
+                      <Newspaper className="size-4" strokeWidth={2.5} />
                     </div>
                     <div>
                       <p className="text-xs font-bold text-foreground">
                         {featuredArticle.source || "Crypto Feed"}
                       </p>
-                      <p className="text-[10px] text-muted-foreground">
+                      <p className="text-2xs text-muted-foreground">
                         {formatNewsDate(featuredArticle)}
                       </p>
                     </div>
@@ -496,7 +476,7 @@ export default function NewsPage() {
                     className="inline-flex items-center gap-1.5 rounded-full bg-primary text-primary-foreground text-xs font-bold px-4 py-2 hover:bg-primary/90 transition-all shadow-xs"
                   >
                     Read Full Story
-                    <ArrowSquareOut className="size-3.5" weight="bold" />
+                    <ArrowSquareOut className="size-3.5" strokeWidth={2.5} />
                   </a>
                 </div>
               </div>
@@ -521,7 +501,7 @@ export default function NewsPage() {
 
             {loading && (
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <ArrowsClockwise className="size-3.5 animate-spin text-primary" weight="bold" />
+                <ArrowsClockwise className="size-3.5 animate-spin text-primary" strokeWidth={2.5} />
                 <span>Updating live feed...</span>
               </div>
             )}
@@ -573,8 +553,8 @@ export default function NewsPage() {
                           className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
                         />
                         <div className="absolute top-3 left-3 flex items-center gap-1.5">
-                          <span className="px-2.5 py-0.5 rounded-full bg-card/95 backdrop-blur-md text-foreground text-[11px] font-bold border border-border/60 shadow-xs flex items-center gap-1">
-                            <Globe className="size-3 text-primary" weight="bold" />
+                          <span className="px-2.5 py-0.5 rounded-full bg-card/95 backdrop-blur-md text-foreground text-2xs font-bold border border-border/60 shadow-xs flex items-center gap-1">
+                            <Globe className="size-3 text-primary" strokeWidth={2.5} />
                             {article.category || "Crypto"}
                           </span>
                         </div>
@@ -582,11 +562,11 @@ export default function NewsPage() {
                         {article.sentiment && (
                           <div className="absolute top-3 right-3">
                             <span
-                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold backdrop-blur-md shadow-xs ${
+                              className={`px-2 py-0.5 rounded-full text-2xs font-bold backdrop-blur-md shadow-xs ${
                                 article.sentiment.toLowerCase() === "positive"
-                                  ? "bg-emerald-500/90 text-white"
+                                  ? "bg-success text-success-foreground"
                                   : article.sentiment.toLowerCase() === "negative"
-                                  ? "bg-rose-500/90 text-white"
+                                  ? "bg-destructive text-destructive-foreground"
                                   : "bg-card/90 text-foreground border border-border/60"
                               }`}
                             >
@@ -598,7 +578,7 @@ export default function NewsPage() {
 
                       {/* Card Body */}
                       <div className="p-6">
-                        <div className="flex items-center gap-2 text-[11px] text-muted-foreground mb-2.5">
+                        <div className="flex items-center gap-2 text-2xs text-muted-foreground mb-2.5">
                           <span className="flex items-center gap-1">
                             <CalendarBlank className="size-3" />
                             {formatNewsDate(article)}
@@ -623,7 +603,7 @@ export default function NewsPage() {
                     {/* Card Footer */}
                     <div className="px-6 pb-6 pt-0 border-t border-border/40 mt-4 flex items-center justify-between">
                       <div className="flex items-center gap-2.5 pt-3">
-                        <div className="w-7 h-7 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-[10px]">
+                        <div className="w-7 h-7 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold text-2xs">
                           <Newspaper className="size-3.5" />
                         </div>
                         <span className="text-xs font-semibold text-foreground truncate max-w-[120px]">
@@ -637,7 +617,7 @@ export default function NewsPage() {
                         rel="noopener noreferrer"
                         className="text-xs font-bold text-primary flex items-center gap-1 group-hover:translate-x-1 transition-transform pt-3"
                       >
-                        Read Story <ArrowSquareOut className="size-3" weight="bold" />
+                        Read Story <ArrowSquareOut className="size-3" strokeWidth={2.5} />
                       </a>
                     </div>
                   </motion.article>
@@ -656,25 +636,25 @@ export default function NewsPage() {
             transition={{ duration: 0.4 }}
             className="rounded-3xl bg-primary text-primary-foreground p-8 sm:p-12 text-center relative overflow-hidden shadow-xl"
           >
-            <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute top-0 right-0 w-96 h-96 bg-primary-foreground/10 rounded-full blur-3xl pointer-events-none" />
 
             <div className="relative z-10 max-w-2xl mx-auto">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 text-white text-xs font-bold mb-4 backdrop-blur-xs">
-                <Sparkle className="size-3.5 fill-white" weight="fill" />
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-foreground/15 text-primary-foreground text-xs font-bold mb-4 backdrop-blur-xs">
+                <Sparkle className="size-3.5 fill-primary-foreground" fill="currentColor" />
                 <span>FreelanceXchain Crypto Wire</span>
               </div>
 
-              <h3 className="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight text-white">
+              <h3 className="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight text-primary-foreground">
                 Get real-time market alpha & breaking news.
               </h3>
 
-              <p className="mt-3 text-sm sm:text-base text-white/80 leading-relaxed">
+              <p className="mt-3 text-sm sm:text-base text-primary-foreground/80 leading-relaxed">
                 Receive weekly breakdowns of market shifts, token movements, and decentralized economy trends directly in your inbox.
               </p>
 
               {subscribed ? (
-                <div className="mt-6 inline-flex items-center gap-2 px-5 py-3 rounded-full bg-white text-primary font-bold text-sm shadow-md">
-                  <CheckCircle className="size-5 text-emerald-600" weight="fill" />
+                <div className="mt-6 inline-flex items-center gap-2 px-5 py-3 rounded-full bg-primary-foreground text-primary font-bold text-sm shadow-md">
+                  <CheckCircle className="size-5 text-success" fill="currentColor" />
                   <span>You are subscribed to the Crypto Wire!</span>
                 </div>
               ) : (
@@ -688,19 +668,19 @@ export default function NewsPage() {
                     placeholder="Enter your email..."
                     value={emailInput}
                     onChange={(e) => setEmailInput(e.target.value)}
-                    className="w-full px-5 py-3 rounded-full bg-white text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-white/50 shadow-md"
+                    className="w-full px-5 py-3 rounded-full bg-primary-foreground text-primary text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-white/50 shadow-md"
                   />
                   <Button
                     type="submit"
-                    className="w-full sm:w-auto px-6 py-3 rounded-full bg-[#181d27] text-white hover:bg-black text-xs font-bold shrink-0 shadow-md cursor-pointer"
+                    className="w-full sm:w-auto px-6 py-3 rounded-full bg-foreground text-background hover:bg-foreground/90 text-xs font-bold shrink-0 shadow-md cursor-pointer"
                   >
                     Subscribe Free
-                    <PaperPlaneTilt className="size-3.5 ml-1.5" weight="bold" />
+                    <PaperPlaneTilt className="size-3.5 ml-1.5" strokeWidth={2.5} />
                   </Button>
                 </form>
               )}
 
-              <p className="mt-3 text-[11px] text-white/60">
+              <p className="mt-3 text-2xs text-primary-foreground/60">
                 Zero spam. One-click unsubscribe at any time.
               </p>
             </div>

@@ -7,27 +7,15 @@ import { Button } from '@/components/ui/button';
 import { kycApi } from '@/lib/api';
 import { safeAttachmentUrl } from '@/lib/attachment-presentation';
 import type { KycVerification } from '@/types';
-import {
-  Shield,
-  CheckCircle,
-  XCircle,
-  Clock,
-  FileText,
-  Globe,
-  AlertTriangle,
-  ExternalLink,
-  Loader2,
-  ChevronDown,
-  ChevronUp,
-} from 'lucide-react';
+import { Shield, CheckCircle, XCircle, Clock, FileText, Globe, AlertTriangle, ExternalLink, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 
 const statusColors: Record<string, string> = {
-  pending: 'bg-yellow-500/10 text-yellow-500',
-  in_progress: 'bg-blue-500/10 text-blue-500',
-  completed: 'bg-blue-500/10 text-blue-500',
-  approved: 'bg-green-500/10 text-green-500',
-  rejected: 'bg-red-500/10 text-red-500',
-  expired: 'bg-gray-500/10 text-gray-500',
+  pending: 'bg-warning-subtle text-warning',
+  in_progress: 'bg-info-subtle text-info',
+  completed: 'bg-info-subtle text-info',
+  approved: 'bg-success-subtle text-success',
+  rejected: 'bg-destructive-subtle text-destructive',
+  expired: 'bg-neutral-subtle text-neutral',
 };
 
 const statusLabels: Record<string, string> = {
@@ -159,16 +147,16 @@ function StatCard({ icon: Icon, label, count, color, active, onClick }: {
   onClick: () => void;
 }) {
   const colorMap: Record<string, string> = {
-    yellow: 'bg-yellow-500/10',
-    blue: 'bg-blue-500/10',
-    green: 'bg-green-500/10',
-    red: 'bg-red-500/10',
+    yellow: 'bg-warning-subtle',
+    blue: 'bg-info-subtle',
+    green: 'bg-success-subtle',
+    red: 'bg-destructive-subtle',
   };
   const iconColorMap: Record<string, string> = {
-    yellow: 'text-yellow-500',
-    blue: 'text-blue-500',
-    green: 'text-green-500',
-    red: 'text-red-500',
+    yellow: 'text-warning',
+    blue: 'text-info',
+    green: 'text-success',
+    red: 'text-destructive',
   };
 
   return (
@@ -208,7 +196,7 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
       <CardContent className="p-5">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl gradient-primary flex items-center justify-center text-white font-bold text-lg">
+            <div className="w-14 h-14 rounded-xl gradient-primary flex items-center justify-center text-primary-foreground font-bold text-lg">
               {initials}
             </div>
             <div>
@@ -302,7 +290,7 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
                 <div className="flex gap-3 mt-3">
                   <Button
                     size="sm"
-                    className="bg-green-600 hover:bg-green-700 text-white"
+                    className="bg-success hover:bg-success/90 text-success-foreground"
                     disabled={reviewing}
                     onClick={() => onReview(v.id, 'approved')}
                   >
@@ -312,7 +300,7 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
                   <Button
                     size="sm"
                     variant="outline"
-                    className="text-red-500 border-red-500/50 hover:bg-red-500/10"
+                    className="text-destructive border-destructive-border hover:bg-destructive-subtle"
                     disabled={reviewing}
                     onClick={() => onReview(v.id, 'rejected')}
                   >
@@ -365,11 +353,11 @@ function ResultCell({ label, passed, extra }: { label: string; passed: boolean |
   return (
     <div className="p-2 rounded bg-secondary/30 flex items-center gap-2">
       {passed === null ? (
-        <Clock className="w-4 h-4 text-gray-400" />
+        <Clock className="w-4 h-4 text-neutral" />
       ) : passed ? (
-        <CheckCircle className="w-4 h-4 text-green-500" />
+        <CheckCircle className="w-4 h-4 text-success" />
       ) : (
-        <XCircle className="w-4 h-4 text-red-500" />
+        <XCircle className="w-4 h-4 text-destructive" />
       )}
       <div>
         <p className="text-xs text-muted-foreground">{label}</p>
@@ -382,12 +370,12 @@ function ResultCell({ label, passed, extra }: { label: string; passed: boolean |
 function CheckDot({ passed, label }: { passed: boolean | null; label: string }) {
   return (
     <div
-      className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+      className={`w-5 h-5 rounded-full flex items-center justify-center text-2xs font-bold ${
         passed === null
-          ? 'bg-gray-500/20 text-gray-400'
+          ? 'bg-neutral-subtle text-neutral'
           : passed
-          ? 'bg-green-500/20 text-green-500'
-          : 'bg-red-500/20 text-red-500'
+          ? 'bg-success-subtle text-success'
+          : 'bg-destructive-subtle text-destructive'
       }`}
       title={`${label}: ${passed === null ? 'N/A' : passed ? 'Passed' : 'Failed'}`}
     >

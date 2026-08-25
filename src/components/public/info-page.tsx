@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
-import Navbar from '@/components/ui/navbar';
-import { FooterSection } from '@/components/ui/footer-section';
-import { Sparkle } from '@phosphor-icons/react/dist/ssr';
+import Navbar from '@/components/layout/navbar';
+import { FooterSection } from '@/components/layout/footer-section';
+import { Sparkles as Sparkle } from 'lucide-react';
 
 export function InfoPage({
   title,
@@ -22,7 +22,7 @@ export function InfoPage({
         {/* Header Hero */}
         <section className="mx-auto max-w-4xl px-6 lg:px-8 mb-12 text-center">
           <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold mb-4 border border-primary/20 shadow-xs">
-            <Sparkle className="size-3.5 fill-primary" weight="fill" />
+            <Sparkle className="size-3.5 fill-primary" fill="currentColor" />
             <span>{badge}</span>
           </div>
 

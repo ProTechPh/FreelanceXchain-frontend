@@ -13,6 +13,7 @@ import { useAuthStore } from '@/stores/authStore';
 import type { EmailPreferences, EmailPreferencesUpdate, FileInfo, FileQuota, MfaFactor } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -204,16 +205,11 @@ export function AccountSettings() {
           {preferences && preferenceRows.map((row) => (
             <div key={row.key} className="flex min-h-12 items-center justify-between gap-4 border-b border-border py-2 last:border-0">
               <span className="text-sm">{row.label}</span>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={preferences[row.key]}
+              <Switch
+                checked={preferences[row.key]}
                 aria-label={`${row.label} emails`}
-                onClick={() => updatePreference(row.key, row.apiKey)}
-                className={`relative h-6 w-11 rounded-full transition-colors ${preferences[row.key] ? 'bg-primary' : 'bg-muted'}`}
-              >
-                <span className={`absolute top-1 size-4 rounded-full bg-white transition-transform ${preferences[row.key] ? 'left-6' : 'left-1'}`} />
-              </button>
+                onCheckedChange={() => updatePreference(row.key, row.apiKey)}
+              />
             </div>
           ))}
         </CardContent>

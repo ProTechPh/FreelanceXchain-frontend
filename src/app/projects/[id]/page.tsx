@@ -10,24 +10,13 @@ import { projectsApi } from '@/lib/api';
 import { ProposalDialog } from '@/components/projects/ProposalDialog';
 import { FavoriteButton } from '@/components/marketplace/favorite-button';
 import type { Project } from '@/types';
-import { getStatusColor } from '@/lib/status-styles';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { getProjectPrimaryAction } from '@/lib/project-actions';
 import { formatFileSize, safeAttachmentUrl } from '@/lib/attachment-presentation';
 import { useAuthStore } from '@/stores/authStore';
 import { getMarketplaceReturnPath } from '@/lib/marketplace-return';
 import { toast } from 'sonner';
-import {
-  Zap,
-  Calendar,
-  Target,
-  Send,
-  Share2,
-  Loader2,
-  SearchX,
-  ClipboardList,
-  ExternalLink,
-  Paperclip,
-} from 'lucide-react';
+import { Zap, Calendar, Target, Send, Share2, Loader2, SearchX, ClipboardList, ExternalLink, Paperclip } from 'lucide-react';
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -99,9 +88,9 @@ export default function ProjectDetailPage() {
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <h1 className="text-3xl font-bold">{project.title}</h1>
-                <Badge className={getStatusColor(project.status)}>{project.status.replace('_', ' ')}</Badge>
+                <StatusBadge status={project.status} domain="project" />
                 {project.isRush && (
-                  <Badge className="bg-amber-500/10 text-amber-500">
+                  <Badge className="bg-warning-subtle text-warning">
                     <Zap className="w-3 h-3 mr-1" /> Rush +{project.rushFeePercentage}%
                   </Badge>
                 )}
@@ -183,7 +172,7 @@ export default function ProjectDetailPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        <Badge className={getStatusColor(milestone.status)}>{milestone.status.replace('_', ' ')}</Badge>
+                        <StatusBadge status={milestone.status} domain="milestone" />
                         <p className="font-semibold text-primary">${milestone.amount.toLocaleString()}</p>
                       </div>
                     </div>

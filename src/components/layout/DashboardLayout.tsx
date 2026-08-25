@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
@@ -39,11 +40,13 @@ export function DashboardLayout({ children, allowedRoles }: DashboardLayoutProps
 
   if (!hasHydrated || isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-          <p className="text-sm text-muted-foreground">Loading...</p>
-        </div>
+      <div
+        role="status"
+        aria-live="polite"
+        className="flex min-h-screen flex-col items-center justify-center gap-3"
+      >
+        <Loader2 className="size-8 animate-spin text-primary" aria-hidden="true" />
+        <p className="text-sm text-muted-foreground">Loading your dashboard…</p>
       </div>
     );
   }
@@ -54,10 +57,24 @@ export function DashboardLayout({ children, allowedRoles }: DashboardLayoutProps
 
   return (
     <div className="flex min-h-screen">
+      {/* Keyboard users land here first: one Tab skips the whole sidebar and
+          top bar, which is otherwise ~20 stops before any page content. */}
+      <a
+        href="#dashboard-content"
+        className="sr-only z-50 focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-primary-foreground"
+      >
+        Skip to main content
+      </a>
       <Sidebar />
-      <div className="flex-1 flex flex-col">
+      <div className="flex min-w-0 flex-1 flex-col">
         <TopBar />
-        <main className="flex-1 p-6 overflow-auto">{children}</main>
+        <main
+          id="dashboard-content"
+          tabIndex={-1}
+          className="flex-1 px-(--space-page-x) py-6 outline-none"
+        >
+          {children}
+        </main>
       </div>
     </div>
   );

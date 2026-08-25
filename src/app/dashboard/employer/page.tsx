@@ -2,25 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { getStatusColor } from '@/lib/status-styles';
+import { StatusBadge } from '@/components/ui/status-badge';
 import Link from 'next/link';
 import { projectsApi, analyticsApi, freelancersApi, reputationApi } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
 import type { Project, Proposal } from '@/types';
 import { toast } from 'sonner';
-import {
-  DollarSign,
-  FolderOpen,
-  FileText,
-  Users,
-  Clock,
-  ArrowUpRight,
-  PlusCircle,
-  Briefcase,
-  Loader2,
-} from 'lucide-react';
+import { DollarSign, FolderOpen, FileText, Users, Clock, ArrowUpRight, PlusCircle, Briefcase, Loader2 } from 'lucide-react';
 
 interface RecentProposalView {
   proposal: Proposal;
@@ -144,8 +133,8 @@ export default function EmployerDashboard() {
       title: 'Total Spent',
       value: totalSpent !== null ? `$${totalSpent.toLocaleString()}` : '—',
       icon: DollarSign,
-      color: 'text-green-500',
-      bg: 'bg-green-500/10',
+      color: 'text-success',
+      bg: 'bg-success-subtle',
     },
     {
       title: 'Pending Proposals',
@@ -158,8 +147,8 @@ export default function EmployerDashboard() {
       title: 'Completed Contracts',
       value: activeContractCount !== null ? String(activeContractCount) : '—',
       icon: Briefcase,
-      color: 'text-yellow-500',
-      bg: 'bg-yellow-500/10',
+      color: 'text-warning',
+      bg: 'bg-warning-subtle',
     },
   ];
 
@@ -237,9 +226,7 @@ export default function EmployerDashboard() {
                       </div>
                       <div className="text-right">
                         <p className="font-semibold text-primary">${project.budget.toLocaleString()}</p>
-                        <Badge className={getStatusColor(project.status)}>
-                          {project.status.replace('_', ' ')}
-                        </Badge>
+                        <StatusBadge status={project.status} domain="project" />
                       </div>
                     </div>
                     {project.status === 'in_progress' && milestones.length > 0 && (
@@ -277,7 +264,7 @@ export default function EmployerDashboard() {
             {recentProposals.map(({ proposal, projectTitle, freelancerName, rating }) => (
               <div key={proposal.id} className="p-3 rounded-xl bg-secondary/50 border border-border">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center text-white text-xs font-bold">
+                  <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center text-primary-foreground text-xs font-bold">
                     {initials(freelancerName)}
                   </div>
                   <div className="flex-1">
@@ -302,7 +289,7 @@ export default function EmployerDashboard() {
           <Card className="bg-card border-border hover:border-primary/20 transition-all cursor-pointer">
             <CardContent className="p-4 flex items-center gap-4">
               <div className="w-10 h-10 rounded-lg gradient-primary flex items-center justify-center">
-                <PlusCircle className="w-5 h-5 text-white" />
+                <PlusCircle className="w-5 h-5 text-primary-foreground" />
               </div>
               <div>
                 <p className="font-medium">Post New Project</p>
@@ -327,8 +314,8 @@ export default function EmployerDashboard() {
         <Link href="/dashboard/employer/verification">
           <Card className="bg-card border-border hover:border-primary/20 transition-all cursor-pointer">
             <CardContent className="p-4 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                <Briefcase className="w-5 h-5 text-green-500" />
+              <div className="w-10 h-10 rounded-lg bg-success-subtle flex items-center justify-center">
+                <Briefcase className="w-5 h-5 text-success" />
               </div>
               <div>
                 <p className="font-medium">Verification</p>

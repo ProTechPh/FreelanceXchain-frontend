@@ -119,7 +119,7 @@ test('employer funds a pending contract through the backend escrow endpoint', as
   await page.getByRole('button', { name: 'Fund contract securely' }).click();
 
   await expect(page.getByText('Contract funded and activated.')).toBeVisible();
-  await expect(page.getByText('active', { exact: true })).toBeVisible();
+  await expect(page.getByText('Active', { exact: true })).toBeVisible();
   expect(fundingRequests).toBe(1);
   expect(fundingBody).toBeNull();
   expect(await page.evaluate(() => (window as Window & { __ethereumCalls?: number }).__ethereumCalls ?? 0)).toBe(0);

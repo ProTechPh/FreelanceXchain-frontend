@@ -1,6 +1,6 @@
-import AboutUsSection from '@/components/ui/about-us-section';
-import Navbar from '@/components/ui/navbar';
-import { FooterSection } from '@/components/ui/footer-section';
+import AboutUsSection from '@/components/marketing/about-us-section';
+import Navbar from '@/components/layout/navbar';
+import { FooterSection } from '@/components/layout/footer-section';
 
 export const metadata = {
   title: 'About Us | FreelanceXchain',

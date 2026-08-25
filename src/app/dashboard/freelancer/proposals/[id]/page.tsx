@@ -5,13 +5,12 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { ArrowLeft, BriefcaseBusiness, Clock, ExternalLink, FileText, Loader2, Star } from 'lucide-react';
 import { toast } from 'sonner';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatFileSize, safeAttachmentUrl } from '@/lib/attachment-presentation';
 import { proposalsApi } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/auth-contract';
-import { getStatusColor } from '@/lib/status-styles';
+import { StatusBadge } from '@/components/ui/status-badge';
 import type { ProposalWithEmployerHistory } from '@/types';
 
 export default function FreelancerProposalDetailPage() {
@@ -69,7 +68,7 @@ export default function FreelancerProposalDetailPage() {
         <Button asChild variant="ghost" size="sm" className="-ml-3 mb-2"><Link href="/dashboard/freelancer/proposals"><ArrowLeft className="mr-2 h-4 w-4" />Back to proposals</Link></Button>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div><h1 className="text-2xl font-bold">{project.title}</h1><p className="mt-1 text-muted-foreground">Your proposal to {employerName}</p></div>
-          <Badge className={getStatusColor(proposal.status)}>{proposal.status}</Badge>
+          <StatusBadge status={proposal.status} domain="proposal" />
         </div>
       </div>
 

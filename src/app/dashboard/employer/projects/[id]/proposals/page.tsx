@@ -3,19 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import {
-  ArrowLeft,
-  Check,
-  Clock,
-  DollarSign,
-  FileText,
-  Loader2,
-  MessageSquare,
-  Paperclip,
-  SearchX,
-  UserRound,
-  X,
-} from 'lucide-react';
+import { ArrowLeft, Check, Clock, DollarSign, FileText, Loader2, MessageSquare, Paperclip, SearchX, UserRound, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -35,7 +23,7 @@ import {
   updateProposalDecision,
   type ProposalDecision,
 } from '@/lib/proposal-management';
-import { getStatusColor } from '@/lib/status-styles';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { getDirectMessageRoute } from '@/lib/dashboard-message-route';
 import type { FreelancerProfile, Project, Proposal } from '@/types';
 
@@ -159,7 +147,7 @@ export default function EmployerProjectProposalsPage() {
           <Badge variant="secondary" className="h-8 px-3">
             {proposals.length} total
           </Badge>
-          <Badge className="h-8 bg-yellow-500/10 px-3 text-yellow-500">
+          <Badge className="h-8 bg-warning-subtle px-3 text-warning">
             {pendingCount} pending
           </Badge>
         </div>
@@ -171,7 +159,7 @@ export default function EmployerProjectProposalsPage() {
           <CardContent><div className="grid gap-3 lg:grid-cols-2">{recommendations.map((recommendation) => {
             const profile = profiles[recommendation.freelancerId];
             const name = profile?.name || `Freelancer ${recommendation.freelancerId.slice(0, 8)}`;
-            return <div key={recommendation.freelancerId} className="rounded-xl border border-border bg-card p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-medium">{name}</p><p className="mt-1 text-xs text-muted-foreground">Reputation {Math.round(recommendation.reputationScore)}%</p></div><Badge className="bg-green-500/10 text-green-500">{Math.round(recommendation.combinedScore)}% fit</Badge></div><div className="mt-3 flex flex-wrap gap-1.5">{recommendation.matchedSkills.map((skill) => <Badge key={skill} variant="secondary" className="text-xs">{skill}</Badge>)}</div><p className="mt-3 text-sm text-muted-foreground">{recommendation.reasoning}</p><div className="mt-4 flex gap-2"><Button asChild size="sm" variant="outline"><Link href={`/freelancers/${recommendation.freelancerId}`}>View profile</Link></Button><Button asChild size="sm" variant="ghost"><Link href={getDirectMessageRoute('employer', recommendation.freelancerId)}>Message</Link></Button></div></div>;
+            return <div key={recommendation.freelancerId} className="rounded-xl border border-border bg-card p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-medium">{name}</p><p className="mt-1 text-xs text-muted-foreground">Reputation {Math.round(recommendation.reputationScore)}%</p></div><Badge className="bg-success-subtle text-success">{Math.round(recommendation.combinedScore)}% fit</Badge></div><div className="mt-3 flex flex-wrap gap-1.5">{recommendation.matchedSkills.map((skill) => <Badge key={skill} variant="secondary" className="text-xs">{skill}</Badge>)}</div><p className="mt-3 text-sm text-muted-foreground">{recommendation.reasoning}</p><div className="mt-4 flex gap-2"><Button asChild size="sm" variant="outline"><Link href={`/freelancers/${recommendation.freelancerId}`}>View profile</Link></Button><Button asChild size="sm" variant="ghost"><Link href={getDirectMessageRoute('employer', recommendation.freelancerId)}>Message</Link></Button></div></div>;
           })}</div></CardContent>
         </Card>
       )}
@@ -208,9 +196,7 @@ export default function EmployerProjectProposalsPage() {
                       </p>
                     </div>
                   </div>
-                  <Badge className={getStatusColor(proposal.status)}>
-                    {proposal.status}
-                  </Badge>
+                  <StatusBadge status={proposal.status} domain="proposal" />
                 </CardHeader>
                 <CardContent className="space-y-5">
                   <div className="grid gap-3 sm:grid-cols-2">

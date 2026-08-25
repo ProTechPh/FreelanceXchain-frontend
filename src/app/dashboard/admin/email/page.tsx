@@ -15,21 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Mail,
-  Inbox,
-  Send,
-  Trash2,
-  Star,
-  StarOff,
-  RefreshCw,
-  PenSquare,
-  Reply,
-  ArrowLeft,
-  Search,
-  MailOpen,
-  Clock,
-} from 'lucide-react';
+import { Mail, Inbox, Send, Trash2, Star, StarOff, RefreshCw, PenSquare, Reply, ArrowLeft, Search, MailOpen, Clock } from 'lucide-react';
 import { emailApi } from '@/lib/api';
 import { toast } from 'sonner';
 
@@ -327,7 +313,7 @@ export default function AdminEmailPage() {
                         className="shrink-0"
                       >
                         {email.is_starred ? (
-                          <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                          <Star className="w-4 h-4 text-warning fill-warning" />
                         ) : (
                           <StarOff className="w-4 h-4 text-muted-foreground/40" />
                         )}

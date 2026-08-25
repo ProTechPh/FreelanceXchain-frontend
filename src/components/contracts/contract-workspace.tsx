@@ -19,7 +19,7 @@ import {
   normalizeMilestone,
 } from '@/lib/contract-workflow';
 import { getApiErrorMessage } from '@/lib/auth-contract';
-import { getStatusColor } from '@/lib/status-styles';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { hasApprovedKyc } from '@/lib/kyc-eligibility';
 import { safeAttachmentUrl } from '@/lib/attachment-presentation';
 import { getTransactionDetailRoute } from '@/lib/transaction-view';
@@ -181,13 +181,13 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
           <h1 className="text-2xl font-bold">{contract.project?.title || contract.title || 'Contract'}</h1>
           <p className="mt-1 text-muted-foreground">Contract #{contract.id.slice(0, 8)}</p>
         </div>
-        <Badge className={getStatusColor(contract.status)}>{contract.status.replace('_', ' ')}</Badge>
+        <StatusBadge status={contract.status} domain="contract" />
       </div>
 
       {!isVerified && ['pending', 'active', 'completed'].includes(contract.status) && (
-        <Card className="border-amber-500/40 bg-amber-500/5">
+        <Card className="border-warning-border bg-warning-subtle">
           <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="flex items-center gap-2 text-sm"><ShieldCheck className="size-5 text-amber-500" />Identity verification is required before contract mutations.</p>
+            <p className="flex items-center gap-2 text-sm"><ShieldCheck className="size-5 text-warning" />Identity verification is required before contract mutations.</p>
             <Button asChild size="sm" variant="outline"><Link href={verificationPath}>Complete verification</Link></Button>
           </CardContent>
         </Card>
@@ -237,10 +237,10 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
               <>
                 <div className="grid grid-cols-3 gap-3 text-sm">
                   <div><p className="text-muted-foreground">Total</p><p className="font-semibold">${paymentStatus.totalAmount.toLocaleString()}</p></div>
-                  <div><p className="text-muted-foreground">Released</p><p className="font-semibold text-green-500">${paymentStatus.releasedAmount.toLocaleString()}</p></div>
-                  <div><p className="text-muted-foreground">Pending</p><p className="font-semibold text-amber-500">${paymentStatus.pendingAmount.toLocaleString()}</p></div>
+                  <div><p className="text-muted-foreground">Released</p><p className="font-semibold text-success">${paymentStatus.releasedAmount.toLocaleString()}</p></div>
+                  <div><p className="text-muted-foreground">Pending</p><p className="font-semibold text-warning">${paymentStatus.pendingAmount.toLocaleString()}</p></div>
                 </div>
-                <div><div className="mb-1 flex justify-between text-xs text-muted-foreground"><span>Release progress</span><span>{paymentStatus.totalAmount > 0 ? Math.round((paymentStatus.releasedAmount / paymentStatus.totalAmount) * 100) : 0}%</span></div><div className="h-2 overflow-hidden rounded-full bg-secondary"><div className="h-full rounded-full bg-green-500" style={{ width: `${paymentStatus.totalAmount > 0 ? Math.min(100, (paymentStatus.releasedAmount / paymentStatus.totalAmount) * 100) : 0}%` }} /></div></div>
+                <div><div className="mb-1 flex justify-between text-xs text-muted-foreground"><span>Release progress</span><span>{paymentStatus.totalAmount > 0 ? Math.round((paymentStatus.releasedAmount / paymentStatus.totalAmount) * 100) : 0}%</span></div><div className="h-2 overflow-hidden rounded-full bg-secondary"><div className="h-full rounded-full bg-success" style={{ width: `${paymentStatus.totalAmount > 0 ? Math.min(100, (paymentStatus.releasedAmount / paymentStatus.totalAmount) * 100) : 0}%` }} /></div></div>
                 <p className="text-xs text-muted-foreground">{paymentStatus.milestones.length} milestone{paymentStatus.milestones.length === 1 ? '' : 's'} tracked by the payment service.</p>
               </>
             ) : <p className="text-sm text-muted-foreground">Payment status is temporarily unavailable.</p>}
@@ -300,7 +300,7 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-3">
                   <div><CardTitle className="text-base">{milestone.title}</CardTitle><p className="mt-1 text-sm text-muted-foreground">{milestone.description}</p></div>
-                  <Badge className={getStatusColor(milestone.status)}>{milestone.status.replace('_', ' ')}</Badge>
+                  <StatusBadge status={milestone.status} domain="milestone" />
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -351,7 +351,7 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
         <Card>
           <CardHeader><CardTitle>Disputes</CardTitle></CardHeader>
           <CardContent className="space-y-3">
-            {disputes.length === 0 ? <p className="text-sm text-muted-foreground">No disputes for this contract.</p> : disputes.map((dispute) => <Link key={dispute.id} href={`/dashboard/${role}/disputes/${dispute.id}`} className="flex items-start gap-2 rounded-lg border border-border p-3 text-sm transition-colors hover:border-primary/30"><AlertTriangle className="mt-0.5 size-4 text-amber-500" /><div><p className="font-medium">{dispute.reason}</p><p className="text-muted-foreground">{dispute.status.replace('_', ' ')}</p></div></Link>)}
+            {disputes.length === 0 ? <p className="text-sm text-muted-foreground">No disputes for this contract.</p> : disputes.map((dispute) => <Link key={dispute.id} href={`/dashboard/${role}/disputes/${dispute.id}`} className="flex items-start gap-2 rounded-lg border border-border p-3 text-sm transition-colors hover:border-primary/30"><AlertTriangle className="mt-0.5 size-4 text-warning" /><div><p className="font-medium">{dispute.reason}</p><p className="text-muted-foreground">{dispute.status.replace('_', ' ')}</p></div></Link>)}
           </CardContent>
         </Card>
       </div>

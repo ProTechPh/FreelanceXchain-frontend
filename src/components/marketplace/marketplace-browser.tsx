@@ -1,18 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
-import {
-  BookmarkPlus,
-  Heart,
-  Loader2,
-  Search,
-  Trash2,
-  Sparkles,
-  Briefcase,
-} from "lucide-react";
+import { BookmarkPlus, Heart, Loader2, Search, Trash2, Sparkles, Briefcase } from 'lucide-react';
 import { toast } from "sonner";
-import Navbar from "@/components/ui/navbar";
-import { FooterSection } from "@/components/ui/footer-section";
+import Navbar from "@/components/layout/navbar";
+import { FooterSection } from "@/components/layout/footer-section";
 import { favoritesApi, freelancersApi, projectsApi, savedSearchesApi, skillsApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/auth-contract";
 import {
@@ -270,7 +262,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-foreground">
             {kind === "project" ? "Discover High-Impact Web3 Projects, " : "Hire Top Web3 & Smart Contract Talent, "}
             <br className="hidden sm:inline" />
-            <span className="text-[#717680] dark:text-muted-foreground font-semibold">
+            <span className="text-muted-foreground dark:text-muted-foreground font-semibold">
               secured by smart escrow.
             </span>
           </h1>

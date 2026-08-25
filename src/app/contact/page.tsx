@@ -3,35 +3,28 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
-import Navbar from "@/components/ui/navbar";
-import { FooterSection } from "@/components/ui/footer-section";
-import {
-  Sparkle,
-  ShieldCheck,
-  Question,
-  PaperPlaneTilt,
-  CheckCircle,
-  LockKey,
-} from "@phosphor-icons/react";
+import Navbar from "@/components/layout/navbar";
+import { FooterSection } from "@/components/layout/footer-section";
+import { Sparkles as Sparkle, ShieldCheck, CircleQuestionMark as Question, Send as PaperPlaneTilt, CircleCheck as CheckCircle, Lock as LockKey } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 
 const SUPPORT_CHANNELS = [
   {
-    icon: <LockKey className="size-5 text-primary" weight="bold" />,
+    icon: <LockKey className="size-5 text-primary" strokeWidth={2.5} />,
     title: "Escrow & Contract Disputes",
     description: "Questions about milestone funds, locked smart contracts, or evidence submissions.",
     action: "Open Dispute Center",
     href: "/dashboard/freelancer/disputes",
   },
   {
-    icon: <ShieldCheck className="size-5 text-primary" weight="bold" />,
+    icon: <ShieldCheck className="size-5 text-primary" strokeWidth={2.5} />,
     title: "Didit KYC & Verification",
     description: "Assistance with biometric verification, identity documents, or country eligibility.",
     action: "Verification Status",
     href: "/dashboard/freelancer/verification",
   },
   {
-    icon: <Question className="size-5 text-primary" weight="bold" />,
+    icon: <Question className="size-5 text-primary" strokeWidth={2.5} />,
     title: "Help Center & Tutorials",
     description: "Step-by-step documentation for proposals, milestone deliverables, and wallet setups.",
     action: "Browse Tutorials",
@@ -70,13 +63,13 @@ export default function ContactPage() {
             transition={{ duration: 0.4 }}
           >
             <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold mb-4 border border-primary/20 shadow-xs">
-              <Sparkle className="size-3.5 fill-primary" weight="fill" />
+              <Sparkle className="size-3.5 fill-primary" fill="currentColor" />
               <span>Direct Support & Inquiries</span>
             </div>
 
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-foreground">
               We&apos;re here to help you <br />
-              <span className="text-[#717680] dark:text-muted-foreground font-semibold">
+              <span className="text-muted-foreground dark:text-muted-foreground font-semibold">
                 work and hire on-chain safely.
               </span>
             </h1>
@@ -127,7 +120,7 @@ export default function ContactPage() {
 
             {submitted ? (
               <div className="p-8 text-center rounded-2xl bg-primary/10 border border-primary/20 space-y-3">
-                <CheckCircle className="size-12 text-primary mx-auto" weight="fill" />
+                <CheckCircle className="size-12 text-primary mx-auto" fill="currentColor" />
                 <h3 className="text-lg font-bold text-foreground">Message Sent Successfully</h3>
                 <p className="text-xs text-muted-foreground max-w-sm mx-auto">
                   Thank you for contacting FreelanceXchain support. A ticket has been created and our team will get back to you at {formData.email}.
@@ -217,7 +210,7 @@ export default function ContactPage() {
                   className="w-full py-3 rounded-full bg-primary text-primary-foreground font-bold text-sm shadow-md hover:bg-primary/90 cursor-pointer"
                 >
                   Submit Inquiry
-                  <PaperPlaneTilt className="size-4 ml-2" weight="bold" />
+                  <PaperPlaneTilt className="size-4 ml-2" strokeWidth={2.5} />
                 </Button>
               </form>
             )}

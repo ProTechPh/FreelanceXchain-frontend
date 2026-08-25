@@ -11,9 +11,9 @@ import { toast } from 'sonner';
 import { Search, Loader2, User } from 'lucide-react';
 
 const statusColors: Record<AuditLogEntry['status'], string> = {
-  success: 'bg-green-500/10 text-green-500',
-  pending: 'bg-yellow-500/10 text-yellow-500',
-  failure: 'bg-red-500/10 text-red-500',
+  success: 'bg-success-subtle text-success',
+  pending: 'bg-warning-subtle text-warning',
+  failure: 'bg-destructive-subtle text-destructive',
 };
 
 const RANGE_PRESETS = [
@@ -116,19 +116,19 @@ export default function AuditLogsPage() {
         </Card>
         <Card className="bg-card border-border">
           <CardContent className="p-4">
-            <p className="text-2xl font-bold text-green-500">{successCount}</p>
+            <p className="text-2xl font-bold text-success">{successCount}</p>
             <p className="text-xs text-muted-foreground">Successful</p>
           </CardContent>
         </Card>
         <Card className="bg-card border-border">
           <CardContent className="p-4">
-            <p className="text-2xl font-bold text-yellow-500">{pendingCount}</p>
+            <p className="text-2xl font-bold text-warning">{pendingCount}</p>
             <p className="text-xs text-muted-foreground">Pending</p>
           </CardContent>
         </Card>
         <Card className="bg-card border-border">
           <CardContent className="p-4">
-            <p className="text-2xl font-bold text-red-500">{failureCount}</p>
+            <p className="text-2xl font-bold text-destructive">{failureCount}</p>
             <p className="text-xs text-muted-foreground">Failed</p>
           </CardContent>
         </Card>
@@ -192,7 +192,7 @@ export default function AuditLogsPage() {
                       <td className="p-4">
                         <code className="text-sm bg-secondary px-2 py-1 rounded">{log.action}</code>
                         {log.error_message && (
-                          <p className="text-xs text-red-500 mt-1 max-w-xs truncate">{log.error_message}</p>
+                          <p className="text-xs text-destructive mt-1 max-w-xs truncate">{log.error_message}</p>
                         )}
                       </td>
                       <td className="p-4">

@@ -70,7 +70,7 @@ export default function PasswordlessPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-muted/30 p-6">
+    <div className="flex min-h-screen items-center justify-center bg-muted/30 p-6">
       <Card className="w-full max-w-md">
         <CardHeader><CardTitle><h1 className="flex items-center gap-2"><KeyRound className="size-5" />Passwordless sign in</h1></CardTitle></CardHeader>
         <CardContent className="space-y-5">
@@ -85,6 +85,6 @@ export default function PasswordlessPage() {
           <p className="text-center text-sm text-muted-foreground"><Link href="/login" className="text-primary hover:underline">Back to password sign in</Link></p>
         </CardContent>
       </Card>
-    </main>
+    </div>
   );
 }

@@ -14,9 +14,9 @@ import { toast } from 'sonner';
 import { AlertTriangle, Clock, CheckCircle, FileText, DollarSign, Loader2 } from 'lucide-react';
 
 const statusColors: Record<DisputeStatus, string> = {
-  open: 'bg-red-500/10 text-red-500',
-  under_review: 'bg-yellow-500/10 text-yellow-500',
-  resolved: 'bg-green-500/10 text-green-500',
+  open: 'bg-destructive-subtle text-destructive',
+  under_review: 'bg-warning-subtle text-warning',
+  resolved: 'bg-success-subtle text-success',
 };
 
 function relativeTime(iso: string): string {
@@ -135,8 +135,8 @@ export default function DisputesPage() {
         <Card className="bg-card border-border">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center">
-                <AlertTriangle className="w-5 h-5 text-red-500" />
+              <div className="w-10 h-10 rounded-lg bg-destructive-subtle flex items-center justify-center">
+                <AlertTriangle className="w-5 h-5 text-destructive" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{openCount}</p>
@@ -148,8 +148,8 @@ export default function DisputesPage() {
         <Card className="bg-card border-border">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-yellow-500/10 flex items-center justify-center">
-                <Clock className="w-5 h-5 text-yellow-500" />
+              <div className="w-10 h-10 rounded-lg bg-warning-subtle flex items-center justify-center">
+                <Clock className="w-5 h-5 text-warning" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{underReviewCount}</p>
@@ -161,8 +161,8 @@ export default function DisputesPage() {
         <Card className="bg-card border-border">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                <CheckCircle className="w-5 h-5 text-green-500" />
+              <div className="w-10 h-10 rounded-lg bg-success-subtle flex items-center justify-center">
+                <CheckCircle className="w-5 h-5 text-success" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{resolvedCount}</p>
@@ -269,7 +269,7 @@ export default function DisputesPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="text-green-500 border-green-500/50"
+                          className="text-success border-success-border"
                           disabled={resolvingId === dispute.id}
                           onClick={() => handleResolve(dispute.id, 'employer_favor')}
                         >
@@ -280,8 +280,8 @@ export default function DisputesPage() {
                   )}
 
                   {dispute.status === 'resolved' && dispute.resolution && (
-                    <div className="p-3 rounded-lg bg-green-500/5 border border-green-500/20">
-                      <p className="text-sm text-green-500 flex items-center gap-2">
+                    <div className="p-3 rounded-lg bg-success-subtle border border-success-border">
+                      <p className="text-sm text-success flex items-center gap-2">
                         <CheckCircle className="w-4 h-4" />
                         Resolved in favor of {dispute.resolution.decision === 'freelancer_favor' ? 'freelancer' : 'employer'} — {dispute.resolution.reasoning}
                       </p>

@@ -1,4 +1,4 @@
-import { Faq5 } from '@/components/ui/faq-5';
+import { Faq5 } from '@/components/marketing/faq-5';
 
 export default function FaqsPage() {
   return (

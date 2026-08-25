@@ -31,7 +31,7 @@ export default function ResendConfirmationPage() {
   };
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-muted/30 p-6">
+    <div className="flex min-h-screen items-center justify-center bg-muted/30 p-6">
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>
@@ -60,6 +60,6 @@ export default function ResendConfirmationPage() {
           <p className="text-center text-sm"><Link href="/login" className="text-primary hover:underline">Back to sign in</Link></p>
         </CardContent>
       </Card>
-    </main>
+    </div>
   );
 }

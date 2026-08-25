@@ -29,7 +29,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={nunitoSans.variable} suppressHydrationWarning>
+    <html lang="en" className={nunitoSans.variable} data-scroll-behavior="smooth" suppressHydrationWarning>
       <body className="min-h-screen bg-background text-foreground antialiased" suppressHydrationWarning>
         <Providers>{children}</Providers>
       </body>

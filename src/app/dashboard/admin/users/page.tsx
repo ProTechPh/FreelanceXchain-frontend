@@ -11,14 +11,14 @@ import { toast } from 'sonner';
 import { Search, Ban, UserCheck, ShieldCheck, Loader2 } from 'lucide-react';
 
 const statusColors: Record<string, string> = {
-  active: 'bg-green-500/10 text-green-500',
-  suspended: 'bg-red-500/10 text-red-500',
+  active: 'bg-success-subtle text-success',
+  suspended: 'bg-destructive-subtle text-destructive',
 };
 
 const roleColors: Record<UserRole, string> = {
   freelancer: 'bg-primary/10 text-primary',
   employer: 'bg-cyan/10 text-cyan',
-  admin: 'bg-purple-500/10 text-purple-500',
+  admin: 'bg-info-subtle text-info',
 };
 
 export default function UsersPage() {
@@ -131,7 +131,7 @@ export default function UsersPage() {
         </Card>
         <Card className="bg-card border-border">
           <CardContent className="p-4">
-            <p className="text-2xl font-bold text-green-500">{activeCount}</p>
+            <p className="text-2xl font-bold text-success">{activeCount}</p>
             <p className="text-xs text-muted-foreground">Active</p>
           </CardContent>
         </Card>
@@ -143,7 +143,7 @@ export default function UsersPage() {
         </Card>
         <Card className="bg-card border-border">
           <CardContent className="p-4">
-            <p className="text-2xl font-bold text-red-500">{suspendedCount}</p>
+            <p className="text-2xl font-bold text-destructive">{suspendedCount}</p>
             <p className="text-xs text-muted-foreground">Suspended</p>
           </CardContent>
         </Card>
@@ -223,7 +223,7 @@ export default function UsersPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-yellow-500"
+                            className="h-8 w-8 text-warning"
                             title="Suspend"
                             disabled={pendingActionId === user.id}
                             onClick={() => handleSuspend(user)}
@@ -234,7 +234,7 @@ export default function UsersPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-green-500"
+                            className="h-8 w-8 text-success"
                             title="Unsuspend"
                             disabled={pendingActionId === user.id}
                             onClick={() => handleUnsuspend(user)}

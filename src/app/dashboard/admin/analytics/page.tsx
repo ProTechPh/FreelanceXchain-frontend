@@ -56,8 +56,8 @@ export default function AnalyticsPage() {
       title: 'Total Revenue (platform fees)',
       value: analytics ? `$${analytics.totalRevenue.toLocaleString()}` : '—',
       icon: DollarSign,
-      color: 'text-green-500',
-      bg: 'bg-green-500/10',
+      color: 'text-success',
+      bg: 'bg-success-subtle',
     },
     {
       title: 'Total Users',
@@ -79,8 +79,8 @@ export default function AnalyticsPage() {
       title: 'Active Contracts',
       value: analytics ? analytics.activeContracts.toLocaleString() : '—',
       icon: TrendingUp,
-      color: 'text-yellow-500',
-      bg: 'bg-yellow-500/10',
+      color: 'text-warning',
+      bg: 'bg-warning-subtle',
     },
   ];
 
@@ -104,7 +104,7 @@ export default function AnalyticsPage() {
                 <div>
                   <p className="text-sm text-muted-foreground">{metric.title}</p>
                   <p className="text-2xl font-bold mt-1">{metric.value}</p>
-                  {metric.change && <p className="text-xs text-green-500 mt-1">{metric.change}</p>}
+                  {metric.change && <p className="text-xs text-success mt-1">{metric.change}</p>}
                 </div>
                 <div className={`w-10 h-10 rounded-lg ${metric.bg} flex items-center justify-center`}>
                   <metric.icon className={`w-5 h-5 ${metric.color}`} />
@@ -201,7 +201,7 @@ export default function AnalyticsPage() {
                       <td className="p-3 font-medium">{freelancer.userName}</td>
                       <td className="p-3">
                         <span className="flex items-center gap-1">
-                          <Star className="w-3 h-3 text-yellow-500" /> {freelancer.averageRating.toFixed(1)}
+                          <Star className="w-3 h-3 text-warning" /> {freelancer.averageRating.toFixed(1)}
                         </span>
                       </td>
                       <td className="p-3 text-muted-foreground">{freelancer.totalRatings}</td>

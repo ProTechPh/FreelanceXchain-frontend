@@ -12,10 +12,10 @@ import { toast } from 'sonner';
 import { Clock, CheckCircle, XCircle, FileText, Loader2 } from 'lucide-react';
 
 const statusConfig: Record<ProposalStatus, { icon: typeof Clock; color: string; bg: string; label: string }> = {
-  pending: { icon: Clock, color: 'text-yellow-500', bg: 'bg-yellow-500/10', label: 'Pending' },
-  accepted: { icon: CheckCircle, color: 'text-green-500', bg: 'bg-green-500/10', label: 'Accepted' },
-  rejected: { icon: XCircle, color: 'text-red-500', bg: 'bg-red-500/10', label: 'Rejected' },
-  withdrawn: { icon: XCircle, color: 'text-gray-500', bg: 'bg-gray-500/10', label: 'Withdrawn' },
+  pending: { icon: Clock, color: 'text-warning', bg: 'bg-warning-subtle', label: 'Pending' },
+  accepted: { icon: CheckCircle, color: 'text-success', bg: 'bg-success-subtle', label: 'Accepted' },
+  rejected: { icon: XCircle, color: 'text-destructive', bg: 'bg-destructive-subtle', label: 'Rejected' },
+  withdrawn: { icon: XCircle, color: 'text-neutral', bg: 'bg-neutral-subtle', label: 'Withdrawn' },
 };
 
 interface ProposalView {

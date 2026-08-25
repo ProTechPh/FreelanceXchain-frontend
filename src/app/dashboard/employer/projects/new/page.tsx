@@ -20,19 +20,7 @@ import {
   type ProjectSubmissionSkill,
 } from '@/lib/project-submission';
 import { toast } from 'sonner';
-import {
-  ChevronRight,
-  ChevronLeft,
-  Plus,
-  X,
-  Upload,
-  FileText,
-  DollarSign,
-  Clock,
-  Target,
-  Loader2,
-  Sparkles,
-} from 'lucide-react';
+import { ChevronRight, ChevronLeft, Plus, X, Upload, FileText, DollarSign, Clock, Target, Loader2, Sparkles } from 'lucide-react';
 
 const steps = [
   { id: 1, title: 'Project Details', icon: FileText },
@@ -229,9 +217,9 @@ export default function CreateProjectPage() {
             aria-current={currentStep === step.id ? 'step' : undefined}
             className={`flex min-h-10 items-center justify-center gap-2 rounded-lg px-2 py-2 text-center ${
               currentStep === step.id
-                ? 'gradient-primary text-white'
+                ? 'gradient-primary text-primary-foreground'
                 : currentStep > step.id
-                ? 'bg-green-500/10 text-green-500'
+                ? 'bg-success-subtle text-success'
                 : 'bg-secondary text-muted-foreground'
             }`}
           >

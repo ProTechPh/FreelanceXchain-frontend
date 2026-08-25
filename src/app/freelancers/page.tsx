@@ -3,15 +3,15 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { MapPin, ShieldCheck } from "lucide-react";
+import { MapPin, ShieldCheck } from 'lucide-react';
 import { MarketplaceBrowser } from "@/components/marketplace/marketplace-browser";
 import type { FreelancerProfile } from "@/types";
 import { marketplaceFiltersFromSearchParams } from "@/lib/marketplace-search";
 
 const availabilityColors: Record<string, string> = {
-  available: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
-  busy: "bg-yellow-500/10 text-yellow-600",
-  unavailable: "bg-gray-500/10 text-gray-500",
+  available: "bg-success-subtle text-success dark:text-success",
+  busy: "bg-warning-subtle text-warning",
+  unavailable: "bg-neutral-subtle text-neutral",
 };
 
 function FreelancerResult({ freelancer, listingQuery }: { freelancer: FreelancerProfile; listingQuery: string }) {
@@ -30,7 +30,7 @@ function FreelancerResult({ freelancer, listingQuery }: { freelancer: Freelancer
                 <h2 className="truncate text-base font-bold text-foreground group-hover:text-primary transition-colors">
                   {freelancer.name || "Verified Freelancer"}
                 </h2>
-                <ShieldCheck className="size-4 text-emerald-500 shrink-0" />
+                <ShieldCheck className="size-4 text-success shrink-0" />
               </div>
               <p className="mt-1 line-clamp-2 text-xs text-muted-foreground leading-relaxed">
                 {freelancer.bio || "Full-stack Web3 & Smart Contract Developer."}
@@ -39,10 +39,10 @@ function FreelancerResult({ freelancer, listingQuery }: { freelancer: Freelancer
           </div>
 
           <div className="flex items-center gap-2 mb-3">
-            <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${availabilityColors[freelancer.availability] || availabilityColors.available}`}>
+            <span className={`px-2.5 py-0.5 rounded-full text-2xs font-bold ${availabilityColors[freelancer.availability] || availabilityColors.available}`}>
               {freelancer.availability}
             </span>
-            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
+            <span className="inline-flex items-center gap-1 text-2xs font-semibold text-muted-foreground">
               <MapPin className="size-3" /> {freelancer.nationality || "Remote"}
             </span>
           </div>
@@ -51,7 +51,7 @@ function FreelancerResult({ freelancer, listingQuery }: { freelancer: Freelancer
             {freelancer.skills?.slice(0, 4).map((skill) => (
               <span
                 key={skill.name}
-                className="px-2 py-0.5 rounded-full bg-background border border-border/80 text-[10px] font-semibold text-foreground/80"
+                className="px-2 py-0.5 rounded-full bg-background border border-border/80 text-2xs font-semibold text-foreground/80"
               >
                 {skill.name}
               </span>

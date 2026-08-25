@@ -1,30 +1,95 @@
+"use client"
+
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { cva, type VariantProps } from "class-variance-authority"
+import { Loader2 } from 'lucide-react'
 
 import { cn } from "@/lib/utils"
 
+// Reference implementation for the state contract in SKILL.md: every component
+// must define default, hover, focus-visible, active, disabled, loading and error.
+//
+// Notes on the choices here:
+//  - `disabled` uses explicit muted tokens rather than opacity. Fading a button
+//    to 50% drags its text below the AA threshold; muted tokens stay legible
+//    while still reading as unavailable.
+//  - `active:` states are real, not inherited from hover.
+//  - `loading` is a prop, not a caller-assembled spinner. 36 files were building
+//    their own; this makes the state consistent and keeps `aria-busy` attached.
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-xl text-sm font-semibold ring-offset-background transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  [
+    "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap",
+    "rounded-md font-semibold",
+    "transition-[background-color,border-color,color,box-shadow,transform]",
+    "duration-fast ease-out",
+    "outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+    "disabled:pointer-events-none disabled:cursor-not-allowed",
+    "aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed",
+    "data-[loading=true]:cursor-progress",
+    // Error state, driven by aria-invalid so form libraries wire it for free.
+    "aria-invalid:ring-2 aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+    "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  ].join(" "),
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-[1.02]",
-        destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline:
-          "border border-border/60 bg-transparent text-foreground hover:bg-primary/[0.06] hover:border-primary/40 hover:text-foreground",
-        secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
-        gradient: "gradient-primary text-white hover:scale-[1.02] hover:opacity-90",
+        default: [
+          "bg-primary text-primary-foreground shadow-xs",
+          "hover:bg-primary-hover",
+          "active:bg-primary-active",
+          "disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none",
+          "aria-disabled:bg-muted aria-disabled:text-muted-foreground",
+        ].join(" "),
+        destructive: [
+          "bg-destructive text-destructive-foreground shadow-xs",
+          "hover:bg-destructive/90",
+          "active:bg-destructive/80",
+          "focus-visible:ring-destructive",
+          "disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none",
+        ].join(" "),
+        outline: [
+          "border border-input bg-transparent text-foreground",
+          "hover:bg-accent hover:text-accent-foreground hover:border-primary",
+          "active:bg-primary-subtle",
+          "disabled:border-border disabled:text-muted-foreground",
+        ].join(" "),
+        secondary: [
+          "bg-secondary text-secondary-foreground",
+          "hover:bg-secondary/70",
+          "active:bg-secondary/90",
+          "disabled:bg-muted disabled:text-muted-foreground",
+        ].join(" "),
+        ghost: [
+          "bg-transparent text-foreground",
+          "hover:bg-accent hover:text-accent-foreground",
+          "active:bg-primary-subtle",
+          "disabled:text-muted-foreground",
+        ].join(" "),
+        link: [
+          "text-primary underline-offset-4",
+          "hover:underline",
+          "active:text-primary-active",
+          "disabled:text-muted-foreground disabled:no-underline",
+        ].join(" "),
+        // Kept because 27 call sites use it. It now resolves against a real
+        // utility — previously `gradient-primary` was undefined, so this variant
+        // rendered as white text on no background.
+        gradient: [
+          "gradient-primary text-primary-foreground shadow-sm",
+          "hover:opacity-90",
+          "active:opacity-100 active:brightness-95",
+          "disabled:bg-none disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none",
+        ].join(" "),
       },
       size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-9 px-3",
-        lg: "h-11 px-8",
-        icon: "h-10 w-10",
+        xs: "h-7 gap-1.5 px-2 text-2xs",
+        sm: "h-9 px-3 text-sm",
+        default: "h-10 px-4 text-sm",
+        lg: "h-11 px-6 text-base",
+        icon: "size-10",
+        "icon-sm": "size-9",
+        "icon-xs": "size-7",
       },
     },
     defaultVariants: {
@@ -34,24 +99,53 @@ const buttonVariants = cva(
   },
 )
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+interface ButtonProps
+  extends React.ComponentProps<"button">,
     VariantProps<typeof buttonVariants> {
   asChild?: boolean
+  /** Shows a spinner, disables interaction and sets aria-busy. */
+  loading?: boolean
+  /** Announced while loading. Defaults to the button's own content. */
+  loadingText?: string
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : "button"
-    return (
-      <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
-        ref={ref}
-        {...props}
-      />
-    )
-  },
-)
-Button.displayName = "Button"
+function Button({
+  className,
+  variant,
+  size,
+  asChild = false,
+  loading = false,
+  loadingText,
+  disabled,
+  children,
+  ...props
+}: ButtonProps) {
+  const Comp = asChild ? Slot : "button"
 
-export { Button, buttonVariants }
+  // `asChild` renders an arbitrary element (usually a Link); injecting a spinner
+  // there would break Slot's single-child contract, so loading only decorates
+  // real buttons.
+  const showSpinner = loading && !asChild
+
+  return (
+    <Comp
+      data-slot="button"
+      data-loading={loading || undefined}
+      className={cn(buttonVariants({ variant, size, className }))}
+      disabled={asChild ? undefined : disabled || loading}
+      aria-busy={loading || undefined}
+      {...props}
+    >
+      {showSpinner ? (
+        <>
+          <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+          {loadingText ?? children}
+        </>
+      ) : (
+        children
+      )}
+    </Comp>
+  )
+}
+
+export { Button, buttonVariants, type ButtonProps }

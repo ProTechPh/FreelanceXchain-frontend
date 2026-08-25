@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { toast } from 'sonner';
-import { SignUpPage } from '@/components/ui/sign-up';
+import { SignUpPage } from '@/components/marketing/sign-up';
 import type { UserRole } from '@/types';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 

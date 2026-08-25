@@ -68,6 +68,6 @@ test('other contract participant approves a pending escrow refund', async ({ pag
   await page.getByRole('button', { name: 'Approve refund' }).click();
 
   await expect(page.getByText('Refund approved.')).toBeVisible();
-  await expect(page.getByText('approved', { exact: true })).toBeVisible();
+  await expect(page.getByText('Approved', { exact: true })).toBeVisible();
   expect(approvalCount).toBe(1);
 });

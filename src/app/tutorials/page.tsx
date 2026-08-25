@@ -3,23 +3,16 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
-import Navbar from "@/components/ui/navbar";
-import { FooterSection } from "@/components/ui/footer-section";
-import {
-  Sparkle,
-  CheckCircle,
-  User,
-  Briefcase,
-  ShieldCheck,
-  ArrowRight,
-} from "@phosphor-icons/react";
+import Navbar from "@/components/layout/navbar";
+import { FooterSection } from "@/components/layout/footer-section";
+import { Sparkles as Sparkle, CircleCheck as CheckCircle, User, Briefcase, ShieldCheck, ArrowRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 
 const TUTORIAL_TRACKS = [
   {
     id: "freelancers",
     label: "For Freelancers",
-    icon: <User className="size-4" weight="bold" />,
+    icon: <User className="size-4" strokeWidth={2.5} />,
     badge: "Getting Hired & Paid",
     description: "Master the complete freelancer lifecycle: profile setup, AI proposal bidding, milestone deliverables, and instant escrow payouts.",
     steps: [
@@ -56,7 +49,7 @@ const TUTORIAL_TRACKS = [
   {
     id: "employers",
     label: "For Employers",
-    icon: <Briefcase className="size-4" weight="bold" />,
+    icon: <Briefcase className="size-4" strokeWidth={2.5} />,
     badge: "Hiring & Escrow Management",
     description: "Post projects, review AI-ranked proposals, lock upfront funds in smart contract escrow, and approve milestone deliverables safely.",
     steps: [
@@ -93,7 +86,7 @@ const TUTORIAL_TRACKS = [
   {
     id: "security",
     label: "Security & Wallet Basics",
-    icon: <ShieldCheck className="size-4" weight="bold" />,
+    icon: <ShieldCheck className="size-4" strokeWidth={2.5} />,
     badge: "Account Protection",
     description: "Essential best practices for Web3 security, multi-factor authentication, and safe smart contract interactions.",
     steps: [
@@ -148,13 +141,13 @@ export default function TutorialsPage() {
             transition={{ duration: 0.4 }}
           >
             <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold mb-4 border border-primary/20 shadow-xs">
-              <Sparkle className="size-3.5 fill-primary" weight="fill" />
+              <Sparkle className="size-3.5 fill-primary" fill="currentColor" />
               <span>Step-by-Step Guides & Tutorials</span>
             </div>
 
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-foreground">
               Master the FreelanceXchain <br />
-              <span className="text-[#717680] dark:text-muted-foreground font-semibold">
+              <span className="text-muted-foreground dark:text-muted-foreground font-semibold">
                 smart escrow ecosystem.
               </span>
             </h1>
@@ -214,7 +207,7 @@ export default function TutorialsPage() {
                     <span className="w-10 h-10 rounded-2xl bg-primary/10 text-primary font-black text-sm flex items-center justify-center border border-primary/20">
                       {item.step}
                     </span>
-                    <CheckCircle className="size-5 text-emerald-500" weight="fill" />
+                    <CheckCircle className="size-5 text-success" fill="currentColor" />
                   </div>
 
                   <h3 className="text-lg font-bold text-foreground tracking-tight leading-snug">
@@ -234,7 +227,7 @@ export default function TutorialsPage() {
                       className="rounded-full text-xs font-bold hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all cursor-pointer"
                     >
                       {item.action}
-                      <ArrowRight className="size-3 ml-1.5" weight="bold" />
+                      <ArrowRight className="size-3 ml-1.5" strokeWidth={2.5} />
                     </Button>
                   </Link>
                 </div>

@@ -84,15 +84,15 @@ export default function SystemHealthPage() {
       <Card className="bg-card border-border">
         <CardContent className="p-6">
           <div className="flex items-center gap-4">
-            <div className={`w-16 h-16 rounded-2xl ${allHealthy ? 'bg-green-500/10' : 'bg-red-500/10'} flex items-center justify-center`}>
+            <div className={`w-16 h-16 rounded-2xl ${allHealthy ? 'bg-success-subtle' : 'bg-destructive-subtle'} flex items-center justify-center`}>
               {allHealthy ? (
-                <CheckCircle className="w-8 h-8 text-green-500" />
+                <CheckCircle className="w-8 h-8 text-success" />
               ) : (
-                <AlertTriangle className="w-8 h-8 text-red-500" />
+                <AlertTriangle className="w-8 h-8 text-destructive" />
               )}
             </div>
             <div>
-              <h2 className={`text-2xl font-bold ${allHealthy ? 'text-green-500' : 'text-red-500'}`}>
+              <h2 className={`text-2xl font-bold ${allHealthy ? 'text-success' : 'text-destructive'}`}>
                 {allHealthy ? 'All Systems Operational' : 'Degraded'}
               </h2>
               <p className="text-muted-foreground">
@@ -112,14 +112,14 @@ export default function SystemHealthPage() {
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      card.status === 'healthy' ? 'bg-green-500/10' : 'bg-red-500/10'
+                      card.status === 'healthy' ? 'bg-success-subtle' : 'bg-destructive-subtle'
                     }`}
                   >
-                    <card.icon className={`w-5 h-5 ${card.status === 'healthy' ? 'text-green-500' : 'text-red-500'}`} />
+                    <card.icon className={`w-5 h-5 ${card.status === 'healthy' ? 'text-success' : 'text-destructive'}`} />
                   </div>
                   <p className="font-medium">{card.name}</p>
                 </div>
-                <Badge className={card.status === 'healthy' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}>
+                <Badge className={card.status === 'healthy' ? 'bg-success-subtle text-success' : 'bg-destructive-subtle text-destructive'}>
                   {card.status ?? 'unknown'}
                 </Badge>
               </div>

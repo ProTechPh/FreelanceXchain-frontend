@@ -3,27 +3,25 @@
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { toast } from 'sonner';
-import { SignInPage, Testimonial } from '@/components/ui/sign-in';
+import { SignInPage, Testimonial } from '@/components/marketing/sign-in';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 
+// Illustrative product copy, not attributed customer quotes.
 const testimonials: Testimonial[] = [
   {
-    avatarSrc: "https://randomuser.me/api/portraits/women/57.jpg",
-    name: "Sarah Chen",
-    handle: "@sarahdigital",
-    text: "Amazing platform! The user experience is seamless and the features are exactly what I needed."
+    name: 'Freelancers',
+    handle: 'Get paid on delivery',
+    text: 'Funds are locked in escrow before you start, and released to your wallet the moment a milestone is approved.',
   },
   {
-    avatarSrc: "https://randomuser.me/api/portraits/men/64.jpg",
-    name: "Marcus Johnson",
-    handle: "@marcustech",
-    text: "This service has transformed how I work. Clean design, powerful features, and excellent support."
+    name: 'Employers',
+    handle: 'Fund with confidence',
+    text: 'Release payment per milestone, not up front. Every participant is KYC-verified before a contract can be funded.',
   },
   {
-    avatarSrc: "https://randomuser.me/api/portraits/men/32.jpg",
-    name: "David Martinez",
-    handle: "@davidcreates",
-    text: "I've tried many platforms, but this one stands out. Intuitive, reliable, and genuinely helpful for productivity."
+    name: 'Both sides',
+    handle: 'One shared record',
+    text: 'Contracts, milestones and disputes read the same way for everyone on them, on-chain and auditable.',
   },
 ];
 

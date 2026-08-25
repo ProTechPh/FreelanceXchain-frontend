@@ -16,23 +16,12 @@ import {
 import { useAuthStore } from '@/stores/authStore';
 import type { Contract, Proposal, Project } from '@/types';
 import { toast } from 'sonner';
-import {
-  DollarSign,
-  FolderOpen,
-  FileText,
-  Star,
-  TrendingUp,
-  Clock,
-  ArrowUpRight,
-  Briefcase,
-  Wallet,
-  Loader2,
-} from 'lucide-react';
+import { DollarSign, FolderOpen, FileText, Star, TrendingUp, Clock, ArrowUpRight, Briefcase, Wallet, Loader2 } from 'lucide-react';
 
 const statusColors: Record<string, string> = {
-  pending: 'bg-yellow-500/10 text-yellow-500',
-  accepted: 'bg-green-500/10 text-green-500',
-  rejected: 'bg-red-500/10 text-red-500',
+  pending: 'bg-warning-subtle text-warning',
+  accepted: 'bg-success-subtle text-success',
+  rejected: 'bg-destructive-subtle text-destructive',
   withdrawn: 'bg-muted text-muted-foreground',
 };
 
@@ -158,8 +147,8 @@ export default function FreelancerDashboard() {
       value: totalEarnings !== null ? `$${totalEarnings.toLocaleString()}` : '—',
       change: projectsCompleted !== null ? `${projectsCompleted} completed contracts` : undefined,
       icon: DollarSign,
-      color: 'text-green-500',
-      bg: 'bg-green-500/10',
+      color: 'text-success',
+      bg: 'bg-success-subtle',
     },
     {
       title: 'Active Contracts',
@@ -182,8 +171,8 @@ export default function FreelancerDashboard() {
       value: averageRating !== null && totalRatings > 0 ? averageRating.toFixed(1) : 'Not yet rated',
       change: totalRatings > 0 ? `${totalRatings} ratings` : undefined,
       icon: Star,
-      color: 'text-yellow-500',
-      bg: 'bg-yellow-500/10',
+      color: 'text-warning',
+      bg: 'bg-warning-subtle',
     },
   ];
 
@@ -337,7 +326,7 @@ export default function FreelancerDashboard() {
                 >
                   <div className="flex items-start justify-between mb-3">
                     <h3 className="font-medium">{project.title}</h3>
-                    <Badge className="bg-green-500/10 text-green-500">{Math.round(matchScore)}% Match</Badge>
+                    <Badge className="bg-success-subtle text-success">{Math.round(matchScore)}% Match</Badge>
                   </div>
                   <p className="text-sm text-primary font-medium mb-2">${project.budget.toLocaleString()}</p>
                   <div className="flex flex-wrap gap-1.5 mb-3">
@@ -363,8 +352,8 @@ export default function FreelancerDashboard() {
         <Link href="/dashboard/freelancer/earnings">
           <Card className="bg-card border-border hover:border-primary/20 transition-all cursor-pointer">
             <CardContent className="p-4 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center">
-                <Wallet className="w-5 h-5 text-green-500" />
+              <div className="w-10 h-10 rounded-lg bg-success-subtle flex items-center justify-center">
+                <Wallet className="w-5 h-5 text-success" />
               </div>
               <div>
                 <p className="font-medium">View Earnings</p>
@@ -376,8 +365,8 @@ export default function FreelancerDashboard() {
         <Link href="/dashboard/freelancer/reputation">
           <Card className="bg-card border-border hover:border-primary/20 transition-all cursor-pointer">
             <CardContent className="p-4 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-lg bg-yellow-500/10 flex items-center justify-center">
-                <Star className="w-5 h-5 text-yellow-500" />
+              <div className="w-10 h-10 rounded-lg bg-warning-subtle flex items-center justify-center">
+                <Star className="w-5 h-5 text-warning" />
               </div>
               <div>
                 <p className="font-medium">Build Reputation</p>

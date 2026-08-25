@@ -3,18 +3,12 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
-import Navbar from "@/components/ui/navbar";
-import { FooterSection } from "@/components/ui/footer-section";
+import Navbar from "@/components/layout/navbar";
+import { FooterSection } from "@/components/layout/footer-section";
 import { reputationApi } from "@/lib/api";
 import type { ReputationScore } from "@/types";
 import { toast } from "sonner";
-import {
-  Trophy,
-  Star,
-  ShieldCheck,
-  Crown,
-  Loader2,
-} from "lucide-react";
+import { Trophy, Star, ShieldCheck, Crown, Loader2 } from 'lucide-react';
 
 export default function LeaderboardPage() {
   const reduce = useReducedMotion();
@@ -56,13 +50,13 @@ export default function LeaderboardPage() {
             transition={{ duration: 0.4 }}
           >
             <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold mb-4 border border-primary/20 shadow-xs">
-              <Trophy className="size-3.5 text-amber-500" />
+              <Trophy className="size-3.5 text-warning" />
               <span>On-Chain Verified Rankings</span>
             </div>
 
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-foreground">
               Top Rated Freelancers & Engineers, <br />
-              <span className="text-[#717680] dark:text-muted-foreground font-semibold">
+              <span className="text-muted-foreground dark:text-muted-foreground font-semibold">
                 ranked by on-chain reputation.
               </span>
             </h1>
@@ -85,32 +79,32 @@ export default function LeaderboardPage() {
                 {/* 2nd Place */}
                 <div className="order-2 md:order-1 rounded-3xl bg-card border border-border/80 p-6 shadow-md text-center flex flex-col justify-between hover:border-primary/50 transition-all">
                   <div>
-                    <div className="w-10 h-10 rounded-full bg-gray-400/10 text-gray-400 font-extrabold text-sm flex items-center justify-center mx-auto mb-3">
+                    <div className="w-10 h-10 rounded-full bg-neutral-subtle text-neutral font-extrabold text-sm flex items-center justify-center mx-auto mb-3">
                       #2
                     </div>
                     <h3 className="font-bold text-foreground text-base">User {leaderboard[1].user_id.slice(0, 8)}</h3>
                     <p className="text-xs text-muted-foreground mt-0.5">{leaderboard[1].total_ratings} completed milestones</p>
                   </div>
                   <div className="mt-4 pt-4 border-t border-border/50 flex items-center justify-center gap-1 text-sm font-bold text-foreground">
-                    <Star className="size-4 text-amber-500 fill-amber-500" />
+                    <Star className="size-4 text-warning fill-warning" />
                     <span>{leaderboard[1].overall_score.toFixed(2)} Rating</span>
                   </div>
                 </div>
 
                 {/* 1st Place - Gold Champion */}
                 <div className="order-1 md:order-2 rounded-3xl bg-card border-2 border-primary/40 p-8 shadow-xl text-center flex flex-col justify-between scale-105 relative">
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-amber-500 text-white text-[11px] font-bold shadow-md flex items-center gap-1">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-warning text-warning-foreground text-2xs font-bold shadow-md flex items-center gap-1">
                     <Crown className="size-3" /> Champion
                   </div>
                   <div>
-                    <div className="w-12 h-12 rounded-full bg-amber-500/10 text-amber-500 font-black text-lg flex items-center justify-center mx-auto mb-3">
+                    <div className="w-12 h-12 rounded-full bg-warning-subtle text-warning font-black text-lg flex items-center justify-center mx-auto mb-3">
                       #1
                     </div>
                     <h3 className="font-extrabold text-foreground text-lg">User {leaderboard[0].user_id.slice(0, 8)}</h3>
                     <p className="text-xs text-muted-foreground mt-0.5">{leaderboard[0].total_ratings} completed milestones</p>
                   </div>
                   <div className="mt-4 pt-4 border-t border-border/50 flex items-center justify-center gap-1.5 text-base font-extrabold text-primary">
-                    <Star className="size-4 text-amber-500 fill-amber-500" />
+                    <Star className="size-4 text-warning fill-warning" />
                     <span>{leaderboard[0].overall_score.toFixed(2)} Rating</span>
                   </div>
                 </div>
@@ -118,14 +112,14 @@ export default function LeaderboardPage() {
                 {/* 3rd Place */}
                 <div className="order-3 rounded-3xl bg-card border border-border/80 p-6 shadow-md text-center flex flex-col justify-between hover:border-primary/50 transition-all">
                   <div>
-                    <div className="w-10 h-10 rounded-full bg-orange-400/10 text-orange-400 font-extrabold text-sm flex items-center justify-center mx-auto mb-3">
+                    <div className="w-10 h-10 rounded-full bg-warning-subtle text-warning font-extrabold text-sm flex items-center justify-center mx-auto mb-3">
                       #3
                     </div>
                     <h3 className="font-bold text-foreground text-base">User {leaderboard[2].user_id.slice(0, 8)}</h3>
                     <p className="text-xs text-muted-foreground mt-0.5">{leaderboard[2].total_ratings} completed milestones</p>
                   </div>
                   <div className="mt-4 pt-4 border-t border-border/50 flex items-center justify-center gap-1 text-sm font-bold text-foreground">
-                    <Star className="size-4 text-amber-500 fill-amber-500" />
+                    <Star className="size-4 text-warning fill-warning" />
                     <span>{leaderboard[2].overall_score.toFixed(2)} Rating</span>
                   </div>
                 </div>
@@ -151,14 +145,14 @@ export default function LeaderboardPage() {
                           <div>
                             <div className="flex items-center gap-1.5">
                               <p className="font-bold text-foreground text-sm">User {entry.user_id.slice(0, 8)}</p>
-                              <ShieldCheck className="size-3.5 text-emerald-500" />
+                              <ShieldCheck className="size-3.5 text-success" />
                             </div>
-                            <p className="text-[11px] text-muted-foreground">{entry.total_ratings} reviews</p>
+                            <p className="text-2xs text-muted-foreground">{entry.total_ratings} reviews</p>
                           </div>
                         </div>
 
                         <div className="flex items-center gap-1 font-bold text-foreground text-sm">
-                          <Star className="size-3.5 text-amber-500 fill-amber-500" />
+                          <Star className="size-3.5 text-warning fill-warning" />
                           <span>{entry.overall_score.toFixed(2)}</span>
                         </div>
                       </div>
@@ -174,10 +168,10 @@ export default function LeaderboardPage() {
                   <h3 className="font-bold text-foreground text-sm mb-3">Reputation Tiers</h3>
                   <div className="space-y-2">
                     {[
-                      { tier: "Platinum", min: "4.9+", color: "bg-purple-500", perks: "Top 1% Performers" },
-                      { tier: "Gold", min: "4.7+", color: "bg-amber-500", perks: "Top 5% Performers" },
-                      { tier: "Silver", min: "4.5+", color: "bg-gray-400", perks: "Top 15% Performers" },
-                      { tier: "Bronze", min: "4.0+", color: "bg-orange-400", perks: "Top 30% Performers" },
+                      { tier: "Platinum", min: "4.9+", color: "bg-info", perks: "Top 1% Performers" },
+                      { tier: "Gold", min: "4.7+", color: "bg-warning", perks: "Top 5% Performers" },
+                      { tier: "Silver", min: "4.5+", color: "bg-neutral", perks: "Top 15% Performers" },
+                      { tier: "Bronze", min: "4.0+", color: "bg-warning", perks: "Top 30% Performers" },
                     ].map((tier) => (
                       <div key={tier.tier} className="flex items-center justify-between p-2.5 rounded-xl bg-background border border-border/60 text-xs">
                         <div className="flex items-center gap-2">

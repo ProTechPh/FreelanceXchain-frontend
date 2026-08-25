@@ -11,7 +11,7 @@ import {
   canRequestRushUpgrade,
   canRespondToRushUpgrade,
 } from '@/lib/contract-negotiation';
-import { getStatusColor } from '@/lib/status-styles';
+import { StatusBadge } from '@/components/ui/status-badge';
 import type { Contract, KycStatus, RefundRequest, RushUpgradeRequest } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -127,7 +127,7 @@ export function ContractNegotiationPanel({
 
           {openRushRequest && (
             <div className="space-y-3 rounded-lg border border-border p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2"><p className="font-medium">Open request: {openRushRequest.proposedPercentage}%</p><Badge className={getStatusColor(openRushRequest.status)}>{openRushRequest.status.replace('_', ' ')}</Badge></div>
+              <div className="flex flex-wrap items-center justify-between gap-2"><p className="font-medium">Open request: {openRushRequest.proposedPercentage}%</p><StatusBadge status={openRushRequest.status} domain="rush" /></div>
               {openRushRequest.counterPercentage !== null && <p className="text-sm text-muted-foreground">Freelancer counter-offer: {openRushRequest.counterPercentage}%</p>}
 
               {role === 'freelancer' && canRespondToRushUpgrade(role, openRushRequest.status, kycStatus) && (
@@ -172,7 +172,7 @@ export function ContractNegotiationPanel({
               const rejectionReason = rejectionReasons[refund.id] ?? '';
               return (
                 <li key={refund.id} className="space-y-3 rounded-lg border border-border p-4 text-sm">
-                  <div className="flex flex-wrap items-start justify-between gap-2"><div><p className="font-medium">${refund.amount.toLocaleString()} {refund.is_partial ? 'partial refund' : 'refund'}</p><p className="mt-1 text-muted-foreground">{refund.reason}</p></div><Badge className={getStatusColor(refund.status)}>{refund.status}</Badge></div>
+                  <div className="flex flex-wrap items-start justify-between gap-2"><div><p className="font-medium">${refund.amount.toLocaleString()} {refund.is_partial ? 'partial refund' : 'refund'}</p><p className="mt-1 text-muted-foreground">{refund.reason}</p></div><StatusBadge status={refund.status} domain="refund" /></div>
                   {refund.rejection_reason && <p className="text-destructive">Rejected: {refund.rejection_reason}</p>}
                   {refund.requested_by === currentUserId && refund.status === 'pending' && <p className="text-muted-foreground">Waiting for the other participant to respond.</p>}
                   {canDecide && (

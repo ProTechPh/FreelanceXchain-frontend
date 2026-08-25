@@ -9,7 +9,7 @@ import { getApiErrorMessage } from '@/lib/auth-contract';
 import { canUseDisputeActions, validateDisputeDraft, validateEvidenceLink, type DisputeDraft } from '@/lib/dispute-form';
 import { safeAttachmentUrl } from '@/lib/attachment-presentation';
 import { normalizeMilestone } from '@/lib/contract-workflow';
-import { getStatusColor } from '@/lib/status-styles';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { useAuthStore } from '@/stores/authStore';
 import type { Contract, Dispute, DisputeEvidence, Milestone, UserRole } from '@/types';
 import { Badge } from '@/components/ui/badge';
@@ -215,7 +215,7 @@ export function DisputeCenter({ role, disputeId }: { role: ParticipantRole; disp
 
   if (!verified) {
     return (
-      <Card className="border-amber-500/40 bg-amber-500/5"><CardContent className="flex flex-col items-center gap-4 py-12 text-center"><ShieldCheck className="size-10 text-amber-500" /><div><h1 className="text-xl font-semibold">Verification required</h1><p className="mt-1 text-muted-foreground">The backend requires verified identity before disputes can be viewed or submitted.</p></div><Button asChild><Link href={verificationPath}>Complete verification</Link></Button></CardContent></Card>
+      <Card className="border-warning-border bg-warning-subtle"><CardContent className="flex flex-col items-center gap-4 py-12 text-center"><ShieldCheck className="size-10 text-warning" /><div><h1 className="text-xl font-semibold">Verification required</h1><p className="mt-1 text-muted-foreground">The backend requires verified identity before disputes can be viewed or submitted.</p></div><Button asChild><Link href={verificationPath}>Complete verification</Link></Button></CardContent></Card>
     );
   }
 
@@ -252,7 +252,7 @@ export function DisputeCenter({ role, disputeId }: { role: ParticipantRole; disp
           return (
             <Card key={dispute.id}>
               <CardHeader>
-                <div className="flex items-start justify-between gap-3"><div><CardTitle className="text-base">{contract?.project?.title || contract?.title || `Contract ${dispute.contractId.slice(0, 8)}`}</CardTitle><p className="mt-1 text-sm text-muted-foreground">Opened {new Date(dispute.createdAt).toLocaleString()}</p></div><Badge className={getStatusColor(dispute.status)}>{dispute.status.replace('_', ' ')}</Badge></div>
+                <div className="flex items-start justify-between gap-3"><div><CardTitle className="text-base">{contract?.project?.title || contract?.title || `Contract ${dispute.contractId.slice(0, 8)}`}</CardTitle><p className="mt-1 text-sm text-muted-foreground">Opened {new Date(dispute.createdAt).toLocaleString()}</p></div><StatusBadge status={dispute.status} domain="dispute" /></div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="rounded-lg bg-muted p-3 text-sm"><span className="font-medium">Reason:</span> {dispute.reason}</p>
@@ -279,7 +279,7 @@ export function DisputeCenter({ role, disputeId }: { role: ParticipantRole; disp
                   </div>
                 )}
 
-                {dispute.status === 'resolved' && dispute.resolution && <div className="rounded-lg border border-green-500/30 bg-green-500/5 p-3 text-sm"><p className="font-medium">Resolution: {dispute.resolution.decision.replace('_', ' ')}</p><p className="mt-1 text-muted-foreground">{dispute.resolution.reasoning}</p></div>}
+                {dispute.status === 'resolved' && dispute.resolution && <div className="rounded-lg border border-success-border bg-success-subtle p-3 text-sm"><p className="font-medium">Resolution: {dispute.resolution.decision.replace('_', ' ')}</p><p className="mt-1 text-muted-foreground">{dispute.resolution.reasoning}</p></div>}
               </CardContent>
             </Card>
           );

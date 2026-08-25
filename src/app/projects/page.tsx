@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Clock, DollarSign, Users, Zap, ShieldCheck } from "lucide-react";
+import { Clock, DollarSign, Users, Zap, ShieldCheck } from 'lucide-react';
 import { MarketplaceBrowser } from "@/components/marketplace/marketplace-browser";
 import type { Project } from "@/types";
 import { marketplaceFiltersFromSearchParams } from "@/lib/marketplace-search";
@@ -16,11 +16,11 @@ function ProjectResult({ project, listingQuery }: { project: Project; listingQue
         <div className="mb-3 flex items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full">
+              <span className="inline-flex items-center gap-1 text-2xs font-bold text-success dark:text-success bg-success-subtle px-2.5 py-0.5 rounded-full">
                 <ShieldCheck className="size-3" /> Escrow Protected
               </span>
               {project.isRush && (
-                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 bg-amber-500/10 px-2.5 py-0.5 rounded-full">
+                <span className="inline-flex items-center gap-1 text-2xs font-bold text-warning bg-warning-subtle px-2.5 py-0.5 rounded-full">
                   <Zap className="size-3" /> Rush +{project.rushFeePercentage}%
                 </span>
               )}
@@ -42,7 +42,7 @@ function ProjectResult({ project, listingQuery }: { project: Project; listingQue
           {project.requiredSkills?.map((skill) => (
             <span
               key={skill.skillId ?? skill.skillName}
-              className="px-2.5 py-0.5 rounded-full bg-background border border-border/80 text-[11px] font-semibold text-foreground/80"
+              className="px-2.5 py-0.5 rounded-full bg-background border border-border/80 text-2xs font-semibold text-foreground/80"
             >
               {skill.skillName}
             </span>
@@ -52,7 +52,7 @@ function ProjectResult({ project, listingQuery }: { project: Project; listingQue
         <div className="pt-4 border-t border-border/50 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1 font-bold text-foreground text-sm">
-              <DollarSign className="size-4 text-emerald-600 dark:text-emerald-400" />
+              <DollarSign className="size-4 text-success dark:text-success" />
               ${project.budget.toLocaleString()} USDC
             </span>
             <span className="flex items-center gap-1">

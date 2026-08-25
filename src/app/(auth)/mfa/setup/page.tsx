@@ -99,7 +99,7 @@ export default function MfaSetupPage() {
       <div className="w-full max-w-md space-y-6">
       <div className="text-center">
         <div className="w-16 h-16 mx-auto mb-4 rounded-2xl gradient-primary flex items-center justify-center">
-          <Shield className="w-8 h-8 text-white" />
+          <Shield className="w-8 h-8 text-primary-foreground" />
         </div>
         <h1 className="text-2xl font-bold">Set Up Two-Factor Authentication</h1>
         <p className="text-muted-foreground mt-2">
@@ -190,8 +190,8 @@ export default function MfaSetupPage() {
 
       {step === 'complete' && (
         <div className="space-y-4 text-center">
-          <div className="w-16 h-16 mx-auto rounded-full bg-green-500/10 flex items-center justify-center">
-            <CheckCircle className="w-8 h-8 text-green-500" />
+          <div className="w-16 h-16 mx-auto rounded-full bg-success-subtle flex items-center justify-center">
+            <CheckCircle className="w-8 h-8 text-success" />
           </div>
           <p className="text-lg font-medium">Two-Factor Authentication Enabled!</p>
           <p className="text-sm text-muted-foreground">

@@ -13,6 +13,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { MobileNav } from './MobileNav';
 import { useAuthStore } from '@/stores/authStore';
 import { useState, useEffect } from 'react';
 import { notificationsApi } from '@/lib/api';
@@ -82,21 +84,27 @@ export function TopBar() {
   };
 
   return (
-    <header className="h-16 border-b border-border bg-card/80 backdrop-blur-xl sticky top-0 z-40">
-      <div className="flex items-center justify-between h-full px-6">
-        <div className="max-w-md flex-1">
+    <header className="sticky top-0 z-40 h-16 shrink-0 border-b border-border bg-card/80 backdrop-blur-xl">
+      <div className="flex h-full items-center justify-between gap-3 px-4 sm:px-6">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <MobileNav role={user?.role} />
           {hasParticipantDashboard && (
-            <form className="relative" role="search" onSubmit={submitSearch}>
+            <form className="relative w-full max-w-md" role="search" onSubmit={submitSearch}>
               <label htmlFor="dashboard-marketplace-search" className="sr-only">{searchLabel}</label>
-              <input
+              <Input
                 id="dashboard-marketplace-search"
-                type="text"
+                inputSize="sm"
+                type="search"
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 placeholder={`${searchLabel}…`}
-                className="h-9 w-full rounded-lg border border-border bg-secondary pl-4 pr-10 text-sm text-foreground transition-all placeholder:text-muted-foreground focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="pr-10"
               />
-              <button type="submit" className="absolute inset-y-0 right-0 flex w-10 items-center justify-center rounded-r-lg text-muted-foreground transition-colors hover:text-foreground" aria-label={searchLabel}>
+              <button
+                type="submit"
+                aria-label={searchLabel}
+                className="absolute inset-y-0 right-0 flex w-10 items-center justify-center rounded-r-md text-muted-foreground outline-none transition-colors duration-fast hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+              >
                 <Search className="size-4" aria-hidden="true" />
               </button>
             </form>
@@ -110,38 +118,54 @@ export function TopBar() {
 
           {/* Notifications */}
           {user && (
-            <Link href={`/dashboard/${user.role}/notifications`} aria-label={`Notifications${unreadNotifications > 0 ? ` (${unreadNotifications} unread)` : ''}`}>
-              <Button variant="ghost" size="icon" className="relative" tabIndex={-1}>
-                <Bell className="w-5 h-5" />
-                {unreadNotifications > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground">{unreadNotifications > 99 ? '99+' : unreadNotifications}</span>}
-              </Button>
-            </Link>
+            <Button asChild variant="ghost" size="icon" className="relative">
+              <Link
+                href={`/dashboard/${user.role}/notifications`}
+                aria-label={`Notifications${unreadNotifications > 0 ? ` (${unreadNotifications} unread)` : ''}`}
+              >
+                <Bell className="size-5" aria-hidden="true" />
+                {unreadNotifications > 0 && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-2xs font-semibold text-destructive-foreground"
+                  >
+                    {unreadNotifications > 99 ? '99+' : unreadNotifications}
+                  </span>
+                )}
+              </Link>
+            </Button>
           )}
 
           {/* Messages */}
           {hasParticipantDashboard && (
-            <Link href={`/dashboard/${user?.role || 'freelancer'}/messages`}>
-              <Button variant="ghost" size="icon">
-                <MessageSquare className="w-5 h-5" />
-              </Button>
-            </Link>
+            <Button asChild variant="ghost" size="icon">
+              <Link href={`/dashboard/${user?.role || 'freelancer'}/messages`} aria-label="Messages">
+                <MessageSquare className="size-5" aria-hidden="true" />
+              </Link>
+            </Button>
           )}
 
           {/* Wallet */}
           {truncatedAddress && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-secondary border border-border">
-              <Wallet className="w-4 h-4 text-primary" />
-              <span className="text-xs font-mono text-muted-foreground">{truncatedAddress}</span>
+            <div className="hidden items-center gap-2 rounded-md border border-border bg-secondary px-3 py-1.5 md:flex">
+              <Wallet className="size-4 text-primary" aria-hidden="true" />
+              <span className="font-mono text-xs text-muted-foreground">
+                <span className="sr-only">Connected wallet: </span>
+                {truncatedAddress}
+              </span>
             </div>
           )}
 
           {/* User Menu */}
           <DropdownMenu>
-            <DropdownMenuTrigger aria-label="Open account menu" className="flex items-center gap-2 h-9 px-2 rounded-lg hover:bg-accent transition-colors cursor-pointer">
-              <Avatar className="w-7 h-7">
-                <AvatarFallback className="text-xs gradient-primary text-white">{initials}</AvatarFallback>
+            <DropdownMenuTrigger
+              aria-label="Open account menu"
+              className="flex h-9 cursor-pointer items-center gap-2 rounded-md px-2 outline-none transition-colors duration-fast hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+            >
+              <Avatar className="size-7">
+                <AvatarFallback className="text-xs gradient-primary text-primary-foreground">{initials}</AvatarFallback>
               </Avatar>
-              <ChevronDown className="w-4 h-4 text-muted-foreground" />
+              <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               <div className="px-3 py-2">
@@ -157,14 +181,14 @@ export function TopBar() {
                       onClick={() => router.push(`/dashboard/${participantRole}/${item.path}`)}
                       className="flex items-center gap-2 cursor-pointer"
                     >
-                      <item.icon className="w-4 h-4" /> {item.label}
+                      <item.icon className="size-4" aria-hidden="true" /> {item.label}
                     </DropdownMenuItem>
                   ))}
                 </>
               )}
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => logout()} className="flex items-center gap-2 cursor-pointer text-destructive">
-                <LogOut className="w-4 h-4" /> Log out
+                <LogOut className="size-4" aria-hidden="true" /> Log out
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

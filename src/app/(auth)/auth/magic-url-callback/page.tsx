@@ -34,14 +34,14 @@ function MagicUrlCallbackContent() {
   }, [completeAuth, router, secret, userId]);
 
   if (!userId || !secret) {
-    return <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center"><h1 className="text-2xl font-bold">Invalid magic link</h1><p className="text-muted-foreground">The sign-in link is missing its verification token.</p><Link href="/passwordless" className="text-primary hover:underline">Request another link</Link></main>;
+    return <div className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center"><h1 className="text-2xl font-bold">Invalid magic link</h1><p className="text-muted-foreground">The sign-in link is missing its verification token.</p><Link href="/passwordless" className="text-primary hover:underline">Request another link</Link></div>;
   }
-  return <main className="flex min-h-screen items-center justify-center" role="status"><Loader2 className="size-8 animate-spin text-primary" /><span className="sr-only">Completing passwordless sign in</span></main>;
+  return <div className="flex min-h-screen items-center justify-center" role="status"><Loader2 className="size-8 animate-spin text-primary" /><span className="sr-only">Completing passwordless sign in</span></div>;
 }
 
 export default function MagicUrlCallbackPage() {
   return (
-    <Suspense fallback={<main className="flex min-h-screen items-center justify-center" role="status">Loading magic link…</main>}>
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center" role="status">Loading magic link…</div>}>
       <MagicUrlCallbackContent />
     </Suspense>
   );
