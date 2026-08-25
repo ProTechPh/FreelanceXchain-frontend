@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Clock, DollarSign, Users, Zap, ShieldCheck } from 'lucide-react';
 import { MarketplaceBrowser } from "@/components/marketplace/marketplace-browser";
+import { PublicMarketplaceShell } from "@/components/marketplace/public-marketplace-shell";
 import type { Project } from "@/types";
 import { marketplaceFiltersFromSearchParams } from "@/lib/marketplace-search";
 
@@ -80,16 +81,27 @@ function ProjectsMarketplace() {
   const initialFilters = marketplaceFiltersFromSearchParams(new URLSearchParams(serializedFilters));
 
   return (
-    <MarketplaceBrowser<Project>
-      key={serializedFilters}
-      kind="project"
-      initialFilters={initialFilters}
-      title="Browse Projects"
+    <PublicMarketplaceShell
+      eyebrow="Verified escrow project listings"
+      headline={
+        <>
+          Discover high-impact Web3 projects,{" "}
+          <br className="hidden sm:inline" />
+          <span className="font-semibold text-muted-foreground">secured by smart escrow.</span>
+        </>
+      }
       description="Discover verified client projects, generate tailored milestone proposals with AI, and get guaranteed payouts locked in smart escrow."
-      emptyMessage="No open projects match these filters."
-      layout="list"
-      renderItem={(project, listingQuery) => <ProjectResult project={project} listingQuery={listingQuery} />}
-    />
+    >
+      <MarketplaceBrowser<Project>
+        key={serializedFilters}
+        kind="project"
+        variant="public"
+        initialFilters={initialFilters}
+        emptyMessage="No open projects match these filters."
+        layout="list"
+        renderItem={(project, listingQuery) => <ProjectResult project={project} listingQuery={listingQuery} />}
+      />
+    </PublicMarketplaceShell>
   );
 }
 

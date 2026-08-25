@@ -205,7 +205,7 @@ export default function CreateProjectPage() {
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold">Post a New Project</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Post a new project</h1>
         <p className="text-muted-foreground">Create a project listing to find the best talent</p>
       </div>
 

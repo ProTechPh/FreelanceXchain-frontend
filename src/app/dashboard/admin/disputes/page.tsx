@@ -126,7 +126,7 @@ export default function DisputesPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold">Dispute Management</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Dispute management</h1>
         <p className="text-muted-foreground">Resolve conflicts between freelancers and employers</p>
       </div>
 

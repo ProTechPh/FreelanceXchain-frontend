@@ -39,7 +39,7 @@ export function TransactionDetail({ transactionId, role }: { transactionId: stri
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <Button asChild variant="ghost" className="-ml-3"><Link href={backPath}><ArrowLeft className="mr-2 size-4" />Back to transactions</Link></Button>
-      <div className="flex items-start justify-between gap-4"><div><h1 className="text-2xl font-bold">Transaction detail</h1><p className="mt-1 font-mono text-xs text-muted-foreground">{transaction.id}</p></div><Badge variant="secondary">{transaction.status}</Badge></div>
+      <div className="flex items-start justify-between gap-4"><div><h1 className="text-2xl font-extrabold tracking-tight text-foreground">Transaction detail</h1><p className="mt-1 font-mono text-xs text-muted-foreground">{transaction.id}</p></div><Badge variant="secondary">{transaction.status}</Badge></div>
 
       <Card>
         <CardHeader><CardTitle className="flex items-center gap-2"><ReceiptText className="size-5" />Ledger entry</CardTitle></CardHeader>

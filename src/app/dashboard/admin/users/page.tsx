@@ -117,7 +117,7 @@ export default function UsersPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold">User Management</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-foreground">User management</h1>
         <p className="text-muted-foreground">Manage platform users and accounts</p>
       </div>
 

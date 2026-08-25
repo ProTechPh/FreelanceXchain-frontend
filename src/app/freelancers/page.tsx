@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { MapPin, ShieldCheck } from 'lucide-react';
 import { MarketplaceBrowser } from "@/components/marketplace/marketplace-browser";
+import { PublicMarketplaceShell } from "@/components/marketplace/public-marketplace-shell";
 import type { FreelancerProfile } from "@/types";
 import { marketplaceFiltersFromSearchParams } from "@/lib/marketplace-search";
 
@@ -78,16 +79,27 @@ function FreelancersMarketplace() {
   const initialFilters = marketplaceFiltersFromSearchParams(new URLSearchParams(serializedFilters));
 
   return (
-    <MarketplaceBrowser<FreelancerProfile>
-      key={serializedFilters}
-      kind="freelancer"
-      initialFilters={initialFilters}
-      title="Find Talent"
+    <PublicMarketplaceShell
+      eyebrow="Verified Web3 freelancers and engineers"
+      headline={
+        <>
+          Hire top Web3 and smart contract talent,{" "}
+          <br className="hidden sm:inline" />
+          <span className="font-semibold text-muted-foreground">secured by smart escrow.</span>
+        </>
+      }
       description="Connect with pre-vetted blockchain engineers, UI/UX designers, and AI specialists with verified on-chain portfolios."
-      emptyMessage="No freelancers match these filters."
-      layout="grid"
-      renderItem={(freelancer, listingQuery) => <FreelancerResult freelancer={freelancer} listingQuery={listingQuery} />}
-    />
+    >
+      <MarketplaceBrowser<FreelancerProfile>
+        key={serializedFilters}
+        kind="freelancer"
+        variant="public"
+        initialFilters={initialFilters}
+        emptyMessage="No freelancers match these filters."
+        layout="grid"
+        renderItem={(freelancer, listingQuery) => <FreelancerResult freelancer={freelancer} listingQuery={listingQuery} />}
+      />
+    </PublicMarketplaceShell>
   );
 }
 

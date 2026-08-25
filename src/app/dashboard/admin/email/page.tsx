@@ -184,7 +184,7 @@ export default function AdminEmailPage() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Mail className="w-6 h-6 text-primary" />
-          <h1 className="text-2xl font-bold">Email</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Email</h1>
           {unreadCount > 0 && (
             <Badge variant="default">{unreadCount} unread</Badge>
           )}

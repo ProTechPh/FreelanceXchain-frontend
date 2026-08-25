@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 /**
  * Form field wrapper: label, optional description, control, and error message.
  *
- * SKILL.md requires every component to define an error state and requires that
+ * skill.md requires every component to define an error state and requires that
  * accessibility rules be testable. Wiring `id`, `aria-describedby` and
  * `aria-invalid` by hand at every call site is exactly where that slips, so this
  * does it once. The control receives the wiring via context — see `useField`.

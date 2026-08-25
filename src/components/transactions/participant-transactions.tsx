@@ -74,7 +74,7 @@ export function ParticipantTransactions({ role }: { role: ParticipantRole }) {
 
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-bold">{title}</h1><p className="text-muted-foreground">Review ledger entries recorded by contract payment workflows.</p></div>
+      <div><h1 className="text-2xl font-extrabold tracking-tight text-foreground">{title}</h1><p className="text-muted-foreground">Review ledger entries recorded by contract payment workflows.</p></div>
 
       <div className="grid gap-4 sm:grid-cols-3">
         {[

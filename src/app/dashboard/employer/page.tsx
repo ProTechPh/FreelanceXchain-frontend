@@ -157,7 +157,7 @@ export default function EmployerDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Welcome back{currentUser?.name ? `, ${currentUser.name}` : ''}!</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Welcome back{currentUser?.name ? `, ${currentUser.name}` : ''}!</h1>
           <p className="text-muted-foreground">Manage your projects and find talent</p>
         </div>
         <Link href="/dashboard/employer/projects/new">

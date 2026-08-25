@@ -121,7 +121,7 @@ export function VerificationCenter({ role }: { role: ParticipantRole }) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Identity Verification</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Identity verification</h1>
           <p className="text-muted-foreground">{roleDescription}</p>
         </div>
       </div>

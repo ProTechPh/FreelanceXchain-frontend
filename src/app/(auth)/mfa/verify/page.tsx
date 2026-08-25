@@ -68,7 +68,7 @@ export default function MfaVerifyPage() {
         <div className="w-16 h-16 mx-auto mb-4 rounded-2xl gradient-primary flex items-center justify-center">
           <Shield className="w-8 h-8 text-primary-foreground" />
         </div>
-        <h1 className="text-2xl font-bold">Two-Factor Authentication</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Two-Factor Authentication</h1>
         <p className="text-muted-foreground mt-2">
           Enter the 6-digit code from your authenticator app
         </p>

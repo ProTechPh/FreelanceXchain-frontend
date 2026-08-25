@@ -101,7 +101,7 @@ export default function MfaSetupPage() {
         <div className="w-16 h-16 mx-auto mb-4 rounded-2xl gradient-primary flex items-center justify-center">
           <Shield className="w-8 h-8 text-primary-foreground" />
         </div>
-        <h1 className="text-2xl font-bold">Set Up Two-Factor Authentication</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Set Up Two-Factor Authentication</h1>
         <p className="text-muted-foreground mt-2">
           Add an extra layer of security to your account
         </p>

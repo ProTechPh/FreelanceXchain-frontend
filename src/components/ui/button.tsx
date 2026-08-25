@@ -7,7 +7,7 @@ import { Loader2 } from 'lucide-react'
 
 import { cn } from "@/lib/utils"
 
-// Reference implementation for the state contract in SKILL.md: every component
+// Reference implementation for the state contract in skill.md: every component
 // must define default, hover, focus-visible, active, disabled, loading and error.
 //
 // Notes on the choices here:

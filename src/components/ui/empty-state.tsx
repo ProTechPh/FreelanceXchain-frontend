@@ -17,7 +17,7 @@ interface EmptyStateProps extends React.ComponentProps<"div"> {
  * The one empty state. Every list, table and search result uses it so "nothing
  * here" always looks deliberate rather than broken.
  *
- * Copy rule (SKILL.md tone): say what is missing and what to do about it. Never
+ * Copy rule (skill.md tone): say what is missing and what to do about it. Never
  * a bare "No data".
  */
 function EmptyState({

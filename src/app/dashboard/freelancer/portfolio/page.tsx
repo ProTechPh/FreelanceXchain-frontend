@@ -154,7 +154,7 @@ export default function PortfolioPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Portfolio</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Portfolio</h1>
           <p className="text-muted-foreground">Showcase your best work</p>
         </div>
         <Button variant="gradient" onClick={openCreate}>

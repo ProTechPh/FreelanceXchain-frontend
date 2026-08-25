@@ -228,7 +228,7 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div><h1 className="text-2xl font-bold">Profile</h1><p className="text-muted-foreground">Keep the information shown to marketplace participants up to date.</p></div>
+        <div><h1 className="text-2xl font-extrabold tracking-tight text-foreground">Profile</h1><p className="text-muted-foreground">Keep the information shown to marketplace participants up to date.</p></div>
         <Button type="button" onClick={() => void saveProfile()} disabled={saving}><Save className="mr-2 size-4" />{saving ? 'Saving…' : 'Save profile'}</Button>
       </div>
 

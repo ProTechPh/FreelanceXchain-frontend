@@ -227,7 +227,7 @@ export function DisputeCenter({ role, disputeId }: { role: ParticipantRole; disp
     <div className="mx-auto max-w-5xl space-y-6">
       <div>
         {disputeId && <Button asChild variant="ghost" className="-ml-3 mb-2"><Link href={`/dashboard/${role}/disputes`}>Back to disputes</Link></Button>}
-        <h1 className="text-2xl font-bold">{disputeId ? 'Dispute details' : 'Disputes'}</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-foreground">{disputeId ? 'Dispute details' : 'Disputes'}</h1>
         <p className="text-muted-foreground">{disputeId ? 'Review the case, linked contract, resolution, and submitted evidence.' : 'Open a case for a submitted milestone and provide evidence for review.'}</p>
       </div>
 

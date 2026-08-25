@@ -140,7 +140,7 @@ export default function EmployerProjectProposalsPage() {
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to project
             </Link>
           </Button>
-          <h1 className="text-2xl font-bold">Project Proposals</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Project proposals</h1>
           <p className="mt-1 text-muted-foreground">Review offers for {project.title}</p>
         </div>
         <div className="flex gap-3">

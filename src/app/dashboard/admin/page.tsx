@@ -146,7 +146,7 @@ export default function AdminDashboard() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Admin dashboard</h1>
           <p className="text-muted-foreground">Platform overview and management</p>
         </div>
         <div className="flex gap-3">
@@ -320,7 +320,7 @@ export default function AdminDashboard() {
                 <Shield className="w-5 h-5 text-success" />
               </div>
               <div>
-                <p className="font-medium">KYC Review</p>
+                <p className="font-medium">KYC review</p>
                 <p className="text-xs text-muted-foreground">Verify identities</p>
               </div>
             </CardContent>

@@ -69,7 +69,7 @@ export default function SystemHealthPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">System Health</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">System health</h1>
           <p className="text-muted-foreground">
             Real backend health signals — this backend exposes database and storage
             connectivity plus process uptime, not per-service response-time metrics.

@@ -58,7 +58,7 @@ function ResetPasswordForm() {
           <CheckCircle className="size-8 text-primary" aria-hidden="true" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold">Password updated</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Password updated</h1>
           <p className="mt-2 text-muted-foreground">
             Your password has been changed. Sign in again on all of your devices.
           </p>
@@ -76,7 +76,7 @@ function ResetPasswordForm() {
         <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-full bg-primary/10">
           <KeyRound className="size-8 text-primary" aria-hidden="true" />
         </div>
-        <h1 className="text-2xl font-bold">Choose a new password</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Choose a new password</h1>
         <p className="mt-2 text-muted-foreground">
           Use a unique password you have not used on this account before.
         </p>

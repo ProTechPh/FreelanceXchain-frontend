@@ -46,7 +46,7 @@ export default function EmployerProjectsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">My Projects</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">My projects</h1>
           <p className="text-muted-foreground">Manage your project listings</p>
         </div>
         <Link href="/dashboard/employer/projects/new">

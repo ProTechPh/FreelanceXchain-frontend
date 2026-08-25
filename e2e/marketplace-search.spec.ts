@@ -142,4 +142,36 @@ test('freelancer dashboard browse page uses the server search contract', async (
 
   await expect(page.getByText('No open projects match these filters.')).toBeVisible();
   expect(searchCalls).toBeGreaterThan(0);
+
+  // The dashboard browse page must render the dashboard shell, not the public
+  // homepage shell. It previously re-exported `/projects` wholesale, so the
+  // marketing navbar, hero and footer rendered inside the dashboard: two navs,
+  // two logos, two search fields and a nested <main>.
+  await expect(page.getByRole('heading', { level: 1, name: 'Browse projects' })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: 'Dashboard' })).toBeVisible();
+
+  // Exactly one main landmark and one h1.
+  expect(await page.locator('main').count()).toBe(1);
+  expect(await page.locator('h1').count()).toBe(1);
+
+  // No marketing chrome.
+  expect(await page.locator('footer').count()).toBe(0);
+  await expect(page.getByRole('link', { name: 'Recommended for you' })).toBeVisible();
+});
+
+test('the public projects page keeps its marketing shell', async ({ page }) => {
+  await page.route('**/api/search/projects**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ items: [], metadata: { pageSize: 12, hasMore: false, offset: 0 } }) }));
+  await page.route('**/api/projects/stats/categories**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ categories: [] }) }));
+  await page.route('**/api/skills', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ categories: [] }) }));
+  await page.route('**/api/favorites', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }));
+  await page.route('**/api/saved-searches', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }));
+
+  await page.goto('/projects');
+
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+  expect(await page.locator('main').count()).toBe(1);
+  expect(await page.locator('h1').count()).toBe(1);
+  expect(await page.locator('footer').count()).toBe(1);
+  // The dashboard sidebar must never appear on a public route.
+  expect(await page.getByRole('navigation', { name: 'Dashboard' }).count()).toBe(0);
 });

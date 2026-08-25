@@ -37,7 +37,7 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Contracts</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Contracts</h1>
         <p className="text-muted-foreground">Track funding, deliverables, approvals, and payment activity.</p>
       </div>
 

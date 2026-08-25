@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Guards the SKILL.md "Anti-patterns" list. Fails the build if a prohibited
+// Guards the skill.md "Anti-patterns" list. Fails the build if a prohibited
 // pattern reappears, so the drift that produced 465 hardcoded colours cannot
 // silently happen again.
 import { execSync } from 'node:child_process';
@@ -32,9 +32,37 @@ const CHECKS = [
     name: 'second icon library (lucide-react only)',
     pattern: '@phosphor-icons|@radix-ui/react-icons',
   },
+  {
+    name: 'dashboard route re-exporting a public route',
+    pattern: String.raw`export \{ default \} from ['"]@/app/`,
+  },
 ];
 
+// Public page chrome must not be reachable from a dashboard route. Feature
+// components render their working surface; the route supplies the shell.
+
 let failed = false;
+let failedChrome = false;
+const CHROME = String.raw`layout/navbar|layout/footer-section`;
+const CHROME_ALLOWED = ['src/components/marketplace/public-marketplace-shell.tsx'];
+try {
+  const hits = execSync(
+    `grep -rlE ${JSON.stringify(CHROME)} src/app/dashboard src/components/dashboard src/components/marketplace src/components/contracts src/components/messages src/components/disputes src/components/transactions 2>/dev/null || true`,
+    { encoding: 'utf8', shell: '/bin/bash' },
+  ).trim();
+  const bad = hits ? hits.split('\n').filter((f) => !CHROME_ALLOWED.includes(f)) : [];
+  if (bad.length) {
+    failedChrome = true;
+    console.error('\nFAIL  public page chrome reachable from a dashboard surface:');
+    for (const f of bad) console.error(`      ${f}`);
+  } else {
+    console.log('PASS  no public chrome on dashboard surfaces');
+  }
+} catch (error) {
+  failedChrome = true;
+  console.error(`\nFAIL  chrome check could not run: ${error.message}`);
+}
+
 
 for (const { name, pattern } of CHECKS) {
   let hits = '';
@@ -74,5 +102,6 @@ for (const cls of CUSTOM) {
   }
 }
 
+failed = failed || failedChrome;
 console.log(`\n${failed ? '=== TOKEN GUARD FAILED ===' : '=== TOKEN GUARD PASSED ==='}`);
 process.exit(failed ? 1 : 0);

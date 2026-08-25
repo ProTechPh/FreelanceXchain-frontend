@@ -67,7 +67,7 @@ export default function FreelancerProposalDetailPage() {
       <div>
         <Button asChild variant="ghost" size="sm" className="-ml-3 mb-2"><Link href="/dashboard/freelancer/proposals"><ArrowLeft className="mr-2 h-4 w-4" />Back to proposals</Link></Button>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-          <div><h1 className="text-2xl font-bold">{project.title}</h1><p className="mt-1 text-muted-foreground">Your proposal to {employerName}</p></div>
+          <div><h1 className="text-2xl font-extrabold tracking-tight text-foreground">{project.title}</h1><p className="mt-1 text-muted-foreground">Your proposal to {employerName}</p></div>
           <StatusBadge status={proposal.status} domain="proposal" />
         </div>
       </div>

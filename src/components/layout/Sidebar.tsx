@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip } from '@/components/ui/tooltip';
 import { FreelanceXchainIcon } from '@/components/ui/freelancexchain-logo';
 import { SidebarNav } from './SidebarNav';
+import { SidebarUserCard } from './SidebarUserCard';
 
 /**
  * Desktop dashboard sidebar.
@@ -46,6 +47,10 @@ export function Sidebar() {
       </div>
 
       <SidebarNav role={user?.role} collapsed={collapsed} />
+
+      <div className="shrink-0 border-t border-sidebar-border p-2">
+        <SidebarUserCard collapsed={collapsed} />
+      </div>
 
       <div className="shrink-0 border-t border-sidebar-border p-3">
         <Tooltip content={collapsed ? 'Expand sidebar' : 'Collapse sidebar'} side="right">

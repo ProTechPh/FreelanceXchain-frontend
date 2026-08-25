@@ -1,12 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
-import { BookmarkPlus, Heart, Loader2, Search, Trash2, Sparkles, Briefcase } from 'lucide-react';
+import { BookmarkPlus, Briefcase, Heart, Search, Trash2 } from 'lucide-react';
 import { toast } from "sonner";
-import Navbar from "@/components/layout/navbar";
-import { FooterSection } from "@/components/layout/footer-section";
 import { favoritesApi, freelancersApi, projectsApi, savedSearchesApi, skillsApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/auth-contract";
+import { formatAmount } from "@/lib/format";
 import {
   buildMarketplaceSearchParams,
   createSavedSearchFilters,
@@ -17,20 +16,29 @@ import {
 import { useAuthStore } from "@/stores/authStore";
 import type { FreelancerProfile, Project, ProjectCategoryStat, SavedSearch, Skill } from "@/types";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 type MarketplaceKind = "project" | "freelancer";
 
 type MarketplaceBrowserProps<T extends Project | FreelancerProfile> = {
   kind: MarketplaceKind;
-  title: string;
-  description: string;
   emptyMessage: string;
   layout: "list" | "grid";
   renderItem: (item: T, listingQuery: string) => ReactNode;
   getTargetId?: (item: T) => string;
   initialFilters?: MarketplaceFilters;
+  /**
+   * `public` is the marketing surface (roomier, softer radii); `dashboard` is
+   * the in-app surface, which must sit inside the dashboard shell without
+   * competing with it.
+   */
+  variant?: "public" | "dashboard";
+  /** Action rendered beside the result count, e.g. a layout or sort control. */
+  resultsAction?: ReactNode;
 };
 
 function createInitialFilters(filters?: MarketplaceFilters): MarketplaceFilters {
@@ -48,15 +56,28 @@ function updateBudget(
   return next;
 }
 
+/**
+ * Search, filter and results surface for the project and freelancer marketplaces.
+ *
+ * It deliberately renders **no page chrome**. It previously baked in the public
+ * `Navbar`, a marketing hero and the marketing `FooterSection`, which meant the
+ * freelancer dashboard's Browse Projects page rendered the entire homepage shell
+ * inside the dashboard shell — two navbars, two logos, two search fields and a
+ * marketing footer under the sidebar. Each surface now owns its own header.
+ */
 export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
   kind,
-  description,
   emptyMessage,
   layout,
   renderItem,
   getTargetId = (item) => item.id,
   initialFilters,
+  variant = "public",
+  resultsAction,
 }: MarketplaceBrowserProps<T>) {
+  const isDashboard = variant === "dashboard";
+  const panel = isDashboard ? "rounded-lg p-4 sm:p-5" : "rounded-3xl p-6 sm:p-8";
+  const control = isDashboard ? "rounded-md" : "rounded-full";
   const user = useAuthStore((state) => state.user);
   const [items, setItems] = useState<T[]>([]);
   const [filters, setFilters] = useState<MarketplaceFilters>(() => createInitialFilters(initialFilters));
@@ -248,177 +269,207 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
-      <Navbar />
-
-      <main className="grow pt-28 sm:pt-36 pb-20">
-        {/* Sprout Hero Header */}
-        <section className="mx-auto max-w-7xl px-6 lg:px-8 mb-10 text-center">
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold mb-4 border border-primary/20 shadow-xs">
-            <Sparkles className="size-3.5 fill-primary" />
-            <span>{kind === "project" ? "Verified Escrow Project Listings" : "Verified Web3 Freelancers & Engineers"}</span>
-          </div>
-
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-foreground">
-            {kind === "project" ? "Discover High-Impact Web3 Projects, " : "Hire Top Web3 & Smart Contract Talent, "}
-            <br className="hidden sm:inline" />
-            <span className="text-muted-foreground dark:text-muted-foreground font-semibold">
-              secured by smart escrow.
-            </span>
-          </h1>
-
-          <p className="mt-4 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            {description}
-          </p>
-        </section>
-
-        <div className="mx-auto max-w-7xl space-y-6 px-6 lg:px-8">
+    <div className={cn("flex flex-col", isDashboard ? "gap-5" : "gap-6")}>
           {/* Popular Categories Strip (For Projects) */}
           {kind === "project" && categoryStats.length > 0 && (
             <section aria-labelledby="project-categories-heading">
-              <h2 id="project-categories-heading" className="mb-3 text-sm font-bold text-foreground uppercase tracking-wider">
-                Popular Categories
+              <h2 id="project-categories-heading" className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Popular categories
               </h2>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {categoryStats.slice(0, 4).map((category) => (
-                  <div
+                  <button
                     key={category.categoryId}
-                    className="p-5 rounded-3xl bg-card border border-border/80 shadow-xs hover:border-primary/50 transition-all cursor-pointer"
+                    type="button"
+                    className={cn(
+                      "border border-border bg-card p-4 text-left transition-colors duration-fast outline-none",
+                      "hover:border-primary hover:bg-accent",
+                      "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                      isDashboard ? "rounded-lg" : "rounded-2xl",
+                    )}
                     onClick={() => {
                       setFilters((prev) => ({ ...prev, keyword: category.categoryName }));
                       void loadResults({ ...filters, keyword: category.categoryName });
                     }}
                   >
-                    <p className="font-bold text-foreground text-sm">{category.categoryName}</p>
+                    <p className="text-sm font-semibold text-foreground">{category.categoryName}</p>
                     <p className="mt-1 text-xs text-muted-foreground">
                       {category.projectCount} open project{category.projectCount === 1 ? "" : "s"}
                     </p>
                     <p className="mt-2 text-xs font-semibold text-primary">
-                      ${category.totalBudget.toLocaleString()} total budget
+                      {formatAmount(category.totalBudget)} total budget
                     </p>
-                  </div>
+                  </button>
                 ))}
               </div>
             </section>
           )}
 
-          {/* Search & Filter Card */}
-          <div className="rounded-3xl bg-card border border-border/80 p-6 sm:p-8 shadow-md shadow-black/5">
-            <form className="space-y-6" onSubmit={submitSearch}>
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <div className="relative flex-1">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                  <Input
-                    value={filters.keyword}
-                    onChange={(event) => setFilters((current) => ({ ...current, keyword: event.target.value }))}
-                    placeholder={`Search by title, description, or keyword...`}
-                    className="pl-11 pr-4 py-2.5 rounded-full bg-background border-border/80 text-sm focus-visible:ring-primary/40"
-                  />
+          {/* Search & filters.
+              On the dashboard these sit in one toolbar row: stacked full-width
+              fields pushed the first project roughly 700px down the page, which
+              is the opposite of what a browse view should do. Same controls and
+              same labels — nothing is hidden behind a disclosure. */}
+          <div className={cn("border border-border bg-card shadow-xs", panel)}>
+            <form
+              className={isDashboard ? "flex flex-col gap-3" : "space-y-6"}
+              onSubmit={submitSearch}
+            >
+              <div className={cn("flex flex-col gap-3", isDashboard ? "lg:flex-row lg:items-end" : "sm:flex-row")}>
+                <div className={cn("space-y-1.5", isDashboard && "lg:flex-[2]")}>
+                  <Label htmlFor="marketplace-keyword" className="text-xs font-semibold text-foreground">
+                    Search
+                  </Label>
+                  <div className="relative">
+                    <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                    <Input
+                      id="marketplace-keyword"
+                      value={filters.keyword}
+                      onChange={(event) => setFilters((current) => ({ ...current, keyword: event.target.value }))}
+                      placeholder="Search by title, description, or keyword…"
+                      className={cn("pl-10", control)}
+                    />
+                  </div>
                 </div>
+
+                <div className={cn("space-y-1.5", isDashboard && "lg:flex-1")}>
+                  <Label htmlFor="skill-select" className="text-xs font-semibold text-foreground">Skill</Label>
+                  <select
+                    id="skill-select"
+                    aria-label="Skill"
+                    value={filters.skillIds[0] ?? ""}
+                    onChange={(event) => {
+                      const val = event.target.value;
+                      setFilters((current) => ({ ...current, skillIds: val ? [val] : [] }));
+                    }}
+                    className={cn(
+                      "h-10 w-full border border-input bg-background px-3 text-sm text-foreground outline-none transition-colors duration-fast",
+                      "hover:border-foreground/30 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40",
+                      control,
+                    )}
+                  >
+                    <option value="">All skills</option>
+                    {skills.map((skill) => (
+                      <option key={skill.id} value={skill.id}>
+                        {skill.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {kind === "project" && (
+                  <>
+                    <div className={cn("space-y-1.5", isDashboard && "lg:w-32")}>
+                      <Label htmlFor="minimum-budget" className="text-xs font-semibold text-foreground">Minimum budget</Label>
+                      <Input
+                        id="minimum-budget"
+                        type="number"
+                        min="0"
+                        inputMode="numeric"
+                        value={filters.minBudget ?? ""}
+                        onChange={(event) => setFilters((current) => updateBudget(current, "minBudget", event.target.value))}
+                        placeholder="500"
+                        className={control}
+                      />
+                    </div>
+                    <div className={cn("space-y-1.5", isDashboard && "lg:w-32")}>
+                      <Label htmlFor="maximum-budget" className="text-xs font-semibold text-foreground">Maximum budget</Label>
+                      <Input
+                        id="maximum-budget"
+                        type="number"
+                        min="0"
+                        inputMode="numeric"
+                        value={filters.maxBudget ?? ""}
+                        onChange={(event) => setFilters((current) => updateBudget(current, "maxBudget", event.target.value))}
+                        placeholder="5000"
+                        className={control}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {isDashboard && (
+                  <div className="flex shrink-0 gap-2">
+                    <Button type="submit" className={control}>Apply filters</Button>
+                    <Button type="button" variant="outline" className={control} onClick={resetFilters}>Reset</Button>
+                  </div>
+                )}
               </div>
 
-              {/* Skill selector */}
-              <div className="space-y-1.5">
-                <Label htmlFor="skill-select" className="text-xs font-bold text-foreground">Skill</Label>
-                <select
-                  id="skill-select"
-                  aria-label="Skill"
-                  value={filters.skillIds[0] ?? ""}
-                  onChange={(event) => {
-                    const val = event.target.value;
-                    setFilters((current) => ({ ...current, skillIds: val ? [val] : [] }));
-                  }}
-                  className="w-full rounded-xl bg-background border border-border/80 text-sm px-3 py-2"
-                >
-                  <option value="">All skills</option>
-                  {skills.map((skill) => (
-                    <option key={skill.id} value={skill.id}>
-                      {skill.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Budget Range (for Projects) */}
-              {kind === "project" && (
-                <div className="grid gap-4 sm:grid-cols-2 pt-2 border-t border-border/50">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="minimum-budget" className="text-xs font-bold text-foreground">Minimum budget</Label>
-                    <Input
-                      id="minimum-budget"
-                      type="number"
-                      min="0"
-                      value={filters.minBudget ?? ""}
-                      onChange={(event) => setFilters((current) => updateBudget(current, "minBudget", event.target.value))}
-                      placeholder="e.g. 500"
-                      className="rounded-xl bg-background border-border/80 text-sm"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="maximum-budget" className="text-xs font-bold text-foreground">Maximum budget</Label>
-                    <Input
-                      id="maximum-budget"
-                      type="number"
-                      min="0"
-                      value={filters.maxBudget ?? ""}
-                      onChange={(event) => setFilters((current) => updateBudget(current, "maxBudget", event.target.value))}
-                      placeholder="e.g. 5000"
-                      className="rounded-xl bg-background border-border/80 text-sm"
-                    />
-                  </div>
+              {!isDashboard && (
+                <div className="flex gap-2 pt-2">
+                  <Button type="submit" className={control}>Apply filters</Button>
+                  <Button type="button" variant="outline" className={control} onClick={resetFilters}>Reset</Button>
                 </div>
               )}
-
-              <div className="flex gap-2 pt-2">
-                <Button type="submit" className="rounded-full bg-primary text-primary-foreground text-xs font-bold px-6 shadow-xs cursor-pointer">
-                  Apply filters
-                </Button>
-                <Button type="button" variant="outline" className="rounded-full text-xs font-bold cursor-pointer" onClick={resetFilters}>
-                  Reset
-                </Button>
-              </div>
             </form>
           </div>
 
-          {/* Saved Searches (if authenticated) */}
+          {/* Saved searches. On the dashboard this is a single row of chips
+              rather than a second full-width panel below the filters. */}
           {user && (
-            <div className="rounded-3xl bg-card border border-border/80 p-6 shadow-sm">
-              <div className="grid gap-6 lg:grid-cols-2">
-                <form className="space-y-3" onSubmit={saveSearch}>
-                  <div>
-                    <h3 className="font-bold text-foreground text-sm">Save Current Filter Preset</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">Quickly return to this search criteria or receive match alerts.</p>
-                  </div>
-                  <div className="flex flex-col gap-2 sm:flex-row">
+            <div className={cn("border border-border bg-card shadow-xs", isDashboard ? "rounded-lg p-3" : panel)}>
+              <div className={cn(isDashboard ? "flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between" : "grid gap-6 lg:grid-cols-2")}>
+                <form className={isDashboard ? "flex items-end gap-2" : "space-y-3"} onSubmit={saveSearch}>
+                  {!isDashboard && (
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground">Save current filter preset</h3>
+                      <p className="mt-0.5 text-xs text-muted-foreground">Quickly return to this search criteria or receive match alerts.</p>
+                    </div>
+                  )}
+                  <div className={cn("flex flex-col gap-2 sm:flex-row", isDashboard && "items-end")}>
                     <div className="flex-1 space-y-1">
-                      <Label htmlFor="saved-search-name" className="sr-only">Search name</Label>
+                      <Label htmlFor="saved-search-name" className={isDashboard ? "text-xs font-semibold text-foreground" : "sr-only"}>
+                        Search name
+                      </Label>
                       <Input
                         id="saved-search-name"
                         value={savedSearchName}
                         onChange={(event) => setSavedSearchName(event.target.value)}
-                        placeholder="e.g. React & Solidity Gigs"
-                        className="rounded-full bg-background border-border/80 text-xs"
+                        placeholder="e.g. React & Solidity gigs"
+                        className={cn(control, isDashboard && "lg:w-56")}
                       />
                     </div>
-                    <Button size="sm" className="rounded-full bg-primary text-primary-foreground text-xs font-bold shrink-0" type="submit" disabled={savingSearch}>
-                      <BookmarkPlus className="mr-1.5 size-3.5" />{savingSearch ? "Saving…" : "Save search"}
+                    <Button size="sm" type="submit" loading={savingSearch} loadingText="Saving…" className={cn("shrink-0", control)}>
+                      <BookmarkPlus className="size-3.5" aria-hidden="true" />Save search
                     </Button>
                   </div>
                 </form>
 
-                <div>
-                  <h3 className="font-bold text-foreground text-sm">Your Saved Presets</h3>
+                <div className={isDashboard ? "min-w-0" : ""}>
+                  <h3 className={cn("text-sm font-semibold text-foreground", isDashboard && "sr-only")}>Your saved presets</h3>
                   {savedSearches.length === 0 ? (
-                    <p className="mt-2 text-xs text-muted-foreground">No saved searches yet.</p>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      No saved searches yet. Save a filter set to reuse it or get alerts.
+                    </p>
                   ) : (
-                    <ul className="mt-2 space-y-1.5">
+                    <ul className={cn(isDashboard ? "flex flex-wrap items-center gap-2" : "mt-2 space-y-1.5")}>
                       {savedSearches.map((savedSearch) => (
-                        <li key={savedSearch.id} className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-background px-3 py-1.5">
-                          <Button type="button" variant="ghost" size="sm" className="h-auto justify-start p-0 text-xs font-semibold" onClick={() => void runSavedSearch(savedSearch)}>
+                        <li
+                          key={savedSearch.id}
+                          className={cn(
+                            "flex items-center gap-1 border border-border bg-background",
+                            isDashboard ? "rounded-full py-0.5 pl-3 pr-1" : "justify-between gap-3 rounded-xl px-3 py-1.5",
+                          )}
+                        >
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-auto justify-start p-0 text-xs font-semibold hover:bg-transparent hover:text-primary"
+                            onClick={() => void runSavedSearch(savedSearch)}
+                          >
                             {savedSearch.name}
                           </Button>
-                          <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => void deleteSavedSearch(savedSearch.id)}>
-                            <Trash2 className="size-3 text-destructive" />
+                          <Button
+                            type="button"
+                            size="icon-xs"
+                            variant="ghost"
+                            aria-label={`Delete saved search ${savedSearch.name}`}
+                            className="size-6 text-muted-foreground hover:text-destructive"
+                            onClick={() => void deleteSavedSearch(savedSearch.id)}
+                          >
+                            <Trash2 className="size-3" aria-hidden="true" />
                           </Button>
                         </li>
                       ))}
@@ -430,20 +481,38 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
           )}
 
           {/* Results Count */}
-          <div className="flex items-center justify-between text-xs font-bold text-muted-foreground uppercase tracking-wider pt-2">
-            <span>Showing {items.length} {kind}s</span>
+          <div className="flex items-center justify-between gap-3">
+            <p aria-live="polite" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              {loading && items.length === 0
+                ? "Searching…"
+                : `Showing ${items.length} ${kind}${items.length === 1 ? "" : "s"}`}
+            </p>
+            {resultsAction}
           </div>
 
           {/* Items Grid / List */}
           {loading && items.length === 0 ? (
-            <div className="flex min-h-64 items-center justify-center rounded-3xl bg-card border border-border/80 p-8">
-              <Loader2 className="size-8 animate-spin text-primary" />
+            <div
+              role="status"
+              aria-live="polite"
+              className={layout === "grid" ? "grid gap-6 md:grid-cols-2 lg:grid-cols-3" : "space-y-4"}
+            >
+              <span className="sr-only">Searching…</span>
+              {Array.from({ length: layout === "grid" ? 6 : 4 }).map((_, index) => (
+                <Skeleton key={index} className={cn(layout === "grid" ? "h-56" : "h-44", isDashboard ? "rounded-lg" : "rounded-3xl")} />
+              ))}
             </div>
           ) : items.length === 0 ? (
-            <div className="text-center py-16 rounded-3xl bg-card border border-border/80 p-8 text-muted-foreground">
-              <Briefcase className="size-10 mx-auto mb-2 opacity-50" />
-              <p className="text-sm font-semibold">{emptyMessage}</p>
-            </div>
+            <EmptyState
+              icon={Briefcase}
+              title={emptyMessage}
+              description="Try widening your budget range, clearing a skill, or searching a different keyword."
+              action={
+                <Button variant="outline" className={control} onClick={resetFilters}>
+                  Reset filters
+                </Button>
+              }
+            />
           ) : (
             <div className={layout === "grid" ? "grid gap-6 md:grid-cols-2 lg:grid-cols-3" : "space-y-4"}>
               {items.map((item) => {
@@ -458,12 +527,16 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
                         type="button"
                         size="icon"
                         variant="secondary"
-                        className="absolute right-4 top-4 z-10 rounded-full h-8 w-8 bg-card/90 backdrop-blur-xs border border-border/80 shadow-xs hover:scale-110 transition-transform"
+                        className={cn(
+                          "absolute right-4 top-4 z-10 size-8 rounded-full border border-border bg-card/90 shadow-xs backdrop-blur-xs",
+                          favorite && "text-destructive",
+                        )}
                         aria-label={favorite ? `Remove ${kind} from favorites` : `Save ${kind} to favorites`}
+                        aria-pressed={favorite}
                         disabled={favoriteActionId === targetId}
                         onClick={() => void toggleFavorite(targetId)}
                       >
-                        <Heart className="size-3.5" fill={favorite ? "#ef4444" : "none"} color={favorite ? "#ef4444" : "currentColor"} />
+                        <Heart className="size-3.5" fill={favorite ? "currentColor" : "none"} aria-hidden="true" />
                       </Button>
                     )}
                   </div>
@@ -485,10 +558,6 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
               </Button>
             </div>
           )}
-        </div>
-      </main>
-
-      <FooterSection />
     </div>
   );
 }

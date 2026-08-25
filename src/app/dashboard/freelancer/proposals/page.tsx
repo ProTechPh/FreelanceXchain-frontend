@@ -78,7 +78,7 @@ export default function ProposalsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">My Proposals</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">My proposals</h1>
           <p className="text-muted-foreground">Track and manage your submitted proposals</p>
         </div>
       </div>

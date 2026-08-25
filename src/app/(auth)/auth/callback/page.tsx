@@ -102,7 +102,7 @@ function OAuthCallbackContent() {
     return (
       <div className="space-y-6">
         <div className="text-center">
-          <h1 className="text-2xl font-bold">Complete your registration</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Complete your registration</h1>
           <p className="mt-2 text-muted-foreground">
             Choose how you will use FreelanceXchain. This controls your dashboard and available actions.
           </p>
@@ -143,7 +143,7 @@ function OAuthCallbackContent() {
           <ShieldAlert className="size-8 text-destructive" aria-hidden="true" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold">Unable to sign in</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Unable to sign in</h1>
           <p role="alert" className="mt-2 text-muted-foreground">{errorMessage}</p>
         </div>
         <Button asChild variant="gradient" className="w-full">

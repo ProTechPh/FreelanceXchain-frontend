@@ -79,7 +79,7 @@ export default function AuditLogsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Audit Logs</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Audit logs</h1>
           <p className="text-muted-foreground">Track platform activity{failedOnly ? ' (failed actions)' : ` — last ${rangeDays} days`}</p>
         </div>
         <div className="flex gap-2">

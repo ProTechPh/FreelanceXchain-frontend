@@ -178,7 +178,7 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold">{contract.project?.title || contract.title || 'Contract'}</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">{contract.project?.title || contract.title || 'Contract'}</h1>
           <p className="mt-1 text-muted-foreground">Contract #{contract.id.slice(0, 8)}</p>
         </div>
         <StatusBadge status={contract.status} domain="contract" />

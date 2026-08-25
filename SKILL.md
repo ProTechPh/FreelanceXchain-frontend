@@ -5,14 +5,34 @@ description: Implementation-ready design-system rules for FreelanceXchain — to
 
 # FreelanceXchain Design System
 
-> Supersedes the generated `design-system-sprout` scan that previously occupied this file.
-> That scan was captured from an unrelated product: its brand was wrong, its type
-> scale was captured at the wrong magnification (`base=12px`, `xs=6px`), and its
-> `color.text.primary=#535862` contradicted the palette actually shipped. Its
-> **rules** were sound and are kept verbatim below; its **values** are replaced with
-> the ones in `src/app/globals.css`, every one of which is contrast-verified.
+> **Relationship to `SKILLS.md`.** `SKILLS.md` holds the typeui.sh-generated
+> `design-system-sprout` scan and is kept as the upstream reference — do not delete
+> it. This file is the applied system: where the two differ, this one is what the
+> code implements, and every difference is listed under "Known divergences" below.
 >
-> This file is hand-maintained. If typeui.sh regenerates it, restore from git.
+> The scan's **rules** are adopted verbatim (WCAG 2.2 AA, the seven required
+> component states, semantic tokens over raw values, no one-off typography). Its
+> **font family is adopted exactly** — Nunito Sans, loaded globally. Its numeric
+> values are not, because they were captured from a different product at the wrong
+> magnification.
+>
+> This file is hand-maintained. If typeui.sh overwrites it, restore from git.
+
+## Known divergences from `SKILLS.md`
+
+| `SKILLS.md` | Applied | Why |
+|---|---|---|
+| `font.family.primary=Nunito Sans` | **Same** | Adopted exactly; loaded in `src/app/layout.tsx`, applied on `<html>` |
+| `font.family.stack=…, Nunito Sans Placeholder, sans-serif` | `"Nunito Sans", "Nunito Sans Fallback"` | `next/font` generates a metric-matched fallback, which avoids the layout shift a generic placeholder causes |
+| `font.weight.base=400` | **Same** | Body inherits 400 |
+| `font.size.base=12px` | `1rem` (16px) | 12px body text on a form-heavy marketplace is below a comfortable reading size, and the scale below it would be illegible |
+| `font.lineHeight.base=16px` | `1.5rem` (24px) | 16px leading on 16px text leaves no line spacing at all |
+| `font.size.xs=6px` … `4xl=16px` | Re-anchored scale, `2xs=0.6875rem` … `7xl=4.5rem` | A 6px step cannot meet AA at any contrast. The scan's *ratios* are kept; the magnification is corrected |
+| `color.text.primary=#535862` | `--foreground: #181d27` | #535862 on #fdfdfd measures 7.0:1 and reads washed for body copy. Kept as `--foreground-subtle` |
+| `color.surface.base=#000000` | `--background: #0a0a0a` (dark) | Pure black against white text causes halation |
+| `color.text.tertiary=#a4a7ae` | **Same** | Applied as dark-theme `--muted-foreground` |
+| `color.surface.muted=#fafafa` | `--muted: #f4f5f6` | Needed one more step of separation from `--card: #ffffff` |
+| Brand "Sprout", surface "marketing site" | FreelanceXchain, two-sided marketplace | The scan was taken from an unrelated product |
 
 ## Context and goals
 
@@ -135,6 +155,34 @@ browser cannot disagree and trigger a hydration mismatch.
 
 `lucide-react` only, at a consistent size (`size-4` inline, `size-5` standalone).
 
+### Surfaces
+
+Three surfaces, and a component belongs to exactly one:
+
+| Surface | Location | Chrome |
+|---|---|---|
+| Public / marketing | `src/components/marketing/` | `Navbar` + hero + `FooterSection`, full-bleed |
+| Dashboard (in-app) | `src/components/dashboard/`, `contracts/`, `marketplace/`, … | Sidebar + TopBar, supplied by `DashboardLayout` |
+| Primitives | `src/components/ui/` | None — surface-agnostic by definition |
+
+Rules:
+
+- A shared feature component (the marketplace search, a contract list) **must not**
+  render page chrome. It renders its working surface; the route supplies the shell.
+  `MarketplaceBrowser` violated this — it baked in the public `Navbar`, a marketing
+  hero and the `FooterSection`, so `/dashboard/freelancer/projects` rendered the
+  entire homepage inside the dashboard shell.
+- A dashboard route **must not** re-export a public route (`export { default } from
+  '@/app/projects/page'`). The two surfaces have different jobs: the public page
+  sells the platform, the dashboard page is a working tool for someone comparing
+  projects to bid on.
+- Exactly one `<main>` and one `<h1>` per page. Dashboard pages get their `<main>`
+  from `DashboardLayout` and their `<h1>` from `PageHeader`.
+- Dashboard pages use `PageHeader` (`src/components/dashboard/page-header.tsx`) —
+  a working header, never a marketing hero.
+- Where a component genuinely serves both surfaces, it takes a
+  `variant: 'public' | 'dashboard'` and the route supplies the chrome.
+
 ### Responsive and edge cases
 
 - Wide content (tables, code) scrolls inside its own container; the page body
@@ -192,6 +240,10 @@ Prohibited, all of which this codebase previously contained:
 - Bare `toLocaleString()` for money.
 - Exact-match nav highlighting, which loses the parent on every detail route.
 - Nested `<main>`, or `<a>` wrapping `<button>`.
+- Page chrome (`Navbar`, `FooterSection`) inside a shared feature component.
+- A dashboard route re-exporting a public route's page.
+- Clickable `<div>`s — a control that takes a click must be a `<button>`.
+- Title Case headings; the product uses sentence case.
 
 ## QA checklist
 
@@ -204,3 +256,4 @@ Prohibited, all of which this codebase previously contained:
 - [ ] Both themes checked, including system preference
 - [ ] 375 / 768 / 1280 / 1920 with no horizontal body scroll
 - [ ] Both role dashboards render the same concepts the same way
+- [ ] No public chrome on a dashboard route, and no sidebar on a public route

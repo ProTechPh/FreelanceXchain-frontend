@@ -6,7 +6,7 @@
 
 /* ==========================================================================
    FreelanceXchain design tokens
-   Rules from SKILL.md (design-system-sprout):
+   Rules from skill.md (design-system-sprout):
      - Components consume semantic tokens only. No raw hex, no palette classes.
      - Every text/background pair below is verified >= 4.5:1 (WCAG 2.2 AA).
      - UI component boundaries (--input, --ring) are verified >= 3:1 (1.4.11).
@@ -16,7 +16,7 @@
 
 @theme inline {
   /* ---- Typography scale -------------------------------------------------
-     SKILL.md's literal sizes (base 12px, xs 6px) were captured at the wrong
+     skill.md's literal sizes (base 12px, xs 6px) were captured at the wrong
      scale and are unreadable. The ratio structure is preserved; the scale is
      re-anchored at base = 16px. `sm` stays the dense-UI default.
      `2xs` is the sanctioned home for what used to be text-[11px]/[10px]. */
@@ -58,7 +58,7 @@
   --text-7xl--letter-spacing: -0.03em;
 
   /* ---- Font families ----------------------------------------------------
-     SKILL.md names a single family. Heading/body contrast comes from weight,
+     skill.md names a single family. Heading/body contrast comes from weight,
      tracking and line-height (see @layer base), not a second typeface. */
   --font-sans: var(--font-nunito);
   --font-heading: var(--font-nunito);
@@ -382,7 +382,7 @@
     text-wrap: pretty;
   }
 
-  /* Universal focus fallback. SKILL.md makes a visible focus indicator
+  /* Universal focus fallback. skill.md makes a visible focus indicator
      non-negotiable; this guarantees no element can be focus-invisible even if
      a component forgets its own treatment. Components may override, never
      remove. */
