@@ -22,20 +22,10 @@ const GithubIcon = () => (
 );
 
 
-// --- TYPE DEFINITIONS ---
-
-export interface Testimonial {
-  name: string;
-  handle: string;
-  text: string;
-}
-
 interface SignInPageProps {
   title?: React.ReactNode;
   description?: React.ReactNode;
   homeHref?: string;
-  heroImageSrc?: string;
-  testimonials?: Testimonial[];
   onSignIn?: (event: React.FormEvent<HTMLFormElement>) => void;
   /**
    * Sign-in is in flight. Signing in can take a couple of seconds against a
@@ -51,40 +41,16 @@ interface SignInPageProps {
   onPasswordlessSignIn?: () => void;
 }
 
-// --- SUB-COMPONENTS ---
-
 const GlassInputWrapper = ({ children }: { children: React.ReactNode }) => (
   <div className="rounded-2xl border border-border bg-foreground/5 backdrop-blur-sm transition-colors focus-within:border-info-border focus-within:bg-info-subtle">
     {children}
   </div>
 );
 
-  const TestimonialCard = ({ testimonial, delay }: { testimonial: Testimonial, delay: string }) => (
-  <figure className={`animate-testimonial ${delay} flex w-64 items-start gap-3 rounded-xl border border-border bg-card/70 p-5 backdrop-blur-xl`}>
-    {/* Initials rather than a stock photo: no third-party image request, and no
-        implication that a specific pictured person said this. */}
-    <span
-      aria-hidden="true"
-      className="flex size-10 shrink-0 items-center justify-center rounded-lg gradient-primary text-sm font-bold text-primary-foreground"
-    >
-      {testimonial.name.split(' ').map((part) => part[0]).join('').slice(0, 2)}
-    </span>
-    <div className="text-sm leading-snug">
-      <figcaption className="font-medium text-foreground">{testimonial.name}</figcaption>
-      <p className="text-xs text-muted-foreground">{testimonial.handle}</p>
-      <blockquote className="mt-1 text-foreground/80">{testimonial.text}</blockquote>
-    </div>
-  </figure>
-);
-
-// --- MAIN COMPONENT ---
-
 export const SignInPage: React.FC<SignInPageProps> = ({
   title = <span className="font-light text-foreground tracking-tighter">Welcome</span>,
   description = "Access your account and continue your journey with us",
   homeHref,
-  heroImageSrc,
-  testimonials = [],
   onSignIn,
   loading = false,
   onGoogleSignIn,
@@ -97,8 +63,8 @@ export const SignInPage: React.FC<SignInPageProps> = ({
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <div className="h-[100dvh] flex flex-col md:flex-row font-geist w-[100dvw]">
-      {/* Left column: sign-in form */}
+    <div className="flex min-h-dvh w-full font-geist">
+      {/* Sign-in form */}
       <section className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
           <div className="flex flex-col gap-6">
@@ -182,20 +148,6 @@ export const SignInPage: React.FC<SignInPageProps> = ({
           </div>
         </div>
       </section>
-
-      {/* Right column: hero image + testimonials */}
-      {heroImageSrc && (
-        <section className="hidden md:block flex-1 relative p-4">
-          <div className="animate-slide-right animate-delay-300 absolute inset-4 rounded-3xl bg-cover bg-center" style={{ backgroundImage: `url(${heroImageSrc})` }}></div>
-          {testimonials.length > 0 && (
-            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-4 px-8 w-full justify-center">
-              <TestimonialCard testimonial={testimonials[0]} delay="animate-delay-1000" />
-              {testimonials[1] && <div className="hidden xl:flex"><TestimonialCard testimonial={testimonials[1]} delay="animate-delay-1200" /></div>}
-              {testimonials[2] && <div className="hidden 2xl:flex"><TestimonialCard testimonial={testimonials[2]} delay="animate-delay-1400" /></div>}
-            </div>
-          )}
-        </section>
-      )}
     </div>
   );
 };

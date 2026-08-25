@@ -74,6 +74,26 @@ test('employer uploads a file before sending message attachment metadata', async
   expect(sendBody).toEqual({ receiverId: freelancerId, content: 'Please review the brief.', attachments: sentMessage.attachments });
 });
 
+test('the icon-only send button replaces its icon with one loading spinner', async ({ page }) => {
+  const user = await authenticate(page, 'employer');
+  await page.route('**/api/messages/conversations', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ items: [], total: 0, hasMore: false }) }));
+  await page.route('**/api/contracts?**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ items: [{ id: 'contract-1', employerId: user.id, freelancerId, status: 'active' }], hasMore: false, total: 1 }) }));
+  await page.route(`**/api/freelancers/${freelancerId}`, (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ userId: freelancerId, name: 'Ada Developer', bio: '', hourlyRate: 80, availability: 'available', skills: [], experience: [] }) }));
+  await page.route('**/api/messages/send', async () => {
+    await new Promise(() => {});
+  });
+
+  await page.goto(`/dashboard/employer/messages?recipientId=${freelancerId}`);
+  await page.getByRole('textbox', { name: 'Message', exact: true }).fill('Please review this.');
+
+  const sendButton = page.getByRole('button', { name: 'Send message' });
+  await sendButton.click();
+
+  await expect(sendButton).toHaveAttribute('aria-busy', 'true');
+  await expect(sendButton.locator('svg')).toHaveCount(1);
+  await expect(sendButton.locator('svg.animate-spin')).toHaveCount(1);
+});
+
 test('administrator notification links a dispute to the moderation queue', async ({ page }) => {
   const user = await authenticate(page, 'admin');
   const notificationId = '123e4567-e89b-12d3-a456-426614174091';

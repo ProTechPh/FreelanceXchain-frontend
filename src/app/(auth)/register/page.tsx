@@ -28,7 +28,6 @@ export default function RegisterPage() {
 
   return (
     <SignUpPage
-      heroImageSrc="https://images.unsplash.com/photo-1551434678-e076c223a692?w=2160&q=80"
       onSubmit={handleSubmit}
       onGoogleSignIn={() => handleOAuth('google')}
       onGithubSignIn={() => handleOAuth('github')}

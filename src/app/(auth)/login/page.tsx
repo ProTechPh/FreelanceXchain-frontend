@@ -4,27 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { toast } from 'sonner';
-import { SignInPage, Testimonial } from '@/components/marketing/sign-in';
+import { SignInPage } from '@/components/marketing/sign-in';
 import { getApiErrorMessage } from '@/lib/auth-contract';
-
-// Illustrative product copy, not attributed customer quotes.
-const testimonials: Testimonial[] = [
-  {
-    name: 'Freelancers',
-    handle: 'Get paid on delivery',
-    text: 'Funds are locked in escrow before you start, and released to your wallet the moment a milestone is approved.',
-  },
-  {
-    name: 'Employers',
-    handle: 'Fund with confidence',
-    text: 'Release payment per milestone, not up front. Every participant is KYC-verified before a contract can be funded.',
-  },
-  {
-    name: 'Both sides',
-    handle: 'One shared record',
-    text: 'Contracts, milestones and disputes read the same way for everyone on them, on-chain and auditable.',
-  },
-];
 
 export default function LoginPage() {
   const { login } = useAuthStore();
@@ -68,8 +49,6 @@ export default function LoginPage() {
   return (
     <SignInPage
       homeHref="/"
-      heroImageSrc="https://images.unsplash.com/photo-1642615835477-d303d7dc9ee9?w=2160&q=80"
-      testimonials={testimonials}
       onSignIn={handleSignIn}
       loading={isSigningIn}
       onGoogleSignIn={() => handleOAuth('google')}

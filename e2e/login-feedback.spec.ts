@@ -12,6 +12,18 @@ test('the sign-in page provides a keyboard-accessible path back home', async ({ 
   await expect(page).toHaveURL(/\/$/);
 });
 
+test('login and registration keep the focus on forms without hero imagery', async ({ page }) => {
+  await page.goto('/login');
+
+  await expect(page.getByRole('heading', { name: 'Welcome' })).toBeVisible();
+  await expect(page.locator('[style*="background-image"]')).toHaveCount(0);
+
+  await page.goto('/register');
+
+  await expect(page.getByRole('heading', { name: 'Create an account' })).toBeVisible();
+  await expect(page.locator('[style*="background-image"]')).toHaveCount(0);
+});
+
 // Signing in can take a couple of seconds against a cold backend. Before this,
 // the submit button gave no feedback at all, so the natural reaction was to
 // click it again — against a request that was already in flight.

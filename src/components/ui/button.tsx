@@ -130,6 +130,7 @@ function Button({
   // there would break Slot's single-child contract, so loading only decorates
   // real buttons.
   const showSpinner = loading && !asChild
+  const iconOnly = size === "icon" || size === "icon-sm" || size === "icon-xs"
 
   return (
     <Comp
@@ -143,7 +144,7 @@ function Button({
       {showSpinner ? (
         <>
           <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-          {loadingText ?? children}
+          {loadingText ?? (iconOnly ? null : children)}
         </>
       ) : (
         children

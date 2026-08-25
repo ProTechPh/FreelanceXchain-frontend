@@ -26,7 +26,6 @@ const GlassInputWrapper = ({ children }: { children: React.ReactNode }) => (
 );
 
 interface SignUpPageProps {
-  heroImageSrc?: string;
   onSubmit?: (data: { email: string; password: string; role: UserRole }) => void;
   onGoogleSignIn?: () => void;
   onGithubSignIn?: () => void;
@@ -35,7 +34,6 @@ interface SignUpPageProps {
 }
 
 export const SignUpPage: React.FC<SignUpPageProps> = ({
-  heroImageSrc,
   onSubmit,
   onGoogleSignIn,
   onGithubSignIn,
@@ -69,8 +67,8 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
   };
 
   return (
-    <div className="h-[100dvh] flex flex-col md:flex-row font-geist w-[100dvw]">
-      {/* Left column: sign-up form */}
+    <div className="flex min-h-dvh w-full font-geist">
+      {/* Sign-up form */}
       <section className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
           <div className="flex flex-col gap-6">
@@ -208,13 +206,6 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
           </div>
         </div>
       </section>
-
-      {/* Right column: hero image */}
-      {heroImageSrc && (
-        <section className="hidden md:block flex-1 relative p-4">
-          <div className="animate-slide-right animate-delay-300 absolute inset-4 rounded-3xl bg-cover bg-center" style={{ backgroundImage: `url(${heroImageSrc})` }}></div>
-        </section>
-      )}
     </div>
   );
 };
