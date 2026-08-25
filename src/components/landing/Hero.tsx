@@ -291,7 +291,7 @@ export function Footer() {
             <h4 className="font-semibold mb-4">Company</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link href="/about" className="hover:text-foreground">About Us</Link></li>
-              <li><Link href="/blog" className="hover:text-foreground">Blog</Link></li>
+              <li><Link href="/news" className="hover:text-foreground">Crypto News</Link></li>
               <li><Link href="/careers" className="hover:text-foreground">Careers</Link></li>
               <li><Link href="/contact" className="hover:text-foreground">Contact</Link></li>
             </ul>

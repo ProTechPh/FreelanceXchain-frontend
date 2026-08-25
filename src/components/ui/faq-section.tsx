@@ -52,11 +52,11 @@ function FaqItem({ faq, isOpen, onToggle }: { faq: (typeof faqs)[number]; isOpen
     <div className="border-b border-border/60 last:border-b-0 py-1">
       <button
         onClick={onToggle}
-        className="flex w-full items-center justify-between py-4 text-left text-sm sm:text-base font-bold text-foreground hover:text-primary transition-colors focus-visible:outline-none"
+        className="flex w-full items-center justify-between py-4 text-left text-sm sm:text-base font-bold text-foreground hover:text-primary transition-colors focus-visible:outline-none gap-3"
         aria-expanded={isOpen}
       >
-        <span>{faq.question}</span>
-        <span className={`p-1 rounded-lg bg-muted/60 transition-transform duration-200 ${isOpen ? "rotate-180 bg-primary/10 text-primary" : "text-muted-foreground"}`}>
+        <span className="min-w-0 flex-1 break-words">{faq.question}</span>
+        <span className={`p-1 rounded-lg bg-muted/60 transition-transform duration-200 shrink-0 ${isOpen ? "rotate-180 bg-primary/10 text-primary" : "text-muted-foreground"}`}>
           <CaretDown className="size-4 shrink-0" weight="bold" />
         </span>
       </button>
@@ -69,7 +69,7 @@ function FaqItem({ faq, isOpen, onToggle }: { faq: (typeof faqs)[number]; isOpen
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
             className="overflow-hidden"
           >
-            <p className="pb-5 text-xs sm:text-sm text-muted-foreground leading-relaxed">
+            <p className="pb-5 text-xs sm:text-sm text-muted-foreground leading-relaxed break-words">
               {faq.answer}
             </p>
           </motion.div>
@@ -97,13 +97,13 @@ export function FaqSection() {
             <Sparkle className="size-3.5 fill-primary" weight="fill" />
             <span>Got Questions?</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight">
-            <span className="text-foreground">Still have questions? </span>
+          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight break-words">
+            <span className="text-foreground">Still have questions? </span> <br className="hidden sm:inline" />
             <span className="text-[#717680] dark:text-muted-foreground">
               We’ve got you covered.
             </span>
           </h2>
-          <p className="mt-3 text-sm sm:text-base text-muted-foreground">
+          <p className="mt-3 text-xs sm:text-base text-muted-foreground max-w-xl mx-auto break-words leading-relaxed">
             If it’s not covered here, reach out to our team — or just try FreelanceXchain and see for yourself.
           </p>
         </motion.div>

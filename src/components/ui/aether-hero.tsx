@@ -117,7 +117,7 @@ export default function AetherHero() {
             initial={reduce ? false : { opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, delay: 0.08 }}
-            className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.08]"
+            className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.12] sm:leading-[1.08] break-words"
           >
             <span className="text-[#717680] dark:text-muted-foreground font-normal">
               Stop chasing payments.{" "}
@@ -132,7 +132,7 @@ export default function AetherHero() {
             initial={reduce ? false : { opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, delay: 0.16 }}
-            className="mt-5 text-base sm:text-lg text-muted-foreground leading-relaxed max-w-xl mx-auto font-normal"
+            className="mt-4 sm:mt-5 text-sm sm:text-base lg:text-lg text-muted-foreground leading-relaxed max-w-xl mx-auto font-normal break-words"
           >
             Discover verified client projects, generate tailored proposals with AI, and get guaranteed milestone payouts locked in smart contract escrow.
           </motion.p>
@@ -306,12 +306,12 @@ export default function AetherHero() {
                   </div>
 
                   {/* Filter tabs */}
-                  <div className="flex items-center gap-1.5 p-1 rounded-xl bg-muted/60 border border-border text-xs font-semibold">
+                  <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 p-1 rounded-xl bg-muted/60 border border-border text-xs font-semibold">
                     {["All", "Escrow Funded", "Milestones", "Proposals"].map((f) => (
                       <button
                         key={f}
                         onClick={() => setSelectedFilter(f)}
-                        className={`px-3 py-1 rounded-lg text-xs transition-all ${
+                        className={`px-2.5 sm:px-3 py-1 rounded-lg text-[11px] sm:text-xs transition-all ${
                           selectedFilter === f
                             ? "bg-background text-foreground shadow-xs font-bold"
                             : "text-muted-foreground hover:text-foreground"
@@ -335,24 +335,24 @@ export default function AetherHero() {
                           : "bg-card border-border/70 hover:border-border hover:bg-muted/30"
                       }`}
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
                         <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center font-bold text-xs text-foreground shrink-0 border border-border/60">
                           {c.client[0]}
                         </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold text-foreground">{c.role}</span>
-                            <span className="text-xs text-muted-foreground">• {c.client}</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+                            <span className="text-xs font-bold text-foreground break-words">{c.role}</span>
+                            <span className="text-xs text-muted-foreground truncate">• {c.client}</span>
                           </div>
                           <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-0.5">
-                            <span>{c.location}</span>
+                            <span className="truncate">{c.location}</span>
                             <span>•</span>
-                            <span className="font-bold text-foreground">{c.budget}</span>
+                            <span className="font-bold text-foreground shrink-0">{c.budget}</span>
                           </div>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2.5 self-start sm:self-auto">
+                      <div className="flex items-center gap-2.5 self-start sm:self-auto shrink-0">
                         <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300">
                           {c.match}
                         </span>
@@ -366,14 +366,14 @@ export default function AetherHero() {
               </div>
 
               {/* Live Contract Inspector Note */}
-              <div className="mt-4 p-3 rounded-xl bg-background border border-border/80 flex items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <ShieldCheck className="size-4 text-emerald-500 shrink-0" weight="fill" />
-                  <span className="truncate">
+              <div className="mt-4 p-3 rounded-xl bg-background border border-border/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                <div className="flex items-start sm:items-center gap-2 text-muted-foreground min-w-0 flex-1">
+                  <ShieldCheck className="size-4 text-emerald-500 shrink-0 mt-0.5 sm:mt-0" weight="fill" />
+                  <span className="line-clamp-2 sm:truncate break-words">
                     <strong className="text-foreground">{selectedContract.client}:</strong> {selectedContract.notes}
                   </span>
                 </div>
-                <span className="shrink-0 text-[10px] font-bold text-primary px-2 py-0.5 rounded-md bg-primary/10">
+                <span className="self-start sm:self-auto shrink-0 text-[10px] font-bold text-primary px-2 py-0.5 rounded-md bg-primary/10">
                   Escrow Verified
                 </span>
               </div>

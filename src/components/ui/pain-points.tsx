@@ -37,13 +37,13 @@ export function PainPoints() {
           <p className="text-xs font-bold text-destructive uppercase tracking-wider mb-2">
             The Problem
           </p>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-foreground">
-            Tired of freelance friction? <br />
+          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-foreground break-words">
+            Tired of freelance friction? <br className="hidden sm:inline" />
             <span className="text-muted-foreground font-semibold">
               Here’s what’s really holding you back.
             </span>
           </h2>
-          <p className="mt-3 text-sm text-muted-foreground">
+          <p className="mt-3 text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-xl mx-auto break-words">
             Delayed payouts, 20% platform cuts, and fake reviews shouldn&apos;t exist in 2026. The traditional freelancing system is broken.
           </p>
         </motion.div>
@@ -71,7 +71,7 @@ export function PainPoints() {
               <span className="shrink-0 h-6 w-6 rounded-full bg-destructive/10 text-destructive flex items-center justify-center text-xs font-bold">
                 <X className="size-3.5" weight="bold" />
               </span>
-              <span>{point}</span>
+              <span className="min-w-0 flex-1 break-words">{point}</span>
             </motion.div>
           ))}
         </motion.div>

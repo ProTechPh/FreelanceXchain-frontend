@@ -33,7 +33,7 @@ const footerLinks: FooterSection[] = [
 			{ title: 'Compare Platforms', href: '/#compare' },
 			{ title: 'Verified Reviews', href: '/#reviews' },
 			{ title: 'FAQs & Help', href: '/#faq' },
-			{ title: 'Blog & Guides', href: '/blog' },
+			{ title: 'Crypto News', href: '/news' },
 			{ title: 'Tutorials', href: '/tutorials' },
 		],
 	},
@@ -100,7 +100,7 @@ export function FooterSection() {
 						</div>
 					</AnimatedContainer>
 
-					<div className="grid grid-cols-2 gap-8 sm:grid-cols-4 xl:col-span-2">
+					<div className="grid grid-cols-2 gap-5 sm:gap-8 sm:grid-cols-4 xl:col-span-2">
 						{footerLinks.map((section, index) => (
 							<AnimatedContainer key={section.label} delay={0.05 + index * 0.04}>
 								<div>

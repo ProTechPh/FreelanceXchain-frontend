@@ -28,20 +28,20 @@ function CallToAction() {
           </div>
 
           {/* Title */}
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight max-w-2xl mx-auto">
-            Ready to hire or get hired? <br />
+          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight max-w-2xl mx-auto break-words">
+            Ready to hire or get hired? <br className="hidden sm:inline" />
             <span className="text-emerald-300">Get started with smart escrow today.</span>
           </h2>
 
-          <p className="mt-4 text-sm sm:text-base leading-relaxed max-w-xl mx-auto text-emerald-100/80 font-normal">
+          <p className="mt-3 sm:mt-4 text-xs sm:text-base leading-relaxed max-w-xl mx-auto text-emerald-100/80 font-normal break-words">
             Join verified talent and top employers closing milestone contracts with AI speed, portable reputation, and Ethereum smart contract escrow.
           </p>
 
           {/* Action Buttons */}
-          <div className="mt-8 flex flex-wrap justify-center items-center gap-3.5">
+          <div className="mt-8 flex flex-wrap justify-center items-center gap-3">
             <Link
               href="/register"
-              className="group inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full bg-white text-[#0f4c3d] font-bold text-sm shadow-lg transition-all duration-150 hover:bg-emerald-50 active:scale-[0.98]"
+              className="group inline-flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3.5 rounded-full bg-white text-[#0f4c3d] font-bold text-sm shadow-lg transition-all duration-150 hover:bg-emerald-50 active:scale-[0.98]"
             >
               <span>Get Started Free</span>
               <ArrowRight
@@ -51,25 +51,25 @@ function CallToAction() {
             </Link>
             <Link
               href="/projects"
-              className="inline-flex items-center justify-center px-7 py-3.5 rounded-full border border-white/25 text-white font-semibold text-sm transition-all duration-150 hover:bg-white/10 active:scale-[0.98]"
+              className="inline-flex items-center justify-center w-full sm:w-auto px-7 py-3.5 rounded-full border border-white/25 text-white font-semibold text-sm transition-all duration-150 hover:bg-white/10 active:scale-[0.98]"
             >
               Browse Projects
             </Link>
           </div>
 
           {/* Bottom Trust Badges */}
-          <div className="mt-10 pt-8 border-t border-white/15 flex flex-wrap justify-center items-center gap-6 sm:gap-10 text-xs text-emerald-200/90 font-medium">
+          <div className="mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-white/15 flex flex-wrap justify-center items-center gap-4 sm:gap-10 text-xs text-emerald-200/90 font-medium">
             <div className="flex items-center gap-2">
-              <CheckCircle className="size-4 text-emerald-400" weight="fill" />
-              <span>100% Smart Contract Escrow</span>
+              <CheckCircle className="size-4 text-emerald-400 shrink-0" weight="fill" />
+              <span className="break-words">100% Smart Contract Escrow</span>
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle className="size-4 text-emerald-400" weight="fill" />
-              <span>Didit KYC in 220+ Countries</span>
+              <CheckCircle className="size-4 text-emerald-400 shrink-0" weight="fill" />
+              <span className="break-words">Didit KYC in 220+ Countries</span>
             </div>
             <div className="flex items-center gap-2">
-              <Star className="size-4 text-amber-400 fill-amber-400" weight="fill" />
-              <span>Zero Unpaid Invoices Guaranteed</span>
+              <Star className="size-4 text-amber-400 fill-amber-400 shrink-0" weight="fill" />
+              <span className="break-words">Zero Unpaid Invoices Guaranteed</span>
             </div>
           </div>
         </motion.div>

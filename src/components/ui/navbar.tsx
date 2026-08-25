@@ -1,6 +1,6 @@
 "use client"
 
-import { List, MagnifyingGlass, TrendUp, Lightning, Users } from "@phosphor-icons/react";
+import { List, MagnifyingGlass, TrendUp, Lightning, Users, Newspaper } from "@phosphor-icons/react";
 import * as React from "react";
 
 import { Button } from "@/components/ui/button";
@@ -58,6 +58,7 @@ export default function Navbar({
     { title: "FAQ", url: "/#faq" },
     { title: "Projects", url: "/projects" },
     { title: "Talent", url: "/freelancers" },
+    { title: "Crypto News", url: "/news" },
   ],
   auth = {
     login: { text: "Sign in", url: "/login" },
@@ -207,9 +208,9 @@ export default function Navbar({
                 <Users className="size-4" weight="light" />Find Talent
               </Link>
             </CommandItem>
-            <CommandItem asChild value="leaderboard">
-              <Link href="/leaderboard" onClick={() => setOpenSearch(false)}>
-                <TrendUp className="size-4" weight="light" />Reputation Leaderboard
+            <CommandItem asChild value="crypto news">
+              <Link href="/news" onClick={() => setOpenSearch(false)}>
+                <Newspaper className="size-4" weight="light" />Crypto News
               </Link>
             </CommandItem>
           </CommandGroup>
