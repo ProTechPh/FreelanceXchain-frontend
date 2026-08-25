@@ -14,6 +14,16 @@ const nextConfig: NextConfig = {
         hostname: 'cloud.appwrite.io',
         pathname: '/v1/storage/buckets/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'cdn.worldvectorlogo.com',
+        pathname: '/logos/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'upload.wikimedia.org',
+        pathname: '/wikipedia/commons/**',
+      },
     ],
   },
 };

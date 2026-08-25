@@ -1,52 +1,80 @@
-'use client';
+"use client";
 
-import { Suspense } from 'react';
-import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { Clock, MapPin } from 'lucide-react';
-import { MarketplaceBrowser } from '@/components/marketplace/marketplace-browser';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import type { FreelancerProfile } from '@/types';
-import { marketplaceFiltersFromSearchParams } from '@/lib/marketplace-search';
+import { Suspense } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { MapPin, ShieldCheck } from "lucide-react";
+import { MarketplaceBrowser } from "@/components/marketplace/marketplace-browser";
+import type { FreelancerProfile } from "@/types";
+import { marketplaceFiltersFromSearchParams } from "@/lib/marketplace-search";
 
 const availabilityColors: Record<string, string> = {
-  available: 'bg-green-500/10 text-green-500',
-  busy: 'bg-yellow-500/10 text-yellow-500',
-  unavailable: 'bg-gray-500/10 text-gray-500',
+  available: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+  busy: "bg-yellow-500/10 text-yellow-600",
+  unavailable: "bg-gray-500/10 text-gray-500",
 };
 
 function FreelancerResult({ freelancer, listingQuery }: { freelancer: FreelancerProfile; listingQuery: string }) {
-  const initials = (freelancer.name ?? 'U').split(' ').map((name) => name[0]).join('');
-  const returnPath = `/freelancers${listingQuery ? `?${listingQuery}` : ''}`;
+  const initials = (freelancer.name ?? "U").split(" ").map((name) => name[0]).join("");
+  const returnPath = `/freelancers${listingQuery ? `?${listingQuery}` : ""}`;
   return (
-    <Link href={`/freelancers/${freelancer.userId}?returnTo=${encodeURIComponent(returnPath)}`} className="block h-full">
-      <Card className="h-full cursor-pointer transition-all hover:border-primary/20">
-        <CardContent className="p-6 pt-16">
-          <div className="mb-4 flex items-start gap-4">
-            <div className="flex size-14 items-center justify-center rounded-xl gradient-primary text-lg font-bold text-white">{initials}</div>
+    <Link href={`/freelancers/${freelancer.userId}?returnTo=${encodeURIComponent(returnPath)}`} className="block h-full group">
+      <div className="h-full rounded-3xl bg-card border border-border/80 p-6 shadow-md shadow-black/5 hover:border-primary/50 hover:shadow-xl transition-all duration-300 flex flex-col justify-between">
+        <div>
+          <div className="mb-4 flex items-start gap-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-primary text-primary-foreground font-extrabold text-base flex items-center justify-center shadow-xs shrink-0">
+              {initials}
+            </div>
             <div className="min-w-0 flex-1">
-              <h2 className="truncate text-lg font-semibold">{freelancer.name || 'Freelancer'}</h2>
-              <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{freelancer.bio || 'No bio provided'}</p>
+              <div className="flex items-center gap-1.5">
+                <h2 className="truncate text-base font-bold text-foreground group-hover:text-primary transition-colors">
+                  {freelancer.name || "Verified Freelancer"}
+                </h2>
+                <ShieldCheck className="size-4 text-emerald-500 shrink-0" />
+              </div>
+              <p className="mt-1 line-clamp-2 text-xs text-muted-foreground leading-relaxed">
+                {freelancer.bio || "Full-stack Web3 & Smart Contract Developer."}
+              </p>
             </div>
           </div>
-          <Badge className={availabilityColors[freelancer.availability]}><Clock className="mr-1 size-3" />{freelancer.availability}</Badge>
-          <div className="my-4 flex flex-wrap gap-1.5">
-            {freelancer.skills?.slice(0, 4).map((skill) => <Badge key={skill.name} variant="secondary" className="text-xs">{skill.name}</Badge>)}
+
+          <div className="flex items-center gap-2 mb-3">
+            <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${availabilityColors[freelancer.availability] || availabilityColors.available}`}>
+              {freelancer.availability}
+            </span>
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
+              <MapPin className="size-3" /> {freelancer.nationality || "Remote"}
+            </span>
           </div>
-          <div className="flex items-center justify-between text-sm">
-            <span className="flex items-center gap-1 text-muted-foreground"><MapPin className="size-3" />{freelancer.nationality || 'Remote'}</span>
-            <span className="font-semibold text-primary">${freelancer.hourlyRate}/hr</span>
+
+          <div className="my-3 flex flex-wrap gap-1.5">
+            {freelancer.skills?.slice(0, 4).map((skill) => (
+              <span
+                key={skill.name}
+                className="px-2 py-0.5 rounded-full bg-background border border-border/80 text-[10px] font-semibold text-foreground/80"
+              >
+                {skill.name}
+              </span>
+            ))}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+
+        <div className="pt-3.5 border-t border-border/50 flex items-center justify-between text-xs mt-3">
+          <span className="font-bold text-primary text-sm">
+            ${freelancer.hourlyRate}/hr
+          </span>
+          <span className="text-xs font-bold text-foreground/80 group-hover:text-primary transition-colors">
+            View Profile →
+          </span>
+        </div>
+      </div>
     </Link>
   );
 }
 
 function FreelancersMarketplace() {
   const searchParams = useSearchParams();
-  const serializedFilters = searchParams?.toString() ?? '';
+  const serializedFilters = searchParams?.toString() ?? "";
   const initialFilters = marketplaceFiltersFromSearchParams(new URLSearchParams(serializedFilters));
 
   return (
@@ -55,15 +83,18 @@ function FreelancersMarketplace() {
       kind="freelancer"
       initialFilters={initialFilters}
       title="Find Talent"
-      description="Search freelancer profiles by specialty and keep a shortlist of favorites."
+      description="Connect with pre-vetted blockchain engineers, UI/UX designers, and AI specialists with verified on-chain portfolios."
       emptyMessage="No freelancers match these filters."
       layout="grid"
-      getTargetId={(freelancer) => freelancer.userId}
       renderItem={(freelancer, listingQuery) => <FreelancerResult freelancer={freelancer} listingQuery={listingQuery} />}
     />
   );
 }
 
 export default function FreelancersPage() {
-  return <Suspense><FreelancersMarketplace /></Suspense>;
+  return (
+    <Suspense>
+      <FreelancersMarketplace />
+    </Suspense>
+  );
 }

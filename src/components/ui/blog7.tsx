@@ -99,6 +99,7 @@ const Blog7 = ({
                   href={post.url}
                   className="transition-opacity duration-200 fade-in hover:opacity-70"
                 >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={post.image}
                     alt={post.title}

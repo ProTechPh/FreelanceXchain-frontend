@@ -1,47 +1,82 @@
-'use client';
+"use client";
 
-import { Suspense } from 'react';
-import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { Clock, DollarSign, Users, Zap } from 'lucide-react';
-import { MarketplaceBrowser } from '@/components/marketplace/marketplace-browser';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import type { Project } from '@/types';
-import { marketplaceFiltersFromSearchParams } from '@/lib/marketplace-search';
+import { Suspense } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Clock, DollarSign, Users, Zap, ShieldCheck } from "lucide-react";
+import { MarketplaceBrowser } from "@/components/marketplace/marketplace-browser";
+import type { Project } from "@/types";
+import { marketplaceFiltersFromSearchParams } from "@/lib/marketplace-search";
 
 function ProjectResult({ project, listingQuery }: { project: Project; listingQuery: string }) {
-  const returnPath = `/projects${listingQuery ? `?${listingQuery}` : ''}`;
+  const returnPath = `/projects${listingQuery ? `?${listingQuery}` : ""}`;
   return (
-    <Link href={`/projects/${project.id}?returnTo=${encodeURIComponent(returnPath)}`} className="block">
-      <Card className="cursor-pointer transition-all hover:border-primary/30 hover:glow-sm-primary">
-        <CardContent className="p-6 pr-16">
-          <div className="mb-4 flex items-start justify-between">
-            <div>
-              <h2 className="text-xl font-semibold transition-colors hover:text-primary">{project.title}</h2>
-              <p className="mt-1 text-sm text-muted-foreground">{project.employer?.name || 'Unknown Employer'}</p>
+    <Link href={`/projects/${project.id}?returnTo=${encodeURIComponent(returnPath)}`} className="block group">
+      <div className="rounded-3xl bg-card border border-border/80 p-6 sm:p-7 shadow-md shadow-black/5 hover:border-primary/50 hover:shadow-xl transition-all duration-300">
+        <div className="mb-3 flex items-start justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full">
+                <ShieldCheck className="size-3" /> Escrow Protected
+              </span>
+              {project.isRush && (
+                <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 bg-amber-500/10 px-2.5 py-0.5 rounded-full">
+                  <Zap className="size-3" /> Rush +{project.rushFeePercentage}%
+                </span>
+              )}
             </div>
-            {project.isRush && <Badge className="bg-amber-500/10 text-amber-500"><Zap className="mr-1 size-3" />Rush +{project.rushFeePercentage}%</Badge>}
+            <h2 className="text-lg sm:text-xl font-bold text-foreground mt-2 group-hover:text-primary transition-colors">
+              {project.title}
+            </h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Posted by <span className="font-semibold text-foreground">{project.employer?.name || "Verified Employer"}</span>
+            </p>
           </div>
-          <p className="mb-4 line-clamp-2 text-muted-foreground">{project.description}</p>
-          <div className="mb-4 flex flex-wrap gap-2">
-            {project.requiredSkills?.map((skill) => <Badge key={skill.skillId ?? skill.skillName} variant="secondary">{skill.skillName}</Badge>)}
+        </div>
+
+        <p className="mb-4 line-clamp-2 text-xs sm:text-sm text-muted-foreground leading-relaxed">
+          {project.description}
+        </p>
+
+        <div className="mb-5 flex flex-wrap gap-1.5">
+          {project.requiredSkills?.map((skill) => (
+            <span
+              key={skill.skillId ?? skill.skillName}
+              className="px-2.5 py-0.5 rounded-full bg-background border border-border/80 text-[11px] font-semibold text-foreground/80"
+            >
+              {skill.skillName}
+            </span>
+          ))}
+        </div>
+
+        <div className="pt-4 border-t border-border/50 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
+          <div className="flex items-center gap-4">
+            <span className="flex items-center gap-1 font-bold text-foreground text-sm">
+              <DollarSign className="size-4 text-emerald-600 dark:text-emerald-400" />
+              ${project.budget.toLocaleString()} USDC
+            </span>
+            <span className="flex items-center gap-1">
+              <Clock className="size-3.5" />
+              Due {new Date(project.deadline).toLocaleDateString()}
+            </span>
+            <span className="flex items-center gap-1">
+              <Users className="size-3.5" />
+              {project.proposalCount || 0} proposals
+            </span>
           </div>
-          <div className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1 font-medium text-primary"><DollarSign className="size-4" />${project.budget.toLocaleString()}</span>
-            <span className="flex items-center gap-1"><Clock className="size-4" />{new Date(project.deadline).toLocaleDateString()}</span>
-            <span className="flex items-center gap-1"><Users className="size-4" />{project.proposalCount || 0} proposals</span>
-            <span>{new Date(project.createdAt).toLocaleDateString()}</span>
-          </div>
-        </CardContent>
-      </Card>
+
+          <span className="text-xs font-bold text-primary group-hover:translate-x-1 transition-transform">
+            View Details & Apply →
+          </span>
+        </div>
+      </div>
     </Link>
   );
 }
 
 function ProjectsMarketplace() {
   const searchParams = useSearchParams();
-  const serializedFilters = searchParams?.toString() ?? '';
+  const serializedFilters = searchParams?.toString() ?? "";
   const initialFilters = marketplaceFiltersFromSearchParams(new URLSearchParams(serializedFilters));
 
   return (
@@ -50,7 +85,7 @@ function ProjectsMarketplace() {
       kind="project"
       initialFilters={initialFilters}
       title="Browse Projects"
-      description="Search open work by keyword, skill, and budget, then save the searches you care about."
+      description="Discover verified client projects, generate tailored milestone proposals with AI, and get guaranteed payouts locked in smart escrow."
       emptyMessage="No open projects match these filters."
       layout="list"
       renderItem={(project, listingQuery) => <ProjectResult project={project} listingQuery={listingQuery} />}
@@ -59,5 +94,9 @@ function ProjectsMarketplace() {
 }
 
 export default function ProjectsPage() {
-  return <Suspense><ProjectsMarketplace /></Suspense>;
+  return (
+    <Suspense>
+      <ProjectsMarketplace />
+    </Suspense>
+  );
 }

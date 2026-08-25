@@ -1,349 +1,386 @@
-'use client';
+"use client";
 
-import React, { useEffect, useRef, useState, useMemo } from 'react';
-import Link from 'next/link';
-import { useTheme } from 'next-themes';
-import { cn } from '@/lib/utils';
+import React, { useState } from "react";
+import Link from "next/link";
+import { motion, useReducedMotion } from "motion/react";
+import {
+  ArrowRight,
+  Sparkle,
+  CheckCircle,
+  ShieldCheck,
+  Briefcase,
+  List,
+  Gear,
+  Question,
+  MagnifyingGlass,
+  Check,
+  Coins,
+  TrendUp,
+  FileCode,
+} from "@phosphor-icons/react";
 
-export type AetherHeroProps = {
-  title?: string;
-  subtitle?: string;
-  ctaLabel?: string;
-  ctaHref?: string;
-  secondaryCtaLabel?: string;
-  secondaryCtaHref?: string;
+const trustBadges = [
+  { text: "100% Smart Contract Escrow" },
+  { text: "AI Skill & Proposal Matching" },
+  { text: "Portable On-Chain Reputation" },
+];
 
-  align?: 'left' | 'center' | 'right';
-  maxWidth?: number;
-  overlayGradient?: string;
-  textColor?: string;
+const mockContracts = [
+  {
+    id: 1,
+    role: "DeFi Protocol Full-Stack DApp",
+    client: "Ethereum Ecosystem",
+    location: "Remote • Worldwide",
+    budget: "$4,500 USDC",
+    stage: "Escrow Funded (Milestone 2/3)",
+    stageColor: "bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border-emerald-500/20",
+    match: "99% Skill Match",
+    skills: ["Solidity", "Next.js", "Foundry", "Smart Escrow"],
+    notes: "Employer funded $4,500 into contract escrow. Milestone 1 deliverable verified and $1,500 auto-released to wallet.",
+  },
+  {
+    id: 2,
+    role: "AI Agent Workflow Pipeline",
+    client: "Modern SaaS Scaleup",
+    location: "Remote • Global",
+    budget: "$3,200",
+    stage: "Proposal Accepted",
+    stageColor: "bg-blue-500/10 text-blue-800 dark:text-blue-300 border-blue-500/20",
+    match: "98% Skill Match",
+    skills: ["Python", "FastAPI", "Vector DB", "LLM Agents"],
+    notes: "Proposal tailored by AI assistant matched client requirements perfectly. Contract workspace created and awaiting escrow deposit.",
+  },
+  {
+    id: 3,
+    role: "Smart Contract Audit & Formal Verification",
+    client: "Polygon Validator Protocol",
+    location: "Remote • US / EU",
+    budget: "$6,000 ETH",
+    stage: "Milestone Paid 🎉",
+    stageColor: "bg-purple-500/10 text-purple-800 dark:text-purple-300 border-purple-500/20",
+    match: "99% Skill Match",
+    skills: ["EVM Internals", "Security Audit", "Slither", "Formal Proofs"],
+    notes: "Deliverable approved by employer. Funds released instantly on-chain and verified reputation score updated to 99.8%.",
+  },
+  {
+    id: 4,
+    role: "Design System & Web3 Component Suite",
+    client: "Supabase Partner",
+    location: "Remote • Global",
+    budget: "$2,800",
+    stage: "In Progress",
+    stageColor: "bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-500/20",
+    match: "96% Skill Match",
+    skills: ["Figma", "Tailwind CSS", "React 19", "UX Tokens"],
+    notes: "Milestone 1 submitted for client review. Milestone 2 escrow active.",
+  },
+];
 
-  fragmentSource?: string;
-  dprMax?: number;
-  clearColor?: [number, number, number, number];
+export default function AetherHero() {
+  const reduce = useReducedMotion();
+  const [selectedFilter, setSelectedFilter] = useState("All");
+  const [selectedContract, setSelectedContract] = useState(mockContracts[0]);
 
-  height?: string | number;
-  className?: string;
-  ariaLabel?: string;
-};
-
-const DEFAULT_FRAG = `#version 300 es
-precision highp float;
-out vec4 O;
-uniform float time;
-uniform vec2 resolution;
-#define FC gl_FragCoord.xy
-#define R resolution
-#define T time
-#define S smoothstep
-#define MN min(R.x,R.y)
-float pattern(vec2 uv) {
-  float d=.0;
-  for (float i=.0; i<3.; i++) {
-    uv.x+=sin(T*(1.+i)+uv.y*1.5)*.2;
-    d+=.005/abs(uv.x);
-  }
-  return d;	
-}
-vec3 scene(vec2 uv) {
-  vec3 col=vec3(0);
-  uv=vec2(atan(uv.x,uv.y)*2./6.28318,-log(length(uv))+T);
-  for (float i=.0; i<3.; i++) {
-    int k=int(mod(i,3.));
-    col[k]+=pattern(uv+i*6./MN);
-  }
-  return col;
-}
-void main() {
-  vec2 uv=(FC-.5*R)/MN;
-  vec3 col=vec3(0);
-  float s=12., e=9e-4;
-  col+=e/(sin(uv.x*s)*cos(uv.y*s));
-  uv.y+=R.x>R.y?.5:.5*(R.y/R.x);
-  col+=scene(uv);
-  O=vec4(col,1.);
-}`;
-
-const VERT_SRC = `#version 300 es
-precision highp float;
-in vec2 position;
-void main(){ gl_Position = vec4(position, 0.0, 1.0); }
-`;
-
-export default function AetherHero({
-  title = 'Decentralize Your Freelance Career',
-  subtitle = 'The future of work is here. Get matched with projects using AI, secure payments with smart contracts, and build an immutable reputation on-chain.',
-  ctaLabel = 'Find Work',
-  ctaHref = '/register',
-  secondaryCtaLabel = 'Hire Talent',
-  secondaryCtaHref = '/register',
-
-  align = 'center',
-  maxWidth = 960,
-  overlayGradient,
-  textColor,
-
-  fragmentSource = DEFAULT_FRAG,
-  dprMax = 2,
-  clearColor,
-
-  height = '100dvh',
-  className = '',
-  ariaLabel = 'Aurora hero background',
-}: AetherHeroProps) {
-  const { resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true);
-  }, []);
-  // Default to dark until mounted (matches the app's default theme, avoids a flash)
-  const isDark = !mounted || resolvedTheme !== 'light';
-
-  const resolvedOverlayGradient = overlayGradient ?? (isDark
-    ? 'linear-gradient(180deg, #000000bb, #00000055 40%, transparent)'
-    : 'linear-gradient(180deg, #ffffffcc, #ffffff66 40%, transparent)');
-  const resolvedTextColor = textColor ?? (isDark ? '#ffffff' : '#0a0a0a');
-  const resolvedClearColor = useMemo<[number, number, number, number]>(
-    () => clearColor ?? (isDark ? [0, 0, 0, 1] : [0.98, 0.98, 0.98, 1]),
-    [clearColor, isDark]
-  );
-
-  const badgeClass = isDark
-    ? 'bg-white/[0.08] border-white/15 text-white/80'
-    : 'bg-black/[0.05] border-black/10 text-black/70';
-  const secondaryBtnClass = isDark
-    ? 'glass border-white/20 text-white hover:bg-white/10 hover:border-white/30'
-    : 'glass border-black/10 text-black hover:bg-black/5 hover:border-black/20';
-  const dividerBorderClass = isDark ? 'border-white/10' : 'border-black/10';
-  const statLabelClass = isDark ? 'text-white/50' : 'text-black/50';
-
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const glRef = useRef<WebGL2RenderingContext | null>(null);
-  const programRef = useRef<WebGLProgram | null>(null);
-  const bufRef = useRef<WebGLBuffer | null>(null);
-  const uniTimeRef = useRef<WebGLUniformLocation | null>(null);
-  const uniResRef = useRef<WebGLUniformLocation | null>(null);
-  const rafRef = useRef<number | null>(null);
-
-  const compileShader = (gl: WebGL2RenderingContext, src: string, type: number) => {
-    const sh = gl.createShader(type)!;
-    gl.shaderSource(sh, src);
-    gl.compileShader(sh);
-    if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
-      const info = gl.getShaderInfoLog(sh) || 'Unknown shader error';
-      gl.deleteShader(sh);
-      throw new Error(info);
-    }
-    return sh;
-  };
-  const createProgram = (gl: WebGL2RenderingContext, vs: string, fs: string) => {
-    const v = compileShader(gl, vs, gl.VERTEX_SHADER);
-    const f = compileShader(gl, fs, gl.FRAGMENT_SHADER);
-    const prog = gl.createProgram()!;
-    gl.attachShader(prog, v);
-    gl.attachShader(prog, f);
-    gl.linkProgram(prog);
-    gl.deleteShader(v);
-    gl.deleteShader(f);
-    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
-      const info = gl.getProgramInfoLog(prog) || 'Program link error';
-      gl.deleteProgram(prog);
-      throw new Error(info);
-    }
-    return prog;
-  };
-
-  useEffect(() => {
-    const canvas = canvasRef.current!;
-    const gl = canvas.getContext('webgl2', { alpha: true, antialias: true });
-    if (!gl) return;
-    glRef.current = gl;
-
-    let prog: WebGLProgram;
-    try {
-      prog = createProgram(gl, VERT_SRC, fragmentSource);
-    } catch (e) {
-      console.error(e);
-      return;
-    }
-    programRef.current = prog;
-
-    const verts = new Float32Array([-1, 1, -1, -1, 1, 1, 1, -1]);
-    const buf = gl.createBuffer()!;
-    bufRef.current = buf;
-    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-    gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
-
-    gl.useProgram(prog);
-    const posLoc = gl.getAttribLocation(prog, 'position');
-    gl.enableVertexAttribArray(posLoc);
-    gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
-
-    uniTimeRef.current = gl.getUniformLocation(prog, 'time');
-    uniResRef.current = gl.getUniformLocation(prog, 'resolution');
-
-    gl.clearColor(resolvedClearColor[0], resolvedClearColor[1], resolvedClearColor[2], resolvedClearColor[3]);
-
-    const fit = () => {
-      const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, dprMax));
-      const rect = canvas.getBoundingClientRect();
-      const cssW = Math.max(1, rect.width);
-      const cssH = Math.max(1, rect.height);
-      const W = Math.floor(cssW * dpr);
-      const H = Math.floor(cssH * dpr);
-      if (canvas.width !== W || canvas.height !== H) {
-        canvas.width = W; canvas.height = H;
-      }
-      gl.viewport(0, 0, canvas.width, canvas.height);
-    };
-    fit();
-    const onResize = () => fit();
-    const ro = new ResizeObserver(fit);
-    ro.observe(canvas);
-    window.addEventListener('resize', onResize);
-
-    const loop = (now: number) => {
-      gl.clear(gl.COLOR_BUFFER_BIT);
-      gl.useProgram(prog);
-      gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-      if (uniResRef.current) gl.uniform2f(uniResRef.current, canvas.width, canvas.height);
-      if (uniTimeRef.current) gl.uniform1f(uniTimeRef.current, now * 1e-3);
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-      rafRef.current = requestAnimationFrame(loop);
-    };
-    rafRef.current = requestAnimationFrame(loop);
-
-    return () => {
-      ro.disconnect();
-      window.removeEventListener('resize', onResize);
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      if (bufRef.current) gl.deleteBuffer(bufRef.current);
-      if (programRef.current) gl.deleteProgram(programRef.current);
-    };
-  }, [fragmentSource, dprMax, resolvedClearColor]);
-
-  const justify =
-    align === 'left' ? 'flex-start' : align === 'right' ? 'flex-end' : 'center';
-  const textAlign =
-    align === 'left' ? 'left' : align === 'right' ? 'right' : 'center';
+  const filteredContracts =
+    selectedFilter === "All"
+      ? mockContracts
+      : mockContracts.filter((c) =>
+          selectedFilter === "Escrow Funded"
+            ? c.stage.includes("Escrow Funded")
+            : selectedFilter === "Milestones"
+            ? c.stage.includes("Milestone")
+            : c.stage.includes(selectedFilter)
+        );
 
   return (
-    <section
-      className={['aurora-hero', className].join(' ')}
-      style={{ height, position: 'relative', overflow: 'hidden' }}
-      aria-label="Hero"
-    >
+    <section className="relative bg-background overflow-hidden pt-32 pb-16 lg:pt-40 lg:pb-24 border-b border-border/40">
+      {/* Soft background glow */}
+      <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-primary/5 rounded-full blur-3xl pointer-events-none -z-10" />
 
-      <canvas
-        ref={canvasRef}
-        className="aurora-canvas"
-        role="img"
-        aria-label={ariaLabel}
-        style={{
-          position: 'absolute',
-          inset: 0,
-          width: '100%',
-          height: '100%',
-          display: 'block',
-          userSelect: 'none',
-          touchAction: 'none',
-        }}
-      />
-
-      <div
-        className="aurora-overlay"
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background: resolvedOverlayGradient,
-          pointerEvents: 'none',
-        }}
-      />
-
-      <div
-        className="aurora-content"
-        style={{
-          position: 'relative',
-          zIndex: 2,
-          height: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          color: resolvedTextColor,
-        }}
-      >
-        <div
-          className="w-full px-6 sm:px-10 md:px-16 py-24"
-          style={{
-            maxWidth,
-            marginInline: align === 'center' ? 'auto' : undefined,
-          }}
-        >
-          <div className={cn('inline-flex items-center gap-2 px-4 py-2 rounded-full border mb-6 text-sm font-medium', badgeClass)}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-            </svg>
-            Powered by Blockchain &amp; AI
-          </div>
-
-          <h1
-            className={cn(
-              'mt-0 text-[clamp(2.4rem,7vw,5.5rem)] leading-[1.02] tracking-[-0.03em] font-extrabold drop-shadow-2xl',
-              'text-center md:text-left'
-            )}
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        {/* Centered Hero Header */}
+        <div className="text-center max-w-3xl mx-auto">
+          {/* Announcement pill */}
+          <motion.div
+            initial={reduce ? false : { opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35 }}
+            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-card border border-border/80 text-xs font-semibold text-foreground mb-6 shadow-xs hover:border-primary/40 transition-colors"
           >
-            {title}
-          </h1>
+            <Sparkle className="size-3.5 text-primary fill-primary" weight="fill" />
+            <span>AI Skill Matching & Smart Contract Escrow</span>
+            <ArrowRight className="size-3 text-muted-foreground" weight="bold" />
+          </motion.div>
 
-          {subtitle ? (
-            <p
-              className={cn(
-                'mt-4 text-[clamp(0.95rem,2vw,1.2rem)] leading-relaxed opacity-90 drop-shadow-lg max-w-[600px]',
-                'text-center md:text-left mx-auto md:mx-0'
-              )}
+          {/* Two-tone Headline */}
+          <motion.h1
+            initial={reduce ? false : { opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, delay: 0.08 }}
+            className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.08]"
+          >
+            <span className="text-[#717680] dark:text-muted-foreground font-normal">
+              Stop chasing payments.{" "}
+            </span>
+            <span className="text-[#181d27] dark:text-foreground font-extrabold">
+              Work securely on-chain.
+            </span>
+          </motion.h1>
+
+          {/* Subheading */}
+          <motion.p
+            initial={reduce ? false : { opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, delay: 0.16 }}
+            className="mt-5 text-base sm:text-lg text-muted-foreground leading-relaxed max-w-xl mx-auto font-normal"
+          >
+            Discover verified client projects, generate tailored proposals with AI, and get guaranteed milestone payouts locked in smart contract escrow.
+          </motion.p>
+
+          {/* Dual Action Buttons */}
+          <motion.div
+            initial={reduce ? false : { opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45, delay: 0.24 }}
+            className="mt-8 flex flex-wrap justify-center items-center gap-3.5"
+          >
+            <Link
+              href="/register"
+              className="group inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full bg-[#0f4c3d] text-white font-bold text-sm shadow-md shadow-[#0f4c3d]/20 transition-all duration-150 hover:bg-[#135d4b] hover:shadow-lg active:scale-[0.98]"
             >
-              {subtitle}
-            </p>
-          ) : null}
+              <span>Get Started Free</span>
+              <ArrowRight
+                className="size-4 transition-transform duration-150 group-hover:translate-x-1"
+                weight="bold"
+              />
+            </Link>
+            <Link
+              href="/projects"
+              className="inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full border border-border/80 bg-card text-foreground font-semibold text-sm transition-all duration-150 hover:bg-muted/70 hover:border-border active:scale-[0.98]"
+            >
+              <Briefcase className="size-4 text-muted-foreground" weight="duotone" />
+              <span>Browse Projects</span>
+            </Link>
+          </motion.div>
 
-          <div className={cn('flex flex-wrap gap-3 mt-8', 'justify-center md:justify-start')}>
-            {ctaLabel ? (
-              <Link
-                href={ctaHref}
-                className="inline-flex items-center justify-center px-7 py-3.5 rounded-xl gradient-primary text-white font-semibold text-base transition-all duration-200 hover:scale-[1.02] hover:opacity-90 active:scale-[0.98]"
-              >
-                {ctaLabel}
-              </Link>
-            ) : null}
-
-            {secondaryCtaLabel ? (
-              <Link
-                href={secondaryCtaHref}
-                className={cn('inline-flex items-center justify-center px-7 py-3.5 rounded-xl font-semibold text-base transition-all duration-200', secondaryBtnClass)}
-              >
-                {secondaryCtaLabel}
-              </Link>
-            ) : null}
-          </div>
-
-          <div className={cn('flex flex-wrap gap-8 mt-10 pt-8 border-t', dividerBorderClass, 'justify-center md:justify-start')}>
-            {[
-              { value: '2,400+', label: 'Freelancers' },
-              { value: '$1.2M+', label: 'Secured in Escrow' },
-              { value: '180+', label: 'Countries' },
-            ].map((stat) => (
-              <div key={stat.label} className="flex flex-col gap-0.5">
-                <span className="text-2xl font-bold tracking-tight">{stat.value}</span>
-                <span className={cn('text-xs uppercase tracking-widest', statLabelClass)}>{stat.label}</span>
+          {/* 3-item Trust list */}
+          <motion.div
+            initial={reduce ? false : { opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.32 }}
+            className="mt-8 flex flex-wrap justify-center items-center gap-6 sm:gap-8 text-xs sm:text-sm text-muted-foreground"
+          >
+            {trustBadges.map((badge) => (
+              <div key={badge.text} className="flex items-center gap-2">
+                <Check className="size-4 text-[#0f4c3d] dark:text-emerald-400 shrink-0" weight="bold" />
+                <span className="font-medium text-foreground">{badge.text}</span>
               </div>
             ))}
-          </div>
+          </motion.div>
         </div>
-      </div>
 
+        {/* FreelanceXchain Desktop Contract Workspace Mockup */}
+        <motion.div
+          initial={reduce ? false : { opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.38, ease: [0.16, 1, 0.3, 1] }}
+          className="mt-14 mx-auto max-w-5xl relative"
+        >
+          {/* Floating Escrow Funded Badge Top-Right */}
+          <motion.div
+            animate={reduce ? undefined : { y: [0, -6, 0] }}
+            transition={{ repeat: Infinity, duration: 4.2, ease: "easeInOut" }}
+            className="hidden sm:flex absolute -top-5 -right-3 z-20 items-center gap-3 px-4 py-2.5 rounded-2xl bg-card border border-border shadow-xl backdrop-blur-md"
+          >
+            <div className="w-8 h-8 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
+              <ShieldCheck className="size-4" weight="fill" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-foreground">Smart Escrow Funded 🔒</p>
+              <p className="text-[11px] text-muted-foreground">$4,500 USDC locked upfront</p>
+            </div>
+          </motion.div>
+
+          {/* Floating Milestone Approved Badge Bottom-Left */}
+          <motion.div
+            animate={reduce ? undefined : { y: [0, 6, 0] }}
+            transition={{ repeat: Infinity, duration: 4.8, ease: "easeInOut", delay: 1 }}
+            className="hidden sm:flex absolute -bottom-5 -left-3 z-20 items-center gap-3 px-4 py-2.5 rounded-2xl bg-card border border-border shadow-xl backdrop-blur-md"
+          >
+            <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+              <Coins className="size-4" weight="fill" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-foreground">Milestone Payout Released</p>
+              <p className="text-[11px] text-muted-foreground">$1,500 transferred to wallet instantly</p>
+            </div>
+          </motion.div>
+
+          {/* Desktop App Window Container */}
+          <div className="rounded-2xl border border-border/80 bg-card shadow-2xl overflow-hidden grid grid-cols-12 min-h-[460px]">
+            {/* Left Sidebar */}
+            <div className="col-span-12 md:col-span-3 border-b md:border-b-0 md:border-r border-border/60 bg-muted/25 p-4 flex flex-col justify-between">
+              <div>
+                {/* Brand Header in sidebar */}
+                <div className="flex items-center gap-2 mb-6 px-2">
+                  <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center shadow-xs">
+                    <Sparkle className="w-3.5 h-3.5 text-primary-foreground fill-primary-foreground" weight="fill" />
+                  </div>
+                  <span className="font-extrabold text-sm text-foreground tracking-tight">FreelanceXchain</span>
+                </div>
+
+                {/* Sidebar Search */}
+                <div className="relative mb-4">
+                  <MagnifyingGlass className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+                  <input
+                    type="text"
+                    readOnly
+                    placeholder="Search projects..."
+                    className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-background border border-border text-xs text-muted-foreground focus:outline-none"
+                  />
+                </div>
+
+                {/* Nav Items */}
+                <div className="space-y-1 text-xs font-semibold">
+                  <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-primary/10 text-primary">
+                    <div className="flex items-center gap-2">
+                      <Briefcase className="size-4" weight="fill" />
+                      <span>Projects Feed</span>
+                    </div>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-primary/15 font-bold">Live</span>
+                  </div>
+                  <div className="flex items-center justify-between px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted/50 cursor-pointer">
+                    <div className="flex items-center gap-2">
+                      <FileCode className="size-4" weight="bold" />
+                      <span>Active Contracts</span>
+                    </div>
+                    <span className="text-[10px] font-bold text-foreground">4</span>
+                  </div>
+                  <div className="flex items-center justify-between px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted/50 cursor-pointer">
+                    <div className="flex items-center gap-2">
+                      <List className="size-4" weight="bold" />
+                      <span>Proposals</span>
+                    </div>
+                    <span className="text-[10px] font-bold text-foreground">12</span>
+                  </div>
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-lg text-muted-foreground hover:bg-muted/50 cursor-pointer">
+                    <TrendUp className="size-4" weight="bold" />
+                    <span>On-Chain Reputation</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom Profile Widget */}
+              <div className="pt-4 border-t border-border/50">
+                <div className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-muted/50">
+                  <div className="w-7 h-7 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 font-bold text-xs flex items-center justify-center">
+                    0x
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1">
+                      <p className="text-xs font-bold text-foreground truncate">Alex Mercer</p>
+                      <CheckCircle className="size-3 text-emerald-500" weight="fill" />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground font-mono truncate">0x71C...39A2 • KYC Verified</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-4 mt-2 px-2 text-[11px] text-muted-foreground font-medium">
+                  <span className="flex items-center gap-1 hover:text-foreground cursor-pointer">
+                    <Gear className="size-3" /> Settings
+                  </span>
+                  <span className="flex items-center gap-1 hover:text-foreground cursor-pointer">
+                    <Question className="size-3" /> Help
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Main Area: Contract Workspace Feed */}
+            <div className="col-span-12 md:col-span-9 p-6 flex flex-col justify-between bg-gradient-to-b from-background to-muted/10">
+              <div>
+                {/* Header bar */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-border/50">
+                  <div>
+                    <p className="text-base font-bold text-foreground">Contracts & Projects Workspace</p>
+                    <p className="text-xs text-muted-foreground">Milestone-based smart contract escrow with automatic releases</p>
+                  </div>
+
+                  {/* Filter tabs */}
+                  <div className="flex items-center gap-1.5 p-1 rounded-xl bg-muted/60 border border-border text-xs font-semibold">
+                    {["All", "Escrow Funded", "Milestones", "Proposals"].map((f) => (
+                      <button
+                        key={f}
+                        onClick={() => setSelectedFilter(f)}
+                        className={`px-3 py-1 rounded-lg text-xs transition-all ${
+                          selectedFilter === f
+                            ? "bg-background text-foreground shadow-xs font-bold"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {f}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Contracts list */}
+                <div className="mt-4 space-y-2.5">
+                  {filteredContracts.map((c) => (
+                    <div
+                      key={c.id}
+                      onClick={() => setSelectedContract(c)}
+                      className={`p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 ${
+                        selectedContract.id === c.id
+                          ? "bg-primary/5 border-primary/40 shadow-xs"
+                          : "bg-card border-border/70 hover:border-border hover:bg-muted/30"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center font-bold text-xs text-foreground shrink-0 border border-border/60">
+                          {c.client[0]}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-foreground">{c.role}</span>
+                            <span className="text-xs text-muted-foreground">• {c.client}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-0.5">
+                            <span>{c.location}</span>
+                            <span>•</span>
+                            <span className="font-bold text-foreground">{c.budget}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2.5 self-start sm:self-auto">
+                        <span className="text-[11px] font-bold text-emerald-800 dark:text-emerald-300">
+                          {c.match}
+                        </span>
+                        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${c.stageColor}`}>
+                          {c.stage}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Live Contract Inspector Note */}
+              <div className="mt-4 p-3 rounded-xl bg-background border border-border/80 flex items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <ShieldCheck className="size-4 text-emerald-500 shrink-0" weight="fill" />
+                  <span className="truncate">
+                    <strong className="text-foreground">{selectedContract.client}:</strong> {selectedContract.notes}
+                  </span>
+                </div>
+                <span className="shrink-0 text-[10px] font-bold text-primary px-2 py-0.5 rounded-md bg-primary/10">
+                  Escrow Verified
+                </span>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </div>
     </section>
   );
 }
-
-export { AetherHero };

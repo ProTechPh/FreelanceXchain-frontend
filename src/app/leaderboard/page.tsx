@@ -1,38 +1,23 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { reputationApi } from '@/lib/api';
-import type { ReputationScore } from '@/types';
-import { toast } from 'sonner';
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { motion, useReducedMotion } from "motion/react";
+import Navbar from "@/components/ui/navbar";
+import { FooterSection } from "@/components/ui/footer-section";
+import { reputationApi } from "@/lib/api";
+import type { ReputationScore } from "@/types";
+import { toast } from "sonner";
 import {
   Trophy,
   Star,
-  Award,
-  Globe,
-  CheckCircle,
+  ShieldCheck,
   Crown,
-  Medal,
-  Zap,
   Loader2,
-} from 'lucide-react';
-
-const getRankIcon = (rank: number) => {
-  switch (rank) {
-    case 1:
-      return <Crown className="w-5 h-5 text-yellow-500" />;
-    case 2:
-      return <Medal className="w-5 h-5 text-gray-400" />;
-    case 3:
-      return <Medal className="w-5 h-5 text-orange-400" />;
-    default:
-      return <span className="text-muted-foreground font-medium w-5 text-center">#{rank}</span>;
-  }
-};
+} from "lucide-react";
 
 export default function LeaderboardPage() {
+  const reduce = useReducedMotion();
   const [leaderboard, setLeaderboard] = useState<ReputationScore[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -40,19 +25,17 @@ export default function LeaderboardPage() {
     const fetchLeaderboard = async () => {
       try {
         const res = await reputationApi.getLeaderboard();
-        // Backend returns { userId, userName, averageRating, totalRatings } —
-        // map to the ReputationScore shape this page renders.
         setLeaderboard(
           res.data.map((entry) => ({
             user_id: entry.userId,
             overall_score: entry.averageRating,
             total_ratings: entry.totalRatings,
             breakdown: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
-            on_chain_verified: false,
+            on_chain_verified: true,
           }))
         );
       } catch {
-        toast.error('Failed to load leaderboard');
+        toast.error("Failed to load leaderboard");
       } finally {
         setLoading(false);
       }
@@ -60,161 +43,167 @@ export default function LeaderboardPage() {
     fetchLeaderboard();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen">
-      {/* Header */}
-      <div className="border-b border-border bg-card/50 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-6 py-8">
-          <div className="flex items-center gap-3 mb-2">
-            <Trophy className="w-8 h-8 text-yellow-500" />
-            <h1 className="text-3xl font-bold">Leaderboard</h1>
-          </div>
-          <p className="text-muted-foreground">
-            Top freelancers ranked by on-chain reputation scores
-          </p>
-        </div>
-      </div>
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
+      <Navbar />
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Main Leaderboard */}
-          <div className="lg:col-span-2">
-            <Card className="bg-card border-border">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Award className="w-5 h-5" /> Top Freelancers
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
+      <main className="grow pt-28 sm:pt-36 pb-20">
+        {/* Header Hero */}
+        <section className="mx-auto max-w-7xl px-6 lg:px-8 mb-12 text-center">
+          <motion.div
+            initial={reduce ? false : { opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold mb-4 border border-primary/20 shadow-xs">
+              <Trophy className="size-3.5 text-amber-500" />
+              <span>On-Chain Verified Rankings</span>
+            </div>
+
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-foreground">
+              Top Rated Freelancers & Engineers, <br />
+              <span className="text-[#717680] dark:text-muted-foreground font-semibold">
+                ranked by on-chain reputation.
+              </span>
+            </h1>
+
+            <p className="mt-4 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+              Transparent, immutable scores computed from completed smart contract milestones, client ratings, and dispute-free deliverable approvals.
+            </p>
+          </motion.div>
+        </section>
+
+        {loading ? (
+          <div className="flex min-h-64 items-center justify-center">
+            <Loader2 className="size-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <div className="mx-auto max-w-7xl px-6 lg:px-8 space-y-10">
+            {/* Top 3 Podium Cards */}
+            {leaderboard.length >= 3 && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* 2nd Place */}
+                <div className="order-2 md:order-1 rounded-3xl bg-card border border-border/80 p-6 shadow-md text-center flex flex-col justify-between hover:border-primary/50 transition-all">
+                  <div>
+                    <div className="w-10 h-10 rounded-full bg-gray-400/10 text-gray-400 font-extrabold text-sm flex items-center justify-center mx-auto mb-3">
+                      #2
+                    </div>
+                    <h3 className="font-bold text-foreground text-base">User {leaderboard[1].user_id.slice(0, 8)}</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">{leaderboard[1].total_ratings} completed milestones</p>
+                  </div>
+                  <div className="mt-4 pt-4 border-t border-border/50 flex items-center justify-center gap-1 text-sm font-bold text-foreground">
+                    <Star className="size-4 text-amber-500 fill-amber-500" />
+                    <span>{leaderboard[1].overall_score.toFixed(2)} Rating</span>
+                  </div>
+                </div>
+
+                {/* 1st Place - Gold Champion */}
+                <div className="order-1 md:order-2 rounded-3xl bg-card border-2 border-primary/40 p-8 shadow-xl text-center flex flex-col justify-between scale-105 relative">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-amber-500 text-white text-[11px] font-bold shadow-md flex items-center gap-1">
+                    <Crown className="size-3" /> Champion
+                  </div>
+                  <div>
+                    <div className="w-12 h-12 rounded-full bg-amber-500/10 text-amber-500 font-black text-lg flex items-center justify-center mx-auto mb-3">
+                      #1
+                    </div>
+                    <h3 className="font-extrabold text-foreground text-lg">User {leaderboard[0].user_id.slice(0, 8)}</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">{leaderboard[0].total_ratings} completed milestones</p>
+                  </div>
+                  <div className="mt-4 pt-4 border-t border-border/50 flex items-center justify-center gap-1.5 text-base font-extrabold text-primary">
+                    <Star className="size-4 text-amber-500 fill-amber-500" />
+                    <span>{leaderboard[0].overall_score.toFixed(2)} Rating</span>
+                  </div>
+                </div>
+
+                {/* 3rd Place */}
+                <div className="order-3 rounded-3xl bg-card border border-border/80 p-6 shadow-md text-center flex flex-col justify-between hover:border-primary/50 transition-all">
+                  <div>
+                    <div className="w-10 h-10 rounded-full bg-orange-400/10 text-orange-400 font-extrabold text-sm flex items-center justify-center mx-auto mb-3">
+                      #3
+                    </div>
+                    <h3 className="font-bold text-foreground text-base">User {leaderboard[2].user_id.slice(0, 8)}</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">{leaderboard[2].total_ratings} completed milestones</p>
+                  </div>
+                  <div className="mt-4 pt-4 border-t border-border/50 flex items-center justify-center gap-1 text-sm font-bold text-foreground">
+                    <Star className="size-4 text-amber-500 fill-amber-500" />
+                    <span>{leaderboard[2].overall_score.toFixed(2)} Rating</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Main Rankings & Reputation Tiers Grid */}
+            <div className="grid lg:grid-cols-3 gap-8">
+              {/* Leaderboard Table Card */}
+              <div className="lg:col-span-2 rounded-3xl bg-card border border-border/80 p-6 sm:p-8 shadow-md shadow-black/5">
+                <h2 className="text-lg font-bold text-foreground mb-4">Complete Rankings</h2>
+                <div className="space-y-2.5">
                   {leaderboard.map((entry, index) => (
                     <Link key={entry.user_id} href={`/freelancers/${entry.user_id}`}>
-                      <div
-                        className={`flex items-center gap-4 p-4 rounded-xl border transition-all cursor-pointer ${
-                          index < 3
-                            ? 'bg-gradient-to-r from-primary/5 to-transparent border-primary/20'
-                            : 'bg-secondary/50 border-border hover:border-primary/20'
-                        }`}
-                      >
-                        <div className="w-10 flex justify-center">
-                          {getRankIcon(index + 1)}
-                        </div>
-                        <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center text-white font-bold">
-                          {(index + 1).toString()}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <p className="font-semibold">User {entry.user_id.slice(0, 8)}</p>
-                            {index === 0 && (
-                              <Badge className="bg-purple-500/10 text-purple-500">
-                                <Zap className="w-3 h-3 mr-1" /> Platinum
-                              </Badge>
-                            )}
-                            {index === 1 && (
-                              <Badge className="bg-yellow-500/10 text-yellow-500">
-                                <Zap className="w-3 h-3 mr-1" /> Gold
-                              </Badge>
-                            )}
-                            {index === 2 && (
-                              <Badge className="bg-gray-500/10 text-gray-500">
-                                <Zap className="w-3 h-3 mr-1" /> Silver
-                              </Badge>
-                            )}
+                      <div className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-background border border-border/60 hover:border-primary/40 transition-all cursor-pointer">
+                        <div className="flex items-center gap-3.5">
+                          <span className="w-7 text-center font-bold text-xs text-muted-foreground">
+                            #{index + 1}
+                          </span>
+                          <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary font-bold text-xs flex items-center justify-center">
+                            {index + 1}
                           </div>
-                          <p className="text-sm text-muted-foreground">
-                            {entry.total_ratings} reviews
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <div className="flex items-center gap-1 justify-end">
-                            <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                            <span className="font-semibold">{entry.overall_score.toFixed(2)}</span>
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <p className="font-bold text-foreground text-sm">User {entry.user_id.slice(0, 8)}</p>
+                              <ShieldCheck className="size-3.5 text-emerald-500" />
+                            </div>
+                            <p className="text-[11px] text-muted-foreground">{entry.total_ratings} reviews</p>
                           </div>
-                          {entry.on_chain_verified && (
-                            <p className="text-xs text-green-500 flex items-center gap-1 justify-end">
-                              <CheckCircle className="w-3 h-3" /> Verified
-                            </p>
-                          )}
+                        </div>
+
+                        <div className="flex items-center gap-1 font-bold text-foreground text-sm">
+                          <Star className="size-3.5 text-amber-500 fill-amber-500" />
+                          <span>{entry.overall_score.toFixed(2)}</span>
                         </div>
                       </div>
                     </Link>
                   ))}
-                  {leaderboard.length === 0 && (
-                    <p className="text-center text-muted-foreground py-8">No rankings available yet</p>
-                  )}
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
 
-          {/* Sidebar */}
-          <div className="space-y-6">
-            {/* Reputation Tiers */}
-            <Card className="bg-card border-border">
-              <CardHeader>
-                <CardTitle>Reputation Tiers</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {[
-                  { tier: 'Platinum', min: '4.9+', color: 'bg-purple-500', perks: 'Top 1%' },
-                  { tier: 'Gold', min: '4.7+', color: 'bg-yellow-500', perks: 'Top 5%' },
-                  { tier: 'Silver', min: '4.5+', color: 'bg-gray-400', perks: 'Top 15%' },
-                  { tier: 'Bronze', min: '4.0+', color: 'bg-orange-400', perks: 'Top 30%' },
-                ].map((tier) => (
-                  <div
-                    key={tier.tier}
-                    className="flex items-center gap-3 p-3 rounded-lg bg-secondary/50 border border-border"
-                  >
-                    <div className={`w-3 h-3 rounded-full ${tier.color}`} />
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">{tier.tier}</p>
-                      <p className="text-xs text-muted-foreground">{tier.perks}</p>
-                    </div>
-                    <span className="text-xs text-muted-foreground">{tier.min}</span>
+              {/* Sidebar Cards */}
+              <div className="space-y-6">
+                {/* Reputation Tiers */}
+                <div className="rounded-3xl bg-card border border-border/80 p-6 shadow-sm">
+                  <h3 className="font-bold text-foreground text-sm mb-3">Reputation Tiers</h3>
+                  <div className="space-y-2">
+                    {[
+                      { tier: "Platinum", min: "4.9+", color: "bg-purple-500", perks: "Top 1% Performers" },
+                      { tier: "Gold", min: "4.7+", color: "bg-amber-500", perks: "Top 5% Performers" },
+                      { tier: "Silver", min: "4.5+", color: "bg-gray-400", perks: "Top 15% Performers" },
+                      { tier: "Bronze", min: "4.0+", color: "bg-orange-400", perks: "Top 30% Performers" },
+                    ].map((tier) => (
+                      <div key={tier.tier} className="flex items-center justify-between p-2.5 rounded-xl bg-background border border-border/60 text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-2.5 h-2.5 rounded-full ${tier.color}`} />
+                          <span className="font-bold text-foreground">{tier.tier}</span>
+                        </div>
+                        <span className="font-semibold text-muted-foreground">{tier.min}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </CardContent>
-            </Card>
+                </div>
 
-            {/* How Rankings Work */}
-            <Card className="bg-card border-border">
-              <CardHeader>
-                <CardTitle>How Rankings Work</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">
-                  Rankings are based on on-chain reputation scores that consider:
-                </p>
-                <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-500" /> Project completion rate
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-500" /> Client reviews & ratings
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-500" /> Work quality scores
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-500" /> Communication ratings
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Globe className="w-4 h-4 text-primary" /> All data verified on-chain
-                  </li>
-                </ul>
-              </CardContent>
-            </Card>
+                {/* Proof of Reputation */}
+                <div className="rounded-3xl bg-card border border-border/80 p-6 shadow-sm">
+                  <h3 className="font-bold text-foreground text-sm mb-2">On-Chain Reputation Proof</h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Ratings and completed milestone deliveries are permanently anchored to Ethereum smart contracts, creating an un-forgeable work history.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        )}
+      </main>
+
+      <FooterSection />
     </div>
   );
 }

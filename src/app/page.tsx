@@ -1,37 +1,32 @@
-import { Testimonials } from '@/components/ui/testimonials-columns-1';
-import { Logos3 } from '@/components/ui/logos3';
-import { FooterSection } from '@/components/ui/footer-section';
-import { CallToAction } from '@/components/ui/call-to-action';
-import AetherHero from '@/components/ui/aether-hero';
-import { HowItWorks } from '@/components/ui/how-it-works';
-import { WhySection } from '@/components/ui/vercep-feature-1';
-import Navbar from '@/components/ui/navbar';
+import { FooterSection } from "@/components/ui/footer-section";
+import { CallToAction } from "@/components/ui/call-to-action";
+import AetherHero from "@/components/ui/aether-hero";
+import { WhySection } from "@/components/ui/vercep-feature-1";
+import { PainPoints } from "@/components/ui/pain-points";
+import { FeaturesGrid } from "@/components/ui/features-grid";
+import { ComparisonTable } from "@/components/ui/comparison-table";
+import { TestimonialsMarquee } from "@/components/ui/testimonials-marquee";
+import { EcosystemShowcase } from "@/components/ui/ecosystem-showcase";
+import { FaqSection } from "@/components/ui/faq-section";
+import Navbar from "@/components/ui/navbar";
 
 export default function Home() {
   return (
     <div className="min-h-screen">
-      {/* Navigation */}
       <Navbar />
 
-      {/* Main Content */}
       <main>
-        <AetherHero
-          title="Decentralize Your Freelance Career"
-          subtitle="Get matched with projects using AI, secure payments with smart contracts, and build an immutable reputation on-chain."
-          ctaLabel="Find Work"
-          ctaHref="/register"
-          secondaryCtaLabel="Hire Talent"
-          secondaryCtaHref="/register"
-          align="left"
-        />
+        <AetherHero />
+        <PainPoints />
         <WhySection />
-        <HowItWorks />
-        <Testimonials />
-        <Logos3 />
+        <FeaturesGrid />
+        <EcosystemShowcase />
+        <ComparisonTable />
+        <TestimonialsMarquee />
+        <FaqSection />
         <CallToAction />
       </main>
 
-      {/* Footer */}
       <FooterSection />
     </div>
   );
