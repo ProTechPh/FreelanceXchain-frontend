@@ -40,7 +40,7 @@ export function Sidebar() {
           <FreelanceXchainIcon size={30} />
           {!collapsed && (
             <span className="flex items-center text-lg font-extrabold tracking-tight text-foreground">
-              Freelance<span className="px-0.5 font-black text-primary">X</span>chain
+              Freelance<span className="font-black text-primary">X</span>chain
             </span>
           )}
         </Link>

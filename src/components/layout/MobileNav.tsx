@@ -48,7 +48,7 @@ export function MobileNav({ role }: { role: UserRole | undefined }) {
           >
             <FreelanceXchainIcon size={28} />
             <span>
-              Freelance<span className="px-0.5 font-black text-primary">X</span>chain
+              Freelance<span className="font-black text-primary">X</span>chain
             </span>
           </Link>
         </SheetHeader>
