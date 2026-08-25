@@ -8,7 +8,8 @@ import { FooterSection } from "@/components/layout/footer-section";
 import { reputationApi } from "@/lib/api";
 import type { ReputationScore } from "@/types";
 import { toast } from "sonner";
-import { Trophy, Star, ShieldCheck, Crown, Loader2 } from 'lucide-react';
+import { Trophy, Star, ShieldCheck, Crown } from 'lucide-react';
+import { ListSkeleton } from '@/components/dashboard/skeletons';
 
 export default function LeaderboardPage() {
   const reduce = useReducedMotion();
@@ -68,9 +69,7 @@ export default function LeaderboardPage() {
         </section>
 
         {loading ? (
-          <div className="flex min-h-64 items-center justify-center">
-            <Loader2 className="size-8 animate-spin text-primary" />
-          </div>
+          <ListSkeleton rows={8} label="Loading leaderboard" />
         ) : (
           <div className="mx-auto max-w-7xl px-6 lg:px-8 space-y-10">
             {/* Top 3 Podium Cards */}

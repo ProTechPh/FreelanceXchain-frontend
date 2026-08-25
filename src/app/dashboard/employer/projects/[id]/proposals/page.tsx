@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { ArrowLeft, Check, Clock, DollarSign, FileText, Loader2, MessageSquare, Paperclip, SearchX, UserRound, X } from 'lucide-react';
+import { ArrowLeft, Check, Clock, DollarSign, FileText, MessageSquare, Paperclip, SearchX, UserRound, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -26,6 +26,7 @@ import {
 import { StatusBadge } from '@/components/ui/status-badge';
 import { getDirectMessageRoute } from '@/lib/dashboard-message-route';
 import type { FreelancerProfile, Project, Proposal } from '@/types';
+import { ListSkeleton } from '@/components/dashboard/skeletons';
 
 interface PendingDecision {
   proposal: Proposal;
@@ -113,9 +114,7 @@ export default function EmployerProjectProposalsPage() {
 
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center" aria-label="Loading proposals">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
+      <ListSkeleton rows={4} label="Loading proposals" />
     );
   }
 
@@ -314,13 +313,11 @@ export default function EmployerProjectProposalsPage() {
             <Button
               variant={decision?.action === 'accept' ? 'gradient' : 'destructive'}
               onClick={confirmDecision}
-              disabled={updating}
+              loading={updating}
+              loadingText="Updating…"
             >
-              {updating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {updating
-                ? 'Updating…'
-                : decision?.action === 'accept'
-                  ? 'Accept Proposal'
+              {decision?.action === 'accept'
+                  ? 'Accept proposal'
                   : 'Reject Proposal'}
             </Button>
           </DialogFooter>

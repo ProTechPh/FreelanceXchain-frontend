@@ -19,7 +19,8 @@ import { subscribeToNotificationStream } from '@/lib/sse';
 import { useAuthStore } from '@/stores/authStore';
 import type { ConversationWithDetails, Message } from '@/types';
 import { toast } from 'sonner';
-import { Send, Search, Check, CheckCheck, Loader2, MessageSquare, ExternalLink, FileText, Paperclip, X } from 'lucide-react';
+import { Send, Search, Check, CheckCheck, MessageSquare, ExternalLink, FileText, Paperclip, X } from 'lucide-react';
+import { ListSkeleton } from '@/components/dashboard/skeletons';
 
 function initials(name: string): string {
   return name
@@ -235,9 +236,7 @@ export function MessagesWorkspace() {
 
   if (loadingConversations) {
     return (
-      <div className="flex items-center justify-center h-[calc(100vh-8rem)]">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
+      <ListSkeleton rows={5} label="Loading conversations" />
     );
   }
 
@@ -377,7 +376,7 @@ export function MessagesWorkspace() {
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {loadingMessages ? (
                 <div className="flex items-center justify-center h-full">
-                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                  <ListSkeleton rows={3} label="Loading messages" />
                 </div>
               ) : messages.length === 0 ? (
                 <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
@@ -451,8 +450,8 @@ export function MessagesWorkspace() {
                   className="flex-1"
                   disabled={sending}
                 />
-                <Button variant="gradient" size="icon" aria-label="Send message" onClick={handleSend} disabled={sending || !newMessage.trim()}>
-                  {sending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                <Button variant="gradient" size="icon" aria-label="Send message" onClick={handleSend} loading={sending} disabled={!newMessage.trim()}>
+                  <Send className="size-5" aria-hidden="true" />
                 </Button>
               </div>
             </div>

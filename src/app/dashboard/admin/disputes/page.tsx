@@ -11,7 +11,9 @@ import { safeAttachmentUrl } from '@/lib/attachment-presentation';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import type { Dispute, Contract, DisputeStatus } from '@/types';
 import { toast } from 'sonner';
-import { AlertTriangle, Clock, CheckCircle, FileText, DollarSign, Loader2 } from 'lucide-react';
+import { Scale, AlertTriangle, Clock, CheckCircle, FileText, DollarSign } from 'lucide-react';
+import { ListSkeleton } from '@/components/dashboard/skeletons';
+import { EmptyState } from '@/components/ui/empty-state';
 
 const statusColors: Record<DisputeStatus, string> = {
   open: 'bg-destructive-subtle text-destructive',
@@ -108,9 +110,7 @@ export default function DisputesPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
+      <ListSkeleton rows={4} label="Loading disputes" />
     );
   }
 
@@ -197,7 +197,12 @@ export default function DisputesPage() {
         {statuses.map((status) => (
           <TabsContent key={status} value={status} className="space-y-4">
             {byStatus(status).length === 0 && (
-              <p className="text-sm text-muted-foreground py-12 text-center">No disputes here</p>
+              <EmptyState
+                size="sm"
+                icon={Scale}
+                title="No disputes in this queue"
+                description="Disputes land here when a participant escalates a funded contract."
+              />
             )}
             {byStatus(status).map(({ dispute, contract }) => (
               <Card key={dispute.id} className="bg-card border-border">

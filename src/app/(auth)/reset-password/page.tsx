@@ -6,8 +6,8 @@ import { useSearchParams } from 'next/navigation';
 import { CheckCircle, KeyRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { authApi } from '@/lib/api';
+import { Field } from '@/components/ui/field';
 import {
   getApiErrorMessage,
   getPasswordResetToken,
@@ -89,9 +89,8 @@ function ResetPasswordForm() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="password">New password</Label>
-          <Input
+        <Field label="New password" htmlFor="password">
+<Input
             id="password"
             name="password"
             type="password"
@@ -107,11 +106,10 @@ function ResetPasswordForm() {
           <p id="password-requirements" className="text-xs text-muted-foreground">
             8–72 characters with uppercase, lowercase, a number, and @$!%*?&amp;.
           </p>
-        </div>
+</Field>
 
-        <div className="space-y-2">
-          <Label htmlFor="confirm-password">Confirm new password</Label>
-          <Input
+        <Field label="Confirm new password" htmlFor="confirm-password">
+<Input
             id="confirm-password"
             name="confirmPassword"
             type="password"
@@ -124,7 +122,7 @@ function ResetPasswordForm() {
             aria-describedby="reset-error"
             required
           />
-        </div>
+</Field>
 
         {formError && (
           <p id="reset-error" role="alert" className="text-sm text-destructive">
@@ -132,8 +130,8 @@ function ResetPasswordForm() {
           </p>
         )}
 
-        <Button type="submit" variant="gradient" className="w-full" disabled={!accessToken || isSubmitting}>
-          {isSubmitting ? 'Updating password…' : 'Update password'}
+        <Button type="submit" variant="gradient" className="w-full" loading={isSubmitting} loadingText="Updating password…" disabled={!accessToken}>
+          Update password
         </Button>
       </form>
 

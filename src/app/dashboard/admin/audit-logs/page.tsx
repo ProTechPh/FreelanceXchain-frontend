@@ -8,7 +8,10 @@ import { Input } from '@/components/ui/input';
 import { auditLogsApi } from '@/lib/api';
 import type { AuditLogEntry } from '@/types';
 import { toast } from 'sonner';
-import { Search, Loader2, User } from 'lucide-react';
+import { ClipboardList, Search, User } from 'lucide-react';
+import { ListSkeleton } from '@/components/dashboard/skeletons';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { EmptyState } from '@/components/ui/empty-state';
 
 const statusColors: Record<AuditLogEntry['status'], string> = {
   success: 'bg-success-subtle text-success',
@@ -170,60 +173,61 @@ export default function AuditLogsPage() {
       <Card className="bg-card border-border">
         <CardContent className="p-0">
           {loading ? (
-            <div className="flex items-center justify-center h-64">
-              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-            </div>
+            <ListSkeleton rows={6} label="Loading audit logs" className="p-4" />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Action</th>
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Actor</th>
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Resource</th>
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Status</th>
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">IP</th>
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Time</th>
-                  </tr>
-                </thead>
-                <tbody>
+            <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Action</TableHead>
+                    <TableHead>Actor</TableHead>
+                    <TableHead>Resource</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>IP</TableHead>
+                    <TableHead>Time</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {filteredLogs.map((log) => (
-                    <tr key={log.id} className="border-b border-border hover:bg-secondary/30">
-                      <td className="p-4">
+                    <TableRow key={log.id}>
+                      <TableCell>
                         <code className="text-sm bg-secondary px-2 py-1 rounded">{log.action}</code>
                         {log.error_message && (
                           <p className="text-xs text-destructive mt-1 max-w-xs truncate">{log.error_message}</p>
                         )}
-                      </td>
-                      <td className="p-4">
+                      </TableCell>
+                      <TableCell>
                         <div className="flex items-center gap-2">
                           <User className="w-4 h-4 text-muted-foreground" />
                           <span className="text-sm font-mono" title={log.actor_id ?? log.user_id ?? undefined}>
                             {(log.actor_id ?? log.user_id ?? 'system').slice(0, 8)}
                           </span>
                         </div>
-                      </td>
-                      <td className="p-4 text-sm text-muted-foreground">
+                      </TableCell>
+                      <TableCell className="p-4 text-sm text-muted-foreground">
                         {log.resource_type}
                         {log.resource_id && <span className="font-mono text-xs"> #{log.resource_id.slice(0, 8)}</span>}
-                      </td>
-                      <td className="p-4">
+                      </TableCell>
+                      <TableCell>
                         <Badge className={statusColors[log.status]}>{log.status}</Badge>
-                      </td>
-                      <td className="p-4 text-sm font-mono text-muted-foreground">{log.ip_address ?? '-'}</td>
-                      <td className="p-4 text-sm text-muted-foreground">{new Date(log.created_at).toLocaleString()}</td>
-                    </tr>
+                      </TableCell>
+                      <TableCell className="p-4 text-sm font-mono text-muted-foreground">{log.ip_address ?? '-'}</TableCell>
+                      <TableCell className="p-4 text-sm text-muted-foreground">{new Date(log.created_at).toLocaleString()}</TableCell>
+                    </TableRow>
                   ))}
                   {filteredLogs.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="p-8 text-center text-muted-foreground">
-                        No audit log entries match your filters
-                      </td>
-                    </tr>
+                    <TableRow>
+                      <TableCell colSpan={6} className="py-10">
+                        <EmptyState
+                          size="sm"
+                          icon={ClipboardList}
+                          title="No audit entries match your filters"
+                          description="Try widening the date range or clearing the action filter."
+                        />
+                      </TableCell>
+                    </TableRow>
                   )}
-                </tbody>
-              </table>
-            </div>
+                </TableBody>
+              </Table>
           )}
         </CardContent>
       </Card>

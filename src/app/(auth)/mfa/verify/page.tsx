@@ -4,12 +4,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useAuthStore } from '@/stores/authStore';
 import { authApi } from '@/lib/api';
 import { toast } from 'sonner';
 import { Shield, ArrowLeft } from 'lucide-react';
 import { getApiErrorMessage, isAuthSuccessResponse } from '@/lib/auth-contract';
+import { Field } from '@/components/ui/field';
 
 export default function MfaVerifyPage() {
   const [code, setCode] = useState('');
@@ -75,9 +75,8 @@ export default function MfaVerifyPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="code">Verification Code</Label>
-          <Input
+        <Field label="Verification Code" htmlFor="code">
+<Input
             id="code"
             type="text"
             placeholder="000000"
@@ -88,7 +87,7 @@ export default function MfaVerifyPage() {
             required
             autoFocus
           />
-        </div>
+</Field>
 
         <Button type="submit" variant="gradient" className="w-full" disabled={isVerifying || code.length !== 6}>
           {isVerifying ? 'Verifying...' : 'Verify'}

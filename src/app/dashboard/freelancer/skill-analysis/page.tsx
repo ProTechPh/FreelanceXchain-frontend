@@ -1,15 +1,16 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { BookOpen, BrainCircuit, CheckCircle2, Loader2, Search, TrendingUp } from 'lucide-react';
+import { BookOpen, BrainCircuit, CheckCircle2, Search, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { matchingApi, type ExtractedSkill, type SkillGapAnalysis } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { DetailSkeleton } from '@/components/dashboard/skeletons';
+import { Field } from '@/components/ui/field';
 
 export default function SkillAnalysisPage() {
   const [analysis, setAnalysis] = useState<SkillGapAnalysis | null>(null);
@@ -55,10 +56,10 @@ export default function SkillAnalysisPage() {
     <div className="mx-auto max-w-5xl space-y-6">
       <div><h1 className="flex items-center gap-2 text-2xl font-bold"><BrainCircuit className="size-6 text-primary" />Skill analysis</h1><p className="text-muted-foreground">Use the backend matching service to identify skill gaps and extract taxonomy skills from text.</p></div>
 
-      <div className="flex justify-end"><Button type="button" variant="outline" disabled={loadingAnalysis} onClick={() => void loadAnalysis()}>{loadingAnalysis ? <Loader2 className="mr-2 size-4 animate-spin" /> : <TrendingUp className="mr-2 size-4" />}Refresh analysis</Button></div>
+      <div className="flex justify-end"><Button type="button" variant="outline" loading={loadingAnalysis} loadingText="Analysing…" onClick={() => void loadAnalysis()}><TrendingUp className="size-4" aria-hidden="true" />Refresh analysis</Button></div>
 
       {loadingAnalysis ? (
-        <Card><CardContent className="flex min-h-48 items-center justify-center" role="status"><Loader2 className="size-8 animate-spin text-primary" /><span className="sr-only">Analyzing skills</span></CardContent></Card>
+        <DetailSkeleton label="Analysing skills" />
       ) : analysis ? (
         <div className="grid gap-5 md:grid-cols-2">
           <Card><CardHeader><CardTitle className="flex items-center gap-2"><CheckCircle2 className="size-5 text-success" />Current skills</CardTitle></CardHeader><CardContent className="flex flex-wrap gap-2">{analysis.currentSkills.map((skill) => <Badge key={skill} variant="secondary">{skill}</Badge>)}{analysis.currentSkills.length === 0 && <p className="text-sm text-muted-foreground">No profile skills found.</p>}</CardContent></Card>
@@ -71,7 +72,9 @@ export default function SkillAnalysisPage() {
       <Card>
         <CardHeader><CardTitle className="flex items-center gap-2"><Search className="size-5" />Extract skills from text</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          <form className="space-y-3" onSubmit={extractSkills}><div className="space-y-2"><Label htmlFor="skill-source-text">Job description, résumé, or project brief</Label><Textarea id="skill-source-text" rows={6} value={text} onChange={(event) => setText(event.target.value)} /></div><Button type="submit" disabled={extracting || !text.trim()}>{extracting ? 'Extracting…' : 'Extract skills'}</Button></form>
+          <form className="space-y-3" onSubmit={extractSkills}><Field label="Job description, résumé, or project brief" htmlFor="skill-source-text">
+<Textarea id="skill-source-text" rows={6} value={text} onChange={(event) => setText(event.target.value)} />
+</Field><Button type="submit" disabled={extracting || !text.trim()}>{extracting ? 'Extracting…' : 'Extract skills'}</Button></form>
           {extracted.length > 0 && <div className="flex flex-wrap gap-2 border-t border-border pt-4">{extracted.map((skill) => <Badge key={skill.skillId} variant="secondary">{skill.skillName} · {Math.round(skill.confidence * 100)}%</Badge>)}</div>}
         </CardContent>
       </Card>

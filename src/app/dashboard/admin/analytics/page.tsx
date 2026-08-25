@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { adminApi, analyticsApi, reputationApi } from '@/lib/api';
 import type { AdminAnalytics, SkillTrend } from '@/types';
 import { toast } from 'sonner';
-import { TrendingUp, Users, DollarSign, FolderOpen, Loader2, Star } from 'lucide-react';
+import { TrendingUp, Users, DollarSign, FolderOpen, Star } from 'lucide-react';
+import { StatsSkeleton } from '@/components/dashboard/skeletons';
 
 interface LeaderboardEntry {
   userId: string;
@@ -45,9 +46,7 @@ export default function AnalyticsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
+      <StatsSkeleton label="Loading analytics" />
     );
   }
 

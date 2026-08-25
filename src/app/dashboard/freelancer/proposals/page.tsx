@@ -9,7 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { proposalsApi, projectsApi } from '@/lib/api';
 import type { Proposal, Project, ProposalStatus } from '@/types';
 import { toast } from 'sonner';
-import { Clock, CheckCircle, XCircle, FileText, Loader2 } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, FileText } from 'lucide-react';
+import { ListSkeleton } from '@/components/dashboard/skeletons';
 
 const statusConfig: Record<ProposalStatus, { icon: typeof Clock; color: string; bg: string; label: string }> = {
   pending: { icon: Clock, color: 'text-warning', bg: 'bg-warning-subtle', label: 'Pending' },
@@ -65,9 +66,7 @@ export default function ProposalsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
+      <ListSkeleton rows={4} label="Loading proposals" />
     );
   }
 

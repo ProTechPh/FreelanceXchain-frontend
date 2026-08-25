@@ -9,7 +9,9 @@ import { projectsApi, analyticsApi, freelancersApi, reputationApi } from '@/lib/
 import { useAuthStore } from '@/stores/authStore';
 import type { Project, Proposal } from '@/types';
 import { toast } from 'sonner';
-import { DollarSign, FolderOpen, FileText, Users, Clock, ArrowUpRight, PlusCircle, Briefcase, Loader2 } from 'lucide-react';
+import { DollarSign, FolderOpen, FileText, Users, Clock, ArrowUpRight, PlusCircle, Briefcase } from 'lucide-react';
+import { formatAmount } from '@/lib/format';
+import { StatsSkeleton } from '@/components/dashboard/skeletons';
 
 interface RecentProposalView {
   proposal: Proposal;
@@ -113,9 +115,7 @@ export default function EmployerDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
+      <StatsSkeleton label="Loading dashboard" />
     );
   }
 
@@ -131,7 +131,7 @@ export default function EmployerDashboard() {
     },
     {
       title: 'Total Spent',
-      value: totalSpent !== null ? `$${totalSpent.toLocaleString()}` : '—',
+      value: formatAmount(totalSpent),
       icon: DollarSign,
       color: 'text-success',
       bg: 'bg-success-subtle',

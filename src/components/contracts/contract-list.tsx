@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { CircleDollarSign, FileCheck2, FolderOpen, LoaderCircle } from 'lucide-react';
+import { CircleDollarSign, FileCheck2, FolderOpen } from 'lucide-react';
 import { toast } from 'sonner';
 import { contractsApi } from '@/lib/api';
 import { getContractDetailRoute } from '@/lib/contract-route';
@@ -10,6 +10,10 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import type { Contract, UserRole } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ListSkeleton } from '@/components/dashboard/skeletons';
+import { PageHeader } from '@/components/dashboard/page-header';
+import { EmptyState } from '@/components/ui/empty-state';
+import { formatAmount, formatDate } from '@/lib/format';
 
 export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'freelancer'> }) {
   const [contracts, setContracts] = useState<Contract[]>([]);
@@ -22,29 +26,25 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) {
-    return (
-      <div className="flex min-h-64 items-center justify-center" role="status" aria-label="Loading contracts">
-        <LoaderCircle className="size-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
   const active = contracts.filter((contract) => contract.status === 'active').length;
   const totalValue = contracts.reduce((total, contract) => total + contract.totalAmount, 0);
   const completed = contracts.filter((contract) => contract.status === 'completed').length;
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Contracts</h1>
-        <p className="text-muted-foreground">Track funding, deliverables, approvals, and payment activity.</p>
-      </div>
+      <PageHeader
+        title="Contracts"
+        description="Track funding, deliverables, approvals, and payment activity."
+      />
 
+      {loading ? (
+        <ListSkeleton rows={4} label="Loading contracts" />
+      ) : (
+        <>
       <div className="grid gap-4 sm:grid-cols-3">
         {[
           { label: 'Active', value: active, icon: FolderOpen },
-          { label: 'Total value', value: `$${totalValue.toLocaleString()}`, icon: CircleDollarSign },
+          { label: 'Total value', value: formatAmount(totalValue), icon: CircleDollarSign },
           { label: 'Completed', value: completed, icon: FileCheck2 },
         ].map((stat) => (
           <Card key={stat.label}>
@@ -59,7 +59,22 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
       </div>
 
       {contracts.length === 0 ? (
-        <Card><CardContent className="py-12 text-center text-muted-foreground">No contracts yet.</CardContent></Card>
+        <EmptyState
+          icon={FolderOpen}
+          title={role === 'employer' ? 'No contracts yet' : 'No contracts yet'}
+          description={
+            role === 'employer'
+              ? 'A contract is created when you accept a proposal. Review your open projects to get started.'
+              : 'A contract is created when an employer accepts your proposal. Keep applying to open projects.'
+          }
+          action={
+            <Button asChild>
+              <Link href={role === 'employer' ? '/dashboard/employer/projects' : '/dashboard/freelancer/projects'}>
+                {role === 'employer' ? 'View my projects' : 'Browse projects'}
+              </Link>
+            </Button>
+          }
+        />
       ) : (
         <div className="space-y-4">
           {contracts.map((contract) => {
@@ -83,10 +98,10 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
-                    <div><p className="text-muted-foreground">Value</p><p className="font-semibold">${contract.totalAmount.toLocaleString()}</p></div>
+                    <div><p className="text-muted-foreground">Value</p><p className="font-semibold tabular-nums">{formatAmount(contract.totalAmount)}</p></div>
                     <div><p className="text-muted-foreground">Milestones</p><p className="font-semibold">{completedMilestones}/{milestones.length}</p></div>
                     <div><p className="text-muted-foreground">Progress</p><p className="font-semibold">{progress}%</p></div>
-                    <div><p className="text-muted-foreground">Created</p><p className="font-semibold">{new Date(contract.createdAt).toLocaleDateString()}</p></div>
+                    <div><p className="text-muted-foreground">Created</p><p className="font-semibold">{formatDate(contract.createdAt)}</p></div>
                   </div>
                   <div className="h-2 overflow-hidden rounded-full bg-muted" aria-label={`${progress}% complete`}>
                     <div className="h-full bg-primary" style={{ width: `${progress}%` }} />
@@ -99,6 +114,8 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
             );
           })}
         </div>
+      )}
+        </>
       )}
     </div>
   );

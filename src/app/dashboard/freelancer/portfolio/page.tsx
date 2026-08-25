@@ -19,7 +19,9 @@ import { safeAttachmentUrl } from '@/lib/attachment-presentation';
 import { useAuthStore } from '@/stores/authStore';
 import type { PortfolioItem } from '@/types';
 import { toast } from 'sonner';
-import { Plus, ExternalLink, Edit, Trash2, Globe, Image as ImageIcon, Tag, Loader2 } from 'lucide-react';
+import { Plus, ExternalLink, Edit, Trash2, Globe, Image as ImageIcon, Tag } from 'lucide-react';
+import { CardGridSkeleton } from '@/components/dashboard/skeletons';
+import { EmptyState } from '@/components/ui/empty-state';
 
 interface FormState {
   title: string;
@@ -140,9 +142,7 @@ export default function PortfolioPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
+      <CardGridSkeleton count={6} label="Loading portfolio" />
     );
   }
 
@@ -211,7 +211,11 @@ export default function PortfolioPage() {
           <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center">
             <ImageIcon className="w-6 h-6 text-muted-foreground" />
           </div>
-          <p className="text-muted-foreground">No portfolio items yet</p>
+          <EmptyState
+            icon={ImageIcon}
+            title="No portfolio items yet"
+            description="Work samples are the first thing employers look at. Add a few to strengthen every proposal you send."
+          />
           <Button variant="gradient" onClick={openCreate}>
             <Plus className="w-4 h-4 mr-2" /> Add your first project
           </Button>
@@ -345,8 +349,8 @@ export default function PortfolioPage() {
               <Button variant="outline" onClick={() => setDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleSubmit} disabled={submitting}>
-                {submitting ? 'Saving…' : editingId ? 'Save Changes' : 'Add Item'}
+              <Button onClick={handleSubmit} loading={submitting} loadingText="Saving…">
+                {editingId ? 'Save changes' : 'Add item'}
               </Button>
             </div>
           </div>

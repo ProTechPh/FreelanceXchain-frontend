@@ -107,5 +107,5 @@ test('participant reviews personal audit activity', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Activity log' })).toBeVisible();
   await expect(page.getByText('Wallet Updated')).toBeVisible();
   await page.getByLabel('Status').selectOption('failure');
-  await expect(page.getByText('No activity matches these filters.')).toBeVisible();
+  await expect(page.getByText('No activity matches these filters')).toBeVisible();
 });

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { AlertTriangle, ArrowLeft, FileText, LoaderCircle, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, FileText, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   contractsApi,
@@ -33,6 +33,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { DetailSkeleton } from '@/components/dashboard/skeletons';
 
 type ParticipantRole = Extract<UserRole, 'employer' | 'freelancer'>;
 const initialReview: ReviewDraft = { rating: 5, comment: '', workQuality: 5, communication: 5, professionalism: 5, wouldWorkAgain: true };
@@ -111,7 +112,7 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
   }, [loadWorkspace]);
 
   if (loading) {
-    return <div className="flex min-h-64 items-center justify-center" role="status"><LoaderCircle className="size-8 animate-spin text-primary" /></div>;
+    return <DetailSkeleton label="Loading contract" />;
   }
 
   if (!contract || !user) {

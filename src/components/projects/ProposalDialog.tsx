@@ -1,7 +1,7 @@
 'use client';
 
 import { useId, useState } from 'react';
-import { Loader2, Paperclip, Send } from 'lucide-react';
+import { Paperclip, Send } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -156,13 +156,9 @@ export function ProposalDialog({ open, onOpenChange, onSubmitted, project }: Pro
             >
               Cancel
             </Button>
-            <Button type="submit" variant="gradient" disabled={submitting}>
-              {submitting ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="mr-2 h-4 w-4" />
-              )}
-              {submitting ? 'Submitting…' : 'Submit Proposal'}
+            <Button type="submit" variant="gradient" loading={submitting} loadingText="Submitting…">
+              <Send className="size-4" aria-hidden="true" />
+              Submit proposal
             </Button>
           </DialogFooter>
         </form>

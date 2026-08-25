@@ -20,7 +20,9 @@ import {
   type ProjectSubmissionSkill,
 } from '@/lib/project-submission';
 import { toast } from 'sonner';
-import { ChevronRight, ChevronLeft, Plus, X, Upload, FileText, DollarSign, Clock, Target, Loader2, Sparkles } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Plus, X, Upload, FileText, DollarSign, Clock, Target, Sparkles } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Field } from '@/components/ui/field';
 
 const steps = [
   { id: 1, title: 'Project Details', icon: FileText },
@@ -237,25 +239,23 @@ export default function CreateProjectPage() {
               <div>
                 <h2 className="text-lg font-semibold mb-4">Project Details</h2>
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="title">Project Title</Label>
-                    <Input
+                  <Field label="Project Title" htmlFor="title">
+<Input
                       id="title"
                       placeholder="e.g., E-commerce Platform Development"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea
+</Field>
+                  <Field label="Description" htmlFor="description">
+<Textarea
                       id="description"
                       placeholder="Describe your project in detail..."
                       rows={6}
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                     />
-                  </div>
+</Field>
                   <div className="space-y-2">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <Label id="required-skills-label">Required Skills</Label>
@@ -263,10 +263,12 @@ export default function CreateProjectPage() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        disabled={extractingSkills || skillsLoading || !description.trim()}
+                        loading={extractingSkills}
+                        loadingText="Analysing…"
+                        disabled={skillsLoading || !description.trim()}
                         onClick={() => void suggestSkills()}
                       >
-                        {extractingSkills ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                        <Sparkles className="size-4" aria-hidden="true" />
                         Suggest from description
                       </Button>
                     </div>
@@ -287,8 +289,11 @@ export default function CreateProjectPage() {
                     </div>
                     <div className="flex flex-wrap gap-2" aria-labelledby="required-skills-label">
                       {skillsLoading && (
-                        <span role="status" className="inline-flex items-center text-sm text-muted-foreground">
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading skills...
+                        <span role="status" className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                          <Skeleton className="h-6 w-20 rounded-full" />
+                          <Skeleton className="h-6 w-24 rounded-full" />
+                          <Skeleton className="h-6 w-16 rounded-full" />
+                          <span className="sr-only">Loading skills</span>
                         </span>
                       )}
                       {!skillsLoading && skillOptions
@@ -426,9 +431,8 @@ export default function CreateProjectPage() {
               <h2 className="text-lg font-semibold">Budget & Timeline</h2>
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="budget">Total Budget ($)</Label>
-                    <Input
+                  <Field label="Total Budget ($)" htmlFor="budget">
+<Input
                       id="budget"
                       type="number"
                       min="0.01"
@@ -437,16 +441,15 @@ export default function CreateProjectPage() {
                       value={budget}
                       onChange={(e) => setBudget(e.target.value)}
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="deadline">Deadline</Label>
-                    <Input
+</Field>
+                  <Field label="Deadline" htmlFor="deadline">
+<Input
                       id="deadline"
                       type="date"
                       value={deadline}
                       onChange={(e) => setDeadline(e.target.value)}
                     />
-                  </div>
+</Field>
                   <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
                     <div className="flex items-center gap-2 text-primary mb-2">
                       <Clock className="w-4 h-4" />
@@ -558,14 +561,11 @@ export default function CreateProjectPage() {
             type="button"
             variant="gradient"
             aria-describedby={formError ? 'project-form-error' : undefined}
-            disabled={isSubmitting}
+            loading={isSubmitting}
+            loadingText="Posting…"
             onClick={() => void handleSubmit()}
           >
-            {isSubmitting ? (
-              <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Posting...</>
-            ) : (
-              'Post Project'
-            )}
+            Post project
           </Button>
         )}
       </div>

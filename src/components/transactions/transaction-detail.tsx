@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Copy, Loader2, ReceiptText } from 'lucide-react';
+import { ArrowLeft, Copy, ReceiptText } from 'lucide-react';
 import { toast } from 'sonner';
 import { transactionsApi } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/auth-contract';
@@ -11,6 +11,7 @@ import type { Transaction, UserRole } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DetailSkeleton } from '@/components/dashboard/skeletons';
 
 type ParticipantRole = Extract<UserRole, 'employer' | 'freelancer'>;
 
@@ -26,7 +27,7 @@ export function TransactionDetail({ transactionId, role }: { transactionId: stri
   }, [transactionId]);
 
   if (loading) {
-    return <div className="flex min-h-64 items-center justify-center" role="status" aria-label="Loading transaction"><Loader2 className="size-8 animate-spin text-primary" /></div>;
+    return <DetailSkeleton label="Loading transaction" />;
   }
   if (!transaction) {
     return <Card><CardContent className="py-12 text-center text-muted-foreground">Transaction unavailable.</CardContent></Card>;

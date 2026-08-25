@@ -9,7 +9,7 @@ import { getApiErrorMessage } from '@/lib/auth-contract';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Field } from '@/components/ui/field';
 
 export default function ResendConfirmationPage() {
   const [email, setEmail] = useState('');
@@ -49,11 +49,10 @@ export default function ResendConfirmationPage() {
           ) : (
             <form className="space-y-4" onSubmit={handleSubmit}>
               <p className="text-sm text-muted-foreground">Enter the address you used to create your account.</p>
-              <div className="space-y-2">
-                <Label htmlFor="confirmation-email">Email</Label>
-                <Input id="confirmation-email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
-              </div>
-              <Button className="w-full" type="submit" disabled={loading || !email.trim()}>{loading ? 'Sending…' : 'Send confirmation email'}</Button>
+              <Field label="Email" htmlFor="confirmation-email">
+<Input id="confirmation-email" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+</Field>
+              <Button className="w-full" type="submit" loading={loading} loadingText="Sending…" disabled={!email.trim()}>Send confirmation email</Button>
             </form>
           )}
           {sent && <Button className="w-full" type="button" variant="outline" onClick={() => setSent(false)}>Use another email</Button>}

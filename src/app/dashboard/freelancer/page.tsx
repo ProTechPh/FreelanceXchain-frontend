@@ -16,7 +16,9 @@ import {
 import { useAuthStore } from '@/stores/authStore';
 import type { Contract, Proposal, Project } from '@/types';
 import { toast } from 'sonner';
-import { DollarSign, FolderOpen, FileText, Star, TrendingUp, Clock, ArrowUpRight, Briefcase, Wallet, Loader2 } from 'lucide-react';
+import { DollarSign, FolderOpen, FileText, Star, TrendingUp, Clock, ArrowUpRight, Briefcase, Wallet } from 'lucide-react';
+import { formatAmount, formatNumber } from '@/lib/format';
+import { StatsSkeleton } from '@/components/dashboard/skeletons';
 
 const statusColors: Record<string, string> = {
   pending: 'bg-warning-subtle text-warning',
@@ -135,17 +137,15 @@ export default function FreelancerDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
+      <StatsSkeleton label="Loading dashboard" />
     );
   }
 
   const stats = [
     {
       title: 'Total Earned',
-      value: totalEarnings !== null ? `$${totalEarnings.toLocaleString()}` : '—',
-      change: projectsCompleted !== null ? `${projectsCompleted} completed contracts` : undefined,
+      value: formatAmount(totalEarnings),
+      change: projectsCompleted != null ? `${formatNumber(projectsCompleted)} completed contracts` : undefined,
       icon: DollarSign,
       color: 'text-success',
       bg: 'bg-success-subtle',

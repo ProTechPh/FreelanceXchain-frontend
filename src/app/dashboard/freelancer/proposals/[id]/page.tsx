@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { ArrowLeft, BriefcaseBusiness, Clock, ExternalLink, FileText, Loader2, Star } from 'lucide-react';
+import { ArrowLeft, BriefcaseBusiness, Clock, ExternalLink, FileText, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,6 +12,7 @@ import { proposalsApi } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { StatusBadge } from '@/components/ui/status-badge';
 import type { ProposalWithEmployerHistory } from '@/types';
+import { DetailSkeleton } from '@/components/dashboard/skeletons';
 
 export default function FreelancerProposalDetailPage() {
   const params = useParams<{ id: string }>();
@@ -52,7 +53,7 @@ export default function FreelancerProposalDetailPage() {
   };
 
   if (loading) {
-    return <div className="flex h-64 items-center justify-center" aria-label="Loading proposal"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+    return <DetailSkeleton label="Loading proposal" />;
   }
 
   if (!details) {

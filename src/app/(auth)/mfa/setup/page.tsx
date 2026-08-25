@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useAuthStore } from '@/stores/authStore';
 import { authApi } from '@/lib/api';
 import { toast } from 'sonner';
@@ -12,6 +11,7 @@ import { Shield, Copy, CheckCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import QRCode from 'qrcode';
+import { Field } from '@/components/ui/field';
 
 type Step = 'enroll' | 'verify' | 'complete';
 
@@ -167,9 +167,8 @@ export default function MfaSetupPage() {
           </div>
 
           <form onSubmit={handleVerify} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="code">3. Enter the 6-digit code from your authenticator app</Label>
-              <Input
+            <Field label="3. Enter the 6-digit code from your authenticator app" htmlFor="code">
+<Input
                 id="code"
                 type="text"
                 placeholder="000000"
@@ -180,7 +179,7 @@ export default function MfaSetupPage() {
                 required
                 autoFocus
               />
-            </div>
+</Field>
             <Button type="submit" variant="gradient" className="w-full" disabled={isVerifying || code.length !== 6}>
               {isVerifying ? 'Verifying...' : 'Verify & Enable'}
             </Button>

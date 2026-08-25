@@ -11,6 +11,7 @@ import { getApiErrorMessage } from '@/lib/auth-contract';
 import { safeAttachmentUrl } from '@/lib/attachment-presentation';
 import type { KycVerification, UserRole } from '@/types';
 import { Shield, CheckCircle, XCircle, Clock, AlertTriangle, ExternalLink, RefreshCw, Loader2, Globe, FileText, User, Calendar } from 'lucide-react';
+import { DetailSkeleton } from '@/components/dashboard/skeletons';
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   approved: { label: 'Approved', color: 'bg-success-subtle text-success', icon: CheckCircle },
@@ -101,9 +102,7 @@ export function VerificationCenter({ role }: { role: ParticipantRole }) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
+      <DetailSkeleton label="Loading verification" />
     );
   }
 
@@ -172,18 +171,11 @@ export function VerificationCenter({ role }: { role: ParticipantRole }) {
               </div>
               <Button
                 onClick={handleInitiate}
-                disabled={initiating}
+                loading={initiating}
+                loadingText="Starting…"
                 variant="gradient"
               >
-                {initiating ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Starting...
-                  </>
-                ) : (
-                  <>
-                    <Shield className="w-4 h-4 mr-2" /> Start Verification
-                  </>
-                )}
+                <Shield className="size-4" aria-hidden="true" /> Start verification
               </Button>
             </div>
           ) : (
@@ -224,18 +216,11 @@ export function VerificationCenter({ role }: { role: ParticipantRole }) {
                 {(verification.status === 'rejected' || verification.status === 'expired') && (
                   <Button
                     onClick={handleInitiate}
-                    disabled={initiating || retryAvailability?.canRetry === false}
+                    loading={initiating} loadingText="Starting…" disabled={retryAvailability?.canRetry === false}
                     variant="gradient"
                   >
-                    {initiating ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Starting...
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCw className="w-4 h-4 mr-2" /> {retryAvailability?.canRetry === false ? `Retry in ${retryAvailability.hoursRemaining}h` : 'Retry Verification'}
-                      </>
-                    )}
+                    <RefreshCw className="size-4" aria-hidden="true" />
+                    {retryAvailability?.canRetry === false ? `Retry in ${retryAvailability.hoursRemaining}h` : 'Retry verification'}
                   </Button>
                 )}
               </div>

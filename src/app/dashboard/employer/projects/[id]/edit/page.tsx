@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Loader2, Save } from 'lucide-react';
+import { ArrowLeft, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { projectsApi } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/auth-contract';
@@ -15,6 +15,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { DetailSkeleton } from '@/components/dashboard/skeletons';
+import { Field } from '@/components/ui/field';
 
 export default function EditProjectPage() {
   const params = useParams<{ id: string }>();
@@ -66,7 +68,7 @@ export default function EditProjectPage() {
     }
   };
 
-  if (loading) return <div className="flex min-h-64 items-center justify-center" role="status"><Loader2 className="size-8 animate-spin text-primary" /></div>;
+  if (loading) return <DetailSkeleton label="Loading project" />;
   if (!project) return <Card><CardContent className="py-12 text-center text-muted-foreground">Project unavailable.</CardContent></Card>;
   const verified = hasApprovedKyc(user?.kycStatus);
 
@@ -76,11 +78,19 @@ export default function EditProjectPage() {
       <Card><CardHeader><CardTitle>Edit project</CardTitle></CardHeader><CardContent>
         {!verified ? <div className="space-y-3 py-6 text-center"><p className="text-muted-foreground">Identity verification is required by the backend before project updates.</p><Button asChild><Link href="/dashboard/employer/verification">Complete verification</Link></Button></div> : (
           <form className="space-y-4" onSubmit={save}>
-            <div className="space-y-2"><Label htmlFor="edit-title">Title</Label><Input id="edit-title" value={title} onChange={(event) => setTitle(event.target.value)} /></div>
-            <div className="space-y-2"><Label htmlFor="edit-description">Description</Label><Textarea id="edit-description" rows={7} value={description} onChange={(event) => setDescription(event.target.value)} /></div>
-            <div className="grid gap-4 sm:grid-cols-2"><div className="space-y-2"><Label htmlFor="edit-budget">Budget</Label><Input id="edit-budget" type="number" min="1" value={budget} onChange={(event) => setBudget(event.target.value)} /></div><div className="space-y-2"><Label htmlFor="edit-deadline">Deadline</Label><Input id="edit-deadline" type="date" value={deadline} onChange={(event) => setDeadline(event.target.value)} /></div></div>
+            <Field label="Title" htmlFor="edit-title">
+<Input id="edit-title" value={title} onChange={(event) => setTitle(event.target.value)} />
+</Field>
+            <Field label="Description" htmlFor="edit-description">
+<Textarea id="edit-description" rows={7} value={description} onChange={(event) => setDescription(event.target.value)} />
+</Field>
+            <div className="grid gap-4 sm:grid-cols-2"><Field label="Budget" htmlFor="edit-budget">
+<Input id="edit-budget" type="number" min="1" value={budget} onChange={(event) => setBudget(event.target.value)} />
+</Field><Field label="Deadline" htmlFor="edit-deadline">
+<Input id="edit-deadline" type="date" value={deadline} onChange={(event) => setDeadline(event.target.value)} />
+</Field></div>
             <div className="space-y-2"><Label htmlFor="edit-status">Status</Label><select id="edit-status" className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm" value={status} onChange={(event) => setStatus(event.target.value as ProjectStatus)}><option value="draft">Draft</option><option value="open">Open</option><option value="cancelled">Cancelled</option></select></div>
-            <Button type="submit" disabled={saving}><Save className="mr-2 size-4" />{saving ? 'Saving…' : 'Save changes'}</Button>
+            <Button type="submit" loading={saving} loadingText="Saving…"><Save className="size-4" aria-hidden="true" />Save changes</Button>
           </form>
         )}
       </CardContent></Card>

@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Award, BriefcaseBusiness, History, Loader2, MessageSquareOff, ShieldCheck, Star, TrendingUp, Users } from 'lucide-react';
+import { Award, BriefcaseBusiness, History, MessageSquareOff, ShieldCheck, Star, TrendingUp, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { reputationApi } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
 import type { AggregatedReputationScore, ReputationBreakdown, ReputationHistoryEntry, ReputationLeaderboardEntry, ReputationMetadata, ReputationWorkHistoryEntry } from '@/types';
+import { StatsSkeleton } from '@/components/dashboard/skeletons';
 
 const starKeys = [
   [5, 'fiveStars'],
@@ -50,7 +51,7 @@ export function ReputationOverview() {
     return () => { active = false; };
   }, [userId]);
 
-  if (loading) return <div className="flex h-64 items-center justify-center" role="status"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+  if (loading) return <StatsSkeleton tiles={3} label="Loading reputation" />;
 
   const overall = score?.averageRating ?? 0;
   const totalRatings = score?.totalRatings ?? 0;

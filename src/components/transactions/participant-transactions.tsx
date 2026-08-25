@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowDownLeft, ArrowUpRight, CircleDollarSign, Loader2, ReceiptText, WalletCards } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, CircleDollarSign, ReceiptText, WalletCards } from 'lucide-react';
 import { toast } from 'sonner';
 import { transactionsApi } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/auth-contract';
@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { ListSkeleton } from '@/components/dashboard/skeletons';
 
 type ParticipantRole = Extract<UserRole, 'employer' | 'freelancer'>;
 
@@ -98,7 +99,7 @@ export function ParticipantTransactions({ role }: { role: ParticipantRole }) {
         <CardHeader><CardTitle>Transaction history</CardTitle></CardHeader>
         <CardContent>
           {loading ? (
-            <div className="flex min-h-40 items-center justify-center" role="status" aria-label="Loading transactions"><Loader2 className="size-7 animate-spin text-primary" /></div>
+            <ListSkeleton rows={4} label="Loading transactions" />
           ) : transactions.length === 0 ? (
             <div className="flex flex-col items-center gap-3 py-12 text-center text-muted-foreground"><CircleDollarSign className="size-10" /><p>No transactions match these filters.</p></div>
           ) : (

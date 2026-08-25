@@ -12,7 +12,8 @@ import { useAuthStore } from '@/stores/authStore';
 import type { FreelancerProfile } from '@/types';
 import { getMarketplaceReturnPath } from '@/lib/marketplace-return';
 import { toast } from 'sonner';
-import { MapPin, Clock, Briefcase, Send, Loader2 } from 'lucide-react';
+import { MapPin, Clock, Briefcase, Send } from 'lucide-react';
+import { DetailSkeleton } from '@/components/dashboard/skeletons';
 
 export default function FreelancerProfilePage() {
   const params = useParams();
@@ -39,9 +40,7 @@ export default function FreelancerProfilePage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
+      <DetailSkeleton label="Loading profile" />
     );
   }
 

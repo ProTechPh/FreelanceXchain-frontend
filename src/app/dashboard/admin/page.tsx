@@ -8,7 +8,8 @@ import Link from 'next/link';
 import { adminApi, auditLogsApi, kycApi } from '@/lib/api';
 import type { AuditLogEntry, Dispute, SystemHealth } from '@/types';
 import { toast } from 'sonner';
-import { Users, FolderOpen, DollarSign, AlertTriangle, Activity, ArrowUpRight, Shield, BarChart3, CheckCircle, Clock, Loader2 } from 'lucide-react';
+import { Users, FolderOpen, DollarSign, AlertTriangle, Activity, ArrowUpRight, Shield, BarChart3, CheckCircle, Clock } from 'lucide-react';
+import { StatsSkeleton } from '@/components/dashboard/skeletons';
 
 function relativeTime(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime();
@@ -87,9 +88,7 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
+      <StatsSkeleton label="Loading dashboard" />
     );
   }
 

@@ -16,7 +16,8 @@ import { formatFileSize, safeAttachmentUrl } from '@/lib/attachment-presentation
 import { useAuthStore } from '@/stores/authStore';
 import { getMarketplaceReturnPath } from '@/lib/marketplace-return';
 import { toast } from 'sonner';
-import { Zap, Calendar, Target, Send, Share2, Loader2, SearchX, ClipboardList, ExternalLink, Paperclip } from 'lucide-react';
+import { Zap, Calendar, Target, Send, Share2, SearchX, ClipboardList, ExternalLink, Paperclip } from 'lucide-react';
+import { DetailSkeleton } from '@/components/dashboard/skeletons';
 
 export default function ProjectDetailPage() {
   const params = useParams();
@@ -44,9 +45,7 @@ export default function ProjectDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
+      <DetailSkeleton label="Loading project" />
     );
   }
 

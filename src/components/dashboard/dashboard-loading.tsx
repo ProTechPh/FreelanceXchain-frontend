@@ -1,7 +1,7 @@
 import { Skeleton } from '@/components/ui/skeleton';
 
 /** Dashboard segment loading state: KPI row, then a content block. */
-export default function DashboardLoading() {
+export function DashboardLoading() {
   return (
     <div role="status" aria-live="polite" className="space-y-6">
       <span className="sr-only">Loading dashboard…</span>

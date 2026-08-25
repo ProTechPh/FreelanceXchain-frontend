@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import { Briefcase, Loader2, Pencil, Plus, Save, Trash2, UserRound } from 'lucide-react';
+import { Briefcase, Pencil, Plus, Save, Trash2, UserRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { employersApi, freelancersApi, skillsApi } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/auth-contract';
@@ -22,6 +22,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { DetailSkeleton } from '@/components/dashboard/skeletons';
+import { Field } from '@/components/ui/field';
 
 type ProfileRole = Extract<UserRole, 'employer' | 'freelancer'>;
 
@@ -216,7 +218,7 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
   };
 
   if (loading) {
-    return <div className="flex min-h-64 items-center justify-center" role="status" aria-label="Loading profile"><Loader2 className="size-8 animate-spin text-primary" /></div>;
+    return <DetailSkeleton label="Loading profile" />;
   }
 
   if (loadError) {
@@ -229,15 +231,21 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
     <div className="mx-auto max-w-5xl space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div><h1 className="text-2xl font-extrabold tracking-tight text-foreground">Profile</h1><p className="text-muted-foreground">Keep the information shown to marketplace participants up to date.</p></div>
-        <Button type="button" onClick={() => void saveProfile()} disabled={saving}><Save className="mr-2 size-4" />{saving ? 'Saving…' : 'Save profile'}</Button>
+        <Button type="button" onClick={() => void saveProfile()} loading={saving} loadingText="Saving…"><Save className="size-4" aria-hidden="true" />Save profile</Button>
       </div>
 
       <Card>
         <CardHeader><CardTitle className="flex items-center gap-2"><UserRound className="size-5" />Account identity</CardTitle></CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-3">
-          <div className="space-y-2"><Label htmlFor="profile-name">Verified name</Label><Input id="profile-name" value={identityProfile?.name || user?.name || ''} disabled /></div>
-          <div className="space-y-2"><Label htmlFor="profile-nationality">Nationality</Label><Input id="profile-nationality" value={identityProfile?.nationality || 'Not available'} disabled /></div>
-          <div className="space-y-2"><Label htmlFor="profile-email">Email</Label><Input id="profile-email" value={user?.email ?? ''} disabled /></div>
+          <Field label="Verified name" htmlFor="profile-name">
+<Input id="profile-name" value={identityProfile?.name || user?.name || ''} disabled />
+</Field>
+          <Field label="Nationality" htmlFor="profile-nationality">
+<Input id="profile-nationality" value={identityProfile?.nationality || 'Not available'} disabled />
+</Field>
+          <Field label="Email" htmlFor="profile-email">
+<Input id="profile-email" value={user?.email ?? ''} disabled />
+</Field>
         </CardContent>
       </Card>
 
@@ -247,7 +255,9 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
             <CardHeader><CardTitle>Professional details</CardTitle></CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2 sm:col-span-2"><Label htmlFor="profile-bio">Bio</Label><Textarea id="profile-bio" value={freelancerForm.bio} onChange={(event) => setFreelancerForm((current) => ({ ...current, bio: event.target.value }))} rows={5} /></div>
-              <div className="space-y-2"><Label htmlFor="hourly-rate">Hourly rate (USD)</Label><Input id="hourly-rate" type="number" min="1" value={freelancerForm.hourlyRate} onChange={(event) => setFreelancerForm((current) => ({ ...current, hourlyRate: Number(event.target.value) }))} /></div>
+              <Field label="Hourly rate (USD)" htmlFor="hourly-rate">
+<Input id="hourly-rate" type="number" min="1" value={freelancerForm.hourlyRate} onChange={(event) => setFreelancerForm((current) => ({ ...current, hourlyRate: Number(event.target.value) }))} />
+</Field>
               <div className="space-y-2"><Label htmlFor="availability">Availability</Label><select id="availability" className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm" value={freelancerForm.availability} onChange={(event) => setFreelancerForm((current) => ({ ...current, availability: event.target.value as FreelancerProfileForm['availability'] }))}><option value="available">Available</option><option value="busy">Busy</option><option value="unavailable">Unavailable</option></select></div>
             </CardContent>
           </Card>
@@ -267,7 +277,9 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
                 </div>
                 <div className="grid gap-3 sm:grid-cols-[1fr_160px_auto] sm:items-end">
                   <div className="space-y-2"><Label htmlFor="new-skill">Add skill</Label><select id="new-skill" className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm" value={selectedSkillId} onChange={(event) => setSelectedSkillId(event.target.value)}><option value="">Choose a skill</option>{availableSkills.map((skill) => <option key={skill.id} value={skill.id}>{skill.name}</option>)}</select></div>
-                  <div className="space-y-2"><Label htmlFor="skill-years">Years</Label><Input id="skill-years" type="number" min="0" step="0.5" value={skillYears} onChange={(event) => setSkillYears(Number(event.target.value))} /></div>
+                  <Field label="Years" htmlFor="skill-years">
+<Input id="skill-years" type="number" min="0" step="0.5" value={skillYears} onChange={(event) => setSkillYears(Number(event.target.value))} />
+</Field>
                   <Button type="button" variant="outline" disabled={!selectedSkillId || actionId === 'add-skill'} onClick={() => void addSkill()}><Plus className="mr-2 size-4" />Add</Button>
                 </div>
               </CardContent>
@@ -288,10 +300,18 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
 
                 {showExperienceForm && (
                   <form className="grid gap-4 rounded-lg border border-border p-4 sm:grid-cols-2" onSubmit={saveExperience}>
-                    <div className="space-y-2"><Label htmlFor="experience-title">Job title</Label><Input id="experience-title" value={experienceForm.title} onChange={(event) => setExperienceForm((current) => ({ ...current, title: event.target.value }))} /></div>
-                    <div className="space-y-2"><Label htmlFor="experience-company">Company</Label><Input id="experience-company" value={experienceForm.company} onChange={(event) => setExperienceForm((current) => ({ ...current, company: event.target.value }))} /></div>
-                    <div className="space-y-2"><Label htmlFor="experience-start">Start date</Label><Input id="experience-start" type="date" value={experienceForm.startDate} onChange={(event) => setExperienceForm((current) => ({ ...current, startDate: event.target.value }))} /></div>
-                    <div className="space-y-2"><Label htmlFor="experience-end">End date (optional)</Label><Input id="experience-end" type="date" value={experienceForm.endDate ?? ''} onChange={(event) => setExperienceForm((current) => ({ ...current, endDate: event.target.value || null }))} /></div>
+                    <Field label="Job title" htmlFor="experience-title">
+<Input id="experience-title" value={experienceForm.title} onChange={(event) => setExperienceForm((current) => ({ ...current, title: event.target.value }))} />
+</Field>
+                    <Field label="Company" htmlFor="experience-company">
+<Input id="experience-company" value={experienceForm.company} onChange={(event) => setExperienceForm((current) => ({ ...current, company: event.target.value }))} />
+</Field>
+                    <Field label="Start date" htmlFor="experience-start">
+<Input id="experience-start" type="date" value={experienceForm.startDate} onChange={(event) => setExperienceForm((current) => ({ ...current, startDate: event.target.value }))} />
+</Field>
+                    <Field label="End date (optional)" htmlFor="experience-end">
+<Input id="experience-end" type="date" value={experienceForm.endDate ?? ''} onChange={(event) => setExperienceForm((current) => ({ ...current, endDate: event.target.value || null }))} />
+</Field>
                     <div className="space-y-2 sm:col-span-2"><Label htmlFor="experience-description">Description</Label><Textarea id="experience-description" value={experienceForm.description} onChange={(event) => setExperienceForm((current) => ({ ...current, description: event.target.value }))} /></div>
                     <div className="flex gap-2 sm:col-span-2"><Button type="submit" disabled={actionId === 'experience'}>{editingExperienceId ? 'Update experience' : 'Add experience'}</Button><Button type="button" variant="ghost" onClick={resetExperienceForm}>Cancel</Button></div>
                   </form>
@@ -304,8 +324,12 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
         <Card>
           <CardHeader><CardTitle>Company details</CardTitle></CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2"><Label htmlFor="company-name">Company name</Label><Input id="company-name" value={employerForm.companyName} onChange={(event) => setEmployerForm((current) => ({ ...current, companyName: event.target.value }))} /></div>
-            <div className="space-y-2"><Label htmlFor="industry">Industry</Label><Input id="industry" value={employerForm.industry} onChange={(event) => setEmployerForm((current) => ({ ...current, industry: event.target.value }))} /></div>
+            <Field label="Company name" htmlFor="company-name">
+<Input id="company-name" value={employerForm.companyName} onChange={(event) => setEmployerForm((current) => ({ ...current, companyName: event.target.value }))} />
+</Field>
+            <Field label="Industry" htmlFor="industry">
+<Input id="industry" value={employerForm.industry} onChange={(event) => setEmployerForm((current) => ({ ...current, industry: event.target.value }))} />
+</Field>
             <div className="space-y-2 sm:col-span-2"><Label htmlFor="company-description">Company description</Label><Textarea id="company-description" rows={6} value={employerForm.description} onChange={(event) => setEmployerForm((current) => ({ ...current, description: event.target.value }))} /></div>
             {employerProfile && <p className="text-xs text-muted-foreground sm:col-span-2">Company profile last updated {new Date(employerProfile.updatedAt).toLocaleString()}.</p>}
           </CardContent>

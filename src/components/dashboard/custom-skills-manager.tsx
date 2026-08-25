@@ -11,8 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Field } from '@/components/ui/field';
 
 const emptyDraft = { name: '', description: '', yearsOfExperience: 0, categoryName: '', suggestForGlobal: false };
 
@@ -94,9 +94,17 @@ export function CustomSkillsManager() {
       <CardContent className="grid gap-6 lg:grid-cols-2">
         <form className="space-y-4 rounded-lg border border-border p-4" onSubmit={save}>
           <h3 className="font-semibold">{editingId ? 'Edit custom skill' : 'New custom skill'}</h3>
-          <div className="space-y-2"><Label htmlFor="custom-skill-name">Name</Label><Input id="custom-skill-name" value={draft.name} onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))} /></div>
-          <div className="space-y-2"><Label htmlFor="custom-skill-description">Description</Label><Textarea id="custom-skill-description" rows={4} value={draft.description} onChange={(event) => setDraft((current) => ({ ...current, description: event.target.value }))} /></div>
-          <div className="grid grid-cols-2 gap-3"><div className="space-y-2"><Label htmlFor="custom-skill-years">Years</Label><Input id="custom-skill-years" type="number" min="0" max="50" step="0.5" value={draft.yearsOfExperience} onChange={(event) => setDraft((current) => ({ ...current, yearsOfExperience: Number(event.target.value) }))} /></div><div className="space-y-2"><Label htmlFor="custom-skill-category">Category (optional)</Label><Input id="custom-skill-category" value={draft.categoryName} onChange={(event) => setDraft((current) => ({ ...current, categoryName: event.target.value }))} /></div></div>
+          <Field label="Name" htmlFor="custom-skill-name">
+<Input id="custom-skill-name" value={draft.name} onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))} />
+</Field>
+          <Field label="Description" htmlFor="custom-skill-description">
+<Textarea id="custom-skill-description" rows={4} value={draft.description} onChange={(event) => setDraft((current) => ({ ...current, description: event.target.value }))} />
+</Field>
+          <div className="grid grid-cols-2 gap-3"><Field label="Years" htmlFor="custom-skill-years">
+<Input id="custom-skill-years" type="number" min="0" max="50" step="0.5" value={draft.yearsOfExperience} onChange={(event) => setDraft((current) => ({ ...current, yearsOfExperience: Number(event.target.value) }))} />
+</Field><Field label="Category (optional)" htmlFor="custom-skill-category">
+<Input id="custom-skill-category" value={draft.categoryName} onChange={(event) => setDraft((current) => ({ ...current, categoryName: event.target.value }))} />
+</Field></div>
           {!editingId && <label className="flex items-start gap-2 text-sm"><input className="mt-1" type="checkbox" checked={draft.suggestForGlobal} onChange={(event) => setDraft((current) => ({ ...current, suggestForGlobal: event.target.checked }))} /><span><span className="font-medium">Suggest for the global taxonomy</span><span className="block text-muted-foreground">Administrators can review popular requests.</span></span></label>}
           <div className="flex gap-2"><Button type="submit" disabled={actionId === 'save'}><Plus className="mr-2 size-4" />{editingId ? 'Save changes' : 'Add custom skill'}</Button>{editingId && <Button type="button" variant="ghost" onClick={reset}>Cancel</Button>}</div>
         </form>

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { FileText, Link2, Loader2, Plus, Scale, ShieldCheck, Trash2, Upload } from 'lucide-react';
+import { FileText, Link2, Plus, Scale, ShieldCheck, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { contractsApi, disputesApi, milestonesApi } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/auth-contract';
@@ -18,6 +18,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { ListSkeleton } from '@/components/dashboard/skeletons';
+import { EmptyState } from '@/components/ui/empty-state';
 
 type ParticipantRole = Extract<UserRole, 'employer' | 'freelancer'>;
 const emptyDraft: DisputeDraft = { contractId: '', milestoneId: '', reason: '' };
@@ -220,7 +222,7 @@ export function DisputeCenter({ role, disputeId }: { role: ParticipantRole; disp
   }
 
   if (loading) {
-    return <div className="flex min-h-64 items-center justify-center" role="status" aria-label="Loading disputes"><Loader2 className="size-8 animate-spin text-primary" /></div>;
+    return <ListSkeleton rows={3} label="Loading disputes" />;
   }
 
   return (
@@ -245,7 +247,11 @@ export function DisputeCenter({ role, disputeId }: { role: ParticipantRole; disp
 
       <section className="space-y-4" aria-labelledby="cases-heading">
         <h2 id="cases-heading" className="text-xl font-semibold">{disputeId ? 'Case' : 'Your cases'}</h2>
-        {disputes.length === 0 && <Card><CardContent className="py-10 text-center text-muted-foreground">No disputes found.</CardContent></Card>}
+        {disputes.length === 0 && <EmptyState
+          icon={Scale}
+          title="No disputes"
+          description="Disputes appear here when either side raises an issue on a funded contract. Nothing needs your attention right now."
+        />}
         {disputes.map((dispute) => {
           const contract = contractsById.get(dispute.contractId);
           const evidenceRecords = evidenceByDispute[dispute.id] ?? [];

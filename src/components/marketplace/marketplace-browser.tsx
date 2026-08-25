@@ -550,11 +550,12 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
             <div className="text-center pt-4">
               <Button
                 variant="outline"
-                className="rounded-full text-xs font-bold px-8 shadow-xs"
-                disabled={loading}
+                className={control}
+                loading={loading}
+                loadingText="Loading…"
                 onClick={() => void loadResults(filters, items.length, true)}
               >
-                {loading ? "Loading…" : "Load More"}
+                Load more
               </Button>
             </div>
           )}

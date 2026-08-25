@@ -8,7 +8,10 @@ import { Input } from '@/components/ui/input';
 import { adminApi } from '@/lib/api';
 import type { AdminUser, UserRole } from '@/types';
 import { toast } from 'sonner';
-import { Search, Ban, UserCheck, ShieldCheck, Loader2 } from 'lucide-react';
+import { Users, Search, Ban, UserCheck, ShieldCheck } from 'lucide-react';
+import { ListSkeleton } from '@/components/dashboard/skeletons';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { EmptyState } from '@/components/ui/empty-state';
 
 const statusColors: Record<string, string> = {
   active: 'bg-success-subtle text-success',
@@ -103,9 +106,7 @@ export default function UsersPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
+      <ListSkeleton rows={6} label="Loading users" />
     );
   }
 
@@ -177,36 +178,35 @@ export default function UsersPage() {
       {/* Users Table */}
       <Card className="bg-card border-border">
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">User</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Role</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Status</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Joined</th>
-                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
+          <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Joined</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {filteredUsers.map((user) => (
-                  <tr key={user.id} className="border-b border-border hover:bg-secondary/30">
-                    <td className="p-4">
+                  <TableRow key={user.id}>
+                    <TableCell>
                       <div>
                         <p className="font-medium">{user.name || 'Unnamed'}</p>
                         <p className="text-sm text-muted-foreground">{user.email}</p>
                       </div>
-                    </td>
-                    <td className="p-4">
+                    </TableCell>
+                    <TableCell>
                       <Badge className={roleColors[user.role]}>{user.role}</Badge>
-                    </td>
-                    <td className="p-4">
+                    </TableCell>
+                    <TableCell>
                       <Badge className={statusColors[user.isActive ? 'active' : 'suspended']}>
                         {user.isActive ? 'active' : 'suspended'}
                       </Badge>
-                    </td>
-                    <td className="p-4 text-muted-foreground">{new Date(user.createdAt).toLocaleDateString()}</td>
-                    <td className="p-4">
+                    </TableCell>
+                    <TableCell className="p-4 text-muted-foreground">{new Date(user.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell>
                       <div className="flex items-center justify-end gap-2">
                         <Button
                           variant="ghost"
@@ -243,19 +243,23 @@ export default function UsersPage() {
                           </Button>
                         )}
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
                 {filteredUsers.length === 0 && (
-                  <tr>
-                    <td colSpan={5} className="p-8 text-center text-muted-foreground">
-                      No users match your filters
-                    </td>
-                  </tr>
+                  <TableRow>
+                    <TableCell colSpan={5} className="py-10">
+                      <EmptyState
+                        size="sm"
+                        icon={Users}
+                        title="No users match your filters"
+                        description="Try clearing the search or selecting a different role."
+                      />
+                    </TableCell>
+                  </TableRow>
                 )}
-              </tbody>
-            </table>
-          </div>
+              </TableBody>
+            </Table>
         </CardContent>
       </Card>
     </div>

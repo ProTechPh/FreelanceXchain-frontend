@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Field } from '@/components/ui/field';
 
 type ParticipantRole = 'employer' | 'freelancer';
 
@@ -159,8 +160,12 @@ export function ContractNegotiationPanel({
         <CardContent className="space-y-4">
           {canCreateRefund && (
             <div className="space-y-3 rounded-lg border border-border p-4">
-              <div className="space-y-2"><Label htmlFor="refund-reason">Reason</Label><Textarea id="refund-reason" rows={3} value={refundReason} onChange={(event) => setRefundReason(event.target.value)} placeholder="Explain why the remaining escrow should be refunded" /></div>
-              <div className="space-y-2"><Label htmlFor="refund-amount">Amount (optional)</Label><Input id="refund-amount" type="number" min="0.01" step="0.01" max={contract.totalAmount} value={refundAmount} onChange={(event) => setRefundAmount(event.target.value)} placeholder={`Full remaining escrow (up to $${contract.totalAmount})`} /></div>
+              <Field label="Reason" htmlFor="refund-reason">
+<Textarea id="refund-reason" rows={3} value={refundReason} onChange={(event) => setRefundReason(event.target.value)} placeholder="Explain why the remaining escrow should be refunded" />
+</Field>
+              <Field label="Amount (optional)" htmlFor="refund-amount">
+<Input id="refund-amount" type="number" min="0.01" step="0.01" max={contract.totalAmount} value={refundAmount} onChange={(event) => setRefundAmount(event.target.value)} placeholder={`Full remaining escrow (up to $${contract.totalAmount})`} />
+</Field>
               <Button type="button" disabled={actionId === 'refund-request'} onClick={requestRefund}><BadgeDollarSign className="mr-2 size-4" />{actionId === 'refund-request' ? 'Submitting…' : 'Request refund'}</Button>
             </div>
           )}

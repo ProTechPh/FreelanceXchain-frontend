@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { adminApi } from '@/lib/api';
 import type { SystemHealth } from '@/types';
 import { toast } from 'sonner';
-import { Database, HardDrive, Clock, CheckCircle, AlertTriangle, RefreshCw, Loader2 } from 'lucide-react';
+import { Database, HardDrive, Clock, CheckCircle, AlertTriangle, RefreshCw } from 'lucide-react';
+import { StatsSkeleton } from '@/components/dashboard/skeletons';
 
 function formatUptime(seconds: number): string {
   const days = Math.floor(seconds / 86400);
@@ -43,9 +44,7 @@ export default function SystemHealthPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
+      <StatsSkeleton label="Loading system health" />
     );
   }
 

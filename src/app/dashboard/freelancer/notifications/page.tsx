@@ -10,7 +10,8 @@ import { getNotificationDestination } from '@/lib/notification-route';
 import { useAuthStore } from '@/stores/authStore';
 import type { Notification, NotificationType } from '@/types';
 import { toast } from 'sonner';
-import { FileText, DollarSign, MessageSquare, CheckCircle, XCircle, AlertTriangle, Clock, Star, RefreshCw, Loader2, BellOff, type LucideIcon } from 'lucide-react';
+import { FileText, DollarSign, MessageSquare, CheckCircle, XCircle, AlertTriangle, Clock, Star, RefreshCw, BellOff, type LucideIcon } from 'lucide-react';
+import { ListSkeleton } from '@/components/dashboard/skeletons';
 
 const ICON_BY_TYPE: Record<NotificationType, { icon: LucideIcon; color: string; bg: string }> = {
   proposal_received: { icon: FileText, color: 'text-info', bg: 'bg-info-subtle' },
@@ -128,9 +129,7 @@ export function NotificationsCenter() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
+      <ListSkeleton rows={6} label="Loading notifications" />
     );
   }
 
@@ -203,8 +202,8 @@ export function NotificationsCenter() {
           })}
           {hasMore && tab === 'all' && (
             <div className="flex justify-center pt-2">
-              <Button variant="outline" size="sm" onClick={loadMore} disabled={loadingMore}>
-                {loadingMore ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
+              <Button variant="outline" size="sm" onClick={loadMore} loading={loadingMore} loadingText="Loading…">
+                <RefreshCw className="size-4" aria-hidden="true" />
                 Load more
               </Button>
             </div>

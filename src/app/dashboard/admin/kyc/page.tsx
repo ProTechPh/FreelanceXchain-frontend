@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { kycApi } from '@/lib/api';
 import { safeAttachmentUrl } from '@/lib/attachment-presentation';
 import type { KycVerification } from '@/types';
-import { Shield, CheckCircle, XCircle, Clock, FileText, Globe, AlertTriangle, ExternalLink, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Shield, CheckCircle, XCircle, Clock, FileText, Globe, AlertTriangle, ExternalLink, ChevronDown, ChevronUp } from 'lucide-react';
+import { ListSkeleton } from '@/components/dashboard/skeletons';
 
 const statusColors: Record<string, string> = {
   pending: 'bg-warning-subtle text-warning',
@@ -108,9 +109,7 @@ export default function KycReviewPage() {
 
       {/* Verification List */}
       {loading ? (
-        <div className="flex items-center justify-center h-32">
-          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-        </div>
+        <ListSkeleton rows={4} label="Loading KYC queue" />
       ) : verifications.length === 0 ? (
         <Card className="bg-card border-border">
           <CardContent className="p-8 text-center">
@@ -291,20 +290,22 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
                   <Button
                     size="sm"
                     className="bg-success hover:bg-success/90 text-success-foreground"
-                    disabled={reviewing}
+                    loading={reviewing}
+                    loadingText="Approving…"
                     onClick={() => onReview(v.id, 'approved')}
                   >
-                    {reviewing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle className="w-4 h-4 mr-2" />}
+                    <CheckCircle className="size-4" aria-hidden="true" />
                     Approve
                   </Button>
                   <Button
                     size="sm"
                     variant="outline"
                     className="text-destructive border-destructive-border hover:bg-destructive-subtle"
-                    disabled={reviewing}
+                    loading={reviewing}
+                    loadingText="Rejecting…"
                     onClick={() => onReview(v.id, 'rejected')}
                   >
-                    {reviewing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <XCircle className="w-4 h-4 mr-2" />}
+                    <XCircle className="size-4" aria-hidden="true" />
                     Reject
                   </Button>
                 </div>

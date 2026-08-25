@@ -9,7 +9,8 @@ import Link from 'next/link';
 import { projectsApi } from '@/lib/api';
 import type { Project, ProjectStatus } from '@/types';
 import { toast } from 'sonner';
-import { PlusCircle, Clock, DollarSign, Users, Eye, Loader2, FolderSearch, ClipboardList, Pencil } from 'lucide-react';
+import { PlusCircle, Clock, DollarSign, Users, Eye, FolderSearch, ClipboardList, Pencil } from 'lucide-react';
+import { ListSkeleton } from '@/components/dashboard/skeletons';
 
 export default function EmployerProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -33,9 +34,7 @@ export default function EmployerProjectsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
+      <ListSkeleton rows={4} label="Loading projects" />
     );
   }
 
