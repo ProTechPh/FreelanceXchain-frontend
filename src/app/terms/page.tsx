@@ -1,5 +1,51 @@
-import { InfoPage } from '@/components/public/info-page';
+import { InfoPage } from "@/components/public/info-page";
+
+export const metadata = {
+  title: "Terms of Service | FreelanceXchain",
+  description: "The rules and agreements governing the FreelanceXchain decentralized freelance marketplace and smart contract escrow.",
+};
 
 export default function TermsPage() {
-  return <InfoPage title="Terms of Service" intro="The rules that apply when using the FreelanceXchain marketplace. Last updated August 6, 2026."><section><h2>Marketplace accounts</h2><p>You must provide accurate account information, protect your credentials, and use the role and identity verification assigned to you. You are responsible for activity performed through your account.</p></section><section><h2>Projects and contracts</h2><p>Employers must describe work and payment terms accurately. Freelancers must submit original deliverables they are authorized to provide. Accepted proposals, funded contracts, milestone approvals, disputes, refunds, and reviews are recorded through the platform workflows.</p></section><section><h2>Payments and disputes</h2><p>Contract funding and milestone releases use the platform&apos;s server-controlled escrow process. Do not attempt to bypass platform payment or dispute controls. Submitted evidence must be lawful and relevant to the case.</p></section><section><h2>Acceptable use</h2><p>Fraud, harassment, impersonation, malicious code, unlawful content, and attempts to compromise the service are prohibited. Accounts may be restricted when needed to protect users or comply with law.</p></section><section><h2>Availability and changes</h2><p>The service may change as features, regulations, and supported networks evolve. Material updates will be communicated through the platform where practical.</p></section></InfoPage>;
+  return (
+    <InfoPage
+      title="Terms of Service"
+      badge="Legal & Platform Agreement"
+      intro="The governance rules, milestone escrow commitments, and user rights that apply when using FreelanceXchain. Last updated August 2026."
+    >
+      <section className="space-y-3">
+        <h2 className="text-xl font-bold text-foreground">1. Marketplace Accounts & Identity Verification</h2>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          To access the FreelanceXchain marketplace, you must provide accurate registration details, secure your authentication credentials, and complete Didit identity verification where required. You are responsible for all actions conducted through your wallet address and authenticated session.
+        </p>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-xl font-bold text-foreground">2. Projects, Proposals & Milestone Escrow</h2>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          Employers must specify truthful project scopes, budgets, and milestone deliverables. Freelancers commit to submitting original, high-quality deliverables. Once an employer accepts a proposal and deposits funds into the Ethereum smart contract escrow, those funds are held trustlessly until milestone completion is approved or an arbitration decision is made.
+        </p>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-xl font-bold text-foreground">3. Automated Payouts & Dispute Resolution</h2>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          Milestone payouts are automatically executed on-chain upon client deliverable approval. In the event of a scope disagreement, either party may trigger the Dispute Center. Both parties submit evidence, and verified arbiters review project milestones on-chain to determine fair fund allocation.
+        </p>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-xl font-bold text-foreground">4. Acceptable Conduct & Prohibited Activities</h2>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          Users agree not to engage in fraud, harassment, malicious code deployment, intellectual property infringement, or attempts to circumvent in-platform smart contract escrow controls. Violations may result in KYC credential flagging and account suspension.
+        </p>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-xl font-bold text-foreground">5. Platform Evolution & Multi-Chain Support</h2>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          FreelanceXchain may upgrade smart contract architectures, add Layer 2 network integrations (e.g. Polygon, Arbitrum, Base, Optimism), and refine protocol parameters to optimize gas efficiency and user safety.
+        </p>
+      </section>
+    </InfoPage>
+  );
 }

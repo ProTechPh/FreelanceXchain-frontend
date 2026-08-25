@@ -1,48 +1,63 @@
-'use client';
+"use client";
 
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Bell, BookmarkPlus, Heart, Loader2, Search, SlidersHorizontal, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
-import { favoritesApi, freelancersApi, projectsApi, savedSearchesApi, skillsApi } from '@/lib/api';
-import { getApiErrorMessage } from '@/lib/auth-contract';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  Bell,
+  BookmarkPlus,
+  Heart,
+  Loader2,
+  Search,
+  SlidersHorizontal,
+  Trash2,
+  Sparkles,
+  DollarSign,
+  Clock,
+  Briefcase,
+  CheckCircle,
+} from "lucide-react";
+import { toast } from "sonner";
+import Navbar from "@/components/ui/navbar";
+import { FooterSection } from "@/components/ui/footer-section";
+import { favoritesApi, freelancersApi, projectsApi, savedSearchesApi, skillsApi } from "@/lib/api";
+import { getApiErrorMessage } from "@/lib/auth-contract";
 import {
   buildMarketplaceSearchParams,
   createSavedSearchFilters,
   marketplaceFiltersToSearchParams,
   restoreSavedSearchFilters,
   type MarketplaceFilters,
-} from '@/lib/marketplace-search';
-import { useAuthStore } from '@/stores/authStore';
-import type { FreelancerProfile, Project, ProjectCategoryStat, SavedSearch, Skill } from '@/types';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+} from "@/lib/marketplace-search";
+import { useAuthStore } from "@/stores/authStore";
+import type { FreelancerProfile, Project, ProjectCategoryStat, SavedSearch, Skill } from "@/types";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-type MarketplaceKind = 'project' | 'freelancer';
+type MarketplaceKind = "project" | "freelancer";
 
 type MarketplaceBrowserProps<T extends Project | FreelancerProfile> = {
   kind: MarketplaceKind;
   title: string;
   description: string;
   emptyMessage: string;
-  layout: 'list' | 'grid';
+  layout: "list" | "grid";
   renderItem: (item: T, listingQuery: string) => ReactNode;
   getTargetId?: (item: T) => string;
   initialFilters?: MarketplaceFilters;
 };
 
 function createInitialFilters(filters?: MarketplaceFilters): MarketplaceFilters {
-  return filters ? { ...filters, skillIds: [...filters.skillIds] } : { keyword: '', skillIds: [] };
+  return filters ? { ...filters, skillIds: [...filters.skillIds] } : { keyword: "", skillIds: [] };
 }
 
 function updateBudget(
   filters: MarketplaceFilters,
-  field: 'minBudget' | 'maxBudget',
+  field: "minBudget" | "maxBudget",
   value: string,
 ): MarketplaceFilters {
   const next = { ...filters };
-  if (value === '') delete next[field];
+  if (value === "") delete next[field];
   else next[field] = Number(value);
   return next;
 }
@@ -66,7 +81,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const [favoriteActionId, setFavoriteActionId] = useState<string | null>(null);
-  const [savedSearchName, setSavedSearchName] = useState('');
+  const [savedSearchName, setSavedSearchName] = useState("");
   const [notifyOnNew, setNotifyOnNew] = useState(true);
   const [loading, setLoading] = useState(true);
   const [savingSearch, setSavingSearch] = useState(false);
@@ -82,14 +97,14 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
       && nextFilters.maxBudget !== undefined
       && nextFilters.minBudget > nextFilters.maxBudget
     ) {
-      toast.error('Minimum budget cannot exceed maximum budget.');
+      toast.error("Minimum budget cannot exceed maximum budget.");
       return;
     }
 
     setLoading(true);
     try {
       const params = buildMarketplaceSearchParams(nextFilters, offset);
-      const response = kind === 'project'
+      const response = kind === "project"
         ? await projectsApi.search(params)
         : await freelancersApi.search(params);
       const nextItems = response.data.items as T[];
@@ -104,81 +119,108 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
   }, [kind]);
 
   useEffect(() => {
-    // Initial marketplace results come from the server search contract.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void loadResults(createInitialFilters(initialFilters));
-  }, [initialFilters, loadResults]);
+    void loadResults(appliedFilters);
+  }, [appliedFilters, loadResults]);
 
   useEffect(() => {
-    skillsApi.getTaxonomy()
-      .then(({ data }) => setSkills(data.categories.flatMap((category) => category.skills)))
-      .catch(() => setSkills([]));
-  }, []);
+    async function loadAuxiliaryData() {
+      try {
+        const skillsResponse = await skillsApi.getTaxonomy();
+        const allSkills = skillsResponse.data.categories.flatMap((category) => category.skills ?? []);
+        setSkills(allSkills);
+      } catch (error) {
+        toast.error(getApiErrorMessage(error, "Unable to load skills."));
+      }
 
-  useEffect(() => {
-    if (kind !== 'project') return;
-    projectsApi.getCategoryStats()
-      .then(({ data }) => setCategoryStats(data.categories))
-      .catch(() => setCategoryStats([]));
-  }, [kind]);
+      if (kind === "project") {
+        try {
+          const categoriesResponse = await projectsApi.getCategoryStats();
+          setCategoryStats(categoriesResponse.data.categories ?? []);
+        } catch (error) {
+          toast.error(getApiErrorMessage(error, "Unable to load category stats."));
+        }
+      }
 
-  useEffect(() => {
-    if (!user) return;
-    Promise.all([
-      favoritesApi.list(kind),
-      savedSearchesApi.list(kind),
-    ]).then(([favoriteResponse, savedResponse]) => {
-      setFavoriteIds(new Set(favoriteResponse.data.map((favorite) => favorite.targetId)));
-      setSavedSearches(savedResponse.data);
-    }).catch(() => toast.error('Unable to load your saved marketplace items.'));
+      if (user) {
+        try {
+          const searchesResponse = await savedSearchesApi.list(kind);
+          setSavedSearches(searchesResponse.data);
+        } catch (error) {
+          toast.error(getApiErrorMessage(error, "Unable to load saved searches."));
+        }
+
+        try {
+          const favoritesResponse = await favoritesApi.list(kind);
+          setFavoriteIds(new Set(favoritesResponse.data.map((fav) => fav.targetId)));
+        } catch (error) {
+          toast.error(getApiErrorMessage(error, "Unable to load favorites."));
+        }
+      }
+    }
+
+    void loadAuxiliaryData();
   }, [kind, user]);
 
-  const selectedSkill = filters.skillIds[0] ?? '';
   const savedSkillOptions = useMemo(
     () => skills.map((skill) => ({ id: skill.id, name: skill.name })),
     [skills],
   );
 
-  const submitSearch = (event: React.FormEvent<HTMLFormElement>) => {
+  const toggleSkill = (skillId: string) => {
+    setFilters((current) => {
+      const exists = current.skillIds.includes(skillId);
+      return {
+        ...current,
+        skillIds: exists
+          ? current.skillIds.filter((id) => id !== skillId)
+          : [...current.skillIds, skillId],
+      };
+    });
+  };
+
+  const submitSearch = (event: React.FormEvent) => {
     event.preventDefault();
     const searchParams = marketplaceFiltersToSearchParams(filters);
     const query = searchParams.toString();
-    window.history.replaceState(null, '', `${window.location.pathname}${query ? `?${query}` : ''}`);
+    window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
     void loadResults(filters);
   };
 
-  const toggleFavorite = async (targetId: string) => {
-    const wasFavorite = favoriteIds.has(targetId);
-    setFavoriteActionId(targetId);
-    setFavoriteIds((current) => {
-      const next = new Set(current);
-      if (wasFavorite) next.delete(targetId);
-      else next.add(targetId);
-      return next;
-    });
+  const resetFilters = () => {
+    const nextFilters: MarketplaceFilters = { keyword: "", skillIds: [] };
+    setFilters(nextFilters);
+    window.history.replaceState(null, "", window.location.pathname);
+    void loadResults(nextFilters);
+  };
 
+  const toggleFavorite = async (targetId: string) => {
+    setFavoriteActionId(targetId);
     try {
-      if (wasFavorite) await favoritesApi.remove(kind, targetId);
-      else await favoritesApi.add(kind, targetId);
-      toast.success(wasFavorite ? 'Removed from favorites.' : 'Saved to favorites.');
+      if (favoriteIds.has(targetId)) {
+        await favoritesApi.remove(kind, targetId);
+        setFavoriteIds((current) => {
+          const next = new Set(current);
+          next.delete(targetId);
+          return next;
+        });
+        toast.success(`Removed from favorites.`);
+      } else {
+        await favoritesApi.add(kind, targetId);
+        setFavoriteIds((current) => new Set(current).add(targetId));
+        toast.success(`Saved to favorites.`);
+      }
     } catch (error) {
-      setFavoriteIds((current) => {
-        const next = new Set(current);
-        if (wasFavorite) next.add(targetId);
-        else next.delete(targetId);
-        return next;
-      });
-      toast.error(getApiErrorMessage(error, 'Unable to update favorites.'));
+      toast.error(getApiErrorMessage(error, "Unable to update favorites."));
     } finally {
       setFavoriteActionId(null);
     }
   };
 
-  const saveSearch = async (event: React.FormEvent<HTMLFormElement>) => {
+  const saveSearch = async (event: React.FormEvent) => {
     event.preventDefault();
     const name = savedSearchName.trim();
     if (!name) {
-      toast.error('Enter a name for this search.');
+      toast.error("Enter a name for this search.");
       return;
     }
 
@@ -191,10 +233,10 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
         notifyOnNew,
       });
       setSavedSearches((current) => [data, ...current]);
-      setSavedSearchName('');
-      toast.success('Search saved.');
+      setSavedSearchName("");
+      toast.success("Search saved.");
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Unable to save this search.'));
+      toast.error(getApiErrorMessage(error, "Unable to save this search."));
     } finally {
       setSavingSearch(false);
     }
@@ -211,10 +253,10 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
       setHasMore(false);
       const searchParams = marketplaceFiltersToSearchParams(restored);
       const query = searchParams.toString();
-      window.history.replaceState(null, '', `${window.location.pathname}${query ? `?${query}` : ''}`);
-      toast.success(`Saved search executed: ${data.count} result${data.count === 1 ? '' : 's'}.`);
+      window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
+      toast.success(`Saved search executed: ${data.count} result${data.count === 1 ? "" : "s"}.`);
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Unable to execute this saved search.'));
+      toast.error(getApiErrorMessage(error, "Unable to execute this saved search."));
     } finally {
       setLoading(false);
     }
@@ -224,173 +266,253 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
     try {
       await savedSearchesApi.remove(id);
       setSavedSearches((current) => current.filter((savedSearch) => savedSearch.id !== id));
-      toast.success('Saved search deleted.');
+      toast.success("Saved search deleted.");
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Unable to delete this saved search.'));
+      toast.error(getApiErrorMessage(error, "Unable to delete this saved search."));
     }
   };
 
   return (
-    <div className="min-h-screen">
-      <div className="border-b border-border bg-card/50 backdrop-blur-xl">
-        <div className="mx-auto max-w-7xl px-6 py-8">
-          <h1 className="text-3xl font-bold">{title}</h1>
-          <p className="mt-2 text-muted-foreground">{description}</p>
-        </div>
-      </div>
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
+      <Navbar />
 
-      <div className="mx-auto max-w-7xl space-y-6 px-6 py-8">
-        {kind === 'project' && categoryStats.length > 0 && (
-          <section aria-labelledby="project-categories-heading">
-            <h2 id="project-categories-heading" className="mb-3 text-lg font-semibold">Popular categories</h2>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {categoryStats.slice(0, 8).map((category) => (
-                <Card key={category.categoryId}>
-                  <CardContent className="p-4">
-                    <p className="font-medium">{category.categoryName}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">{category.projectCount} open project{category.projectCount === 1 ? '' : 's'}</p>
-                    <p className="mt-2 text-xs text-muted-foreground">${category.totalBudget.toLocaleString()} total budget</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </section>
-        )}
+      <main className="grow pt-28 sm:pt-36 pb-20">
+        {/* Sprout Hero Header */}
+        <section className="mx-auto max-w-7xl px-6 lg:px-8 mb-10 text-center">
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold mb-4 border border-primary/20 shadow-xs">
+            <Sparkles className="size-3.5 fill-primary" />
+            <span>{kind === "project" ? "Verified Escrow Project Listings" : "Verified Web3 Freelancers & Engineers"}</span>
+          </div>
 
-        <Card>
-          <CardContent className="p-5">
-            <form className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px_auto]" onSubmit={submitSearch}>
-              <div className="space-y-2">
-                <Label htmlFor={`${kind}-keyword`}>Search</Label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-foreground">
+            {kind === "project" ? "Discover High-Impact Web3 Projects, " : "Hire Top Web3 & Smart Contract Talent, "}
+            <br className="hidden sm:inline" />
+            <span className="text-[#717680] dark:text-muted-foreground font-semibold">
+              secured by smart escrow.
+            </span>
+          </h1>
+
+          <p className="mt-4 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            {description}
+          </p>
+        </section>
+
+        <div className="mx-auto max-w-7xl space-y-6 px-6 lg:px-8">
+          {/* Popular Categories Strip (For Projects) */}
+          {kind === "project" && categoryStats.length > 0 && (
+            <section aria-labelledby="project-categories-heading">
+              <h2 id="project-categories-heading" className="mb-3 text-sm font-bold text-foreground uppercase tracking-wider">
+                Popular Categories
+              </h2>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {categoryStats.slice(0, 4).map((category) => (
+                  <div
+                    key={category.categoryId}
+                    className="p-5 rounded-3xl bg-card border border-border/80 shadow-xs hover:border-primary/50 transition-all cursor-pointer"
+                    onClick={() => {
+                      setFilters((prev) => ({ ...prev, keyword: category.categoryName }));
+                      void loadResults({ ...filters, keyword: category.categoryName });
+                    }}
+                  >
+                    <p className="font-bold text-foreground text-sm">{category.categoryName}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {category.projectCount} open project{category.projectCount === 1 ? "" : "s"}
+                    </p>
+                    <p className="mt-2 text-xs font-semibold text-primary">
+                      ${category.totalBudget.toLocaleString()} total budget
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Search & Filter Card */}
+          <div className="rounded-3xl bg-card border border-border/80 p-6 sm:p-8 shadow-md shadow-black/5">
+            <form className="space-y-6" onSubmit={submitSearch}>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <div className="relative flex-1">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                   <Input
-                    id={`${kind}-keyword`}
-                    className="pl-10"
-                    placeholder={kind === 'project' ? 'Title or description' : 'Bio or specialty'}
                     value={filters.keyword}
                     onChange={(event) => setFilters((current) => ({ ...current, keyword: event.target.value }))}
+                    placeholder={`Search by title, description, or keyword...`}
+                    className="pl-11 pr-4 py-2.5 rounded-full bg-background border-border/80 text-sm focus-visible:ring-primary/40"
                   />
                 </div>
+                <div className="flex gap-2">
+                  <Button type="submit" className="rounded-full bg-primary text-primary-foreground text-xs font-bold px-6 shadow-xs cursor-pointer">
+                    <Search className="mr-2 size-4" />Search
+                  </Button>
+                  <Button type="button" variant="outline" className="rounded-full text-xs font-bold cursor-pointer" onClick={resetFilters}>
+                    Reset
+                  </Button>
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor={`${kind}-skill`}>Skill</Label>
-                <select
-                  id={`${kind}-skill`}
-                  className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                  value={selectedSkill}
-                  onChange={(event) => setFilters((current) => ({
-                    ...current,
-                    skillIds: event.target.value ? [event.target.value] : [],
-                  }))}
-                >
-                  <option value="">All skills</option>
-                  {skills.map((skill) => <option key={skill.id} value={skill.id}>{skill.name}</option>)}
-                </select>
-              </div>
-              <Button className="self-end" type="submit">
-                <SlidersHorizontal className="mr-2 size-4" aria-hidden="true" />Apply filters
-              </Button>
 
-              {kind === 'project' && (
-                <div className="grid grid-cols-2 gap-3 lg:col-span-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="minimum-budget">Minimum budget</Label>
-                    <Input id="minimum-budget" type="number" min="0" value={filters.minBudget ?? ''} onChange={(event) => setFilters((current) => updateBudget(current, 'minBudget', event.target.value))} />
+              {/* Skills Selector */}
+              {skills.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-xs font-bold text-foreground">Filter by Required Skills</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {skills.slice(0, 14).map((skill) => {
+                      const selected = filters.skillIds.includes(skill.id);
+                      return (
+                        <button
+                          key={skill.id}
+                          type="button"
+                          onClick={() => toggleSkill(skill.id)}
+                          className={`px-3 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                            selected
+                              ? "bg-primary text-primary-foreground shadow-xs"
+                              : "bg-background border border-border/80 text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                          }`}
+                        >
+                          {skill.name}
+                        </button>
+                      );
+                    })}
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="maximum-budget">Maximum budget</Label>
-                    <Input id="maximum-budget" type="number" min="0" value={filters.maxBudget ?? ''} onChange={(event) => setFilters((current) => updateBudget(current, 'maxBudget', event.target.value))} />
+                </div>
+              )}
+
+              {/* Budget Range (for Projects) */}
+              {kind === "project" && (
+                <div className="grid gap-4 sm:grid-cols-2 pt-2 border-t border-border/50">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="minimum-budget" className="text-xs font-bold text-foreground">Minimum Budget ($)</Label>
+                    <Input
+                      id="minimum-budget"
+                      type="number"
+                      min="0"
+                      value={filters.minBudget ?? ""}
+                      onChange={(event) => setFilters((current) => updateBudget(current, "minBudget", event.target.value))}
+                      placeholder="e.g. 500"
+                      className="rounded-xl bg-background border-border/80 text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="maximum-budget" className="text-xs font-bold text-foreground">Maximum Budget ($)</Label>
+                    <Input
+                      id="maximum-budget"
+                      type="number"
+                      min="0"
+                      value={filters.maxBudget ?? ""}
+                      onChange={(event) => setFilters((current) => updateBudget(current, "maxBudget", event.target.value))}
+                      placeholder="e.g. 5000"
+                      className="rounded-xl bg-background border-border/80 text-sm"
+                    />
                   </div>
                 </div>
               )}
             </form>
-          </CardContent>
-        </Card>
+          </div>
 
-        {user && (
-          <Card>
-            <CardContent className="grid gap-5 p-5 lg:grid-cols-2">
-              <form className="space-y-3" onSubmit={saveSearch}>
-                <div>
-                  <h2 className="font-semibold">Save these filters</h2>
-                  <p className="text-sm text-muted-foreground">Return to this search and optionally get new-match alerts.</p>
-                </div>
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  <div className="flex-1 space-y-2">
-                    <Label htmlFor={`${kind}-saved-name`}>Search name</Label>
-                    <Input id={`${kind}-saved-name`} value={savedSearchName} onChange={(event) => setSavedSearchName(event.target.value)} placeholder="e.g. React projects" />
+          {/* Saved Searches (if authenticated) */}
+          {user && (
+            <div className="rounded-3xl bg-card border border-border/80 p-6 shadow-sm">
+              <div className="grid gap-6 lg:grid-cols-2">
+                <form className="space-y-3" onSubmit={saveSearch}>
+                  <div>
+                    <h3 className="font-bold text-foreground text-sm">Save Current Filter Preset</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">Quickly return to this search criteria or receive match alerts.</p>
                   </div>
-                  <Button className="self-end" type="submit" disabled={savingSearch}>
-                    <BookmarkPlus className="mr-2 size-4" aria-hidden="true" />{savingSearch ? 'Saving…' : 'Save search'}
-                  </Button>
-                </div>
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={notifyOnNew} onChange={(event) => setNotifyOnNew(event.target.checked)} />
-                  <Bell className="size-4" aria-hidden="true" />Notify me about new matches
-                </label>
-              </form>
-
-              <div>
-                <h2 className="font-semibold">Saved searches</h2>
-                {savedSearches.length === 0 ? (
-                  <p className="mt-3 text-sm text-muted-foreground">No saved searches yet.</p>
-                ) : (
-                  <ul className="mt-3 space-y-2">
-                    {savedSearches.map((savedSearch) => (
-                      <li key={savedSearch.id} className="flex items-center justify-between gap-3 rounded-lg border border-border p-2">
-                        <Button type="button" variant="ghost" className="h-auto justify-start px-2" onClick={() => void runSavedSearch(savedSearch)}>{savedSearch.name}</Button>
-                        <Button type="button" size="icon" variant="ghost" aria-label={`Delete saved search ${savedSearch.name}`} onClick={() => void deleteSavedSearch(savedSearch.id)}><Trash2 className="size-4" /></Button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        <p className="text-sm text-muted-foreground">Showing {items.length} {kind}s</p>
-
-        {loading && items.length === 0 ? (
-          <div className="flex min-h-64 items-center justify-center" role="status" aria-label={`Loading ${kind}s`}><Loader2 className="size-8 animate-spin text-primary" /></div>
-        ) : items.length === 0 ? (
-          <Card><CardContent className="py-14 text-center text-muted-foreground">{emptyMessage}</CardContent></Card>
-        ) : (
-          <div className={layout === 'grid' ? 'grid gap-6 md:grid-cols-2 lg:grid-cols-3' : 'space-y-4'}>
-            {items.map((item) => {
-              const targetId = getTargetId(item);
-              const favorite = favoriteIds.has(targetId);
-              const listingQuery = marketplaceFiltersToSearchParams(appliedFilters).toString();
-              return (
-                <div key={targetId} className="relative">
-                  {renderItem(item, listingQuery)}
-                  {user && (
-                    <Button
-                      type="button"
-                      size="icon"
-                      variant="secondary"
-                      className="absolute right-4 top-4 z-10 rounded-full"
-                      aria-label={favorite ? `Remove ${kind} from favorites` : `Save ${kind} to favorites`}
-                      aria-pressed={favorite}
-                      disabled={favoriteActionId === targetId}
-                      onClick={() => void toggleFavorite(targetId)}
-                    >
-                      <Heart className="size-4" fill={favorite ? 'currentColor' : 'none'} />
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <Input
+                      value={savedSearchName}
+                      onChange={(event) => setSavedSearchName(event.target.value)}
+                      placeholder="e.g. React & Solidity Gigs"
+                      className="rounded-full bg-background border-border/80 text-xs"
+                    />
+                    <Button size="sm" className="rounded-full bg-primary text-primary-foreground text-xs font-bold shrink-0" type="submit" disabled={savingSearch}>
+                      <BookmarkPlus className="mr-1.5 size-3.5" />{savingSearch ? "Saving…" : "Save Search"}
                     </Button>
+                  </div>
+                </form>
+
+                <div>
+                  <h3 className="font-bold text-foreground text-sm">Your Saved Presets</h3>
+                  {savedSearches.length === 0 ? (
+                    <p className="mt-2 text-xs text-muted-foreground">No saved searches yet.</p>
+                  ) : (
+                    <ul className="mt-2 space-y-1.5">
+                      {savedSearches.map((savedSearch) => (
+                        <li key={savedSearch.id} className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-background px-3 py-1.5">
+                          <Button type="button" variant="ghost" size="sm" className="h-auto justify-start p-0 text-xs font-semibold" onClick={() => void runSavedSearch(savedSearch)}>
+                            {savedSearch.name}
+                          </Button>
+                          <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => void deleteSavedSearch(savedSearch.id)}>
+                            <Trash2 className="size-3 text-destructive" />
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
                   )}
                 </div>
-              );
-            })}
-          </div>
-        )}
+              </div>
+            </div>
+          )}
 
-        {hasMore && (
-          <div className="text-center">
-            <Button variant="outline" disabled={loading} onClick={() => void loadResults(filters, items.length, true)}>{loading ? 'Loading…' : 'Load more'}</Button>
+          {/* Results Count */}
+          <div className="flex items-center justify-between text-xs font-bold text-muted-foreground uppercase tracking-wider pt-2">
+            <span>Showing {items.length} {kind}s</span>
           </div>
-        )}
-      </div>
+
+          {/* Items Grid / List */}
+          {loading && items.length === 0 ? (
+            <div className="flex min-h-64 items-center justify-center rounded-3xl bg-card border border-border/80 p-8">
+              <Loader2 className="size-8 animate-spin text-primary" />
+            </div>
+          ) : items.length === 0 ? (
+            <div className="text-center py-16 rounded-3xl bg-card border border-border/80 p-8 text-muted-foreground">
+              <Briefcase className="size-10 mx-auto mb-2 opacity-50" />
+              <p className="text-sm font-semibold">{emptyMessage}</p>
+            </div>
+          ) : (
+            <div className={layout === "grid" ? "grid gap-6 md:grid-cols-2 lg:grid-cols-3" : "space-y-4"}>
+              {items.map((item) => {
+                const targetId = getTargetId(item);
+                const favorite = favoriteIds.has(targetId);
+                const listingQuery = marketplaceFiltersToSearchParams(appliedFilters).toString();
+                return (
+                  <div key={targetId} className="relative group">
+                    {renderItem(item, listingQuery)}
+                    {user && (
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="secondary"
+                        className="absolute right-4 top-4 z-10 rounded-full h-8 w-8 bg-card/90 backdrop-blur-xs border border-border/80 shadow-xs hover:scale-110 transition-transform"
+                        aria-label={favorite ? `Remove from favorites` : `Save to favorites`}
+                        disabled={favoriteActionId === targetId}
+                        onClick={() => void toggleFavorite(targetId)}
+                      >
+                        <Heart className="size-3.5" fill={favorite ? "#ef4444" : "none"} color={favorite ? "#ef4444" : "currentColor"} />
+                      </Button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Load More Button */}
+          {hasMore && (
+            <div className="text-center pt-4">
+              <Button
+                variant="outline"
+                className="rounded-full text-xs font-bold px-8 shadow-xs"
+                disabled={loading}
+                onClick={() => void loadResults(filters, items.length, true)}
+              >
+                {loading ? "Loading…" : "Load More"}
+              </Button>
+            </div>
+          )}
+        </div>
+      </main>
+
+      <FooterSection />
     </div>
   );
 }

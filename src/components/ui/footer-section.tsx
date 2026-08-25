@@ -1,14 +1,14 @@
 'use client';
+
 import React from 'react';
 import type { ComponentProps, ReactNode } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { Globe, Envelope } from '@phosphor-icons/react';
+import { Sparkle } from '@phosphor-icons/react';
 import Link from 'next/link';
 
 interface FooterLink {
 	title: string;
 	href: string;
-	icon?: React.ComponentType<{ className?: string }>;
 }
 
 interface FooterSection {
@@ -18,22 +18,33 @@ interface FooterSection {
 
 const footerLinks: FooterSection[] = [
 	{
-		label: 'Platform',
+		label: 'Product',
+		links: [
+			{ title: 'AI Apply', href: '/#features' },
+			{ title: 'Personalized Documents', href: '/#features' },
+			{ title: 'Application Tracking', href: '/#features' },
+			{ title: 'Smart Escrow', href: '/#features' },
+			{ title: 'Browse Projects', href: '/projects' },
+		],
+	},
+	{
+		label: 'Resources',
+		links: [
+			{ title: 'Compare Platforms', href: '/#compare' },
+			{ title: 'Verified Reviews', href: '/#reviews' },
+			{ title: 'FAQs & Help', href: '/#faq' },
+			{ title: 'Blog & Guides', href: '/blog' },
+			{ title: 'Tutorials', href: '/tutorials' },
+		],
+	},
+	{
+		label: 'Explore',
 		links: [
 			{ title: 'Browse Projects', href: '/projects' },
 			{ title: 'Find Talent', href: '/freelancers' },
 			{ title: 'Leaderboard', href: '/leaderboard' },
-			{ title: 'Status', href: '/status' },
-		],
-	},
-	{
-		label: 'Company',
-		links: [
 			{ title: 'About Us', href: '/about' },
-			{ title: 'Blog', href: '/blog' },
-			{ title: 'How It Works', href: '/how-it-works' },
-			{ title: 'Tutorials', href: '/tutorials' },
-			{ title: 'Help Center', href: '/help' },
+			{ title: 'Contact Support', href: '/contact' },
 		],
 	},
 	{
@@ -41,61 +52,78 @@ const footerLinks: FooterSection[] = [
 		links: [
 			{ title: 'Terms of Service', href: '/terms' },
 			{ title: 'Privacy Policy', href: '/privacy' },
-		],
-	},
-	{
-		label: 'Connect',
-		links: [
-			{ title: 'Website', href: '/', icon: Globe },
-			{ title: 'Support', href: '/help', icon: Envelope },
+			{ title: 'Security & Trust', href: '/status' },
 		],
 	},
 ];
 
 export function FooterSection() {
+	const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+		if (href.startsWith('/#') || href.startsWith('#')) {
+			const hash = href.replace('/#', '').replace('#', '');
+			const target = document.getElementById(hash);
+			if (target) {
+				e.preventDefault();
+				const headerOffset = 80;
+				const bodyRect = document.body.getBoundingClientRect().top;
+				const elementRect = target.getBoundingClientRect().top;
+				const elementPosition = elementRect - bodyRect;
+				const offsetPosition = elementPosition - headerOffset;
+
+				window.scrollTo({
+					top: offsetPosition,
+					behavior: 'smooth',
+				});
+				window.history.pushState(null, '', `#${hash}`);
+			}
+		}
+	};
+
 	return (
-		<footer className="md:rounded-t-6xl relative w-full max-w-6xl mx-auto flex flex-col items-center justify-center rounded-t-4xl border-t bg-[radial-gradient(35%_128px_at_50%_0%,oklch(1_0_0/8%),transparent)] px-6 py-12 lg:py-16">
-			<div className="bg-foreground/20 absolute top-0 left-1/2 h-px w-1/3 -translate-x-1/2 rounded-full blur" />
-
-			<div className="grid w-full gap-8 xl:grid-cols-3 xl:gap-8">
-				<AnimatedContainer className="space-y-4">
-					<Link href="/" className="flex items-center gap-2">
-						<div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
-							<svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-								<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-							</svg>
-						</div>
-						<span className="font-bold text-lg gradient-text">FreelanceXchain</span>
-					</Link>
-					<p className="text-muted-foreground text-sm">
-						The decentralized freelance marketplace powered by blockchain and AI.
-					</p>
-					<p className="text-muted-foreground mt-8 text-sm md:mt-0">
-						© {new Date().getFullYear()} FreelanceXchain. All rights reserved.
-					</p>
-				</AnimatedContainer>
-
-				<div className="mt-10 grid grid-cols-2 gap-8 md:grid-cols-4 xl:col-span-2 xl:mt-0">
-					{footerLinks.map((section, index) => (
-						<AnimatedContainer key={section.label} delay={0.1 + index * 0.1}>
-							<div className="mb-10 md:mb-0">
-								<h3 className="text-xs font-semibold">{section.label}</h3>
-								<ul className="text-muted-foreground mt-4 space-y-2 text-sm">
-									{section.links.map((link) => (
-										<li key={link.title}>
-											<Link
-												href={link.href}
-												className="hover:text-foreground inline-flex items-center transition-all duration-300"
-											>
-												{link.icon && <link.icon className="me-1 size-4" />}
-												{link.title}
-											</Link>
-										</li>
-									))}
-								</ul>
+		<footer className="w-full border-t border-border/60 bg-background px-6 py-12 lg:py-16">
+			<div className="max-w-6xl mx-auto">
+				<div className="grid w-full gap-8 xl:grid-cols-3 xl:gap-12">
+					<AnimatedContainer className="space-y-4">
+						<Link href="/" className="flex items-center gap-2.5">
+							<div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center shadow-xs">
+								<Sparkle className="w-4 h-4 text-primary-foreground fill-primary-foreground" weight="fill" />
 							</div>
-						</AnimatedContainer>
-					))}
+							<span className="font-extrabold text-lg text-foreground tracking-tight">
+								FreelanceXchain
+							</span>
+						</Link>
+						<p className="text-muted-foreground text-xs sm:text-sm leading-relaxed max-w-sm">
+							Helping candidates and freelancers land dream roles and high-value contracts faster with AI-native tailoring and instant smart escrow.
+						</p>
+						<div className="pt-4 text-xs text-muted-foreground">
+							© {new Date().getFullYear()} FreelanceXchain, Inc. All rights reserved.
+						</div>
+					</AnimatedContainer>
+
+					<div className="grid grid-cols-2 gap-8 sm:grid-cols-4 xl:col-span-2">
+						{footerLinks.map((section, index) => (
+							<AnimatedContainer key={section.label} delay={0.05 + index * 0.04}>
+								<div>
+									<h3 className="text-xs font-bold text-foreground uppercase tracking-wider">
+										{section.label}
+									</h3>
+									<ul className="text-muted-foreground mt-4 space-y-2.5 text-xs font-medium">
+										{section.links.map((link) => (
+											<li key={link.title}>
+												<Link
+													href={link.href}
+													onClick={(e) => handleSmoothScroll(e, link.href)}
+													className="hover:text-primary transition-colors duration-150"
+												>
+													{link.title}
+												</Link>
+											</li>
+										))}
+									</ul>
+								</div>
+							</AnimatedContainer>
+						))}
+					</div>
 				</div>
 			</div>
 		</footer>
@@ -112,18 +140,19 @@ function AnimatedContainer({ className, delay = 0.1, children }: ViewAnimationPr
 	const shouldReduceMotion = useReducedMotion();
 
 	if (shouldReduceMotion) {
-		return children;
+		return <div className={className}>{children}</div>;
 	}
 
 	return (
 		<motion.div
-			initial={{ filter: 'blur(4px)', translateY: -8, opacity: 0 }}
-			whileInView={{ filter: 'blur(0px)', translateY: 0, opacity: 1 }}
+			initial={{ opacity: 0, y: 8 }}
+			whileInView={{ opacity: 1, y: 0 }}
 			viewport={{ once: true }}
-			transition={{ delay, duration: 0.8 }}
+			transition={{ delay, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
 			className={className}
 		>
 			{children}
 		</motion.div>
 	);
 }
+

@@ -1,146 +1,100 @@
 "use client";
-import React from "react";
-import { motion } from "motion/react";
 
-
-export const TestimonialsColumn = (props: {
-  className?: string;
-  testimonials: typeof testimonials;
-  duration?: number;
-}) => {
-  return (
-    <div className={props.className}>
-      <motion.div
-        animate={{
-          translateY: "-50%",
-        }}
-        transition={{
-          duration: props.duration || 10,
-          repeat: Infinity,
-          ease: "linear",
-          repeatType: "loop",
-        }}
-        className="flex flex-col gap-6 pb-6 bg-background"
-      >
-        {[
-          ...new Array(2).fill(0).map((_, index) => (
-            <React.Fragment key={index}>
-              {props.testimonials.map(({ text, image, name, role }, i) => (
-                <div className="p-8 rounded-2xl border border-border/60 hover:border-primary/30 bg-card shadow-lg shadow-primary/10 max-w-xs w-full transition-colors duration-300 glass-hover" key={i}>
-                  <div>{text}</div>
-                  <div className="flex items-center gap-2 mt-5">
-                    <img
-                      width={40}
-                      height={40}
-                      src={image}
-                      alt={name}
-                      className="h-10 w-10 rounded-full"
-                    />
-                    <div className="flex flex-col">
-                      <div className="font-medium tracking-tight leading-5">{name}</div>
-                      <div className="leading-5 opacity-60 tracking-tight">{role}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </React.Fragment>
-          )),
-        ]}
-      </motion.div>
-    </div>
-  );
-};
+import { motion, useReducedMotion } from "motion/react";
 
 const testimonials = [
   {
-    text: "FreelanceXchain completely changed how I get paid. Smart contract escrow means I never have to chase a client for payment again.",
-    image: "https://randomuser.me/api/portraits/women/1.jpg",
+    text: "Smart contract escrow means I never have to chase a client for payment again. Funds release the moment I deliver.",
     name: "Briana Patton",
     role: "UI/UX Designer",
+    image: "https://randomuser.me/api/portraits/women/1.jpg",
   },
   {
-    text: "The AI matching is scarily accurate. Within a day of posting my project I had three proposals from developers who actually fit what I needed.",
-    image: "https://randomuser.me/api/portraits/men/2.jpg",
+    text: "The AI matching is scarily accurate. Within a day I had three proposals from developers who actually fit what I needed.",
     name: "Bilal Ahmed",
     role: "Startup Founder",
+    image: "https://randomuser.me/api/portraits/men/2.jpg",
   },
   {
-    text: "My on-chain reputation followed me from project to project. New clients can see my whole track record without me having to pitch myself.",
-    image: "https://randomuser.me/api/portraits/women/3.jpg",
+    text: "My on-chain reputation followed me from project to project. New clients can see my whole track record without me having to pitch.",
     name: "Saman Malik",
     role: "Full-Stack Developer",
-  },
-  {
-    text: "As someone who works with clients in three different countries, having a single crypto payment rail with no conversion fees is a game changer.",
-    image: "https://randomuser.me/api/portraits/men/4.jpg",
-    name: "Omar Raza",
-    role: "Motion Designer",
-  },
-  {
-    text: "Dispute resolution through the platform is fair and transparent. Both sides see the same smart contract terms from day one.",
-    image: "https://randomuser.me/api/portraits/women/5.jpg",
-    name: "Zainab Hussain",
-    role: "Product Manager",
-  },
-  {
-    text: "I went from freelancing on three platforms to just this one. The reputation system and milestone payments give me everything I need in one place.",
-    image: "https://randomuser.me/api/portraits/women/6.jpg",
-    name: "Aliza Khan",
-    role: "Content Strategist",
-  },
-  {
-    text: "We hired four contractors through FreelanceXchain in a month. The on-chain reputation scores saved us hours of vetting.",
-    image: "https://randomuser.me/api/portraits/men/7.jpg",
-    name: "Farhan Siddiqui",
-    role: "Engineering Lead",
-  },
-  {
-    text: "The milestone-based escrow protects both sides. I feel confident taking on new clients I've never worked with before.",
-    image: "https://randomuser.me/api/portraits/women/8.jpg",
-    name: "Sana Sheikh",
-    role: "Brand Consultant",
-  },
-  {
-    text: "I love that my reputation is mine — not tied to a platform that can deactivate my account. It's on the blockchain, it follows me anywhere.",
-    image: "https://randomuser.me/api/portraits/men/9.jpg",
-    name: "Hassan Ali",
-    role: "Blockchain Developer",
+    image: "https://randomuser.me/api/portraits/women/3.jpg",
   },
 ];
 
-const firstColumn = testimonials.slice(0, 3);
-const secondColumn = testimonials.slice(3, 6);
-const thirdColumn = testimonials.slice(6, 9);
+export function Testimonials() {
+  const reduce = useReducedMotion();
 
-export const Testimonials = () => {
   return (
-    <section className="bg-background my-20 relative">
-      <div className="container z-10 mx-auto px-6 lg:px-8">
+    <section className="py-20 sm:py-28 bg-background">
+      <div className="mx-auto max-w-6xl px-6 lg:px-8">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={reduce ? false : { opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          viewport={{ once: true }}
-          className="flex flex-col items-center justify-center max-w-[540px] mx-auto"
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          className="max-w-xl mb-12"
         >
-          <div className="flex justify-center">
-            <div className="border border-white/[0.1] bg-white/[0.04] py-1 px-4 rounded-full text-foreground/60 text-sm">Testimonials</div>
-          </div>
-
-          <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold tracking-tighter mt-5">
-            What freelancers &amp; employers say
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight leading-tight text-foreground">
+            What people are saying
           </h2>
-          <p className="text-center mt-5 opacity-75">
-            Real results from people building their careers on-chain.
+          <p className="mt-3 text-muted-foreground leading-relaxed">
+            Real results from freelancers and employers on the platform.
           </p>
         </motion.div>
 
-        <div className="flex justify-center gap-6 mt-10 [mask-image:linear-gradient(to_bottom,transparent,black_25%,black_75%,transparent)] max-h-[740px] overflow-hidden">
-          <TestimonialsColumn testimonials={firstColumn} duration={15} />
-          <TestimonialsColumn testimonials={secondColumn} className="hidden md:block" duration={19} />
-          <TestimonialsColumn testimonials={thirdColumn} className="hidden lg:block" duration={17} />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {testimonials.map((t, i) => (
+            <motion.div
+              key={t.name}
+              initial={reduce ? false : { opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.15 }}
+              transition={{
+                duration: 0.4,
+                delay: i * 0.06,
+                ease: [0.16, 1, 0.3, 1],
+              }}
+              className="rounded-xl border border-border bg-card p-6 flex flex-col transition-colors duration-150 hover:bg-muted/50"
+            >
+              {/* Stars */}
+              <div className="flex items-center gap-0.5 mb-4">
+                {[...Array(5)].map((_, j) => (
+                  <svg
+                    key={j}
+                    className="size-3.5 text-primary fill-current"
+                    viewBox="0 0 20 20"
+                  >
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                ))}
+              </div>
+
+              <p className="text-sm text-foreground leading-relaxed mb-5 flex-1">
+                {t.text}
+              </p>
+
+              <div className="flex items-center gap-3 pt-4 border-t border-border">
+                <img
+                  src={t.image}
+                  alt={t.name}
+                  className="h-9 w-9 rounded-full object-cover"
+                  loading="lazy"
+                />
+                <div>
+                  <p className="text-sm font-semibold text-foreground leading-tight">
+                    {t.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {t.role}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          ))}
         </div>
       </div>
     </section>
   );
-};
+}

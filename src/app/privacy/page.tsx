@@ -1,5 +1,51 @@
-import { InfoPage } from '@/components/public/info-page';
+import { InfoPage } from "@/components/public/info-page";
+
+export const metadata = {
+  title: "Privacy Policy | FreelanceXchain",
+  description: "How FreelanceXchain manages data, Didit KYC verification, on-chain public records, and privacy protections.",
+};
 
 export default function PrivacyPage() {
-  return <InfoPage title="Privacy Policy" intro="How FreelanceXchain handles account, marketplace, verification, and transaction data. Last updated August 6, 2026."><section><h2>Information we process</h2><p>We process account details, profile information, project and proposal content, messages, uploaded files, KYC status and provider results, wallet addresses, payment records, disputes, reviews, and security logs.</p></section><section><h2>Why it is used</h2><p>Data is used to authenticate users, operate contracts and payments, match marketplace participants, prevent abuse, meet verification obligations, resolve disputes, provide notifications, and improve reliability.</p></section><section><h2>Sharing and public data</h2><p>Public profiles, projects, skills, and reviews can be visible to marketplace visitors. Service providers may process data for identity verification, storage, email delivery, infrastructure, and blockchain operations. Public blockchain records cannot generally be deleted.</p></section><section><h2>Retention and security</h2><p>Records are retained for the period needed to operate the service, resolve claims, prevent fraud, and satisfy legal obligations. Access controls, rate limits, audit logs, and encrypted transport are used to reduce risk.</p></section><section><h2>Your choices</h2><p>You can update supported profile and notification settings in your dashboard. Requests involving access, correction, or deletion may be limited where records must be retained or exist on a public blockchain.</p></section></InfoPage>;
+  return (
+    <InfoPage
+      title="Privacy Policy"
+      badge="Data & Privacy Standards"
+      intro="Our transparent policies on how FreelanceXchain handles personal data, biometric KYC verification, and public blockchain transactions. Last updated August 2026."
+    >
+      <section className="space-y-3">
+        <h2 className="text-xl font-bold text-foreground">1. What Information We Process</h2>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          We collect basic profile data (name, email, portfolio links, skill tags), project proposals, milestone deliverables, contract communications, wallet addresses, and Didit identity verification statuses (verifying government IDs across 220+ countries without storing unencrypted raw documents).
+        </p>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-xl font-bold text-foreground">2. How We Use Your Information</h2>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          Your information enables core platform functionality: running AI skill matching algorithms, calculating on-chain reputation scores, enforcing smart contract escrow releases, preventing fraudulent accounts, and providing live contract updates.
+        </p>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-xl font-bold text-foreground">3. Public Blockchain Records & Data Immutability</h2>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          Please note that transactions committed to the Ethereum or Polygon blockchain (such as smart contract escrow deposits, milestone payout hashes, and reputation ratings) are public, transparent, and cannot be modified or deleted by design.
+        </p>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-xl font-bold text-foreground">4. Data Security & Storage</h2>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          All off-chain data (such as proposal drafts and private workspace chat) is encrypted in transit and at rest using modern encryption standards. We do not sell your personal data to third-party advertisers.
+        </p>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-xl font-bold text-foreground">5. Your Privacy Rights & Controls</h2>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          You can update your profile information, manage communication preferences, and disconnect connected Web3 wallets at any time through your dashboard settings.
+        </p>
+      </section>
+    </InfoPage>
+  );
 }
