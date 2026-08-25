@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 
+import { Button } from '@/components/ui/button';
+
 // --- HELPER COMPONENTS (ICONS) ---
 
 const GoogleIcon = () => (
@@ -33,6 +35,12 @@ interface SignInPageProps {
   heroImageSrc?: string;
   testimonials?: Testimonial[];
   onSignIn?: (event: React.FormEvent<HTMLFormElement>) => void;
+  /**
+   * Sign-in is in flight. Signing in can take a couple of seconds against a
+   * cold backend, and without this the button gave no feedback at all — so the
+   * natural reaction was to click it again.
+   */
+  loading?: boolean;
   onGoogleSignIn?: () => void;
   onGithubSignIn?: () => void;
   onResetPassword?: () => void;
@@ -75,6 +83,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
   heroImageSrc,
   testimonials = [],
   onSignIn,
+  loading = false,
   onGoogleSignIn,
   onGithubSignIn,
   onResetPassword,
@@ -121,9 +130,14 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                 <button type="button" onClick={onResetPassword} className="text-info transition-colors hover:underline">Reset password</button>
               </div>
 
-              <button type="submit" className="animate-element animate-delay-600 w-full rounded-2xl bg-primary py-4 font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
-                Sign In
-              </button>
+              <Button
+                type="submit"
+                loading={loading}
+                loadingText="Signing in…"
+                className="animate-element animate-delay-600 h-14 w-full rounded-2xl text-base"
+              >
+                Sign in
+              </Button>
             </form>
 
             <div className="animate-element animate-delay-700 relative flex items-center justify-center">
@@ -132,17 +146,17 @@ export const SignInPage: React.FC<SignInPageProps> = ({
             </div>
 
             <div className="animate-element animate-delay-800 grid grid-cols-2 gap-3">
-              <button type="button" onClick={onGoogleSignIn} className="flex items-center justify-center gap-3 border border-border rounded-2xl py-4 hover:bg-secondary transition-colors">
+              <button type="button" onClick={onGoogleSignIn} disabled={loading} className="flex items-center justify-center gap-3 border border-border rounded-2xl py-4 transition-colors hover:bg-secondary disabled:pointer-events-none disabled:bg-muted disabled:text-muted-foreground">
                   <GoogleIcon />
                   Google
               </button>
-              <button type="button" onClick={onGithubSignIn} className="flex items-center justify-center gap-3 border border-border rounded-2xl py-4 hover:bg-secondary transition-colors">
+              <button type="button" onClick={onGithubSignIn} disabled={loading} className="flex items-center justify-center gap-3 border border-border rounded-2xl py-4 transition-colors hover:bg-secondary disabled:pointer-events-none disabled:bg-muted disabled:text-muted-foreground">
                   <GithubIcon />
                   GitHub
               </button>
             </div>
 
-            <button type="button" onClick={onPasswordlessSignIn} className="w-full rounded-2xl border border-border py-3 text-sm font-medium transition-colors hover:bg-secondary">
+            <button type="button" onClick={onPasswordlessSignIn} disabled={loading} className="w-full rounded-2xl border border-border py-3 text-sm font-medium transition-colors hover:bg-secondary disabled:pointer-events-none disabled:bg-muted disabled:text-muted-foreground">
               Sign in with email code or magic link
             </button>
 

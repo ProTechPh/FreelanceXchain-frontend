@@ -17,6 +17,10 @@ import { cn } from "@/lib/utils"
 //  - `active:` states are real, not inherited from hover.
 //  - `loading` is a prop, not a caller-assembled spinner. 36 files were building
 //    their own; this makes the state consistent and keeps `aria-busy` attached.
+//  - A loading button keeps its normal colour. It is still `disabled` so it
+//    cannot be submitted twice, but the muted disabled treatment reads as
+//    "unavailable" when the truth is "working" — hence the not-data-[loading]
+//    guards on the disabled styles below.
 const buttonVariants = cva(
   [
     "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap",
@@ -26,7 +30,7 @@ const buttonVariants = cva(
     "outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
     "disabled:pointer-events-none disabled:cursor-not-allowed",
     "aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed",
-    "data-[loading=true]:cursor-progress",
+    "data-[loading=true]:cursor-progress data-[loading=true]:opacity-100",
     // Error state, driven by aria-invalid so form libraries wire it for free.
     "aria-invalid:ring-2 aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
     "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
@@ -38,39 +42,39 @@ const buttonVariants = cva(
           "bg-primary text-primary-foreground shadow-xs",
           "hover:bg-primary-hover",
           "active:bg-primary-active",
-          "disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none",
-          "aria-disabled:bg-muted aria-disabled:text-muted-foreground",
+          "not-data-[loading=true]:disabled:bg-muted not-data-[loading=true]:disabled:text-muted-foreground not-data-[loading=true]:disabled:shadow-none",
+          "aria-not-data-[loading=true]:disabled:bg-muted aria-not-data-[loading=true]:disabled:text-muted-foreground",
         ].join(" "),
         destructive: [
           "bg-destructive text-destructive-foreground shadow-xs",
           "hover:bg-destructive/90",
           "active:bg-destructive/80",
           "focus-visible:ring-destructive",
-          "disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none",
+          "not-data-[loading=true]:disabled:bg-muted not-data-[loading=true]:disabled:text-muted-foreground not-data-[loading=true]:disabled:shadow-none",
         ].join(" "),
         outline: [
           "border border-input bg-transparent text-foreground",
           "hover:bg-accent hover:text-accent-foreground hover:border-primary",
           "active:bg-primary-subtle",
-          "disabled:border-border disabled:text-muted-foreground",
+          "not-data-[loading=true]:disabled:border-border not-data-[loading=true]:disabled:text-muted-foreground",
         ].join(" "),
         secondary: [
           "bg-secondary text-secondary-foreground",
           "hover:bg-secondary/70",
           "active:bg-secondary/90",
-          "disabled:bg-muted disabled:text-muted-foreground",
+          "not-data-[loading=true]:disabled:bg-muted not-data-[loading=true]:disabled:text-muted-foreground",
         ].join(" "),
         ghost: [
           "bg-transparent text-foreground",
           "hover:bg-accent hover:text-accent-foreground",
           "active:bg-primary-subtle",
-          "disabled:text-muted-foreground",
+          "not-data-[loading=true]:disabled:text-muted-foreground",
         ].join(" "),
         link: [
           "text-primary underline-offset-4",
           "hover:underline",
           "active:text-primary-active",
-          "disabled:text-muted-foreground disabled:no-underline",
+          "not-data-[loading=true]:disabled:text-muted-foreground not-data-[loading=true]:disabled:no-underline",
         ].join(" "),
         // Kept because 27 call sites use it. It now resolves against a real
         // utility — previously `gradient-primary` was undefined, so this variant
@@ -79,7 +83,7 @@ const buttonVariants = cva(
           "gradient-primary text-primary-foreground shadow-sm",
           "hover:opacity-90",
           "active:opacity-100 active:brightness-95",
-          "disabled:bg-none disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none",
+          "not-data-[loading=true]:disabled:bg-none not-data-[loading=true]:disabled:bg-muted not-data-[loading=true]:disabled:text-muted-foreground not-data-[loading=true]:disabled:shadow-none",
         ].join(" "),
       },
       size: {
