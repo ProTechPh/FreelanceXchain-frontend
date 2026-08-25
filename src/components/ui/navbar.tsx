@@ -88,20 +88,20 @@ export default function Navbar({
   };
 
   return (
-    <nav className="fixed top-4 left-0 right-0 z-50 px-4 sm:px-6 pointer-events-none flex justify-center">
-      <div className="pointer-events-auto max-w-5xl w-full mx-auto px-4 sm:px-6 h-14 rounded-full bg-card/90 backdrop-blur-md border border-border/80 shadow-md shadow-black/5 flex items-center justify-between gap-4">
+    <nav className="fixed top-4 left-0 right-0 z-50 px-3 sm:px-6 pointer-events-none flex justify-center">
+      <div className="pointer-events-auto max-w-7xl w-full mx-auto px-4 sm:px-5 h-14 rounded-full bg-card/90 backdrop-blur-md border border-border/80 shadow-md shadow-black/5 flex items-center justify-between gap-2 lg:gap-4">
 
         {/* Logo — always visible */}
         <Logo />
 
-        {/* Desktop nav links — hidden below md */}
-        <div className="hidden md:flex items-center gap-1">
+        {/* Desktop nav links — hidden below lg, compact on lg */}
+        <div className="hidden lg:flex items-center gap-0.5 xl:gap-1">
           {menu.map((item) => (
             <Link
               key={item.title}
               href={item.url}
               onClick={(e) => handleSmoothScroll(e, item.url)}
-              className="px-3.5 py-1.5 rounded-full text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all cursor-pointer"
+              className="px-2.5 xl:px-3 py-1.5 rounded-full text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all cursor-pointer whitespace-nowrap"
             >
               {item.title}
             </Link>
@@ -109,16 +109,16 @@ export default function Navbar({
         </div>
 
         {/* Desktop auth — hidden below sm */}
-        <div className="hidden sm:flex items-center gap-2 shrink-0">
+        <div className="hidden sm:flex items-center gap-1.5 sm:gap-2 shrink-0">
           <ThemeToggle />
-          <Button variant="ghost" size="icon" aria-label="Open search dialog" className="rounded-full h-8 w-8" onClick={() => setOpenSearch(true)}>
+          <Button variant="ghost" size="icon" aria-label="Open search dialog" className="rounded-full h-8 w-8 shrink-0" onClick={() => setOpenSearch(true)}>
             <MagnifyingGlass className="size-3.5" weight="bold" />
           </Button>
-          <Link href={auth.login.url}>
-            <Button variant="ghost" size="sm" className="rounded-full text-xs font-bold">{auth.login.text}</Button>
+          <Link href={auth.login.url} className="shrink-0">
+            <Button variant="ghost" size="sm" className="rounded-full text-xs font-bold px-3">{auth.login.text}</Button>
           </Link>
-          <Link href={auth.signup.url}>
-            <Button size="sm" className="rounded-full bg-primary text-primary-foreground text-xs font-bold px-4 hover:bg-primary/90 shadow-sm">{auth.signup.text}</Button>
+          <Link href={auth.signup.url} className="shrink-0">
+            <Button size="sm" className="rounded-full bg-primary text-primary-foreground text-xs font-bold px-4 hover:bg-primary/90 shadow-sm whitespace-nowrap">{auth.signup.text}</Button>
           </Link>
         </div>
 
