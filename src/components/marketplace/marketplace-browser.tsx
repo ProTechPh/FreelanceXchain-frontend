@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
-import { BookmarkPlus, Briefcase, Heart, Search, Trash2 } from 'lucide-react';
+import { BookmarkPlus, Briefcase, ChevronDown, Heart, ListFilter, Search, Trash2, X } from 'lucide-react';
 import { toast } from "sonner";
 import { favoritesApi, freelancersApi, projectsApi, savedSearchesApi, skillsApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/auth-contract";
@@ -76,8 +76,11 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
   resultsAction,
 }: MarketplaceBrowserProps<T>) {
   const isDashboard = variant === "dashboard";
-  const panel = isDashboard ? "rounded-lg p-4 sm:p-5" : "rounded-3xl p-6 sm:p-8";
+  const panel = isDashboard ? "overflow-hidden rounded-lg" : "rounded-3xl p-6 sm:p-8";
   const control = isDashboard ? "rounded-md" : "rounded-full";
+  const dashboardFilterGrid = kind === "project"
+    ? "grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-[minmax(16rem,2fr)_minmax(10rem,1fr)_minmax(8rem,0.65fr)_minmax(8rem,0.65fr)_auto] xl:items-end"
+    : "grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-[minmax(16rem,2fr)_minmax(10rem,1fr)_auto] xl:items-end";
   const user = useAuthStore((state) => state.user);
   const [items, setItems] = useState<T[]>([]);
   const [filters, setFilters] = useState<MarketplaceFilters>(() => createInitialFilters(initialFilters));
@@ -92,6 +95,12 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
   const [loading, setLoading] = useState(true);
   const [savingSearch, setSavingSearch] = useState(false);
   const [hasMore, setHasMore] = useState(false);
+  const selectedFilterCount = [
+    Boolean(filters.keyword.trim()),
+    filters.skillIds.length > 0,
+    kind === "project" && filters.minBudget !== undefined,
+    kind === "project" && filters.maxBudget !== undefined,
+  ].filter(Boolean).length;
 
   const loadResults = useCallback(async (
     nextFilters: MarketplaceFilters,
@@ -312,11 +321,38 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
               same labels — nothing is hidden behind a disclosure. */}
           <div className={cn("border border-border bg-card shadow-xs", panel)}>
             <form
-              className={isDashboard ? "flex flex-col gap-3" : "space-y-6"}
+              className={isDashboard ? "" : "space-y-6"}
               onSubmit={submitSearch}
             >
-              <div className={cn("flex flex-col gap-3", isDashboard ? "lg:flex-row lg:items-end" : "sm:flex-row")}>
-                <div className={cn("space-y-1.5", isDashboard && "lg:flex-[2]")}>
+              {isDashboard && (
+                <div className="flex flex-col gap-3 border-b border-border bg-muted/40 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary-subtle text-primary">
+                      <ListFilter className="size-4" aria-hidden="true" />
+                    </span>
+                    <div>
+                      <h2 className="text-sm font-bold text-foreground">
+                        Filter {kind === "project" ? "projects" : "freelancers"}
+                      </h2>
+                      <p className="text-xs text-muted-foreground" role="status" aria-live="polite">
+                        {selectedFilterCount === 0
+                          ? `Showing all ${kind === "project" ? "open projects" : "freelancers"}`
+                          : `${selectedFilterCount} ${selectedFilterCount === 1 ? "filter" : "filters"} selected`}
+                      </p>
+                    </div>
+                  </div>
+
+                  {selectedFilterCount > 0 && (
+                    <Button type="button" variant="ghost" size="sm" className="self-start sm:self-auto" disabled={loading} onClick={resetFilters}>
+                      <X className="size-4" aria-hidden="true" />
+                      Clear filters
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              <div className={isDashboard ? dashboardFilterGrid : "flex flex-col gap-3 sm:flex-row"}>
+                <div className={cn("space-y-1.5", isDashboard && "sm:col-span-2 xl:col-span-1")}>
                   <Label htmlFor="marketplace-keyword" className="text-xs font-semibold text-foreground">
                     Search
                   </Label>
@@ -332,34 +368,37 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
                   </div>
                 </div>
 
-                <div className={cn("space-y-1.5", isDashboard && "lg:flex-1")}>
+                <div className="space-y-1.5">
                   <Label htmlFor="skill-select" className="text-xs font-semibold text-foreground">Skill</Label>
-                  <select
-                    id="skill-select"
-                    aria-label="Skill"
-                    value={filters.skillIds[0] ?? ""}
-                    onChange={(event) => {
-                      const val = event.target.value;
-                      setFilters((current) => ({ ...current, skillIds: val ? [val] : [] }));
-                    }}
-                    className={cn(
-                      "h-10 w-full border border-input bg-background px-3 text-sm text-foreground outline-none transition-colors duration-fast",
-                      "hover:border-foreground/30 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40",
-                      control,
-                    )}
-                  >
-                    <option value="">All skills</option>
-                    {skills.map((skill) => (
-                      <option key={skill.id} value={skill.id}>
-                        {skill.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      id="skill-select"
+                      aria-label="Skill"
+                      value={filters.skillIds[0] ?? ""}
+                      onChange={(event) => {
+                        const val = event.target.value;
+                        setFilters((current) => ({ ...current, skillIds: val ? [val] : [] }));
+                      }}
+                      className={cn(
+                        "h-10 w-full appearance-none border border-input bg-background px-3 pr-10 text-sm text-foreground transition-[border-color,box-shadow] duration-fast",
+                        "hover:border-foreground/30 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40",
+                        control,
+                      )}
+                    >
+                      <option value="">All skills</option>
+                      {skills.map((skill) => (
+                        <option key={skill.id} value={skill.id}>
+                          {skill.name}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                  </div>
                 </div>
 
                 {kind === "project" && (
                   <>
-                    <div className={cn("space-y-1.5", isDashboard && "lg:w-32")}>
+                    <div className="space-y-1.5">
                       <Label htmlFor="minimum-budget" className="text-xs font-semibold text-foreground">Minimum budget</Label>
                       <Input
                         id="minimum-budget"
@@ -372,7 +411,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
                         className={control}
                       />
                     </div>
-                    <div className={cn("space-y-1.5", isDashboard && "lg:w-32")}>
+                    <div className="space-y-1.5">
                       <Label htmlFor="maximum-budget" className="text-xs font-semibold text-foreground">Maximum budget</Label>
                       <Input
                         id="maximum-budget"
@@ -389,9 +428,11 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
                 )}
 
                 {isDashboard && (
-                  <div className="flex shrink-0 gap-2">
-                    <Button type="submit" className={control}>Apply filters</Button>
-                    <Button type="button" variant="outline" className={control} onClick={resetFilters}>Reset</Button>
+                  <div className="flex shrink-0 self-end">
+                    <Button type="submit" className={cn("w-full sm:min-w-36", control)} disabled={loading}>
+                      <ListFilter className="size-4" aria-hidden="true" />
+                      Apply filters
+                    </Button>
                   </div>
                 )}
               </div>
