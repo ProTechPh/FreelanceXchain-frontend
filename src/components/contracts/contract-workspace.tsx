@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { AlertTriangle, ArrowLeft, FileText, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
@@ -34,12 +35,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
+import { ContractPaymentHistory } from '@/components/contracts/contract-payment-history';
+import { qk } from '@/lib/query-keys';
 
 type ParticipantRole = Extract<UserRole, 'employer' | 'freelancer'>;
 const initialReview: ReviewDraft = { rating: 5, comment: '', workQuality: 5, communication: 5, professionalism: 5, wouldWorkAgain: true };
 
 export function ContractWorkspace({ contractId, role }: { contractId: string; role: ParticipantRole }) {
   const user = useAuthStore((state) => state.user);
+  const queryClient = useQueryClient();
   const [contract, setContract] = useState<Contract | null>(null);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -128,6 +132,9 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
     try {
       await action();
       toast.success(success);
+      // The ledger is a React Query resource, so refreshing the useState-backed
+      // workspace is not enough to pick up the new payment row.
+      void queryClient.invalidateQueries({ queryKey: qk.contractPayments(contractId) });
       await loadWorkspace();
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'The contract action could not be completed.'));
@@ -340,9 +347,11 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
         })}
       </section>
 
+      <ContractPaymentHistory contractId={contractId} userId={user.id} />
+
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <CardHeader><CardTitle>Transactions</CardTitle></CardHeader>
+          <CardHeader><CardTitle>Blockchain transactions</CardTitle></CardHeader>
           <CardContent>
             {transactions.length === 0 ? <p className="text-sm text-muted-foreground">No transactions recorded.</p> : (
               <ul className="space-y-3">{transactions.map((transaction) => <li key={transaction.id} className="border-b border-border pb-3 text-sm last:border-0"><Link href={getTransactionDetailRoute(role, transaction.id)} className="flex items-center justify-between rounded-md outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"><div><p className="font-medium">{transaction.type.replaceAll('_', ' ')}</p><p className="text-xs text-muted-foreground">{new Date(transaction.created_at).toLocaleString()}</p></div><div className="text-right"><p>${transaction.amount.toLocaleString()}</p><Badge variant="secondary">{transaction.status}</Badge></div></Link></li>)}</ul>

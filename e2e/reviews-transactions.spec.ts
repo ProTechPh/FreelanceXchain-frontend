@@ -26,6 +26,10 @@ async function authenticate(page: Page, storedUser = user) {
     headers: { 'set-cookie': 'psifi.x-csrf-token=e2e-csrf-token; Path=/; SameSite=Lax' },
     body: JSON.stringify({ cookieName: 'psifi.x-csrf-token' }),
   }));
+  // The transactions and earnings pages now also render the payment ledger and
+  // lifetime totals; stub both so these specs stay hermetic.
+  await page.route('**/api/payments/summary', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ totalEarnings: 0, totalSpent: 0, available: true }) }));
+  await page.route(/\/api\/payments\/me(?:\?.*)?$/, (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ items: [], total: 0, hasMore: false, totalEarnings: 0, totalSpent: 0 }) }));
 }
 
 test('employer reviews the freelancer after a completed contract', async ({ page }) => {
@@ -40,6 +44,8 @@ test('employer reviews the freelancer after a completed contract', async ({ page
   await page.route(`**/api/transactions/contract/${contractId}`, (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }));
   await page.route(`**/api/contracts/${contractId}/disputes`, (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }));
   await page.route(`**/api/reviews/can-review/${contractId}**`, (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ canRate: true }) }));
+  // The workspace now also loads the payment ledger; stub it so the spec stays hermetic.
+  await page.route(`**/api/payments/contracts/${contractId}/history`, (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ contractId, items: [] }) }));
   await page.route('**/api/reviews', async (route) => {
     reviewBody = route.request().postDataJSON();
     await route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ id: 'review-1', ...(reviewBody as object), reviewerId: user.id, revieweeId: 'freelancer-1', createdAt: user.createdAt, updatedAt: user.updatedAt }) });

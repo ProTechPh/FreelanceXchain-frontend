@@ -893,3 +893,81 @@ export interface CryptoMarketMoversResponse {
   coins: CryptoMarketMoverCoin[];
 }
 
+
+// Payment ledger types
+//
+// These mirror the `payments` collection (the money-movement audit trail), which is
+// a different collection from `transactions` (the blockchain tx record). The payment
+// ledger is camelCase; `Transaction` above is snake_case. Keep them distinct.
+export type PaymentType =
+  | 'escrow_deposit'
+  | 'milestone_release'
+  | 'refund'
+  | 'dispute_resolution'
+  | 'rush_fee';
+
+export interface PaymentHistoryRecord {
+  id: string;
+  milestoneId: string | null;
+  payerId: string;
+  payeeId: string;
+  amount: number;
+  currency: string;
+  txHash: string | null;
+  status: string;
+  paymentType: PaymentType;
+  createdAt: string;
+}
+
+export interface ContractPaymentHistory {
+  contractId: string;
+  items: PaymentHistoryRecord[];
+}
+
+export interface MyPaymentRecord extends PaymentHistoryRecord {
+  contractId: string;
+}
+
+export interface MyPaymentsResponse {
+  items: MyPaymentRecord[];
+  total: number;
+  hasMore: boolean;
+  /** null when the totals query failed — render an unavailable state, never 0. */
+  totalEarnings: number | null;
+  totalSpent: number | null;
+}
+
+export interface PaymentSummary {
+  totalEarnings: number | null;
+  totalSpent: number | null;
+  /** false when either totals query failed — show unavailable instead of a misleading zero. */
+  available: boolean;
+}
+
+// Admin audit search types
+export interface AuditLogSearchResponse {
+  items: AuditLogEntry[];
+  total: number;
+  hasMore: boolean;
+  /** Document id to pass back as `cursor` for the next page, or null on the last page. */
+  nextCursor: string | null;
+}
+
+export interface AdminActivityRow {
+  actor_id: string;
+  /** YYYY-MM-DD */
+  date: string;
+  actions: Record<string, number>;
+  total: number;
+}
+
+export interface AdminActivitySummary {
+  items: AdminActivityRow[];
+  totalActions: number;
+  activeAdmins: number;
+}
+
+export interface AnalyticsDateRange {
+  startDate?: string;
+  endDate?: string;
+}

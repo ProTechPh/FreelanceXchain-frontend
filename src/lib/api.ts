@@ -67,11 +67,17 @@ import type {
   FearGreedIndexData,
   GlobalMarketStats,
   CryptoMarketMoversResponse,
+  ContractPaymentHistory,
+  MyPaymentsResponse,
+  PaymentSummary,
+  AuditLogSearchResponse,
+  AdminActivitySummary,
 } from '@/types';
 import type {
   CreateProjectPayload,
   SetProjectMilestonesPayload,
 } from '@/lib/project-submission';
+import type { AuditSearchParams } from '@/lib/audit-log-search';
 import {
   createCsrfTokenManager,
   isCsrfValidationFailure,
@@ -496,6 +502,19 @@ export const paymentsApi = {
   
   getStatus: (contractId: string) =>
     api.get<ContractPaymentStatus>(`/payments/contracts/${contractId}/status`),
+
+  // The money-movement ledger for a contract (escrow deposits, milestone releases,
+  // refunds, dispute resolutions, rush fees), newest first. Distinct from
+  // transactionsApi.getForContract, which reads the blockchain tx collection.
+  getHistory: (contractId: string) =>
+    api.get<ContractPaymentHistory>(`/payments/contracts/${contractId}/history`),
+
+  // limit must be 1-100 and offset >= 0; the API answers 400 otherwise.
+  getMine: (params?: { limit?: number; offset?: number }) =>
+    api.get<MyPaymentsResponse>('/payments/me', { params }),
+
+  getSummary: () =>
+    api.get<PaymentSummary>('/payments/summary'),
 };
 
 export const messagesApi = {
@@ -779,6 +798,14 @@ export const auditLogsApi = {
 
   getById: (id: string) =>
     api.get<AuditLogEntry>(`/audit-logs/${id}`),
+
+  // Server-side filtered search with cursor pagination. Build `params` with
+  // buildAuditSearchParams so empty filters are dropped rather than sent blank.
+  search: (params: AuditSearchParams) =>
+    api.get<AuditLogSearchResponse>('/audit-logs/search', { params }),
+
+  getAdminActivitySummary: (startDate: string, endDate: string) =>
+    api.get<AdminActivitySummary>('/audit-logs/summary/admin-activity', { params: { startDate, endDate } }),
 };
 
 export const analyticsApi = {

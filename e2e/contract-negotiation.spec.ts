@@ -19,6 +19,8 @@ async function stubSupportingWorkspaceRoutes(page: Page) {
   await page.route(`**/api/milestones/contract/${contractId}`, (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }));
   await page.route(`**/api/transactions/contract/${contractId}`, (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }));
   await page.route(`**/api/contracts/${contractId}/disputes`, (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }));
+  // The workspace now also loads the payment ledger; stub it so the spec stays hermetic.
+  await page.route(`**/api/payments/contracts/${contractId}/history`, (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ contractId, items: [] }) }));
 }
 
 test('verified employer requests a rush upgrade from the contract workspace', async ({ page }) => {

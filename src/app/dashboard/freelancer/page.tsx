@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,9 +11,11 @@ import {
   matchingApi,
   projectsApi,
   reputationApi,
-  analyticsApi,
 } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
+import { useFreelancerAnalytics } from '@/hooks/use-analytics';
+import { AnalyticsRangeFilter } from '@/components/analytics/range-filter';
+import { DEFAULT_RANGE_PRESET, getRangeLabel, resolveRange, type RangePresetId } from '@/lib/analytics-range';
 import type { Contract, Proposal, Project } from '@/types';
 import { toast } from 'sonner';
 import { DollarSign, FolderOpen, FileText, Star, TrendingUp, Clock, ArrowUpRight, Briefcase, Wallet } from 'lucide-react';
@@ -59,8 +61,7 @@ interface RecommendedProjectView {
 export default function FreelancerDashboard() {
   const currentUser = useAuthStore((state) => state.user);
   const [loading, setLoading] = useState(true);
-  const [totalEarnings, setTotalEarnings] = useState<number | null>(null);
-  const [projectsCompleted, setProjectsCompleted] = useState<number | null>(null);
+  const [range, setRange] = useState<RangePresetId>(DEFAULT_RANGE_PRESET);
   const [averageRating, setAverageRating] = useState<number | null>(null);
   const [totalRatings, setTotalRatings] = useState<number>(0);
   const [activeContracts, setActiveContracts] = useState<ActiveContractView[]>([]);
@@ -68,24 +69,27 @@ export default function FreelancerDashboard() {
   const [recentProposals, setRecentProposals] = useState<RecentProposalView[]>([]);
   const [recommended, setRecommended] = useState<RecommendedProjectView[]>([]);
 
+  // Analytics is the one resource on this page that moved to React Query: it is the
+  // only one that refetches on a user action (the range filter), and the API caches
+  // it for 60s, so a client cache keyed on the range avoids re-requesting a value
+  // the server would only serve from its own cache anyway.
+  const analyticsRange = useMemo(() => resolveRange(range, new Date()), [range]);
+  const { data: analytics } = useFreelancerAnalytics(analyticsRange, Boolean(currentUser));
+  const totalEarnings = analytics?.totalEarnings ?? null;
+  const projectsCompleted = analytics?.projectsCompleted ?? null;
+
   useEffect(() => {
     if (!currentUser) return;
 
     const load = async () => {
       try {
-        const [analyticsRes, contractsRes, proposalsRes, recommendationsRes, reputationRes] =
+        const [contractsRes, proposalsRes, recommendationsRes, reputationRes] =
           await Promise.allSettled([
-            analyticsApi.getFreelancer(),
             contractsApi.list(),
             proposalsApi.getMine(),
             matchingApi.getProjectRecommendations(3),
             reputationApi.getScore(currentUser.id),
           ]);
-
-        if (analyticsRes.status === 'fulfilled') {
-          setTotalEarnings(analyticsRes.value.data.totalEarnings);
-          setProjectsCompleted(analyticsRes.value.data.projectsCompleted);
-        }
 
         if (reputationRes.status === 'fulfilled') {
           setAverageRating(reputationRes.value.data.averageRating);
@@ -143,7 +147,7 @@ export default function FreelancerDashboard() {
 
   const stats = [
     {
-      title: 'Total Earned',
+      title: range === 'all' ? 'Total Earned' : `Earned · ${getRangeLabel(range)}`,
       value: formatAmount(totalEarnings),
       change: projectsCompleted != null ? `${formatNumber(projectsCompleted)} completed contracts` : undefined,
       icon: DollarSign,
@@ -183,6 +187,12 @@ export default function FreelancerDashboard() {
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Welcome back{currentUser?.name ? `, ${currentUser.name}` : ''}!</h1>
           <p className="text-muted-foreground">Here&apos;s what&apos;s happening with your work</p>
+          <AnalyticsRangeFilter
+            value={range}
+            onChange={setRange}
+            label="Earnings date range"
+            className="mt-3"
+          />
         </div>
         <Link href="/dashboard/freelancer/projects">
           <Button variant="gradient">
