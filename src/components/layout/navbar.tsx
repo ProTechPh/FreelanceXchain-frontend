@@ -114,12 +114,12 @@ export default function Navbar({
           <Button variant="ghost" size="icon" aria-label="Open search dialog" className="rounded-full h-8 w-8 shrink-0" onClick={() => setOpenSearch(true)}>
             <MagnifyingGlass className="size-3.5" strokeWidth={2.5} />
           </Button>
-          <Link href={auth.login.url} className="shrink-0">
-            <Button variant="ghost" size="sm" className="rounded-full text-xs font-bold px-3">{auth.login.text}</Button>
-          </Link>
-          <Link href={auth.signup.url} className="shrink-0">
-            <Button size="sm" className="rounded-full bg-primary text-primary-foreground text-xs font-bold px-4 hover:bg-primary/90 shadow-sm whitespace-nowrap">{auth.signup.text}</Button>
-          </Link>
+          <Button asChild variant="ghost" size="sm" className="shrink-0 rounded-full text-xs font-bold px-3">
+            <Link href={auth.login.url}>{auth.login.text}</Link>
+          </Button>
+          <Button asChild size="sm" className="shrink-0 rounded-full bg-primary text-primary-foreground text-xs font-bold px-4 hover:bg-primary/90 shadow-sm whitespace-nowrap">
+            <Link href={auth.signup.url}>{auth.signup.text}</Link>
+          </Button>
         </div>
 
         {/* Mobile right actions — visible below sm */}
@@ -156,12 +156,12 @@ export default function Navbar({
                 </div>
 
                 <div className="flex flex-col gap-3 pt-4 border-t border-border/50">
-                  <Link href={auth.login.url} className="w-full" onClick={() => setMobileMenuOpen(false)}>
-                    <Button variant="outline" className="w-full">{auth.login.text}</Button>
-                  </Link>
-                  <Link href={auth.signup.url} className="w-full" onClick={() => setMobileMenuOpen(false)}>
-                    <Button className="w-full bg-primary text-primary-foreground">{auth.signup.text}</Button>
-                  </Link>
+                  <Button asChild variant="outline" className="w-full">
+                    <Link href={auth.login.url} onClick={() => setMobileMenuOpen(false)}>{auth.login.text}</Link>
+                  </Button>
+                  <Button asChild className="w-full bg-primary text-primary-foreground">
+                    <Link href={auth.signup.url} onClick={() => setMobileMenuOpen(false)}>{auth.signup.text}</Link>
+                  </Button>
                 </div>
               </div>
             </SheetContent>

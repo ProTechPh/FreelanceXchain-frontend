@@ -408,6 +408,41 @@
 }
 
 /* ==========================================================================
+   Components
+   ========================================================================== */
+
+@layer components {
+  /* Keep cmdk's attribute hooks in plain CSS. Encoding these descendants as
+     arbitrary Tailwind variants caused generated output to be rescanned and
+     corrupted after a hot reload. */
+  [data-slot="command-dialog"] [cmdk-group-heading] {
+    padding-inline: calc(var(--spacing) * 2);
+    color: var(--muted-foreground);
+    font-weight: var(--font-weight-medium);
+  }
+
+  [data-slot="command-dialog"] [cmdk-group] {
+    padding-inline: calc(var(--spacing) * 2);
+  }
+
+  [data-slot="command-dialog"] [cmdk-input] {
+    height: calc(var(--spacing) * 12);
+  }
+
+  [data-slot="command-dialog"] [cmdk-item] {
+    padding: calc(var(--spacing) * 2) calc(var(--spacing) * 3);
+  }
+
+  [data-slot="command-group"] [cmdk-group-heading] {
+    padding: calc(var(--spacing) * 2) calc(var(--spacing) * 3);
+    color: var(--muted-foreground);
+    font-size: var(--text-xs);
+    line-height: var(--text-xs--line-height);
+    font-weight: var(--font-weight-medium);
+  }
+}
+
+/* ==========================================================================
    Utilities
    ========================================================================== */
 

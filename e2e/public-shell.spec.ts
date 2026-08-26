@@ -15,3 +15,51 @@ test('public landing page exposes primary marketplace navigation', async ({ page
     '/freelancers',
   );
 });
+
+test('landing hero uses a compact escrow preview on mobile', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto('/');
+
+  const hero = page.getByRole('region', { name: 'Freelance marketplace introduction' });
+  await expect(page.getByRole('region', { name: 'Mobile escrow workflow preview' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Interactive contract workspace preview' })).toBeHidden();
+
+  const heroBox = await hero.boundingBox();
+  expect(heroBox?.height).toBeLessThan(1_500);
+});
+
+test('landing hero keeps the full contract workspace on desktop', async ({ page }) => {
+  await page.setViewportSize({ width: 1_280, height: 900 });
+  await page.goto('/');
+
+  await expect(page.getByRole('region', { name: 'Interactive contract workspace preview' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Mobile escrow workflow preview' })).toBeHidden();
+});
+
+test('public navbar does not nest interactive controls', async ({ page }) => {
+  await page.goto('/');
+
+  await expect(page.locator('a button')).toHaveCount(0);
+});
+
+test('public navbar icon actions keep a visible keyboard focus indicator', async ({ page }) => {
+  await page.setViewportSize({ width: 768, height: 900 });
+  await page.goto('/');
+
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', { name: /Theme:/ })).toBeFocused();
+
+  const themeOutline = await page.getByRole('button', { name: /Theme:/ }).evaluate(
+    (element) => getComputedStyle(element).outlineStyle,
+  );
+  expect(themeOutline).not.toBe('none');
+
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', { name: 'Open search dialog' })).toBeFocused();
+
+  const searchOutline = await page.getByRole('button', { name: 'Open search dialog' }).evaluate(
+    (element) => getComputedStyle(element).outlineStyle,
+  );
+  expect(searchOutline).not.toBe('none');
+});

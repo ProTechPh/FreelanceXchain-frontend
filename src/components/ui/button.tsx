@@ -27,7 +27,7 @@ const buttonVariants = cva(
     "rounded-md font-semibold",
     "transition-[background-color,border-color,color,box-shadow,transform]",
     "duration-fast ease-out",
-    "outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+    "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
     "disabled:pointer-events-none disabled:cursor-not-allowed",
     "aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed",
     "data-[loading=true]:cursor-progress data-[loading=true]:opacity-100",
