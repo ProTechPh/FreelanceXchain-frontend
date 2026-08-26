@@ -63,3 +63,45 @@ test('public navbar icon actions keep a visible keyboard focus indicator', async
   );
   expect(searchOutline).not.toBe('none');
 });
+
+test('final marketplace CTA uses its high-contrast foreground palette', async ({ page }) => {
+  for (const colorScheme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme });
+    await page.goto('/');
+
+    const heading = page.getByRole('heading', { name: /Ready to hire or get hired/ });
+    await heading.scrollIntoViewIfNeeded();
+
+    const colors = await heading.evaluate((element) => {
+      const parseColor = (value: string) => {
+        if (value.startsWith('#')) {
+          const rawHex = value.slice(1);
+          const hex = rawHex.length === 3
+            ? rawHex.split('').map((channel) => `${channel}${channel}`).join('')
+            : rawHex;
+          return hex.match(/.{2}/g)?.map((channel) => Number.parseInt(channel, 16)) ?? [];
+        }
+
+        return value.match(/[\d.]+/g)?.slice(0, 3).map(Number) ?? [];
+      };
+
+      const rootStyles = getComputedStyle(document.documentElement);
+      const accent = element.querySelector('span');
+      const darkTheme = document.documentElement.classList.contains('dark');
+
+      return {
+        heading: parseColor(getComputedStyle(element).color),
+        expectedHeading: parseColor(
+          rootStyles.getPropertyValue(darkTheme ? '--foreground' : '--primary-foreground').trim(),
+        ),
+        accent: accent ? parseColor(getComputedStyle(accent).color) : [],
+        expectedAccent: parseColor(
+          rootStyles.getPropertyValue(darkTheme ? '--primary' : '--primary-subtle').trim(),
+        ),
+      };
+    });
+
+    expect(colors.heading).toEqual(colors.expectedHeading);
+    expect(colors.accent).toEqual(colors.expectedAccent);
+  }
+});
