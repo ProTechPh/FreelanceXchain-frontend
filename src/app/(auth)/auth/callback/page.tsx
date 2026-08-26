@@ -44,14 +44,20 @@ function OAuthCallbackContent() {
     }
 
     const fragmentParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+    const userId = queryParams.get('userId') || fragmentParams.get('userId') || undefined;
+    const secret = queryParams.get('secret') || fragmentParams.get('secret') || undefined;
     const token = getAuthCallbackToken(queryParams, fragmentParams);
-    if (!token) {
+    if (!token && !secret) {
       queueMicrotask(() => setState('error'));
       return;
     }
 
-    accessTokenRef.current = token;
-    authApi.oauthCallback(token)
+    const payload = userId && secret
+      ? { userId, secret, access_token: secret }
+      : { access_token: (token || secret)! };
+
+    accessTokenRef.current = token || secret || null;
+    authApi.oauthCallback(payload)
       .then(({ data }) => {
         if (isMfaRequiredResponse(data)) {
           beginMfa(data.mfaSessionToken);
@@ -60,6 +66,9 @@ function OAuthCallbackContent() {
         }
 
         if (isRegistrationRequiredResponse(data)) {
+          if (data.access_token) {
+            accessTokenRef.current = data.access_token;
+          }
           setState('registration');
           return;
         }

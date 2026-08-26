@@ -16,7 +16,6 @@ import {
 import { useAuthStore } from "@/stores/authStore";
 import type { FreelancerProfile, Project, ProjectCategoryStat, SavedSearch, Skill } from "@/types";
 import { Button } from "@/components/ui/button";
-import { EmptyState } from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -282,17 +281,17 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
           {/* Popular Categories Strip (For Projects) */}
           {kind === "project" && categoryStats.length > 0 && (
             <section aria-labelledby="project-categories-heading">
-              <h2 id="project-categories-heading" className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Popular categories
+              <h2 id="project-categories-heading" className="mb-4 text-sm font-bold text-foreground">
+                Popular Categories
               </h2>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {categoryStats.slice(0, 4).map((category) => (
                   <button
                     key={category.categoryId}
                     type="button"
                     className={cn(
-                      "border border-border bg-card p-4 text-left transition-colors duration-fast outline-none",
-                      "hover:border-primary hover:bg-accent",
+                      "border border-border/80 bg-card p-5 text-left transition-all duration-300 outline-none shadow-sm shadow-black/5",
+                      "hover:border-primary/50 hover:shadow-md hover:-translate-y-0.5",
                       "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                       isDashboard ? "rounded-lg" : "rounded-2xl",
                     )}
@@ -301,11 +300,11 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
                       void loadResults({ ...filters, keyword: category.categoryName });
                     }}
                   >
-                    <p className="text-sm font-semibold text-foreground">{category.categoryName}</p>
+                    <p className="text-sm font-bold text-foreground">{category.categoryName}</p>
                     <p className="mt-1 text-xs text-muted-foreground">
                       {category.projectCount} open project{category.projectCount === 1 ? "" : "s"}
                     </p>
-                    <p className="mt-2 text-xs font-semibold text-primary">
+                    <p className="mt-2 text-sm font-bold text-primary">
                       {formatAmount(category.totalBudget)} total budget
                     </p>
                   </button>
@@ -319,7 +318,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
               fields pushed the first project roughly 700px down the page, which
               is the opposite of what a browse view should do. Same controls and
               same labels — nothing is hidden behind a disclosure. */}
-          <div className={cn("border border-border bg-card shadow-xs", panel)}>
+          <div className={cn("border border-border/80 bg-card shadow-md shadow-black/5", panel)}>
             <form
               className={isDashboard ? "" : "space-y-6"}
               onSubmit={submitSearch}
@@ -523,7 +522,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
 
           {/* Results Count */}
           <div className="flex items-center justify-between gap-3">
-            <p aria-live="polite" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <p aria-live="polite" className="text-sm font-bold text-foreground">
               {loading && items.length === 0
                 ? "Searching…"
                 : `Showing ${items.length} ${kind}${items.length === 1 ? "" : "s"}`}
@@ -540,20 +539,20 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
             >
               <span className="sr-only">Searching…</span>
               {Array.from({ length: layout === "grid" ? 6 : 4 }).map((_, index) => (
-                <Skeleton key={index} className={cn(layout === "grid" ? "h-56" : "h-44", isDashboard ? "rounded-lg" : "rounded-3xl")} />
+                <Skeleton key={index} className={cn(layout === "grid" ? "h-64" : "h-48", isDashboard ? "rounded-lg" : "rounded-3xl")} />
               ))}
             </div>
           ) : items.length === 0 ? (
-            <EmptyState
-              icon={Briefcase}
-              title={emptyMessage}
-              description="Try widening your budget range, clearing a skill, or searching a different keyword."
-              action={
-                <Button variant="outline" className={control} onClick={resetFilters}>
-                  Reset filters
-                </Button>
-              }
-            />
+            <div className="rounded-3xl bg-card border border-border/80 p-12 text-center shadow-md shadow-black/5">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-neutral/10 flex items-center justify-center">
+                <Briefcase className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-bold text-foreground mb-2">{emptyMessage}</h3>
+              <p className="text-sm text-muted-foreground mb-6">Try widening your budget range, clearing a skill, or searching a different keyword.</p>
+              <Button variant="outline" className={control} onClick={resetFilters}>
+                Reset filters
+              </Button>
+            </div>
           ) : (
             <div className={layout === "grid" ? "grid gap-6 md:grid-cols-2 lg:grid-cols-3" : "space-y-4"}>
               {items.map((item) => {
@@ -588,15 +587,15 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
 
           {/* Load More Button */}
           {hasMore && (
-            <div className="text-center pt-4">
+            <div className="text-center pt-6">
               <Button
                 variant="outline"
-                className={control}
+                className="rounded-full px-8 py-2.5"
                 loading={loading}
                 loadingText="Loading…"
                 onClick={() => void loadResults(filters, items.length, true)}
               >
-                Load more
+                Load more projects
               </Button>
             </div>
           )}

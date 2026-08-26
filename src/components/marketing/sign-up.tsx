@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, User, Briefcase } from 'lucide-react';
+import { Eye, EyeOff, User, Briefcase, ArrowRight, Sparkles, ArrowLeft } from 'lucide-react';
 import type { UserRole } from '@/types';
 import { getRegistrationFormError } from '@/lib/auth-contract';
 import { Button } from '@/components/ui/button';
+import { FreelanceXchainLogo } from '@/components/ui/freelancexchain-logo';
+import Link from 'next/link';
 
 const GoogleIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 48 48">
@@ -19,11 +21,17 @@ const GithubIcon = () => (
     </svg>
 );
 
-const GlassInputWrapper = ({ children }: { children: React.ReactNode }) => (
-  <div className="rounded-2xl border border-border bg-foreground/5 backdrop-blur-sm transition-colors focus-within:border-info-border focus-within:bg-info-subtle">
-    {children}
-  </div>
+const CheckIcon = () => (
+    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+    </svg>
 );
+
+const features = [
+  '100% Smart Contract Escrow',
+  'Zero Platform Fees for Freelancers',
+  'Portable On-Chain Reputation',
+];
 
 interface SignUpPageProps {
   onSubmit?: (data: { email: string; password: string; role: UserRole }) => void;
@@ -67,140 +75,271 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
   };
 
   return (
-    <div className="flex min-h-dvh w-full font-geist">
-      {/* Sign-up form */}
-      <section className="flex-1 flex items-center justify-center p-8">
+    <div className="flex flex-col lg:flex-row min-h-dvh w-full bg-background">
+      {/* Left side - Branding (hidden on mobile, visible on lg+) */}
+      <div className="hidden lg:flex lg:w-[45%] relative overflow-hidden">
+        {/* Gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary to-chart-2" />
+        
+        {/* Decorative shapes */}
+        <div className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-success/15 blur-3xl" />
+        <div className="absolute -bottom-32 -left-32 w-[500px] h-[500px] rounded-full bg-success/15 blur-3xl" />
+        
+        <div className="relative z-10 flex flex-col justify-between p-12 lg:p-16 text-white w-full">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity">
+            <FreelanceXchainLogo iconSize={36} className="text-white [&_span]:text-white" />
+          </Link>
+          
+          {/* Content */}
+          <div className="max-w-lg">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/15 text-white text-xs font-bold mb-6 border border-white/20 backdrop-blur-sm">
+              <Sparkles className="size-3.5" fill="currentColor" />
+              <span>Join the Future of Work</span>
+            </div>
+            
+            {/* Heading */}
+            <h2 className="text-4xl lg:text-5xl font-extrabold leading-tight tracking-tight mb-5 text-white">
+              Start your decentralized freelance journey today
+            </h2>
+            
+            {/* Description */}
+            <p className="text-lg leading-relaxed mb-10 text-white/90">
+              Smart contract escrow, AI proposal matching, and portable on-chain reputation — all in one platform.
+            </p>
+            
+            {/* Feature list */}
+            <div className="flex flex-col gap-4">
+              {features.map((feature) => (
+                <div key={feature} className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center shrink-0 backdrop-blur-sm">
+                    <CheckIcon />
+                  </div>
+                  <span className="text-white font-semibold text-[15px]">{feature}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* Footer */}
+          <p className="text-white/60 text-sm">
+            © 2026 FreelanceXchain. All rights reserved.
+          </p>
+        </div>
+      </div>
+
+      {/* Mobile features banner (visible on mobile, hidden on lg+) */}
+      <div className="lg:hidden bg-gradient-to-br from-primary via-primary to-chart-2 p-6 text-white">
+        <Link href="/" className="flex items-center gap-2.5 mb-5">
+          <FreelanceXchainLogo iconSize={28} className="text-white [&_span]:text-white" />
+        </Link>
+        <div className="flex flex-col gap-3">
+          {features.map((feature) => (
+            <div key={feature} className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center shrink-0">
+                <CheckIcon />
+              </div>
+              <span className="text-white font-semibold text-sm">{feature}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Right side - Form */}
+      <section className="flex-1 flex items-center justify-center p-5 sm:p-8 lg:p-12 overflow-y-auto">
         <div className="w-full max-w-md">
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-5 sm:gap-6">
             {step === 'role' ? (
               <>
-                <h1 className="animate-element animate-delay-100 text-4xl md:text-5xl font-semibold leading-tight">
-                  <span className="font-light text-foreground tracking-tighter">Create an</span> account
-                </h1>
-                <p className="animate-element animate-delay-200 text-muted-foreground">Choose how you want to use FreelanceXchain</p>
+                {/* Header */}
+                <div>
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-foreground">
+                    Create an <span className="text-primary">account</span>
+                  </h1>
+                  <p className="mt-2 text-muted-foreground text-sm">Choose how you want to use FreelanceXchain</p>
+                </div>
 
-                <div className="animate-element animate-delay-300 grid grid-cols-2 gap-4">
+                {/* Role selection cards */}
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   <button
                     type="button"
                     onClick={() => handleRoleSelect('freelancer')}
-                    className="flex flex-col items-center gap-3 p-6 rounded-2xl border border-border bg-foreground/5 backdrop-blur-sm hover:border-info-border hover:bg-info-subtle transition-all cursor-pointer group"
+                    className="flex flex-col items-center gap-3 sm:gap-4 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-border/80 bg-card hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 active:scale-[0.98] transition-all duration-200 cursor-pointer group"
                   >
-                    <div className="w-12 h-12 rounded-xl bg-info-subtle flex items-center justify-center group-hover:bg-info-subtle transition-colors">
-                      <User className="w-6 h-6 text-info" />
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-primary-subtle flex items-center justify-center group-hover:bg-primary/15 transition-colors">
+                      <User className="w-6 h-6 sm:w-7 sm:h-7 text-primary" />
                     </div>
                     <div className="text-center">
-                      <p className="font-semibold">I&apos;m a Freelancer</p>
-                      <p className="text-xs text-muted-foreground mt-1">Find work and get paid securely</p>
+                      <p className="font-bold text-foreground text-xs sm:text-sm">I&apos;m a Freelancer</p>
+                      <p className="text-[11px] sm:text-xs text-muted-foreground mt-1 leading-relaxed">Find work and get paid securely</p>
                     </div>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => handleRoleSelect('employer')}
-                    className="flex flex-col items-center gap-3 p-6 rounded-2xl border border-border bg-foreground/5 backdrop-blur-sm hover:border-info-border hover:bg-info-subtle transition-all cursor-pointer group"
+                    className="flex flex-col items-center gap-3 sm:gap-4 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-border/80 bg-card hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 active:scale-[0.98] transition-all duration-200 cursor-pointer group"
                   >
-                    <div className="w-12 h-12 rounded-xl bg-info-subtle flex items-center justify-center group-hover:bg-info-subtle transition-colors">
-                      <Briefcase className="w-6 h-6 text-info" />
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-primary-subtle flex items-center justify-center group-hover:bg-primary/15 transition-colors">
+                      <Briefcase className="w-6 h-6 sm:w-7 sm:h-7 text-primary" />
                     </div>
                     <div className="text-center">
-                      <p className="font-semibold">I&apos;m an Employer</p>
-                      <p className="text-xs text-muted-foreground mt-1">Hire talent for your projects</p>
+                      <p className="font-bold text-foreground text-xs sm:text-sm">I&apos;m an Employer</p>
+                      <p className="text-[11px] sm:text-xs text-muted-foreground mt-1 leading-relaxed">Hire talent for your projects</p>
                     </div>
                   </button>
                 </div>
 
-                <div className="animate-element animate-delay-400 relative flex items-center justify-center">
+                {/* Divider */}
+                <div className="relative flex items-center justify-center">
                   <span className="w-full border-t border-border"></span>
-                  <span className="px-4 text-sm text-muted-foreground bg-background absolute">Or continue with</span>
+                  <span className="px-3 text-xs font-medium text-muted-foreground bg-background absolute uppercase tracking-wider">Or continue with</span>
                 </div>
 
-                <div className="animate-element animate-delay-500 grid grid-cols-2 gap-3">
-                  <button type="button" onClick={onGoogleSignIn} className="flex items-center justify-center gap-3 border border-border rounded-2xl py-4 hover:bg-secondary transition-colors">
-                      <GoogleIcon />
-                      Google
+                {/* Social login buttons */}
+                <div className="grid grid-cols-2 gap-3">
+                  <button 
+                    type="button" 
+                    onClick={onGoogleSignIn} 
+                    className="flex items-center justify-center gap-2.5 border border-border/80 rounded-xl sm:rounded-2xl py-3 sm:py-3.5 hover:bg-muted/50 hover:border-border-strong active:scale-[0.98] transition-all duration-200 font-semibold text-sm text-foreground"
+                  >
+                    <GoogleIcon />
+                    Google
                   </button>
-                  <button type="button" onClick={onGithubSignIn} className="flex items-center justify-center gap-3 border border-border rounded-2xl py-4 hover:bg-secondary transition-colors">
-                      <GithubIcon />
-                      GitHub
+                  <button 
+                    type="button" 
+                    onClick={onGithubSignIn} 
+                    className="flex items-center justify-center gap-2.5 border border-border/80 rounded-xl sm:rounded-2xl py-3 sm:py-3.5 hover:bg-muted/50 hover:border-border-strong active:scale-[0.98] transition-all duration-200 font-semibold text-sm text-foreground"
+                  >
+                    <GithubIcon />
+                    GitHub
                   </button>
                 </div>
 
-                <p className="animate-element animate-delay-600 text-center text-sm text-muted-foreground">
+                {/* Sign in link */}
+                <p className="text-center text-sm text-muted-foreground">
                   Already have an account?{' '}
-                  <button type="button" onClick={onSignIn} className="text-info transition-colors hover:underline">Sign in</button>
+                  <button type="button" onClick={onSignIn} className="text-primary font-bold hover:underline">Sign in</button>
                 </p>
               </>
             ) : (
               <>
-                <h1 className="animate-element animate-delay-100 text-4xl md:text-5xl font-semibold leading-tight">
-                  <span className="font-light text-foreground tracking-tighter">{role === 'freelancer' ? 'Freelancer' : 'Employer'}</span> account
-                </h1>
-                <p className="animate-element animate-delay-200 text-muted-foreground">Complete your registration</p>
+                {/* Back button + Header */}
+                <div>
+                  <button 
+                    type="button" 
+                    onClick={() => setStep('role')}
+                    className="text-sm text-muted-foreground hover:text-foreground mb-4 sm:mb-5 flex items-center gap-1.5 font-medium transition-colors"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    Back
+                  </button>
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-foreground">
+                    <span className="text-primary">{role === 'freelancer' ? 'Freelancer' : 'Employer'}</span> account
+                  </h1>
+                  <p className="mt-2 text-muted-foreground text-sm">Complete your registration</p>
+                </div>
 
-                <form className="space-y-5" onSubmit={handleSubmit}>
-                  <div className="animate-element animate-delay-300">
-                    <label htmlFor="email" className="text-sm font-medium text-muted-foreground">Email Address</label>
-                    <GlassInputWrapper>
-                      <input id="email" name="email" type="email" placeholder="Enter your email address" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-transparent text-sm p-4 rounded-2xl focus:outline-none" required />
-                    </GlassInputWrapper>
+                {/* Form */}
+                <form className="space-y-4 sm:space-y-5" onSubmit={handleSubmit}>
+                  <div>
+                    <label htmlFor="email" className="text-sm font-bold text-foreground mb-1.5 sm:mb-2 block">Email Address</label>
+                    <input 
+                      id="email" 
+                      name="email" 
+                      type="email" 
+                      placeholder="you@example.com" 
+                      value={email} 
+                      onChange={(e) => setEmail(e.target.value)} 
+                      className="w-full px-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-border/80 bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all placeholder:text-muted-foreground/60" 
+                      required 
+                    />
                   </div>
 
-                  <div className="animate-element animate-delay-400">
-                    <label htmlFor="password" className="text-sm font-medium text-muted-foreground">Password</label>
-                    <GlassInputWrapper>
-                      <div className="relative">
-                        <input id="password" name="password" type={showPassword ? 'text' : 'password'} placeholder="Enter your password" value={password} onChange={(e) => { setPassword(e.target.value); setFormError(null); }} aria-describedby="password-requirements registration-error" className="w-full bg-transparent text-sm p-4 pr-12 rounded-2xl focus:outline-none" required />
-                        <button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'} className="absolute inset-y-0 right-3 flex items-center">
-                          {showPassword ? <EyeOff className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" /> : <Eye className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />}
-                        </button>
-                      </div>
-                    </GlassInputWrapper>
-                    <p id="password-requirements" className="mt-2 text-xs text-muted-foreground">
-                      8–72 characters with uppercase, lowercase, a number, and @$!%*?&amp;.
+                  <div>
+                    <label htmlFor="password" className="text-sm font-bold text-foreground mb-1.5 sm:mb-2 block">Password</label>
+                    <div className="relative">
+                      <input 
+                        id="password" 
+                        name="password" 
+                        type={showPassword ? 'text' : 'password'} 
+                        placeholder="Create a strong password" 
+                        value={password} 
+                        onChange={(e) => { setPassword(e.target.value); setFormError(null); }} 
+                        aria-describedby="password-requirements registration-error" 
+                        className="w-full px-4 py-3 sm:py-3.5 pr-12 rounded-xl sm:rounded-2xl border border-border/80 bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all placeholder:text-muted-foreground/60" 
+                        required 
+                      />
+                      <button 
+                        type="button" 
+                        onClick={() => setShowPassword(!showPassword)} 
+                        aria-label={showPassword ? 'Hide password' : 'Show password'} 
+                        className="absolute inset-y-0 right-3 flex items-center"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
+                        ) : (
+                          <Eye className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
+                        )}
+                      </button>
+                    </div>
+                    <p id="password-requirements" className="mt-1.5 text-xs text-muted-foreground">
+                      8–72 characters with uppercase, lowercase, a number, and special character.
                     </p>
                   </div>
 
-                  <div className="animate-element animate-delay-500">
-                    <label htmlFor="confirmPassword" className="text-sm font-medium text-muted-foreground">Confirm Password</label>
-                    <GlassInputWrapper>
-                      <input id="confirmPassword" name="confirmPassword" type="password" placeholder="Confirm your password" value={confirmPassword} onChange={(e) => { setConfirmPassword(e.target.value); setFormError(null); }} aria-describedby="registration-error" className="w-full bg-transparent text-sm p-4 rounded-2xl focus:outline-none" required />
-                    </GlassInputWrapper>
+                  <div>
+                    <label htmlFor="confirmPassword" className="text-sm font-bold text-foreground mb-1.5 sm:mb-2 block">Confirm Password</label>
+                    <input 
+                      id="confirmPassword" 
+                      name="confirmPassword" 
+                      type="password" 
+                      placeholder="Confirm your password" 
+                      value={confirmPassword} 
+                      onChange={(e) => { setConfirmPassword(e.target.value); setFormError(null); }} 
+                      aria-describedby="registration-error" 
+                      className="w-full px-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-border/80 bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all placeholder:text-muted-foreground/60" 
+                      required 
+                    />
                   </div>
 
-                  <div className="animate-element animate-delay-600 flex items-start gap-3">
-                    <input type="checkbox" id="terms" checked={agreed} onChange={(e) => { setAgreed(e.target.checked); setFormError(null); }} className="mt-1 rounded border-border" />
-                    <label htmlFor="terms" className="text-sm text-muted-foreground">
+                  {/* Terms checkbox */}
+                  <div className="flex items-start gap-3">
+                    <input 
+                      type="checkbox" 
+                      id="terms" 
+                      checked={agreed} 
+                      onChange={(e) => { setAgreed(e.target.checked); setFormError(null); }} 
+                      className="mt-1 rounded border-border accent-primary" 
+                    />
+                    <label htmlFor="terms" className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
                       I agree to the{' '}
-                      <a href="/terms" className="text-info hover:underline">Terms of Service</a>
+                      <a href="/terms" className="text-primary font-bold hover:underline">Terms of Service</a>
                       {' '}and{' '}
-                      <a href="/privacy" className="text-info hover:underline">Privacy Policy</a>
+                      <a href="/privacy" className="text-primary font-bold hover:underline">Privacy Policy</a>
                     </label>
                   </div>
 
+                  {/* Error message */}
                   {formError && (
-                    <p id="registration-error" role="alert" className="text-sm text-destructive">
+                    <p id="registration-error" role="alert" className="text-sm text-destructive bg-destructive-subtle px-4 py-3 rounded-xl sm:rounded-2xl font-medium">
                       {formError}
                     </p>
                   )}
 
+                  {/* Submit button */}
                   <Button
                     type="submit"
                     size="lg"
                     loading={isLoading}
                     loadingText="Creating account…"
-                    className="animate-element animate-delay-700 h-14 w-full rounded-2xl"
+                    className="h-12 sm:h-13 w-full rounded-xl sm:rounded-2xl bg-primary text-primary-foreground font-bold text-sm hover:bg-primary-hover shadow-md shadow-primary/20 transition-all duration-200 active:scale-[0.98]"
                   >
                     Create account
+                    <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </form>
-
-                <button
-                  type="button"
-                  onClick={() => setStep('role')}
-                  className="animate-element animate-delay-800 w-full text-sm text-muted-foreground hover:text-foreground"
-                >
-                  ← Back to role selection
-                </button>
               </>
             )}
           </div>

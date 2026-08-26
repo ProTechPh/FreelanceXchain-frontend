@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, ArrowRight, Sparkles } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
+import { FreelanceXchainLogo } from '@/components/ui/freelancexchain-logo';
 
 // --- HELPER COMPONENTS (ICONS) ---
 
@@ -21,17 +22,23 @@ const GithubIcon = () => (
     </svg>
 );
 
+const CheckIcon = () => (
+    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+    </svg>
+);
+
+const features = [
+  '100% Smart Contract Escrow',
+  'Zero Platform Fees for Freelancers',
+  'Portable On-Chain Reputation',
+];
 
 interface SignInPageProps {
   title?: React.ReactNode;
   description?: React.ReactNode;
   homeHref?: string;
   onSignIn?: (event: React.FormEvent<HTMLFormElement>) => void;
-  /**
-   * Sign-in is in flight. Signing in can take a couple of seconds against a
-   * cold backend, and without this the button gave no feedback at all — so the
-   * natural reaction was to click it again.
-   */
   loading?: boolean;
   onGoogleSignIn?: () => void;
   onGithubSignIn?: () => void;
@@ -39,16 +46,11 @@ interface SignInPageProps {
   onResendConfirmation?: () => void;
   onCreateAccount?: () => void;
   onPasswordlessSignIn?: () => void;
+  oauthError?: string | null;
 }
 
-const GlassInputWrapper = ({ children }: { children: React.ReactNode }) => (
-  <div className="rounded-2xl border border-border bg-foreground/5 backdrop-blur-sm transition-colors focus-within:border-info-border focus-within:bg-info-subtle">
-    {children}
-  </div>
-);
-
 export const SignInPage: React.FC<SignInPageProps> = ({
-  title = <span className="font-light text-foreground tracking-tighter">Welcome</span>,
+  title = <span className="font-extrabold text-foreground tracking-tight">Welcome back</span>,
   description = "Access your account and continue your journey with us",
   homeHref,
   onSignIn,
@@ -59,91 +61,234 @@ export const SignInPage: React.FC<SignInPageProps> = ({
   onResendConfirmation,
   onCreateAccount,
   onPasswordlessSignIn,
+  oauthError,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <div className="flex min-h-dvh w-full font-geist">
-      {/* Sign-in form */}
-      <section className="flex-1 flex items-center justify-center p-8">
+    <div className="flex flex-col lg:flex-row min-h-dvh w-full bg-background">
+      {/* Left side - Branding (hidden on mobile, visible on lg+) */}
+      <div className="hidden lg:flex lg:w-[45%] relative overflow-hidden">
+        {/* Gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary to-chart-2" />
+        
+        {/* Decorative shapes */}
+        <div className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-success/15 blur-3xl" />
+        <div className="absolute -bottom-32 -left-32 w-[500px] h-[500px] rounded-full bg-success/15 blur-3xl" />
+        
+        <div className="relative z-10 flex flex-col justify-between p-12 lg:p-16 text-white w-full">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity">
+            <FreelanceXchainLogo iconSize={36} className="text-white [&_span]:text-white" />
+          </Link>
+          
+          {/* Content */}
+          <div className="max-w-lg">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/15 text-white text-xs font-bold mb-6 border border-white/20 backdrop-blur-sm">
+              <Sparkles className="size-3.5" fill="currentColor" />
+              <span>Decentralized Freelance Economy</span>
+            </div>
+            
+            {/* Heading */}
+            <p className="text-4xl lg:text-5xl font-extrabold leading-tight tracking-tight mb-5 text-white">
+              Welcome back to FreelanceXchain
+            </p>
+            
+            {/* Description */}
+            <p className="text-lg leading-relaxed mb-10 text-white/90">
+              Smart contract escrow, AI proposal matching, and portable on-chain reputation — all in one platform.
+            </p>
+            
+            {/* Feature list */}
+            <div className="flex flex-col gap-4">
+              {features.map((feature) => (
+                <div key={feature} className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center shrink-0 backdrop-blur-sm">
+                    <CheckIcon />
+                  </div>
+                  <span className="text-white font-semibold text-[15px]">{feature}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* Footer */}
+          <p className="text-white/60 text-sm">
+            © 2026 FreelanceXchain. All rights reserved.
+          </p>
+        </div>
+      </div>
+
+      {/* Mobile features banner (visible on mobile, hidden on lg+) */}
+      <div className="lg:hidden bg-gradient-to-br from-primary via-primary to-chart-2 p-5 text-white">
+        <Link href="/" className="flex items-center gap-2.5 mb-4">
+          <FreelanceXchainLogo iconSize={28} className="text-white [&_span]:text-white" />
+        </Link>
+        <div className="flex flex-col gap-3">
+          {features.map((feature) => (
+            <div key={feature} className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center shrink-0">
+                <CheckIcon />
+              </div>
+              <span className="text-white font-semibold text-sm">{feature}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Right side - Form */}
+      <section className="flex-1 flex items-center justify-center p-5 sm:p-8 lg:p-12 overflow-y-auto">
         <div className="w-full max-w-md">
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-5 sm:gap-6">
+            {/* Back link */}
             {homeHref && (
               <Link
                 href={homeHref}
-                className="animate-element inline-flex w-fit items-center gap-2 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:text-foreground active:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
-                <ArrowLeft className="size-4" aria-hidden="true" />
+                <ArrowLeft className="size-4" />
                 Back to home
               </Link>
             )}
-            <h1 className="animate-element animate-delay-100 text-4xl md:text-5xl font-semibold leading-tight">{title}</h1>
-            <p className="animate-element animate-delay-200 text-muted-foreground">{description}</p>
 
-            <form className="space-y-5" onSubmit={onSignIn}>
-              <div className="animate-element animate-delay-300">
-                <label htmlFor="login-email" className="text-sm font-medium text-muted-foreground">Email Address</label>
-                <GlassInputWrapper>
-                  <input id="login-email" name="email" type="email" placeholder="Enter your email address" className="w-full bg-transparent text-sm p-4 rounded-2xl focus:outline-none" required />
-                </GlassInputWrapper>
+            {/* OAuth Error Message */}
+            {oauthError && (
+              <div className="rounded-2xl border border-destructive/30 bg-destructive-subtle px-4 py-3.5 flex items-start gap-3">
+                <svg className="w-5 h-5 text-destructive shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+                <div>
+                  <p className="text-sm font-semibold text-destructive">Sign-in failed</p>
+                  <p className="text-sm text-destructive/80 mt-0.5">{oauthError}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Header */}
+            <div>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-foreground">
+                {title}
+              </h1>
+              <p className="mt-2 text-muted-foreground text-sm">{description}</p>
+            </div>
+
+            {/* Form */}
+            <form className="space-y-4 sm:space-y-5" onSubmit={onSignIn}>
+              <div>
+                <label htmlFor="login-email" className="text-sm font-bold text-foreground mb-1.5 sm:mb-2 block">Email Address</label>
+                <input 
+                  id="login-email" 
+                  name="email" 
+                  type="email" 
+                  placeholder="you@example.com" 
+                  className="w-full px-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-border/80 bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all placeholder:text-muted-foreground/60" 
+                  required 
+                />
               </div>
 
-              <div className="animate-element animate-delay-400">
-                <label htmlFor="login-password" className="text-sm font-medium text-muted-foreground">Password</label>
-                <GlassInputWrapper>
-                  <div className="relative">
-                    <input id="login-password" name="password" type={showPassword ? 'text' : 'password'} placeholder="Enter your password" className="w-full bg-transparent text-sm p-4 pr-12 rounded-2xl focus:outline-none" required />
-                    <button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'} className="absolute inset-y-0 right-3 flex items-center">
-                      {showPassword ? <EyeOff className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" /> : <Eye className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />}
-                    </button>
-                  </div>
-                </GlassInputWrapper>
+              <div>
+                <label htmlFor="login-password" className="text-sm font-bold text-foreground mb-1.5 sm:mb-2 block">Password</label>
+                <div className="relative">
+                  <input 
+                    id="login-password" 
+                    name="password" 
+                    type={showPassword ? 'text' : 'password'} 
+                    placeholder="Enter your password" 
+                    className="w-full px-4 py-3 sm:py-3.5 pr-12 rounded-xl sm:rounded-2xl border border-border/80 bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all placeholder:text-muted-foreground/60" 
+                    required 
+                  />
+                  <button 
+                    type="button" 
+                    onClick={() => setShowPassword(!showPassword)} 
+                    aria-label={showPassword ? 'Hide password' : 'Show password'} 
+                    className="absolute inset-y-0 right-3 flex items-center"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
+                    ) : (
+                      <Eye className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
+                    )}
+                  </button>
+                </div>
               </div>
 
-              <div className="animate-element animate-delay-500 flex items-center justify-between text-sm">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input type="checkbox" name="rememberMe" className="custom-checkbox" />
-                  <span className="text-foreground/90">Keep me signed in</span>
+              {/* Remember me + Reset password */}
+              <div className="flex items-center justify-between text-sm">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="rememberMe" className="rounded border-border accent-primary" />
+                  <span className="text-muted-foreground">Keep me signed in</span>
                 </label>
-                <button type="button" onClick={onResetPassword} className="text-info transition-colors hover:underline">Reset password</button>
+                <button type="button" onClick={onResetPassword} className="text-primary font-bold hover:underline">
+                  Reset password
+                </button>
               </div>
 
+              {/* Submit button */}
               <Button
                 type="submit"
                 loading={loading}
                 loadingText="Signing in…"
-                className="animate-element animate-delay-600 h-14 w-full rounded-2xl text-base"
+                className="h-12 sm:h-13 w-full rounded-xl sm:rounded-2xl bg-primary text-primary-foreground font-bold text-sm hover:bg-primary-hover shadow-md shadow-primary/20 transition-all duration-200 active:scale-[0.98]"
               >
                 Sign in
+                <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </form>
 
-            <div className="animate-element animate-delay-700 relative flex items-center justify-center">
+            {/* Divider */}
+            <div className="relative flex items-center justify-center">
               <span className="w-full border-t border-border"></span>
-              <span className="px-4 text-sm text-muted-foreground bg-background absolute">Or continue with</span>
+              <span className="px-3 text-xs font-medium text-muted-foreground bg-background absolute uppercase tracking-wider">Or continue with</span>
             </div>
 
-            <div className="animate-element animate-delay-800 grid grid-cols-2 gap-3">
-              <button type="button" onClick={onGoogleSignIn} disabled={loading} className="flex items-center justify-center gap-3 border border-border rounded-2xl py-4 transition-colors hover:bg-secondary disabled:pointer-events-none disabled:bg-muted disabled:text-muted-foreground">
-                  <GoogleIcon />
-                  Google
+            {/* Social login buttons */}
+            <div className="grid grid-cols-2 gap-3">
+              <button 
+                type="button" 
+                onClick={onGoogleSignIn} 
+                disabled={loading} 
+                className="flex items-center justify-center gap-2.5 border border-border/80 rounded-xl sm:rounded-2xl py-3 sm:py-3.5 transition-all duration-200 hover:bg-muted/50 hover:border-border-strong active:scale-[0.98] disabled:pointer-events-none disabled:bg-muted disabled:text-muted-foreground font-semibold text-sm text-foreground"
+              >
+                <GoogleIcon />
+                Google
               </button>
-              <button type="button" onClick={onGithubSignIn} disabled={loading} className="flex items-center justify-center gap-3 border border-border rounded-2xl py-4 transition-colors hover:bg-secondary disabled:pointer-events-none disabled:bg-muted disabled:text-muted-foreground">
-                  <GithubIcon />
-                  GitHub
+              <button 
+                type="button" 
+                onClick={onGithubSignIn} 
+                disabled={loading} 
+                className="flex items-center justify-center gap-2.5 border border-border/80 rounded-xl sm:rounded-2xl py-3 sm:py-3.5 transition-all duration-200 hover:bg-muted/50 hover:border-border-strong active:scale-[0.98] disabled:pointer-events-none disabled:bg-muted disabled:text-muted-foreground font-semibold text-sm text-foreground"
+              >
+                <GithubIcon />
+                GitHub
               </button>
             </div>
 
-            <button type="button" onClick={onPasswordlessSignIn} disabled={loading} className="w-full rounded-2xl border border-border py-3 text-sm font-medium transition-colors hover:bg-secondary disabled:pointer-events-none disabled:bg-muted disabled:text-muted-foreground">
+            {/* Magic link */}
+            <button 
+              type="button" 
+              onClick={onPasswordlessSignIn} 
+              disabled={loading} 
+              className="w-full rounded-xl sm:rounded-2xl border border-border/80 py-3 sm:py-3.5 text-sm font-semibold text-muted-foreground transition-all duration-200 hover:bg-muted/50 hover:text-foreground active:scale-[0.98] disabled:pointer-events-none disabled:bg-muted disabled:text-muted-foreground"
+            >
               Sign in with email code or magic link
             </button>
 
-            <button type="button" onClick={onResendConfirmation} className="text-sm text-muted-foreground transition-colors hover:text-foreground hover:underline">
+            {/* Resend confirmation */}
+            <button 
+              type="button" 
+              onClick={onResendConfirmation} 
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground hover:underline"
+            >
               Didn&apos;t receive your account confirmation email?
             </button>
 
-            <p className="animate-element animate-delay-900 text-center text-sm text-muted-foreground">
-              New to our platform? <button type="button" onClick={onCreateAccount} className="text-info transition-colors hover:underline">Create Account</button>
+            {/* Create account link */}
+            <p className="text-center text-sm text-muted-foreground">
+              New to our platform?{' '}
+              <button type="button" onClick={onCreateAccount} className="text-primary font-bold hover:underline">
+                Create Account
+              </button>
             </p>
           </div>
         </div>
