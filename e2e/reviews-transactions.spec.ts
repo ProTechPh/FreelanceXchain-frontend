@@ -13,13 +13,13 @@ const user = {
   updatedAt: '2026-08-06T00:00:00.000Z',
 };
 
-async function authenticate(page: Page) {
+async function authenticate(page: Page, storedUser = user) {
   await page.addInitScript((storedUser) => {
     localStorage.setItem('access_token', 'app-access-token');
     localStorage.setItem('refresh_token', 'app-refresh-token');
     localStorage.setItem('auth-storage', JSON.stringify({ state: { user: storedUser, isAuthenticated: true }, version: 0 }));
-  }, user);
-  await page.route('**/api/auth/me', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ user }) }));
+  }, storedUser);
+  await page.route('**/api/auth/me', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ user: storedUser }) }));
   await page.route('**/auth/csrf-token', (route) => route.fulfill({
     status: 200,
     contentType: 'application/json',
@@ -84,4 +84,33 @@ test('employer opens an authorized transaction detail from payment history', asy
   await expect(page.getByRole('heading', { name: 'Transaction detail' })).toBeVisible();
   await expect(page.getByText('0xabcdef1234567890')).toBeVisible();
   await expect(page.getByText('sepolia')).toBeVisible();
+});
+
+test('freelancer applies and clears earnings transaction filters', async ({ page }) => {
+  const freelancer = { ...user, id: 'freelancer-1', role: 'freelancer' };
+  const observedFilters: string[] = [];
+
+  await authenticate(page, freelancer);
+  await page.route(/\/api\/transactions(?:\?.*)?$/, (route) => {
+    const url = new URL(route.request().url());
+    observedFilters.push(`${url.searchParams.get('type') ?? ''}|${url.searchParams.get('status') ?? ''}`);
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ items: [], hasMore: false, total: 0 }),
+    });
+  });
+
+  await page.goto('/dashboard/freelancer/earnings');
+  await page.getByLabel('Type').selectOption('escrow_release');
+  await page.getByLabel('Status').selectOption('completed');
+
+  await expect(page.getByText('2 filters selected')).toBeVisible();
+  await page.getByRole('button', { name: 'Apply filters' }).click();
+  await expect.poll(() => observedFilters).toContain('escrow_release|completed');
+
+  await page.getByRole('button', { name: 'Clear filters' }).click();
+  await expect(page.getByLabel('Type')).toHaveValue('');
+  await expect(page.getByLabel('Status')).toHaveValue('');
+  await expect.poll(() => observedFilters.at(-1)).toBe('|');
 });
