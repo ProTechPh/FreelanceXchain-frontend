@@ -7,6 +7,7 @@ type CsrfCookieName = (typeof CSRF_COOKIE_NAMES)[number];
 
 interface CsrfTokenResponse {
   cookieName: string;
+  token?: string;
 }
 
 interface CsrfTokenManagerDependencies {
@@ -60,27 +61,31 @@ export function createCsrfTokenManager({
   requestToken,
 }: CsrfTokenManagerDependencies) {
   let cookieName: CsrfCookieName | null = null;
+  let memoryToken: string | null = null;
   let initialized = false;
   let tokenRequest: Promise<string> | null = null;
 
   const currentToken = (): string | null => (
-    cookieName ? readCsrfCookie(readCookies(), cookieName) : null
+    memoryToken || (cookieName ? readCsrfCookie(readCookies(), cookieName) : null)
   );
 
   const generateToken = async (): Promise<string> => {
-    const response = await requestToken();
-    if (!isCsrfCookieName(response.cookieName)) {
-      throw new Error('The API returned an unsupported CSRF cookie name.');
-    }
+    try {
+      const response = await requestToken();
+      if (isCsrfCookieName(response.cookieName)) {
+        cookieName = response.cookieName;
+      }
 
-    cookieName = response.cookieName;
-    const token = currentToken();
-    if (!token) {
-      throw new Error('The API did not set a readable CSRF token cookie.');
-    }
+      if (response.token) {
+        memoryToken = response.token;
+      }
 
-    initialized = true;
-    return token;
+      const token = currentToken() || response.token || '';
+      initialized = true;
+      return token;
+    } catch {
+      return '';
+    }
   };
 
   const ensureToken = async (options: EnsureTokenOptions = {}): Promise<string> => {

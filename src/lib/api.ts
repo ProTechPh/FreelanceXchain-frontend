@@ -125,8 +125,14 @@ api.interceptors.request.use(
 
     const method = (config.method ?? 'get').toUpperCase();
     if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
-      const csrfToken = await csrfTokenManager.ensureToken();
-      config.headers['x-csrf-token'] = csrfToken;
+      try {
+        const csrfToken = await csrfTokenManager.ensureToken();
+        if (csrfToken) {
+          config.headers['x-csrf-token'] = csrfToken;
+        }
+      } catch {
+        // Proceed without csrf header for exempt or cross-subdomain requests
+      }
     }
 
     return config;
