@@ -23,18 +23,18 @@ function CallToAction() {
           <div className="pointer-events-none absolute inset-x-12 top-0 h-px bg-gradient-to-r from-transparent via-primary-foreground/40 to-transparent dark:via-primary/40" />
 
           {/* Badge */}
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/15 text-white text-xs font-bold mb-6 border border-white/20 backdrop-blur-xs">
-            <Sparkle className="size-3.5" fill="currentColor" />
+          <div className="mb-6 inline-flex items-center gap-1.5 rounded-full border border-primary-foreground/20 bg-primary-foreground/10 px-3.5 py-1.5 text-xs font-bold text-primary-foreground backdrop-blur-xs">
+            <Sparkle className="size-3.5 fill-current text-primary-subtle dark:text-primary" aria-hidden="true" />
             <span>Decentralized Freelance Economy</span>
           </div>
 
           {/* Title */}
-          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight max-w-2xl mx-auto break-words text-white">
+          <h2 className="mx-auto max-w-2xl break-words text-2xl font-extrabold leading-tight tracking-tight text-primary-foreground dark:text-foreground sm:text-4xl lg:text-5xl">
             Ready to hire or get hired? <br className="hidden sm:inline" />
-            <span className="text-white">Get started with smart escrow today.</span>
+            <span className="text-primary-subtle dark:text-primary">Get started with smart escrow today.</span>
           </h2>
 
-          <p className="mt-3 sm:mt-4 text-xs sm:text-base leading-relaxed max-w-xl mx-auto text-white/90 font-normal break-words">
+          <p className="mx-auto mt-3 max-w-xl break-words text-xs font-normal leading-relaxed text-primary-foreground/80 dark:text-muted-foreground sm:mt-4 sm:text-base">
             Join verified talent and top employers closing milestone contracts with AI speed, portable reputation, and Ethereum smart contract escrow.
           </p>
 

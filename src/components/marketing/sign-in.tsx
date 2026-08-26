@@ -91,9 +91,9 @@ export const SignInPage: React.FC<SignInPageProps> = ({
             </div>
             
             {/* Heading */}
-            <h1 className="text-4xl lg:text-5xl font-extrabold leading-tight tracking-tight mb-5 text-white">
+            <p className="text-4xl lg:text-5xl font-extrabold leading-tight tracking-tight mb-5 text-white">
               Welcome back to FreelanceXchain
-            </h1>
+            </p>
             
             {/* Description */}
             <p className="text-lg leading-relaxed mb-10 text-white/90">

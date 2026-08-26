@@ -17,7 +17,11 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'NEXT_DIST_DIR=.next-e2e NEXT_PUBLIC_API_URL=http://127.0.0.1:3100/api pnpm dev --hostname 127.0.0.1 --port 3100',
+    command: 'pnpm dev --hostname 127.0.0.1 --port 3100',
+    env: {
+      NEXT_DIST_DIR: '.next-e2e',
+      NEXT_PUBLIC_API_URL: 'http://127.0.0.1:3100/api',
+    },
     url: 'http://127.0.0.1:3100',
     reuseExistingServer: false,
     timeout: 120_000,

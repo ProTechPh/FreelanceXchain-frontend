@@ -100,9 +100,9 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
             </div>
             
             {/* Heading */}
-            <h1 className="text-4xl lg:text-5xl font-extrabold leading-tight tracking-tight mb-5 text-white">
+            <h2 className="text-4xl lg:text-5xl font-extrabold leading-tight tracking-tight mb-5 text-white">
               Start your decentralized freelance journey today
-            </h1>
+            </h2>
             
             {/* Description */}
             <p className="text-lg leading-relaxed mb-10 text-white/90">
