@@ -14,7 +14,7 @@ import { formatFileSize, safeAttachmentUrl } from '@/lib/attachment-presentation
 import { useAuthStore } from '@/stores/authStore';
 import { getMarketplaceReturnPath } from '@/lib/marketplace-return';
 import { toast } from 'sonner';
-import { ArrowLeft, Zap, ShieldCheck, DollarSign, Clock, Users, Calendar, Send, Share2, ExternalLink, Paperclip } from 'lucide-react';
+import { ArrowLeft, Zap, ShieldCheck, Send, Share2, ExternalLink, Paperclip } from 'lucide-react';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
 import Navbar from '@/components/layout/navbar';
 import { FooterSection } from '@/components/layout/footer-section';

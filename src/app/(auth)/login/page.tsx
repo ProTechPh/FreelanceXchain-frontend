@@ -18,15 +18,17 @@ export default function LoginPage() {
   useEffect(() => {
     const errorParam = searchParams?.get('error');
     if (errorParam) {
-      try {
-        const errorData = JSON.parse(decodeURIComponent(errorParam));
-        setOauthError(errorData.message || 'Sign-in failed. Please try again.');
-      } catch {
-        // If not JSON, use the raw error string
-        setOauthError(decodeURIComponent(errorParam));
-      }
-      // Clear the error from URL without reloading
-      window.history.replaceState({}, '', '/login');
+      queueMicrotask(() => {
+        try {
+          const errorData = JSON.parse(decodeURIComponent(errorParam));
+          setOauthError(errorData.message || 'Sign-in failed. Please try again.');
+        } catch {
+          // If not JSON, use the raw error string
+          setOauthError(decodeURIComponent(errorParam));
+        }
+        // Clear the error from URL without reloading
+        window.history.replaceState({}, '', '/login');
+      });
     }
   }, [searchParams]);
 

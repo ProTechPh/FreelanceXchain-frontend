@@ -38,9 +38,25 @@ function CallToAction() {
             Join verified talent and top employers closing milestone contracts with AI speed, portable reputation, and Ethereum smart contract escrow.
           </p>
 
-            <p className="mx-auto mt-3 max-w-xl break-words text-xs font-normal leading-relaxed text-primary-foreground/80 dark:text-muted-foreground sm:mt-4 sm:text-base">
-              Join verified talent and top employers closing milestone contracts with AI speed, portable reputation, and Ethereum smart contract escrow.
-            </p>
+          {/* Action Buttons */}
+          <div className="mt-8 flex flex-wrap justify-center items-center gap-3">
+            <Link
+              href="/register"
+              className="group inline-flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3.5 rounded-full bg-primary-foreground text-primary font-bold text-sm shadow-lg transition-all duration-150 hover:bg-success-subtle active:scale-[0.98]"
+            >
+              <span>Get Started Free</span>
+              <ArrowRight
+                className="size-4 transition-transform duration-150 group-hover:translate-x-1"
+                strokeWidth={2.5}
+              />
+            </Link>
+            <Link
+              href="/projects"
+              className="inline-flex items-center justify-center w-full sm:w-auto px-7 py-3.5 rounded-full border border-primary-foreground/25 text-primary-foreground font-semibold text-sm transition-all duration-150 hover:bg-primary-foreground/10 active:scale-[0.98]"
+            >
+              Browse Projects
+            </Link>
+          </div>
 
           {/* Bottom Trust Badges */}
           <div className="mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-primary-foreground/15 flex flex-wrap justify-center items-center gap-4 sm:gap-10 text-xs text-white/90 font-medium">

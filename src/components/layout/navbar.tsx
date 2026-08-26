@@ -62,6 +62,7 @@ export default function Navbar({
     signup: { text: "Get Started", url: "/register" },
   },
 }: NavbarProps) {
+  const pathname = usePathname();
   const [openSearch, setOpenSearch] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [globalSearchQuery, setGlobalSearchQuery] = React.useState('');
@@ -100,7 +101,7 @@ export default function Navbar({
           {menu.map((item) => {
             const isActive = item.url.startsWith('/#') 
               ? false 
-              : usePathname() === item.url;
+              : pathname === item.url;
             return (
               <Link
                 key={item.title}

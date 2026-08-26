@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Clock, DollarSign, Users, Zap, ShieldCheck, Calendar, ArrowRight, Briefcase } from 'lucide-react';
+import { Clock, DollarSign, Users, Zap, ShieldCheck, Briefcase } from 'lucide-react';
 import { MarketplaceBrowser } from "@/components/marketplace/marketplace-browser";
 import { PublicMarketplaceShell } from "@/components/marketplace/public-marketplace-shell";
 import type { Project } from "@/types";
