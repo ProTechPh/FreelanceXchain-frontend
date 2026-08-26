@@ -1,12 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ui/status-badge';
 import Link from 'next/link';
-import { projectsApi, analyticsApi, freelancersApi, reputationApi } from '@/lib/api';
+import { projectsApi, freelancersApi, reputationApi } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
+import { useEmployerAnalytics } from '@/hooks/use-analytics';
+import { AnalyticsRangeFilter } from '@/components/analytics/range-filter';
+import { DEFAULT_RANGE_PRESET, getRangeLabel, resolveRange, type RangePresetId } from '@/lib/analytics-range';
 import type { Project, Proposal } from '@/types';
 import { toast } from 'sonner';
 import { DollarSign, FolderOpen, FileText, Users, Clock, ArrowUpRight, PlusCircle, Briefcase } from 'lucide-react';
@@ -40,26 +43,26 @@ function initials(name: string): string {
 export default function EmployerDashboard() {
   const currentUser = useAuthStore((state) => state.user);
   const [loading, setLoading] = useState(true);
-  const [totalSpent, setTotalSpent] = useState<number | null>(null);
+  const [range, setRange] = useState<RangePresetId>(DEFAULT_RANGE_PRESET);
   const [projects, setProjects] = useState<Project[]>([]);
   const [pendingProposalCount, setPendingProposalCount] = useState(0);
-  const [activeContractCount, setActiveContractCount] = useState<number | null>(null);
   const [recentProposals, setRecentProposals] = useState<RecentProposalView[]>([]);
+
+  // Only analytics moves to React Query here — it is the one resource the range
+  // filter refetches, and the API already caches it for 60s.
+  const analyticsRange = useMemo(() => resolveRange(range, new Date()), [range]);
+  const { data: analytics } = useEmployerAnalytics(analyticsRange, Boolean(currentUser));
+  const totalSpent = analytics?.totalSpent ?? null;
+  const completedContractCount = analytics?.projectsCompleted ?? null;
 
   useEffect(() => {
     if (!currentUser) return;
 
     const load = async () => {
       try {
-        const [analyticsRes, projectsRes] = await Promise.allSettled([
-          analyticsApi.getEmployer(),
+        const [projectsRes] = await Promise.allSettled([
           projectsApi.getMyProjects(),
         ]);
-
-        if (analyticsRes.status === 'fulfilled') {
-          setTotalSpent(analyticsRes.value.data.totalSpent);
-          setActiveContractCount(analyticsRes.value.data.projectsCompleted);
-        }
 
         let myProjects: Project[] = [];
         if (projectsRes.status === 'fulfilled') {
@@ -130,7 +133,7 @@ export default function EmployerDashboard() {
       bg: 'bg-primary/10',
     },
     {
-      title: 'Total Spent',
+      title: range === 'all' ? 'Total Spent' : `Spent · ${getRangeLabel(range)}`,
       value: formatAmount(totalSpent),
       icon: DollarSign,
       color: 'text-success',
@@ -145,7 +148,7 @@ export default function EmployerDashboard() {
     },
     {
       title: 'Completed Contracts',
-      value: activeContractCount !== null ? String(activeContractCount) : '—',
+      value: completedContractCount !== null ? String(completedContractCount) : '—',
       icon: Briefcase,
       color: 'text-warning',
       bg: 'bg-warning-subtle',
@@ -159,6 +162,12 @@ export default function EmployerDashboard() {
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Welcome back{currentUser?.name ? `, ${currentUser.name}` : ''}!</h1>
           <p className="text-muted-foreground">Manage your projects and find talent</p>
+          <AnalyticsRangeFilter
+            value={range}
+            onChange={setRange}
+            label="Spending date range"
+            className="mt-3"
+          />
         </div>
         <Link href="/dashboard/employer/projects/new">
           <Button variant="gradient">

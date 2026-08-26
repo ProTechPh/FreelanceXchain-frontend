@@ -167,10 +167,17 @@ export function TopBar() {
               </Avatar>
               <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <div className="px-3 py-2">
-                <p className="text-sm font-medium">{user?.name || 'User'}</p>
-                <p className="text-xs text-muted-foreground">{user?.email}</p>
+            <DropdownMenuContent align="end" className="w-56">
+              {/* The menu is a fixed width, so an address longer than it must
+                  ellipsize rather than clip mid-character. `title` keeps the full
+                  value reachable on hover. */}
+              <div className="min-w-0 px-3 py-2">
+                <p className="truncate text-sm font-medium" title={user?.name || 'User'}>
+                  {user?.name || 'User'}
+                </p>
+                <p className="truncate text-xs text-muted-foreground" title={user?.email}>
+                  {user?.email}
+                </p>
               </div>
               {hasParticipantDashboard && (
                 <>

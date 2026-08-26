@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowDownLeft, ArrowUpRight, CircleDollarSign, ReceiptText, WalletCards } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, ChevronDown, CircleDollarSign, ListFilter, ReceiptText, WalletCards, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { transactionsApi } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/auth-contract';
@@ -71,6 +71,12 @@ export function ParticipantTransactions({ role }: { role: ParticipantRole }) {
   }, [transactions, user]);
 
   const applyFilters = () => void load(typeFilter, statusFilter);
+  const selectedFilterCount = Number(Boolean(typeFilter)) + Number(Boolean(statusFilter));
+  const clearFilters = () => {
+    setTypeFilter('');
+    setStatusFilter('');
+    void load();
+  };
   const title = role === 'freelancer' ? 'Earnings and transactions' : 'Payments and transactions';
 
   return (
@@ -87,11 +93,73 @@ export function ParticipantTransactions({ role }: { role: ParticipantRole }) {
         ))}
       </div>
 
-      <Card>
-        <CardContent className="grid gap-4 p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
-          <div className="space-y-2"><Label htmlFor="transaction-type">Type</Label><select id="transaction-type" className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm" value={typeFilter} onChange={(event) => setTypeFilter(event.target.value)}><option value="">All types</option>{Object.entries(typeLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>
-          <div className="space-y-2"><Label htmlFor="transaction-status">Status</Label><select id="transaction-status" className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}><option value="">All statuses</option><option value="pending">Pending</option><option value="completed">Completed</option><option value="failed">Failed</option></select></div>
-          <Button type="button" variant="outline" onClick={applyFilters}>Apply filters</Button>
+      <Card className="gap-0 py-0">
+        <CardContent className="p-0">
+          <form onSubmit={(event) => { event.preventDefault(); applyFilters(); }}>
+            <div className="flex flex-col gap-3 border-b border-border bg-muted/40 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-primary-subtle text-primary">
+                  <ListFilter className="size-4" aria-hidden="true" />
+                </span>
+                <div>
+                  <h2 className="text-sm font-bold text-foreground">Filter transactions</h2>
+                  <p className="text-xs text-muted-foreground" role="status" aria-live="polite">
+                    {selectedFilterCount === 0
+                      ? 'Showing all transaction activity'
+                      : `${selectedFilterCount} ${selectedFilterCount === 1 ? 'filter' : 'filters'} selected`}
+                  </p>
+                </div>
+              </div>
+
+              {selectedFilterCount > 0 && (
+                <Button type="button" variant="ghost" size="sm" className="self-start sm:self-auto" disabled={loading} onClick={clearFilters}>
+                  <X className="size-4" aria-hidden="true" />
+                  Clear filters
+                </Button>
+              )}
+            </div>
+
+            <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] lg:items-end">
+              <div className="space-y-1.5">
+                <Label htmlFor="transaction-type" className="text-xs font-semibold">Type</Label>
+                <div className="relative">
+                  <select
+                    id="transaction-type"
+                    className="h-10 w-full appearance-none rounded-md border border-input bg-background px-3 pr-10 text-sm text-foreground transition-[border-color,box-shadow] duration-fast hover:border-foreground/30 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
+                    value={typeFilter}
+                    onChange={(event) => setTypeFilter(event.target.value)}
+                  >
+                    <option value="">All types</option>
+                    {Object.entries(typeLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="transaction-status" className="text-xs font-semibold">Status</Label>
+                <div className="relative">
+                  <select
+                    id="transaction-status"
+                    className="h-10 w-full appearance-none rounded-md border border-input bg-background px-3 pr-10 text-sm text-foreground transition-[border-color,box-shadow] duration-fast hover:border-foreground/30 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
+                    value={statusFilter}
+                    onChange={(event) => setStatusFilter(event.target.value)}
+                  >
+                    <option value="">All statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="completed">Completed</option>
+                    <option value="failed">Failed</option>
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                </div>
+              </div>
+
+              <Button type="submit" className="w-full sm:col-span-2 lg:col-span-1 lg:w-auto" disabled={loading}>
+                <ListFilter className="size-4" aria-hidden="true" />
+                Apply filters
+              </Button>
+            </div>
+          </form>
         </CardContent>
       </Card>
 

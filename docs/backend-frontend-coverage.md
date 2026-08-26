@@ -1,6 +1,6 @@
 # Backend-to-frontend coverage
 
-This matrix was audited on 2026-08-06 against `FreelanceXchain-api` commit `7a8ce97` on branch `Aug5`. The legacy frontend commit `b16452cff786771477eff3299eeade23462edb6d` was used only as a behavioral reference.
+This matrix was audited on 2026-08-06 against `FreelanceXchain-api` commit `7a8ce97` on branch `Aug5`, and re-audited on 2026-08-26 against commit `f815ec0` (v1.0.15) to cover the payment-ledger and audit-search routes added since. The legacy frontend commit `b16452cff786771477eff3299eeade23462edb6d` was used only as a behavioral reference.
 
 Status meanings:
 
@@ -35,6 +35,8 @@ Status meanings:
 | Contracts | `GET /contracts`, `/contracts/:id`, `GET /contracts/:id/fund-info`, `POST /contracts/:id/fund`, `/contracts/:id/cancel`, `GET /contracts/:id/disputes` | Participants; mutations require approved KYC | Role-specific contract lists and workspaces, backend-managed funding, cancellation, related disputes |
 | Milestones | `GET /milestones/contract/:contractId`; `POST /milestones/:id/submit-with-files`, `/approve`, `/reject` | Participant role; protected through contract workflow | Deliverable upload/submission and employer feedback/approval/rejection |
 | Payment summary | `GET /payments/contracts/:contractId/status` | Contract participant | Contract payment status and milestone progress |
+| Contract payment ledger | `GET /payments/contracts/:contractId/history` | Contract parties or admin | Payment ledger card in the contract workspace, signed per viewer, with completed-only totals |
+| Personal payment ledger | `GET /payments/me`, `GET /payments/summary` | Authenticated | Freelancer earnings and employer transactions pages: lifetime totals plus an offset-paginated ledger |
 | Rush upgrades | Contract request/history and rush response/counter routes | Participant role; mutations require approved KYC | Contract negotiation panel for request, accept, decline, counter, and history |
 | Escrow refunds | Request/history/approve/reject routes under `/escrow` | Participants; mutations require approved KYC | Contract negotiation panel with party/status guards |
 | Transactions | `GET /transactions`, `/transactions/:id`, `/transactions/contract/:contractId` | Authenticated participant | Filtered transaction lists, details, and contract transaction history |
@@ -50,7 +52,8 @@ Status meanings:
 | Owned file storage | `GET /file-management`, `/quota`; `DELETE /file-management/:bucket/:path` | Authenticated owner | Participant settings show quota/files and confirm owned-file deletion |
 | Personal audit activity | `GET /audit-logs/me` | Authenticated | Role-specific activity pages |
 | Admin audit | User/resource/action/failed/range/report/detail routes under `/audit-logs` | Admin | `/dashboard/admin/audit-logs` filters, reports, and detail presentation |
-| Participant analytics | `GET /analytics/freelancer`, `/analytics/employer` | Authenticated | Role dashboards with empty/error fallback states |
+| Admin audit search | `GET /audit-logs/search`, `GET /audit-logs/summary/admin-activity` | Admin | Server-side actor/user/action/resource/status/date filtering with cursor pagination, plus the per-admin per-day activity card |
+| Participant analytics | `GET /analytics/freelancer`, `/analytics/employer` (incl. `startDate`/`endDate`) | Authenticated | Role dashboards with empty/error fallback states and a date-range preset filter |
 | Admin analytics and users | `/admin/stats`, `/admin/analytics`, `/admin/users...` | Admin | Admin overview, analytics, user filtering/suspension/unsuspension/verification |
 | Admin system health | `GET /admin/system/health` | Admin | `/dashboard/admin/system` with live database, storage, and uptime signals |
 | Admin inbox | Inbox list/detail/update/delete/send/reply/unread routes | Admin | `/dashboard/admin/email` |
@@ -82,3 +85,6 @@ Status meanings:
 - Backend errors currently use both `{ error: { message } }` and `{ error: "message" }`; the shared error reader supports both shapes plus `{ message }`.
 - Project, proposal, milestone, dispute, portfolio, and message attachment workflows preserve the backend field names and multipart limits used by their current routes.
 - Inbound webhooks, blockchain provider behavior, real wallet balances/networks, email delivery, SSE longevity, and KYC provider redirects still require staging acceptance with configured external services.
+- `GET /payments/contracts/:id/history` and `GET /transactions/contract/:contractId` are both shown on the contract workspace on purpose. They are different collections — the first is the `payments` money ledger (camelCase, `paymentType`, payer/payee), the second is the blockchain `transactions` record (snake_case). They are labelled "Payment ledger" and "Blockchain transactions" so the overlap does not read as duplicated data.
+- The API sends `Cache-Control: no-store` on every `/api/*` response and exposes no ETag, so the browser cache is unavailable and the React Query client cache is the only one. Its `staleTime` mirrors the server's in-memory LRU TTLs (60s for analytics and payment totals, 5 min for skill trends and platform metrics).
+- Those server caches have no invalidation hook, so a client-side refetch after a mutation can still return the pre-mutation value for up to the full TTL. The contract payment ledger is uncached server-side and is therefore the only one of these surfaces that is fresh immediately. UI on the cached surfaces must not claim live freshness.

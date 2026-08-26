@@ -150,6 +150,16 @@ test('freelancer dashboard browse page uses the server search contract', async (
   await expect(page.getByRole('heading', { level: 1, name: 'Browse projects' })).toBeVisible();
   await expect(page.getByRole('navigation', { name: 'Dashboard' })).toBeVisible();
 
+  await page.getByLabel('Search', { exact: true }).fill('React');
+  await page.getByLabel('Minimum budget').fill('500');
+  await page.getByLabel('Maximum budget').fill('5000');
+  await expect(page.getByText('3 filters selected')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Clear filters' }).click();
+  await expect(page.getByLabel('Search', { exact: true })).toHaveValue('');
+  await expect(page.getByLabel('Minimum budget')).toHaveValue('');
+  await expect(page.getByLabel('Maximum budget')).toHaveValue('');
+
   // Exactly one main landmark and one h1.
   expect(await page.locator('main').count()).toBe(1);
   expect(await page.locator('h1').count()).toBe(1);

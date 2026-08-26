@@ -43,6 +43,12 @@ test.beforeEach(async ({ page }) => {
     headers: { 'set-cookie': 'psifi.x-csrf-token=e2e-csrf-token; Path=/; SameSite=Lax' },
     body: JSON.stringify({ cookieName: 'psifi.x-csrf-token' }),
   }));
+  // The workspace now also loads the payment ledger; stub it so the spec stays hermetic.
+  await page.route('**/api/payments/contracts/*/history', (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ contractId, items: [] }),
+  }));
 });
 
 test('employer funds a pending contract through the backend escrow endpoint', async ({ page }) => {

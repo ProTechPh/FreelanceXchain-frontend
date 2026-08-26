@@ -70,7 +70,7 @@ export default function SkillAnalysisPage() {
       ) : <Card><CardContent className="py-10 text-center text-muted-foreground">No skill analysis is available yet.</CardContent></Card>}
 
       <Card>
-        <CardHeader><CardTitle className="flex items-center gap-2"><Search className="size-5" />Extract skills from text</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="flex items-center gap-2"><Search className="size-5" />Resume</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           <form className="space-y-3" onSubmit={extractSkills}><Field label="Job description, résumé, or project brief" htmlFor="skill-source-text">
 <Textarea id="skill-source-text" rows={6} value={text} onChange={(event) => setText(event.target.value)} />

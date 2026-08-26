@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 import { FreelanceXchainIcon } from "@/components/ui/freelancexchain-logo";
+import { MobileEscrowPreview } from "@/components/marketing/mobile-escrow-preview";
 import { ArrowRight, Sparkles as Sparkle, CircleCheck as CheckCircle, ShieldCheck, Briefcase, Menu as List, Settings as Gear, CircleQuestionMark as Question, Search as MagnifyingGlass, Check, Coins, TrendingUp as TrendUp, FileCode } from 'lucide-react';
 
 const trustBadges = [
@@ -80,7 +81,10 @@ export default function AetherHero() {
         );
 
   return (
-    <section className="relative bg-background overflow-hidden pt-32 pb-16 lg:pt-40 lg:pb-24 border-b border-border/40">
+    <section
+      aria-label="Freelance marketplace introduction"
+      className="relative overflow-hidden border-b border-border/40 bg-background pt-32 pb-16 lg:pt-40 lg:pb-24"
+    >
       {/* Soft background glow */}
       <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-primary/5 rounded-full blur-3xl pointer-events-none -z-10" />
 
@@ -128,7 +132,7 @@ export default function AetherHero() {
           >
             <Link
               href="/register"
-              className="group inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full bg-primary text-primary-foreground font-bold text-sm shadow-md shadow-[#0f4c3d]/20 transition-all duration-150 hover:bg-chart-2 hover:shadow-lg active:scale-[0.98]"
+              className="group inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full bg-primary text-primary-foreground font-bold text-sm shadow-md transition-all duration-150 hover:bg-primary-hover hover:shadow-lg active:scale-[0.98]"
             >
               <span>Get Started Free</span>
               <ArrowRight
@@ -167,12 +171,16 @@ export default function AetherHero() {
           </motion.div>
         </div>
 
+        <MobileEscrowPreview />
+
         {/* FreelanceXchain Desktop Contract Workspace Mockup */}
         <motion.div
+          role="region"
+          aria-label="Interactive contract workspace preview"
           initial={reduce ? false : { opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.38, ease: [0.16, 1, 0.3, 1] }}
-          className="mt-14 mx-auto max-w-5xl relative"
+          className="relative mx-auto mt-14 hidden max-w-5xl md:block"
         >
           {/* Floating Escrow Funded Badge Top-Right */}
           <motion.div
@@ -215,7 +223,7 @@ export default function AetherHero() {
                     <FreelanceXchainIcon size={24} />
                   </div>
                   <span className="font-extrabold text-sm text-foreground tracking-tight flex items-center">
-                    Freelance<span className="text-primary font-black px-0.5 drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]">X</span>chain
+                    Freelance<span className="px-0.5 font-black text-primary">X</span>chain
                   </span>
                 </div>
 

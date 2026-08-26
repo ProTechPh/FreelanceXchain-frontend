@@ -9,10 +9,14 @@ const utilityDestinations = [
   'Settings',
 ];
 
-async function authenticateParticipant(page: Page, role: 'freelancer' | 'employer') {
+async function authenticateParticipant(
+  page: Page,
+  role: 'freelancer' | 'employer',
+  email = `${role}@example.com`,
+) {
   const user = {
     id: `${role}-1`,
-    email: `${role}@example.com`,
+    email,
     name: role,
     role,
     walletAddress: '',
@@ -65,3 +69,29 @@ for (const role of ['freelancer', 'employer'] as const) {
     await expect(page).toHaveURL(`/dashboard/${role}/saved`);
   });
 }
+
+test('a long email ellipsizes inside the fixed-width account menu', async ({ page }) => {
+  // The menu is a fixed width, so an address wider than it must show an ellipsis
+  // rather than clip mid-character (which read as a rendering bug).
+  const email = 'freelancer1@demo.freelancexchange.com';
+  await authenticateParticipant(page, 'freelancer', email);
+  await page.goto('/dashboard/freelancer/activity');
+
+  await page.getByRole('button', { name: 'Open account menu' }).click();
+  const address = page.getByTitle(email);
+  await expect(address).toBeVisible();
+
+  const box = await address.evaluate((el) => ({
+    overflowing: el.scrollWidth > el.clientWidth,
+    textOverflow: getComputedStyle(el).textOverflow,
+    whiteSpace: getComputedStyle(el).whiteSpace,
+  }));
+  expect(box.overflowing).toBe(true);
+  expect(box.textOverflow).toBe('ellipsis');
+  expect(box.whiteSpace).toBe('nowrap');
+
+  // And it must stay inside the menu rather than spilling past its edge.
+  const menuBox = (await page.locator('[data-slot="dropdown-menu-content"]').boundingBox())!;
+  const addressBox = (await address.boundingBox())!;
+  expect(addressBox.x + addressBox.width).toBeLessThanOrEqual(menuBox.x + menuBox.width + 1);
+});

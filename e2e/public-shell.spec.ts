@@ -15,3 +15,93 @@ test('public landing page exposes primary marketplace navigation', async ({ page
     '/freelancers',
   );
 });
+
+test('landing hero uses a compact escrow preview on mobile', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto('/');
+
+  const hero = page.getByRole('region', { name: 'Freelance marketplace introduction' });
+  await expect(page.getByRole('region', { name: 'Mobile escrow workflow preview' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Interactive contract workspace preview' })).toBeHidden();
+
+  const heroBox = await hero.boundingBox();
+  expect(heroBox?.height).toBeLessThan(1_500);
+});
+
+test('landing hero keeps the full contract workspace on desktop', async ({ page }) => {
+  await page.setViewportSize({ width: 1_280, height: 900 });
+  await page.goto('/');
+
+  await expect(page.getByRole('region', { name: 'Interactive contract workspace preview' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Mobile escrow workflow preview' })).toBeHidden();
+});
+
+test('public navbar does not nest interactive controls', async ({ page }) => {
+  await page.goto('/');
+
+  await expect(page.locator('a button')).toHaveCount(0);
+});
+
+test('public navbar icon actions keep a visible keyboard focus indicator', async ({ page }) => {
+  await page.setViewportSize({ width: 768, height: 900 });
+  await page.goto('/');
+
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', { name: /Theme:/ })).toBeFocused();
+
+  const themeOutline = await page.getByRole('button', { name: /Theme:/ }).evaluate(
+    (element) => getComputedStyle(element).outlineStyle,
+  );
+  expect(themeOutline).not.toBe('none');
+
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', { name: 'Open search dialog' })).toBeFocused();
+
+  const searchOutline = await page.getByRole('button', { name: 'Open search dialog' }).evaluate(
+    (element) => getComputedStyle(element).outlineStyle,
+  );
+  expect(searchOutline).not.toBe('none');
+});
+
+test('final marketplace CTA uses its high-contrast foreground palette', async ({ page }) => {
+  for (const colorScheme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme });
+    await page.goto('/');
+
+    const heading = page.getByRole('heading', { name: /Ready to hire or get hired/ });
+    await heading.scrollIntoViewIfNeeded();
+
+    const colors = await heading.evaluate((element) => {
+      const parseColor = (value: string) => {
+        if (value.startsWith('#')) {
+          const rawHex = value.slice(1);
+          const hex = rawHex.length === 3
+            ? rawHex.split('').map((channel) => `${channel}${channel}`).join('')
+            : rawHex;
+          return hex.match(/.{2}/g)?.map((channel) => Number.parseInt(channel, 16)) ?? [];
+        }
+
+        return value.match(/[\d.]+/g)?.slice(0, 3).map(Number) ?? [];
+      };
+
+      const rootStyles = getComputedStyle(document.documentElement);
+      const accent = element.querySelector('span');
+      const darkTheme = document.documentElement.classList.contains('dark');
+
+      return {
+        heading: parseColor(getComputedStyle(element).color),
+        expectedHeading: parseColor(
+          rootStyles.getPropertyValue(darkTheme ? '--foreground' : '--primary-foreground').trim(),
+        ),
+        accent: accent ? parseColor(getComputedStyle(accent).color) : [],
+        expectedAccent: parseColor(
+          rootStyles.getPropertyValue(darkTheme ? '--primary' : '--primary-subtle').trim(),
+        ),
+      };
+    });
+
+    expect(colors.heading).toEqual(colors.expectedHeading);
+    expect(colors.accent).toEqual(colors.expectedAccent);
+  }
+});
