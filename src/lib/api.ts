@@ -182,8 +182,10 @@ export const authApi = {
   oauthLogin: (provider: 'google' | 'github') =>
     api.get<{ url: string }>(`/auth/oauth/${provider}`),
 
-  oauthCallback: (accessToken: string) =>
-    api.post<OAuthCallbackResponse>('/auth/oauth/callback', { access_token: accessToken }),
+  oauthCallback: (data: { access_token?: string; accessToken?: string; userId?: string; secret?: string } | string) => {
+    const payload = typeof data === 'string' ? { access_token: data } : data;
+    return api.post<OAuthCallbackResponse>('/auth/oauth/callback', payload);
+  },
 
   oauthRegister: (accessToken: string, role: Exclude<UserRole, 'admin'>) =>
     api.post<AuthSuccessResponse>('/auth/oauth/register', { accessToken, role }),

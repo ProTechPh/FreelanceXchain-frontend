@@ -32,7 +32,7 @@ export function isMfaRequiredResponse(response: unknown): response is MfaRequire
 
 export function isRegistrationRequiredResponse(
   response: unknown,
-): response is { status: 'registration_required'; message?: string } {
+): response is { status: 'registration_required'; message?: string; access_token?: string } {
   return isRecord(response) && response.status === 'registration_required';
 }
 

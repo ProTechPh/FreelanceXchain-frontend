@@ -2,6 +2,7 @@
 
 import { Menu as List, Search as MagnifyingGlass, Zap as Lightning, Users, Newspaper } from 'lucide-react';
 import * as React from "react";
+import { usePathname } from 'next/navigation';
 
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -96,16 +97,25 @@ export default function Navbar({
 
         {/* Desktop nav links — hidden below lg, compact on lg */}
         <div className="hidden lg:flex items-center gap-0.5 xl:gap-1">
-          {menu.map((item) => (
-            <Link
-              key={item.title}
-              href={item.url}
-              onClick={(e) => handleSmoothScroll(e, item.url)}
-              className="px-2.5 xl:px-3 py-1.5 rounded-full text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all cursor-pointer whitespace-nowrap"
-            >
-              {item.title}
-            </Link>
-          ))}
+          {menu.map((item) => {
+            const isActive = item.url.startsWith('/#') 
+              ? false 
+              : usePathname() === item.url;
+            return (
+              <Link
+                key={item.title}
+                href={item.url}
+                onClick={(e) => handleSmoothScroll(e, item.url)}
+                className={`px-2.5 xl:px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+                  isActive 
+                    ? 'text-primary bg-primary/10' 
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/60'
+                }`}
+              >
+                {item.title}
+              </Link>
+            );
+          })}
         </div>
 
         {/* Desktop auth — hidden below sm */}

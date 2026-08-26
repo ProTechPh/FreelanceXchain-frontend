@@ -419,6 +419,20 @@
     background-image: linear-gradient(135deg, var(--primary) 0%, var(--chart-2) 55%, var(--chart-3) 100%);
   }
 
+  /* Fill utilities for SVG icons — these map semantic colors to fill property */
+  .fill-warning {
+    fill: var(--warning);
+  }
+  .fill-success {
+    fill: var(--success);
+  }
+  .fill-primary {
+    fill: var(--primary);
+  }
+  .fill-muted-foreground {
+    fill: var(--muted-foreground);
+  }
+
   .gradient-text {
     background-image: linear-gradient(135deg, var(--primary) 0%, var(--chart-3) 100%);
     -webkit-background-clip: text;

@@ -3,69 +3,94 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { MapPin, ShieldCheck } from 'lucide-react';
+import { MapPin, ShieldCheck, Clock, CircleCheck, CircleMinus, ArrowRight } from 'lucide-react';
 import { MarketplaceBrowser } from "@/components/marketplace/marketplace-browser";
 import { PublicMarketplaceShell } from "@/components/marketplace/public-marketplace-shell";
 import type { FreelancerProfile } from "@/types";
 import { marketplaceFiltersFromSearchParams } from "@/lib/marketplace-search";
 
-const availabilityColors: Record<string, string> = {
-  available: "bg-success-subtle text-success dark:text-success",
-  busy: "bg-warning-subtle text-warning",
-  unavailable: "bg-neutral-subtle text-neutral",
+const availabilityConfig: Record<string, { colors: string; icon: React.ReactNode; label: string }> = {
+  available: {
+    colors: "bg-success/10 text-success border border-success/20",
+    icon: <CircleCheck className="w-3 h-3" />,
+    label: "Available",
+  },
+  busy: {
+    colors: "bg-warning/10 text-warning border border-warning/20",
+    icon: <Clock className="w-3 h-3" />,
+    label: "Busy",
+  },
+  unavailable: {
+    colors: "bg-neutral/10 text-neutral border border-neutral/20",
+    icon: <CircleMinus className="w-3 h-3" />,
+    label: "Unavailable",
+  },
 };
 
 function FreelancerResult({ freelancer, listingQuery }: { freelancer: FreelancerProfile; listingQuery: string }) {
   const initials = (freelancer.name ?? "U").split(" ").map((name) => name[0]).join("");
   const returnPath = `/freelancers${listingQuery ? `?${listingQuery}` : ""}`;
+  const availability = availabilityConfig[freelancer.availability] || availabilityConfig.available;
+  
   return (
     <Link href={`/freelancers/${freelancer.userId}?returnTo=${encodeURIComponent(returnPath)}`} className="block h-full group">
       <div className="h-full rounded-3xl bg-card border border-border/80 p-6 shadow-md shadow-black/5 hover:border-primary/50 hover:shadow-xl transition-all duration-300 flex flex-col justify-between">
         <div>
-          <div className="mb-4 flex items-start gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-primary text-primary-foreground font-extrabold text-base flex items-center justify-center shadow-xs shrink-0">
+          {/* Header: Avatar + Name + Bio */}
+          <div className="mb-5 flex items-start gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-extrabold text-lg flex items-center justify-center shadow-md shadow-primary/20 shrink-0">
               {initials}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5">
-                <h2 className="truncate text-base font-bold text-foreground group-hover:text-primary transition-colors">
+              <div className="flex items-center gap-2">
+                <h2 className="truncate text-lg font-bold text-foreground group-hover:text-primary transition-colors">
                   {freelancer.name || "Verified Freelancer"}
                 </h2>
-                <ShieldCheck className="size-4 text-success shrink-0" />
+                <ShieldCheck className="w-5 h-5 text-success shrink-0" />
               </div>
-              <p className="mt-1 line-clamp-2 text-xs text-muted-foreground leading-relaxed">
+              <p className="mt-1.5 line-clamp-2 text-sm text-muted-foreground leading-relaxed">
                 {freelancer.bio || "Full-stack Web3 & Smart Contract Developer."}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 mb-3">
-            <span className={`px-2.5 py-0.5 rounded-full text-2xs font-bold ${availabilityColors[freelancer.availability] || availabilityColors.available}`}>
-              {freelancer.availability}
+          {/* Status + Location */}
+          <div className="flex items-center gap-3 mb-4">
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${availability.colors}`}>
+              {availability.icon}
+              {availability.label}
             </span>
-            <span className="inline-flex items-center gap-1 text-2xs font-semibold text-muted-foreground">
-              <MapPin className="size-3" /> {freelancer.nationality || "Remote"}
+            <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+              <MapPin className="w-4 h-4" /> {freelancer.nationality || "Remote"}
             </span>
           </div>
 
-          <div className="my-3 flex flex-wrap gap-1.5">
+          {/* Skills */}
+          <div className="flex flex-wrap gap-2">
             {freelancer.skills?.slice(0, 4).map((skill) => (
               <span
                 key={skill.name}
-                className="px-2 py-0.5 rounded-full bg-background border border-border/80 text-2xs font-semibold text-foreground/80"
+                className="px-3 py-1 rounded-full bg-background border border-border/80 text-sm font-medium text-foreground/80 hover:border-primary/50 transition-colors"
               >
                 {skill.name}
               </span>
             ))}
+            {freelancer.skills && freelancer.skills.length > 4 && (
+              <span className="px-3 py-1 rounded-full bg-background border border-border/80 text-sm font-medium text-muted-foreground">
+                +{freelancer.skills.length - 4}
+              </span>
+            )}
           </div>
         </div>
 
-        <div className="pt-3.5 border-t border-border/50 flex items-center justify-between text-xs mt-3">
-          <span className="font-bold text-primary text-sm">
-            ${freelancer.hourlyRate}/hr
+        {/* Footer: Price + CTA */}
+        <div className="pt-4 border-t border-border/50 flex items-center justify-between mt-5">
+          <span className="font-bold text-primary text-lg">
+            ${freelancer.hourlyRate}<span className="text-sm font-medium text-muted-foreground">/hr</span>
           </span>
-          <span className="text-xs font-bold text-foreground/80 group-hover:text-primary transition-colors">
-            View Profile →
+          <span className="inline-flex items-center gap-1.5 text-sm font-bold text-foreground/80 group-hover:text-primary transition-colors">
+            View Profile
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
           </span>
         </div>
       </div>

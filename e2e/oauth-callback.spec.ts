@@ -55,7 +55,11 @@ test('new OAuth user can choose a role and finish registration', async ({ page }
   await page.getByRole('button', { name: /Employer/ }).click();
 
   await expect(page).toHaveURL(/\/dashboard\/employer$/);
-  expect(callbackBody).toEqual({ access_token: 'oauth-secret' });
+  expect(callbackBody).toEqual({
+    userId: 'appwrite-user',
+    secret: 'oauth-secret',
+    access_token: 'oauth-secret',
+  });
   expect(registrationBody).toEqual({ accessToken: 'oauth-secret', role: 'employer' });
   expect(await page.evaluate(() => localStorage.getItem('access_token'))).toBe('app-access-token');
 });

@@ -22,18 +22,18 @@ function CallToAction() {
           <div className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-success-subtle blur-3xl pointer-events-none" />
 
           {/* Badge */}
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-primary-foreground/10 text-success-foreground text-xs font-bold mb-6 border border-primary-foreground/15 backdrop-blur-xs">
-            <Sparkle className="size-3.5 fill-success" fill="currentColor" />
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/15 text-white text-xs font-bold mb-6 border border-white/20 backdrop-blur-xs">
+            <Sparkle className="size-3.5" fill="currentColor" />
             <span>Decentralized Freelance Economy</span>
           </div>
 
           {/* Title */}
-          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight max-w-2xl mx-auto break-words">
+          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight max-w-2xl mx-auto break-words text-white">
             Ready to hire or get hired? <br className="hidden sm:inline" />
-            <span className="text-success">Get started with smart escrow today.</span>
+            <span className="text-white">Get started with smart escrow today.</span>
           </h2>
 
-          <p className="mt-3 sm:mt-4 text-xs sm:text-base leading-relaxed max-w-xl mx-auto text-success-foreground font-normal break-words">
+          <p className="mt-3 sm:mt-4 text-xs sm:text-base leading-relaxed max-w-xl mx-auto text-white/90 font-normal break-words">
             Join verified talent and top employers closing milestone contracts with AI speed, portable reputation, and Ethereum smart contract escrow.
           </p>
 
@@ -58,17 +58,17 @@ function CallToAction() {
           </div>
 
           {/* Bottom Trust Badges */}
-          <div className="mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-primary-foreground/15 flex flex-wrap justify-center items-center gap-4 sm:gap-10 text-xs text-success-foreground font-medium">
+          <div className="mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-primary-foreground/15 flex flex-wrap justify-center items-center gap-4 sm:gap-10 text-xs text-white/90 font-medium">
             <div className="flex items-center gap-2">
-              <CheckCircle className="size-4 text-success shrink-0" fill="currentColor" />
+              <CheckCircle className="size-4 text-white shrink-0" fill="currentColor" />
               <span className="break-words">100% Smart Contract Escrow</span>
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle className="size-4 text-success shrink-0" fill="currentColor" />
+              <CheckCircle className="size-4 text-white shrink-0" fill="currentColor" />
               <span className="break-words">Didit KYC in 220+ Countries</span>
             </div>
             <div className="flex items-center gap-2">
-              <Star className="size-4 text-warning fill-warning shrink-0" fill="currentColor" />
+              <Star className="size-4 text-yellow-300 shrink-0" fill="currentColor" />
               <span className="break-words">Zero Unpaid Invoices Guaranteed</span>
             </div>
           </div>

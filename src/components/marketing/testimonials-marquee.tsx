@@ -67,12 +67,11 @@ function TestimonialCard({ t }: { t: (typeof testimonialsRow1)[number] }) {
               <Star
                 key={j}
                 className="size-3.5 text-warning fill-warning"
-                fill="currentColor"
               />
             ))}
           </div>
           <span className="inline-flex items-center gap-1 text-2xs font-bold text-success bg-success-subtle px-2 py-0.5 rounded-full truncate">
-            <CheckCircle className="size-3 shrink-0" fill="currentColor" />
+            <CheckCircle className="size-3 shrink-0 text-success fill-success" />
             {t.badge}
           </span>
         </div>
