@@ -139,7 +139,7 @@ export default function EmployerProjectsPage() {
                       <Button variant="outline" size="sm"><Pencil className="mr-2 size-4" />Edit</Button>
                     </Link>
                   )}
-                  <Link href={`/projects/${project.id}`}>
+                  <Link href={`/dashboard/employer/projects/${project.id}`}>
                     <Button variant="outline" size="sm">
                       <Eye className="w-4 h-4 mr-2" /> View
                     </Button>

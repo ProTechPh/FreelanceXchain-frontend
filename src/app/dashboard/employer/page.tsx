@@ -220,7 +220,7 @@ export default function EmployerDashboard() {
                 return (
                   <Link
                     key={project.id}
-                    href={`/projects/${project.id}`}
+                    href={`/dashboard/employer/projects/${project.id}`}
                     className="block rounded-xl border border-border bg-secondary/50 p-4 transition-all hover:border-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <div className="flex items-start justify-between mb-3">

@@ -87,7 +87,7 @@ export function isAuthSuccessResponse(response: unknown): response is AuthSucces
 
 export function normalizeAuthUser(user: AuthApiUser): User {
   const emailName = user.email.split('@')[0]?.trim();
-  const name = emailName || 'User';
+  const name = (typeof user.name === 'string' && user.name.trim()) ? user.name.trim() : (emailName || 'User');
 
   return {
     id: user.id,

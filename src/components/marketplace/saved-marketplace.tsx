@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { EmptyState } from '@/components/ui/empty-state';
+import { useAuthStore } from '@/stores/authStore';
 
 type SavedSearchDraft = { name: string; notifyOnNew: boolean };
 
@@ -36,6 +37,7 @@ function savedSearchHref(search: SavedSearch): string {
 }
 
 export function SavedMarketplace() {
+  const user = useAuthStore((state) => state.user);
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [searches, setSearches] = useState<SavedSearch[]>([]);
   const [drafts, setDrafts] = useState<Record<string, SavedSearchDraft>>({});
@@ -122,7 +124,16 @@ export function SavedMarketplace() {
     <div className="mx-auto max-w-6xl space-y-6">
       <div><h1 className="flex items-center gap-2 text-2xl font-bold"><Bookmark className="size-6" />Saved marketplace</h1><p className="text-muted-foreground">Manage favorite projects and freelancers, reusable filters, and new-match alerts.</p></div>
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card><CardHeader><CardTitle className="flex items-center gap-2"><Heart className="size-5 text-primary" />Favorites</CardTitle></CardHeader><CardContent>{favorites.length === 0 ? <p className="text-sm text-muted-foreground">No marketplace favorites yet.</p> : <ul className="space-y-3">{favorites.map((favorite) => <li key={favorite.id} className="flex items-center justify-between gap-3 rounded-lg border border-border p-3"><div className="min-w-0"><p className="truncate font-medium">{favoriteLabel(favorite)}</p><Badge variant="secondary" className="mt-1">{favorite.targetType}</Badge></div><div className="flex gap-1"><Button asChild type="button" variant="ghost" size="icon"><Link href={favorite.targetType === 'project' ? `/projects/${favorite.targetId}` : `/freelancers/${favorite.targetId}`} aria-label={`Open ${favoriteLabel(favorite)}`}><ExternalLink className="size-4" /></Link></Button><Button type="button" variant="ghost" size="icon" aria-label={`Remove ${favoriteLabel(favorite)} from favorites`} disabled={actionId === favorite.id} onClick={() => void removeFavorite(favorite)}><Trash2 className="size-4 text-destructive" /></Button></div></li>)}</ul>}</CardContent></Card>
+        <Card><CardHeader><CardTitle className="flex items-center gap-2"><Heart className="size-5 text-primary" />Favorites</CardTitle></CardHeader><CardContent>{favorites.length === 0 ? <p className="text-sm text-muted-foreground">No marketplace favorites yet.</p> : <ul className="space-y-3">{favorites.map((favorite) => {
+          const favoriteHref = favorite.targetType === 'project'
+            ? user?.role === 'freelancer'
+              ? `/dashboard/freelancer/projects/${favorite.targetId}`
+              : user?.role === 'employer'
+                ? `/dashboard/employer/projects/${favorite.targetId}`
+                : `/projects/${favorite.targetId}`
+            : `/freelancers/${favorite.targetId}`;
+          return <li key={favorite.id} className="flex items-center justify-between gap-3 rounded-lg border border-border p-3"><div className="min-w-0"><p className="truncate font-medium">{favoriteLabel(favorite)}</p><Badge variant="secondary" className="mt-1">{favorite.targetType}</Badge></div><div className="flex gap-1"><Button asChild type="button" variant="ghost" size="icon"><Link href={favoriteHref} aria-label={`Open ${favoriteLabel(favorite)}`}><ExternalLink className="size-4" /></Link></Button><Button type="button" variant="ghost" size="icon" aria-label={`Remove ${favoriteLabel(favorite)} from favorites`} disabled={actionId === favorite.id} onClick={() => void removeFavorite(favorite)}><Trash2 className="size-4 text-destructive" /></Button></div></li>;
+        })}</ul>}</CardContent></Card>
 
         <div className="space-y-4">
           {searches.length === 0 ? <EmptyState

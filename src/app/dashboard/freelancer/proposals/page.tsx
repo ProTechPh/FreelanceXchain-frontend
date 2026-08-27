@@ -150,7 +150,7 @@ export default function ProposalsPage() {
                       <Button variant="outline" size="sm">View Proposal</Button>
                     </Link>
                     {project && (
-                      <Link href={`/projects/${project.id}`}>
+                      <Link href={`/dashboard/freelancer/projects/${project.id}`}>
                         <Button variant="ghost" size="sm">View Project</Button>
                       </Link>
                     )}

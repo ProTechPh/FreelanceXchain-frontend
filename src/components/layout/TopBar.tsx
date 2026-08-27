@@ -62,7 +62,7 @@ export function TopBar() {
       unsubscribe();
       window.removeEventListener('notification-count-change', handleCountChange);
     };
-  }, [user]);
+  }, [user?.id]);
 
   const initials = mounted && user?.name
     ? user.name.split(' ').map((n) => n[0]).join('').toUpperCase()

@@ -231,6 +231,12 @@ export const authApi = {
 
   updateWallet: (walletAddress: string) =>
     api.patch<{ walletAddress: string }>('/auth/wallet', { walletAddress }),
+
+  disconnectWallet: () =>
+    api.delete<{ message: string; walletAddress: string }>('/auth/wallet'),
+
+  deleteAccount: () =>
+    api.delete<{ message: string }>('/auth/account'),
 };
 
 export const emailPreferencesApi = {
