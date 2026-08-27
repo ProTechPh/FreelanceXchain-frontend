@@ -13,6 +13,8 @@ interface ProjectListItemProps {
   /** 0–100 skill match from the recommendations endpoint. Omitted when unknown. */
   matchScore?: number;
   matchedSkills?: string[];
+  /** Optional custom detail href. Defaults to dashboard freelancer project detail. */
+  href?: string;
 }
 
 /**
@@ -23,11 +25,12 @@ interface ProjectListItemProps {
  * freelancer actually decides on — budget, deadline, competition. The public
  * listing card stays roomier; this one is built for scanning twenty in a row.
  */
-export function ProjectListItem({ project, returnTo, matchScore, matchedSkills }: ProjectListItemProps) {
+export function ProjectListItem({ project, returnTo, matchScore, matchedSkills, href }: ProjectListItemProps) {
   const client = project.employer?.name || 'Verified employer';
   const initial = client.trim().charAt(0).toUpperCase() || '?';
   const skills = project.requiredSkills ?? [];
   const matched = new Set(matchedSkills ?? []);
+  const projectLink = href || `/dashboard/freelancer/projects/${project.id}?returnTo=${encodeURIComponent(returnTo)}`;
 
   return (
     <article
@@ -49,7 +52,7 @@ export function ProjectListItem({ project, returnTo, matchScore, matchedSkills }
           <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 pr-10">
             <h3 className="text-sm font-bold text-foreground">
               <Link
-                href={`/projects/${project.id}?returnTo=${encodeURIComponent(returnTo)}`}
+                href={projectLink}
                 className="rounded-sm outline-none after:absolute after:inset-0 after:content-[''] group-hover:text-primary focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 {project.title}

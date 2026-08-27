@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { BookOpen, BrainCircuit, CheckCircle2, Search, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { matchingApi, type ExtractedSkill, type SkillGapAnalysis } from '@/lib/api';
@@ -25,7 +26,10 @@ export default function SkillAnalysisPage() {
       const { data } = await matchingApi.getSkillGaps();
       setAnalysis(data);
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Unable to analyze your skill gaps. Add skills to your profile and try again.'));
+      const msg = getApiErrorMessage(error, '');
+      if (!msg.toLowerCase().includes('profile not found') && !msg.toLowerCase().includes('not found')) {
+        toast.error(msg || 'Unable to analyze your skill gaps.');
+      }
     } finally {
       setLoadingAnalysis(false);
     }
@@ -67,7 +71,19 @@ export default function SkillAnalysisPage() {
           <Card className="md:col-span-2"><CardHeader><CardTitle>Market demand</CardTitle></CardHeader><CardContent className="grid gap-3 sm:grid-cols-2">{analysis.marketDemand.map((item) => <div key={item.skillName} className="flex items-center justify-between rounded-lg border border-border p-3"><span>{item.skillName}</span><Badge variant="secondary">{item.demandLevel} demand</Badge></div>)}</CardContent></Card>
           <Card className="md:col-span-2"><CardHeader><CardTitle className="flex items-center gap-2"><BookOpen className="size-5" />Analysis</CardTitle></CardHeader><CardContent><p className="leading-relaxed text-muted-foreground">{analysis.reasoning}</p></CardContent></Card>
         </div>
-      ) : <Card><CardContent className="py-10 text-center text-muted-foreground">No skill analysis is available yet.</CardContent></Card>}
+      ) : (
+        <Card className="rounded-2xl border-border bg-card">
+          <CardContent className="flex flex-col items-center justify-center gap-3 py-12 text-center max-w-md mx-auto">
+            <p className="font-semibold text-foreground">No skill analysis available yet</p>
+            <p className="text-sm text-muted-foreground">
+              Add skills to your profile so our AI can evaluate your skill gaps and market demand.
+            </p>
+            <Button asChild size="sm" variant="gradient" className="mt-2">
+              <Link href="/dashboard/freelancer/profile">Set up Profile Skills →</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader><CardTitle className="flex items-center gap-2"><Search className="size-5" />Resume</CardTitle></CardHeader>

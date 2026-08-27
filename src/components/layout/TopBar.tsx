@@ -35,6 +35,7 @@ export function TopBar() {
   const [mounted, setMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const userId = user?.id;
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -42,7 +43,7 @@ export function TopBar() {
   }, []);
 
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
     let active = true;
     void notificationsApi.getUnreadCount().then(({ data }) => {
       if (active) setUnreadNotifications(data.count);
@@ -62,7 +63,7 @@ export function TopBar() {
       unsubscribe();
       window.removeEventListener('notification-count-change', handleCountChange);
     };
-  }, [user]);
+  }, [userId]);
 
   const initials = mounted && user?.name
     ? user.name.split(' ').map((n) => n[0]).join('').toUpperCase()

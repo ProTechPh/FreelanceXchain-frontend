@@ -3,24 +3,21 @@ import type { Notification } from '@/types';
 
 const RECONNECT_DELAYS_MS = [1000, 2000, 4000, 8000, 8000];
 
-/**
- * Subscribes to the backend's real-time notification stream (`GET /notifications/stream`).
- *
- * That endpoint only accepts a normal `Authorization: Bearer` header (no query-token
- * fallback), and native `EventSource` can't set custom headers — putting the JWT in the
- * URL instead would leak it into proxy/access logs and browser history. So this reads
- * the stream via `fetch` + a manual `ReadableStream` reader instead.
- */
-export function subscribeToNotificationStream(
-  onNotification: (notification: Notification) => void,
-  onError?: (error: unknown) => void
-): () => void {
-  let closed = false;
-  let controller: AbortController | null = null;
-  let attempt = 0;
-  let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+type Listener = {
+  onNotification: (notification: Notification) => void;
+  onError?: (error: unknown) => void;
+};
 
-  function handleFrame(frame: string) {
+class NotificationStreamManager {
+  private listeners = new Set<Listener>();
+  private controller: AbortController | null = null;
+  private isConnecting = false;
+  private isConnected = false;
+  private attempt = 0;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private disconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+  private handleFrame(frame: string) {
     for (const line of frame.split('\n')) {
       if (!line || line.startsWith(':')) continue; // heartbeat comment line
       if (!line.startsWith('data:')) continue;
@@ -28,37 +25,48 @@ export function subscribeToNotificationStream(
       try {
         const parsed = JSON.parse(line.slice(5).trim());
         if (parsed && parsed.type === 'connected') continue; // initial handshake frame
-        onNotification(parsed as Notification);
+        for (const listener of this.listeners) {
+          try {
+            listener.onNotification(parsed as Notification);
+          } catch {
+            // ignore listener errors
+          }
+        }
       } catch {
         // malformed frame, ignore
       }
     }
   }
 
-  function scheduleReconnect() {
-    if (closed) return;
-    const delay = RECONNECT_DELAYS_MS[Math.min(attempt, RECONNECT_DELAYS_MS.length - 1)];
-    attempt += 1;
-    reconnectTimer = setTimeout(connect, delay);
+  private scheduleReconnect() {
+    if (this.listeners.size === 0) return;
+    if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
+    const delay = RECONNECT_DELAYS_MS[Math.min(this.attempt, RECONNECT_DELAYS_MS.length - 1)];
+    this.attempt += 1;
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      void this.connect();
+    }, delay);
   }
 
-  async function connect() {
-    if (closed) return;
+  private async connect() {
+    if (this.isConnecting || this.isConnected || this.listeners.size === 0) return;
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
     if (!token) return;
 
-    controller = new AbortController();
+    this.isConnecting = true;
+    this.controller = new AbortController();
 
     try {
       const response = await fetch(`${API_URL}/notifications/stream`, {
         headers: { Authorization: `Bearer ${token}` },
-        signal: controller.signal,
+        signal: this.controller.signal,
       });
 
       if (response.status === 401) {
-        // Don't redirect from here — the axios interceptor already owns 401 handling
-        // on the next regular API call. Just stop trying to reconnect.
+        this.isConnecting = false;
+        this.isConnected = false;
         return;
       }
 
@@ -66,36 +74,95 @@ export function subscribeToNotificationStream(
         throw new Error(`SSE connection failed with status ${response.status}`);
       }
 
-      attempt = 0; // connected successfully, reset backoff
+      this.isConnecting = false;
+      this.isConnected = true;
+      this.attempt = 0;
+
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
 
-      while (!closed) {
+      while (this.listeners.size > 0) {
         const { done, value } = await reader.read();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
 
         let boundary = buffer.indexOf('\n\n');
         while (boundary !== -1) {
-          handleFrame(buffer.slice(0, boundary));
+          this.handleFrame(buffer.slice(0, boundary));
           buffer = buffer.slice(boundary + 2);
           boundary = buffer.indexOf('\n\n');
         }
       }
     } catch (error) {
-      if (closed) return;
-      onError?.(error);
+      if (this.listeners.size === 0) return;
+      for (const listener of this.listeners) {
+        listener.onError?.(error);
+      }
     } finally {
-      if (!closed) scheduleReconnect();
+      this.isConnecting = false;
+      this.isConnected = false;
+      if (this.listeners.size > 0) {
+        this.scheduleReconnect();
+      }
     }
   }
 
-  connect();
+  private disconnect() {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    if (this.controller) {
+      this.controller.abort();
+      this.controller = null;
+    }
+    this.isConnecting = false;
+    this.isConnected = false;
+    this.attempt = 0;
+  }
 
-  return () => {
-    closed = true;
-    controller?.abort();
-    if (reconnectTimer) clearTimeout(reconnectTimer);
-  };
+  subscribe(
+    onNotification: (notification: Notification) => void,
+    onError?: (error: unknown) => void
+  ): () => void {
+    const listener: Listener = { onNotification, onError };
+    this.listeners.add(listener);
+
+    if (this.disconnectTimer) {
+      clearTimeout(this.disconnectTimer);
+      this.disconnectTimer = null;
+    }
+
+    if (!this.isConnected && !this.isConnecting) {
+      void this.connect();
+    }
+
+    return () => {
+      this.listeners.delete(listener);
+      if (this.listeners.size === 0) {
+        this.disconnectTimer = setTimeout(() => {
+          if (this.listeners.size === 0) {
+            this.disconnect();
+          }
+        }, 1000);
+      }
+    };
+  }
 }
+
+const sharedStreamManager = new NotificationStreamManager();
+
+/**
+ * Subscribes to the backend's real-time notification stream (`GET /notifications/stream`).
+ *
+ * Uses a single shared HTTP connection across all subscribing components to avoid
+ * saturating the browser's HTTP/1.1 connection limit (max 6 connections per origin).
+ */
+export function subscribeToNotificationStream(
+  onNotification: (notification: Notification) => void,
+  onError?: (error: unknown) => void
+): () => void {
+  return sharedStreamManager.subscribe(onNotification, onError);
+}
+

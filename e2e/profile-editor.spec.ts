@@ -159,7 +159,7 @@ test('freelancer profile renders legacy experiences with unique React keys', asy
   await page.goto('/dashboard/freelancer/profile');
 
   await expect(page.getByText('Engineer', { exact: true })).toBeVisible();
-  await expect(page.getByText('Developer', { exact: true })).toBeVisible();
+  await expect(page.locator('#dashboard-content').getByText('Developer', { exact: true })).toBeVisible();
   await expect(page.getByText('Consultant', { exact: true })).toBeVisible();
   await expect(page.getByText('Intern', { exact: true })).toBeVisible();
   expect(keyWarnings).toEqual([]);

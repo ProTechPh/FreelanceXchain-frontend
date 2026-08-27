@@ -1,4 +1,4 @@
-export function getMarketplaceReturnPath(value: string | null, fallback: '/projects' | '/freelancers'): string {
+export function getMarketplaceReturnPath(value: string | null, fallback: string = '/projects'): string {
   if (!value) return fallback;
   try {
     const url = new URL(value, 'https://frontend.local');

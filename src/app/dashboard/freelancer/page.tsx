@@ -96,39 +96,69 @@ export default function FreelancerDashboard() {
           setTotalRatings(reputationRes.value.data.totalRatings);
         }
 
+        const projectIdsToFetch = new Set<string>();
+
+        let activeContractsList: Contract[] = [];
         if (contractsRes.status === 'fulfilled') {
-          const active = contractsRes.value.data.items.filter((c) => c.status === 'active');
-          const projects = await Promise.all(
-            active.map((c) => projectsApi.get(c.projectId).then((r) => r.data).catch(() => null))
-          );
-          setActiveContracts(active.map((contract, i) => ({ contract, project: projects[i] })));
+          activeContractsList = contractsRes.value.data.items.filter((c) => c.status === 'active');
+          activeContractsList.forEach((c) => projectIdsToFetch.add(c.projectId));
         }
 
+        let recentProposalsList: Proposal[] = [];
         if (proposalsRes.status === 'fulfilled') {
           const all = proposalsRes.value.data;
           setPendingProposalCount(all.filter((p) => p.status === 'pending').length);
 
-          const recent = all
+          recentProposalsList = all
             .slice()
             .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
             .slice(0, 3);
-          const projects = await Promise.all(
-            recent.map((p) => projectsApi.get(p.projectId).then((r) => r.data).catch(() => null))
-          );
-          setRecentProposals(recent.map((proposal, i) => ({ proposal, project: projects[i] })));
+          recentProposalsList.forEach((p) => projectIdsToFetch.add(p.projectId));
         }
 
+        let recsList: Array<{ projectId: string; matchScore: number; matchedSkills: string[] }> = [];
         if (recommendationsRes.status === 'fulfilled') {
-          const recs = recommendationsRes.value.data;
-          const projects = await Promise.all(
-            recs.map((r) => projectsApi.get(r.projectId).then((res) => res.data).catch(() => null))
-          );
-          setRecommended(
-            recs
-              .map((r, i) => ({ project: projects[i], matchScore: r.matchScore, matchedSkills: r.matchedSkills }))
-              .filter((r): r is RecommendedProjectView => r.project !== null)
+          recsList = recommendationsRes.value.data;
+          recsList.forEach((r) => projectIdsToFetch.add(r.projectId));
+        }
+
+        const projectMap = new Map<string, Project | null>();
+        if (projectIdsToFetch.size > 0) {
+          await Promise.all(
+            Array.from(projectIdsToFetch).map(async (projectId) => {
+              try {
+                const res = await projectsApi.get(projectId);
+                projectMap.set(projectId, res.data);
+              } catch {
+                projectMap.set(projectId, null);
+              }
+            })
           );
         }
+
+        setActiveContracts(
+          activeContractsList.map((contract) => ({
+            contract,
+            project: projectMap.get(contract.projectId) ?? null,
+          }))
+        );
+
+        setRecentProposals(
+          recentProposalsList.map((proposal) => ({
+            proposal,
+            project: projectMap.get(proposal.projectId) ?? null,
+          }))
+        );
+
+        setRecommended(
+          recsList
+            .map((r) => ({
+              project: projectMap.get(r.projectId) ?? null,
+              matchScore: r.matchScore,
+              matchedSkills: r.matchedSkills,
+            }))
+            .filter((r): r is RecommendedProjectView => r.project !== null)
+        );
       } catch {
         toast.error('Failed to load dashboard data');
       } finally {
@@ -323,15 +353,20 @@ export default function FreelancerDashboard() {
         </CardHeader>
         <CardContent>
           {recommended.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">
-              No recommendations yet — add skills to your profile to get matched with projects
-            </p>
+            <div className="flex flex-col items-center justify-center py-8 text-center space-y-3">
+              <p className="text-sm text-muted-foreground">
+                No recommendations yet — add skills to your profile to get AI-matched with projects.
+              </p>
+              <Button asChild size="sm" variant="outline">
+                <Link href="/dashboard/freelancer/profile">Set up skills →</Link>
+              </Button>
+            </div>
           ) : (
             <div className="grid md:grid-cols-3 gap-4">
               {recommended.map(({ project, matchScore, matchedSkills }) => (
                 <Link
                   key={project.id}
-                  href={`/projects/${project.id}`}
+                  href={`/dashboard/freelancer/projects/${project.id}`}
                   className="block rounded-xl border border-border bg-secondary/50 p-4 transition-all hover:border-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <div className="flex items-start justify-between mb-3">

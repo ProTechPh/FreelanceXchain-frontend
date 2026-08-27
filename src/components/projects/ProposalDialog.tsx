@@ -1,7 +1,8 @@
 'use client';
 
 import { useId, useState } from 'react';
-import { Paperclip, Send } from 'lucide-react';
+import Link from 'next/link';
+import { Paperclip, Send, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,6 +22,7 @@ import {
   submitProposal,
   type ProposalSubmissionForm,
 } from '@/lib/proposal-submission';
+import { useAuthStore } from '@/stores/authStore';
 
 interface ProposalDialogProps {
   open: boolean;
@@ -40,6 +42,8 @@ const EMPTY_FORM: ProposalSubmissionForm = {
 };
 
 export function ProposalDialog({ open, onOpenChange, onSubmitted, project }: ProposalDialogProps) {
+  const user = useAuthStore((state) => state.user);
+  const isKycApproved = user?.kycStatus === 'approved';
   const fieldId = useId();
   const [form, setForm] = useState<ProposalSubmissionForm>(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
@@ -81,6 +85,23 @@ export function ProposalDialog({ open, onOpenChange, onSubmitted, project }: Pro
             {project ? `Send your offer for “${project.title}”.` : 'Send your offer for this project.'}
           </DialogDescription>
         </DialogHeader>
+
+        {!isKycApproved && (
+          <div className="rounded-xl border border-warning/30 bg-warning/10 p-3.5 text-xs text-warning space-y-2">
+            <div className="flex items-center gap-2 font-bold text-foreground">
+              <ShieldAlert className="size-4 text-warning shrink-0" />
+              <span>Identity Verification (KYC) Required</span>
+            </div>
+            <p className="text-muted-foreground leading-relaxed">
+              Smart contract payments and escrow protection require a verified identity before submitting proposals.
+            </p>
+            <Button asChild size="sm" variant="outline" className="text-xs h-8">
+              <Link href="/dashboard/freelancer/verification">
+                Complete Verification Now →
+              </Link>
+            </Button>
+          </div>
+        )}
 
         <form className="space-y-5" onSubmit={handleSubmit}>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -156,9 +177,15 @@ export function ProposalDialog({ open, onOpenChange, onSubmitted, project }: Pro
             >
               Cancel
             </Button>
-            <Button type="submit" variant="gradient" loading={submitting} loadingText="Submitting…">
+            <Button
+              type="submit"
+              variant="gradient"
+              loading={submitting}
+              loadingText="Submitting…"
+              disabled={!isKycApproved || submitting}
+            >
               <Send className="size-4" aria-hidden="true" />
-              Submit proposal
+              {isKycApproved ? 'Submit proposal' : 'Verification required'}
             </Button>
           </DialogFooter>
         </form>

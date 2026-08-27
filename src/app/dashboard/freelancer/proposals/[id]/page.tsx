@@ -85,7 +85,7 @@ export default function FreelancerProposalDetailPage() {
               const url = safeAttachmentUrl(attachment.url);
               return <li key={`${attachment.filename}-${attachment.url}`} className="flex items-center justify-between gap-3 rounded-lg border border-border p-3"><span className="flex min-w-0 items-center gap-2"><FileText className="h-4 w-4 shrink-0 text-primary" /><span className="truncate text-sm">{attachment.filename}</span><span className="shrink-0 text-xs text-muted-foreground">{formatFileSize(attachment.size)}</span></span>{url ? <Button asChild size="sm" variant="ghost"><a href={url} target="_blank" rel="noreferrer">Open<ExternalLink className="ml-2 h-3 w-3" /></a></Button> : <span className="text-xs text-muted-foreground">Unavailable</span>}</li>;
             })}</ul></div>}
-            <div className="flex flex-wrap gap-2 border-t border-border pt-4"><Button asChild variant="outline"><Link href={`/projects/${project.id}`}>View project</Link></Button>{proposal.status === 'pending' && <Button type="button" variant="ghost" className="text-destructive" disabled={withdrawing} onClick={() => void withdraw()}>{withdrawing ? 'Withdrawing…' : 'Withdraw proposal'}</Button>}</div>
+            <div className="flex flex-wrap gap-2 border-t border-border pt-4"><Button asChild variant="outline"><Link href={`/dashboard/freelancer/projects/${project.id}`}>View project</Link></Button>{proposal.status === 'pending' && <Button type="button" variant="ghost" className="text-destructive" disabled={withdrawing} onClick={() => void withdraw()}>{withdrawing ? 'Withdrawing…' : 'Withdraw proposal'}</Button>}</div>
           </CardContent></Card>
         </div>
 

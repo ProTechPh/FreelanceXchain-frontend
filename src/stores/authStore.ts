@@ -98,11 +98,15 @@ export const useAuthStore = create<AuthState>()(
       loadUser: async () => {
         const token = localStorage.getItem('access_token');
         if (!token) {
-          set({ isAuthenticated: false, user: null });
+          set({ isAuthenticated: false, user: null, isLoading: false });
           return;
         }
 
-        set({ isLoading: true });
+        const currentUser = useAuthStore.getState().user;
+        if (!currentUser) {
+          set({ isLoading: true });
+        }
+
         try {
           const { data } = await authApi.getMe();
           set({ user: normalizeAuthUser(data.user), isAuthenticated: true, isLoading: false });

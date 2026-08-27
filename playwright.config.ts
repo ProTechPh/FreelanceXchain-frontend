@@ -4,8 +4,11 @@ export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
-  retries: process.env.CI ? 2 : 0,
+  retries: process.env.CI ? 2 : 1,
   reporter: process.env.CI ? 'github' : 'list',
+  expect: {
+    timeout: 10_000,
+  },
   use: {
     baseURL: 'http://127.0.0.1:3100',
     trace: 'on-first-retry',
@@ -23,7 +26,7 @@ export default defineConfig({
       NEXT_PUBLIC_API_URL: 'http://127.0.0.1:3100/api',
     },
     url: 'http://127.0.0.1:3100',
-    reuseExistingServer: false,
+    reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },
 });

@@ -632,6 +632,7 @@ export interface RegisterRequest {
 
 export interface AuthApiUser {
   id: string;
+  name?: string;
   email: string;
   role: UserRole;
   walletAddress: string;
