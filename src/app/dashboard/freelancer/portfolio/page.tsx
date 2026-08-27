@@ -110,7 +110,7 @@ export default function PortfolioPage() {
       const skills = form.skills.split(',').map((s) => s.trim()).filter(Boolean);
 
       if (editingId) {
-        const updatePayload: Record<string, any> = {
+        const updatePayload: Record<string, unknown> = {
           title: form.title,
           description: form.description,
           projectUrl: form.projectUrl || undefined,
@@ -272,8 +272,16 @@ export default function PortfolioPage() {
                       loading="lazy"
                       onError={(e) => {
                         const target = e.currentTarget;
-                        if (item.projectUrl && !target.src.includes('microlink.io')) {
-                          target.src = getWebsitePreviewUrl(item.projectUrl);
+                        try {
+                          const parsed = new URL(target.src);
+                          const isMicrolink = parsed.hostname === 'api.microlink.io' || parsed.hostname.endsWith('.microlink.io');
+                          if (item.projectUrl && !isMicrolink) {
+                            target.src = getWebsitePreviewUrl(item.projectUrl);
+                          }
+                        } catch {
+                          if (item.projectUrl) {
+                            target.src = getWebsitePreviewUrl(item.projectUrl);
+                          }
                         }
                       }}
                     />

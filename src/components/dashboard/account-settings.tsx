@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -85,7 +85,7 @@ export function AccountSettings() {
   const [deleteConfirmationText, setDeleteConfirmationText] = useState('');
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
-  const loadStorage = useCallback(async () => {
+  const loadStorage = async () => {
     setStorageLoading(true);
     try {
       const [fileResult, quotaResult] = await Promise.allSettled([
@@ -112,7 +112,7 @@ export function AccountSettings() {
     } finally {
       setStorageLoading(false);
     }
-  }, []);
+  };
 
   useEffect(() => {
     Promise.all([emailPreferencesApi.get(), authApi.mfaFactors()])
@@ -121,11 +121,35 @@ export function AccountSettings() {
         setFactors(factorResponse.data.factors);
       })
       .catch(() => toast.error('Some account settings could not be loaded.'));
-  }, []);
 
-  useEffect(() => {
-    void loadStorage();
-  }, [loadStorage]);
+    let active = true;
+    Promise.allSettled([fileManagementApi.list(), fileManagementApi.getQuota()])
+      .then(([fileResult, quotaResult]) => {
+        if (!active) return;
+        if (quotaResult.status === 'fulfilled' && quotaResult.value?.data) {
+          setQuota(quotaResult.value.data);
+          setStorageAvailable(true);
+        } else {
+          setQuota({ used: 0, limit: 100 * 1024 * 1024, percentage: 0, files: 0 });
+          setStorageAvailable(true);
+        }
+        if (fileResult.status === 'fulfilled' && Array.isArray(fileResult.value?.data)) {
+          setFiles(fileResult.value.data);
+        } else {
+          setFiles([]);
+        }
+      })
+      .catch(() => {
+        if (active) setStorageAvailable(false);
+      })
+      .finally(() => {
+        if (active) setStorageLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const updatePreference = async (
     key: (typeof preferenceRows)[number]['key'],
@@ -204,6 +228,7 @@ export function AccountSettings() {
     setDeletingFile(file.path);
     try {
       await fileManagementApi.remove(file.bucket, file.path);
+      setStorageLoading(true);
       await loadStorage();
       toast.success('File deleted.');
     } catch (error) {
