@@ -482,27 +482,29 @@ export function AccountSettings() {
       </Card>
 
       {/* Danger Zone: Account Deletion (GDPR / Data Privacy Compliance) */}
-      <Card className="border-destructive/40 bg-destructive/5">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-destructive">
-            <AlertTriangle className="size-5" /> Danger Zone: Delete Account
-          </CardTitle>
-          <CardDescription>
-            Permanently delete your account, profiles, and associated personal records in compliance with data privacy regulations (GDPR Right to Erasure).
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-foreground">Irreversible Account Removal</p>
-            <p className="text-xs text-muted-foreground">
-              Once deleted, all your active sessions, profile details, and portfolio attachments will be permanently removed.
-            </p>
-          </div>
-          <Button variant="destructive" onClick={() => setShowDeleteModal(true)}>
-            <Trash2 className="size-4 mr-1.5" /> Delete Account
-          </Button>
-        </CardContent>
-      </Card>
+      {user?.role === 'freelancer' && (
+        <Card className="border-destructive/40 bg-destructive/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="size-5" /> Danger Zone: Delete Account
+            </CardTitle>
+            <CardDescription>
+              Permanently delete your account, profiles, and associated personal records in compliance with data privacy regulations (GDPR Right to Erasure).
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-foreground">Irreversible Account Removal</p>
+              <p className="text-xs text-muted-foreground">
+                Once deleted, all your active sessions, profile details, and portfolio attachments will be permanently removed.
+              </p>
+            </div>
+            <Button variant="destructive" onClick={() => setShowDeleteModal(true)}>
+              <Trash2 className="size-4 mr-1.5" /> Delete Account
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Account Deletion Confirmation Modal */}
       <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
