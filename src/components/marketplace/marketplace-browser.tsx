@@ -14,7 +14,7 @@ import {
   type MarketplaceFilters,
 } from "@/lib/marketplace-search";
 import { useAuthStore } from "@/stores/authStore";
-import type { FreelancerProfile, Project, ProjectCategoryStat, SavedSearch, Skill } from "@/types";
+import type { Favorite, FreelancerProfile, Project, ProjectCategoryStat, SavedSearch, Skill } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -159,14 +159,26 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
       if (user) {
         try {
           const searchesResponse = await savedSearchesApi.list(kind);
-          setSavedSearches(searchesResponse.data);
+          const rawSearches: unknown = searchesResponse.data;
+          const searchData = Array.isArray(rawSearches)
+            ? rawSearches
+            : rawSearches && typeof rawSearches === 'object' && 'data' in rawSearches && Array.isArray((rawSearches as { data: unknown[] }).data)
+              ? (rawSearches as { data: SavedSearch[] }).data
+              : [];
+          setSavedSearches(searchData);
         } catch (error) {
           toast.error(getApiErrorMessage(error, "Unable to load saved searches."));
         }
 
         try {
           const favoritesResponse = await favoritesApi.list(kind);
-          setFavoriteIds(new Set(favoritesResponse.data.map((fav) => fav.targetId)));
+          const rawFavorites: unknown = favoritesResponse.data;
+          const favData = Array.isArray(rawFavorites)
+            ? rawFavorites
+            : rawFavorites && typeof rawFavorites === 'object' && 'data' in rawFavorites && Array.isArray((rawFavorites as { data: unknown[] }).data)
+              ? (rawFavorites as { data: Favorite[] }).data
+              : [];
+          setFavoriteIds(new Set(favData.map((fav) => fav.targetId)));
         } catch (error) {
           toast.error(getApiErrorMessage(error, "Unable to load favorites."));
         }
