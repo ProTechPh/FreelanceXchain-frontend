@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, User, Briefcase, ArrowRight, Sparkles, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, User, Briefcase, ArrowRight, Sparkles, ArrowLeft, AlertCircle } from 'lucide-react';
 import type { UserRole } from '@/types';
 import { getRegistrationFormError } from '@/lib/auth-contract';
 import { Button } from '@/components/ui/button';
@@ -39,6 +39,7 @@ interface SignUpPageProps {
   onGithubSignIn?: () => void;
   onSignIn?: () => void;
   isLoading?: boolean;
+  oauthError?: string | null;
 }
 
 export const SignUpPage: React.FC<SignUpPageProps> = ({
@@ -47,6 +48,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
   onGithubSignIn,
   onSignIn,
   isLoading = false,
+  oauthError,
 }) => {
   const [step, setStep] = useState<'role' | 'details'>('role');
   const [role, setRole] = useState<UserRole>('freelancer');
@@ -159,6 +161,16 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                   </h1>
                   <p className="mt-2 text-muted-foreground text-sm">Choose how you want to use FreelanceXchain</p>
                 </div>
+
+                {oauthError && (
+                  <div className="flex items-start gap-3 p-3.5 rounded-xl sm:rounded-2xl bg-destructive/10 border border-destructive/20 text-destructive text-sm" role="alert">
+                    <AlertCircle className="size-5 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold">Sign-in Error</p>
+                      <p className="text-sm text-destructive/80 mt-0.5">{oauthError}</p>
+                    </div>
+                  </div>
+                )}
 
                 {/* Role selection cards */}
                 <div className="grid grid-cols-2 gap-3 sm:gap-4">
