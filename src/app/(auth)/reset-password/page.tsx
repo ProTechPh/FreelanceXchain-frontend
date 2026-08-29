@@ -145,14 +145,19 @@ function ResetPasswordForm() {
   );
 }
 
+import { GuestGuard } from '@/components/auth/guest-guard';
+
 export default function ResetPasswordPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center p-6">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
-        <Suspense fallback={<p role="status">Loading password reset…</p>}>
-          <ResetPasswordForm />
-        </Suspense>
+    <GuestGuard>
+      <div className="flex min-h-screen items-center justify-center p-6">
+        <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
+          <Suspense fallback={<p role="status">Loading password reset…</p>}>
+            <ResetPasswordForm />
+          </Suspense>
+        </div>
       </div>
-    </div>
+    </GuestGuard>
   );
 }
+

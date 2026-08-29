@@ -105,3 +105,45 @@ test('final marketplace CTA uses its high-contrast foreground palette', async ({
     expect(colors.accent).toEqual(colors.expectedAccent);
   }
 });
+
+test('authenticated user sees dashboard navigation instead of sign in or get started on landing page', async ({ page }) => {
+  const user = {
+    id: 'user-freelancer-1',
+    email: 'freelancer@example.com',
+    name: 'Jane Freelancer',
+    role: 'freelancer',
+    isEmailVerified: true,
+    isKycVerified: true,
+    createdAt: '2026-08-01T00:00:00.000Z',
+    updatedAt: '2026-08-06T00:00:00.000Z',
+  };
+  await page.addInitScript((storedUser) => {
+    localStorage.setItem('access_token', 'app-access-token');
+    localStorage.setItem('refresh_token', 'app-refresh-token');
+    localStorage.setItem('auth-storage', JSON.stringify({
+      state: { user: storedUser, isAuthenticated: true },
+      version: 0,
+    }));
+  }, user);
+  await page.route('**/api/auth/me', (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ user }),
+  }));
+
+  await page.goto('/');
+
+  // Should NOT show Sign in or Get Started in navbar
+  await expect(page.getByRole('link', { name: 'Sign in' })).toBeHidden();
+  await expect(page.getByRole('link', { name: 'Get Started' })).toBeHidden();
+
+  // Should show Dashboard button linking to role dashboard
+  const dashboardLinks = page.getByRole('link', { name: 'Dashboard' });
+  await expect(dashboardLinks.first()).toBeVisible();
+  await expect(dashboardLinks.first()).toHaveAttribute('href', '/dashboard/freelancer');
+
+  // Hero primary button should say Go to Dashboard
+  const heroDashboardLink = page.getByRole('link', { name: 'Go to Dashboard' }).first();
+  await expect(heroDashboardLink).toBeVisible();
+  await expect(heroDashboardLink).toHaveAttribute('href', '/dashboard/freelancer');
+});

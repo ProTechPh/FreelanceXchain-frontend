@@ -1,11 +1,24 @@
 "use client";
 
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Sparkles as Sparkle, Star, CircleCheck as CheckCircle } from 'lucide-react';
 import { motion, useReducedMotion } from "motion/react";
+import { useAuthStore } from "@/stores/authStore";
 
 function CallToAction() {
   const reduce = useReducedMotion();
+  const { user, isAuthenticated } = useAuthStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+  }, []);
+
+  const isLoggedIn = mounted && isAuthenticated && !!user;
+  const primaryHref = isLoggedIn ? `/dashboard/${user.role || 'freelancer'}` : '/register';
+  const primaryText = isLoggedIn ? 'Go to Dashboard' : 'Get Started Free';
 
   return (
     <section className="bg-gradient-to-b from-background via-primary-subtle/30 to-background py-20 sm:py-28">
@@ -41,10 +54,10 @@ function CallToAction() {
           {/* Action Buttons */}
           <div className="mt-8 flex flex-wrap justify-center items-center gap-3">
             <Link
-              href="/register"
+              href={primaryHref}
               className="group inline-flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3.5 rounded-full bg-primary-foreground text-primary font-bold text-sm shadow-lg transition-all duration-150 hover:bg-success-subtle active:scale-[0.98]"
             >
-              <span>Get Started Free</span>
+              <span>{primaryText}</span>
               <ArrowRight
                 className="size-4 transition-transform duration-150 group-hover:translate-x-1"
                 strokeWidth={2.5}

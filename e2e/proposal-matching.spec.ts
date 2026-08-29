@@ -75,3 +75,43 @@ test('freelancer can open the full recommendation list', async ({ page }) => {
   await expect(page.getByText('96% match')).toBeVisible();
   await expect(page.getByText('Your React experience is a strong match.')).toBeVisible();
 });
+
+test('freelancer generates tailored AI proposal and submits it', async ({ page }) => {
+  await authenticate(page, 'freelancer');
+  const project = makeProject();
+  await page.route(`**/api/projects/${projectId}`, (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(project) }));
+  await page.route('**/api/favorites/check**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isFavorite: false }) }));
+  await page.route(`**/api/matching/generate-proposal/${projectId}`, (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({
+      coverLetter: '### Dear Client\nI have extensive experience building React analytics platforms and DEX interfaces.',
+      proposedRate: 2400,
+      estimatedDuration: 14,
+      proposedMilestones: [
+        { title: 'UI Setup', description: 'Components & layout', amount: 1200, durationDays: 7 },
+        { title: 'Integration', description: 'Connect data sources', amount: 1200, durationDays: 7 },
+      ],
+      highlights: ['98% Verified On-Chain Reputation', 'Built DEX in Portfolio', 'Expert in React'],
+    }),
+  }));
+  await page.route('**/api/proposals', (route) => route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ id: proposalId }) }));
+
+  await page.goto(`/dashboard/freelancer/projects/${projectId}`);
+  await expect(page.getByRole('button', { name: 'AI Proposal' })).toBeVisible();
+
+  // Click AI Proposal
+  await page.getByRole('button', { name: 'AI Proposal' }).click();
+  await expect(page.getByText('AI Proposal Assistant')).toBeVisible();
+
+  // Verify AI generated fields
+  await expect(page.getByText('98% Verified On-Chain Reputation')).toBeVisible();
+  await expect(page.getByText('I have extensive experience building React analytics platforms')).toBeVisible();
+  await expect(page.getByLabel('Proposed rate (USD)')).toHaveValue('2400');
+  await expect(page.getByLabel('Estimated duration (days)')).toHaveValue('14');
+  await expect(page.getByText('AI brief document attached automatically')).toBeVisible();
+
+  // Submit proposal
+  await page.getByRole('button', { name: 'Submit proposal' }).click();
+  await expect(page.getByText('Proposal submitted successfully!')).toBeVisible();
+});

@@ -10,24 +10,7 @@ import type { AuditLogEntry, Dispute, SystemHealth } from '@/types';
 import { toast } from 'sonner';
 import { Users, FolderOpen, DollarSign, AlertTriangle, Activity, ArrowUpRight, Shield, BarChart3, CheckCircle, Clock } from 'lucide-react';
 import { StatsSkeleton } from '@/components/dashboard/skeletons';
-
-function relativeTime(iso: string): string {
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const diffSec = Math.round(diffMs / 1000);
-  const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
-  if (Math.abs(diffSec) < 60) return rtf.format(-diffSec, 'second');
-  const diffMin = Math.round(diffSec / 60);
-  if (Math.abs(diffMin) < 60) return rtf.format(-diffMin, 'minute');
-  const diffHour = Math.round(diffMin / 60);
-  if (Math.abs(diffHour) < 24) return rtf.format(-diffHour, 'hour');
-  const diffDay = Math.round(diffHour / 24);
-  return rtf.format(-diffDay, 'day');
-}
-
-function describeLog(log: AuditLogEntry): string {
-  const action = log.action.replace(/_/g, ' ');
-  return `${action.charAt(0).toUpperCase()}${action.slice(1)} — ${log.resource_type}`;
-}
+import { formatAuditAction, formatAuditResource, formatRelativeTime } from '@/lib/format';
 
 function formatUptime(seconds: number): string {
   const days = Math.floor(seconds / 86400);
@@ -143,19 +126,19 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Admin dashboard</h1>
           <p className="text-muted-foreground">Platform overview and management</p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-2 shrink-0">
           <Link href="/dashboard/admin/analytics">
-            <Button variant="outline">
+            <Button variant="outline" size="sm" className="w-full sm:w-auto">
               <BarChart3 className="w-4 h-4 mr-2" /> Analytics
             </Button>
           </Link>
           <Link href="/dashboard/admin/system">
-            <Button variant="outline">
+            <Button variant="outline" size="sm" className="w-full sm:w-auto">
               <Activity className="w-4 h-4 mr-2" /> System Health
             </Button>
           </Link>
@@ -227,9 +210,13 @@ export default function AdminDashboard() {
                   <div className={`w-8 h-8 rounded-lg bg-background flex items-center justify-center ${color}`}>
                     <Icon className="w-4 h-4" />
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm">{describeLog(log)}</p>
-                    <p className="text-xs text-muted-foreground">{relativeTime(log.created_at)}</p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-semibold text-foreground truncate">{formatAuditAction(log.action)}</p>
+                      <span className="text-xs text-muted-foreground">•</span>
+                      <span className="text-xs text-muted-foreground font-medium">{formatAuditResource(log.resource_type)}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{formatRelativeTime(log.created_at)}</p>
                   </div>
                 </div>
               );
@@ -272,7 +259,7 @@ export default function AdminDashboard() {
       </Card>
 
       {/* Quick Links */}
-      <div className="grid md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Link href="/dashboard/admin/users">
           <Card className="bg-card border-border hover:border-primary/20 transition-all cursor-pointer">
             <CardContent className="p-4 flex items-center gap-4">

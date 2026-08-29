@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
 import { Field } from '@/components/ui/field';
+import { Markdown } from '@/components/ui/markdown';
 
 export default function SkillAnalysisPage() {
   const [analysis, setAnalysis] = useState<SkillGapAnalysis | null>(null);
@@ -69,7 +70,7 @@ export default function SkillAnalysisPage() {
           <Card><CardHeader><CardTitle className="flex items-center gap-2"><CheckCircle2 className="size-5 text-success" />Current skills</CardTitle></CardHeader><CardContent className="flex flex-wrap gap-2">{analysis.currentSkills.map((skill) => <Badge key={skill} variant="secondary">{skill}</Badge>)}{analysis.currentSkills.length === 0 && <p className="text-sm text-muted-foreground">No profile skills found.</p>}</CardContent></Card>
           <Card><CardHeader><CardTitle className="flex items-center gap-2"><TrendingUp className="size-5 text-warning" />Recommended skills</CardTitle></CardHeader><CardContent className="flex flex-wrap gap-2">{analysis.recommendedSkills.map((skill) => <Badge key={skill}>{skill}</Badge>)}{analysis.recommendedSkills.length === 0 && <p className="text-sm text-muted-foreground">No immediate gaps identified.</p>}</CardContent></Card>
           <Card className="md:col-span-2"><CardHeader><CardTitle>Market demand</CardTitle></CardHeader><CardContent className="grid gap-3 sm:grid-cols-2">{analysis.marketDemand.map((item) => <div key={item.skillName} className="flex items-center justify-between rounded-lg border border-border p-3"><span>{item.skillName}</span><Badge variant="secondary">{item.demandLevel} demand</Badge></div>)}</CardContent></Card>
-          <Card className="md:col-span-2"><CardHeader><CardTitle className="flex items-center gap-2"><BookOpen className="size-5" />Analysis</CardTitle></CardHeader><CardContent><p className="leading-relaxed text-muted-foreground">{analysis.reasoning}</p></CardContent></Card>
+          <Card className="md:col-span-2"><CardHeader><CardTitle className="flex items-center gap-2"><BookOpen className="size-5" />Analysis</CardTitle></CardHeader><CardContent><Markdown content={analysis.reasoning} /></CardContent></Card>
         </div>
       ) : (
         <Card className="rounded-2xl border-border bg-card">

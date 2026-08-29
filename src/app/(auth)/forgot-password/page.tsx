@@ -8,6 +8,7 @@ import { authApi } from '@/lib/api';
 import { toast } from 'sonner';
 import { CheckCircle, Mail } from 'lucide-react';
 import { Field } from '@/components/ui/field';
+import { GuestGuard } from '@/components/auth/guest-guard';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -28,70 +29,71 @@ export default function ForgotPasswordPage() {
     }
   };
 
-  if (sent) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-8">
-        <div className="w-full max-w-md space-y-6 text-center">
-        <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
-          <CheckCircle className="w-8 h-8 text-primary" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Check your email</h1>
-          <p className="text-muted-foreground mt-2">
-            We&apos;ve sent a password reset link to<br />
-            <span className="font-medium text-foreground">{email}</span>
-          </p>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          Didn&apos;t receive the email?{' '}
-          <button onClick={() => setSent(false)} className="text-primary hover:underline font-medium">
-            Try again
-          </button>
-        </p>
-        <Link href="/login">
-          <Button variant="outline" className="w-full">
-            Back to sign in
-          </Button>
-        </Link>
-      </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen flex items-center justify-center p-8">
-      <div className="w-full max-w-md space-y-6">
-      <div className="text-center">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-          <Mail className="w-8 h-8 text-primary" />
+    <GuestGuard>
+      {sent ? (
+        <div className="min-h-screen flex items-center justify-center p-8">
+          <div className="w-full max-w-md space-y-6 text-center">
+            <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+              <CheckCircle className="w-8 h-8 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Check your email</h1>
+              <p className="text-muted-foreground mt-2">
+                We&apos;ve sent a password reset link to<br />
+                <span className="font-medium text-foreground">{email}</span>
+              </p>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Didn&apos;t receive the email?{' '}
+              <button onClick={() => setSent(false)} className="text-primary hover:underline font-medium">
+                Try again
+              </button>
+            </p>
+            <Link href="/login">
+              <Button variant="outline" className="w-full">
+                Back to sign in
+              </Button>
+            </Link>
+          </div>
         </div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Forgot password?</h1>
-        <p className="text-muted-foreground mt-1">
-          Enter your email and we&apos;ll send you a reset link
-        </p>
-      </div>
+      ) : (
+        <div className="min-h-screen flex items-center justify-center p-8">
+          <div className="w-full max-w-md space-y-6">
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+                <Mail className="w-8 h-8 text-primary" />
+              </div>
+              <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Forgot password?</h1>
+              <p className="text-muted-foreground mt-1">
+                Enter your email and we&apos;ll send you a reset link
+              </p>
+            </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Field label="Email" htmlFor="email">
-<Input
-            id="email"
-            type="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-</Field>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <Field label="Email" htmlFor="email">
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </Field>
 
-        <Button type="submit" variant="gradient" className="w-full" loading={isLoading} loadingText="Sending...">Send reset link</Button>
+              <Button type="submit" variant="gradient" className="w-full" loading={isLoading} loadingText="Sending...">Send reset link</Button>
 
-        <Link href="/login">
-          <Button variant="ghost" className="w-full">
-            ← Back to sign in
-          </Button>
-        </Link>
-      </form>
-      </div>
-      </div>
+              <Link href="/login">
+                <Button variant="ghost" className="w-full">
+                  ← Back to sign in
+                </Button>
+              </Link>
+            </form>
+          </div>
+        </div>
+      )}
+    </GuestGuard>
   );
 }
+

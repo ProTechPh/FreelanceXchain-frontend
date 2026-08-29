@@ -92,7 +92,7 @@ export default function KycReviewPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground">KYC review</h1>
           <p className="text-muted-foreground">Review identity verification requests</p>

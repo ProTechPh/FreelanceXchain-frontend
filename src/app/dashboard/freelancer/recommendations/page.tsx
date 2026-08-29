@@ -11,6 +11,7 @@ import { matchingApi, projectsApi, type ProjectRecommendation } from '@/lib/api'
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import type { Project } from '@/types';
 import { CardGridSkeleton } from '@/components/dashboard/skeletons';
+import { Markdown } from '@/components/ui/markdown';
 
 interface RecommendationView extends ProjectRecommendation {
   project: Project;
@@ -145,9 +146,9 @@ export default function FreelancerRecommendationsPage() {
                     Potential gaps: {item.missingSkills.join(', ')}
                   </p>
                 )}
-                <p className="rounded-lg bg-secondary/40 p-3 text-sm text-muted-foreground">
-                  {item.reasoning}
-                </p>
+                <div className="rounded-lg bg-secondary/40 p-3 text-sm text-muted-foreground">
+                  <Markdown content={item.reasoning} />
+                </div>
                 <Button asChild>
                   <Link href={`/dashboard/freelancer/projects/${item.project.id}`}>
                     View project

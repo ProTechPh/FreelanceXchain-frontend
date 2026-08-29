@@ -43,13 +43,13 @@ export default function EmployerProjectsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground">My projects</h1>
           <p className="text-muted-foreground">Manage your project listings</p>
         </div>
-        <Link href="/dashboard/employer/projects/new">
-          <Button variant="gradient">
+        <Link href="/dashboard/employer/projects/new" className="shrink-0">
+          <Button variant="gradient" className="w-full sm:w-auto">
             <PlusCircle className="w-4 h-4 mr-2" /> Post Project
           </Button>
         </Link>

@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { toast } from 'sonner';
 import { SignInPage } from '@/components/marketing/sign-in';
 import { getApiErrorMessage } from '@/lib/auth-contract';
+import { GuestGuard } from '@/components/auth/guest-guard';
 
 export default function LoginPage() {
   const { login } = useAuthStore();
@@ -59,7 +60,7 @@ export default function LoginPage() {
 
       toast.success('Welcome back!');
       const user = useAuthStore.getState().user;
-      router.push(`/dashboard/${user?.role || 'freelancer'}`);
+      router.replace(`/dashboard/${user?.role || 'freelancer'}`);
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Unable to sign in. Please try again.'), { duration: 5000 });
       setIsSigningIn(false);
@@ -67,17 +68,20 @@ export default function LoginPage() {
   };
 
   return (
-    <SignInPage
-      homeHref="/"
-      onSignIn={handleSignIn}
-      loading={isSigningIn}
-      onGoogleSignIn={() => handleOAuth('google')}
-      onGithubSignIn={() => handleOAuth('github')}
-      onResetPassword={() => router.push('/forgot-password')}
-      onResendConfirmation={() => router.push('/resend-confirmation')}
-      onCreateAccount={() => router.push('/register')}
-      onPasswordlessSignIn={() => router.push('/passwordless')}
-      oauthError={oauthError}
-    />
+    <GuestGuard>
+      <SignInPage
+        homeHref="/"
+        onSignIn={handleSignIn}
+        loading={isSigningIn}
+        onGoogleSignIn={() => handleOAuth('google')}
+        onGithubSignIn={() => handleOAuth('github')}
+        onResetPassword={() => router.push('/forgot-password')}
+        onResendConfirmation={() => router.push('/resend-confirmation')}
+        onCreateAccount={() => router.push('/register')}
+        onPasswordlessSignIn={() => router.push('/passwordless')}
+        oauthError={oauthError}
+      />
+    </GuestGuard>
   );
 }
+

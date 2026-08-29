@@ -683,6 +683,21 @@ export interface SkillGapAnalysis {
   reasoning: string;
 }
 
+export interface ProposalMilestonePlan {
+  title: string;
+  description: string;
+  amount: number;
+  durationDays: number;
+}
+
+export interface AIProposalResult {
+  coverLetter: string;
+  proposedRate: number;
+  estimatedDuration: number;
+  proposedMilestones: ProposalMilestonePlan[];
+  highlights: string[];
+}
+
 export const matchingApi = {
   getProjectRecommendations: (limit?: number) =>
     api.get<ProjectRecommendation[]>('/matching/projects', { params: limit ? { limit } : undefined }),
@@ -697,6 +712,16 @@ export const matchingApi = {
 
   getSkillGaps: () =>
     api.get<SkillGapAnalysis>('/matching/skill-gaps'),
+
+  generateProposal: (projectId: string, customNotes?: string) =>
+    api.post<AIProposalResult>(`/matching/generate-proposal/${projectId}`, { customNotes }),
+};
+
+export type SenderProfile = {
+  key: string;
+  name: string;
+  email: string;
+  description: string;
 };
 
 export const emailApi = {
@@ -705,6 +730,9 @@ export const emailApi = {
 
   getUnreadCount: (folder?: string) =>
     api.get<{ count: number }>('/inbox/unread-count', { params: { folder } }),
+
+  getProfiles: () =>
+    api.get<{ profiles: SenderProfile[] }>('/inbox/profiles'),
 
   getById: (id: string) =>
     api.get(`/inbox/${id}`),
@@ -715,10 +743,10 @@ export const emailApi = {
   delete: (id: string) =>
     api.delete(`/inbox/${id}`),
 
-  send: (data: { to: string; subject: string; text: string; html?: string }) =>
+  send: (data: { to: string; subject: string; text: string; html?: string; senderProfile?: string; senderName?: string }) =>
     api.post('/inbox/send', data),
 
-  reply: (id: string, data: { text: string; html?: string }) =>
+  reply: (id: string, data: { text: string; html?: string; senderProfile?: string; senderName?: string }) =>
     api.post(`/inbox/${id}/reply`, data),
 };
 

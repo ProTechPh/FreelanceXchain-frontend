@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { SignUpPage } from '@/components/marketing/sign-up';
 import type { UserRole } from '@/types';
 import { getApiErrorMessage } from '@/lib/auth-contract';
+import { GuestGuard } from '@/components/auth/guest-guard';
 
 export default function RegisterPage() {
   const { register, isLoading } = useAuthStore();
@@ -20,19 +21,22 @@ export default function RegisterPage() {
     try {
       await register(data.email, data.password, data.role);
       toast.success('Account created successfully!');
-      router.push(`/dashboard/${data.role}`);
+      router.replace(`/dashboard/${data.role}`);
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Registration failed. Please try again.'));
     }
   };
 
   return (
-    <SignUpPage
-      onSubmit={handleSubmit}
-      onGoogleSignIn={() => handleOAuth('google')}
-      onGithubSignIn={() => handleOAuth('github')}
-      onSignIn={() => router.push('/login')}
-      isLoading={isLoading}
-    />
+    <GuestGuard>
+      <SignUpPage
+        onSubmit={handleSubmit}
+        onGoogleSignIn={() => handleOAuth('google')}
+        onGithubSignIn={() => handleOAuth('github')}
+        onSignIn={() => router.push('/login')}
+        isLoading={isLoading}
+      />
+    </GuestGuard>
   );
 }
+

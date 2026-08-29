@@ -19,7 +19,8 @@ import { subscribeToNotificationStream } from '@/lib/sse';
 import { useAuthStore } from '@/stores/authStore';
 import type { ConversationWithDetails, Message } from '@/types';
 import { toast } from 'sonner';
-import { Send, Search, Check, CheckCheck, MessageSquare, ExternalLink, FileText, Paperclip, X } from 'lucide-react';
+import { Send, Search, Check, CheckCheck, MessageSquare, ExternalLink, FileText, Paperclip, X, ArrowLeft } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { MessagesWorkspaceSkeleton, MessageThreadSkeleton } from '@/components/messages/messages-workspace-skeleton';
 
 function initials(name: string): string {
@@ -241,7 +242,7 @@ export function MessagesWorkspace() {
   return (
     <div className="flex h-[calc(100vh-8rem)] rounded-xl overflow-hidden border border-border bg-card">
       {/* Conversations List */}
-      <div className="w-80 border-r border-border flex flex-col">
+      <div className={cn('w-full md:w-80 border-r border-border flex flex-col', chatRecipient ? 'hidden md:flex' : 'flex')}>
         <div className="p-4 border-b border-border">
           <h2 className="font-semibold mb-3">Messages</h2>
           <div className="relative">
@@ -346,7 +347,7 @@ export function MessagesWorkspace() {
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 flex flex-col">
+      <div className={cn('flex-1 flex flex-col', !chatRecipient ? 'hidden md:flex' : 'flex')}>
         {!chatRecipient ? (
           <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
             Select a conversation to start chatting
@@ -356,6 +357,18 @@ export function MessagesWorkspace() {
             {/* Chat Header */}
             <div className="p-4 border-b border-border flex items-center justify-between">
               <div className="flex items-center gap-3">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="md:hidden -ml-2 h-8 w-8"
+                  onClick={() => {
+                    setSelectedId(null);
+                    setDirectRecipient(null);
+                  }}
+                  aria-label="Back to conversations"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
                 <Avatar className="w-10 h-10">
                   <AvatarFallback className="gradient-primary text-primary-foreground text-sm">
                     {initials(chatRecipient.name)}

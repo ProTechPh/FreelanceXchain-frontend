@@ -125,3 +125,69 @@ export function formatRelativeTime(
   }
   return rtf.format(Math.round(seconds), 'second');
 }
+
+const AUDIT_ACTION_LABELS: Record<string, string> = {
+  'auth.login': 'User Login',
+  'auth.login_failed': 'Failed Login Attempt',
+  'auth.logout': 'User Logout',
+  'auth.register': 'User Registration',
+  'auth.password_update': 'Password Updated',
+  'auth.password_reset': 'Password Reset',
+  'auth.mfa_enroll': 'MFA Enrolled',
+  'auth.mfa_verify': 'MFA Verified',
+  'kyc.approve': 'KYC Approved',
+  'kyc.reject': 'KYC Rejected',
+  'dispute.resolve': 'Dispute Resolved',
+  'dispute.verify_evidence': 'Evidence Verified',
+  'skill.create': 'Skill Created',
+  'skill.approve': 'Skill Approved',
+  'skill.reject': 'Skill Rejected',
+  'user.suspend': 'User Suspended',
+  'user.unsuspend': 'User Unsuspended',
+  'contract.force_release': 'Milestone Force Release',
+  'contract.emergency_refund': 'Emergency Escrow Refund',
+  'escrow.refund_review': 'Escrow Refund Review',
+  'system.health_check': 'System Health Check',
+  'system.maintenance': 'System Maintenance',
+};
+
+const AUDIT_RESOURCE_LABELS: Record<string, string> = {
+  kyc_verification: 'KYC Verification',
+  dispute_evidence: 'Dispute Evidence',
+  contract: 'Contract',
+  taxonomy: 'Skill Taxonomy',
+  skill: 'Skill',
+  user: 'User Account',
+  dispute: 'Dispute',
+  system: 'System',
+  escrow: 'Escrow',
+};
+
+/**
+ * Converts dot-and-underscore variable action names (e.g. `escrow.refund_review`, `kyc.reject`)
+ * into clean, user-friendly labels (e.g. "Escrow Refund Review", "KYC Rejected").
+ */
+export function formatAuditAction(action: string | null | undefined): string {
+  if (!action) return '—';
+  if (AUDIT_ACTION_LABELS[action]) return AUDIT_ACTION_LABELS[action];
+
+  if (action.includes('.')) {
+    const parts = action.split('.');
+    const category = parts[0]!.toUpperCase() === 'KYC' ? 'KYC' : parts[0]!.charAt(0).toUpperCase() + parts[0]!.slice(1);
+    const rest = parts.slice(1).join(' ').replace(/[._-]/g, ' ');
+    const formattedRest = rest.replace(/\b\w/g, (c) => c.toUpperCase());
+    return `${category}: ${formattedRest}`;
+  }
+
+  return action.replace(/[._-]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/**
+ * Converts underscored resource names (e.g. `kyc_verification`, `dispute_evidence`)
+ * into clean labels (e.g. "KYC Verification", "Dispute Evidence").
+ */
+export function formatAuditResource(resourceType: string | null | undefined): string {
+  if (!resourceType) return '—';
+  if (AUDIT_RESOURCE_LABELS[resourceType]) return AUDIT_RESOURCE_LABELS[resourceType];
+  return resourceType.replace(/[._-]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}

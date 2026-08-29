@@ -213,7 +213,7 @@ export default function FreelancerDashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Welcome back{currentUser?.name ? `, ${currentUser.name}` : ''}!</h1>
           <p className="text-muted-foreground">Here&apos;s what&apos;s happening with your work</p>
@@ -224,8 +224,8 @@ export default function FreelancerDashboard() {
             className="mt-3"
           />
         </div>
-        <Link href="/dashboard/freelancer/projects">
-          <Button variant="gradient">
+        <Link href="/dashboard/freelancer/projects" className="shrink-0">
+          <Button variant="gradient" className="w-full sm:w-auto">
             <Briefcase className="w-4 h-4 mr-2" /> Browse Projects
           </Button>
         </Link>
