@@ -13,11 +13,18 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
-import { Mail, Inbox, Send, Trash2, Star, StarOff, RefreshCw, PenSquare, Reply, ArrowLeft, Search, MailOpen, Clock } from 'lucide-react';
-import { emailApi } from '@/lib/api';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Mail, Inbox, Send, Trash2, Star, StarOff, RefreshCw, PenSquare, Reply, ArrowLeft, Search, MailOpen, Clock, ShieldCheck, UserCheck } from 'lucide-react';
+import { emailApi, type SenderProfile } from '@/lib/api';
 import { toast } from 'sonner';
+import { getApiErrorMessage } from '@/lib/auth-contract';
 
 type EmailItem = {
   id: string;
@@ -52,7 +59,27 @@ export default function AdminEmailPage() {
   const [composeTo, setComposeTo] = useState('');
   const [composeSubject, setComposeSubject] = useState('');
   const [composeBody, setComposeBody] = useState('');
+  const [senderProfile, setSenderProfile] = useState<string>('support');
+  const [senderName, setSenderName] = useState<string>('');
+  const [profiles, setProfiles] = useState<SenderProfile[]>([
+    { key: 'support', name: 'FreelanceXchain Support', email: 'support@freelancexchain.works', description: 'Customer & Freelancer Assistance' },
+    { key: 'admin', name: 'FreelanceXchain Admin', email: 'admin@freelancexchain.works', description: 'Platform Operations & Management' },
+    { key: 'security', name: 'FreelanceXchain Security', email: 'security@freelancexchain.works', description: 'Escrow, Disputes & KYC Security' },
+    { key: 'team', name: 'FreelanceXchain Team', email: 'team@freelancexchain.works', description: 'Community & Ecosystem Updates' },
+    { key: 'noreply', name: 'FreelanceXchain Notifications', email: 'noreply@freelancexchain.works', description: 'Automated Platform Notifications' },
+  ]);
   const [sending, setSending] = useState(false);
+
+  const fetchProfiles = useCallback(async () => {
+    try {
+      const res = await emailApi.getProfiles();
+      if (res.data?.profiles?.length) {
+        setProfiles(res.data.profiles);
+      }
+    } catch {
+      // fallback to initial state
+    }
+  }, []);
 
   const fetchEmails = useCallback(async () => {
     setLoading(true);
@@ -79,7 +106,8 @@ export default function AdminEmailPage() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchEmails();
     fetchUnreadCount();
-  }, [fetchEmails, fetchUnreadCount]);
+    fetchProfiles();
+  }, [fetchEmails, fetchUnreadCount, fetchProfiles]);
 
   const openEmail = async (email: EmailItem) => {
     try {
@@ -134,15 +162,18 @@ export default function AdminEmailPage() {
         to: composeTo,
         subject: composeSubject,
         text: composeBody,
+        senderProfile,
+        senderName: senderName.trim() || undefined,
       });
       toast.success('Email sent');
       setComposeOpen(false);
       setComposeTo('');
       setComposeSubject('');
       setComposeBody('');
+      setSenderName('');
       if (currentFolder === 'sent') fetchEmails();
-    } catch {
-      toast.error('Failed to send email');
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Failed to send email'));
     } finally {
       setSending(false);
     }
@@ -155,12 +186,17 @@ export default function AdminEmailPage() {
     }
     setSending(true);
     try {
-      await emailApi.reply(selectedEmail.id, { text: composeBody });
+      await emailApi.reply(selectedEmail.id, {
+        text: composeBody,
+        senderProfile,
+        senderName: senderName.trim() || undefined,
+      });
       toast.success('Reply sent');
       setReplyOpen(false);
       setComposeBody('');
-    } catch {
-      toast.error('Failed to send reply');
+      setSenderName('');
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Failed to send reply'));
     } finally {
       setSending(false);
     }
@@ -180,8 +216,8 @@ export default function AdminEmailPage() {
   ];
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] gap-4 p-6">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col h-[calc(100vh-4rem)] gap-4 p-4 sm:p-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <Mail className="w-6 h-6 text-primary" />
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Email</h1>
@@ -193,18 +229,55 @@ export default function AdminEmailPage() {
           <Button variant="outline" size="sm" onClick={fetchEmails}>
             <RefreshCw className="w-4 h-4" />
           </Button>
+          <Button size="sm" onClick={() => setComposeOpen(true)}>
+            <PenSquare className="w-4 h-4 mr-2" />
+            Compose
+          </Button>
           <Dialog open={composeOpen} onOpenChange={setComposeOpen}>
-            <DialogTrigger>
-              <Button size="sm">
-                <PenSquare className="w-4 h-4 mr-2" />
-                Compose
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
+            <DialogContent className="sm:max-w-[620px]">
               <DialogHeader>
-                <DialogTitle>New Email</DialogTitle>
+                <DialogTitle className="flex items-center gap-2">
+                  <Mail className="w-5 h-5 text-primary" />
+                  New Email
+                </DialogTitle>
               </DialogHeader>
-              <div className="space-y-4 pt-4">
+              <div className="space-y-4 pt-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-muted/40 rounded-lg border border-border/50">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold flex items-center gap-1.5">
+                      <ShieldCheck className="w-3.5 h-3.5 text-primary" />
+                      Sender Profile (From)
+                    </Label>
+                    <Select value={senderProfile} onValueChange={(val) => { if (val) setSenderProfile(val); }}>
+                      <SelectTrigger className="h-9 text-xs">
+                        <SelectValue placeholder="Select sender profile" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {profiles.map((p) => (
+                          <SelectItem key={p.key} value={p.key}>
+                            <div className="flex flex-col text-left py-0.5">
+                              <span className="font-semibold text-xs text-foreground">{p.name}</span>
+                              <span className="text-[11px] text-muted-foreground">{p.email}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold flex items-center gap-1.5">
+                      <UserCheck className="w-3.5 h-3.5 text-primary" />
+                      Display Name (Optional)
+                    </Label>
+                    <Input
+                      placeholder="e.g. Jericho (Support Lead)"
+                      value={senderName}
+                      onChange={(e) => setSenderName(e.target.value)}
+                      className="h-9 text-xs"
+                    />
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <Label>To</Label>
                   <Input
@@ -225,12 +298,12 @@ export default function AdminEmailPage() {
                   <Label>Body</Label>
                   <Textarea
                     placeholder="Write your message..."
-                    rows={8}
+                    rows={7}
                     value={composeBody}
                     onChange={(e) => setComposeBody(e.target.value)}
                   />
                 </div>
-                <div className="flex justify-end gap-2">
+                <div className="flex justify-end gap-2 pt-2">
                   <Button
                     variant="outline"
                     onClick={() => setComposeOpen(false)}
@@ -238,7 +311,7 @@ export default function AdminEmailPage() {
                     Cancel
                   </Button>
                   <Button onClick={handleSend} disabled={sending}>
-                    {sending ? 'Sending...' : 'Send'}
+                    {sending ? 'Sending...' : 'Send Email'}
                   </Button>
                 </div>
               </div>
@@ -249,7 +322,7 @@ export default function AdminEmailPage() {
 
       <div className="flex flex-1 gap-4 overflow-hidden">
         {/* Folder sidebar */}
-        <div className="w-48 shrink-0 space-y-1">
+        <div className="hidden sm:block w-48 shrink-0 space-y-1">
           {folders.map((f) => (
             <button
               key={f.key}
@@ -413,23 +486,60 @@ export default function AdminEmailPage() {
 
             {/* Reply dialog */}
             <Dialog open={replyOpen} onOpenChange={setReplyOpen}>
-              <DialogContent className="sm:max-w-[600px]">
+              <DialogContent className="sm:max-w-[620px]">
                 <DialogHeader>
-                  <DialogTitle>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Reply className="w-5 h-5 text-primary" />
                     Reply to {selectedEmail.from_address}
                   </DialogTitle>
                 </DialogHeader>
-                <div className="space-y-4 pt-4">
-                  <div className="text-sm text-muted-foreground">
-                    Re: {selectedEmail.subject}
+                <div className="space-y-4 pt-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-muted/40 rounded-lg border border-border/50">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold flex items-center gap-1.5">
+                        <ShieldCheck className="w-3.5 h-3.5 text-primary" />
+                        Reply As (Sender Profile)
+                      </Label>
+                      <Select value={senderProfile} onValueChange={(val) => { if (val) setSenderProfile(val); }}>
+                        <SelectTrigger className="h-9 text-xs">
+                          <SelectValue placeholder="Select sender profile" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {profiles.map((p) => (
+                            <SelectItem key={p.key} value={p.key}>
+                              <div className="flex flex-col text-left py-0.5">
+                                <span className="font-semibold text-xs text-foreground">{p.name}</span>
+                                <span className="text-[11px] text-muted-foreground">{p.email}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold flex items-center gap-1.5">
+                        <UserCheck className="w-3.5 h-3.5 text-primary" />
+                        Display Name (Optional)
+                      </Label>
+                      <Input
+                        placeholder="e.g. Jericho (Support Lead)"
+                        value={senderName}
+                        onChange={(e) => setSenderName(e.target.value)}
+                        className="h-9 text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="text-xs font-medium text-muted-foreground px-1">
+                    Subject: Re: {selectedEmail.subject}
                   </div>
                   <Textarea
                     placeholder="Write your reply..."
-                    rows={8}
+                    rows={7}
                     value={composeBody}
                     onChange={(e) => setComposeBody(e.target.value)}
                   />
-                  <div className="flex justify-end gap-2">
+                  <div className="flex justify-end gap-2 pt-2">
                     <Button
                       variant="outline"
                       onClick={() => setReplyOpen(false)}

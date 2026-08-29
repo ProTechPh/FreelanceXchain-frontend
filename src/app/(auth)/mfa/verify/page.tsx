@@ -16,14 +16,18 @@ export default function MfaVerifyPage() {
   const [factorId] = useState('totp');
   const [isVerifying, setIsVerifying] = useState(false);
   const verificationCompleted = useRef(false);
-  const { mfaPending, mfaSessionToken, completeMfa, clearMfa } = useAuthStore();
+  const { user, isAuthenticated, hasHydrated, mfaPending, mfaSessionToken, completeMfa, clearMfa } = useAuthStore();
   const router = useRouter();
 
   useEffect(() => {
-    if (!verificationCompleted.current && (!mfaPending || !mfaSessionToken)) {
-      router.push('/login');
+    if (hasHydrated && isAuthenticated && user && !mfaPending) {
+      router.replace(`/dashboard/${user.role || 'freelancer'}`);
+      return;
     }
-  }, [mfaPending, mfaSessionToken, router]);
+    if (hasHydrated && !verificationCompleted.current && (!mfaPending || !mfaSessionToken)) {
+      router.replace('/login');
+    }
+  }, [hasHydrated, isAuthenticated, user, mfaPending, mfaSessionToken, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

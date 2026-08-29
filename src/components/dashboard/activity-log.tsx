@@ -13,10 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { EmptyState } from '@/components/ui/empty-state';
-
-function actionLabel(action: string): string {
-  return action.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
+import { formatAuditAction, formatAuditResource } from '@/lib/format';
 
 export function ActivityLog() {
   const [logs, setLogs] = useState<AuditLogEntry[]>([]);
@@ -58,7 +55,7 @@ export function ActivityLog() {
           icon={History}
           title="No activity matches these filters"
           description="Try clearing the search or widening the date range."
-        /> : <Card><CardContent className="p-0"><ul className="divide-y divide-border">{filtered.map((log) => <li key={log.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-medium">{actionLabel(log.action)}</p><p className="mt-1 text-sm text-muted-foreground">{actionLabel(log.resource_type)} · {new Date(log.created_at).toLocaleString()}</p>{log.error_message && <p className="mt-1 text-sm text-destructive">{log.error_message}</p>}</div><div className="flex items-center gap-3"><Badge variant={log.status === 'failure' ? 'destructive' : 'secondary'}>{log.status}</Badge>{log.ip_address && <span className="font-mono text-xs text-muted-foreground">{log.ip_address}</span>}</div></li>)}</ul></CardContent></Card>}
+        /> : <Card><CardContent className="p-0"><ul className="divide-y divide-border">{filtered.map((log) => <li key={log.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-semibold text-foreground">{formatAuditAction(log.action)}</p><p className="mt-1 text-sm text-muted-foreground">{formatAuditResource(log.resource_type)} · {new Date(log.created_at).toLocaleString()}</p>{log.error_message && <p className="mt-1 text-sm text-destructive">{log.error_message}</p>}</div><div className="flex items-center gap-3"><Badge variant={log.status === 'failure' ? 'destructive' : 'secondary'}>{log.status}</Badge>{log.ip_address && <span className="font-mono text-xs text-muted-foreground">{log.ip_address}</span>}</div></li>)}</ul></CardContent></Card>}
     </div>
   );
 }

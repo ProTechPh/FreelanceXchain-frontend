@@ -14,7 +14,7 @@ import {
   type AuditLogStatus,
 } from '@/lib/audit-log-search';
 import { resolveRange } from '@/lib/analytics-range';
-import { formatDateTime } from '@/lib/format';
+import { formatDateTime, formatAuditAction, formatAuditResource } from '@/lib/format';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import type { AuditLogEntry } from '@/types';
 import { ClipboardList, Search, User } from 'lucide-react';
@@ -194,7 +194,7 @@ export default function AuditLogsPage() {
                       <TableCell className="text-sm text-muted-foreground">{row.date}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">
                         {Object.entries(row.actions)
-                          .map(([name, count]) => `${name} (${count})`)
+                          .map(([name, count]) => `${formatAuditAction(name)} (${count})`)
                           .join(', ')}
                       </TableCell>
                       <TableCell className="text-right tabular-nums">{row.total}</TableCell>
@@ -213,7 +213,7 @@ export default function AuditLogsPage() {
           <Search aria-hidden="true" className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             aria-label="Filter by action"
-            placeholder="Action, e.g. user.suspend"
+            placeholder="Search action, e.g. KYC, Login, Suspend"
             value={action}
             onChange={(e) => setAction(e.target.value)}
             className="pl-10"
@@ -221,13 +221,13 @@ export default function AuditLogsPage() {
         </div>
         <Input
           aria-label="Filter by actor id"
-          placeholder="Actor id"
+          placeholder="Actor ID"
           value={actor}
           onChange={(e) => setActor(e.target.value)}
         />
         <Input
           aria-label="Filter by resource type"
-          placeholder="Resource type, e.g. contract"
+          placeholder="Resource type, e.g. Contract, User, KYC"
           value={resourceType}
           onChange={(e) => setResourceType(e.target.value)}
         />
@@ -276,6 +276,7 @@ export default function AuditLogsPage() {
               />
             </div>
           ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -290,10 +291,13 @@ export default function AuditLogsPage() {
               <TableBody>
                 {logs.map((log) => (
                   <TableRow key={log.id}>
-                    <TableCell>
-                      <code className="text-sm bg-secondary px-2 py-1 rounded">{log.action}</code>
+                    <TableCell className="p-4">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-semibold text-sm text-foreground">{formatAuditAction(log.action)}</span>
+                        <span className="font-mono text-xs text-muted-foreground">{log.action}</span>
+                      </div>
                       {log.error_message && (
-                        <p className="text-xs text-destructive mt-1 max-w-xs truncate">{log.error_message}</p>
+                        <p className="text-xs text-destructive mt-1 max-w-xs truncate" title={log.error_message}>{log.error_message}</p>
                       )}
                     </TableCell>
                     <TableCell>
@@ -304,9 +308,9 @@ export default function AuditLogsPage() {
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell className="p-4 text-sm text-muted-foreground">
-                      {log.resource_type}
-                      {log.resource_id && <span className="font-mono text-xs"> #{log.resource_id.slice(0, 8)}</span>}
+                    <TableCell className="p-4 text-sm">
+                      <span className="font-medium text-foreground">{formatAuditResource(log.resource_type)}</span>
+                      {log.resource_id && <span className="font-mono text-xs text-muted-foreground ml-1.5">#{log.resource_id.slice(0, 8)}</span>}
                     </TableCell>
                     <TableCell>
                       <Badge className={statusColors[log.status]}>{log.status}</Badge>
@@ -329,6 +333,7 @@ export default function AuditLogsPage() {
                 )}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>

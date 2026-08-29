@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 import { FreelanceXchainIcon } from "@/components/ui/freelancexchain-logo";
 import { MobileEscrowPreview } from "@/components/marketing/mobile-escrow-preview";
 import { ArrowRight, Sparkles as Sparkle, CircleCheck as CheckCircle, ShieldCheck, Briefcase, Menu as List, Settings as Gear, CircleQuestionMark as Question, Search as MagnifyingGlass, Check, Coins, TrendingUp as TrendUp, FileCode } from 'lucide-react';
+import { useAuthStore } from "@/stores/authStore";
 
 const trustBadges = [
   { text: "100% Smart Contract Escrow" },
@@ -66,8 +67,18 @@ const mockContracts = [
 
 export default function AetherHero() {
   const reduce = useReducedMotion();
+  const { user, isAuthenticated } = useAuthStore();
+  const [mounted, setMounted] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("All");
   const [selectedContract, setSelectedContract] = useState(mockContracts[0]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isLoggedIn = mounted && isAuthenticated && !!user;
+  const primaryHref = isLoggedIn ? `/dashboard/${user.role || 'freelancer'}` : '/register';
+  const primaryText = isLoggedIn ? 'Go to Dashboard' : 'Get Started Free';
 
   const filteredContracts =
     selectedFilter === "All"
@@ -131,10 +142,10 @@ export default function AetherHero() {
             className="mt-8 flex flex-wrap justify-center items-center gap-3.5"
           >
             <Link
-              href="/register"
+              href={primaryHref}
               className="group inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full bg-primary text-primary-foreground font-bold text-sm shadow-md transition-all duration-150 hover:bg-primary-hover hover:shadow-lg active:scale-[0.98]"
             >
-              <span>Get Started Free</span>
+              <span>{primaryText}</span>
               <ArrowRight
                 className="size-4 transition-transform duration-150 group-hover:translate-x-1"
                 strokeWidth={2.5}

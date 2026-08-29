@@ -90,7 +90,7 @@ export function TopBar() {
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <MobileNav role={user?.role} />
           {hasParticipantDashboard && (
-            <form className="relative w-full max-w-md" role="search" onSubmit={submitSearch}>
+            <form className="relative w-full max-w-[180px] sm:max-w-md" role="search" onSubmit={submitSearch}>
               <label htmlFor="dashboard-marketplace-search" className="sr-only">{searchLabel}</label>
               <Input
                 id="dashboard-marketplace-search"

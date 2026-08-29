@@ -1,10 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 import { Sparkles as Sparkle, ShieldCheck, Brain, Globe, Lock as LockKey } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { useAuthStore } from "@/stores/authStore";
 
 const PILLARS = [
   {
@@ -42,6 +43,16 @@ const STATS = [
 
 export default function AboutUsSection() {
   const reduce = useReducedMotion();
+  const { user, isAuthenticated } = useAuthStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isLoggedIn = mounted && isAuthenticated && !!user;
+  const primaryHref = isLoggedIn ? `/dashboard/${user.role || 'freelancer'}` : '/register';
+  const primaryText = isLoggedIn ? 'Go to Dashboard' : 'Get Started Free';
 
   return (
     <div className="w-full">
@@ -129,9 +140,9 @@ export default function AboutUsSection() {
               Join thousands of Web3 engineers, designers, and employers transacting safely through smart contract escrow.
             </p>
             <div className="pt-4 flex flex-wrap items-center justify-center gap-3">
-              <Link href="/register">
+              <Link href={primaryHref}>
                 <Button className="rounded-full bg-primary-foreground text-primary hover:bg-primary-foreground/90 text-xs font-bold px-6 py-3 shadow-md">
-                  Get Started Free
+                  {primaryText}
                 </Button>
               </Link>
               <Link href="/projects">

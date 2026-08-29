@@ -178,90 +178,93 @@ export default function UsersPage() {
       {/* Users Table */}
       <Card className="bg-card border-border">
         <CardContent className="p-0">
-          <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Joined</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{user.name || 'Unnamed'}</p>
-                        <p className="text-sm text-muted-foreground">{user.email}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={roleColors[user.role]}>{user.role}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={statusColors[user.isActive ? 'active' : 'suspended']}>
-                        {user.isActive ? 'active' : 'suspended'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="p-4 text-muted-foreground">{new Date(user.createdAt).toLocaleDateString()}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-primary"
-                          title={user.kycVerified ? 'KYC verified' : 'Manually verify KYC'}
-                          aria-label={user.kycVerified ? 'KYC verified' : `Manually verify KYC for ${user.name || user.email}`}
-                          disabled={pendingActionId === user.id || user.kycVerified}
-                          onClick={() => handleVerify(user)}
-                        >
-                          <ShieldCheck className="w-4 h-4" />
-                        </Button>
-                        {user.isActive ? (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-warning"
-                            title="Suspend"
-                            disabled={pendingActionId === user.id}
-                            onClick={() => handleSuspend(user)}
-                          >
-                            <Ban className="w-4 h-4" />
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-success"
-                            title="Unsuspend"
-                            disabled={pendingActionId === user.id}
-                            onClick={() => handleUnsuspend(user)}
-                          >
-                            <UserCheck className="w-4 h-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {filteredUsers.length === 0 && (
+          <div className="overflow-x-auto">
+            <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={5} className="py-10">
-                      <EmptyState
-                        size="sm"
-                        icon={Users}
-                        title="No users match your filters"
-                        description="Try clearing the search or selecting a different role."
-                      />
-                    </TableCell>
+                    <TableHead>User</TableHead>
+                    <TableHead>Role</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="hidden sm:table-cell">Joined</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredUsers.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{user.name || 'Unnamed'}</p>
+                          <p className="text-sm text-muted-foreground">{user.email}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={roleColors[user.role]}>{user.role}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={statusColors[user.isActive ? 'active' : 'suspended']}>
+                          {user.isActive ? 'active' : 'suspended'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell p-4 text-muted-foreground">{new Date(user.createdAt).toLocaleDateString()}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-primary"
+                            title={user.kycVerified ? 'KYC verified' : 'Manually verify KYC'}
+                            aria-label={user.kycVerified ? 'KYC verified' : `Manually verify KYC for ${user.name || user.email}`}
+                            disabled={pendingActionId === user.id || user.kycVerified}
+                            onClick={() => handleVerify(user)}
+                          >
+                            <ShieldCheck className="w-4 h-4" />
+                          </Button>
+                          {user.isActive ? (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-warning"
+                              title="Suspend"
+                              disabled={pendingActionId === user.id}
+                              onClick={() => handleSuspend(user)}
+                            >
+                              <Ban className="w-4 h-4" />
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-success"
+                              title="Unsuspend"
+                              disabled={pendingActionId === user.id}
+                              onClick={() => handleUnsuspend(user)}
+                            >
+                              <UserCheck className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {filteredUsers.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="py-10">
+                        <EmptyState
+                          size="sm"
+                          icon={Users}
+                          title="No users match your filters"
+                          description="Try clearing the search or selecting a different role."
+                        />
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+          </div>
         </CardContent>
       </Card>
     </div>
   );
 }
+

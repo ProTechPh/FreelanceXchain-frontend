@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Field } from '@/components/ui/field';
+import { GuestGuard } from '@/components/auth/guest-guard';
 
 export default function PasswordlessPage() {
   const router = useRouter();
@@ -53,7 +54,7 @@ export default function PasswordlessPage() {
       const { data } = await authApi.verifyPasswordlessToken(userId, code.trim());
       if (isAuthSuccessResponse(data)) {
         completeAuth(data);
-        router.push(`/dashboard/${data.user.role}`);
+        router.replace(`/dashboard/${data.user.role}`);
         return;
       }
       if (isRegistrationRequiredResponse(data)) {
@@ -70,25 +71,28 @@ export default function PasswordlessPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 p-6">
-      <Card className="w-full max-w-md">
-        <CardHeader><CardTitle><h1 className="flex items-center gap-2"><KeyRound className="size-5" />Passwordless sign in</h1></CardTitle></CardHeader>
-        <CardContent className="space-y-5">
-          <Field label="Email" htmlFor="passwordless-email">
-<Input id="passwordless-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
-</Field>
-          <div className="grid grid-cols-2 gap-3"><Button type="button" disabled={loading || !email.trim()} onClick={() => void requestCode()}><Mail className="mr-2 size-4" />Email code</Button><Button type="button" variant="outline" disabled={loading || !email.trim()} onClick={() => void requestMagicLink()}>Magic link</Button></div>
-          {userId && (
-            <form className="space-y-3 border-t border-border pt-5" onSubmit={verifyCode}>
-              <Field label="One-time code" htmlFor="passwordless-code">
-<Input id="passwordless-code" inputMode="numeric" autoComplete="one-time-code" value={code} onChange={(event) => setCode(event.target.value)} />
-</Field>
-              <Button className="w-full" type="submit" disabled={loading || !code.trim()}>Verify and sign in</Button>
-            </form>
-          )}
-          <p className="text-center text-sm text-muted-foreground"><Link href="/login" className="text-primary hover:underline">Back to password sign in</Link></p>
-        </CardContent>
-      </Card>
-    </div>
+    <GuestGuard>
+      <div className="flex min-h-screen items-center justify-center bg-muted/30 p-6">
+        <Card className="w-full max-w-md">
+          <CardHeader><CardTitle><h1 className="flex items-center gap-2"><KeyRound className="size-5" />Passwordless sign in</h1></CardTitle></CardHeader>
+          <CardContent className="space-y-5">
+            <Field label="Email" htmlFor="passwordless-email">
+              <Input id="passwordless-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+            </Field>
+            <div className="grid grid-cols-2 gap-3"><Button type="button" disabled={loading || !email.trim()} onClick={() => void requestCode()}><Mail className="mr-2 size-4" />Email code</Button><Button type="button" variant="outline" disabled={loading || !email.trim()} onClick={() => void requestMagicLink()}>Magic link</Button></div>
+            {userId && (
+              <form className="space-y-3 border-t border-border pt-5" onSubmit={verifyCode}>
+                <Field label="One-time code" htmlFor="passwordless-code">
+                  <Input id="passwordless-code" inputMode="numeric" autoComplete="one-time-code" value={code} onChange={(event) => setCode(event.target.value)} />
+                </Field>
+                <Button className="w-full" type="submit" disabled={loading || !code.trim()}>Verify and sign in</Button>
+              </form>
+            )}
+            <p className="text-center text-sm text-muted-foreground"><Link href="/login" className="text-primary hover:underline">Back to password sign in</Link></p>
+          </CardContent>
+        </Card>
+      </div>
+    </GuestGuard>
   );
 }
+

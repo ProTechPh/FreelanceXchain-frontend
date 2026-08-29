@@ -1,8 +1,8 @@
 'use client';
 
-import { useId, useState } from 'react';
+import { useId, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Paperclip, Send, ShieldAlert } from 'lucide-react';
+import { Paperclip, Send, ShieldAlert, Sparkles, Wand2, Check, RefreshCw, Eye, Edit3, X, FileText, Award, Layers } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,8 +15,11 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Markdown } from '@/components/ui/markdown';
 import { getApiErrorMessage } from '@/lib/auth-contract';
-import { proposalsApi } from '@/lib/api';
+import { proposalsApi, matchingApi, type AIProposalResult } from '@/lib/api';
 import {
   ProposalFormValidationError,
   submitProposal,
@@ -33,6 +36,7 @@ interface ProposalDialogProps {
     title: string;
     budget: number;
   } | null;
+  initialGenerateAI?: boolean;
 }
 
 const EMPTY_FORM: ProposalSubmissionForm = {
@@ -41,17 +45,126 @@ const EMPTY_FORM: ProposalSubmissionForm = {
   files: [],
 };
 
-export function ProposalDialog({ open, onOpenChange, onSubmitted, project }: ProposalDialogProps) {
+function createProposalDocumentFile(
+  projectTitle: string,
+  coverLetter: string,
+  highlights: string[],
+  milestones: Array<{ title: string; description: string; amount: number; durationDays: number }>
+): File {
+  const safeTitle = projectTitle.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 30);
+  const content = `# Proposal: ${projectTitle}
+Generated on: ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+
+## Key Qualifications & Highlights
+${highlights.map((h) => `- ${h}`).join('\n')}
+
+## Proposal & Technical Strategy
+${coverLetter}
+
+## Proposed Milestones & Delivery Schedule
+${milestones.map((m, i) => `${i + 1}. **${m.title}** ($${m.amount.toLocaleString()} - ${m.durationDays} days)\n   ${m.description}`).join('\n\n')}
+
+---
+Submitted via FreelanceXchain Decentralized Platform with Smart Contract Escrow Protection.
+`;
+
+  const blob = new Blob([content], { type: 'text/markdown' });
+  return new File([blob], `Proposal_${safeTitle || 'Brief'}.md`, { type: 'text/markdown' });
+}
+
+export function ProposalDialog({
+  open,
+  onOpenChange,
+  onSubmitted,
+  project,
+  initialGenerateAI = false,
+}: ProposalDialogProps) {
   const user = useAuthStore((state) => state.user);
   const isKycApproved = user?.kycStatus === 'approved';
   const fieldId = useId();
+
   const [form, setForm] = useState<ProposalSubmissionForm>(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
+  const [generatingAI, setGeneratingAI] = useState(false);
+  const [aiProposal, setAiProposal] = useState<AIProposalResult | null>(null);
+  const [customNotes, setCustomNotes] = useState('');
+  const [showCustomNotes, setShowCustomNotes] = useState(false);
+  const [viewMode, setViewMode] = useState<'preview' | 'edit'>('preview');
+  const [editableCoverLetter, setEditableCoverLetter] = useState('');
+
+  const handleGenerateAI = useCallback(async (notes?: string) => {
+    if (!project) return;
+    setGeneratingAI(true);
+    try {
+      const res = await matchingApi.generateProposal(project.id, notes?.trim() || undefined);
+      const data = res.data;
+      setAiProposal(data);
+      setEditableCoverLetter(data.coverLetter);
+
+      // Auto-fill proposed rate & estimated duration
+      setForm((current) => {
+        const autoFile = createProposalDocumentFile(
+          project.title,
+          data.coverLetter,
+          data.highlights,
+          data.proposedMilestones || []
+        );
+
+        // Keep any user-uploaded files, replace or prepend the auto-generated brief
+        const otherFiles = current.files.filter((f) => !f.name.startsWith('Proposal_'));
+        const updatedFiles = [autoFile, ...otherFiles].slice(0, 5);
+
+        return {
+          ...current,
+          proposedRate: String(data.proposedRate || project.budget || ''),
+          estimatedDuration: String(data.estimatedDuration || 14),
+          files: updatedFiles,
+        };
+      });
+
+      toast.success('AI Proposal drafted based on your portfolio & reputation!');
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Unable to generate AI proposal. You can still fill it manually.'));
+    } finally {
+      setGeneratingAI(false);
+    }
+  }, [project]);
+
+  useEffect(() => {
+    if (open && initialGenerateAI && project && !aiProposal && !generatingAI) {
+      void handleGenerateAI();
+    }
+  }, [open, initialGenerateAI, project, aiProposal, generatingAI, handleGenerateAI]);
 
   const handleOpenChange = (nextOpen: boolean) => {
-    if (!submitting) {
-      if (!nextOpen) setForm(EMPTY_FORM);
+    if (!submitting && !generatingAI) {
+      if (!nextOpen) {
+        setForm(EMPTY_FORM);
+        setAiProposal(null);
+        setCustomNotes('');
+        setShowCustomNotes(false);
+        setEditableCoverLetter('');
+      }
       onOpenChange(nextOpen);
+    }
+  };
+
+  const handleCoverLetterChange = (newText: string) => {
+    setEditableCoverLetter(newText);
+    if (project && aiProposal) {
+      const updatedFile = createProposalDocumentFile(
+        project.title,
+        newText,
+        aiProposal.highlights,
+        aiProposal.proposedMilestones || []
+      );
+      setForm((current) => {
+        const otherFiles = current.files.filter((f) => !f.name.startsWith('Proposal_'));
+        return {
+          ...current,
+          files: [updatedFile, ...otherFiles].slice(0, 5),
+        };
+      });
     }
   };
 
@@ -62,10 +175,9 @@ export function ProposalDialog({ open, onOpenChange, onSubmitted, project }: Pro
     setSubmitting(true);
     try {
       await submitProposal(proposalsApi, project.id, form);
-      toast.success('Proposal submitted successfully');
+      toast.success('Proposal submitted successfully!');
       onSubmitted?.();
-      setForm(EMPTY_FORM);
-      onOpenChange(false);
+      handleOpenChange(false);
     } catch (error) {
       const message = error instanceof ProposalFormValidationError
         ? error.message
@@ -78,11 +190,18 @@ export function ProposalDialog({ open, onOpenChange, onSubmitted, project }: Pro
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Submit a proposal</DialogTitle>
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="pr-10 text-left">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <DialogTitle className="text-xl font-bold">Submit Proposal</DialogTitle>
+            {aiProposal && (
+              <Badge variant="secondary" className="gap-1 bg-primary/10 text-primary border-primary/20 text-xs py-0.5">
+                <Sparkles className="size-3" /> AI Tailored
+              </Badge>
+            )}
+          </div>
           <DialogDescription>
-            {project ? `Send your offer for “${project.title}”.` : 'Send your offer for this project.'}
+            {project ? `Send your proposal for “${project.title}”.` : 'Send your offer for this project.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -100,6 +219,155 @@ export function ProposalDialog({ open, onOpenChange, onSubmitted, project }: Pro
                 Complete Verification Now →
               </Link>
             </Button>
+          </div>
+        )}
+
+        {/* AI Proposal Generator Banner */}
+        <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 font-semibold text-foreground text-sm">
+                <Sparkles className="size-4 text-primary animate-pulse" />
+                <span>AI Proposal Assistant</span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Automatically drafts a tailored pitch using your <strong>portfolio projects</strong>, <strong>verified skills</strong>, and <strong>on-chain reputation</strong>.
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant={aiProposal ? 'outline' : 'gradient'}
+              size="sm"
+              loading={generatingAI}
+              loadingText="Analyzing & Drafting…"
+              disabled={generatingAI || submitting}
+              onClick={() => void handleGenerateAI(customNotes)}
+              className="shrink-0 font-medium"
+            >
+              {aiProposal ? (
+                <>
+                  <RefreshCw className="size-3.5 mr-1.5" /> Regenerate
+                </>
+              ) : (
+                <>
+                  <Wand2 className="size-3.5 mr-1.5" /> Draft with AI (1-Click)
+                </>
+              )}
+            </Button>
+          </div>
+
+          {/* Optional notes for AI customization */}
+          <div>
+            {!showCustomNotes ? (
+              <button
+                type="button"
+                className="text-xs text-primary hover:underline flex items-center gap-1"
+                onClick={() => setShowCustomNotes(true)}
+              >
+                + Add specific instructions for the AI
+              </button>
+            ) : (
+              <div className="space-y-2 pt-2">
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>Custom instructions (e.g. mention specific availability, discount, or focus):</span>
+                  <button
+                    type="button"
+                    className="text-muted-foreground hover:text-foreground"
+                    onClick={() => setShowCustomNotes(false)}
+                  >
+                    Hide
+                  </button>
+                </div>
+                <Input
+                  placeholder="e.g. I can start immediately and have 4 years DEX experience..."
+                  value={customNotes}
+                  onChange={(e) => setCustomNotes(e.target.value)}
+                  className="text-xs h-9"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* AI Proposal Preview & Highlights if generated */}
+        {aiProposal && (
+          <div className="space-y-4 rounded-xl border border-border bg-card/60 p-4">
+            {/* Highlights pills */}
+            {aiProposal.highlights && aiProposal.highlights.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {aiProposal.highlights.map((highlight, idx) => (
+                  <Badge key={idx} variant="secondary" className="text-xs gap-1 py-1 px-2.5 font-medium">
+                    <Check className="size-3 text-success" />
+                    {highlight}
+                  </Badge>
+                ))}
+              </div>
+            )}
+
+            {/* Proposal Pitch Tabs & Editor */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between border-b border-border/80 pb-2">
+                <span className="text-xs font-semibold text-foreground uppercase tracking-wider">
+                  Generated Proposal Pitch
+                </span>
+                <div className="flex items-center gap-1">
+                  <Button
+                    type="button"
+                    variant={viewMode === 'preview' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    className="h-7 text-xs px-2.5"
+                    onClick={() => setViewMode('preview')}
+                  >
+                    <Eye className="size-3 mr-1" /> Preview
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={viewMode === 'edit' ? 'secondary' : 'ghost'}
+                    size="sm"
+                    className="h-7 text-xs px-2.5"
+                    onClick={() => setViewMode('edit')}
+                  >
+                    <Edit3 className="size-3 mr-1" /> Edit Pitch
+                  </Button>
+                </div>
+              </div>
+
+              {viewMode === 'preview' ? (
+                <div className="max-h-60 overflow-y-auto rounded-lg border border-border/50 bg-background/50 p-3 text-sm">
+                  <Markdown content={editableCoverLetter} />
+                </div>
+              ) : (
+                <Textarea
+                  value={editableCoverLetter}
+                  onChange={(e) => handleCoverLetterChange(e.target.value)}
+                  rows={8}
+                  className="text-xs font-mono leading-relaxed"
+                  placeholder="Customize your proposal pitch here..."
+                />
+              )}
+            </div>
+
+            {/* Proposed Milestones plan */}
+            {aiProposal.proposedMilestones && aiProposal.proposedMilestones.length > 0 && (
+              <div className="space-y-2 pt-2 border-t border-border/80">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  <Layers className="size-3.5" />
+                  <span>Proposed Milestone Execution Plan</span>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-3">
+                  {aiProposal.proposedMilestones.map((m, idx) => (
+                    <div key={idx} className="rounded-lg border border-border/60 bg-background/40 p-2.5 space-y-1">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-semibold text-foreground truncate">{m.title}</span>
+                        <Badge variant="outline" className="text-[10px] py-0 px-1.5">{m.durationDays}d</Badge>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground line-clamp-2">{m.description}</p>
+                      <p className="text-xs font-medium text-primary">${m.amount.toLocaleString()} USDC</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -141,27 +409,55 @@ export function ProposalDialog({ open, onOpenChange, onSubmitted, project }: Pro
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor={`${fieldId}-files`}>Proposal attachments</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor={`${fieldId}-files`}>Proposal attachments</Label>
+              {form.files.some((f) => f.name.startsWith('Proposal_')) && (
+                <span className="text-[11px] text-success flex items-center gap-1 font-medium">
+                  <Check className="size-3" /> AI brief document attached automatically
+                </span>
+              )}
+            </div>
             <Input
               id={`${fieldId}-files`}
               type="file"
               multiple
-              accept=".pdf,.doc,.docx,.xlsx,.pptx,.png,.jpg,.jpeg,.zip,.rar,.7z,.json,.xml,.mp4,.webm,.mov"
-              onChange={(event) => setForm((current) => ({
-                ...current,
-                files: Array.from(event.target.files ?? []),
-              }))}
-              required
+              accept=".pdf,.doc,.docx,.xlsx,.pptx,.png,.jpg,.jpeg,.zip,.rar,.7z,.json,.xml,.mp4,.webm,.mov,.md,.txt"
+              onChange={(event) => {
+                const newFiles = Array.from(event.target.files ?? []);
+                setForm((current) => {
+                  const autoBrief = current.files.filter((f) => f.name.startsWith('Proposal_'));
+                  return {
+                    ...current,
+                    files: [...autoBrief, ...newFiles].slice(0, 5),
+                  };
+                });
+              }}
             />
             <p className="text-xs text-muted-foreground">
-              Attach 1–5 files, up to 10 MB each and 25 MB total.
+              Attach 1–5 files (up to 10 MB each, 25 MB total).
             </p>
             {form.files.length > 0 && (
               <ul className="space-y-1 text-sm" aria-label="Selected proposal files">
-                {form.files.map((file) => (
-                  <li key={`${file.name}-${file.size}`} className="flex items-center gap-2 text-muted-foreground">
-                    <Paperclip className="h-3.5 w-3.5 shrink-0" />
-                    <span className="truncate">{file.name}</span>
+                {form.files.map((file, idx) => (
+                  <li key={`${file.name}-${idx}`} className="flex items-center justify-between rounded-md bg-secondary/30 px-2.5 py-1 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-2 truncate">
+                      {file.name.startsWith('Proposal_') ? (
+                        <FileText className="h-3.5 w-3.5 text-primary shrink-0" />
+                      ) : (
+                        <Paperclip className="h-3.5 w-3.5 shrink-0" />
+                      )}
+                      <span className="truncate font-medium text-foreground">{file.name}</span>
+                      {file.name.startsWith('Proposal_') && (
+                        <Badge variant="secondary" className="text-[10px] py-0 px-1 text-primary">Auto-Generated</Badge>
+                      )}
+                    </span>
+                    <button
+                      type="button"
+                      className="text-muted-foreground hover:text-destructive ml-2"
+                      onClick={() => setForm((c) => ({ ...c, files: c.files.filter((_, i) => i !== idx) }))}
+                    >
+                      <X className="size-3.5" />
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -173,7 +469,7 @@ export function ProposalDialog({ open, onOpenChange, onSubmitted, project }: Pro
               type="button"
               variant="outline"
               onClick={() => handleOpenChange(false)}
-              disabled={submitting}
+              disabled={submitting || generatingAI}
             >
               Cancel
             </Button>
@@ -181,8 +477,8 @@ export function ProposalDialog({ open, onOpenChange, onSubmitted, project }: Pro
               type="submit"
               variant="gradient"
               loading={submitting}
-              loadingText="Submitting…"
-              disabled={!isKycApproved || submitting}
+              loadingText="Submitting Proposal…"
+              disabled={!isKycApproved || submitting || generatingAI || form.files.length === 0}
             >
               <Send className="size-4" aria-hidden="true" />
               {isKycApproved ? 'Submit proposal' : 'Verification required'}

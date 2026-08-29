@@ -52,3 +52,20 @@ test('formatRelativeTime is deterministic when given an explicit now', () => {
   assert.equal(formatRelativeTime('2026-08-22T12:00:00Z', now), '3 days ago');
   assert.equal(formatRelativeTime('2026-08-25T14:00:00Z', now), 'in 2 hours');
 });
+
+test('formatAuditAction converts variable names to human-readable labels', async () => {
+  const { formatAuditAction, formatAuditResource } = await import('./format.ts');
+  assert.equal(formatAuditAction('auth.login'), 'User Login');
+  assert.equal(formatAuditAction('auth.login_failed'), 'Failed Login Attempt');
+  assert.equal(formatAuditAction('escrow.refund_review'), 'Escrow Refund Review');
+  assert.equal(formatAuditAction('kyc.reject'), 'KYC Rejected');
+  assert.equal(formatAuditAction('contract.force_release'), 'Milestone Force Release');
+  assert.equal(formatAuditAction('custom.custom_action'), 'Custom: Custom Action');
+  assert.equal(formatAuditAction(null), '—');
+
+  assert.equal(formatAuditResource('kyc_verification'), 'KYC Verification');
+  assert.equal(formatAuditResource('dispute_evidence'), 'Dispute Evidence');
+  assert.equal(formatAuditResource('contract'), 'Contract');
+  assert.equal(formatAuditResource('unknown_resource_type'), 'Unknown Resource Type');
+});
+

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Zap, ShieldCheck, Send, Share2, ExternalLink, Paperclip, Pencil, ClipboardList } from 'lucide-react';
+import { ArrowLeft, Zap, ShieldCheck, Send, Share2, ExternalLink, Paperclip, Pencil, ClipboardList, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -66,6 +66,7 @@ export function ProjectDetailView({
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [proposalOpen, setProposalOpen] = useState(false);
+  const [autoGenerateAI, setAutoGenerateAI] = useState(false);
   const user = useAuthStore((state) => state.user);
 
   useEffect(() => {
@@ -237,12 +238,29 @@ export function ProjectDetailView({
               )}
 
               {primaryAction === 'submit-proposal' && (
-                <Button
-                  className="rounded-full gradient-primary text-primary-foreground shadow-md"
-                  onClick={() => setProposalOpen(true)}
-                >
-                  <Send className="w-4 h-4 mr-2" /> Submit Proposal
-                </Button>
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="rounded-full border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary font-medium shadow-sm gap-1.5"
+                    onClick={() => {
+                      setAutoGenerateAI(true);
+                      setProposalOpen(true);
+                    }}
+                  >
+                    <Sparkles className="w-4 h-4 text-primary animate-pulse" />
+                    AI Proposal
+                  </Button>
+                  <Button
+                    className="rounded-full gradient-primary text-primary-foreground shadow-md"
+                    onClick={() => {
+                      setAutoGenerateAI(false);
+                      setProposalOpen(true);
+                    }}
+                  >
+                    <Send className="w-4 h-4 mr-2" /> Submit Proposal
+                  </Button>
+                </>
               )}
             </div>
           </div>
@@ -426,7 +444,11 @@ export function ProjectDetailView({
       {primaryAction === 'submit-proposal' && (
         <ProposalDialog
           open={proposalOpen}
-          onOpenChange={setProposalOpen}
+          onOpenChange={(next) => {
+            setProposalOpen(next);
+            if (!next) setAutoGenerateAI(false);
+          }}
+          initialGenerateAI={autoGenerateAI}
           onSubmitted={() =>
             setProject((current) =>
               current

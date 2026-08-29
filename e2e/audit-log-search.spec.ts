@@ -97,5 +97,5 @@ test('renders the per-admin activity summary for the selected range', async ({ p
   await page.goto('/dashboard/admin/audit-logs');
   await expect(page.getByText('Admin activity', { exact: true })).toBeVisible();
   await expect(page.getByText('3 actions by 1 admin in this range.')).toBeVisible();
-  await expect(page.getByText('user.suspend (3)')).toBeVisible();
+  await expect(page.getByText('User Suspended (3)')).toBeVisible();
 });

@@ -118,7 +118,7 @@ export function VerificationCenter({ role }: { role: ParticipantRole }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Identity verification</h1>
           <p className="text-muted-foreground">{roleDescription}</p>
@@ -181,7 +181,7 @@ export function VerificationCenter({ role }: { role: ParticipantRole }) {
           ) : (
             <>
               {/* Status Badge */}
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-3">
                   <Badge className={config?.color}>
                     <StatusIcon className="w-3 h-3 mr-1" />
