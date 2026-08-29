@@ -73,6 +73,7 @@ export default function AetherHero() {
   const [selectedContract, setSelectedContract] = useState(mockContracts[0]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 

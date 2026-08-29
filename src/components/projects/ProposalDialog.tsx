@@ -2,7 +2,7 @@
 
 import { useId, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Paperclip, Send, ShieldAlert, Sparkles, Wand2, Check, RefreshCw, Eye, Edit3, X, FileText, Award, Layers } from 'lucide-react';
+import { Paperclip, Send, ShieldAlert, Sparkles, Wand2, Check, RefreshCw, Eye, Edit3, X, FileText, Layers } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -132,6 +132,7 @@ export function ProposalDialog({
 
   useEffect(() => {
     if (open && initialGenerateAI && project && !aiProposal && !generatingAI) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       void handleGenerateAI();
     }
   }, [open, initialGenerateAI, project, aiProposal, generatingAI, handleGenerateAI]);
