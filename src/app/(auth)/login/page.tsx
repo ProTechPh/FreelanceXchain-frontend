@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { toast } from 'sonner';
 import { SignInPage } from '@/components/marketing/sign-in';
 import { getApiErrorMessage } from '@/lib/auth-contract';
+import { authApi } from '@/lib/api';
 import { GuestGuard } from '@/components/auth/guest-guard';
 
 export default function LoginPage() {
@@ -33,10 +34,21 @@ export default function LoginPage() {
     }
   }, [searchParams]);
 
-  const handleOAuth = (provider: 'google' | 'github') => {
-    setOauthError(null); // Clear any previous error
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
-    window.location.href = `${apiUrl}/auth/oauth/${provider}`;
+  const handleOAuth = async (provider: 'google' | 'github') => {
+    setOauthError(null);
+    try {
+      const { data } = await authApi.oauthLogin(provider);
+      if (data?.url) {
+        window.location.href = data.url;
+        return;
+      }
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+      window.location.href = `${apiUrl}/auth/oauth/${provider}`;
+    } catch (error) {
+      const msg = getApiErrorMessage(error, 'Too many sign-in attempts. Please try again later.');
+      setOauthError(msg);
+      toast.error(msg);
+    }
   };
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
