@@ -48,6 +48,7 @@ export function useWalletConnection() {
   useEffect(() => {
     if (typeof window === 'undefined' || !window.ethereum || !walletAddress) return;
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refreshBalance();
 
     const handleAccountsChanged = (value: string | string[]) => {

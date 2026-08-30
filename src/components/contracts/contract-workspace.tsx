@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
-import { AlertTriangle, ArrowLeft, Eye, FileText, Paperclip, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Eye, Paperclip, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   contractsApi,

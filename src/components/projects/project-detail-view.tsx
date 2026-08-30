@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Zap, ShieldCheck, Send, Share2, ExternalLink, Paperclip, Pencil, ClipboardList, Sparkles, User, CheckCircle, Clock, FileText } from 'lucide-react';
+import { ArrowLeft, Zap, ShieldCheck, Send, Share2, ExternalLink, Paperclip, Pencil, ClipboardList, Sparkles, User, CheckCircle, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -89,6 +89,7 @@ export function ProjectDetailView({
   }, [user, projectId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void fetchMyProposal();
   }, [fetchMyProposal]);
 

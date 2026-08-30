@@ -88,7 +88,7 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
     } finally {
       setLoading(false);
     }
-  }, [role]);
+  }, [role, user?.name]);
 
   useEffect(() => {
     // Profile state is initialized from the authenticated role endpoint.

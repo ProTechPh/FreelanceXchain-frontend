@@ -44,18 +44,28 @@ export default function DisputesPage() {
   const load = useCallback(async () => {
     try {
       const { data } = await adminApi.getDisputeManagement();
-      const rawDisputes: Dispute[] = (data.disputes || []).map((d: any) => ({
-        ...d,
-        id: d.id,
-        contractId: d.contractId || d.contract_id || '',
-        milestoneId: d.milestoneId || d.milestone_id || '',
-        initiatorId: d.initiatorId || d.initiator_id || '',
-        reason: d.reason || '',
-        status: d.status || 'open',
-        evidence: Array.isArray(d.evidence) ? d.evidence : [],
-        createdAt: d.createdAt || d.created_at || new Date().toISOString(),
-        updatedAt: d.updatedAt || d.updated_at || new Date().toISOString(),
-      }));
+      const rawDisputes: Dispute[] = (data.disputes || []).map((d) => {
+        const raw = d as Dispute & {
+          contract_id?: string;
+          milestone_id?: string;
+          initiator_id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        return {
+          ...raw,
+          id: raw.id || '',
+          contractId: raw.contractId || raw.contract_id || '',
+          milestoneId: raw.milestoneId || raw.milestone_id || '',
+          initiatorId: raw.initiatorId || raw.initiator_id || '',
+          reason: raw.reason || '',
+          status: raw.status || 'open',
+          evidence: Array.isArray(raw.evidence) ? raw.evidence : [],
+          resolution: raw.resolution ?? null,
+          createdAt: raw.createdAt || raw.created_at || new Date().toISOString(),
+          updatedAt: raw.updatedAt || raw.updated_at || new Date().toISOString(),
+        };
+      });
       const sorted = rawDisputes
         .slice()
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())

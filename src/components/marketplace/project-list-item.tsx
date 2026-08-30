@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Clock, ShieldCheck, Users, Zap } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
-import { formatAmount, formatDate } from '@/lib/format';
+import { formatDate } from '@/lib/format';
 import { StatusBadge } from '@/components/ui/status-badge';
 import type { Project } from '@/types';
 

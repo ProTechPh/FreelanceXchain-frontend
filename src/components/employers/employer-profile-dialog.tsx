@@ -10,9 +10,6 @@ import {
   Mail,
   CheckCircle2,
   Star,
-  Wallet,
-  Briefcase,
-  Layers,
 } from 'lucide-react';
 import {
   Dialog,
@@ -47,7 +44,6 @@ export function EmployerProfileDialog({
   );
   const [reputationScore, setReputationScore] = useState<AggregatedReputationScore | null>(null);
   const [employerProjects, setEmployerProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(false);
   const user = useAuthStore((state) => state.user);
 
   useEffect(() => {
@@ -55,7 +51,6 @@ export function EmployerProfileDialog({
 
     let active = true;
     const loadData = async () => {
-      setLoading(true);
       try {
         const [profileRes, scoreRes, projectsRes] = await Promise.allSettled([
           employersApi.getPublicProfile(employerId),
@@ -81,8 +76,6 @@ export function EmployerProfileDialog({
         }
       } catch {
         // Fallback gracefully
-      } finally {
-        if (active) setLoading(false);
       }
     };
 

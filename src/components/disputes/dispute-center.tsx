@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ExternalLink, Eye, FileText, Link2, Paperclip, Plus, Scale, ShieldCheck, Trash2, Upload } from 'lucide-react';
+import { ExternalLink, Eye, FileText, Link2, Plus, Scale, ShieldCheck, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { contractsApi, disputesApi, milestonesApi } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { canUseDisputeActions, validateDisputeDraft, validateEvidenceLink, type DisputeDraft } from '@/lib/dispute-form';
-import { formatFileSize, safeAttachmentUrl } from '@/lib/attachment-presentation';
+import { safeAttachmentUrl } from '@/lib/attachment-presentation';
 import { AttachmentPreviewDialog, type AttachmentPreviewTarget } from '@/components/ui/attachment-preview-dialog';
 import { normalizeMilestone } from '@/lib/contract-workflow';
 import { StatusBadge } from '@/components/ui/status-badge';

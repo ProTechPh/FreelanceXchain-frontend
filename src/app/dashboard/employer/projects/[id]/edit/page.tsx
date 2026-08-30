@@ -69,6 +69,7 @@ export default function EditProjectPage() {
         urls[file.name + file.lastModified] = URL.createObjectURL(file);
       }
     });
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setNewFilePreviews(urls);
 
     return () => {
@@ -277,6 +278,7 @@ export default function EditProjectPage() {
                           >
                             <div className="flex items-center gap-2.5 min-w-0">
                               {isImage && safeUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
                                 <img
                                   src={safeUrl}
                                   alt={att.filename}
@@ -334,6 +336,7 @@ export default function EditProjectPage() {
                           >
                             <div className="flex items-center gap-2.5 min-w-0">
                               {isImage && previewUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
                                 <img
                                   src={previewUrl}
                                   alt={file.name}

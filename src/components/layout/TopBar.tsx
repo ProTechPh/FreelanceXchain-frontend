@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Bell, MessageSquare, Wallet, LogOut, User, Settings, ChevronDown, Search, Shield, Bookmark, History } from 'lucide-react';
+import { Bell, MessageSquare, LogOut, User, Settings, ChevronDown, Search, Shield, Bookmark, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -69,10 +69,6 @@ export function TopBar() {
   const initials = mounted && user?.name
     ? user.name.split(' ').map((n) => n[0]).join('').toUpperCase()
     : 'U';
-
-  const truncatedAddress = mounted && user?.walletAddress
-    ? `${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}`
-    : null;
 
   const participantRole = user?.role === 'freelancer' || user?.role === 'employer' ? user.role : null;
   const hasParticipantDashboard = participantRole !== null;

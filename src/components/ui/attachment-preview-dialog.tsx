@@ -72,11 +72,13 @@ export function AttachmentPreviewDialog({
   const shouldTryImage = isKnownImage || (!isText && !isPdf && Boolean(url) && !imageFailed);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setImageFailed(false);
   }, [open, attachment]);
 
   useEffect(() => {
     if (!open || !attachment) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTextContent(null);
       setError(null);
       setLoading(false);
