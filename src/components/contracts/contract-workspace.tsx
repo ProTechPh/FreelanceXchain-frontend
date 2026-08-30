@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
-import { AlertTriangle, ArrowLeft, FileText, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Eye, FileText, Paperclip, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   contractsApi,
@@ -22,9 +22,11 @@ import {
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { hasApprovedKyc } from '@/lib/kyc-eligibility';
-import { safeAttachmentUrl } from '@/lib/attachment-presentation';
+import { formatFileSize, safeAttachmentUrl } from '@/lib/attachment-presentation';
+import { AttachmentPreviewDialog, type AttachmentPreviewTarget } from '@/components/ui/attachment-preview-dialog';
 import { getTransactionDetailRoute } from '@/lib/transaction-view';
 import { validateReviewDraft, type ReviewDraft } from '@/lib/review-form';
+import { deployEscrowFromWallet } from '@/lib/wallet';
 import { useAuthStore } from '@/stores/authStore';
 import type { Contract, ContractFundInfo, ContractPaymentStatus, Dispute, Milestone, RefundRequest, RushUpgradeRequest, Transaction, UserRole } from '@/types';
 import { ContractNegotiationPanel } from '@/components/contracts/contract-negotiation-panel';
@@ -59,6 +61,7 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
   const [files, setFiles] = useState<Record<string, File[]>>({});
   const [reviewEligibility, setReviewEligibility] = useState<{ canRate: boolean; reason?: string } | null>(null);
   const [review, setReview] = useState<ReviewDraft>(initialReview);
+  const [previewAttachment, setPreviewAttachment] = useState<AttachmentPreviewTarget | null>(null);
 
   const loadWorkspace = useCallback(async () => {
     try {
@@ -143,6 +146,50 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
     }
   };
 
+  const handleFundContract = async () => {
+    setActionId('fund');
+    try {
+      if (typeof window === 'undefined' || !window.ethereum) {
+        toast.error('No EVM-compatible wallet detected. Please connect MetaMask to fund this contract.');
+        return;
+      }
+
+      toast.info('Fetching contract escrow parameters…');
+      const { data: info } = await contractsApi.getFundInfo(contract.id);
+
+      if (!info.freelancerWallet) {
+        toast.error('The freelancer has not connected a wallet address yet.');
+        return;
+      }
+
+      toast.info('Please confirm the escrow deposit in MetaMask…');
+      const deployment = await deployEscrowFromWallet(window.ethereum, {
+        freelancerWallet: info.freelancerWallet,
+        arbiterAddress: info.arbiterWallet || info.platformWallet,
+        platformWallet: info.platformWallet,
+        contractId: contract.id,
+        milestoneAmounts: info.milestoneAmounts,
+        milestoneDescriptions: info.milestoneDescriptions,
+        totalAmount: info.totalAmount,
+        chainId: info.chainId,
+      });
+
+      toast.info('Registering funded escrow on FreelanceXchain…');
+      await contractsApi.fund(contract.id, {
+        escrowAddress: deployment.escrowAddress,
+        transactionHash: deployment.transactionHash,
+      });
+
+      toast.success('Contract funded securely and activated!');
+      void queryClient.invalidateQueries({ queryKey: qk.contractPayments(contractId) });
+      await loadWorkspace();
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Funding transaction failed or was rejected.'));
+    } finally {
+      setActionId(null);
+    }
+  };
+
   const submitMilestone = (milestone: Milestone) => {
     const selectedFiles = files[milestone.id] ?? [];
     if (selectedFiles.length === 0) {
@@ -205,9 +252,9 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
         <CardHeader><CardTitle>Overview</CardTitle></CardHeader>
         <CardContent className="space-y-5">
           <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
-            <div><p className="text-muted-foreground">Base amount</p><p className="font-semibold">${contract.baseAmount.toLocaleString()}</p></div>
-            <div><p className="text-muted-foreground">Rush fee</p><p className="font-semibold">${contract.rushFee.toLocaleString()}</p></div>
-            <div><p className="text-muted-foreground">Total</p><p className="font-semibold text-primary">${contract.totalAmount.toLocaleString()}</p></div>
+            <div><p className="text-muted-foreground">Base amount</p><p className="font-semibold">{contract.baseAmount.toLocaleString()} ETH</p></div>
+            <div><p className="text-muted-foreground">Rush fee</p><p className="font-semibold">{contract.rushFee.toLocaleString()} ETH</p></div>
+            <div><p className="text-muted-foreground">Total</p><p className="font-semibold text-primary">{contract.totalAmount.toLocaleString()} ETH</p></div>
             <div><p className="text-muted-foreground">Escrow</p><p className="truncate font-mono text-xs">{contract.escrowAddress || 'Not funded'}</p></div>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -217,9 +264,9 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
             {contractPermissions.canFund && user.walletAddress && (
               <Button
                 disabled={actionId === 'fund'}
-                onClick={() => runAction('fund', () => contractsApi.fund(contract.id), 'Contract funded and activated.')}
+                onClick={() => void handleFundContract()}
               >
-                {actionId === 'fund' ? 'Funding…' : 'Fund contract securely'}
+                {actionId === 'fund' ? 'Deploying & Funding…' : 'Fund contract securely'}
               </Button>
             )}
             {contractPermissions.canCancel && (
@@ -244,9 +291,9 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
             {paymentStatus ? (
               <>
                 <div className="grid grid-cols-3 gap-3 text-sm">
-                  <div><p className="text-muted-foreground">Total</p><p className="font-semibold">${paymentStatus.totalAmount.toLocaleString()}</p></div>
-                  <div><p className="text-muted-foreground">Released</p><p className="font-semibold text-success">${paymentStatus.releasedAmount.toLocaleString()}</p></div>
-                  <div><p className="text-muted-foreground">Pending</p><p className="font-semibold text-warning">${paymentStatus.pendingAmount.toLocaleString()}</p></div>
+                  <div><p className="text-muted-foreground">Total</p><p className="font-semibold">{paymentStatus.totalAmount.toLocaleString()} ETH</p></div>
+                  <div><p className="text-muted-foreground">Released</p><p className="font-semibold text-success">{paymentStatus.releasedAmount.toLocaleString()} ETH</p></div>
+                  <div><p className="text-muted-foreground">Pending</p><p className="font-semibold text-warning">{paymentStatus.pendingAmount.toLocaleString()} ETH</p></div>
                 </div>
                 <div><div className="mb-1 flex justify-between text-xs text-muted-foreground"><span>Release progress</span><span>{paymentStatus.totalAmount > 0 ? Math.round((paymentStatus.releasedAmount / paymentStatus.totalAmount) * 100) : 0}%</span></div><div className="h-2 overflow-hidden rounded-full bg-secondary"><div className="h-full rounded-full bg-success" style={{ width: `${paymentStatus.totalAmount > 0 ? Math.min(100, (paymentStatus.releasedAmount / paymentStatus.totalAmount) * 100) : 0}%` }} /></div></div>
                 <p className="text-xs text-muted-foreground">{paymentStatus.milestones.length} milestone{paymentStatus.milestones.length === 1 ? '' : 's'} tracked by the payment service.</p>
@@ -258,7 +305,15 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
         <Card>
           <CardHeader><CardTitle>{role === 'employer' ? 'Funding prerequisites' : 'Escrow funding'}</CardTitle></CardHeader>
           <CardContent className="space-y-3 text-sm">
-            {role === 'employer' && fundInfo ? <><div><p className="text-muted-foreground">Freelancer wallet</p><p className="truncate font-mono text-xs">{fundInfo.freelancerWallet}</p></div><div><p className="text-muted-foreground">Platform custodian</p><p className="truncate font-mono text-xs">{fundInfo.platformWallet}</p></div><p className="text-xs text-muted-foreground">The backend will fund {fundInfo.milestoneDescriptions.length} milestone{fundInfo.milestoneDescriptions.length === 1 ? '' : 's'}. No browser-side escrow deployment is required.</p></> : <p className="text-muted-foreground">{contract.escrowAddress ? 'This contract is funded through the platform-managed escrow shown above.' : role === 'employer' ? 'Funding details are unavailable until both participant wallets are ready.' : 'The employer has not funded this contract yet.'}</p>}
+            {role === 'employer' && fundInfo ? (
+              <>
+                <div><p className="text-muted-foreground">Freelancer wallet</p><p className="truncate font-mono text-xs">{fundInfo.freelancerWallet}</p></div>
+                <div><p className="text-muted-foreground">Platform arbiter</p><p className="truncate font-mono text-xs">{fundInfo.arbiterWallet || 'Configured'}</p></div>
+                <p className="text-xs text-muted-foreground">Funding will prompt MetaMask to deposit {contract.totalAmount.toLocaleString()} ETH directly from your wallet into the secure smart contract escrow on the blockchain.</p>
+              </>
+            ) : (
+              <p className="text-muted-foreground">{contract.escrowAddress ? 'This contract is funded through the secure smart contract escrow shown above.' : role === 'employer' ? 'Funding details are unavailable until both participant wallets are ready.' : 'The employer has not funded this contract yet.'}</p>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -313,17 +368,60 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-                  <span><span className="text-muted-foreground">Amount:</span> ${milestone.amount.toLocaleString()}</span>
+                  <span><span className="text-muted-foreground">Amount:</span> {milestone.amount.toLocaleString()} ETH</span>
                   <span><span className="text-muted-foreground">Due:</span> {milestone.dueDate ? new Date(milestone.dueDate).toLocaleDateString() : 'Not set'}</span>
                 </div>
                 {milestone.rejectionReason && <p className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">Revision requested: {milestone.rejectionReason}</p>}
                 {(milestone.deliverableFiles ?? []).length > 0 && (
-                  <ul className="space-y-2" aria-label="Deliverable files">
-                    {(milestone.deliverableFiles ?? []).map((file) => {
-                      const url = safeAttachmentUrl(file.url);
-                      return <li key={file.url}>{url ? <a href={url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-sm text-primary hover:underline"><FileText className="size-4" />{file.filename}</a> : <span className="flex items-center gap-2 text-sm text-muted-foreground"><FileText className="size-4" />{file.filename} unavailable</span>}</li>;
-                    })}
-                  </ul>
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold text-foreground uppercase tracking-wider">
+                      Deliverable Files ({(milestone.deliverableFiles ?? []).length})
+                    </p>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {(milestone.deliverableFiles ?? []).map((file) => {
+                        const url = safeAttachmentUrl(file.url);
+                        return (
+                          <div
+                            key={`${file.filename}-${file.url}`}
+                            className="flex items-center justify-between p-3 rounded-xl border border-border bg-background/50 gap-2 text-xs"
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <Paperclip className="size-4 text-primary shrink-0" />
+                              <div className="min-w-0">
+                                <p className="font-medium truncate text-foreground">{file.filename}</p>
+                                {file.size ? (
+                                  <p className="text-3xs text-muted-foreground">{formatFileSize(file.size)}</p>
+                                ) : null}
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-1 shrink-0">
+                              {url ? (
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 text-xs px-2 hover:text-primary hover:bg-primary/10"
+                                  onClick={() =>
+                                    setPreviewAttachment({
+                                      filename: file.filename,
+                                      url: file.url,
+                                      size: file.size,
+                                      mimeType: file.mimeType,
+                                    })
+                                  }
+                                >
+                                  <Eye className="size-3 mr-1" /> View
+                                </Button>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">Unavailable</span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 )}
 
                 {permissions.canSubmit && (
@@ -354,7 +452,27 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
           <CardHeader><CardTitle>Blockchain transactions</CardTitle></CardHeader>
           <CardContent>
             {transactions.length === 0 ? <p className="text-sm text-muted-foreground">No transactions recorded.</p> : (
-              <ul className="space-y-3">{transactions.map((transaction) => <li key={transaction.id} className="border-b border-border pb-3 text-sm last:border-0"><Link href={getTransactionDetailRoute(role, transaction.id)} className="flex items-center justify-between rounded-md outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring"><div><p className="font-medium">{transaction.type.replaceAll('_', ' ')}</p><p className="text-xs text-muted-foreground">{new Date(transaction.created_at).toLocaleString()}</p></div><div className="text-right"><p>${transaction.amount.toLocaleString()}</p><Badge variant="secondary">{transaction.status}</Badge></div></Link></li>)}</ul>
+              <ul className="space-y-3">
+                {transactions.map((transaction) => (
+                  <li key={transaction.id} className="border-b border-border pb-3 text-sm last:border-0">
+                    <Link href={getTransactionDetailRoute(role, transaction.id)} className="flex items-center justify-between rounded-md outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">
+                      <div>
+                        <p className="font-medium capitalize">{transaction.type.replaceAll('_', ' ')}</p>
+                        <p className="text-xs text-muted-foreground">{new Date(transaction.created_at).toLocaleString()}</p>
+                        {transaction.transaction_hash && (
+                          <p className="font-mono text-xs text-primary/80 truncate max-w-[200px]">
+                            {transaction.transaction_hash.slice(0, 10)}…{transaction.transaction_hash.slice(-8)}
+                          </p>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <p>{transaction.amount.toLocaleString()} ETH</p>
+                        <Badge variant="secondary" className="capitalize">{transaction.status}</Badge>
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             )}
           </CardContent>
         </Card>
@@ -365,6 +483,14 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
           </CardContent>
         </Card>
       </div>
+
+      <AttachmentPreviewDialog
+        open={Boolean(previewAttachment)}
+        onOpenChange={(open) => {
+          if (!open) setPreviewAttachment(null);
+        }}
+        attachment={previewAttachment}
+      />
     </div>
   );
 }

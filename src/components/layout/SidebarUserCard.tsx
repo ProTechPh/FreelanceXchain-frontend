@@ -1,6 +1,7 @@
 'use client';
 
 import { CircleCheck, ShieldAlert } from 'lucide-react';
+import Link from 'next/link';
 
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/authStore';
@@ -34,6 +35,7 @@ export function SidebarUserCard({ collapsed = false }: { collapsed?: boolean }) 
   const user = useAuthStore((state) => state.user);
   if (!user) return null;
 
+  const isAdmin = user.role === 'admin';
   const verified = user.kycStatus === 'approved' || user.kycStatus === 'completed';
   const address = shortAddress(user.walletAddress);
 
@@ -42,11 +44,11 @@ export function SidebarUserCard({ collapsed = false }: { collapsed?: boolean }) 
       <div className="flex justify-center px-2 py-3">
         <span
           className="flex size-8 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground"
-          title={`${user.name ?? 'Account'}${verified ? ' · KYC verified' : ' · Verification pending'}`}
+          title={isAdmin ? `${user.name ?? 'Admin'} · Administrator` : `${user.name ?? 'Account'}${verified ? ' · KYC verified' : ' · Verification pending'}`}
         >
           {initials(user.name)}
           <span className="sr-only">
-            {user.name} — {verified ? 'KYC verified' : 'verification pending'}
+            {user.name} — {isAdmin ? 'Administrator' : (verified ? 'KYC verified' : 'verification pending')}
           </span>
         </span>
       </div>
@@ -64,17 +66,34 @@ export function SidebarUserCard({ collapsed = false }: { collapsed?: boolean }) 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1">
           <p className="truncate text-xs font-bold text-foreground">{user.name ?? 'Account'}</p>
-          {verified ? (
+          {isAdmin ? (
+            <CircleCheck className="size-3 shrink-0 text-primary" aria-hidden="true" />
+          ) : verified ? (
             <CircleCheck className="size-3 shrink-0 text-success" aria-hidden="true" />
           ) : (
             <ShieldAlert className="size-3 shrink-0 text-warning" aria-hidden="true" />
           )}
         </div>
-        <p className={cn('truncate text-2xs text-muted-foreground', address && 'font-mono')}>
-          {address ? `${address} · ` : ''}
-          <span className={cn('font-sans', verified ? 'text-success' : 'text-warning')}>
-            {verified ? 'KYC verified' : 'Verification pending'}
-          </span>
+        <p className="truncate text-2xs text-muted-foreground">
+          {isAdmin ? (
+            <span className="font-medium text-primary">Administrator</span>
+          ) : (
+            <>
+              {address ? (
+                <span className="font-mono text-foreground">{address} · </span>
+              ) : (
+                <Link
+                  href={`/dashboard/${user.role || 'freelancer'}/settings`}
+                  className="text-primary hover:underline"
+                >
+                  No wallet ·{' '}
+                </Link>
+              )}
+              <span className={cn('font-sans', verified ? 'text-success' : 'text-warning')}>
+                {verified ? 'KYC verified' : 'Verification pending'}
+              </span>
+            </>
+          )}
         </p>
       </div>
     </div>

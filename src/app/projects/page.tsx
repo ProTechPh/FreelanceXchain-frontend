@@ -84,7 +84,7 @@ function ProjectResult({ project, listingQuery }: { project: Project; listingQue
           <div className="flex flex-wrap items-center gap-5 text-sm">
             <span className="flex items-center gap-1.5 font-bold text-foreground">
               <DollarSign className="w-4 h-4 text-success" />
-              ${project.budget.toLocaleString()}
+              {project.budget.toLocaleString()} ETH
             </span>
             <span className="flex items-center gap-1.5 text-muted-foreground">
               <Clock className="w-4 h-4" />

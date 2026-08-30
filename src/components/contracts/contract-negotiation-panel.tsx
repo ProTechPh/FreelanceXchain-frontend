@@ -3,8 +3,9 @@
 import { useMemo, useState } from 'react';
 import { BadgeDollarSign, FastForward, HandCoins } from 'lucide-react';
 import { toast } from 'sonner';
-import { refundsApi, rushUpgradesApi } from '@/lib/api';
+import { contractsApi, refundsApi, rushUpgradesApi } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/auth-contract';
+import { sendRushFeeFromWallet } from '@/lib/wallet';
 import {
   canActOnRefund,
   canRequestRefund,
@@ -53,13 +54,17 @@ export function ContractNegotiationPanel({
     () => rushRequests.find((request) => request.status === 'pending' || request.status === 'counter_offered'),
     [rushRequests],
   );
+  const acceptedUnpaidRushRequest = useMemo(
+    () => rushRequests.find((request) => request.status === 'accepted' && contract.rushFee === 0),
+    [rushRequests, contract.rushFee]
+  );
   const pendingRefund = refunds.find((refund) => refund.status === 'pending');
   const canCreateRush = canRequestRushUpgrade({
     role,
     contractStatus: contract.status,
     rushFee: contract.rushFee,
     kycStatus,
-    hasOpenRequest: Boolean(openRushRequest),
+    hasOpenRequest: Boolean(openRushRequest || acceptedUnpaidRushRequest),
   });
   const canCreateRefund = canRequestRefund(contract.status, kycStatus, Boolean(pendingRefund));
 
@@ -71,6 +76,83 @@ export function ContractNegotiationPanel({
       await onRefresh();
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Unable to complete this contract request.'));
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  const handlePayRushFee = async (request: RushUpgradeRequest) => {
+    setActionId(`rush-pay-${request.id}`);
+    try {
+      if (typeof window === 'undefined' || !window.ethereum) {
+        toast.error('No EVM-compatible wallet detected. Please connect MetaMask to pay the rush fee.');
+        return;
+      }
+
+      const percentage = request.counterPercentage ?? request.proposedPercentage;
+      const amount = Math.round(contract.baseAmount * (percentage / 100) * 10000) / 10000;
+
+      toast.info('Fetching freelancer wallet info…');
+      const { data: info } = await contractsApi.getFundInfo(contract.id);
+      if (!info.freelancerWallet) {
+        toast.error('Freelancer has not connected a wallet address yet.');
+        return;
+      }
+
+      toast.info(`Please confirm ${amount} ETH rush fee payment in MetaMask…`);
+      const paymentResult = await sendRushFeeFromWallet(window.ethereum, {
+        freelancerWallet: info.freelancerWallet,
+        amountEth: amount,
+        chainId: info.chainId,
+      });
+
+      toast.info('Registering rush fee payment on FreelanceXchain…');
+      await rushUpgradesApi.pay(request.id, {
+        transactionHash: paymentResult.transactionHash,
+      });
+
+      toast.success('Rush fee paid and activated on contract!');
+      await onRefresh();
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Failed to pay rush fee via MetaMask.'));
+    } finally {
+      setActionId(null);
+    }
+  };
+
+  const handleAcceptCounterRush = async (request: RushUpgradeRequest) => {
+    setActionId(`rush-${request.id}`);
+    try {
+      if (contract.status === 'active' && typeof window !== 'undefined' && window.ethereum) {
+        const percentage = request.counterPercentage ?? request.proposedPercentage;
+        const amount = Math.round(contract.baseAmount * (percentage / 100) * 10000) / 10000;
+
+        toast.info('Fetching freelancer wallet info…');
+        const { data: info } = await contractsApi.getFundInfo(contract.id);
+        if (!info.freelancerWallet) {
+          toast.error('Freelancer has not connected a wallet address yet.');
+          return;
+        }
+
+        toast.info(`Please confirm ${amount} ETH rush fee payment in MetaMask…`);
+        const paymentResult = await sendRushFeeFromWallet(window.ethereum, {
+          freelancerWallet: info.freelancerWallet,
+          amountEth: amount,
+          chainId: info.chainId,
+        });
+
+        toast.info('Registering counter-offer acceptance…');
+        await rushUpgradesApi.acceptCounter(request.id, {
+          transactionHash: paymentResult.transactionHash,
+        });
+      } else {
+        await rushUpgradesApi.acceptCounter(request.id);
+      }
+
+      toast.success('Counter-offer accepted and rush fee paid.');
+      await onRefresh();
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Failed to accept counter-offer.'));
     } finally {
       setActionId(null);
     }
@@ -117,12 +199,43 @@ export function ContractNegotiationPanel({
       <Card>
         <CardHeader><CardTitle className="flex items-center gap-2"><FastForward className="size-5 text-primary" />Rush upgrade</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          {contract.rushFee > 0 && <p className="rounded-lg bg-primary/10 p-3 text-sm">A ${contract.rushFee.toLocaleString()} rush fee is active on this contract.</p>}
+          {contract.rushFee > 0 && <p className="rounded-lg bg-primary/10 p-3 text-sm">A {contract.rushFee.toLocaleString()} ETH rush fee is active on this contract.</p>}
 
           {canCreateRush && (
             <div className="space-y-3 rounded-lg border border-border p-4">
               <div className="space-y-2"><Label htmlFor="rush-percentage">Proposed rush fee</Label><div className="flex items-center gap-2"><Input id="rush-percentage" type="number" min="0.01" max="100" step="0.01" value={rushPercentage} onChange={(event) => setRushPercentage(event.target.value)} /><span className="text-sm text-muted-foreground">%</span></div></div>
               <Button type="button" disabled={actionId === 'rush-request'} onClick={requestRush}>{actionId === 'rush-request' ? 'Requesting…' : 'Request rush upgrade'}</Button>
+            </div>
+          )}
+
+          {acceptedUnpaidRushRequest && role === 'employer' && contract.rushFee === 0 && (
+            <div className="space-y-3 rounded-lg border border-primary/40 bg-primary/5 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="font-medium">Freelancer accepted rush upgrade (+{acceptedUnpaidRushRequest.counterPercentage ?? acceptedUnpaidRushRequest.proposedPercentage}%)</p>
+                <StatusBadge status={acceptedUnpaidRushRequest.status} domain="rush" />
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Please pay the {((contract.baseAmount * (acceptedUnpaidRushRequest.counterPercentage ?? acceptedUnpaidRushRequest.proposedPercentage)) / 100).toFixed(4)} ETH rush fee directly from MetaMask to activate rush mode.
+              </p>
+              <Button
+                type="button"
+                disabled={actionId === `rush-pay-${acceptedUnpaidRushRequest.id}`}
+                onClick={() => void handlePayRushFee(acceptedUnpaidRushRequest)}
+              >
+                {actionId === `rush-pay-${acceptedUnpaidRushRequest.id}` ? 'Processing Payment…' : `Pay Rush Fee (${((contract.baseAmount * (acceptedUnpaidRushRequest.counterPercentage ?? acceptedUnpaidRushRequest.proposedPercentage)) / 100).toFixed(4)} ETH)`}
+              </Button>
+            </div>
+          )}
+
+          {acceptedUnpaidRushRequest && role === 'freelancer' && contract.rushFee === 0 && (
+            <div className="space-y-3 rounded-lg border border-primary/40 bg-primary/5 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="font-medium">You accepted rush upgrade (+{acceptedUnpaidRushRequest.counterPercentage ?? acceptedUnpaidRushRequest.proposedPercentage}%)</p>
+                <StatusBadge status={acceptedUnpaidRushRequest.status} domain="rush" />
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Waiting for employer to pay the {((contract.baseAmount * (acceptedUnpaidRushRequest.counterPercentage ?? acceptedUnpaidRushRequest.proposedPercentage)) / 100).toFixed(4)} ETH rush fee via MetaMask.
+              </p>
             </div>
           )}
 
@@ -143,7 +256,7 @@ export function ContractNegotiationPanel({
 
               {role === 'employer' && canRespondToRushUpgrade(role, openRushRequest.status, kycStatus) && (
                 <div className="flex flex-wrap gap-2">
-                  <Button type="button" disabled={actionId === `rush-${openRushRequest.id}`} onClick={() => void runAction(`rush-${openRushRequest.id}`, () => rushUpgradesApi.acceptCounter(openRushRequest.id), 'Counter-offer accepted.')}>Accept counter</Button>
+                  <Button type="button" disabled={actionId === `rush-${openRushRequest.id}`} onClick={() => void handleAcceptCounterRush(openRushRequest)}>Accept counter & Pay</Button>
                   <Button type="button" variant="outline" disabled={actionId === `rush-${openRushRequest.id}`} onClick={() => void runAction(`rush-${openRushRequest.id}`, () => rushUpgradesApi.declineCounter(openRushRequest.id), 'Counter-offer declined.')}>Decline counter</Button>
                 </div>
               )}
@@ -164,7 +277,7 @@ export function ContractNegotiationPanel({
 <Textarea id="refund-reason" rows={3} value={refundReason} onChange={(event) => setRefundReason(event.target.value)} placeholder="Explain why the remaining escrow should be refunded" />
 </Field>
               <Field label="Amount (optional)" htmlFor="refund-amount">
-<Input id="refund-amount" type="number" min="0.01" step="0.01" max={contract.totalAmount} value={refundAmount} onChange={(event) => setRefundAmount(event.target.value)} placeholder={`Full remaining escrow (up to $${contract.totalAmount})`} />
+<Input id="refund-amount" type="number" min="0.01" step="0.01" max={contract.totalAmount} value={refundAmount} onChange={(event) => setRefundAmount(event.target.value)} placeholder={`Full remaining escrow (up to ${contract.totalAmount} ETH)`} />
 </Field>
               <Button type="button" disabled={actionId === 'refund-request'} onClick={requestRefund}><BadgeDollarSign className="mr-2 size-4" />{actionId === 'refund-request' ? 'Submitting…' : 'Request refund'}</Button>
             </div>
@@ -177,7 +290,7 @@ export function ContractNegotiationPanel({
               const rejectionReason = rejectionReasons[refund.id] ?? '';
               return (
                 <li key={refund.id} className="space-y-3 rounded-lg border border-border p-4 text-sm">
-                  <div className="flex flex-wrap items-start justify-between gap-2"><div><p className="font-medium">${refund.amount.toLocaleString()} {refund.is_partial ? 'partial refund' : 'refund'}</p><p className="mt-1 text-muted-foreground">{refund.reason}</p></div><StatusBadge status={refund.status} domain="refund" /></div>
+                  <div className="flex flex-wrap items-start justify-between gap-2"><div><p className="font-medium">{refund.amount.toLocaleString()} ETH {refund.is_partial ? 'partial refund' : 'refund'}</p><p className="mt-1 text-muted-foreground">{refund.reason}</p></div><StatusBadge status={refund.status} domain="refund" /></div>
                   {refund.rejection_reason && <p className="text-destructive">Rejected: {refund.rejection_reason}</p>}
                   {refund.requested_by === currentUserId && refund.status === 'pending' && <p className="text-muted-foreground">Waiting for the other participant to respond.</p>}
                   {canDecide && (

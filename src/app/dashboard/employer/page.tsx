@@ -13,8 +13,10 @@ import { DEFAULT_RANGE_PRESET, getRangeLabel, resolveRange, type RangePresetId }
 import type { Project, Proposal } from '@/types';
 import { toast } from 'sonner';
 import { DollarSign, FolderOpen, FileText, Users, Clock, ArrowUpRight, PlusCircle, Briefcase } from 'lucide-react';
-import { formatAmount } from '@/lib/format';
+import { formatAmount, formatRelativeTime } from '@/lib/format';
 import { StatsSkeleton } from '@/components/dashboard/skeletons';
+import { WalletConnectBanner } from '@/components/wallet/wallet-connect-banner';
+import { WalletBalanceCard } from '@/components/wallet/wallet-balance-card';
 
 interface RecentProposalView {
   proposal: Proposal;
@@ -23,17 +25,9 @@ interface RecentProposalView {
   rating: number | null;
 }
 
-function relativeTime(iso: string): string {
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const diffSec = Math.round(diffMs / 1000);
-  const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
-  if (Math.abs(diffSec) < 60) return rtf.format(-diffSec, 'second');
-  const diffMin = Math.round(diffSec / 60);
-  if (Math.abs(diffMin) < 60) return rtf.format(-diffMin, 'minute');
-  const diffHour = Math.round(diffMin / 60);
-  if (Math.abs(diffHour) < 24) return rtf.format(-diffHour, 'hour');
-  const diffDay = Math.round(diffHour / 24);
-  return rtf.format(-diffDay, 'day');
+function relativeTime(iso: string | null | undefined): string {
+  if (!iso) return 'recently';
+  return formatRelativeTime(iso);
 }
 
 function initials(name: string): string {
@@ -176,6 +170,12 @@ export default function EmployerDashboard() {
         </Link>
       </div>
 
+      {/* Wallet Connect Banner if unlinked */}
+      <WalletConnectBanner role="employer" />
+
+      {/* Connected Wallet Balance Card */}
+      <WalletBalanceCard role="employer" />
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat) => (
@@ -282,7 +282,7 @@ export default function EmployerDashboard() {
                   </div>
                 </div>
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span className="font-medium text-primary">${proposal.proposedRate.toLocaleString()}</span>
+                  <span className="font-medium text-primary">{proposal.proposedRate.toLocaleString()} ETH</span>
                   {rating !== null && <span>★ {rating.toFixed(1)}</span>}
                   <span>{relativeTime(proposal.createdAt)}</span>
                 </div>

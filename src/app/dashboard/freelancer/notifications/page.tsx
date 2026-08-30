@@ -11,6 +11,7 @@ import { useAuthStore } from '@/stores/authStore';
 import type { Notification, NotificationType } from '@/types';
 import { toast } from 'sonner';
 import { FileText, DollarSign, MessageSquare, CheckCircle, XCircle, AlertTriangle, Clock, Star, RefreshCw, BellOff, type LucideIcon } from 'lucide-react';
+import { formatRelativeTime } from '@/lib/format';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 
 const ICON_BY_TYPE: Record<NotificationType, { icon: LucideIcon; color: string; bg: string }> = {
@@ -35,18 +36,9 @@ const ICON_BY_TYPE: Record<NotificationType, { icon: LucideIcon; color: string; 
   message: { icon: MessageSquare, color: 'text-primary', bg: 'bg-primary/10' },
 };
 
-function relativeTime(iso: string): string {
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const diffSec = Math.round(diffMs / 1000);
-  const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
-
-  if (Math.abs(diffSec) < 60) return rtf.format(-diffSec, 'second');
-  const diffMin = Math.round(diffSec / 60);
-  if (Math.abs(diffMin) < 60) return rtf.format(-diffMin, 'minute');
-  const diffHour = Math.round(diffMin / 60);
-  if (Math.abs(diffHour) < 24) return rtf.format(-diffHour, 'hour');
-  const diffDay = Math.round(diffHour / 24);
-  return rtf.format(-diffDay, 'day');
+function relativeTime(iso: string | null | undefined): string {
+  if (!iso) return 'recently';
+  return formatRelativeTime(iso);
 }
 
 type Tab = 'all' | 'unread';
@@ -106,7 +98,7 @@ export function NotificationsCenter() {
     try {
       await notificationsApi.markRead(id);
     } catch {
-      toast.error('Failed to mark notification as read');
+      // Best-effort optimistic mark as read
     }
   };
 

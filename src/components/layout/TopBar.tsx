@@ -19,6 +19,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useState, useEffect } from 'react';
 import { notificationsApi } from '@/lib/api';
 import { subscribeToNotificationStream } from '@/lib/sse';
+import { WalletHeaderButton } from '@/components/wallet/wallet-header-button';
 
 const participantAccountItems = [
   { label: 'Profile', path: 'profile', icon: User },
@@ -147,15 +148,7 @@ export function TopBar() {
           )}
 
           {/* Wallet */}
-          {truncatedAddress && (
-            <div className="hidden items-center gap-2 rounded-md border border-border bg-secondary px-3 py-1.5 md:flex">
-              <Wallet className="size-4 text-primary" aria-hidden="true" />
-              <span className="font-mono text-xs text-muted-foreground">
-                <span className="sr-only">Connected wallet: </span>
-                {truncatedAddress}
-              </span>
-            </div>
-          )}
+          {hasParticipantDashboard && <WalletHeaderButton />}
 
           {/* User Menu */}
           <DropdownMenu>

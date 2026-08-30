@@ -93,7 +93,7 @@ export function ProjectListItem({ project, returnTo, matchScore, matchedSkills, 
           <dl className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-2xs text-muted-foreground">
             <div className="flex items-center gap-1">
               <dt className="sr-only">Budget</dt>
-              <dd className="text-xs font-bold text-foreground tabular-nums">{formatAmount(project.budget)} USDC</dd>
+              <dd className="text-xs font-bold text-foreground tabular-nums">{project.budget.toLocaleString()} ETH</dd>
             </div>
             <span aria-hidden="true">•</span>
             <div className="flex items-center gap-1">

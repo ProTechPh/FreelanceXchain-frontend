@@ -1,23 +1,27 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Zap, ShieldCheck, Send, Share2, ExternalLink, Paperclip, Pencil, ClipboardList, Sparkles } from 'lucide-react';
+import { ArrowLeft, Zap, ShieldCheck, Send, Share2, ExternalLink, Paperclip, Pencil, ClipboardList, Sparkles, User, CheckCircle, Clock, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { projectsApi } from '@/lib/api';
+import { projectsApi, employersApi, proposalsApi } from '@/lib/api';
 import { ProposalDialog } from '@/components/projects/ProposalDialog';
+import { EmployerProfileDialog } from '@/components/employers/employer-profile-dialog';
 import { FavoriteButton } from '@/components/marketplace/favorite-button';
-import type { Project } from '@/types';
+import type { Project, Proposal } from '@/types';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { getProjectPrimaryAction } from '@/lib/project-actions';
 import { formatFileSize, safeAttachmentUrl } from '@/lib/attachment-presentation';
 import { useAuthStore } from '@/stores/authStore';
 import { getMarketplaceReturnPath } from '@/lib/marketplace-return';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
+import { Markdown } from '@/components/ui/markdown';
+import { AttachmentPreviewDialog, type AttachmentPreviewTarget } from '@/components/ui/attachment-preview-dialog';
 import Navbar from '@/components/layout/navbar';
 import { FooterSection } from '@/components/layout/footer-section';
 
@@ -67,15 +71,64 @@ export function ProjectDetailView({
   const [loading, setLoading] = useState(true);
   const [proposalOpen, setProposalOpen] = useState(false);
   const [autoGenerateAI, setAutoGenerateAI] = useState(false);
+  const [employerDialogOpen, setEmployerDialogOpen] = useState(false);
+  const [myProposal, setMyProposal] = useState<Proposal | null>(null);
+  const [withdrawingProposal, setWithdrawingProposal] = useState(false);
+  const [previewAttachment, setPreviewAttachment] = useState<AttachmentPreviewTarget | null>(null);
   const user = useAuthStore((state) => state.user);
+
+  const fetchMyProposal = useCallback(async () => {
+    if (!user || user.role !== 'freelancer' || !projectId) return;
+    try {
+      const { data } = await proposalsApi.getMine();
+      const existing = data.find((p) => p.projectId === projectId && p.status !== 'withdrawn');
+      setMyProposal(existing || null);
+    } catch {
+      // Ignore
+    }
+  }, [user, projectId]);
+
+  useEffect(() => {
+    void fetchMyProposal();
+  }, [fetchMyProposal]);
+
+  const handleWithdrawProposal = async (id: string) => {
+    setWithdrawingProposal(true);
+    try {
+      await proposalsApi.withdraw(id);
+      toast.success('Proposal withdrawn successfully');
+      setMyProposal(null);
+      setProject((current) =>
+        current ? { ...current, proposalCount: Math.max(0, (current.proposalCount ?? 1) - 1) } : current
+      );
+    } catch {
+      toast.error('Failed to withdraw proposal');
+    } finally {
+      setWithdrawingProposal(false);
+    }
+  };
 
   useEffect(() => {
     let active = true;
     const fetchProject = async () => {
       try {
         const res = await projectsApi.get(projectId);
+        let projectData = res.data;
+        if (!projectData.employer?.name && projectData.employerId) {
+          try {
+            const empRes = await employersApi.getPublicProfile(projectData.employerId);
+            if (empRes.data) {
+              projectData = {
+                ...projectData,
+                employer: empRes.data,
+              };
+            }
+          } catch {
+            // Ignore fallback failure
+          }
+        }
         if (active) {
-          setProject(res.data);
+          setProject(projectData);
         }
       } catch {
         if (active) {
@@ -167,7 +220,8 @@ export function ProjectDetailView({
 
   const primaryAction = getProjectPrimaryAction(user, project);
   const isOwner = user?.role === 'employer' && user?.id === project.employerId;
-  const employerInitials = project.employer?.name?.split(' ').map((n) => n[0]).join('') || '?';
+  const employerDisplayName = project.employer?.name || project.employer?.companyName || 'Employer';
+  const employerInitials = employerDisplayName.split(' ').map((n) => n[0]).join('') || '?';
 
   const renderContent = () => (
     <>
@@ -199,7 +253,7 @@ export function ProjectDetailView({
                 )}
               </div>
               <p className="text-sm text-muted-foreground">
-                Posted by <span className="font-semibold text-foreground">{project.employer?.name || 'Unknown Employer'}</span>
+                Posted by <span className="font-semibold text-foreground">{project.employer?.name || project.employer?.companyName || 'Employer'}</span>
                 {project.createdAt ? ` • ${formatPostedDate(project.createdAt)}` : ''}
               </p>
             </div>
@@ -239,27 +293,53 @@ export function ProjectDetailView({
 
               {primaryAction === 'submit-proposal' && (
                 <>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="rounded-full border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary font-medium shadow-sm gap-1.5"
-                    onClick={() => {
-                      setAutoGenerateAI(true);
-                      setProposalOpen(true);
-                    }}
-                  >
-                    <Sparkles className="w-4 h-4 text-primary animate-pulse" />
-                    AI Proposal
-                  </Button>
-                  <Button
-                    className="rounded-full gradient-primary text-primary-foreground shadow-md"
-                    onClick={() => {
-                      setAutoGenerateAI(false);
-                      setProposalOpen(true);
-                    }}
-                  >
-                    <Send className="w-4 h-4 mr-2" /> Submit Proposal
-                  </Button>
+                  {myProposal ? (
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        variant="outline"
+                        className={
+                          myProposal.status === 'accepted'
+                            ? 'h-9 px-3.5 rounded-full border-success/40 bg-success/10 text-success gap-1.5 text-xs font-semibold shadow-sm'
+                            : myProposal.status === 'rejected'
+                              ? 'h-9 px-3.5 rounded-full border-destructive/40 bg-destructive/10 text-destructive gap-1.5 text-xs font-semibold shadow-sm'
+                              : 'h-9 px-3.5 rounded-full border-warning/40 bg-warning/10 text-warning gap-1.5 text-xs font-semibold shadow-sm'
+                        }
+                      >
+                        <CheckCircle className="size-4" />
+                        Proposal Submitted ({myProposal.status.toUpperCase()})
+                      </Badge>
+                      <Button asChild variant="outline" className="rounded-full">
+                        <Link href="/dashboard/freelancer/proposals">
+                          <ClipboardList className="size-4 mr-1.5" />
+                          My Proposals
+                        </Link>
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="rounded-full border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary font-medium shadow-sm gap-1.5"
+                        onClick={() => {
+                          setAutoGenerateAI(true);
+                          setProposalOpen(true);
+                        }}
+                      >
+                        <Sparkles className="w-4 h-4 text-primary animate-pulse" />
+                        AI Proposal
+                      </Button>
+                      <Button
+                        className="rounded-full gradient-primary text-primary-foreground shadow-md"
+                        onClick={() => {
+                          setAutoGenerateAI(false);
+                          setProposalOpen(true);
+                        }}
+                      >
+                        <Send className="w-4 h-4 mr-2" /> Submit Proposal
+                      </Button>
+                    </>
+                  )}
                 </>
               )}
             </div>
@@ -272,6 +352,137 @@ export function ProjectDetailView({
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Left Column (2 Cols) */}
           <div className="space-y-6 lg:col-span-2">
+            {/* Your Submitted Proposal Card for Freelancers */}
+            {myProposal && (
+              <Card className="rounded-2xl border-2 border-primary/40 bg-primary/5 shadow-sm overflow-hidden">
+                <CardHeader className="bg-primary/10 border-b border-primary/20 pb-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5">
+                      <div className="size-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shadow-sm">
+                        <Send className="size-4" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-base font-bold text-foreground">Your Submitted Proposal</CardTitle>
+                        <p className="text-xs text-muted-foreground">Submitted on {formatPostedDate(myProposal.createdAt)}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <Badge
+                        variant="outline"
+                        className={
+                          myProposal.status === 'accepted'
+                            ? 'bg-success/20 text-success border-success/40 font-semibold'
+                            : myProposal.status === 'rejected'
+                              ? 'bg-destructive/20 text-destructive border-destructive/40 font-semibold'
+                              : 'bg-warning/20 text-warning border-warning/40 font-semibold'
+                        }
+                      >
+                        {myProposal.status === 'pending' ? 'Pending Employer Review' : myProposal.status.toUpperCase()}
+                      </Badge>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-4 space-y-4">
+                  {/* Key Proposal Stats */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3.5 rounded-xl bg-card border border-border text-xs">
+                    <div>
+                      <span className="text-muted-foreground block">Proposed Rate</span>
+                      <span className="text-sm font-bold text-primary">{myProposal.proposedRate.toLocaleString()} ETH</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block">Estimated Delivery</span>
+                      <span className="text-sm font-bold text-foreground">{myProposal.estimatedDuration} days</span>
+                    </div>
+                    <div className="col-span-2 sm:col-span-1">
+                      <span className="text-muted-foreground block">Attachments</span>
+                      <span className="text-sm font-bold text-foreground">{myProposal.attachments?.length || 0} file(s)</span>
+                    </div>
+                  </div>
+
+                  {/* Cover Letter / Proposal Pitch */}
+                  {myProposal.coverLetter && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold text-foreground uppercase tracking-wider">Your Proposal Pitch</p>
+                      <div className="p-3.5 rounded-xl border border-border bg-card text-xs max-h-64 overflow-y-auto">
+                        <Markdown content={myProposal.coverLetter} />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Attached Documents */}
+                  {myProposal.attachments && myProposal.attachments.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold text-foreground uppercase tracking-wider">Attached Documents</p>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {myProposal.attachments.map((att, idx) => {
+                          const safeUrl = safeAttachmentUrl(att.url);
+                          return (
+                            <div
+                              key={att.url || idx}
+                              className="flex items-center justify-between p-2.5 rounded-xl border border-border bg-card gap-2 text-xs"
+                            >
+                              <div className="flex items-center gap-2 min-w-0">
+                                <FileText className="size-4 text-primary shrink-0" />
+                                <div className="min-w-0">
+                                  <p className="font-medium truncate text-foreground">{att.filename}</p>
+                                  <p className="text-3xs text-muted-foreground">{formatFileSize(att.size || 0)}</p>
+                                </div>
+                              </div>
+                              {safeUrl ? (
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 text-xs px-2 shrink-0 hover:text-primary hover:bg-primary/10"
+                                  onClick={() =>
+                                    setPreviewAttachment({
+                                      filename: att.filename,
+                                      url: att.url,
+                                      size: att.size,
+                                      content:
+                                        att.filename.startsWith('Proposal_') && myProposal.coverLetter
+                                          ? myProposal.coverLetter
+                                          : undefined,
+                                    })
+                                  }
+                                >
+                                  View <ExternalLink className="size-3 ml-1" />
+                                </Button>
+                              ) : (
+                                <span className="text-3xs text-muted-foreground">Unavailable</span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Bottom Action Footer */}
+                  <div className="flex items-center justify-between pt-2 border-t border-border/60">
+                    <Button asChild size="sm" variant="ghost" className="text-xs text-muted-foreground hover:text-foreground">
+                      <Link href="/dashboard/freelancer/proposals">
+                        Track in My Proposals →
+                      </Link>
+                    </Button>
+
+                    {myProposal.status === 'pending' && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="text-xs text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
+                        onClick={() => handleWithdrawProposal(myProposal.id)}
+                        disabled={withdrawingProposal}
+                      >
+                        {withdrawingProposal ? 'Withdrawing...' : 'Withdraw Proposal'}
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Description */}
             <Card className="rounded-2xl border-border bg-card">
               <CardHeader>
@@ -309,10 +520,20 @@ export function ProjectDetailView({
                             </span>
                           </span>
                           {url ? (
-                            <Button asChild variant="ghost" size="sm" className="rounded-full">
-                              <a href={url} target="_blank" rel="noreferrer">
-                                Open <ExternalLink className="ml-1.5 h-3 w-3" />
-                              </a>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="rounded-full hover:text-primary hover:bg-primary/10"
+                              onClick={() =>
+                                setPreviewAttachment({
+                                  filename: attachment.filename,
+                                  url: attachment.url,
+                                  size: attachment.size,
+                                })
+                              }
+                            >
+                              View <ExternalLink className="ml-1.5 h-3 w-3" />
                             </Button>
                           ) : (
                             <span className="text-xs text-muted-foreground">Unavailable</span>
@@ -352,7 +573,7 @@ export function ProjectDetailView({
                           </div>
                           <div className="flex items-center gap-3 shrink-0">
                             <StatusBadge status={milestone.status} domain="milestone" size="sm" />
-                            <p className="font-bold text-sm text-primary">${milestone.amount.toLocaleString()}</p>
+                            <p className="font-bold text-sm text-primary">{milestone.amount.toLocaleString()} ETH</p>
                           </div>
                         </div>
                       </div>
@@ -394,7 +615,7 @@ export function ProjectDetailView({
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Budget</span>
-                  <span className="font-bold text-primary text-lg">${project.budget.toLocaleString()} USDC</span>
+                  <span className="font-bold text-primary text-lg">{project.budget.toLocaleString()} ETH</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Deadline</span>
@@ -414,32 +635,86 @@ export function ProjectDetailView({
             {/* Employer Info */}
             {project.employer && (
               <Card className="rounded-2xl border-border bg-card">
-                <CardHeader>
-                  <CardTitle className="text-base font-bold text-foreground">About Employer</CardTitle>
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base font-bold text-foreground">About Employer</CardTitle>
+                    <Badge variant="secondary" className="bg-success-subtle text-success border border-success/20 text-3xs py-0.5">
+                      <ShieldCheck className="size-3 mr-1" /> Verified
+                    </Badge>
+                  </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-4">
                   <div className="flex items-center gap-3">
-                    <div className="size-11 rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-bold text-sm flex items-center justify-center shadow-sm">
+                    <div className="size-11 rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-bold text-sm flex items-center justify-center shadow-sm shrink-0">
                       {employerInitials}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-sm text-foreground truncate">{project.employer.name}</p>
+                      <p className="font-semibold text-sm text-foreground truncate">{employerDisplayName}</p>
                       <p className="text-xs text-muted-foreground truncate">{project.employer.companyName || 'Verified client'}</p>
                     </div>
                   </div>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full rounded-xl border-border/80 hover:border-primary/50 text-xs font-semibold"
+                    onClick={() => setEmployerDialogOpen(true)}
+                  >
+                    <User className="size-3.5 mr-1.5 text-primary" /> View Profile
+                  </Button>
                 </CardContent>
               </Card>
             )}
 
             {/* Trust Badge */}
-            <div className="rounded-2xl bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 p-5 text-center">
-              <ShieldCheck className="size-8 text-primary mx-auto mb-2" />
-              <h4 className="font-bold text-foreground text-sm">Escrow Protected</h4>
-              <p className="text-xs text-muted-foreground mt-1">Funds secured in smart contract</p>
+            <div className="rounded-2xl bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 p-5 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="flex size-10 items-center justify-center rounded-xl bg-primary/15 text-primary shrink-0">
+                  <ShieldCheck className="size-5" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-foreground text-sm">Smart Contract Escrow</h4>
+                  <p className="text-3xs text-success font-medium flex items-center gap-1">
+                    <span className="size-1.5 rounded-full bg-success animate-pulse" /> 100% Payment Protected
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-2 border-t border-primary/15 text-xs text-muted-foreground">
+                <div className="flex items-start gap-2">
+                  <span className="font-bold text-primary text-2xs mt-0.5">1.</span>
+                  <p><strong className="text-foreground">Hire & Deposit:</strong> Employer locks milestone funds into on-chain escrow before work starts.</p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-bold text-primary text-2xs mt-0.5">2.</span>
+                  <p><strong className="text-foreground">Build Safely:</strong> Funds remain securely locked in the smart contract while in progress.</p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-bold text-primary text-2xs mt-0.5">3.</span>
+                  <p><strong className="text-foreground">Instant Payout:</strong> Once approved, the contract releases payment directly to your wallet.</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      <AttachmentPreviewDialog
+        open={Boolean(previewAttachment)}
+        onOpenChange={(open) => {
+          if (!open) setPreviewAttachment(null);
+        }}
+        attachment={previewAttachment}
+      />
+
+      <EmployerProfileDialog
+        open={employerDialogOpen}
+        onOpenChange={setEmployerDialogOpen}
+        employerId={project?.employerId || project?.employer?.userId || project?.employer?.id}
+        projectId={project?.id || projectId}
+        initialProfile={project?.employer}
+      />
 
       {primaryAction === 'submit-proposal' && (
         <ProposalDialog
@@ -449,13 +724,14 @@ export function ProjectDetailView({
             if (!next) setAutoGenerateAI(false);
           }}
           initialGenerateAI={autoGenerateAI}
-          onSubmitted={() =>
+          onSubmitted={() => {
             setProject((current) =>
               current
                 ? { ...current, proposalCount: (current.proposalCount ?? 0) + 1 }
                 : current,
-            )
-          }
+            );
+            void fetchMyProposal();
+          }}
           project={project}
         />
       )}

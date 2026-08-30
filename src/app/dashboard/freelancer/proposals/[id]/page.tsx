@@ -11,6 +11,8 @@ import { formatFileSize, safeAttachmentUrl } from '@/lib/attachment-presentation
 import { proposalsApi } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { Markdown } from '@/components/ui/markdown';
+import { AttachmentPreviewDialog, type AttachmentPreviewTarget } from '@/components/ui/attachment-preview-dialog';
 import type { ProposalWithEmployerHistory } from '@/types';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
 
@@ -20,6 +22,7 @@ export default function FreelancerProposalDetailPage() {
   const [details, setDetails] = useState<ProposalWithEmployerHistory | null>(null);
   const [loading, setLoading] = useState(true);
   const [withdrawing, setWithdrawing] = useState(false);
+  const [previewAttachment, setPreviewAttachment] = useState<AttachmentPreviewTarget | null>(null);
 
   const load = useCallback(async () => {
     if (!proposalId) return;
@@ -39,14 +42,14 @@ export default function FreelancerProposalDetailPage() {
   }, [load]);
 
   const withdraw = async () => {
-    if (!proposalId || !details || !window.confirm('Withdraw this proposal? This cannot be undone.')) return;
+    if (!proposalId) return;
     setWithdrawing(true);
     try {
-      const { data } = await proposalsApi.withdraw(proposalId);
-      setDetails((current) => current ? { ...current, proposal: data } : current);
-      toast.success('Proposal withdrawn.');
+      await proposalsApi.withdraw(proposalId);
+      toast.success('Proposal withdrawn');
+      void load();
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Unable to withdraw this proposal.'));
+      toast.error(getApiErrorMessage(error, 'Failed to withdraw proposal.'));
     } finally {
       setWithdrawing(false);
     }
@@ -77,13 +80,20 @@ export default function FreelancerProposalDetailPage() {
         <div className="space-y-6 lg:col-span-2">
           <Card><CardHeader><CardTitle>Proposal</CardTitle></CardHeader><CardContent className="space-y-5">
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-lg border border-border bg-secondary/30 p-3"><p className="text-xs text-muted-foreground">Proposed rate</p><p className="mt-1 font-semibold text-primary">${proposal.proposedRate.toLocaleString()}</p></div>
+              <div className="rounded-lg border border-border bg-secondary/30 p-3"><p className="text-xs text-muted-foreground">Proposed rate</p><p className="mt-1 font-semibold text-primary">{proposal.proposedRate.toLocaleString()} ETH</p></div>
               <div className="rounded-lg border border-border bg-secondary/30 p-3"><p className="text-xs text-muted-foreground">Estimated delivery</p><p className="mt-1 font-semibold">{proposal.estimatedDuration} days</p></div>
             </div>
-            {proposal.coverLetter && <div><h2 className="mb-2 text-sm font-medium">Cover letter</h2><p className="whitespace-pre-wrap text-sm text-muted-foreground">{proposal.coverLetter}</p></div>}
+            {proposal.coverLetter && (
+              <div>
+                <h2 className="mb-2 text-sm font-medium">Cover letter</h2>
+                <div className="p-4 rounded-xl border border-border bg-card">
+                  <Markdown content={proposal.coverLetter} />
+                </div>
+              </div>
+            )}
             {proposal.attachments.length > 0 && <div><h2 className="mb-2 text-sm font-medium">Attachments</h2><ul className="space-y-2">{proposal.attachments.map((attachment) => {
               const url = safeAttachmentUrl(attachment.url);
-              return <li key={`${attachment.filename}-${attachment.url}`} className="flex items-center justify-between gap-3 rounded-lg border border-border p-3"><span className="flex min-w-0 items-center gap-2"><FileText className="h-4 w-4 shrink-0 text-primary" /><span className="truncate text-sm">{attachment.filename}</span><span className="shrink-0 text-xs text-muted-foreground">{formatFileSize(attachment.size)}</span></span>{url ? <Button asChild size="sm" variant="ghost"><a href={url} target="_blank" rel="noreferrer">Open<ExternalLink className="ml-2 h-3 w-3" /></a></Button> : <span className="text-xs text-muted-foreground">Unavailable</span>}</li>;
+              return <li key={`${attachment.filename}-${attachment.url}`} className="flex items-center justify-between gap-3 rounded-lg border border-border p-3"><span className="flex min-w-0 items-center gap-2"><FileText className="h-4 w-4 shrink-0 text-primary" /><span className="truncate text-sm">{attachment.filename}</span><span className="shrink-0 text-xs text-muted-foreground">{formatFileSize(attachment.size)}</span></span>{url ? <Button type="button" size="sm" variant="ghost" onClick={() => setPreviewAttachment({ filename: attachment.filename, url: attachment.url, size: attachment.size, content: attachment.filename.startsWith('Proposal_') && proposal.coverLetter ? proposal.coverLetter : undefined })}>View<ExternalLink className="ml-2 h-3 w-3" /></Button> : <span className="text-xs text-muted-foreground">Unavailable</span>}</li>;
             })}</ul></div>}
             <div className="flex flex-wrap gap-2 border-t border-border pt-4"><Button asChild variant="outline"><Link href={`/dashboard/freelancer/projects/${project.id}`}>View project</Link></Button>{proposal.status === 'pending' && <Button type="button" variant="ghost" className="text-destructive" disabled={withdrawing} onClick={() => void withdraw()}>{withdrawing ? 'Withdrawing…' : 'Withdraw proposal'}</Button>}</div>
           </CardContent></Card>
@@ -98,6 +108,14 @@ export default function FreelancerProposalDetailPage() {
           <Card><CardHeader><CardTitle className="text-base">Submitted</CardTitle></CardHeader><CardContent className="text-sm text-muted-foreground">{new Date(proposal.createdAt).toLocaleString()}</CardContent></Card>
         </div>
       </div>
+
+      <AttachmentPreviewDialog
+        open={Boolean(previewAttachment)}
+        onOpenChange={(open) => {
+          if (!open) setPreviewAttachment(null);
+        }}
+        attachment={previewAttachment}
+      />
     </div>
   );
 }

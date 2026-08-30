@@ -2,6 +2,7 @@
 
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { cn } from '@/lib/utils';
 
 interface MarkdownProps {
@@ -10,14 +11,45 @@ interface MarkdownProps {
 }
 
 /**
- * Ensures collapsed single-line lists (often emitted by LLMs) are converted
+ * Ensures collapsed single-line lists and tables (often emitted by LLMs) are converted
  * into proper markdown block elements with line breaks.
  */
 function preprocessMarkdown(text: string): string {
   if (!text) return '';
-  return text
-    .replace(/([.:])\s+(\d+\.\s+(?:\*\*|[A-Z]))/g, '$1\n\n$2')
-    .replace(/([.:])\s+([•\-\*]\s+)/g, '$1\n\n$2');
+  let res = text.replace(/\r\n/g, '\n');
+
+  // Fix collapsed single-line lists
+  res = res.replace(/([.:])\s+(\d+\.\s+(?:\*\*|[A-Z]))/g, '$1\n\n$2');
+  res = res.replace(/([.:])\s+([•\-\*]\s+)/g, '$1\n\n$2');
+
+  // Fix collapsed table rows: "| a | b | |---|---| | c | d |" or "|| c | d |"
+  res = res.replace(/\|\s*\|\s*/g, '|\n|');
+
+  // Ensure table starting line has a blank line before it if preceded by normal text
+  const lines = res.split('\n');
+  const output: string[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    const current = lines[i]!;
+    const inlineTableMatch = current.match(/^([^|\n]+?)\s*(\|[^\n]+\|.*)$/);
+    if (inlineTableMatch && !/^\s*[-*#]/.test(inlineTableMatch[1]!)) {
+      output.push(inlineTableMatch[1]!.trim());
+      output.push('');
+      output.push(inlineTableMatch[2]!.trim());
+      continue;
+    }
+
+    const prev = output[output.length - 1];
+    const isTableLine = /^\s*\|.*\|\s*$/.test(current);
+    const prevIsTableLine = prev !== undefined && /^\s*\|.*\|\s*$/.test(prev);
+    const prevIsBlank = !prev || prev.trim() === '';
+
+    if (isTableLine && !prevIsTableLine && !prevIsBlank) {
+      output.push('');
+    }
+    output.push(current);
+  }
+
+  return output.join('\n');
 }
 
 export function Markdown({ content, className }: MarkdownProps) {
@@ -33,6 +65,7 @@ export function Markdown({ content, className }: MarkdownProps) {
       )}
     >
       <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
         components={{
           h1: ({ children }) => (
             <h1 className="text-lg font-bold text-foreground mt-4 mb-2 first:mt-0">
@@ -83,6 +116,38 @@ export function Markdown({ content, className }: MarkdownProps) {
             <blockquote className="border-l-2 border-primary/40 pl-3 my-2 italic text-muted-foreground">
               {children}
             </blockquote>
+          ),
+          table: ({ children }) => (
+            <div className="w-full my-3 overflow-x-auto rounded-lg border border-border bg-card/40">
+              <table className="w-full text-left text-xs border-collapse">
+                {children}
+              </table>
+            </div>
+          ),
+          thead: ({ children }) => (
+            <thead className="bg-muted/70 text-foreground border-b border-border font-semibold">
+              {children}
+            </thead>
+          ),
+          tbody: ({ children }) => (
+            <tbody className="divide-y divide-border/60">
+              {children}
+            </tbody>
+          ),
+          tr: ({ children }) => (
+            <tr className="hover:bg-muted/30 transition-colors">
+              {children}
+            </tr>
+          ),
+          th: ({ children }) => (
+            <th className="px-3 py-2 font-medium text-foreground border-r border-border/50 last:border-r-0">
+              {children}
+            </th>
+          ),
+          td: ({ children }) => (
+            <td className="px-3 py-2 text-foreground/90 border-r border-border/40 last:border-r-0 align-top">
+              {children}
+            </td>
           ),
           code: ({ children, className: codeClassName }) => {
             const isBlock = codeClassName && codeClassName.includes('language-');

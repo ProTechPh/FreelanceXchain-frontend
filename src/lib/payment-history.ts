@@ -18,8 +18,12 @@ export type PaymentDirection = 'in' | 'out' | 'none';
  * Which way the money moved from the viewer's perspective. A user can appear as
  * neither party (an admin reading someone else's contract — the API allows this),
  * which is 'none' rather than a misleading 'out'.
+ *
+ * escrow_deposit goes into the smart contract, not to either party, so it is
+ * always 'none' — the funds are locked until a milestone is approved.
  */
 export function getPaymentDirection(record: PaymentHistoryRecord, userId: string): PaymentDirection {
+  if (record.paymentType === 'escrow_deposit') return 'none';
   if (record.payeeId === userId) return 'in';
   if (record.payerId === userId) return 'out';
   return 'none';
