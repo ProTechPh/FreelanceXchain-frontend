@@ -307,17 +307,31 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
 
                   <div>
                     <label htmlFor="confirmPassword" className="text-sm font-bold text-foreground mb-1.5 sm:mb-2 block">Confirm Password</label>
-                    <input 
-                      id="confirmPassword" 
-                      name="confirmPassword" 
-                      type="password" 
-                      placeholder="Confirm your password" 
-                      value={confirmPassword} 
-                      onChange={(e) => { setConfirmPassword(e.target.value); setFormError(null); }} 
-                      aria-describedby="registration-error" 
-                      className="w-full px-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-border/80 bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all placeholder:text-muted-foreground/60" 
-                      required 
-                    />
+                    <div className="relative">
+                      <input 
+                        id="confirmPassword" 
+                        name="confirmPassword" 
+                        type={showConfirmPassword ? 'text' : 'password'} 
+                        placeholder="Confirm your password" 
+                        value={confirmPassword} 
+                        onChange={(e) => { setConfirmPassword(e.target.value); setFormError(null); }} 
+                        aria-describedby="registration-error" 
+                        className="w-full px-4 py-3 sm:py-3.5 pr-12 rounded-xl sm:rounded-2xl border border-border/80 bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all placeholder:text-muted-foreground/60" 
+                        required 
+                      />
+                      <button 
+                        type="button" 
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)} 
+                        aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'} 
+                        className="absolute inset-y-0 right-3 flex items-center"
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
+                        ) : (
+                          <Eye className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
+                        )}
+                      </button>
+                    </div>
                   </div>
 
                   {/* Terms checkbox */}

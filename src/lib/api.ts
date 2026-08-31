@@ -161,6 +161,7 @@ api.interceptors.response.use(
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
         if (currentPath !== '/login' && currentPath !== '/register') {
+          // eslint-disable-next-line @next/next/no-location-assign-relative-destination
           window.location.href = '/login';
         }
       }

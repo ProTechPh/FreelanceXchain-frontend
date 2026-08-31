@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { AlertTriangle } from 'lucide-react';
 
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 
@@ -34,8 +35,8 @@ export default function GlobalError({
           description="We hit an unexpected error loading this page. Your account and any in-progress contracts are unaffected."
           action={<Button onClick={reset}>Try again</Button>}
           secondaryAction={
-            <Button variant="outline" onClick={() => window.location.assign('/')}>
-              Go to the homepage
+            <Button variant="outline" asChild>
+              <Link href="/">Go to the homepage</Link>
             </Button>
           }
         />
