@@ -28,3 +28,23 @@ export const check = (label, fg, bg, min=4.5) => {
   console.log(`${mark}  ${r.toFixed(2).padStart(5)}:1  (min ${min})  ${label}  ${fg} on ${bg}`);
   return ok;
 };
+
+// Upper bound. Used for the dark theme's body-text pairs: contrast has a
+// comfortable ceiling as well as a floor, and light-on-dark above ~15:1
+// halates (glyphs bloom into the surface). Not a WCAG rule — a legibility one.
+export const checkMax = (label, fg, bg, max) => {
+  const r = ratio(fg,bg);
+  const ok = r <= max;
+  console.log(`${ok ? 'PASS' : 'FAIL'}  ${r.toFixed(2).padStart(5)}:1  (max ${max})  ${label}  ${fg} on ${bg}`);
+  return ok;
+};
+
+// Two surfaces must be independently visible as separate layers. A floor of
+// 4.5:1 says nothing about this: --card at 1.05:1 over --background passed
+// every text assertion while being invisible as a panel.
+export const checkLayer = (label, a, b, min) => {
+  const r = ratio(a,b);
+  const ok = r >= min;
+  console.log(`${ok ? 'PASS' : 'FAIL'}  ${r.toFixed(2).padStart(5)}:1  (min ${min})  ${label}  ${a} / ${b}`);
+  return ok;
+};

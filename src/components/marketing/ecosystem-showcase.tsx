@@ -92,7 +92,7 @@ const UsdtIcon = () => (
 
 const DiditIcon = () => (
   <svg className="w-7 h-7 sm:w-9 sm:h-9" viewBox="0 0 32 32" fill="none">
-    <rect width="32" height="32" rx="8" fill="#0F4C3D" />
+    <rect width="32" height="32" rx="8" fill="var(--brand-3)" />
     <path
       d="M16 6L9 9.5V15.5C9 20.3 12 24.7 16 26C20 24.7 23 20.3 23 15.5V9.5L16 6Z"
       fill="#10B981"
@@ -139,7 +139,7 @@ const IpfsIcon = () => (
 
 const SupabaseIcon = () => (
   <svg className="w-7 h-7 sm:w-9 sm:h-9" viewBox="0 0 32 32" fill="none">
-    <rect width="32" height="32" rx="8" fill="#1C1C1C" />
+    <rect width="32" height="32" rx="8" fill="#1C1C1C" stroke="var(--tile-plate-edge)" strokeWidth="1" />
     <path
       d="M17.5 7L7 20H15.5L14.5 25L25 12H16.5L17.5 7Z"
       fill="#3ECF8E"
@@ -161,7 +161,7 @@ const OpenAiIcon = () => (
 
 const NextJsIcon = () => (
   <svg className="w-7 h-7 sm:w-9 sm:h-9" viewBox="0 0 32 32" fill="none">
-    <rect width="32" height="32" rx="8" fill="#000000" />
+    <rect width="32" height="32" rx="8" fill="#000000" stroke="var(--tile-plate-edge)" strokeWidth="1" />
     <path d="M10 10V22M10 10L21 22M21 10V18" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
@@ -193,7 +193,7 @@ const ChainlinkIcon = () => (
 
 const SolidityIcon = () => (
   <svg className="w-7 h-7 sm:w-9 sm:h-9" viewBox="0 0 32 32" fill="none">
-    <rect width="32" height="32" rx="8" fill="#24292E" />
+    <rect width="32" height="32" rx="8" fill="#24292E" stroke="var(--tile-plate-edge)" strokeWidth="1" />
     <path d="M16 8L22 14L19 17L13 11L16 8Z" fill="#656565" />
     <path d="M10 14L16 20L13 23L7 17L10 14Z" fill="#808080" />
     <path d="M16 14L22 20L19 23L13 17L16 14Z" fill="#B0B0B0" />

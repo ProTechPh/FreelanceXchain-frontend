@@ -136,6 +136,27 @@
   --color-border-strong: var(--border-strong);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  /* Modal/sheet scrim. Resolves per theme — see the note in .dark. */
+  --color-overlay: var(--overlay);
+  /* Text/iconography sitting ON a .gradient-primary surface. Distinct from
+     --primary-foreground, which belongs on the solid --primary fill: in dark
+     that fill is bright so its foreground is near-black, whereas the gradient
+     fill is deep so its foreground is light. Using the wrong one leaves
+     near-black metadata on a deep green bubble. */
+  --color-gradient-from: var(--gradient-from);
+  --color-gradient-via: var(--gradient-via);
+  --color-gradient-to: var(--gradient-to);
+  --color-gradient-foreground: var(--gradient-foreground);
+  /* Large SOLID primary surfaces. --primary itself has to stay bright: it is
+     the text/border/ring colour on dark in 400+ places, where bright is
+     correct. But that same value used as a big fill is a lit block (9.31:1),
+     so large fills get their own deeper token. Small badges, dots and unread
+     counts deliberately keep bg-primary — too small to glare, and they keep
+     the mint accent alive. */
+  --color-primary-fill: var(--primary-fill);
+  --color-primary-fill-foreground: var(--primary-fill-foreground);
+  --color-primary-fill-hover: var(--primary-fill-hover);
+  --color-primary-fill-active: var(--primary-fill-active);
 
   /* Semantic status — the trust signal for contracts, milestones, escrow,
      proposals, disputes and KYC. Both roles must read state identically. */
@@ -214,6 +235,32 @@
   --border-strong: #d5d7da;
   --input: #8a8e96;
   --ring: #0f4c3d;
+  /* Exactly the previous hardcoded bg-black/10, so light is unchanged.
+     Dark needs far more because its page is no longer near-black. */
+  --overlay: rgb(0 0 0 / 0.10);
+
+  /* Hairline on the brand-locked near-black logo tiles. Only needed in dark,
+     where the page is no longer near-black and they would read as holes. */
+  --tile-plate-edge: transparent;
+
+  /* Gradient CTA ramp. Broken out of --primary/--chart-2/--chart-3 so each
+     theme can pick its own, rather than inheriting whatever those happen to
+     be — in dark, --chart-3 is BLUE, which made the gradient run green to
+     blue and reverse hue direction between themes. These three values
+     reproduce the previous light gradient exactly. */
+  --gradient-from: #0f4c3d;
+  --gradient-via: #166e58;
+  /* NOTE: white label text on this stop measures 3.41:1, below AA. That is a
+     pre-existing gap, deliberately left as-is to keep light mode byte-identical
+     to before. Fixing it means deepening this to ~#237d61. */
+  --gradient-to: #2f9c7c;
+  --gradient-foreground: #ffffff;
+
+  /* Same values as the --primary ladder, so light mode is unchanged. */
+  --primary-fill: #0f4c3d;
+  --primary-fill-foreground: #ffffff;
+  --primary-fill-hover: #0c3d31;
+  --primary-fill-active: #0a3329;
 
   --success: #0a6e46;
   --success-foreground: #ffffff;
@@ -266,78 +313,136 @@
 }
 
 /* --------------------------------------------------------------------------
-   DARK — parity surface. Primary lifts to #3ec9a7 for contrast on near-black.
+   DARK — parity surface, cool-slate ramp.
+
+   Two rules this block exists to satisfy, neither of which is a WCAG minimum:
+
+   1. Surfaces are lifted OFF pure black. The previous base (#0a0a0a) paired
+      with #fafafa text measured 18.97:1 — near the top of the range, where
+      light-on-dark halates and glyphs bloom. Base is now #14161c and text
+      #e3e7ee, landing at 14.58:1: still far above AA, without the glare.
+   2. Every surface tier is separately visible. The previous --card (#111113)
+      sat 1.05:1 against the base, so cards read as floating text rather than
+      panels. The ramp below steps background -> card -> muted -> secondary
+      with >=1.12:1 between neighbours.
+
+   --muted and --secondary were previously the SAME value, which collapsed two
+   tiers into one; TabsList is bg-muted and its active tab is
+   dark:data-active:bg-secondary, so the active pill had no fill at all. They
+   are now deliberately distinct: muted = recessed well, secondary = raised
+   control. `pnpm verify:contrast` asserts that separation so it cannot
+   re-collapse.
+
+   Keep every value flat 6-digit hex — verify-contrast.mjs parses this block by
+   hex regex and silently drops oklch()/rgb()/var() values from its assertions.
    -------------------------------------------------------------------------- */
 .dark {
-  --background: #0a0a0a;
-  --foreground: #fafafa;
-  --foreground-subtle: #a4a7ae;
-  --card: #111113;
-  --card-foreground: #fafafa;
-  --popover: #111113;
-  --popover-foreground: #fafafa;
+  --background: #14161c;
+  --foreground: #e3e7ee;
+  --foreground-subtle: #a7aebd;
+  --card: #20242e;
+  --card-foreground: #e3e7ee;
+  --popover: #20242e;
+  --popover-foreground: #e3e7ee;
 
-  --primary: #3ec9a7;
-  --primary-foreground: #05201a;
-  --primary-hover: #59d6b8;
-  --primary-active: #6fdec4;
-  --primary-subtle: #12241e;
+  --primary: #4dcfa8;
+  --primary-foreground: #04211a;
+  --primary-hover: #66dbb8;
+  --primary-active: #7ee3c6;
+  --primary-subtle: #172c26;
 
-  --secondary: #1c1c1f;
-  --secondary-foreground: #fafafa;
-  --muted: #1c1c1f;
-  --muted-foreground: #a4a7ae;
-  --accent: #1c2e28;
-  --accent-foreground: #3ec9a7;
+  /* Raised control surface — must stay lighter than --muted (see header). */
+  --secondary: #363d4b;
+  --secondary-foreground: #e3e7ee;
+  /* Recessed well: tab strips, inert fills. */
+  --muted: #2d3340;
+  --muted-foreground: #a2aab9;
+  --accent: #1e3630;
+  --accent-foreground: #61d8b4;
 
-  --border: #27272a;
-  --border-strong: #3f3f46;
-  --input: #6b6b75;
-  --ring: #3ec9a7;
+  --border: #3c4351;
+  --border-strong: #525a6b;
+  --input: #7d8493;
+  --ring: #4dcfa8;
 
-  --success: #5bd48f;
+  --success: #5fd493;
   --success-foreground: #062015;
-  --success-subtle: #0f2a1e;
-  --success-border: #1e5238;
-  --warning: #f5b23e;
+  --success-subtle: #163023;
+  --success-border: #245c40;
+  --warning: #f0b452;
   --warning-foreground: #231703;
-  --warning-subtle: #2b2113;
-  --warning-border: #5c4415;
-  --info: #7cb4fb;
+  --warning-subtle: #2f2618;
+  --warning-border: #634c1d;
+  --info: #84b8f7;
   --info-foreground: #04182e;
-  --info-subtle: #101f33;
-  --info-border: #1e4373;
-  --destructive: #fb8a86;
+  --info-subtle: #1a2537;
+  --info-border: #2a4b7a;
+  --destructive: #f8908c;
   --destructive-foreground: #2a0806;
-  --destructive-subtle: #2c1414;
-  --destructive-border: #6b2723;
-  --neutral: #b3b6bd;
+  --destructive-subtle: #321a19;
+  --destructive-border: #70302c;
+  --neutral: #b6bcc7;
   --neutral-foreground: #131316;
-  --neutral-subtle: #1c1c1f;
-  --neutral-border: #3f3f46;
+  --neutral-subtle: #2d3340;
+  --neutral-border: #525a6b;
 
+  /* Charts are non-text and need 3:1 against the surfaces they sit on.
+     chart-2 (#2d7a5f) and chart-5 (#3f3f46) both fell under that once the
+     base lifted — 3.50:1 and 1.73:1 — so both are raised. */
   --chart-1: #3ec9a7;
-  --chart-2: #2d7a5f;
+  --chart-2: #3f9c79;
   --chart-3: #7cb4fb;
   --chart-4: #a4a7ae;
-  --chart-5: #3f3f46;
+  --chart-5: #6b7385;
 
-  --sidebar: #111113;
-  --sidebar-foreground: #fafafa;
-  --sidebar-primary: #3ec9a7;
-  --sidebar-primary-foreground: #05201a;
-  --sidebar-accent: #1c1c1f;
-  --sidebar-accent-foreground: #fafafa;
-  --sidebar-border: #27272a;
-  --sidebar-ring: #3ec9a7;
+  --sidebar: #20242e;
+  --sidebar-foreground: #e3e7ee;
+  --sidebar-primary: #4dcfa8;
+  --sidebar-primary-foreground: #04211a;
+  --sidebar-accent: #2d3340;
+  --sidebar-accent-foreground: #e3e7ee;
+  --sidebar-border: #3c4351;
+  --sidebar-ring: #4dcfa8;
 
-  /* Shadows are near-invisible on #0a0a0a; elevation reads through a hairline
-     highlight plus a deeper ambient cast. */
-  /* Lifted so the mark stays legible on near-black. */
+  /* Modal scrim. Tuned per theme because a scrim's job is relative to the
+     page behind it: the previous hardcoded bg-black/10 gave almost no
+     figure-ground once the base stopped being near-black. */
+  --overlay: rgb(0 0 0 / 0.62);
+  --tile-plate-edge: var(--border-strong);
+
+  /* The dark ramp travels HUE (teal -> green) at near-constant luminance,
+     rather than travelling luminance. That is what lets it satisfy two
+     otherwise-conflicting constraints at once: every stop clears 3:1 against
+     the page (1.4.11 — the button's fill is its boundary) while still being
+     dark enough for light text to clear 4.5:1 on it. A ramp that varies
+     luminance cannot do both in this band.
+     Previously this resolved to #4dcfa8 -> #3f9c79 -> #7cb4fb: 9.31:1 against
+     the page at its brightest, which read as a lit block, and ending on blue. */
+  --gradient-from: #147468;
+  --gradient-via: #1b785f;
+  --gradient-to: #277a52;
+  /* Pure white, matching light. Halation is not a risk here — this sits on a
+     mid-luminance colored fill (5.26:1), not on the near-black page. The extra
+     headroom over an off-white is what lets call sites keep a /90 tier for
+     secondary copy and still clear AA. */
+  --gradient-foreground: #ffffff;
+
+  /* Tight band: lighter breaks the white label (<4.5:1), darker breaks the
+     fill's own boundary against the page (<3:1). These three steps are the
+     ladder that fits inside it. */
+  --primary-fill: #1a735c;
+  --primary-fill-foreground: #ffffff;
+  --primary-fill-hover: #1d7c62;
+  --primary-fill-active: #1f8265;
+
+  /* Lifted so the mark stays legible on the dark surface. */
   --brand-1: #8fe7cd;
   --brand-2: #3ec9a7;
   --brand-3: #2d7a5f;
 
+  /* Black-alpha casts still read correctly on #14161c. Now that the surface
+     ramp carries real luminance separation these are no longer load-bearing
+     for hierarchy — they only add depth. */
   --elevation-xs: 0 1px 2px 0 rgb(0 0 0 / 0.5);
   --elevation-sm: 0 1px 3px 0 rgb(0 0 0 / 0.6), inset 0 1px 0 0 rgb(255 255 255 / 0.03);
   --elevation-md: 0 4px 10px -2px rgb(0 0 0 / 0.65), inset 0 1px 0 0 rgb(255 255 255 / 0.04);
@@ -450,8 +555,13 @@
   /* These three were referenced across the app but never defined, so every
      call site rendered unstyled — including the Button `gradient` variant,
      which was white text on no background. Defined here from tokens. */
+  /* Sets `color` as well as the fill: the two travel together, and every call
+     site previously had to remember to pair this with text-primary-foreground.
+     That pairing is wrong in dark now that the fill is deep rather than bright,
+     so the utility owns both halves and call sites just apply it. */
   .gradient-primary {
-    background-image: linear-gradient(135deg, var(--primary) 0%, var(--chart-2) 55%, var(--chart-3) 100%);
+    background-image: linear-gradient(135deg, var(--gradient-from) 0%, var(--gradient-via) 55%, var(--gradient-to) 100%);
+    color: var(--gradient-foreground);
   }
 
   /* Fill utilities for SVG icons — these map semantic colors to fill property */

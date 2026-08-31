@@ -537,7 +537,7 @@ export default function EmployerProjectProposalsPage() {
                           <Button
                             type="button"
                             size="sm"
-                            className="rounded-full gradient-primary text-primary-foreground shadow-md text-xs font-semibold"
+                            className="rounded-full gradient-primary shadow-md text-xs font-semibold"
                             onClick={() => setDecision({ proposal, action: 'accept' })}
                           >
                             <Check className="mr-1.5 size-3.5" /> Accept Proposal & Create Contract

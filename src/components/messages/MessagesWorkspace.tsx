@@ -361,14 +361,14 @@ export function MessagesWorkspace() {
               className="flex w-full items-center gap-3 p-4 text-left transition-colors bg-primary/10 border-r-2 border-primary"
             >
               <Avatar className="w-10 h-10">
-                <AvatarFallback className="gradient-primary text-primary-foreground text-sm">
+                <AvatarFallback className="gradient-primary text-sm">
                   {initials(directRecipient.name)}
                 </AvatarFallback>
               </Avatar>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
                   <p className="truncate text-sm font-semibold text-foreground">{directRecipient.name}</p>
-                  <Badge className="shrink-0 gradient-primary text-primary-foreground text-3xs py-0.5">New Chat</Badge>
+                  <Badge className="shrink-0 gradient-primary text-3xs py-0.5">New Chat</Badge>
                 </div>
                 <p className="mt-0.5 truncate text-xs text-primary font-medium">
                   Type a message to start chatting
@@ -407,7 +407,7 @@ export function MessagesWorkspace() {
                 }`}
               >
                 <Avatar className="w-10 h-10">
-                  <AvatarFallback className="gradient-primary text-primary-foreground text-sm">
+                  <AvatarFallback className="gradient-primary text-sm">
                     {initials(conv.otherUser.name)}
                   </AvatarFallback>
                 </Avatar>
@@ -423,7 +423,7 @@ export function MessagesWorkspace() {
                   </p>
                 </div>
                 {unread > 0 && (
-                  <Badge className="h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs gradient-primary text-primary-foreground">
+                  <Badge className="h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs gradient-primary">
                     {unread}
                   </Badge>
                 )}
@@ -449,7 +449,7 @@ export function MessagesWorkspace() {
                 }`}
               >
                 <Avatar className="w-10 h-10">
-                  <AvatarFallback className="gradient-primary text-primary-foreground text-sm">
+                  <AvatarFallback className="gradient-primary text-sm">
                     {initials(contact.name)}
                   </AvatarFallback>
                 </Avatar>
@@ -492,7 +492,7 @@ export function MessagesWorkspace() {
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
                 <Avatar className="w-10 h-10">
-                  <AvatarFallback className="gradient-primary text-primary-foreground text-sm">
+                  <AvatarFallback className="gradient-primary text-sm">
                     {initials(chatRecipient.name)}
                   </AvatarFallback>
                 </Avatar>
@@ -556,7 +556,7 @@ export function MessagesWorkspace() {
                       <div
                         className={`max-w-[70%] p-3 rounded-2xl ${
                           isMine
-                            ? 'gradient-primary text-primary-foreground rounded-br-md'
+                            ? 'gradient-primary rounded-br-md'
                             : 'bg-secondary border border-border rounded-bl-md'
                         }`}
                       >
@@ -565,19 +565,19 @@ export function MessagesWorkspace() {
                           <ul className="mt-2 space-y-1.5" aria-label="Message attachments">
                             {(msg.attachments ?? []).map((attachment) => {
                               const url = safeAttachmentUrl(attachment.url);
-                              return <li key={`${msg.id}-${attachment.filename}-${attachment.url}`}>{url ? <a href={url} target="_blank" rel="noreferrer" className={`flex items-center gap-2 rounded-lg border px-2 py-1.5 text-xs ${isMine ? 'border-primary-foreground/30 hover:bg-primary-foreground/10' : 'border-border hover:bg-background'}`}><FileText className="h-3.5 w-3.5 shrink-0" /><span className="min-w-0 flex-1 truncate">{attachment.filename}</span><span className={isMine ? 'text-primary-foreground/70' : 'text-muted-foreground'}>{formatFileSize(attachment.size)}</span><ExternalLink className="h-3 w-3 shrink-0" /></a> : <span className="flex items-center gap-2 text-xs"><FileText className="h-3.5 w-3.5" />Attachment unavailable</span>}</li>;
+                              return <li key={`${msg.id}-${attachment.filename}-${attachment.url}`}>{url ? <a href={url} target="_blank" rel="noreferrer" className={`flex items-center gap-2 rounded-lg border px-2 py-1.5 text-xs ${isMine ? 'border-gradient-foreground/30 dark:border-gradient-foreground/60 hover:bg-gradient-foreground/10 dark:hover:bg-gradient-foreground/20' : 'border-border hover:bg-background'}`}><FileText className="h-3.5 w-3.5 shrink-0" /><span className="min-w-0 flex-1 truncate">{attachment.filename}</span><span className={isMine ? 'text-gradient-foreground/70 dark:text-gradient-foreground' : 'text-muted-foreground'}>{formatFileSize(attachment.size)}</span><ExternalLink className="h-3 w-3 shrink-0" /></a> : <span className="flex items-center gap-2 text-xs"><FileText className="h-3.5 w-3.5" />Attachment unavailable</span>}</li>;
                             })}
                           </ul>
                         )}
                         <div className={`flex items-center gap-1 mt-1 ${isMine ? 'justify-end' : ''}`}>
-                          <span className={`text-xs ${isMine ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
+                          <span className={`text-xs ${isMine ? 'text-gradient-foreground/70 dark:text-gradient-foreground' : 'text-muted-foreground'}`}>
                             {relativeTime(msg.created_at)}
                           </span>
                           {isMine && (
                             msg.is_read ? (
-                              <CheckCheck className="w-3 h-3 text-primary-foreground/70" />
+                              <CheckCheck className="w-3 h-3 text-gradient-foreground/70 dark:text-gradient-foreground" />
                             ) : (
-                              <Check className="w-3 h-3 text-primary-foreground/70" />
+                              <Check className="w-3 h-3 text-gradient-foreground/70 dark:text-gradient-foreground" />
                             )
                           )}
                         </div>

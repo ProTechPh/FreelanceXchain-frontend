@@ -159,7 +159,7 @@ export default function Navbar({
                   className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full outline-none transition-opacity duration-fast hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <Avatar className="size-7">
-                    <AvatarFallback className="text-xs gradient-primary text-primary-foreground font-bold">
+                    <AvatarFallback className="text-xs gradient-primary font-bold">
                       {userInitials}
                     </AvatarFallback>
                   </Avatar>
@@ -250,7 +250,7 @@ export default function Navbar({
                   <div className="flex flex-col gap-3 pt-4 border-t border-border/50">
                     <div className="flex items-center gap-3 px-2 py-1">
                       <Avatar className="size-8">
-                        <AvatarFallback className="text-xs gradient-primary text-primary-foreground font-bold">
+                        <AvatarFallback className="text-xs gradient-primary font-bold">
                           {userInitials}
                         </AvatarFallback>
                       </Avatar>

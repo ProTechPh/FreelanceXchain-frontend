@@ -192,7 +192,7 @@ export function AttachmentPreviewDialog({
                   asChild
                   variant="default"
                   size="sm"
-                  className="h-8 px-2.5 text-xs gap-1.5 rounded-lg gradient-primary text-primary-foreground"
+                  className="h-8 px-2.5 text-xs gap-1.5 rounded-lg gradient-primary"
                 >
                   <a href={url} download={displayFilename} target="_blank" rel="noopener noreferrer">
                     <Download className="size-3.5" />
@@ -244,7 +244,7 @@ export function AttachmentPreviewDialog({
 
               {/* Image Display */}
               {shouldTryImage && url && (
-                <div className="flex items-center justify-center p-4 rounded-2xl bg-black/5 dark:bg-black/40 border border-border min-h-[300px]">
+                <div className="flex items-center justify-center p-4 rounded-2xl bg-black/5 dark:bg-background border border-border min-h-[300px]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={url}
@@ -275,7 +275,7 @@ export function AttachmentPreviewDialog({
                     </p>
                   </div>
                   {url && (
-                    <Button asChild className="gradient-primary text-primary-foreground shadow-md rounded-full">
+                    <Button asChild className="gradient-primary shadow-md rounded-full">
                       <a href={url} download={displayFilename} target="_blank" rel="noopener noreferrer">
                         <Download className="size-4 mr-2" /> Download File
                       </a>

@@ -227,7 +227,7 @@ export default function CreateProjectPage() {
             aria-current={currentStep === step.id ? 'step' : undefined}
             className={`flex min-h-10 items-center justify-center gap-2 rounded-lg px-2 py-2 text-center ${
               currentStep === step.id
-                ? 'gradient-primary text-primary-foreground'
+                ? 'gradient-primary'
                 : currentStep > step.id
                 ? 'bg-success-subtle text-success'
                 : 'bg-secondary text-muted-foreground'

@@ -273,7 +273,7 @@ export default function EmployerDashboard() {
             {recentProposals.map(({ proposal, projectTitle, freelancerName, rating }) => (
               <div key={proposal.id} className="p-3 rounded-xl bg-secondary/50 border border-border">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center text-primary-foreground text-xs font-bold">
+                <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center text-xs font-bold">
                     {initials(freelancerName)}
                   </div>
                   <div className="flex-1">
