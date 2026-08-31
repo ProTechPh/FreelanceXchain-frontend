@@ -22,7 +22,7 @@ const GithubIcon = () => (
 );
 
 const CheckIcon = () => (
-    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+    <svg className="w-4 h-4 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
     </svg>
 );
@@ -39,6 +39,7 @@ interface SignUpPageProps {
   onGithubSignIn?: () => void;
   onSignIn?: () => void;
   isLoading?: boolean;
+  loading?: boolean;
   oauthError?: string | null;
 }
 
@@ -48,14 +49,17 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
   onGithubSignIn,
   onSignIn,
   isLoading = false,
+  loading = false,
   oauthError,
 }) => {
+  const isButtonLoading = isLoading || loading;
   const [step, setStep] = useState<'role' | 'details'>('role');
   const [role, setRole] = useState<UserRole>('freelancer');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -87,27 +91,27 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
         <div className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-success/15 blur-3xl" />
         <div className="absolute -bottom-32 -left-32 w-[500px] h-[500px] rounded-full bg-success/15 blur-3xl" />
         
-        <div className="relative z-10 flex flex-col justify-between p-12 lg:p-16 text-white w-full">
+        <div className="relative z-10 flex flex-col justify-between p-12 lg:p-16 text-primary-foreground w-full">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity">
-            <FreelanceXchainLogo iconSize={36} className="text-white [&_span]:text-white" />
+            <FreelanceXchainLogo iconSize={36} className="text-primary-foreground [&_span]:text-primary-foreground" />
           </Link>
           
           {/* Content */}
           <div className="max-w-lg">
             {/* Badge */}
-            <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/15 text-white text-xs font-bold mb-6 border border-white/20 backdrop-blur-sm">
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-primary-foreground/15 text-primary-foreground text-xs font-bold mb-6 border border-primary-foreground/20 backdrop-blur-sm">
               <Sparkles className="size-3.5" fill="currentColor" />
               <span>Join the Future of Work</span>
             </div>
             
             {/* Heading */}
-            <h2 className="text-4xl lg:text-5xl font-extrabold leading-tight tracking-tight mb-5 text-white">
+            <h2 className="text-4xl lg:text-5xl font-extrabold leading-tight tracking-tight mb-5 text-primary-foreground">
               Start your decentralized freelance journey today
             </h2>
             
             {/* Description */}
-            <p className="text-lg leading-relaxed mb-10 text-white/90">
+            <p className="text-lg leading-relaxed mb-10 text-primary-foreground/90">
               Smart contract escrow, AI proposal matching, and portable on-chain reputation — all in one platform.
             </p>
             
@@ -115,34 +119,34 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
             <div className="flex flex-col gap-4">
               {features.map((feature) => (
                 <div key={feature} className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center shrink-0 backdrop-blur-sm">
+                  <div className="w-10 h-10 rounded-xl bg-primary-foreground/15 flex items-center justify-center shrink-0 backdrop-blur-sm">
                     <CheckIcon />
                   </div>
-                  <span className="text-white font-semibold text-[15px]">{feature}</span>
+                  <span className="text-primary-foreground font-semibold text-sm">{feature}</span>
                 </div>
               ))}
             </div>
           </div>
           
           {/* Footer */}
-          <p className="text-white/60 text-sm">
+          <p className="text-primary-foreground/60 text-sm">
             © 2026 FreelanceXchain. All rights reserved.
           </p>
         </div>
       </div>
 
       {/* Mobile features banner (visible on mobile, hidden on lg+) */}
-      <div className="lg:hidden bg-gradient-to-br from-primary via-primary to-chart-2 p-6 text-white">
+      <div className="lg:hidden bg-gradient-to-br from-primary via-primary to-chart-2 p-6 text-primary-foreground">
         <Link href="/" className="flex items-center gap-2.5 mb-5">
-          <FreelanceXchainLogo iconSize={28} className="text-white [&_span]:text-white" />
+          <FreelanceXchainLogo iconSize={28} className="text-primary-foreground [&_span]:text-primary-foreground" />
         </Link>
         <div className="flex flex-col gap-3">
           {features.map((feature) => (
             <div key={feature} className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-primary-foreground/15 flex items-center justify-center shrink-0">
                 <CheckIcon />
               </div>
-              <span className="text-white font-semibold text-sm">{feature}</span>
+              <span className="text-primary-foreground font-semibold text-sm">{feature}</span>
             </div>
           ))}
         </div>
@@ -184,7 +188,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                     </div>
                     <div className="text-center">
                       <p className="font-bold text-foreground text-xs sm:text-sm">I&apos;m a Freelancer</p>
-                      <p className="text-[11px] sm:text-xs text-muted-foreground mt-1 leading-relaxed">Find work and get paid securely</p>
+                      <p className="text-2xs sm:text-xs text-muted-foreground mt-1 leading-relaxed">Find work and get paid securely</p>
                     </div>
                   </button>
 
@@ -198,7 +202,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                     </div>
                     <div className="text-center">
                       <p className="font-bold text-foreground text-xs sm:text-sm">I&apos;m an Employer</p>
-                      <p className="text-[11px] sm:text-xs text-muted-foreground mt-1 leading-relaxed">Hire talent for your projects</p>
+                      <p className="text-2xs sm:text-xs text-muted-foreground mt-1 leading-relaxed">Hire talent for your projects</p>
                     </div>
                   </button>
                 </div>
@@ -344,7 +348,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                   <Button
                     type="submit"
                     size="lg"
-                    loading={isLoading}
+                    loading={isButtonLoading}
                     loadingText="Creating account…"
                     className="h-12 sm:h-13 w-full rounded-xl sm:rounded-2xl bg-primary text-primary-foreground font-bold text-sm hover:bg-primary-hover shadow-md shadow-primary/20 transition-all duration-200 active:scale-[0.98]"
                   >

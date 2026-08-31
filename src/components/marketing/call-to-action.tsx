@@ -72,17 +72,17 @@ function CallToAction() {
           </div>
 
           {/* Bottom Trust Badges */}
-          <div className="mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-primary-foreground/15 flex flex-wrap justify-center items-center gap-4 sm:gap-10 text-xs text-white/90 font-medium">
+          <div className="mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-primary-foreground/15 flex flex-wrap justify-center items-center gap-4 sm:gap-10 text-xs text-primary-foreground/90 font-medium">
             <div className="flex items-center gap-2">
-              <CheckCircle className="size-4 text-white shrink-0" fill="currentColor" />
+              <CheckCircle className="size-4 text-primary-foreground shrink-0" fill="currentColor" />
               <span className="break-words">100% Smart Contract Escrow</span>
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle className="size-4 text-white shrink-0" fill="currentColor" />
+              <CheckCircle className="size-4 text-primary-foreground shrink-0" fill="currentColor" />
               <span className="break-words">Didit KYC in 220+ Countries</span>
             </div>
             <div className="flex items-center gap-2">
-              <Star className="size-4 text-yellow-300 shrink-0" fill="currentColor" />
+              <Star className="size-4 text-warning shrink-0" fill="currentColor" />
               <span className="break-words">Zero Unpaid Invoices Guaranteed</span>
             </div>
           </div>

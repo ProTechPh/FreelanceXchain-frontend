@@ -253,9 +253,9 @@ export default function PortfolioPage() {
                 <div className="bg-muted/80 border-b border-border px-3.5 py-2 flex items-center justify-between text-xs text-muted-foreground">
                   <div className="flex items-center gap-1.5">
                     <div className="w-2.5 h-2.5 rounded-full bg-destructive/60" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-amber-500/60" />
-                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/60" />
-                    <span className="ml-2 font-mono text-[11px] truncate max-w-[200px] sm:max-w-[280px]">
+                    <div className="w-2.5 h-2.5 rounded-full bg-warning/60" />
+                    <div className="w-2.5 h-2.5 rounded-full bg-success/60" />
+                    <span className="ml-2 font-mono text-xs truncate max-w-[200px] sm:max-w-[280px]">
                       {item.projectUrl ? item.projectUrl.replace(/^https?:\/\//, '') : item.title}
                     </span>
                   </div>
@@ -407,9 +407,9 @@ export default function PortfolioPage() {
                 <div className="bg-muted/80 border-b border-border px-3 py-1.5 flex items-center text-xs">
                   <div className="flex items-center gap-1.5">
                     <div className="w-2 h-2 rounded-full bg-destructive/60" />
-                    <div className="w-2 h-2 rounded-full bg-amber-500/60" />
-                    <div className="w-2 h-2 rounded-full bg-emerald-500/60" />
-                    <span className="ml-2 font-mono text-[11px] text-muted-foreground truncate max-w-[240px]">
+                    <div className="w-2 h-2 rounded-full bg-warning/60" />
+                    <div className="w-2 h-2 rounded-full bg-success/60" />
+                    <span className="ml-2 font-mono text-xs text-muted-foreground truncate max-w-[240px]">
                       {form.projectUrl}
                     </span>
                   </div>

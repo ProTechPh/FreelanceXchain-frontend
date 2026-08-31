@@ -23,7 +23,7 @@ const GithubIcon = () => (
 );
 
 const CheckIcon = () => (
-    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+    <svg className="w-4 h-4 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
     </svg>
 );
@@ -76,27 +76,27 @@ export const SignInPage: React.FC<SignInPageProps> = ({
         <div className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-success/15 blur-3xl" />
         <div className="absolute -bottom-32 -left-32 w-[500px] h-[500px] rounded-full bg-success/15 blur-3xl" />
         
-        <div className="relative z-10 flex flex-col justify-between p-12 lg:p-16 text-white w-full">
+        <div className="relative z-10 flex flex-col justify-between p-12 lg:p-16 text-primary-foreground w-full">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity">
-            <FreelanceXchainLogo iconSize={36} className="text-white [&_span]:text-white" />
+            <FreelanceXchainLogo iconSize={36} className="text-primary-foreground [&_span]:text-primary-foreground" />
           </Link>
           
           {/* Content */}
           <div className="max-w-lg">
             {/* Badge */}
-            <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/15 text-white text-xs font-bold mb-6 border border-white/20 backdrop-blur-sm">
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-primary-foreground/15 text-primary-foreground text-xs font-bold mb-6 border border-primary-foreground/20 backdrop-blur-sm">
               <Sparkles className="size-3.5" fill="currentColor" />
               <span>Decentralized Freelance Economy</span>
             </div>
             
             {/* Heading */}
-            <p className="text-4xl lg:text-5xl font-extrabold leading-tight tracking-tight mb-5 text-white">
+            <p className="text-4xl lg:text-5xl font-extrabold leading-tight tracking-tight mb-5 text-primary-foreground">
               Welcome back to FreelanceXchain
             </p>
             
             {/* Description */}
-            <p className="text-lg leading-relaxed mb-10 text-white/90">
+            <p className="text-lg leading-relaxed mb-10 text-primary-foreground/90">
               Smart contract escrow, AI proposal matching, and portable on-chain reputation — all in one platform.
             </p>
             
@@ -104,34 +104,34 @@ export const SignInPage: React.FC<SignInPageProps> = ({
             <div className="flex flex-col gap-4">
               {features.map((feature) => (
                 <div key={feature} className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center shrink-0 backdrop-blur-sm">
+                  <div className="w-10 h-10 rounded-xl bg-primary-foreground/15 flex items-center justify-center shrink-0 backdrop-blur-sm">
                     <CheckIcon />
                   </div>
-                  <span className="text-white font-semibold text-[15px]">{feature}</span>
+                  <span className="text-primary-foreground font-semibold text-sm">{feature}</span>
                 </div>
               ))}
             </div>
           </div>
           
           {/* Footer */}
-          <p className="text-white/60 text-sm">
+          <p className="text-primary-foreground/60 text-sm">
             © 2026 FreelanceXchain. All rights reserved.
           </p>
         </div>
       </div>
 
       {/* Mobile features banner (visible on mobile, hidden on lg+) */}
-      <div className="lg:hidden bg-gradient-to-br from-primary via-primary to-chart-2 p-5 text-white">
+      <div className="lg:hidden bg-gradient-to-br from-primary via-primary to-chart-2 p-5 text-primary-foreground">
         <Link href="/" className="flex items-center gap-2.5 mb-4">
-          <FreelanceXchainLogo iconSize={28} className="text-white [&_span]:text-white" />
+          <FreelanceXchainLogo iconSize={28} className="text-primary-foreground [&_span]:text-primary-foreground" />
         </Link>
         <div className="flex flex-col gap-3">
           {features.map((feature) => (
             <div key={feature} className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center shrink-0">
+              <div className="w-8 h-8 rounded-lg bg-primary-foreground/15 flex items-center justify-center shrink-0">
                 <CheckIcon />
               </div>
-              <span className="text-white font-semibold text-sm">{feature}</span>
+              <span className="text-primary-foreground font-semibold text-sm">{feature}</span>
             </div>
           ))}
         </div>

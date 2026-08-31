@@ -91,10 +91,59 @@ export default function FreelancerProposalDetailPage() {
                 </div>
               </div>
             )}
-            {proposal.attachments.length > 0 && <div><h2 className="mb-2 text-sm font-medium">Attachments</h2><ul className="space-y-2">{proposal.attachments.map((attachment) => {
-              const url = safeAttachmentUrl(attachment.url);
-              return <li key={`${attachment.filename}-${attachment.url}`} className="flex items-center justify-between gap-3 rounded-lg border border-border p-3"><span className="flex min-w-0 items-center gap-2"><FileText className="h-4 w-4 shrink-0 text-primary" /><span className="truncate text-sm">{attachment.filename}</span><span className="shrink-0 text-xs text-muted-foreground">{formatFileSize(attachment.size)}</span></span>{url ? <Button type="button" size="sm" variant="ghost" onClick={() => setPreviewAttachment({ filename: attachment.filename, url: attachment.url, size: attachment.size, content: attachment.filename.startsWith('Proposal_') && proposal.coverLetter ? proposal.coverLetter : undefined })}>View<ExternalLink className="ml-2 h-3 w-3" /></Button> : <span className="text-xs text-muted-foreground">Unavailable</span>}</li>;
-            })}</ul></div>}
+            {proposal.attachments.length > 0 && (
+              <div>
+                <h2 className="mb-2 text-sm font-medium">Attachments</h2>
+                <ul className="space-y-2">
+                  {proposal.attachments.map((attachment) => {
+                    const url = safeAttachmentUrl(attachment.url);
+                    return (
+                      <li
+                        key={`${attachment.filename}-${attachment.url}`}
+                        className="flex items-center justify-between gap-3 rounded-lg border border-border p-3"
+                      >
+                        <span className="flex min-w-0 items-center gap-2">
+                          <FileText className="h-4 w-4 shrink-0 text-primary" />
+                          <span className="truncate text-sm">{attachment.filename}</span>
+                          <span className="shrink-0 text-xs text-muted-foreground">
+                            {formatFileSize(attachment.size)}
+                          </span>
+                        </span>
+                        {url ? (
+                          <div className="flex items-center gap-1">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() =>
+                                setPreviewAttachment({
+                                  filename: attachment.filename,
+                                  url: attachment.url,
+                                  size: attachment.size,
+                                  content:
+                                    attachment.filename.startsWith('Proposal_') && proposal.coverLetter
+                                      ? proposal.coverLetter
+                                      : undefined,
+                                })
+                              }
+                            >
+                              View<ExternalLink className="ml-1 h-3 w-3" />
+                            </Button>
+                            <Button asChild size="sm" variant="ghost">
+                              <a href={url} target="_blank" rel="noopener noreferrer">
+                                Open<ExternalLink className="ml-1 h-3 w-3" />
+                              </a>
+                            </Button>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Unavailable</span>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
             <div className="flex flex-wrap gap-2 border-t border-border pt-4"><Button asChild variant="outline"><Link href={`/dashboard/freelancer/projects/${project.id}`}>View project</Link></Button>{proposal.status === 'pending' && <Button type="button" variant="ghost" className="text-destructive" disabled={withdrawing} onClick={() => void withdraw()}>{withdrawing ? 'Withdrawing…' : 'Withdraw proposal'}</Button>}</div>
           </CardContent></Card>
         </div>

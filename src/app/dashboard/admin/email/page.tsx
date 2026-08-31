@@ -257,7 +257,7 @@ export default function AdminEmailPage() {
                           <SelectItem key={p.key} value={p.key}>
                             <div className="flex flex-col text-left py-0.5">
                               <span className="font-semibold text-xs text-foreground">{p.name}</span>
-                              <span className="text-[11px] text-muted-foreground">{p.email}</span>
+                              <span className="text-xs text-muted-foreground">{p.email}</span>
                             </div>
                           </SelectItem>
                         ))}
@@ -509,7 +509,7 @@ export default function AdminEmailPage() {
                             <SelectItem key={p.key} value={p.key}>
                               <div className="flex flex-col text-left py-0.5">
                                 <span className="font-semibold text-xs text-foreground">{p.name}</span>
-                                <span className="text-[11px] text-muted-foreground">{p.email}</span>
+                                <span className="text-xs text-muted-foreground">{p.email}</span>
                               </div>
                             </SelectItem>
                           ))}

@@ -386,9 +386,9 @@ export function ProposalDialog({
                     <div key={idx} className="rounded-lg border border-border/60 bg-background/40 p-2.5 space-y-1">
                       <div className="flex items-center justify-between text-xs">
                         <span className="font-semibold text-foreground truncate">{m.title}</span>
-                        <Badge variant="outline" className="text-[10px] py-0 px-1.5">{m.durationDays}d</Badge>
+                        <Badge variant="outline" className="text-2xs py-0 px-1.5">{m.durationDays}d</Badge>
                       </div>
-                      <p className="text-[11px] text-muted-foreground line-clamp-2">{m.description}</p>
+                      <p className="text-2xs text-muted-foreground line-clamp-2">{m.description}</p>
                       <p className="text-xs font-medium text-primary">${m.amount.toLocaleString()} USDC</p>
                     </div>
                   ))}
@@ -401,7 +401,7 @@ export function ProposalDialog({
         <form className="space-y-5" onSubmit={handleSubmit}>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor={`${fieldId}-rate`}>Proposed rate (ETH)</Label>
+              <Label htmlFor={`${fieldId}-rate`}>Proposed rate (USD)</Label>
               <Input
                 id={`${fieldId}-rate`}
                 type="number"
@@ -439,7 +439,7 @@ export function ProposalDialog({
             <div className="flex items-center justify-between">
               <Label htmlFor={`${fieldId}-files`}>Proposal attachments</Label>
               {form.files.some((f) => f.name.startsWith('Proposal_')) && (
-                <span className="text-[11px] text-success flex items-center gap-1 font-medium">
+                <span className="text-2xs text-success flex items-center gap-1 font-medium">
                   <Check className="size-3" /> AI brief document attached automatically
                 </span>
               )}
@@ -475,7 +475,7 @@ export function ProposalDialog({
                       )}
                       <span className="truncate font-medium text-foreground">{file.name}</span>
                       {file.name.startsWith('Proposal_') && (
-                        <Badge variant="secondary" className="text-[10px] py-0 px-1 text-primary">Auto-Generated</Badge>
+                        <Badge variant="secondary" className="text-2xs py-0 px-1 text-primary">Auto-Generated</Badge>
                       )}
                     </span>
                     <button

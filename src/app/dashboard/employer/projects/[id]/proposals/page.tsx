@@ -198,7 +198,7 @@ export default function EmployerProjectProposalsPage() {
               </div>
               <div>
                 <CardTitle className="text-base font-bold text-foreground flex items-center gap-2">
-                  AI Talent Matches
+                  <span>Recommended talent</span>
                   <Badge variant="secondary" className="text-3xs bg-primary/10 text-primary border-primary/20">
                     {recommendations.length} Available
                   </Badge>
@@ -298,7 +298,7 @@ export default function EmployerProjectProposalsPage() {
                       {/* Card Actions */}
                       <div className="flex items-center gap-2 pt-2 border-t border-border/60">
                         <Button asChild size="sm" variant="outline" className="text-xs h-8 flex-1">
-                          <Link href={`/freelancers/${recommendation.freelancerId}`}>View Profile</Link>
+                          <Link href={`/freelancers/${recommendation.freelancerId}`}>View profile</Link>
                         </Button>
                         <Button asChild size="sm" variant="ghost" className="text-xs h-8 flex-1">
                           <Link href={getDirectMessageRoute('employer', recommendation.freelancerId)}>

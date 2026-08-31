@@ -45,6 +45,7 @@ test('public navbar does not nest interactive controls', async ({ page }) => {
 test('public navbar icon actions keep a visible keyboard focus indicator', async ({ page }) => {
   await page.setViewportSize({ width: 768, height: 900 });
   await page.goto('/');
+  await expect(page.getByRole('button', { name: /Theme:/ })).toBeVisible();
 
   await page.keyboard.press('Tab');
   await page.keyboard.press('Tab');

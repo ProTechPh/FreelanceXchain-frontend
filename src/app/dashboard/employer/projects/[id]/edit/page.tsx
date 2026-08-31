@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Upload, X, FileText, Image as ImageIcon, Trash2, ExternalLink } from 'lucide-react';
@@ -24,9 +24,9 @@ const MAX_FILES = 10;
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_TOTAL_SIZE = 25 * 1024 * 1024; // 25MB
 
-export default function EditProjectPage() {
+function EditProjectContent() {
   const params = useParams<{ id: string }>();
-  const projectId = params?.id ?? '';
+  const projectId = (params?.id as string) ?? '';
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -61,21 +61,11 @@ export default function EditProjectPage() {
       .finally(() => setLoading(false));
   }, [projectId]);
 
-  // Generate image previews for newly selected image files
   useEffect(() => {
-    const urls: Record<string, string> = {};
-    newFiles.forEach((file) => {
-      if (file.type.startsWith('image/')) {
-        urls[file.name + file.lastModified] = URL.createObjectURL(file);
-      }
-    });
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setNewFilePreviews(urls);
-
     return () => {
-      Object.values(urls).forEach((url) => URL.revokeObjectURL(url));
+      Object.values(newFilePreviews).forEach((url) => URL.revokeObjectURL(url));
     };
-  }, [newFiles]);
+  }, [newFilePreviews]);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
@@ -105,6 +95,13 @@ export default function EditProjectPage() {
     }
 
     setNewFiles((prev) => [...prev, ...files]);
+    const updatedUrls = { ...newFilePreviews };
+    files.forEach((file) => {
+      if (file.type.startsWith('image/')) {
+        updatedUrls[file.name + file.lastModified] = URL.createObjectURL(file);
+      }
+    });
+    setNewFilePreviews(updatedUrls);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -113,6 +110,18 @@ export default function EditProjectPage() {
   };
 
   const removeNewFile = (index: number) => {
+    const fileToRemove = newFiles[index];
+    if (fileToRemove) {
+      const key = fileToRemove.name + fileToRemove.lastModified;
+      if (newFilePreviews[key]) {
+        URL.revokeObjectURL(newFilePreviews[key]);
+        setNewFilePreviews((prev) => {
+          const next = { ...prev };
+          delete next[key];
+          return next;
+        });
+      }
+    }
     setNewFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
@@ -409,5 +418,13 @@ export default function EditProjectPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function EditProjectPage() {
+  return (
+    <Suspense fallback={<DetailSkeleton label="Loading project" />}>
+      <EditProjectContent />
+    </Suspense>
   );
 }

@@ -5,12 +5,18 @@ const createdAt = '2026-08-06T00:00:00.000Z';
 async function authenticate(page: Page, role: 'freelancer' | 'employer' | 'admin') {
   const user = { id: `${role}-1`, email: `${role}@example.com`, name: role, role, walletAddress: '', kycStatus: 'approved', createdAt, updatedAt: createdAt };
   await page.addInitScript((storedUser) => {
-    localStorage.setItem('access_token', 'app-access-token');
-    localStorage.setItem('refresh_token', 'app-refresh-token');
-    localStorage.setItem('auth-storage', JSON.stringify({ state: { user: storedUser, isAuthenticated: true }, version: 0 }));
+    try {
+      localStorage.setItem('access_token', 'app-access-token');
+      localStorage.setItem('refresh_token', 'app-refresh-token');
+      localStorage.setItem('auth-storage', JSON.stringify({ state: { user: storedUser, isAuthenticated: true }, version: 0 }));
+    } catch {
+      // Ignore initial frame security errors
+    }
   }, user);
   await page.route('**/api/auth/me', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ user }) }));
   await page.route('**/auth/csrf-token', (route) => route.fulfill({ status: 200, contentType: 'application/json', headers: { 'set-cookie': 'psifi.x-csrf-token=e2e-csrf-token; Path=/; SameSite=Lax' }, body: JSON.stringify({ cookieName: 'psifi.x-csrf-token' }) }));
+  await page.route('**/api/notifications/unread-count', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ count: 0 }) }));
+  await page.route('**/api/notifications/stream', (route) => route.abort());
   return user;
 }
 
