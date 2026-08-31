@@ -60,7 +60,7 @@ export function Markdown({ content, className }: MarkdownProps) {
   return (
     <div
       className={cn(
-        'text-sm leading-relaxed text-muted-foreground space-y-3',
+        'min-w-0 max-w-full text-sm leading-relaxed text-muted-foreground space-y-3 break-words',
         className
       )}
     >
@@ -117,8 +117,13 @@ export function Markdown({ content, className }: MarkdownProps) {
               {children}
             </blockquote>
           ),
+          pre: ({ children }) => (
+            <pre className="my-2 max-w-full overflow-x-auto rounded-lg bg-muted/70 p-3 text-xs">
+              {children}
+            </pre>
+          ),
           table: ({ children }) => (
-            <div className="w-full my-3 overflow-x-auto rounded-lg border border-border bg-card/40">
+            <div className="my-3 w-full max-w-full overflow-x-auto rounded-lg border border-border bg-card/40">
               <table className="w-full text-left text-xs border-collapse">
                 {children}
               </table>
@@ -140,12 +145,12 @@ export function Markdown({ content, className }: MarkdownProps) {
             </tr>
           ),
           th: ({ children }) => (
-            <th className="px-3 py-2 font-medium text-foreground border-r border-border/50 last:border-r-0">
+            <th className="px-2 py-2 font-medium text-foreground border-r border-border/50 last:border-r-0 sm:px-3">
               {children}
             </th>
           ),
           td: ({ children }) => (
-            <td className="px-3 py-2 text-foreground/90 border-r border-border/40 last:border-r-0 align-top">
+            <td className="px-2 py-2 text-foreground/90 border-r border-border/40 last:border-r-0 align-top sm:px-3">
               {children}
             </td>
           ),
@@ -153,13 +158,13 @@ export function Markdown({ content, className }: MarkdownProps) {
             const isBlock = codeClassName && codeClassName.includes('language-');
             if (isBlock) {
               return (
-                <code className="block bg-muted/70 p-3 rounded-lg text-xs font-mono overflow-x-auto text-foreground my-2">
+                <code className="block font-mono text-xs whitespace-pre text-foreground">
                   {children}
                 </code>
               );
             }
             return (
-              <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono text-foreground">
+              <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs break-all text-foreground">
                 {children}
               </code>
             );

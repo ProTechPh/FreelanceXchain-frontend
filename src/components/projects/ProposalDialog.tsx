@@ -217,21 +217,23 @@ export function ProposalDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="pr-10 text-left">
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <DialogTitle className="text-xl font-bold">Submit Proposal</DialogTitle>
+      <DialogContent className="flex max-h-[calc(100dvh-1rem)] w-[calc(100%-1rem)] max-w-[calc(100%-1rem)] flex-col gap-0 overflow-hidden p-0 sm:max-h-[90vh] sm:w-full sm:max-w-2xl">
+        <DialogHeader className="shrink-0 gap-1.5 border-b border-border/60 px-4 pt-4 pr-12 pb-3 text-left sm:px-5 sm:pt-5">
+          <div className="flex flex-wrap items-center gap-2">
+            <DialogTitle className="text-lg font-bold sm:text-xl">Submit Proposal</DialogTitle>
             {aiProposal && (
               <Badge variant="secondary" className="gap-1 bg-primary/10 text-primary border-primary/20 text-xs py-0.5">
                 <Sparkles className="size-3" /> AI Tailored
               </Badge>
             )}
           </div>
-          <DialogDescription>
+          <DialogDescription className="text-xs break-words sm:text-sm">
             {project ? `Send your proposal for “${project.title}”.` : 'Send your offer for this project.'}
           </DialogDescription>
         </DialogHeader>
 
+        <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleSubmit}>
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5">
         {!isKycApproved && (
           <div className="rounded-xl border border-warning/30 bg-warning/10 p-3.5 text-xs text-warning space-y-2">
             <div className="flex items-center gap-2 font-bold text-foreground">
@@ -250,14 +252,14 @@ export function ProposalDialog({
         )}
 
         {/* AI Proposal Generator Banner */}
-        <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-4 space-y-3">
+        <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-3 space-y-3 sm:p-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="space-y-1">
+            <div className="min-w-0 space-y-1">
               <div className="flex items-center gap-2 font-semibold text-foreground text-sm">
                 <Sparkles className="size-4 text-primary animate-pulse" />
                 <span>AI Proposal Assistant</span>
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-2xs text-muted-foreground sm:text-xs">
                 Automatically drafts a tailored pitch using your <strong>portfolio projects</strong>, <strong>verified skills</strong>, and <strong>on-chain reputation</strong>.
               </p>
             </div>
@@ -269,7 +271,7 @@ export function ProposalDialog({
               loadingText="Analyzing & Drafting…"
               disabled={generatingAI || submitting}
               onClick={() => void handleGenerateAI(customNotes)}
-              className="shrink-0 font-medium"
+              className="w-full shrink-0 font-medium sm:w-auto"
             >
               {aiProposal ? (
                 <>
@@ -295,11 +297,11 @@ export function ProposalDialog({
               </button>
             ) : (
               <div className="space-y-2 pt-2">
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>Custom instructions (e.g. mention specific availability, discount, or focus):</span>
+                <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-1 text-2xs text-muted-foreground sm:text-xs">
+                  <span className="min-w-0 flex-1">Custom instructions (e.g. mention specific availability, discount, or focus):</span>
                   <button
                     type="button"
-                    className="text-muted-foreground hover:text-foreground"
+                    className="shrink-0 text-muted-foreground hover:text-foreground"
                     onClick={() => setShowCustomNotes(false)}
                   >
                     Hide
@@ -318,14 +320,18 @@ export function ProposalDialog({
 
         {/* AI Proposal Preview & Highlights if generated */}
         {aiProposal && (
-          <div className="space-y-4 rounded-xl border border-border bg-card/60 p-4">
+          <div className="space-y-4 rounded-xl border border-border bg-card/60 p-3 sm:p-4">
             {/* Highlights pills */}
             {aiProposal.highlights && aiProposal.highlights.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {aiProposal.highlights.map((highlight, idx) => (
-                  <Badge key={idx} variant="secondary" className="text-xs gap-1 py-1 px-2.5 font-medium">
-                    <Check className="size-3 text-success" />
-                    {highlight}
+                  <Badge
+                    key={idx}
+                    variant="secondary"
+                    className="h-auto max-w-full shrink items-start gap-1.5 overflow-visible rounded-lg px-2.5 py-1 text-2xs leading-snug font-medium break-words whitespace-normal sm:text-xs"
+                  >
+                    <Check className="mt-0.5 size-3 shrink-0 text-success" />
+                    <span className="min-w-0">{highlight}</span>
                   </Badge>
                 ))}
               </div>
@@ -333,11 +339,11 @@ export function ProposalDialog({
 
             {/* Proposal Pitch Tabs & Editor */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between border-b border-border/80 pb-2">
-                <span className="text-xs font-semibold text-foreground uppercase tracking-wider">
+              <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5 border-b border-border/80 pb-2">
+                <span className="text-2xs font-semibold text-foreground uppercase tracking-wider sm:text-xs">
                   Generated Proposal Pitch
                 </span>
-                <div className="flex items-center gap-1">
+                <div className="flex shrink-0 items-center gap-1">
                   <Button
                     type="button"
                     variant={viewMode === 'preview' ? 'secondary' : 'ghost'}
@@ -360,15 +366,15 @@ export function ProposalDialog({
               </div>
 
               {viewMode === 'preview' ? (
-                <div className="max-h-60 overflow-y-auto rounded-lg border border-border/50 bg-background/50 p-3 text-sm">
-                  <Markdown content={editableCoverLetter} />
+                <div className="max-h-52 overflow-y-auto overscroll-contain rounded-lg border border-border/50 bg-background/50 p-3 text-sm sm:max-h-60">
+                  <Markdown content={editableCoverLetter} className="text-xs sm:text-sm" />
                 </div>
               ) : (
                 <Textarea
                   value={editableCoverLetter}
                   onChange={(e) => handleCoverLetterChange(e.target.value)}
                   rows={8}
-                  className="text-xs font-mono leading-relaxed"
+                  className="max-h-52 min-h-40 font-mono text-2xs leading-relaxed sm:max-h-none sm:text-xs"
                   placeholder="Customize your proposal pitch here..."
                 />
               )}
@@ -377,18 +383,18 @@ export function ProposalDialog({
             {/* Proposed Milestones plan */}
             {aiProposal.proposedMilestones && aiProposal.proposedMilestones.length > 0 && (
               <div className="space-y-2 pt-2 border-t border-border/80">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  <Layers className="size-3.5" />
+                <div className="flex items-center gap-1.5 text-2xs font-semibold text-muted-foreground uppercase tracking-wider sm:text-xs">
+                  <Layers className="size-3.5 shrink-0" />
                   <span>Proposed Milestone Execution Plan</span>
                 </div>
-                <div className="grid gap-2 sm:grid-cols-3">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                   {aiProposal.proposedMilestones.map((m, idx) => (
                     <div key={idx} className="rounded-lg border border-border/60 bg-background/40 p-2.5 space-y-1">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="font-semibold text-foreground truncate">{m.title}</span>
-                        <Badge variant="outline" className="text-2xs py-0 px-1.5">{m.durationDays}d</Badge>
+                      <div className="flex items-center justify-between gap-2 text-xs">
+                        <span className="min-w-0 flex-1 truncate font-semibold text-foreground">{m.title}</span>
+                        <Badge variant="outline" className="shrink-0 px-1.5 py-0 text-2xs">{m.durationDays}d</Badge>
                       </div>
-                      <p className="text-2xs text-muted-foreground line-clamp-2">{m.description}</p>
+                      <p className="line-clamp-2 text-2xs text-muted-foreground break-words">{m.description}</p>
                       <p className="text-xs font-medium text-primary">${m.amount.toLocaleString()} USDC</p>
                     </div>
                   ))}
@@ -398,8 +404,8 @@ export function ProposalDialog({
           </div>
         )}
 
-        <form className="space-y-5" onSubmit={handleSubmit}>
-          <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-5">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor={`${fieldId}-rate`}>Proposed rate (USD)</Label>
               <Input
@@ -436,11 +442,11 @@ export function ProposalDialog({
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
               <Label htmlFor={`${fieldId}-files`}>Proposal attachments</Label>
               {form.files.some((f) => f.name.startsWith('Proposal_')) && (
-                <span className="text-2xs text-success flex items-center gap-1 font-medium">
-                  <Check className="size-3" /> AI brief document attached automatically
+                <span className="flex items-center gap-1 text-2xs font-medium text-success">
+                  <Check className="size-3 shrink-0" /> AI brief document attached automatically
                 </span>
               )}
             </div>
@@ -449,6 +455,7 @@ export function ProposalDialog({
               type="file"
               multiple
               accept=".pdf,.doc,.docx,.xlsx,.pptx,.png,.jpg,.jpeg,.zip,.rar,.7z,.json,.xml,.mp4,.webm,.mov,.md,.txt"
+              className="text-xs file:text-xs"
               onChange={(event) => {
                 const newFiles = Array.from(event.target.files ?? []);
                 setForm((current) => {
@@ -466,8 +473,8 @@ export function ProposalDialog({
             {form.files.length > 0 && (
               <ul className="space-y-1 text-sm" aria-label="Selected proposal files">
                 {form.files.map((file, idx) => (
-                  <li key={`${file.name}-${idx}`} className="flex items-center justify-between rounded-md bg-secondary/30 px-2.5 py-1 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-2 truncate">
+                  <li key={`${file.name}-${idx}`} className="flex items-center justify-between gap-2 rounded-md bg-secondary/30 px-2.5 py-1 text-2xs text-muted-foreground sm:text-xs">
+                    <span className="flex min-w-0 flex-1 items-center gap-2">
                       {file.name.startsWith('Proposal_') ? (
                         <FileText className="h-3.5 w-3.5 text-primary shrink-0" />
                       ) : (
@@ -480,7 +487,7 @@ export function ProposalDialog({
                     </span>
                     <button
                       type="button"
-                      className="text-muted-foreground hover:text-destructive ml-2"
+                      className="ml-2 shrink-0 text-muted-foreground hover:text-destructive"
                       onClick={() => setForm((c) => ({ ...c, files: c.files.filter((_, i) => i !== idx) }))}
                     >
                       <X className="size-3.5" />
@@ -491,26 +498,31 @@ export function ProposalDialog({
             )}
           </div>
 
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => handleOpenChange(false)}
-              disabled={submitting || generatingAI}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              variant="gradient"
-              loading={submitting}
-              loadingText="Submitting Proposal…"
-              disabled={!isKycApproved || submitting || generatingAI || form.files.length === 0}
-            >
-              <Send className="size-4" aria-hidden="true" />
-              {isKycApproved ? 'Submit proposal' : 'Verification required'}
-            </Button>
-          </DialogFooter>
+        </div>
+        </div>
+
+        <DialogFooter className="mx-0 mb-0 shrink-0 gap-2 px-4 py-3 sm:px-5">
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full sm:w-auto"
+            onClick={() => handleOpenChange(false)}
+            disabled={submitting || generatingAI}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            variant="gradient"
+            className="w-full sm:w-auto"
+            loading={submitting}
+            loadingText="Submitting Proposal…"
+            disabled={!isKycApproved || submitting || generatingAI || form.files.length === 0}
+          >
+            <Send className="size-4" aria-hidden="true" />
+            {isKycApproved ? 'Submit proposal' : 'Verification required'}
+          </Button>
+        </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
