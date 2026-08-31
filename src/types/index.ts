@@ -258,11 +258,14 @@ export interface Contract {
 
 export interface ContractFundInfo {
   contractId: string;
+  employerWallet?: string;
   freelancerWallet: string;
+  arbiterWallet?: string;
   platformWallet: string;
   milestoneAmounts: string[];
   milestoneDescriptions: string[];
   totalAmount: string;
+  chainId?: string;
 }
 
 export interface ContractPaymentStatus {

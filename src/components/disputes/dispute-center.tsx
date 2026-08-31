@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { FileText, Link2, Plus, Scale, ShieldCheck, Trash2, Upload } from 'lucide-react';
+import { ExternalLink, Eye, FileText, Link2, Plus, Scale, ShieldCheck, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { contractsApi, disputesApi, milestonesApi } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { canUseDisputeActions, validateDisputeDraft, validateEvidenceLink, type DisputeDraft } from '@/lib/dispute-form';
 import { safeAttachmentUrl } from '@/lib/attachment-presentation';
+import { AttachmentPreviewDialog, type AttachmentPreviewTarget } from '@/components/ui/attachment-preview-dialog';
 import { normalizeMilestone } from '@/lib/contract-workflow';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { useAuthStore } from '@/stores/authStore';
@@ -37,6 +38,7 @@ export function DisputeCenter({ role, disputeId }: { role: ParticipantRole; disp
   const [loading, setLoading] = useState(true);
   const [loadingMilestones, setLoadingMilestones] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
+  const [previewAttachment, setPreviewAttachment] = useState<AttachmentPreviewTarget | null>(null);
 
   const verified = canUseDisputeActions(user?.kycStatus);
   const verificationPath = `/dashboard/${role}/verification`;
@@ -272,7 +274,74 @@ export function DisputeCenter({ role, disputeId }: { role: ParticipantRole; disp
                     {evidenceRecords.map((evidence) => {
                       const evidenceUrl = safeAttachmentUrl(evidence.fileUrl || evidence.description);
                       const textOnly = evidence.evidenceType === 'text' || evidence.evidenceType === 'message';
-                      return <li key={evidence.id} className="flex items-start gap-3 rounded-lg border border-border p-3 text-sm"><FileText className="mt-0.5 size-4 shrink-0 text-muted-foreground" /><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><span className="font-medium capitalize">{evidence.evidenceType} evidence</span><Badge variant="secondary">{evidence.verifiedBy ? 'Verified' : 'Unverified'}</Badge></div>{textOnly ? <p className="mt-1 break-words text-muted-foreground">{evidence.description}</p> : evidenceUrl ? <a href={evidenceUrl} target="_blank" rel="noreferrer" className="mt-1 inline-flex text-primary underline">Open evidence</a> : <p className="mt-1 break-words text-muted-foreground">Attachment unavailable</p>}</div>{evidence.submittedBy === user?.id && !evidence.verifiedBy && <Button type="button" size="icon" variant="ghost" aria-label={`Delete ${evidence.evidenceType} evidence`} disabled={actionId === `delete:${evidence.id}`} onClick={() => void deleteEvidence(dispute.id, evidence.id)}><Trash2 className="size-4 text-destructive" /></Button>}</li>;
+                      return (
+                        <li key={evidence.id} className="flex items-start gap-3 rounded-lg border border-border p-3 text-sm">
+                          <FileText className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-medium capitalize">{evidence.evidenceType} evidence</span>
+                              <Badge variant="secondary">{evidence.verifiedBy ? 'Verified' : 'Unverified'}</Badge>
+                            </div>
+                            {textOnly ? (
+                              <p className="mt-1 break-words text-muted-foreground">{evidence.description}</p>
+                            ) : evidence.evidenceType === 'link' ? (
+                              <a
+                                href={evidenceUrl || evidence.description}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label="Open evidence"
+                                className="mt-1 inline-flex items-center gap-1.5 break-all text-xs font-medium text-primary hover:underline"
+                              >
+                                <ExternalLink className="size-3.5 shrink-0" />
+                                <span>{evidence.description}</span>
+                              </a>
+                            ) : evidenceUrl ? (
+                              <div className="mt-1 flex items-center gap-2">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 gap-1.5 px-2.5 text-xs rounded-lg"
+                                  onClick={() =>
+                                    setPreviewAttachment({
+                                      filename: (!evidence.description.startsWith('http://') && !evidence.description.startsWith('https://')) ? evidence.description : 'Evidence File',
+                                      url: evidenceUrl,
+                                    })
+                                  }
+                                >
+                                  <Eye className="size-3.5" />
+                                  View evidence
+                                </Button>
+                                <Button
+                                  asChild
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground"
+                                >
+                                  <a href={evidenceUrl} target="_blank" rel="noopener noreferrer">
+                                    <ExternalLink className="size-3.5" />
+                                    Open raw
+                                  </a>
+                                </Button>
+                              </div>
+                            ) : (
+                              <p className="mt-1 break-words text-muted-foreground">Attachment unavailable</p>
+                            )}
+                          </div>
+                          {evidence.submittedBy === user?.id && !evidence.verifiedBy && (
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="ghost"
+                              aria-label={`Delete ${evidence.evidenceType} evidence`}
+                              disabled={actionId === `delete:${evidence.id}`}
+                              onClick={() => void deleteEvidence(dispute.id, evidence.id)}
+                            >
+                              <Trash2 className="size-4 text-destructive" />
+                            </Button>
+                          )}
+                        </li>
+                      );
                     })}
                   </ul>
                 )}
@@ -291,6 +360,14 @@ export function DisputeCenter({ role, disputeId }: { role: ParticipantRole; disp
           );
         })}
       </section>
+
+      <AttachmentPreviewDialog
+        open={Boolean(previewAttachment)}
+        onOpenChange={(open) => {
+          if (!open) setPreviewAttachment(null);
+        }}
+        attachment={previewAttachment}
+      />
     </div>
   );
 }

@@ -76,7 +76,7 @@ test('employer settings save backend email preferences and omit unsupported acti
   await expect(page.getByRole('switch', { name: 'Weekly digest emails' })).toHaveAttribute('aria-checked', 'false');
   expect(updateBody).toEqual({ weekly_digest: false });
   await expect(page.getByRole('button', { name: /Delete Account/i })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: /Connect wallet/i })).toBeVisible();
+  await expect(page.locator('main').getByRole('button', { name: /Connect wallet/i })).toBeVisible();
 });
 
 test('participant sees storage quota and can delete an owned file', async ({ page }) => {

@@ -1,6 +1,7 @@
 export interface ProposalSubmissionForm {
   proposedRate: string;
   estimatedDuration: string;
+  coverLetter?: string;
   files: File[];
 }
 
@@ -25,8 +26,8 @@ const MAX_TOTAL_SIZE = 25 * 1024 * 1024;
 
 export function validateProposalForm(form: ProposalSubmissionForm): string | null {
   const proposedRate = Number(form.proposedRate);
-  if (!Number.isFinite(proposedRate) || proposedRate < 1) {
-    return 'Proposed rate must be at least 1.';
+  if (!Number.isFinite(proposedRate) || proposedRate <= 0) {
+    return 'Proposed rate must be greater than 0 ETH.';
   }
 
   const estimatedDuration = Number(form.estimatedDuration);
@@ -66,6 +67,9 @@ export async function submitProposal(
   formData.set('projectId', projectId);
   formData.set('proposedRate', String(Number(form.proposedRate)));
   formData.set('estimatedDuration', String(Number(form.estimatedDuration)));
+  if (form.coverLetter) {
+    formData.set('coverLetter', form.coverLetter);
+  }
   for (const file of form.files) {
     formData.append('files', file);
   }

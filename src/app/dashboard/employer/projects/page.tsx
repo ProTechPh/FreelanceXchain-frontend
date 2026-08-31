@@ -120,7 +120,7 @@ export default function EmployerProjectsPage() {
                 <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-4">
                   <div className="flex items-center gap-1">
                     <DollarSign className="w-4 h-4" />
-                    <span className="font-medium text-primary">${project.budget.toLocaleString()}</span>
+                    <span className="font-medium text-primary">{project.budget.toLocaleString()} ETH</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Users className="w-4 h-4" />

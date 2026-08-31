@@ -70,16 +70,25 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
         setEmployerForm({ companyName: data.companyName, description: data.description, industry: data.industry });
       }
     } catch (error) {
-      if (role === 'freelancer' && axios.isAxiosError(error) && error.response?.status === 404) {
-        setFreelancerProfile(null);
-        setFreelancerForm(emptyFreelancerForm);
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        if (role === 'freelancer') {
+          setFreelancerProfile(null);
+          setFreelancerForm(emptyFreelancerForm);
+        } else {
+          setEmployerProfile(null);
+          setEmployerForm({
+            companyName: user?.name || '',
+            description: '',
+            industry: 'Technology',
+          });
+        }
       } else {
         setLoadError(getApiErrorMessage(error, 'Unable to load your profile.'));
       }
     } finally {
       setLoading(false);
     }
-  }, [role]);
+  }, [role, user?.name]);
 
   useEffect(() => {
     // Profile state is initialized from the authenticated role endpoint.

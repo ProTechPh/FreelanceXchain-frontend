@@ -3,7 +3,24 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { ArrowLeft, Check, Clock, DollarSign, FileText, MessageSquare, Paperclip, SearchX, UserRound, X } from 'lucide-react';
+import {
+  ArrowLeft,
+  Check,
+  Clock,
+  DollarSign,
+  FileText,
+  MessageSquare,
+  Paperclip,
+  SearchX,
+  X,
+  Sparkles,
+  ShieldCheck,
+  Star,
+  Eye,
+  Download,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -26,6 +43,7 @@ import {
 } from '@/lib/proposal-management';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { getDirectMessageRoute } from '@/lib/dashboard-message-route';
+import { AttachmentPreviewDialog, type AttachmentPreviewTarget } from '@/components/ui/attachment-preview-dialog';
 import type { FreelancerProfile, Project, Proposal } from '@/types';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 
@@ -44,6 +62,8 @@ export default function EmployerProjectProposalsPage() {
   const [loading, setLoading] = useState(true);
   const [decision, setDecision] = useState<PendingDecision | null>(null);
   const [updating, setUpdating] = useState(false);
+  const [showRecommendations, setShowRecommendations] = useState(true);
+  const [previewAttachment, setPreviewAttachment] = useState<AttachmentPreviewTarget | null>(null);
 
   const load = useCallback(async () => {
     if (!projectId) return;
@@ -56,9 +76,18 @@ export default function EmployerProjectProposalsPage() {
       ]);
       const loadedProposals = proposalResponse.data.items;
       const loadedRecommendations = recommendationResponse.data;
+      // Deduplicate proposals and recommendations to prevent duplicate key collisions
+      const uniqueProposals = loadedProposals.filter(
+        (proposal, index, self) => index === self.findIndex((p) => p.id === proposal.id),
+      );
+      const uniqueRecommendations = loadedRecommendations.filter(
+        (recommendation, index, self) =>
+          index === self.findIndex((r) => r.freelancerId === recommendation.freelancerId),
+      );
+
       const freelancerIds = [...new Set([
-        ...loadedProposals.map((proposal) => proposal.freelancerId),
-        ...loadedRecommendations.map((recommendation) => recommendation.freelancerId),
+        ...uniqueProposals.map((proposal) => proposal.freelancerId),
+        ...uniqueRecommendations.map((recommendation) => recommendation.freelancerId),
       ])];
       const profileEntries = await Promise.all(
         freelancerIds.map(async (freelancerId) => {
@@ -72,8 +101,8 @@ export default function EmployerProjectProposalsPage() {
       );
 
       setProject(projectResponse.data);
-      setProposals(loadedProposals);
-      setRecommendations(loadedRecommendations);
+      setProposals(uniqueProposals);
+      setRecommendations(uniqueRecommendations);
       setProfiles(Object.fromEntries(profileEntries));
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Failed to load project proposals'));
@@ -133,162 +162,409 @@ export default function EmployerProjectProposalsPage() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <Button asChild variant="ghost" size="sm" className="-ml-3 mb-2">
+          <Button asChild variant="ghost" size="sm" className="-ml-3 mb-2 text-muted-foreground hover:text-foreground">
             <Link href={`/dashboard/employer/projects/${project.id}`}>
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to project
             </Link>
           </Button>
-          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Project proposals</h1>
-          <p className="mt-1 text-muted-foreground">Review offers for {project.title}</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">Project proposals</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Review applicant proposals and AI matches for <span className="font-semibold text-foreground">“{project.title}”</span>
+          </p>
         </div>
-        <div className="flex gap-3">
-          <Badge variant="secondary" className="h-8 px-3">
-            {proposals.length} total
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge variant="outline" className="h-8 px-3 text-xs">
+            {proposals.length} Submitted
           </Badge>
-          <Badge className="h-8 bg-warning-subtle px-3 text-warning">
-            {pendingCount} pending
+          <Badge className="h-8 bg-warning-subtle text-warning border-warning/30 px-3 text-xs font-semibold">
+            {pendingCount} Pending Review
+          </Badge>
+          <Badge variant="secondary" className="h-8 px-3 text-xs font-semibold text-primary">
+            {project.budget.toLocaleString()} ETH Budget
           </Badge>
         </div>
       </div>
 
+      {/* Recommended Talent (AI Matches) */}
       {recommendations.length > 0 && (
-        <Card className="border-primary/20 bg-primary/5">
-          <CardHeader><CardTitle className="text-lg">Recommended talent</CardTitle><p className="text-sm text-muted-foreground">AI-ranked freelancers whose skills and reputation fit this project.</p></CardHeader>
-          <CardContent><div className="grid gap-3 lg:grid-cols-2">{recommendations.map((recommendation) => {
-            const profile = profiles[recommendation.freelancerId];
-            const name = profile?.name || `Freelancer ${recommendation.freelancerId.slice(0, 8)}`;
-            return <div key={recommendation.freelancerId} className="rounded-xl border border-border bg-card p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-medium">{name}</p><p className="mt-1 text-xs text-muted-foreground">Reputation {Math.round(recommendation.reputationScore)}%</p></div><Badge className="bg-success-subtle text-success">{Math.round(recommendation.combinedScore)}% fit</Badge></div><div className="mt-3 flex flex-wrap gap-1.5">{recommendation.matchedSkills.map((skill) => <Badge key={skill} variant="secondary" className="text-xs">{skill}</Badge>)}</div><Markdown content={recommendation.reasoning} className="mt-3 text-sm" /><div className="mt-4 flex gap-2"><Button asChild size="sm" variant="outline"><Link href={`/freelancers/${recommendation.freelancerId}`}>View profile</Link></Button><Button asChild size="sm" variant="ghost"><Link href={getDirectMessageRoute('employer', recommendation.freelancerId)}>Message</Link></Button></div></div>;
-          })}</div></CardContent>
-        </Card>
-      )}
-
-      {proposals.length === 0 ? (
-        <Card className="border-border bg-card">
-          <CardContent className="flex flex-col items-center gap-3 py-16 text-center">
-            <FileText className="h-10 w-10 text-muted-foreground" />
-            <div>
-              <p className="font-medium">No proposals yet</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                New freelancer proposals will appear here.
-              </p>
+        <Card className="border border-primary/20 bg-primary/5 shadow-xs overflow-hidden">
+          <CardHeader className="pb-3 border-b border-primary/10 bg-primary/10 flex flex-row items-center justify-between gap-2 space-y-0">
+            <div className="flex items-center gap-2.5">
+              <div className="size-8 rounded-lg bg-primary/15 text-primary flex items-center justify-center shrink-0">
+                <Sparkles className="size-4 animate-pulse" />
+              </div>
+              <div>
+                <CardTitle className="text-base font-bold text-foreground flex items-center gap-2">
+                  <span>Recommended talent</span>
+                  <Badge variant="secondary" className="text-3xs bg-primary/10 text-primary border-primary/20">
+                    {recommendations.length} Available
+                  </Badge>
+                </CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  Pre-screened verified freelancers whose skills fit this project.
+                </p>
+              </div>
             </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {proposals.map((proposal) => {
-            const profile = profiles[proposal.freelancerId];
-            const freelancerName = profile?.name || `Freelancer ${proposal.freelancerId.slice(0, 8)}`;
 
-            return (
-              <Card key={proposal.id} className="border-border bg-card">
-                <CardHeader className="gap-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                      <UserRound className="h-5 w-5" />
-                    </div>
-                    <div className="min-w-0">
-                      <CardTitle className="truncate text-base">{freelancerName}</CardTitle>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Submitted {new Date(proposal.createdAt).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                  <StatusBadge status={proposal.status} domain="proposal" />
-                </CardHeader>
-                <CardContent className="space-y-5">
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="flex items-center gap-2 rounded-lg border border-border bg-secondary/30 p-3">
-                      <DollarSign className="h-4 w-4 text-primary" />
-                      <span className="text-sm text-muted-foreground">Proposed rate</span>
-                      <span className="ml-auto font-semibold">${proposal.proposedRate.toLocaleString()}</span>
-                    </div>
-                    <div className="flex items-center gap-2 rounded-lg border border-border bg-secondary/30 p-3">
-                      <Clock className="h-4 w-4 text-primary" />
-                      <span className="text-sm text-muted-foreground">Delivery</span>
-                      <span className="ml-auto font-semibold">{proposal.estimatedDuration} days</span>
-                    </div>
-                  </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-8 text-xs gap-1 text-muted-foreground hover:text-foreground"
+              onClick={() => setShowRecommendations((prev) => !prev)}
+            >
+              {showRecommendations ? (
+                <>
+                  <span>Hide</span>
+                  <ChevronUp className="size-3.5" />
+                </>
+              ) : (
+                <>
+                  <span>Show</span>
+                  <ChevronDown className="size-3.5" />
+                </>
+              )}
+            </Button>
+          </CardHeader>
 
-                  {proposal.coverLetter && (
-                    <div>
-                      <p className="mb-2 text-sm font-medium">Cover letter</p>
-                      <p className="whitespace-pre-wrap text-sm text-muted-foreground">
-                        {proposal.coverLetter}
-                      </p>
-                    </div>
-                  )}
+          {showRecommendations && (
+            <CardContent className="pt-4">
+              <div className="grid gap-3 lg:grid-cols-2">
+                {recommendations.map((recommendation, idx) => {
+                  const profile = profiles[recommendation.freelancerId];
+                  const name = profile?.name || `Freelancer ${recommendation.freelancerId.slice(0, 8)}`;
+                  const initials = name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || 'FL';
 
-                  {proposal.attachments.length > 0 && (
-                    <div>
-                      <p className="mb-2 text-sm font-medium">Attachments</p>
-                      <div className="flex flex-wrap gap-2">
-                        {proposal.attachments.map((attachment) => {
-                          const safeUrl = safeAttachmentUrl(attachment.url);
-                          const content = (
-                            <>
-                              <Paperclip className="h-3.5 w-3.5" />
-                              <span className="max-w-52 truncate">{attachment.filename}</span>
-                              <span className="text-muted-foreground">({formatFileSize(attachment.size)})</span>
-                            </>
-                          );
+                  return (
+                    <div
+                      key={`${recommendation.freelancerId}-${idx}`}
+                      className="rounded-xl border border-border/80 bg-card p-4 shadow-xs flex flex-col justify-between space-y-3"
+                    >
+                      <div className="space-y-2.5">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="size-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-bold text-sm flex items-center justify-center shrink-0 shadow-sm">
+                              {initials}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-semibold text-sm text-foreground truncate">{name}</p>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                {recommendation.totalRatings && recommendation.totalRatings > 0 ? (
+                                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <Star className="size-3 text-warning fill-warning" />
+                                    <span className="font-semibold text-foreground">
+                                      {(recommendation.averageRating ?? (recommendation.reputationScore / 20)).toFixed(1)}
+                                    </span>
+                                    <span>({recommendation.totalRatings} review{recommendation.totalRatings === 1 ? '' : 's'})</span>
+                                  </span>
+                                ) : recommendation.reputationScore > 0 ? (
+                                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <Star className="size-3 text-warning fill-warning" />
+                                    <span className="font-semibold text-foreground">{(recommendation.reputationScore / 20).toFixed(1)}</span>
+                                    <span>({Math.round(recommendation.reputationScore)}% rep)</span>
+                                  </span>
+                                ) : (
+                                  <Badge variant="secondary" className="text-3xs bg-secondary/60 text-muted-foreground py-0">
+                                    New Talent · Unrated
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          </div>
 
-                          return safeUrl ? (
-                            <a
-                              key={`${proposal.id}-${attachment.filename}`}
-                              href={safeUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-xs hover:border-primary/40 hover:bg-primary/[0.04]"
-                            >
-                              {content}
-                            </a>
-                          ) : (
-                            <span
-                              key={`${proposal.id}-${attachment.filename}`}
-                              className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-xs text-muted-foreground"
-                            >
-                              {content}
-                            </span>
-                          );
-                        })}
+                          <Badge className="bg-success-subtle text-success border border-success/30 font-semibold text-xs shrink-0">
+                            {Math.round(recommendation.combinedScore)}% fit
+                          </Badge>
+                        </div>
+
+                        {/* Matched Skills */}
+                        <div className="flex flex-wrap gap-1.5">
+                          {recommendation.matchedSkills.map((skill, skillIdx) => (
+                            <Badge key={`${skill}-${skillIdx}`} variant="secondary" className="text-3xs px-2 py-0.5">
+                              {skill}
+                            </Badge>
+                          ))}
+                        </div>
+
+                        {/* AI Match Reasoning */}
+                        <div className="p-2.5 rounded-lg bg-secondary/30 border border-border/50 text-xs text-muted-foreground leading-relaxed">
+                          <Markdown content={recommendation.reasoning} />
+                        </div>
+                      </div>
+
+                      {/* Card Actions */}
+                      <div className="flex items-center gap-2 pt-2 border-t border-border/60">
+                        <Button asChild size="sm" variant="outline" className="text-xs h-8 flex-1">
+                          <Link href={`/freelancers/${recommendation.freelancerId}`}>View profile</Link>
+                        </Button>
+                        <Button asChild size="sm" variant="ghost" className="text-xs h-8 flex-1">
+                          <Link href={getDirectMessageRoute('employer', recommendation.freelancerId)}>
+                            <MessageSquare className="size-3.5 mr-1 text-primary" /> Message
+                          </Link>
+                        </Button>
                       </div>
                     </div>
-                  )}
+                  );
+                })}
+              </div>
+            </CardContent>
+          )}
+        </Card>
+      )}
 
-                  {proposal.status === 'pending' && (
-                    <div className="flex flex-wrap justify-end gap-3 border-t border-border pt-4">
-                      <Button
-                        variant="outline"
-                        onClick={() => setDecision({ proposal, action: 'reject' })}
-                      >
-                        <X className="mr-2 h-4 w-4" /> Reject
-                      </Button>
-                      <Button
-                        variant="gradient"
-                        onClick={() => setDecision({ proposal, action: 'accept' })}
-                      >
-                        <Check className="mr-2 h-4 w-4" /> Accept Proposal
-                      </Button>
+      {/* Submitted Proposals Section */}
+      <div className="space-y-4 pt-2">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <FileText className="size-5 text-primary" />
+            Submitted Proposals
+            <Badge variant="secondary" className="text-xs">
+              {proposals.length}
+            </Badge>
+          </h2>
+        </div>
+
+        {proposals.length === 0 ? (
+          <Card className="border-border bg-card">
+            <CardContent className="flex flex-col items-center gap-3 py-16 text-center">
+              <div className="size-12 rounded-2xl bg-secondary/50 flex items-center justify-center text-muted-foreground">
+                <FileText className="size-6" />
+              </div>
+              <div>
+                <p className="font-semibold text-base text-foreground">No proposals submitted yet</p>
+                <p className="mt-1 text-sm text-muted-foreground max-w-sm mx-auto">
+                  Freelancers who submit proposals for this project will appear here for your review and contract creation.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {proposals.map((proposal) => {
+              const profile = profiles[proposal.freelancerId];
+              const freelancerName = profile?.name || `Freelancer ${proposal.freelancerId.slice(0, 8)}`;
+              const initials = freelancerName.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || 'FL';
+
+              // Check if there is an attached proposal brief document
+              const proposalBriefDoc = proposal.attachments?.find((a) => a.filename.startsWith('Proposal_') || a.filename.endsWith('.md'));
+
+              return (
+                <Card key={proposal.id} className="border border-border bg-card shadow-sm rounded-2xl overflow-hidden">
+                  <CardHeader className="bg-secondary/15 border-b border-border/80 gap-4 sm:flex-row sm:items-start sm:justify-between pb-4">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-bold text-sm shadow-sm">
+                        {initials}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <CardTitle className="truncate text-base font-bold text-foreground">
+                            {freelancerName}
+                          </CardTitle>
+                          <Badge variant="secondary" className="bg-success-subtle text-success border border-success/20 text-3xs py-0.5">
+                            <ShieldCheck className="size-3 mr-1" /> Verified Talent
+                          </Badge>
+                        </div>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Submitted on {new Date(proposal.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} at {new Date(proposal.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
                     </div>
-                  )}
-                  {proposal.status === 'accepted' && (
-                    <div className="flex justify-end border-t border-border pt-4">
-                      <Button asChild variant="gradient">
+                    <div className="shrink-0">
+                      <StatusBadge status={proposal.status} domain="proposal" />
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="space-y-5 pt-5">
+                    {/* Proposal Metrics */}
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      <div className="flex items-center gap-3 rounded-xl border border-border/80 bg-secondary/20 p-3.5">
+                        <div className="size-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                          <DollarSign className="size-5" />
+                        </div>
+                        <div>
+                          <span className="text-xs text-muted-foreground block">Proposed Rate</span>
+                          <span className="font-bold text-base text-primary">{proposal.proposedRate.toLocaleString()} ETH</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 rounded-xl border border-border/80 bg-secondary/20 p-3.5">
+                        <div className="size-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                          <Clock className="size-5" />
+                        </div>
+                        <div>
+                          <span className="text-xs text-muted-foreground block">Delivery Timeline</span>
+                          <span className="font-bold text-base text-foreground">{proposal.estimatedDuration} days</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 rounded-xl border border-border/80 bg-secondary/20 p-3.5">
+                        <div className="size-9 rounded-lg bg-success/10 text-success flex items-center justify-center shrink-0">
+                          <ShieldCheck className="size-5" />
+                        </div>
+                        <div>
+                          <span className="text-xs text-muted-foreground block">Protection</span>
+                          <span className="font-bold text-base text-foreground">Escrow Protected</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Proposal Pitch / Cover Letter */}
+                    {proposal.coverLetter ? (
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold text-foreground uppercase tracking-wider">Proposal Pitch & Approach</p>
+                        <div className="p-4 rounded-xl border border-border bg-card text-xs max-h-64 overflow-y-auto">
+                          <Markdown content={proposal.coverLetter} />
+                        </div>
+                      </div>
+                    ) : proposalBriefDoc ? (
+                      <div className="p-4 rounded-xl border border-primary/20 bg-primary/5 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="size-9 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+                            <FileText className="size-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-xs text-foreground truncate">Detailed Proposal Document Attached</p>
+                            <p className="text-3xs text-muted-foreground">{proposalBriefDoc.filename} ({formatFileSize(proposalBriefDoc.size)})</p>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="text-xs h-8 gap-1.5 rounded-lg border-primary/30 text-primary hover:bg-primary/10 shrink-0"
+                          onClick={() =>
+                            setPreviewAttachment({
+                              filename: proposalBriefDoc.filename,
+                              url: proposalBriefDoc.url,
+                              size: proposalBriefDoc.size,
+                            })
+                          }
+                        >
+                          <Eye className="size-3.5" /> Read Proposal Brief
+                        </Button>
+                      </div>
+                    ) : null}
+
+                    {/* Proposal Attachments */}
+                    {proposal.attachments.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold text-foreground uppercase tracking-wider">
+                          Attached Files ({proposal.attachments.length})
+                        </p>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          {proposal.attachments.map((attachment) => {
+                            const safeUrl = safeAttachmentUrl(attachment.url);
+                            return (
+                              <div
+                                key={`${proposal.id}-${attachment.filename}`}
+                                className="flex items-center justify-between p-3 rounded-xl border border-border bg-card gap-2 text-xs"
+                              >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                  <Paperclip className="size-4 text-primary shrink-0" />
+                                  <div className="min-w-0">
+                                    <p className="font-medium truncate text-foreground">{attachment.filename}</p>
+                                    <p className="text-3xs text-muted-foreground">{formatFileSize(attachment.size)}</p>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-1 shrink-0">
+                                  {safeUrl ? (
+                                    <>
+                                      <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-7 text-xs px-2 hover:text-primary hover:bg-primary/10"
+                                        onClick={() =>
+                                          setPreviewAttachment({
+                                            filename: attachment.filename,
+                                            url: attachment.url,
+                                            size: attachment.size,
+                                            content:
+                                              attachment.filename.startsWith('Proposal_') && proposal.coverLetter
+                                                ? proposal.coverLetter
+                                                : undefined,
+                                          })
+                                        }
+                                      >
+                                        <Eye className="size-3 mr-1" /> View
+                                      </Button>
+                                      <Button
+                                        asChild
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-7 text-xs px-2 hover:text-primary hover:bg-primary/10"
+                                      >
+                                        <a href={safeUrl} download={attachment.filename} target="_blank" rel="noopener noreferrer">
+                                          <Download className="size-3" />
+                                        </a>
+                                      </Button>
+                                    </>
+                                  ) : (
+                                    <span className="text-3xs text-muted-foreground">Unavailable</span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Actions Bar */}
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border/80 pt-4">
+                      <Button asChild size="sm" variant="outline" className="rounded-full text-xs">
                         <Link href={getDirectMessageRoute('employer', proposal.freelancerId)}>
-                          <MessageSquare className="mr-2 h-4 w-4" /> Message Freelancer
+                          <MessageSquare className="mr-1.5 size-3.5 text-primary" /> Message Freelancer
                         </Link>
                       </Button>
+
+                      {proposal.status === 'pending' && (
+                        <div className="flex items-center gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            className="rounded-full text-xs text-destructive hover:bg-destructive/10 border-destructive/30"
+                            onClick={() => setDecision({ proposal, action: 'reject' })}
+                          >
+                            <X className="mr-1.5 size-3.5" /> Reject
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            className="rounded-full gradient-primary text-primary-foreground shadow-md text-xs font-semibold"
+                            onClick={() => setDecision({ proposal, action: 'accept' })}
+                          >
+                            <Check className="mr-1.5 size-3.5" /> Accept Proposal & Create Contract
+                          </Button>
+                        </div>
+                      )}
+
+                      {proposal.status === 'accepted' && (
+                        <Badge className="bg-success-subtle text-success border border-success/30 font-semibold text-xs px-3 py-1 rounded-full">
+                          <Check className="mr-1 size-3.5" /> Accepted Contract Created
+                        </Badge>
+                      )}
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <AttachmentPreviewDialog
+        open={Boolean(previewAttachment)}
+        onOpenChange={(open) => {
+          if (!open) setPreviewAttachment(null);
+        }}
+        attachment={previewAttachment}
+      />
 
       <Dialog
         open={decision !== null}
@@ -296,15 +572,15 @@ export default function EmployerProjectProposalsPage() {
           if (!open && !updating) setDecision(null);
         }}
       >
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
               {decision?.action === 'accept' ? 'Accept this proposal?' : 'Reject this proposal?'}
             </DialogTitle>
             <DialogDescription>
               {decision?.action === 'accept'
-                ? 'This creates a contract and rejects the other pending proposals for this project.'
-                : 'The freelancer will no longer be considered for this project.'}
+                ? 'This will accept the proposal, create a secure on-chain escrow contract, and notify the freelancer.'
+                : 'The freelancer will be notified that their proposal was not selected for this project.'}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -315,11 +591,11 @@ export default function EmployerProjectProposalsPage() {
               variant={decision?.action === 'accept' ? 'gradient' : 'destructive'}
               onClick={confirmDecision}
               loading={updating}
-              loadingText="Updating…"
+              loadingText="Processing…"
             >
               {decision?.action === 'accept'
-                  ? 'Accept proposal'
-                  : 'Reject Proposal'}
+                ? 'Accept & Create Contract'
+                : 'Reject Proposal'}
             </Button>
           </DialogFooter>
         </DialogContent>

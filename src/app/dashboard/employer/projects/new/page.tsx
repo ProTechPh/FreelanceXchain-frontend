@@ -166,6 +166,13 @@ export default function CreateProjectPage() {
       return;
     }
 
+    if (currentStep === 2) {
+      const milestoneSum = milestones.reduce((sum, m) => sum + (parseFloat(m.amount) || 0), 0);
+      if (milestoneSum > 0 && (!budget || parseFloat(budget) === 0)) {
+        setBudget(milestoneSum.toFixed(2));
+      }
+    }
+
     setFormError(null);
     setCurrentStep((step) => Math.min(4, step + 1));
   };
@@ -398,12 +405,12 @@ export default function CreateProjectPage() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor={`milestone-${index}-amount`}>Amount ($)</Label>
+                        <Label htmlFor={`milestone-${index}-amount`}>Amount (ETH)</Label>
                         <Input
                           id={`milestone-${index}-amount`}
                           type="number"
-                          min="0.01"
-                          step="0.01"
+                          min="0.0001"
+                          step="any"
                           placeholder="0.00"
                           value={milestone.amount}
                           onChange={(e) => updateMilestone(index, 'amount', e.target.value)}
@@ -426,68 +433,100 @@ export default function CreateProjectPage() {
             </div>
           )}
 
-          {currentStep === 3 && (
-            <div className="space-y-6">
-              <h2 className="text-lg font-semibold">Budget & Timeline</h2>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <Field label="Total Budget ($)" htmlFor="budget">
-<Input
-                      id="budget"
-                      type="number"
-                      min="0.01"
-                      step="0.01"
-                      placeholder="0.00"
-                      value={budget}
-                      onChange={(e) => setBudget(e.target.value)}
-                    />
-</Field>
-                  <Field label="Deadline" htmlFor="deadline">
-<Input
-                      id="deadline"
-                      type="date"
-                      value={deadline}
-                      onChange={(e) => setDeadline(e.target.value)}
-                    />
-</Field>
-                  <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
-                    <div className="flex items-center gap-2 text-primary mb-2">
-                      <Clock className="w-4 h-4" />
-                      <span className="font-medium">Rush Project?</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Enable rush mode to attract freelancers faster. A rush fee will be added to your budget.
-                    </p>
-                  </div>
+          {currentStep === 3 && (() => {
+            const milestonesTotal = milestones.reduce((sum, m) => sum + (parseFloat(m.amount) || 0), 0);
+            const budgetNumber = parseFloat(budget || '0');
+            const isBudgetMismatched = milestonesTotal > 0 && Math.abs(budgetNumber - milestonesTotal) > 0.0001;
+
+            return (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="text-lg font-semibold">Budget & Timeline</h2>
+                  <p className="text-sm text-muted-foreground">Define your project budget (in ETH) and expected delivery timeline.</p>
                 </div>
-                <div className="space-y-4">
-                  <div className="p-4 rounded-xl bg-secondary/50 border border-border">
-                    <h3 className="font-medium mb-3">Budget Summary</h3>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Milestones Total</span>
-                        <span>
-                          ${milestones.reduce((sum, m) => sum + (parseFloat(m.amount) || 0), 0).toFixed(2)}
-                        </span>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <Field
+                      label="Total Budget (ETH)"
+                      htmlFor="budget"
+                      description={`Calculated sum of all milestones: ${milestonesTotal.toLocaleString('en-US', { maximumFractionDigits: 6 })} ETH`}
+                    >
+                      <Input
+                        id="budget"
+                        type="number"
+                        min="0.0001"
+                        step="any"
+                        placeholder={milestonesTotal > 0 ? String(milestonesTotal) : "0.00"}
+                        value={budget}
+                        onChange={(e) => setBudget(e.target.value)}
+                      />
+                    </Field>
+
+                    {isBudgetMismatched && (
+                      <div className="flex items-center justify-between gap-2 text-xs rounded-lg border border-warning-border bg-warning-subtle text-warning p-2.5">
+                        <span>Milestones total is {milestonesTotal.toLocaleString('en-US', { maximumFractionDigits: 6 })} ETH.</span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs border-warning/40 text-warning hover:bg-warning/10"
+                          onClick={() => {
+                            setBudget(String(milestonesTotal));
+                            setFormError(null);
+                          }}
+                        >
+                          Match Milestones ({milestonesTotal.toLocaleString('en-US', { maximumFractionDigits: 6 })} ETH)
+                        </Button>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Platform Fee (5%)</span>
-                        <span>
-                          ${(milestones.reduce((sum, m) => sum + (parseFloat(m.amount) || 0), 0) * 0.05).toFixed(2)}
-                        </span>
+                    )}
+
+                    <Field
+                      label="Target Completion Deadline"
+                      htmlFor="deadline"
+                      description="The target delivery date for all project deliverables and milestone completion."
+                    >
+                      <Input
+                        id="deadline"
+                        type="date"
+                        min={new Date().toISOString().split('T')[0]}
+                        value={deadline}
+                        onChange={(e) => setDeadline(e.target.value)}
+                      />
+                    </Field>
+
+                    <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
+                      <div className="flex items-center gap-2 text-primary mb-2">
+                        <Clock className="w-4 h-4" />
+                        <span className="font-medium">Rush Project?</span>
                       </div>
-                      <div className="border-t border-border pt-2 flex justify-between font-medium">
-                        <span>Total</span>
-                        <span className="text-primary">
-                          ${(milestones.reduce((sum, m) => sum + (parseFloat(m.amount) || 0), 0) * 1.05).toFixed(2)}
-                        </span>
+                      <p className="text-sm text-muted-foreground">
+                        Enable rush mode to attract freelancers faster. A rush fee will be added to your budget.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="p-4 rounded-xl bg-secondary/50 border border-border">
+                      <h3 className="font-medium mb-3">Budget Summary</h3>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Milestones Total</span>
+                          <span>{milestonesTotal.toLocaleString('en-US', { maximumFractionDigits: 6 })} ETH</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Platform Fee (5%)</span>
+                          <span>{(milestonesTotal * 0.05).toLocaleString('en-US', { maximumFractionDigits: 6 })} ETH</span>
+                        </div>
+                        <div className="border-t border-border pt-2 flex justify-between font-medium">
+                          <span>Total</span>
+                          <span className="text-primary">{(milestonesTotal * 1.05).toLocaleString('en-US', { maximumFractionDigits: 6 })} ETH</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {currentStep === 4 && (
             <div className="space-y-6">

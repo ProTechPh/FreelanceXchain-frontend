@@ -13,8 +13,10 @@ export function getDashboardMessageRoute(role: DashboardRole): string | null {
 export function getDirectMessageRoute(
   role: 'freelancer' | 'employer',
   recipientId: string,
+  projectId?: string,
 ): string {
-  return `${getDashboardMessageRoute(role)}?recipientId=${encodeURIComponent(recipientId)}`;
+  const base = `${getDashboardMessageRoute(role)}?recipientId=${encodeURIComponent(recipientId)}`;
+  return projectId ? `${base}&projectId=${encodeURIComponent(projectId)}` : base;
 }
 
 interface ConversationTarget {

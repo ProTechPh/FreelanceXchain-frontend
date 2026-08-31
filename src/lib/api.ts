@@ -441,8 +441,8 @@ export const contractsApi = {
   get: (id: string) =>
     api.get<Contract>(`/contracts/${id}`),
 
-  fund: (id: string) =>
-    api.post<{ message: string; escrowAddress: string; contractStatus: Contract['status'] }>(`/contracts/${id}/fund`),
+  fund: (id: string, payload?: { escrowAddress?: string; transactionHash?: string }) =>
+    api.post<{ message: string; escrowAddress: string; contractStatus: Contract['status'] }>(`/contracts/${id}/fund`, payload),
 
   getFundInfo: (id: string) =>
     api.get<ContractFundInfo>(`/contracts/${id}/fund-info`),
@@ -467,8 +467,11 @@ export const rushUpgradesApi = {
       { action, ...(counterPercentage === undefined ? {} : { counterPercentage }) },
     ),
 
-  acceptCounter: (requestId: string) =>
-    api.post<{ request: RushUpgradeRequest; contract: Contract }>(`/rush-upgrade-requests/${requestId}/accept-counter`),
+  acceptCounter: (requestId: string, payload?: { transactionHash?: string }) =>
+    api.post<{ request: RushUpgradeRequest; contract: Contract }>(`/rush-upgrade-requests/${requestId}/accept-counter`, payload),
+
+  pay: (requestId: string, payload?: { transactionHash?: string }) =>
+    api.post<{ request: RushUpgradeRequest; contract: Contract }>(`/rush-upgrade-requests/${requestId}/pay`, payload),
 
   declineCounter: (requestId: string) =>
     api.post<RushUpgradeRequest>(`/rush-upgrade-requests/${requestId}/decline-counter`),
@@ -665,6 +668,8 @@ export interface FreelancerRecommendation {
   freelancerId: string;
   matchScore: number;
   reputationScore: number;
+  averageRating?: number;
+  totalRatings?: number;
   combinedScore: number;
   matchedSkills: string[];
   reasoning: string;

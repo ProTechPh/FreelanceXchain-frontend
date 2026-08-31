@@ -2,12 +2,15 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { contractsApi, fileUploadsApi, freelancersApi, messagesApi } from '@/lib/api';
+import { StatusBadge } from '@/components/ui/status-badge';
+import { contractsApi, employersApi, fileUploadsApi, freelancersApi, messagesApi, projectsApi } from '@/lib/api';
 import { formatFileSize, safeAttachmentUrl } from '@/lib/attachment-presentation';
+import { formatRelativeTime } from '@/lib/format';
 import { MessageAttachmentValidationError, sendMessageWithAttachments, validateMessageAttachments } from '@/lib/message-attachment';
 import {
   getRealtimeMessage,
@@ -17,9 +20,9 @@ import {
 } from '@/lib/dashboard-message-route';
 import { subscribeToNotificationStream } from '@/lib/sse';
 import { useAuthStore } from '@/stores/authStore';
-import type { ConversationWithDetails, Message } from '@/types';
+import type { ConversationWithDetails, Message, Project } from '@/types';
 import { toast } from 'sonner';
-import { Send, Search, Check, CheckCheck, MessageSquare, ExternalLink, FileText, Paperclip, X, ArrowLeft } from 'lucide-react';
+import { Send, Search, Check, CheckCheck, MessageSquare, ExternalLink, FileText, Paperclip, X, ArrowLeft, Briefcase } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MessagesWorkspaceSkeleton, MessageThreadSkeleton } from '@/components/messages/messages-workspace-skeleton';
 
@@ -32,23 +35,15 @@ function initials(name: string): string {
     .join('') || '?';
 }
 
-function relativeTime(iso: string): string {
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const diffSec = Math.round(diffMs / 1000);
-  const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
-
-  if (Math.abs(diffSec) < 60) return rtf.format(-diffSec, 'second');
-  const diffMin = Math.round(diffSec / 60);
-  if (Math.abs(diffMin) < 60) return rtf.format(-diffMin, 'minute');
-  const diffHour = Math.round(diffMin / 60);
-  if (Math.abs(diffHour) < 24) return rtf.format(-diffHour, 'hour');
-  const diffDay = Math.round(diffHour / 24);
-  return rtf.format(-diffDay, 'day');
+function relativeTime(iso: string | null | undefined): string {
+  if (!iso) return 'recently';
+  return formatRelativeTime(iso);
 }
 
 export function MessagesWorkspace() {
   const searchParams = useSearchParams();
   const requestedRecipientId = searchParams?.get('recipientId')?.trim() || null;
+  const requestedProjectId = searchParams?.get('projectId')?.trim() || null;
   const currentUser = useAuthStore((state) => state.user);
   const [conversations, setConversations] = useState<ConversationWithDetails[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -61,10 +56,88 @@ export function MessagesWorkspace() {
   const [sending, setSending] = useState(false);
   const [directRecipient, setDirectRecipient] = useState<ConversationWithDetails['otherUser'] | null>(null);
   const [acceptedContacts, setAcceptedContacts] = useState<ConversationWithDetails['otherUser'][]>([]);
+  const [inquiredProject, setInquiredProject] = useState<Project | null>(null);
   const selectedIdRef = useRef<string | null>(null);
   useEffect(() => {
     selectedIdRef.current = selectedId;
   }, [selectedId]);
+
+  useEffect(() => {
+    let active = true;
+
+    if (requestedProjectId) {
+      projectsApi
+        .get(requestedProjectId)
+        .then((res) => {
+          if (active && res.data) {
+            setInquiredProject(res.data);
+            setNewMessage((prev) =>
+              prev ? prev : `Hi! I am reaching out regarding your project "${res.data.title}".`
+            );
+          }
+        })
+        .catch(() => {
+          // Ignore if not found
+        });
+      return () => {
+        active = false;
+      };
+    }
+
+    if (messages.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setInquiredProject(null);
+      return;
+    }
+
+    // Inspect messages for project references
+    const inspectMessages = async () => {
+      for (const msg of messages) {
+        // 1. Direct project link in message
+        const idMatch = msg.content.match(/\/projects\/([a-f0-9-]{36}|[a-zA-Z0-9_-]{10,})/i);
+        if (idMatch && idMatch[1]) {
+          try {
+            const { data } = await projectsApi.get(idMatch[1]);
+            if (active && data) {
+              setInquiredProject(data);
+              return;
+            }
+          } catch {
+            // Ignore
+          }
+        }
+
+        // 2. Project title in quotes: regarding your project "test lang"
+        const titleMatch =
+          msg.content.match(/regarding (?:your )?project ["“](.+?)["”]/i) ||
+          msg.content.match(/project ["“](.+?)["”]/i);
+        if (titleMatch && titleMatch[1]) {
+          const titleQuery = titleMatch[1].trim();
+          try {
+            const { data } = await projectsApi.list({ limit: 50 });
+            if (active && data.items.length > 0) {
+              const matched =
+                data.items.find(
+                  (p) => p.title.toLowerCase() === titleQuery.toLowerCase()
+                ) || data.items.find((p) => p.title.toLowerCase().includes(titleQuery.toLowerCase()));
+              if (matched) {
+                setInquiredProject(matched);
+                return;
+              }
+            }
+          } catch {
+            // Ignore
+          }
+        }
+      }
+    };
+
+    void inspectMessages();
+
+    return () => {
+      active = false;
+    };
+  }, [requestedProjectId, messages]);
 
   const loadAcceptedContacts = useCallback(async () => {
     if (currentUser?.role !== 'employer') {
@@ -108,16 +181,34 @@ export function MessagesWorkspace() {
         setSelectedId(initialConversationId);
 
         if (requestedRecipientId && !initialConversationId) {
-          setDirectRecipient({ id: requestedRecipientId, name: 'Freelancer', email: '' });
+          setDirectRecipient({ id: requestedRecipientId, name: 'Client', email: '' });
           try {
-            const { data: profile } = await freelancersApi.getPublicProfile(requestedRecipientId);
-            setDirectRecipient({
-              id: requestedRecipientId,
-              name: profile.name || 'Freelancer',
-              email: '',
-            });
+            if (currentUser?.role === 'freelancer') {
+              const { data: profile } = await employersApi.getPublicProfile(requestedRecipientId);
+              setDirectRecipient({
+                id: requestedRecipientId,
+                name: profile.name || profile.companyName || 'Employer',
+                email: '',
+              });
+            } else {
+              const { data: profile } = await freelancersApi.getPublicProfile(requestedRecipientId);
+              setDirectRecipient({
+                id: requestedRecipientId,
+                name: profile.name || 'Freelancer',
+                email: '',
+              });
+            }
           } catch {
-            // Sending still works with the user ID if the optional profile lookup fails.
+            try {
+              const { data: fallbackProfile } = await employersApi.getPublicProfile(requestedRecipientId);
+              setDirectRecipient({
+                id: requestedRecipientId,
+                name: fallbackProfile.name || fallbackProfile.companyName || 'Employer',
+                email: '',
+              });
+            } catch {
+              // Sending still works with the user ID if the optional profile lookup fails.
+            }
           }
         } else {
           setDirectRecipient(null);
@@ -126,7 +217,7 @@ export function MessagesWorkspace() {
     } catch {
       toast.error('Failed to load conversations');
     }
-  }, [requestedRecipientId]);
+  }, [currentUser, requestedRecipientId]);
 
   const loadMessages = useCallback(async (conversationId: string) => {
     setLoadingMessages(true);
@@ -256,16 +347,38 @@ export function MessagesWorkspace() {
           </div>
         </div>
         <div className="flex-1 overflow-y-auto">
-          {filteredConversations.length === 0 && filteredContacts.length === 0 && (
-            <div className="flex flex-col items-center justify-center gap-2 py-16 text-center px-4">
-              <MessageSquare className="w-8 h-8 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
-                {conversations.length === 0 && conversationlessContacts.length === 0
-                  ? 'No conversations yet'
-                  : 'No matches'}
-              </p>
+          {!selectedId && directRecipient && !filteredContacts.some((c) => c.id === directRecipient.id) && (
+            <div
+              className="flex w-full items-center gap-3 p-4 text-left transition-colors bg-primary/10 border-r-2 border-primary"
+            >
+              <Avatar className="w-10 h-10">
+                <AvatarFallback className="gradient-primary text-primary-foreground text-sm">
+                  {initials(directRecipient.name)}
+                </AvatarFallback>
+              </Avatar>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="truncate text-sm font-semibold text-foreground">{directRecipient.name}</p>
+                  <Badge className="shrink-0 gradient-primary text-primary-foreground text-3xs py-0.5">New Chat</Badge>
+                </div>
+                <p className="mt-0.5 truncate text-xs text-primary font-medium">
+                  Type a message to start chatting
+                </p>
+              </div>
             </div>
           )}
+          {filteredConversations.length === 0 &&
+            filteredContacts.length === 0 &&
+            !(!selectedId && directRecipient) && (
+              <div className="flex flex-col items-center justify-center gap-2 py-16 text-center px-4">
+                <MessageSquare className="w-8 h-8 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  {conversations.length === 0 && conversationlessContacts.length === 0
+                    ? 'No conversations yet'
+                    : 'No matches'}
+                </p>
+              </div>
+            )}
           {filteredConversations.map((conv) => {
             const unread = currentUser && conv.participant1_id === currentUser.id
               ? conv.unread_count_1
@@ -382,6 +495,41 @@ export function MessagesWorkspace() {
                 </div>
               </div>
             </div>
+
+            {/* Inquired Project Context Banner */}
+            {inquiredProject && (
+              <div className="mx-4 mt-3 mb-1 p-3 rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border border-primary/25 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs shrink-0">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="size-9 rounded-xl bg-primary/15 text-primary flex items-center justify-center shrink-0 shadow-xs">
+                    <Briefcase className="size-4.5" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-3xs uppercase font-bold tracking-wider text-primary">Inquiring Project</span>
+                      <StatusBadge status={inquiredProject.status} domain="project" />
+                    </div>
+                    <p className="text-sm font-bold text-foreground truncate">{inquiredProject.title}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
+                  <span className="text-xs font-bold text-foreground px-2.5 py-1 rounded-lg bg-card border border-border">
+                    ${inquiredProject.budget} USDC
+                  </span>
+                  <Button asChild variant="outline" size="sm" className="h-7 text-xs rounded-lg border-border">
+                    <Link
+                      href={
+                        currentUser?.role === 'employer'
+                          ? `/dashboard/employer/projects/${inquiredProject.id}`
+                          : `/dashboard/freelancer/projects/${inquiredProject.id}`
+                      }
+                      target="_blank"
+                    >
+                      View Project <ExternalLink className="size-3 ml-1" />
+                    </Link>
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">

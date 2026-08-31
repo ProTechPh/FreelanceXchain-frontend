@@ -137,7 +137,7 @@ export default function ProposalsPage() {
                     </Badge>
                   </div>
                   <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                    <span className="font-medium text-primary">${proposal.proposedRate.toLocaleString()}</span>
+                    <span className="font-medium text-primary">{proposal.proposedRate.toLocaleString()} ETH</span>
                     <span>{proposal.estimatedDuration} days</span>
                     <span className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />

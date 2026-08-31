@@ -35,6 +35,13 @@ test('builds an employer chat link for an accepted freelancer proposal', () => {
   );
 });
 
+test('builds a direct message route including optional project context', () => {
+  assert.equal(
+    getDirectMessageRoute('freelancer', 'employer-1', 'project-99'),
+    '/dashboard/freelancer/messages?recipientId=employer-1&projectId=project-99',
+  );
+});
+
 test('selects an existing conversation with the requested recipient', () => {
   const conversations = [
     { id: 'conversation-1', otherUser: { id: 'freelancer-1' } },

@@ -45,6 +45,19 @@ const EMPTY_FORM: ProposalSubmissionForm = {
   files: [],
 };
 
+export function sanitizeMarkdownText(text: string): string {
+  if (!text) return '';
+  return text
+    .replace(/[\u2018\u2019\u201A\u201B]/g, "'") // Single quotes / apostrophes
+    .replace(/[\u201C\u201D\u201E\u201F]/g, '"') // Double quotes
+    .replace(/[\u2010\u2011\u2012\u2013\u2014\u2015]/g, '-') // Hyphens & dashes
+    .replace(/[\u2022\u2023\u25E6\u2043]/g, '-') // Bullet characters
+    .replace(/[\u2026]/g, '...')                 // Ellipsis
+    .replace(/[\u00A0\u2000-\u200B]/g, ' ')      // Non-breaking / special spaces
+    .replace(/([1-9])\uFE0F?\u20E3/g, '$1.')     // Keycap emoji numbers like 1️⃣ -> 1.
+    .replace(/[\uFE00-\uFE0F]/g, '');            // Variation selectors
+}
+
 function createProposalDocumentFile(
   projectTitle: string,
   coverLetter: string,
@@ -52,7 +65,7 @@ function createProposalDocumentFile(
   milestones: Array<{ title: string; description: string; amount: number; durationDays: number }>
 ): File {
   const safeTitle = projectTitle.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 30);
-  const content = `# Proposal: ${projectTitle}
+  const rawContent = `# Proposal: ${projectTitle}
 Generated on: ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
 
 ## Key Qualifications & Highlights
@@ -68,8 +81,11 @@ ${milestones.map((m, i) => `${i + 1}. **${m.title}** ($${m.amount.toLocaleString
 Submitted via FreelanceXchain Decentralized Platform with Smart Contract Escrow Protection.
 `;
 
-  const blob = new Blob([content], { type: 'text/markdown' });
-  return new File([blob], `Proposal_${safeTitle || 'Brief'}.md`, { type: 'text/markdown' });
+  const cleanContent = sanitizeMarkdownText(rawContent);
+  const encoder = new TextEncoder();
+  const utf8Bytes = encoder.encode(cleanContent);
+  const blob = new Blob([utf8Bytes], { type: 'text/markdown; charset=utf-8' });
+  return new File([blob], `Proposal_${safeTitle || 'Brief'}.md`, { type: 'text/markdown; charset=utf-8' });
 }
 
 export function ProposalDialog({
@@ -98,15 +114,20 @@ export function ProposalDialog({
     try {
       const res = await matchingApi.generateProposal(project.id, notes?.trim() || undefined);
       const data = res.data;
-      setAiProposal(data);
-      setEditableCoverLetter(data.coverLetter);
+      const cleanCoverLetter = sanitizeMarkdownText(data.coverLetter);
+      setAiProposal({
+        ...data,
+        coverLetter: cleanCoverLetter,
+        highlights: (data.highlights || []).map(sanitizeMarkdownText),
+      });
+      setEditableCoverLetter(cleanCoverLetter);
 
       // Auto-fill proposed rate & estimated duration
       setForm((current) => {
         const autoFile = createProposalDocumentFile(
           project.title,
-          data.coverLetter,
-          data.highlights,
+          cleanCoverLetter,
+          (data.highlights || []).map(sanitizeMarkdownText),
           data.proposedMilestones || []
         );
 
@@ -151,11 +172,12 @@ export function ProposalDialog({
   };
 
   const handleCoverLetterChange = (newText: string) => {
-    setEditableCoverLetter(newText);
+    const cleanText = sanitizeMarkdownText(newText);
+    setEditableCoverLetter(cleanText);
     if (project && aiProposal) {
       const updatedFile = createProposalDocumentFile(
         project.title,
-        newText,
+        cleanText,
         aiProposal.highlights,
         aiProposal.proposedMilestones || []
       );
@@ -175,7 +197,11 @@ export function ProposalDialog({
 
     setSubmitting(true);
     try {
-      await submitProposal(proposalsApi, project.id, form);
+      const submissionForm: ProposalSubmissionForm = {
+        ...form,
+        coverLetter: editableCoverLetter ? sanitizeMarkdownText(editableCoverLetter) : undefined,
+      };
+      await submitProposal(proposalsApi, project.id, submissionForm);
       toast.success('Proposal submitted successfully!');
       onSubmitted?.();
       handleOpenChange(false);
@@ -360,9 +386,9 @@ export function ProposalDialog({
                     <div key={idx} className="rounded-lg border border-border/60 bg-background/40 p-2.5 space-y-1">
                       <div className="flex items-center justify-between text-xs">
                         <span className="font-semibold text-foreground truncate">{m.title}</span>
-                        <Badge variant="outline" className="text-[10px] py-0 px-1.5">{m.durationDays}d</Badge>
+                        <Badge variant="outline" className="text-2xs py-0 px-1.5">{m.durationDays}d</Badge>
                       </div>
-                      <p className="text-[11px] text-muted-foreground line-clamp-2">{m.description}</p>
+                      <p className="text-2xs text-muted-foreground line-clamp-2">{m.description}</p>
                       <p className="text-xs font-medium text-primary">${m.amount.toLocaleString()} USDC</p>
                     </div>
                   ))}
@@ -379,8 +405,8 @@ export function ProposalDialog({
               <Input
                 id={`${fieldId}-rate`}
                 type="number"
-                min="1"
-                step="0.01"
+                min="0.0001"
+                step="any"
                 inputMode="decimal"
                 value={form.proposedRate}
                 onChange={(event) => setForm((current) => ({
@@ -413,7 +439,7 @@ export function ProposalDialog({
             <div className="flex items-center justify-between">
               <Label htmlFor={`${fieldId}-files`}>Proposal attachments</Label>
               {form.files.some((f) => f.name.startsWith('Proposal_')) && (
-                <span className="text-[11px] text-success flex items-center gap-1 font-medium">
+                <span className="text-2xs text-success flex items-center gap-1 font-medium">
                   <Check className="size-3" /> AI brief document attached automatically
                 </span>
               )}
@@ -449,7 +475,7 @@ export function ProposalDialog({
                       )}
                       <span className="truncate font-medium text-foreground">{file.name}</span>
                       {file.name.startsWith('Proposal_') && (
-                        <Badge variant="secondary" className="text-[10px] py-0 px-1 text-primary">Auto-Generated</Badge>
+                        <Badge variant="secondary" className="text-2xs py-0 px-1 text-primary">Auto-Generated</Badge>
                       )}
                     </span>
                     <button

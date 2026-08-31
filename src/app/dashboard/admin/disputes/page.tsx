@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { adminApi, disputesApi, contractsApi } from '@/lib/api';
 import { safeAttachmentUrl } from '@/lib/attachment-presentation';
 import { getApiErrorMessage } from '@/lib/auth-contract';
+import { formatRelativeTime } from '@/lib/format';
 import type { Dispute, Contract, DisputeStatus } from '@/types';
 import { toast } from 'sonner';
 import { Scale, AlertTriangle, Clock, CheckCircle, FileText, DollarSign } from 'lucide-react';
@@ -21,17 +22,9 @@ const statusColors: Record<DisputeStatus, string> = {
   resolved: 'bg-success-subtle text-success',
 };
 
-function relativeTime(iso: string): string {
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const diffSec = Math.round(diffMs / 1000);
-  const rtf = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
-  if (Math.abs(diffSec) < 60) return rtf.format(-diffSec, 'second');
-  const diffMin = Math.round(diffSec / 60);
-  if (Math.abs(diffMin) < 60) return rtf.format(-diffMin, 'minute');
-  const diffHour = Math.round(diffMin / 60);
-  if (Math.abs(diffHour) < 24) return rtf.format(-diffHour, 'hour');
-  const diffDay = Math.round(diffHour / 24);
-  return rtf.format(-diffDay, 'day');
+function relativeTime(iso: string | null | undefined): string {
+  if (!iso) return 'recently';
+  return formatRelativeTime(iso);
 }
 
 interface DisputeView {
@@ -51,17 +44,35 @@ export default function DisputesPage() {
   const load = useCallback(async () => {
     try {
       const { data } = await adminApi.getDisputeManagement();
-      const contracts = await Promise.all(
-        data.disputes
-          .slice()
-          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-          .slice(0, 50)
-          .map((d) => contractsApi.get(d.contractId).then((r) => r.data).catch(() => null))
-      );
-      const sorted = data.disputes
+      const rawDisputes: Dispute[] = (data.disputes || []).map((d) => {
+        const raw = d as Dispute & {
+          contract_id?: string;
+          milestone_id?: string;
+          initiator_id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        return {
+          ...raw,
+          id: raw.id || '',
+          contractId: raw.contractId || raw.contract_id || '',
+          milestoneId: raw.milestoneId || raw.milestone_id || '',
+          initiatorId: raw.initiatorId || raw.initiator_id || '',
+          reason: raw.reason || '',
+          status: raw.status || 'open',
+          evidence: Array.isArray(raw.evidence) ? raw.evidence : [],
+          resolution: raw.resolution ?? null,
+          createdAt: raw.createdAt || raw.created_at || new Date().toISOString(),
+          updatedAt: raw.updatedAt || raw.updated_at || new Date().toISOString(),
+        };
+      });
+      const sorted = rawDisputes
         .slice()
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, 50);
+      const contracts = await Promise.all(
+        sorted.map((d) => (d.contractId ? contractsApi.get(d.contractId).then((r) => r.data).catch(() => null) : Promise.resolve(null)))
+      );
       setViews(sorted.map((dispute, i) => ({ dispute, contract: contracts[i] })));
     } catch {
       toast.error('Failed to load disputes');
@@ -224,9 +235,9 @@ export default function DisputesPage() {
                     </p>
                   </div>
 
-                  {dispute.evidence.length > 0 && (
+                  {(dispute.evidence || []).length > 0 && (
                     <div className="space-y-2 mb-4">
-                      {dispute.evidence.map((ev) => {
+                      {(dispute.evidence || []).map((ev) => {
                         const evidenceUrl = safeAttachmentUrl(ev.content);
                         const verified = verifiedEvidenceIds.has(ev.id);
                         return (
@@ -249,7 +260,7 @@ export default function DisputesPage() {
                   <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
                     {contract && <span className="font-medium text-primary">${contract.totalAmount.toLocaleString()}</span>}
                     <span className="flex items-center gap-1">
-                      <FileText className="w-3 h-3" /> {dispute.evidence.length} evidence items
+                      <FileText className="w-3 h-3" /> {(dispute.evidence || []).length} evidence items
                     </span>
                     <span>{relativeTime(dispute.createdAt)}</span>
                   </div>

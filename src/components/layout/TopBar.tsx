@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Bell, MessageSquare, Wallet, LogOut, User, Settings, ChevronDown, Search, Shield, Bookmark, History } from 'lucide-react';
+import { Bell, MessageSquare, LogOut, User, Settings, ChevronDown, Search, Shield, Bookmark, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -19,6 +19,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { useState, useEffect } from 'react';
 import { notificationsApi } from '@/lib/api';
 import { subscribeToNotificationStream } from '@/lib/sse';
+import { WalletHeaderButton } from '@/components/wallet/wallet-header-button';
 
 const participantAccountItems = [
   { label: 'Profile', path: 'profile', icon: User },
@@ -68,10 +69,6 @@ export function TopBar() {
   const initials = mounted && user?.name
     ? user.name.split(' ').map((n) => n[0]).join('').toUpperCase()
     : 'U';
-
-  const truncatedAddress = mounted && user?.walletAddress
-    ? `${user.walletAddress.slice(0, 6)}...${user.walletAddress.slice(-4)}`
-    : null;
 
   const participantRole = user?.role === 'freelancer' || user?.role === 'employer' ? user.role : null;
   const hasParticipantDashboard = participantRole !== null;
@@ -147,15 +144,7 @@ export function TopBar() {
           )}
 
           {/* Wallet */}
-          {truncatedAddress && (
-            <div className="hidden items-center gap-2 rounded-md border border-border bg-secondary px-3 py-1.5 md:flex">
-              <Wallet className="size-4 text-primary" aria-hidden="true" />
-              <span className="font-mono text-xs text-muted-foreground">
-                <span className="sr-only">Connected wallet: </span>
-                {truncatedAddress}
-              </span>
-            </div>
-          )}
+          {hasParticipantDashboard && <WalletHeaderButton />}
 
           {/* User Menu */}
           <DropdownMenu>
