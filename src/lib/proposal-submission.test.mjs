@@ -20,7 +20,7 @@ const validForm = {
 test('requires a positive rate, duration, and at least one attachment', () => {
   assert.equal(
     validateProposalForm({ ...validForm, proposedRate: '0' }),
-    'Proposed rate must be greater than 0 ETH.',
+    'Proposed rate must be greater than 0.',
   );
   assert.equal(
     validateProposalForm({ ...validForm, estimatedDuration: '0' }),

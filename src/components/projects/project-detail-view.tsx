@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Zap, ShieldCheck, Send, Share2, ExternalLink, Paperclip, Pencil, ClipboardList, Sparkles, User, CheckCircle, FileText } from 'lucide-react';
 import { toast } from 'sonner';
+import { reportFailure } from '@/lib/report-failure';
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -131,9 +132,9 @@ export function ProjectDetailView({
         if (active) {
           setProject(projectData);
         }
-      } catch {
+      } catch (error) {
         if (active) {
-          toast.error('Failed to load project');
+          reportFailure(error, 'load this project');
         }
       } finally {
         if (active) {

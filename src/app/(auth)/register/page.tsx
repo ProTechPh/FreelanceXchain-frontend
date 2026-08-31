@@ -46,7 +46,7 @@ export default function RegisterPage() {
       // eslint-disable-next-line @next/next/no-location-assign-relative-destination
       window.location.href = `${apiUrl}/auth/oauth/${provider}`;
     } catch (error) {
-      const msg = getApiErrorMessage(error, 'Too many sign-in attempts. Please try again later.');
+      const msg = getApiErrorMessage(error, 'Too many attempts. Please try again later.');
       setOauthError(msg);
       toast.error(msg);
     }

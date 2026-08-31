@@ -7,7 +7,7 @@ import Navbar from "@/components/layout/navbar";
 import { FooterSection } from "@/components/layout/footer-section";
 import { reputationApi } from "@/lib/api";
 import type { ReputationScore } from "@/types";
-import { toast } from "sonner";
+import { reportLoadFailure } from '@/lib/report-failure';
 import { Trophy, Star, ShieldCheck, Crown } from 'lucide-react';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 
@@ -17,7 +17,7 @@ export default function LeaderboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchLeaderboard = async () => {
+    async function fetchLeaderboard() {
       try {
         const res = await reputationApi.getLeaderboard();
         setLeaderboard(
@@ -29,13 +29,13 @@ export default function LeaderboardPage() {
             on_chain_verified: true,
           }))
         );
-      } catch {
-        toast.error("Failed to load leaderboard");
+      } catch (error) {
+        reportLoadFailure(error, 'the leaderboard', () => void fetchLeaderboard());
       } finally {
         setLoading(false);
       }
-    };
-    fetchLeaderboard();
+    }
+    void fetchLeaderboard();
   }, []);
 
   return (

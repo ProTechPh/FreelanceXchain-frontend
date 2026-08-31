@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { CircleDollarSign, FileCheck2, FolderOpen } from 'lucide-react';
-import { toast } from 'sonner';
+import { reportLoadFailure } from '@/lib/report-failure';
 import { contractsApi } from '@/lib/api';
 import { getContractDetailRoute } from '@/lib/contract-route';
 import { StatusBadge } from '@/components/ui/status-badge';
@@ -20,10 +20,23 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    contractsApi.list({ limit: 50 })
-      .then(({ data }) => setContracts(data.items))
-      .catch(() => toast.error('Unable to load contracts.'))
-      .finally(() => setLoading(false));
+    let active = true;
+    function run() {
+      contractsApi.list({ limit: 50 })
+        .then(({ data }) => {
+          if (active) setContracts(data.items);
+        })
+        .catch((error) => {
+          if (active) reportLoadFailure(error, 'your contracts', run);
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+    }
+    run();
+    return () => {
+      active = false;
+    };
   }, []);
 
   const active = contracts.filter((contract) => contract.status === 'active').length;

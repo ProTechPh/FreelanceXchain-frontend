@@ -22,6 +22,7 @@ import { subscribeToNotificationStream } from '@/lib/sse';
 import { useAuthStore } from '@/stores/authStore';
 import type { ConversationWithDetails, Message, Project } from '@/types';
 import { toast } from 'sonner';
+import { reportFailure, reportLoadFailure } from '@/lib/report-failure';
 import { Send, Search, Check, CheckCheck, MessageSquare, ExternalLink, FileText, Paperclip, X, ArrowLeft, Briefcase } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MessagesWorkspaceSkeleton, MessageThreadSkeleton } from '@/components/messages/messages-workspace-skeleton';
@@ -167,8 +168,8 @@ export function MessagesWorkspace() {
         }),
       );
       setAcceptedContacts(contacts);
-    } catch {
-      toast.error('Failed to load accepted freelancers');
+    } catch (error) {
+      reportFailure(error, 'load your freelancer list');
     }
   }, [currentUser]);
 
@@ -214,10 +215,14 @@ export function MessagesWorkspace() {
           setDirectRecipient(null);
         }
       }
-    } catch {
-      toast.error('Failed to load conversations');
+    } catch (error) {
+      reportFailure(error, 'load your conversations');
     }
   }, [currentUser, requestedRecipientId]);
+
+  // Lets the Retry above re-request the same conversation; a callback cannot
+  // reference itself.
+  const loadMessagesRef = useRef<(conversationId: string) => void>(() => {});
 
   const loadMessages = useCallback(async (conversationId: string) => {
     setLoadingMessages(true);
@@ -237,12 +242,16 @@ export function MessagesWorkspace() {
             : { ...c, unread_count_2: 0 };
         })
       );
-    } catch {
-      toast.error('Failed to load messages');
+    } catch (error) {
+      reportLoadFailure(error, 'these messages', () => loadMessagesRef.current(conversationId));
     } finally {
       setLoadingMessages(false);
     }
   }, [currentUser]);
+
+  useEffect(() => {
+    loadMessagesRef.current = (conversationId) => void loadMessages(conversationId);
+  }, [loadMessages]);
 
   useEffect(() => {
     const loadInbox = async () => {

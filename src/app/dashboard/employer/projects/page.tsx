@@ -8,7 +8,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import Link from 'next/link';
 import { projectsApi } from '@/lib/api';
 import type { Project, ProjectStatus } from '@/types';
-import { toast } from 'sonner';
+import { reportLoadFailure } from '@/lib/report-failure';
 import { PlusCircle, Clock, DollarSign, Users, Eye, FolderSearch, ClipboardList, Pencil } from 'lucide-react';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 
@@ -17,19 +17,27 @@ export default function EmployerProjectsPage() {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    try {
-      const { data } = await projectsApi.getMyProjects();
-      setProjects(data.items);
-    } catch {
-      toast.error('Failed to load projects');
-    } finally {
-      setLoading(false);
-    }
+    const { data } = await projectsApi.getMyProjects();
+    setProjects(data.items);
   }, []);
 
+  // Reporting lives here rather than inside `load` so the toast's Retry can call
+  // `load` again — a self-reference inside the callback is not allowed.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    load();
+    let active = true;
+    function run() {
+      load()
+        .catch((error) => {
+          if (active) reportLoadFailure(error, 'your projects', run);
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+    }
+    run();
+    return () => {
+      active = false;
+    };
   }, [load]);
 
   if (loading) {

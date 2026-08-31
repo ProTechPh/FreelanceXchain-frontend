@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { proposalsApi, projectsApi } from '@/lib/api';
 import type { Proposal, Project, ProposalStatus } from '@/types';
 import { toast } from 'sonner';
+import { reportLoadFailure } from '@/lib/report-failure';
 import { Clock, CheckCircle, XCircle, FileText } from 'lucide-react';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 
@@ -31,22 +32,30 @@ export default function ProposalsPage() {
   const [withdrawingId, setWithdrawingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    try {
-      const { data: all } = await proposalsApi.getMine();
-      const projects = await Promise.all(
-        all.map((p) => projectsApi.get(p.projectId).then((r) => r.data).catch(() => null))
-      );
-      setProposals(all.map((proposal, i) => ({ proposal, project: projects[i] })));
-    } catch {
-      toast.error('Failed to load proposals');
-    } finally {
-      setLoading(false);
-    }
+    const { data: all } = await proposalsApi.getMine();
+    const projects = await Promise.all(
+      all.map((p) => projectsApi.get(p.projectId).then((r) => r.data).catch(() => null))
+    );
+    setProposals(all.map((proposal, i) => ({ proposal, project: projects[i] })));
   }, []);
 
+  // Reported here rather than inside the loader so the toast's Retry can
+  // call it again; a self-reference inside the callback is not allowed.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    load();
+    let active = true;
+    function run() {
+      load()
+        .catch((error) => {
+          if (active) reportLoadFailure(error, 'your proposals', run);
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+    }
+    run();
+    return () => {
+      active = false;
+    };
   }, [load]);
 
   const handleWithdraw = async (id: string) => {

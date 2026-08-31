@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Eye, EyeOff, ArrowRight, Sparkles } from 'lucide-react';
 
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { FreelanceXchainLogo } from '@/components/ui/freelancexchain-logo';
 
@@ -154,15 +155,12 @@ export const SignInPage: React.FC<SignInPageProps> = ({
 
             {/* OAuth Error Message */}
             {oauthError && (
-              <div className="rounded-2xl border border-destructive/30 bg-destructive-subtle px-4 py-3.5 flex items-start gap-3">
-                <svg className="w-5 h-5 text-destructive shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
-                </svg>
-                <div>
-                  <p className="text-sm font-semibold text-destructive">Sign-in failed</p>
-                  <p className="text-sm text-destructive/80 mt-0.5">{oauthError}</p>
-                </div>
-              </div>
+              <Alert
+                tone="destructive"
+                title="We couldn't sign you in"
+                description={oauthError}
+                className="rounded-2xl"
+              />
             )}
 
             {/* Header */}

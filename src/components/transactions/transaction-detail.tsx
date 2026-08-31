@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { ArrowLeft, Copy, ReceiptText } from 'lucide-react';
 import { toast } from 'sonner';
 import { transactionsApi } from '@/lib/api';
-import { getApiErrorMessage } from '@/lib/auth-contract';
+import { reportLoadFailure } from '@/lib/report-failure';
 import { parseTransactionMetadata } from '@/lib/transaction-view';
 import type { Transaction, UserRole } from '@/types';
 import { Badge } from '@/components/ui/badge';
@@ -20,10 +20,23 @@ export function TransactionDetail({ transactionId, role }: { transactionId: stri
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    transactionsApi.get(transactionId)
-      .then(({ data }) => setTransaction(data))
-      .catch((error) => toast.error(getApiErrorMessage(error, 'Unable to load this transaction.')))
-      .finally(() => setLoading(false));
+    let active = true;
+    function run() {
+      transactionsApi.get(transactionId)
+        .then(({ data }) => {
+          if (active) setTransaction(data);
+        })
+        .catch((error) => {
+          if (active) reportLoadFailure(error, 'this transaction', run);
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+    }
+    run();
+    return () => {
+      active = false;
+    };
   }, [transactionId]);
 
   if (loading) {

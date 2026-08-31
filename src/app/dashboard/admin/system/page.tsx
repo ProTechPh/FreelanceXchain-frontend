@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { adminApi } from '@/lib/api';
 import type { SystemHealth } from '@/types';
-import { toast } from 'sonner';
+import { reportLoadFailure } from '@/lib/report-failure';
 import { Database, HardDrive, Clock, CheckCircle, AlertTriangle, RefreshCw } from 'lucide-react';
 import { StatsSkeleton } from '@/components/dashboard/skeletons';
 
@@ -24,18 +24,26 @@ export default function SystemHealthPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  // A ref, because the Retry handed to the toast has to re-enter `load` with the
+  // same arguments, and a callback cannot reference itself.
+  const loadRef = useRef<(isRefresh?: boolean) => void>(() => {});
+
   const load = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
     try {
       const { data } = await adminApi.getSystemHealth();
       setHealth(data);
-    } catch {
-      toast.error('Failed to load system health');
+    } catch (error) {
+      reportLoadFailure(error, 'system health', () => loadRef.current(isRefresh));
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   }, []);
+
+  useEffect(() => {
+    loadRef.current = (isRefresh) => void load(isRefresh);
+  }, [load]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect

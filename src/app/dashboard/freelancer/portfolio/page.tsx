@@ -16,6 +16,7 @@ import {
 import { portfolioApi } from '@/lib/api';
 import { safeAttachmentUrl } from '@/lib/attachment-presentation';
 import { getApiErrorMessage } from '@/lib/auth-contract';
+import { reportLoadFailure } from '@/lib/report-failure';
 import { getWebsitePreviewUrl, isValidHttpUrl } from '@/lib/portfolio-utils';
 import { useAuthStore } from '@/stores/authStore';
 import type { PortfolioItem } from '@/types';
@@ -55,19 +56,27 @@ export default function PortfolioPage() {
 
   const load = useCallback(async () => {
     if (!currentUser) return;
-    try {
-      const { data } = await portfolioApi.getByFreelancer(currentUser.id);
-      setItems(Array.isArray(data) ? data : []);
-    } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Failed to load portfolio'));
-    } finally {
-      setLoading(false);
-    }
+    const { data } = await portfolioApi.getByFreelancer(currentUser.id);
+    setItems(Array.isArray(data) ? data : []);
   }, [currentUser]);
 
+  // Reported here rather than inside the loader so the toast's Retry can call it
+  // again; a self-reference inside the callback is not allowed.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    load();
+    let active = true;
+    function run() {
+      load()
+        .catch((error) => {
+          if (active) reportLoadFailure(error, 'your portfolio', run);
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+    }
+    run();
+    return () => {
+      active = false;
+    };
   }, [load]);
 
   const openCreate = () => {

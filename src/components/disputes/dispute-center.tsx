@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ExternalLink, Eye, FileText, Link2, Plus, Scale, ShieldCheck, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
+import { reportFailure } from '@/lib/report-failure';
 import { contractsApi, disputesApi, milestonesApi } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { canUseDisputeActions, validateDisputeDraft, validateEvidenceLink, type DisputeDraft } from '@/lib/dispute-form';
@@ -77,7 +78,7 @@ export function DisputeCenter({ role, disputeId }: { role: ParticipantRole; disp
       }));
       setEvidenceByDispute(Object.fromEntries(evidenceEntries));
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Unable to load disputes.'));
+      reportFailure(error, 'load disputes');
     } finally {
       setLoading(false);
     }
@@ -102,7 +103,7 @@ export function DisputeCenter({ role, disputeId }: { role: ParticipantRole; disp
       const { data } = await milestonesApi.listForContract(contractId);
       setMilestones(data.map(normalizeMilestone).filter((milestone) => milestone.status === 'submitted'));
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Unable to load submitted milestones.'));
+      reportFailure(error, 'load the submitted milestones');
     } finally {
       setLoadingMilestones(false);
     }
@@ -219,7 +220,7 @@ export function DisputeCenter({ role, disputeId }: { role: ParticipantRole; disp
 
   if (!verified) {
     return (
-      <Card className="border-warning-border bg-warning-subtle"><CardContent className="flex flex-col items-center gap-4 py-12 text-center"><ShieldCheck className="size-10 text-warning" /><div><h1 className="text-xl font-semibold">Verification required</h1><p className="mt-1 text-muted-foreground">The backend requires verified identity before disputes can be viewed or submitted.</p></div><Button asChild><Link href={verificationPath}>Complete verification</Link></Button></CardContent></Card>
+      <Card className="border-warning-border bg-warning-subtle"><CardContent className="flex flex-col items-center gap-4 py-12 text-center"><ShieldCheck className="size-10 text-warning" /><div><h1 className="text-xl font-semibold">Verification required</h1><p className="mt-1 text-muted-foreground">Verify your identity to view or open a dispute.</p></div><Button asChild><Link href={verificationPath}>Complete verification</Link></Button></CardContent></Card>
     );
   }
 

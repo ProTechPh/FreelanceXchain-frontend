@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Upload, X, FileText, Image as ImageIcon, Trash2, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
+import { reportFailure } from '@/lib/report-failure';
 import { projectsApi, fileUploadsApi } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { useAuthStore } from '@/stores/authStore';
@@ -57,7 +58,7 @@ function EditProjectContent() {
         setStatus(data.status);
         setExistingAttachments(data.attachments || []);
       })
-      .catch((error) => toast.error(getApiErrorMessage(error, 'Unable to load this project.')))
+      .catch((error) => reportFailure(error, 'load this project'))
       .finally(() => setLoading(false));
   }, [projectId]);
 
@@ -202,7 +203,7 @@ function EditProjectContent() {
         <CardContent>
           {!verified ? (
             <div className="space-y-3 py-6 text-center">
-              <p className="text-muted-foreground">Identity verification is required by the backend before project updates.</p>
+              <p className="text-muted-foreground">Verify your identity before editing a project.</p>
               <Button asChild>
                 <Link href="/dashboard/employer/verification">Complete verification</Link>
               </Button>

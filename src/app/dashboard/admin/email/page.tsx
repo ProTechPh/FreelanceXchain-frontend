@@ -24,6 +24,7 @@ import {
 import { Mail, Inbox, Send, Trash2, Star, StarOff, RefreshCw, PenSquare, Reply, ArrowLeft, Search, MailOpen, Clock, ShieldCheck, UserCheck } from 'lucide-react';
 import { emailApi, type SenderProfile } from '@/lib/api';
 import { toast } from 'sonner';
+import { reportFailure } from '@/lib/report-failure';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 
 type EmailItem = {
@@ -86,8 +87,8 @@ export default function AdminEmailPage() {
     try {
       const res = await emailApi.list({ folder: currentFolder, limit: 50 });
       setEmails(res.data.items || []);
-    } catch {
-      toast.error('Failed to load emails');
+    } catch (error) {
+      reportFailure(error, 'load your emails');
     } finally {
       setLoading(false);
     }
@@ -119,8 +120,8 @@ export default function AdminEmailPage() {
         );
         fetchUnreadCount();
       }
-    } catch {
-      toast.error('Failed to load email');
+    } catch (error) {
+      reportFailure(error, 'load this email');
     }
   };
 

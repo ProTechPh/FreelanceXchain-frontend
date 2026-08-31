@@ -3,11 +3,22 @@
 import { useState } from 'react';
 import { ThemeProvider, useTheme } from 'next-themes';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from 'sonner';
+import { Toaster } from '@/components/ui/sonner';
 
 function ThemedToaster() {
   const { resolvedTheme } = useTheme();
-  return <Toaster theme={resolvedTheme === 'light' ? 'light' : 'dark'} position="top-right" richColors />;
+  // The styled wrapper in components/ui/sonner supplies the per-severity icons,
+  // so a warning toast is distinguishable from an error without relying on
+  // colour. closeButton matters because error copy now carries a next step and
+  // is worth more than the default 4s.
+  return (
+    <Toaster
+      theme={resolvedTheme === 'light' ? 'light' : 'dark'}
+      position="top-right"
+      richColors
+      closeButton
+    />
+  );
 }
 
 export function Providers({ children }: { children: React.ReactNode }) {

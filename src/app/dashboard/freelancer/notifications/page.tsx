@@ -10,6 +10,7 @@ import { getNotificationDestination } from '@/lib/notification-route';
 import { useAuthStore } from '@/stores/authStore';
 import type { Notification, NotificationType } from '@/types';
 import { toast } from 'sonner';
+import { reportFailure, reportLoadFailure } from '@/lib/report-failure';
 import { FileText, DollarSign, MessageSquare, CheckCircle, XCircle, AlertTriangle, Clock, Star, RefreshCw, BellOff, type LucideIcon } from 'lucide-react';
 import { formatRelativeTime } from '@/lib/format';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
@@ -53,21 +54,29 @@ export function NotificationsCenter() {
   const [tab, setTab] = useState<Tab>('all');
 
   const loadFirstPage = useCallback(async () => {
-    try {
-      const { data } = await notificationsApi.list({ maxItemCount: 20 });
-      setNotifications(data.items);
-      setContinuationToken(data.continuationToken);
-      setHasMore(data.hasMore);
-    } catch {
-      toast.error('Failed to load notifications');
-    } finally {
-      setLoading(false);
-    }
+    const { data } = await notificationsApi.list({ maxItemCount: 20 });
+    setNotifications(data.items);
+    setContinuationToken(data.continuationToken);
+    setHasMore(data.hasMore);
   }, []);
 
+  // Reported here rather than inside the loader so the toast's Retry can
+  // call it again; a self-reference inside the callback is not allowed.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    loadFirstPage();
+    let active = true;
+    function run() {
+      loadFirstPage()
+        .catch((error) => {
+          if (active) reportLoadFailure(error, 'notifications', run);
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+    }
+    run();
+    return () => {
+      active = false;
+    };
   }, [loadFirstPage]);
 
   useEffect(() => {
@@ -84,8 +93,8 @@ export function NotificationsCenter() {
       setNotifications((prev) => [...prev, ...data.items]);
       setContinuationToken(data.continuationToken);
       setHasMore(data.hasMore);
-    } catch {
-      toast.error('Failed to load more notifications');
+    } catch (error) {
+      reportFailure(error, 'load more notifications');
     } finally {
       setLoadingMore(false);
     }

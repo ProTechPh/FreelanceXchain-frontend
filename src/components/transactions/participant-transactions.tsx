@@ -1,11 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ArrowDownLeft, ArrowUpRight, ChevronDown, CircleDollarSign, ListFilter, ReceiptText, WalletCards, X } from 'lucide-react';
-import { toast } from 'sonner';
+import { reportLoadFailure } from '@/lib/report-failure';
 import { transactionsApi } from '@/lib/api';
-import { getApiErrorMessage } from '@/lib/auth-contract';
 import { getSignedTransactionAmount, getTransactionDetailRoute } from '@/lib/transaction-view';
 import { useAuthStore } from '@/stores/authStore';
 import type { Transaction, UserRole } from '@/types';
@@ -32,6 +31,10 @@ export function ParticipantTransactions({ role }: { role: ParticipantRole }) {
   const [statusFilter, setStatusFilter] = useState('');
   const [loading, setLoading] = useState(true);
 
+  // A ref, because the Retry handed to the toast has to re-run the same filters,
+  // and a callback cannot reference itself.
+  const loadRef = useRef<(type?: string, status?: string) => void>(() => {});
+
   const load = useCallback(async (type = '', status = '') => {
     setLoading(true);
     try {
@@ -42,11 +45,15 @@ export function ParticipantTransactions({ role }: { role: ParticipantRole }) {
       });
       setTransactions(data.items);
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Unable to load transactions.'));
+      reportLoadFailure(error, 'transactions', () => loadRef.current(type, status));
     } finally {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    loadRef.current = (type, status) => void load(type, status);
+  }, [load]);
 
   useEffect(() => {
     // The initial ledger page is loaded from the authenticated transaction endpoint.

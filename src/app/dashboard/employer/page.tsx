@@ -11,7 +11,7 @@ import { useEmployerAnalytics } from '@/hooks/use-analytics';
 import { AnalyticsRangeFilter } from '@/components/analytics/range-filter';
 import { DEFAULT_RANGE_PRESET, getRangeLabel, resolveRange, type RangePresetId } from '@/lib/analytics-range';
 import type { Project, Proposal } from '@/types';
-import { toast } from 'sonner';
+import { reportLoadFailure } from '@/lib/report-failure';
 import { DollarSign, FolderOpen, FileText, Users, Clock, ArrowUpRight, PlusCircle, Briefcase } from 'lucide-react';
 import { formatAmount, formatRelativeTime } from '@/lib/format';
 import { StatsSkeleton } from '@/components/dashboard/skeletons';
@@ -52,7 +52,7 @@ export default function EmployerDashboard() {
   useEffect(() => {
     if (!currentUser) return;
 
-    const load = async () => {
+    async function load() {
       try {
         const [projectsRes] = await Promise.allSettled([
           projectsApi.getMyProjects(),
@@ -100,14 +100,14 @@ export default function EmployerDashboard() {
             rating: details[i].score?.data.averageRating ?? null,
           }))
         );
-      } catch {
-        toast.error('Failed to load dashboard data');
+      } catch (error) {
+        reportLoadFailure(error, 'your dashboard', () => void load());
       } finally {
         setLoading(false);
       }
-    };
+    }
 
-    load();
+    void load();
   }, [currentUser]);
 
   if (loading) {

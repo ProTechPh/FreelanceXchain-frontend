@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { BadgeDollarSign, FastForward, HandCoins } from 'lucide-react';
 import { toast } from 'sonner';
 import { contractsApi, refundsApi, rushUpgradesApi } from '@/lib/api';
-import { getApiErrorMessage } from '@/lib/auth-contract';
+import { reportFailure } from '@/lib/report-failure';
 import { sendRushFeeFromWallet } from '@/lib/wallet';
 import {
   canActOnRefund,
@@ -75,7 +75,7 @@ export function ContractNegotiationPanel({
       toast.success(message);
       await onRefresh();
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Unable to complete this contract request.'));
+      reportFailure(error, 'complete this request');
     } finally {
       setActionId(null);
     }
@@ -83,38 +83,51 @@ export function ContractNegotiationPanel({
 
   const handlePayRushFee = async (request: RushUpgradeRequest) => {
     setActionId(`rush-pay-${request.id}`);
+    // One toast id for the whole flow, so each step replaces the last instead of
+    // stacking four notices for a single payment.
+    const progress = `rush-pay-${request.id}`;
+    let signed = false;
     try {
       if (typeof window === 'undefined' || !window.ethereum) {
-        toast.error('No EVM-compatible wallet detected. Please connect MetaMask to pay the rush fee.');
+        toast.warning('No wallet detected', {
+          description: 'Connect MetaMask or another EVM-compatible wallet to pay the rush fee.',
+        });
         return;
       }
 
       const percentage = request.counterPercentage ?? request.proposedPercentage;
       const amount = Math.round(contract.baseAmount * (percentage / 100) * 10000) / 10000;
 
-      toast.info('Fetching freelancer wallet info…');
+      toast.loading('Checking the freelancer wallet…', { id: progress });
       const { data: info } = await contractsApi.getFundInfo(contract.id);
       if (!info.freelancerWallet) {
-        toast.error('Freelancer has not connected a wallet address yet.');
+        toast.warning('The freelancer has no wallet connected yet', {
+          id: progress,
+          description: 'They need to connect one before you can pay the rush fee.',
+        });
         return;
       }
 
-      toast.info(`Please confirm ${amount} ETH rush fee payment in MetaMask…`);
+      toast.loading(`Confirm the ${amount} ETH rush fee in your wallet…`, { id: progress });
       const paymentResult = await sendRushFeeFromWallet(window.ethereum, {
         freelancerWallet: info.freelancerWallet,
         amountEth: amount,
         chainId: info.chainId,
       });
+      // Past this point the transaction is on-chain, so no later failure may
+      // claim the funds are untouched.
+      signed = true;
 
-      toast.info('Registering rush fee payment on FreelanceXchain…');
+      toast.loading('Recording the payment…', { id: progress });
       await rushUpgradesApi.pay(request.id, {
         transactionHash: paymentResult.transactionHash,
       });
 
-      toast.success('Rush fee paid and activated on contract!');
+      toast.success('Rush fee paid and activated.', { id: progress });
       await onRefresh();
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Failed to pay rush fee via MetaMask.'));
+      toast.dismiss(progress);
+      reportFailure(error, 'pay the rush fee', { fundsUnchanged: !signed });
     } finally {
       setActionId(null);
     }
@@ -122,26 +135,32 @@ export function ContractNegotiationPanel({
 
   const handleAcceptCounterRush = async (request: RushUpgradeRequest) => {
     setActionId(`rush-${request.id}`);
+    const progress = `rush-accept-${request.id}`;
+    let signed = false;
     try {
       if (contract.status === 'active' && typeof window !== 'undefined' && window.ethereum) {
         const percentage = request.counterPercentage ?? request.proposedPercentage;
         const amount = Math.round(contract.baseAmount * (percentage / 100) * 10000) / 10000;
 
-        toast.info('Fetching freelancer wallet info…');
+        toast.loading('Checking the freelancer wallet…', { id: progress });
         const { data: info } = await contractsApi.getFundInfo(contract.id);
         if (!info.freelancerWallet) {
-          toast.error('Freelancer has not connected a wallet address yet.');
+          toast.warning('The freelancer has no wallet connected yet', {
+            id: progress,
+            description: 'They need to connect one before the counter-offer can be paid.',
+          });
           return;
         }
 
-        toast.info(`Please confirm ${amount} ETH rush fee payment in MetaMask…`);
+        toast.loading(`Confirm the ${amount} ETH rush fee in your wallet…`, { id: progress });
         const paymentResult = await sendRushFeeFromWallet(window.ethereum, {
           freelancerWallet: info.freelancerWallet,
           amountEth: amount,
           chainId: info.chainId,
         });
+        signed = true;
 
-        toast.info('Registering counter-offer acceptance…');
+        toast.loading('Recording the acceptance…', { id: progress });
         await rushUpgradesApi.acceptCounter(request.id, {
           transactionHash: paymentResult.transactionHash,
         });
@@ -149,10 +168,11 @@ export function ContractNegotiationPanel({
         await rushUpgradesApi.acceptCounter(request.id);
       }
 
-      toast.success('Counter-offer accepted and rush fee paid.');
+      toast.success('Counter-offer accepted and rush fee paid.', { id: progress });
       await onRefresh();
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Failed to accept counter-offer.'));
+      toast.dismiss(progress);
+      reportFailure(error, 'accept the counter-offer', { fundsUnchanged: !signed });
     } finally {
       setActionId(null);
     }
@@ -161,7 +181,7 @@ export function ContractNegotiationPanel({
   const requestRush = () => {
     const percentage = Number(rushPercentage);
     if (!Number.isFinite(percentage) || percentage <= 0 || percentage > 100) {
-      toast.error('Enter a rush fee percentage between 0.01 and 100.');
+      toast.warning('Enter a rush fee percentage between 0.01 and 100.');
       return;
     }
     void runAction('rush-request', () => rushUpgradesApi.request(contract.id, percentage), 'Rush upgrade requested.');
@@ -170,7 +190,7 @@ export function ContractNegotiationPanel({
   const counterRush = (requestId: string) => {
     const percentage = Number(counterPercentage);
     if (!Number.isFinite(percentage) || percentage <= 0 || percentage > 100) {
-      toast.error('Enter a counter percentage between 0.01 and 100.');
+      toast.warning('Enter a counter percentage between 0.01 and 100.');
       return;
     }
     void runAction(`rush-${requestId}`, () => rushUpgradesApi.respond(requestId, 'counter_offer', percentage), 'Counter-offer sent.');
@@ -179,12 +199,12 @@ export function ContractNegotiationPanel({
   const requestRefund = () => {
     const reason = refundReason.trim();
     if (!reason) {
-      toast.error('Explain why you are requesting a refund.');
+      toast.warning('Explain why you are requesting a refund.');
       return;
     }
     const amount = refundAmount.trim() ? Number(refundAmount) : undefined;
     if (amount !== undefined && (!Number.isFinite(amount) || amount <= 0)) {
-      toast.error('Refund amount must be a positive number.');
+      toast.warning('Refund amount must be a positive number.');
       return;
     }
     void runAction(

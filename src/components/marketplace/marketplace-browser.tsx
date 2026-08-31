@@ -139,20 +139,25 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
 
   useEffect(() => {
     async function loadAuxiliaryData() {
+      // None of this blocks browsing — it fills in filters, saved searches and
+      // favourites. Four independent failures used to mean four red toasts at
+      // once, so they are collected and reported as one warning instead.
+      const unavailable: string[] = [];
+
       try {
         const skillsResponse = await skillsApi.getTaxonomy();
         const allSkills = skillsResponse.data.categories.flatMap((category) => category.skills ?? []);
         setSkills(allSkills);
-      } catch (error) {
-        toast.error(getApiErrorMessage(error, "Unable to load skills."));
+      } catch {
+        unavailable.push('skill filters');
       }
 
       if (kind === "project") {
         try {
           const categoriesResponse = await projectsApi.getCategoryStats();
           setCategoryStats(categoriesResponse.data.categories ?? []);
-        } catch (error) {
-          toast.error(getApiErrorMessage(error, "Unable to load category stats."));
+        } catch {
+          unavailable.push('categories');
         }
       }
 
@@ -166,8 +171,8 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
               ? (rawSearches as { data: SavedSearch[] }).data
               : [];
           setSavedSearches(searchData);
-        } catch (error) {
-          toast.error(getApiErrorMessage(error, "Unable to load saved searches."));
+        } catch {
+          unavailable.push('saved searches');
         }
 
         try {
@@ -179,9 +184,16 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
               ? (rawFavorites as { data: Favorite[] }).data
               : [];
           setFavoriteIds(new Set(favData.map((fav) => fav.targetId)));
-        } catch (error) {
-          toast.error(getApiErrorMessage(error, "Unable to load favorites."));
+        } catch {
+          unavailable.push('favourites');
         }
+      }
+
+      if (unavailable.length > 0) {
+        toast.warning('Some options could not be loaded', {
+          id: 'marketplace-auxiliary',
+          description: `Search still works. Unavailable: ${unavailable.join(', ')}.`,
+        });
       }
     }
 

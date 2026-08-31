@@ -11,7 +11,7 @@ import {
   switchToGanache,
   type WalletConnection,
 } from '@/lib/wallet';
-import { getApiErrorMessage } from '@/lib/auth-contract';
+import { reportFailure } from '@/lib/report-failure';
 import { useAuthStore } from '@/stores/authStore';
 
 export function useWalletConnection() {
@@ -90,7 +90,9 @@ export function useWalletConnection() {
     if (typeof window === 'undefined') return null;
 
     if (!window.ethereum) {
-      toast.error('No EVM-compatible wallet detected. Please install MetaMask or another Web3 wallet.');
+      toast.warning('No wallet detected', {
+        description: 'Install MetaMask or another EVM-compatible wallet, then reload this page.',
+      });
       return null;
     }
 
@@ -105,9 +107,8 @@ export function useWalletConnection() {
       toast.success(`Wallet connected: ${formatWalletAddress(connection.address)} (${connection.balance} ${getNetworkSymbol(connection.chainId)})`);
       return connection;
     } catch (error) {
-      toast.error(
-        getApiErrorMessage(error, error instanceof Error ? error.message : 'Failed to connect wallet.')
-      );
+      // Connecting signs nothing, so a failure here can promise funds are safe.
+      reportFailure(error, 'connect your wallet', { fundsUnchanged: true });
       return null;
     } finally {
       setIsConnecting(false);
@@ -124,7 +125,7 @@ export function useWalletConnection() {
       }
       toast.success('Wallet disconnected successfully.');
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Failed to disconnect wallet.'));
+      reportFailure(error, 'disconnect your wallet', { fundsUnchanged: true });
     } finally {
       setIsDisconnecting(false);
     }
@@ -137,7 +138,7 @@ export function useWalletConnection() {
       toast.success('Switched to Ganache Localhost 7545');
       await refreshBalance();
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Failed to switch network in MetaMask.'));
+      reportFailure(error, 'switch networks', { fundsUnchanged: true });
     }
   }, [refreshBalance]);
 

@@ -2,9 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { History, RefreshCw, Search } from 'lucide-react';
-import { toast } from 'sonner';
 import { auditLogsApi } from '@/lib/api';
-import { getApiErrorMessage } from '@/lib/auth-contract';
+import { reportLoadFailure } from '@/lib/report-failure';
 import type { AuditLogEntry } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -26,16 +25,24 @@ export function ActivityLog() {
     try {
       const { data } = await auditLogsApi.getMine(100);
       setLogs(data.logs);
-    } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Unable to load account activity.'));
     } finally {
       setLoading(false);
     }
   }, []);
 
+  // Reported here rather than inside the loader so the toast's Retry can call it
+  // again; a self-reference inside the callback is not allowed.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void load();
+    let active = true;
+    function run() {
+      load().catch((error) => {
+        if (active) reportLoadFailure(error, 'your account activity', run);
+      });
+    }
+    run();
+    return () => {
+      active = false;
+    };
   }, [load]);
 
   const filtered = useMemo(() => {

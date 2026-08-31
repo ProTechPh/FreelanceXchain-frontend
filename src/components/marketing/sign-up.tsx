@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, User, Briefcase, ArrowRight, Sparkles, ArrowLeft, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, User, Briefcase, ArrowRight, Sparkles, ArrowLeft } from 'lucide-react';
 import type { UserRole } from '@/types';
 import { getRegistrationFormError } from '@/lib/auth-contract';
+import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { FreelanceXchainLogo } from '@/components/ui/freelancexchain-logo';
 import Link from 'next/link';
@@ -167,13 +168,12 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                 </div>
 
                 {oauthError && (
-                  <div className="flex items-start gap-3 p-3.5 rounded-xl sm:rounded-2xl bg-destructive/10 border border-destructive/20 text-destructive text-sm" role="alert">
-                    <AlertCircle className="size-5 shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-semibold">Sign-in Error</p>
-                      <p className="text-sm text-destructive/80 mt-0.5">{oauthError}</p>
-                    </div>
-                  </div>
+                  <Alert
+                    tone="destructive"
+                    title="We couldn't create your account"
+                    description={oauthError}
+                    className="sm:rounded-2xl"
+                  />
                 )}
 
                 {/* Role selection cards */}

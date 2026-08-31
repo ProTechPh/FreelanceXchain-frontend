@@ -20,6 +20,7 @@ import {
   type ProjectSubmissionSkill,
 } from '@/lib/project-submission';
 import { toast } from 'sonner';
+import { reportFailure } from '@/lib/report-failure';
 import { ChevronRight, ChevronLeft, Plus, X, Upload, FileText, DollarSign, Clock, Target, Sparkles } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Field } from '@/components/ui/field';
@@ -64,7 +65,7 @@ export default function CreateProjectPage() {
         }
       } catch (error) {
         if (active) {
-          toast.error(getApiErrorMessage(error, 'Unable to load the skill list. Please refresh and try again.'));
+          reportFailure(error, 'load the skill list');
         }
       } finally {
         if (active) setSkillsLoading(false);
@@ -121,7 +122,7 @@ export default function CreateProjectPage() {
       toast.success(
         suggestions.length > 0
           ? `Added ${suggestions.length} suggested skill${suggestions.length === 1 ? '' : 's'}.`
-          : 'No additional taxonomy skills were found in the description.',
+          : 'No further skills found in the description.',
       );
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Unable to suggest skills right now.'));

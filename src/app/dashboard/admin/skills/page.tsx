@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Plus, Tags, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { reportLoadFailure } from '@/lib/report-failure';
 import { skillsApi } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import type { SkillSuggestion, SkillTaxonomy } from '@/types';
@@ -26,24 +27,32 @@ export default function AdminSkillsPage() {
   const [action, setAction] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    try {
-      const [{ data }, suggestionResponse] = await Promise.all([
-        skillsApi.getTaxonomy(),
-        skillsApi.listSuggestions().catch(() => ({ data: [] as SkillSuggestion[] })),
-      ]);
-      setTaxonomy(data);
-      setSuggestions(suggestionResponse.data);
-      if (data.categories[0]) setSkillCategoryId((current) => current || data.categories[0]!.id);
-    } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Unable to load skill taxonomy.'));
-    } finally {
-      setLoading(false);
-    }
+    const [{ data }, suggestionResponse] = await Promise.all([
+      skillsApi.getTaxonomy(),
+      skillsApi.listSuggestions().catch(() => ({ data: [] as SkillSuggestion[] })),
+    ]);
+    setTaxonomy(data);
+    setSuggestions(suggestionResponse.data);
+    if (data.categories[0]) setSkillCategoryId((current) => current || data.categories[0]!.id);
   }, []);
 
+  // Reported here rather than inside the loader so the toast's Retry can
+  // call it again; a self-reference inside the callback is not allowed.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void load();
+    let active = true;
+    function run() {
+      load()
+        .catch((error) => {
+          if (active) reportLoadFailure(error, 'the skill taxonomy', run);
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+    }
+    run();
+    return () => {
+      active = false;
+    };
   }, [load]);
 
   const createCategory = async (event: React.FormEvent<HTMLFormElement>) => {

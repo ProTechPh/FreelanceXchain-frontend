@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { adminApi, analyticsApi, reputationApi } from '@/lib/api';
 import type { AdminAnalytics, SkillTrend } from '@/types';
-import { toast } from 'sonner';
+import { reportLoadFailure } from '@/lib/report-failure';
 import { TrendingUp, Users, DollarSign, FolderOpen, Star } from 'lucide-react';
 import { StatsSkeleton } from '@/components/dashboard/skeletons';
 
@@ -23,25 +23,33 @@ export default function AnalyticsPage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
 
   const load = useCallback(async () => {
-    try {
-      const [analyticsRes, skillsRes, leaderboardRes] = await Promise.allSettled([
-        adminApi.getAnalytics(),
-        analyticsApi.getSkillTrends(),
-        reputationApi.getLeaderboard({ limit: 5 }),
-      ]);
-      if (analyticsRes.status === 'fulfilled') setAnalytics(analyticsRes.value.data);
-      if (skillsRes.status === 'fulfilled') setSkillTrends(skillsRes.value.data.slice(0, 5));
-      if (leaderboardRes.status === 'fulfilled') setLeaderboard(leaderboardRes.value.data);
-    } catch {
-      toast.error('Failed to load analytics');
-    } finally {
-      setLoading(false);
-    }
+    const [analyticsRes, skillsRes, leaderboardRes] = await Promise.allSettled([
+      adminApi.getAnalytics(),
+      analyticsApi.getSkillTrends(),
+      reputationApi.getLeaderboard({ limit: 5 }),
+    ]);
+    if (analyticsRes.status === 'fulfilled') setAnalytics(analyticsRes.value.data);
+    if (skillsRes.status === 'fulfilled') setSkillTrends(skillsRes.value.data.slice(0, 5));
+    if (leaderboardRes.status === 'fulfilled') setLeaderboard(leaderboardRes.value.data);
   }, []);
 
+  // Reported here rather than inside the loader so the toast's Retry can
+  // call it again; a self-reference inside the callback is not allowed.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    load();
+    let active = true;
+    function run() {
+      load()
+        .catch((error) => {
+          if (active) reportLoadFailure(error, 'analytics', run);
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+    }
+    run();
+    return () => {
+      active = false;
+    };
   }, [load]);
 
   if (loading) {
