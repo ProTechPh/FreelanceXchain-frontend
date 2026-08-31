@@ -289,6 +289,7 @@ export function DisputeCenter({ role, disputeId }: { role: ParticipantRole; disp
                                 href={evidenceUrl || evidence.description}
                                 target="_blank"
                                 rel="noopener noreferrer"
+                                aria-label="Open evidence"
                                 className="mt-1 inline-flex items-center gap-1.5 break-all text-xs font-medium text-primary hover:underline"
                               >
                                 <ExternalLink className="size-3.5 shrink-0" />

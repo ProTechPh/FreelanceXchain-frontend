@@ -46,7 +46,7 @@ export function useWalletConnection() {
 
   // Initial balance load and account change listener
   useEffect(() => {
-    if (typeof window === 'undefined' || !window.ethereum || !walletAddress) return;
+    if (typeof window === 'undefined' || !window.ethereum || !wallet?.address) return;
 
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void refreshBalance();

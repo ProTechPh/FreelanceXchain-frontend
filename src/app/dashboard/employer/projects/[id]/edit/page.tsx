@@ -156,7 +156,7 @@ export default function EditProjectPage() {
         attachments: finalAttachments,
       });
 
-      toast.success('Project and attachments updated successfully!');
+      toast.success('Project updated.');
       router.push('/dashboard/employer/projects');
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Unable to update this project. It may be locked by an accepted proposal.'));
