@@ -242,7 +242,7 @@ export function EmployerProfileDialog({
             {user?.role === 'freelancer' && (
               <Button
                 asChild
-                className="gradient-primary text-primary-foreground shadow-sm"
+                className="gradient-primary shadow-sm"
               >
                 <Link
                   href={

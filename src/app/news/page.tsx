@@ -668,7 +668,7 @@ export default function NewsPage() {
                     placeholder="Enter your email..."
                     value={emailInput}
                     onChange={(e) => setEmailInput(e.target.value)}
-                    className="w-full px-5 py-3 rounded-full bg-primary-foreground text-primary text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-white/50 shadow-md"
+                    className="w-full px-5 py-3 rounded-full bg-primary-foreground text-primary text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary-foreground/50 dark:focus:ring-primary/60 shadow-md"
                   />
                   <Button
                     type="submit"

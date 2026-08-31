@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatFileSize, safeAttachmentUrl } from '@/lib/attachment-presentation';
 import { proposalsApi } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/auth-contract';
+import { reportLoadFailure } from '@/lib/report-failure';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Markdown } from '@/components/ui/markdown';
 import { AttachmentPreviewDialog, type AttachmentPreviewTarget } from '@/components/ui/attachment-preview-dialog';
@@ -26,19 +27,27 @@ export default function FreelancerProposalDetailPage() {
 
   const load = useCallback(async () => {
     if (!proposalId) return;
-    try {
-      const { data } = await proposalsApi.getWithEmployerHistory(proposalId);
-      setDetails(data);
-    } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Unable to load this proposal.'));
-    } finally {
-      setLoading(false);
-    }
+    const { data } = await proposalsApi.getWithEmployerHistory(proposalId);
+    setDetails(data);
   }, [proposalId]);
 
+  // Reported here rather than inside the loader so the toast's Retry can call it
+  // again; a self-reference inside the callback is not allowed.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void load();
+    let active = true;
+    function run() {
+      load()
+        .catch((error) => {
+          if (active) reportLoadFailure(error, 'this proposal', run);
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+    }
+    run();
+    return () => {
+      active = false;
+    };
   }, [load]);
 
   const withdraw = async () => {

@@ -49,7 +49,7 @@ export default function SkillAnalysisPage() {
     try {
       const { data } = await matchingApi.extractSkills(text.trim());
       setExtracted(data);
-      if (data.length === 0) toast.info('No taxonomy skills were detected in that text.');
+      if (data.length === 0) toast.info('No recognised skills found in that text.');
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Unable to extract skills from this text.'));
     } finally {
@@ -59,7 +59,7 @@ export default function SkillAnalysisPage() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
-      <div><h1 className="flex items-center gap-2 text-2xl font-bold"><BrainCircuit className="size-6 text-primary" />Skill analysis</h1><p className="text-muted-foreground">Use the backend matching service to identify skill gaps and extract taxonomy skills from text.</p></div>
+      <div><h1 className="flex items-center gap-2 text-2xl font-bold"><BrainCircuit className="size-6 text-primary" />Skill analysis</h1><p className="text-muted-foreground">Find your skill gaps, and pull recognised skills out of any job description.</p></div>
 
       <div className="flex justify-end"><Button type="button" variant="outline" loading={loadingAnalysis} loadingText="Analysing…" onClick={() => void loadAnalysis()}><TrendingUp className="size-4" aria-hidden="true" />Refresh analysis</Button></div>
 

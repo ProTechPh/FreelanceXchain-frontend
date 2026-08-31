@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { AlertTriangle, ArrowLeft, Eye, Paperclip, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
+import { reportFailure } from '@/lib/report-failure';
 import {
   contractsApi,
   milestonesApi,
@@ -106,7 +107,7 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
         setReviewEligibility(null);
       }
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Unable to load this contract.'));
+      reportFailure(error, 'load this contract');
     } finally {
       setLoading(false);
     }
@@ -212,7 +213,7 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
       {!isVerified && ['pending', 'active', 'completed'].includes(contract.status) && (
         <Card className="border-warning-border bg-warning-subtle">
           <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="flex items-center gap-2 text-sm"><ShieldCheck className="size-5 text-warning" />Identity verification is required before contract mutations.</p>
+            <p className="flex items-center gap-2 text-sm"><ShieldCheck className="size-5 text-warning" />Verify your identity before making changes to a contract.</p>
             <Button asChild size="sm" variant="outline"><Link href={verificationPath}>Complete verification</Link></Button>
           </CardContent>
         </Card>

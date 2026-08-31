@@ -39,9 +39,9 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: [
-          "bg-primary text-primary-foreground shadow-xs",
-          "hover:bg-primary-hover",
-          "active:bg-primary-active",
+          "bg-primary-fill text-primary-fill-foreground shadow-xs",
+          "hover:bg-primary-fill-hover",
+          "active:bg-primary-fill-active",
           "not-data-[loading=true]:disabled:bg-muted not-data-[loading=true]:disabled:text-muted-foreground not-data-[loading=true]:disabled:shadow-none",
           "aria-not-data-[loading=true]:disabled:bg-muted aria-not-data-[loading=true]:disabled:text-muted-foreground",
         ].join(" "),
@@ -80,7 +80,7 @@ const buttonVariants = cva(
         // utility — previously `gradient-primary` was undefined, so this variant
         // rendered as white text on no background.
         gradient: [
-          "gradient-primary text-primary-foreground shadow-sm",
+          "gradient-primary shadow-sm",
           "hover:opacity-90",
           "active:opacity-100 active:brightness-95",
           "not-data-[loading=true]:disabled:bg-none not-data-[loading=true]:disabled:bg-muted not-data-[loading=true]:disabled:text-muted-foreground not-data-[loading=true]:disabled:shadow-none",

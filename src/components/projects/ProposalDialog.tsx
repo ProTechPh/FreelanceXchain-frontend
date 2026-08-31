@@ -18,11 +18,16 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Markdown } from '@/components/ui/markdown';
-import { getApiErrorMessage } from '@/lib/auth-contract';
+import { Alert } from '@/components/ui/alert';
+import { Field, useField } from '@/components/ui/field';
+import { reportFailure } from '@/lib/report-failure';
 import { proposalsApi, matchingApi, type AIProposalResult } from '@/lib/api';
 import {
+  MAX_FILE_COUNT,
   ProposalFormValidationError,
+  findProposalFormError,
   submitProposal,
+  type ProposalField,
   type ProposalSubmissionForm,
 } from '@/lib/proposal-submission';
 import { useAuthStore } from '@/stores/authStore';
@@ -88,6 +93,11 @@ Submitted via FreelanceXchain Decentralized Platform with Smart Contract Escrow 
   return new File([blob], `Proposal_${safeTitle || 'Brief'}.md`, { type: 'text/markdown; charset=utf-8' });
 }
 
+/** `Input` wired to its surrounding `Field`: id, aria-describedby, aria-invalid. */
+function FieldInput(props: React.ComponentProps<typeof Input>) {
+  return <Input {...useField()} {...props} />;
+}
+
 export function ProposalDialog({
   open,
   onOpenChange,
@@ -107,6 +117,13 @@ export function ProposalDialog({
   const [showCustomNotes, setShowCustomNotes] = useState(false);
   const [viewMode, setViewMode] = useState<'preview' | 'edit'>('preview');
   const [editableCoverLetter, setEditableCoverLetter] = useState('');
+  /** Set on submit, so errors land under the control they describe. */
+  const [fieldError, setFieldError] = useState<{ field: ProposalField; message: string } | null>(null);
+
+  /** Why submitting is unavailable, for the button's tooltip. */
+  const blockedReason = !isKycApproved
+    ? 'Verify your identity first.'
+    : null;
 
   const handleGenerateAI = useCallback(async (notes?: string) => {
     if (!project) return;
@@ -133,7 +150,7 @@ export function ProposalDialog({
 
         // Keep any user-uploaded files, replace or prepend the auto-generated brief
         const otherFiles = current.files.filter((f) => !f.name.startsWith('Proposal_'));
-        const updatedFiles = [autoFile, ...otherFiles].slice(0, 5);
+        const updatedFiles = [autoFile, ...otherFiles].slice(0, MAX_FILE_COUNT);
 
         return {
           ...current,
@@ -145,7 +162,9 @@ export function ProposalDialog({
 
       toast.success('AI Proposal drafted based on your portfolio & reputation!');
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Unable to generate AI proposal. You can still fill it manually.'));
+      // No Retry action here: the Regenerate button beside this banner is the
+      // retry, and a second one in the toast would just duplicate it.
+      reportFailure(error, 'draft your proposal with AI');
     } finally {
       setGeneratingAI(false);
     }
@@ -166,6 +185,7 @@ export function ProposalDialog({
         setCustomNotes('');
         setShowCustomNotes(false);
         setEditableCoverLetter('');
+        setFieldError(null);
       }
       onOpenChange(nextOpen);
     }
@@ -185,7 +205,7 @@ export function ProposalDialog({
         const otherFiles = current.files.filter((f) => !f.name.startsWith('Proposal_'));
         return {
           ...current,
-          files: [updatedFile, ...otherFiles].slice(0, 5),
+          files: [updatedFile, ...otherFiles].slice(0, MAX_FILE_COUNT),
         };
       });
     }
@@ -195,21 +215,31 @@ export function ProposalDialog({
     event.preventDefault();
     if (!project) return;
 
+    const submissionForm: ProposalSubmissionForm = {
+      ...form,
+      coverLetter: editableCoverLetter ? sanitizeMarkdownText(editableCoverLetter) : undefined,
+    };
+
+    // Validate before the request so the message can point at the offending
+    // control instead of arriving as a toast in the corner.
+    const invalid = findProposalFormError(submissionForm);
+    setFieldError(invalid);
+    if (invalid) return;
+
     setSubmitting(true);
     try {
-      const submissionForm: ProposalSubmissionForm = {
-        ...form,
-        coverLetter: editableCoverLetter ? sanitizeMarkdownText(editableCoverLetter) : undefined,
-      };
       await submitProposal(proposalsApi, project.id, submissionForm);
-      toast.success('Proposal submitted successfully!');
+      toast.success('Proposal submitted.');
       onSubmitted?.();
       handleOpenChange(false);
     } catch (error) {
-      const message = error instanceof ProposalFormValidationError
-        ? error.message
-        : getApiErrorMessage(error, 'Failed to submit proposal');
-      toast.error(message);
+      // A rule the backend enforces but the client does not know about still
+      // belongs on the form, not in a toast.
+      if (error instanceof ProposalFormValidationError) {
+        setFieldError({ field: 'proposedRate', message: error.message });
+        return;
+      }
+      reportFailure(error, 'submit your proposal', { fundsUnchanged: true });
     } finally {
       setSubmitting(false);
     }
@@ -235,20 +265,19 @@ export function ProposalDialog({
         <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleSubmit}>
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5">
         {!isKycApproved && (
-          <div className="rounded-xl border border-warning/30 bg-warning/10 p-3.5 text-xs text-warning space-y-2">
-            <div className="flex items-center gap-2 font-bold text-foreground">
-              <ShieldAlert className="size-4 text-warning shrink-0" />
-              <span>Identity Verification (KYC) Required</span>
-            </div>
-            <p className="text-muted-foreground leading-relaxed">
-              Smart contract payments and escrow protection require a verified identity before submitting proposals.
-            </p>
-            <Button asChild size="sm" variant="outline" className="text-xs h-8">
-              <Link href="/dashboard/freelancer/verification">
-                Complete Verification Now →
-              </Link>
-            </Button>
-          </div>
+          <Alert
+            tone="warning"
+            // Always present when unverified, so it should not interrupt a
+            // screen reader the way a new error would.
+            live={false}
+            title="Verify your identity to submit a proposal"
+            description="Escrow protection and milestone payments need a verified identity first."
+            action={(
+              <Button asChild size="sm" variant="outline" className="h-8 text-xs">
+                <Link href="/dashboard/freelancer/verification">Verify now</Link>
+              </Button>
+            )}
+          />
         )}
 
         {/* AI Proposal Generator Banner */}
@@ -406,39 +435,43 @@ export function ProposalDialog({
 
         <div className="space-y-5">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor={`${fieldId}-rate`}>Proposed rate (USD)</Label>
-              <Input
-                id={`${fieldId}-rate`}
+            <Field
+              label="Proposed rate (USD)"
+              htmlFor={`${fieldId}-rate`}
+              error={fieldError?.field === 'proposedRate' ? fieldError.message : null}
+              required
+            >
+              <FieldInput
                 type="number"
                 min="0.0001"
                 step="any"
                 inputMode="decimal"
                 value={form.proposedRate}
-                onChange={(event) => setForm((current) => ({
-                  ...current,
-                  proposedRate: event.target.value,
-                }))}
-                required
+                onChange={(event) => {
+                  setFieldError(null);
+                  setForm((current) => ({ ...current, proposedRate: event.target.value }));
+                }}
               />
-            </div>
+            </Field>
 
-            <div className="space-y-2">
-              <Label htmlFor={`${fieldId}-duration`}>Estimated duration (days)</Label>
-              <Input
-                id={`${fieldId}-duration`}
+            <Field
+              label="Estimated duration (days)"
+              htmlFor={`${fieldId}-duration`}
+              error={fieldError?.field === 'estimatedDuration' ? fieldError.message : null}
+              required
+            >
+              <FieldInput
                 type="number"
                 min="1"
                 step="1"
                 inputMode="numeric"
                 value={form.estimatedDuration}
-                onChange={(event) => setForm((current) => ({
-                  ...current,
-                  estimatedDuration: event.target.value,
-                }))}
-                required
+                onChange={(event) => {
+                  setFieldError(null);
+                  setForm((current) => ({ ...current, estimatedDuration: event.target.value }));
+                }}
               />
-            </div>
+            </Field>
           </div>
 
           <div className="space-y-2">
@@ -456,20 +489,43 @@ export function ProposalDialog({
               multiple
               accept=".pdf,.doc,.docx,.xlsx,.pptx,.png,.jpg,.jpeg,.zip,.rar,.7z,.json,.xml,.mp4,.webm,.mov,.md,.txt"
               className="text-xs file:text-xs"
+              aria-describedby={`${fieldId}-files-hint`}
               onChange={(event) => {
                 const newFiles = Array.from(event.target.files ?? []);
+                setFieldError(null);
                 setForm((current) => {
                   const autoBrief = current.files.filter((f) => f.name.startsWith('Proposal_'));
-                  return {
-                    ...current,
-                    files: [...autoBrief, ...newFiles].slice(0, 5),
-                  };
+                  const combined = [...autoBrief, ...newFiles];
+                  // This list used to be sliced silently, so files the user
+                  // picked just never appeared. Say what was dropped.
+                  const dropped = combined.length - MAX_FILE_COUNT;
+                  if (dropped > 0) {
+                    toast.warning(
+                      `Only ${MAX_FILE_COUNT} attachments allowed`,
+                      {
+                        description: dropped === 1
+                          ? 'The last file you picked was not added.'
+                          : `The last ${dropped} files you picked were not added.`,
+                      },
+                    );
+                  }
+                  return { ...current, files: combined.slice(0, MAX_FILE_COUNT) };
                 });
               }}
             />
-            <p className="text-xs text-muted-foreground">
-              Attach 1–5 files (up to 10 MB each, 25 MB total).
+            <p id={`${fieldId}-files-hint`} className="text-xs text-muted-foreground">
+              Attach 1–{MAX_FILE_COUNT} files (up to 10 MB each, 25 MB total).
             </p>
+            {fieldError?.field === 'files' && (
+              <p
+                id={`${fieldId}-files-error`}
+                role="alert"
+                className="flex items-start gap-1.5 text-xs font-medium text-destructive"
+              >
+                <ShieldAlert className="mt-px size-3.5 shrink-0" aria-hidden="true" />
+                {fieldError.message}
+              </p>
+            )}
             {form.files.length > 0 && (
               <ul className="space-y-1 text-sm" aria-label="Selected proposal files">
                 {form.files.map((file, idx) => (
@@ -516,8 +572,12 @@ export function ProposalDialog({
             variant="gradient"
             className="w-full sm:w-auto"
             loading={submitting}
-            loadingText="Submitting Proposal…"
-            disabled={!isKycApproved || submitting || generatingAI || form.files.length === 0}
+            loadingText="Submitting proposal…"
+            // Attachments are no longer part of this condition: the button stays
+            // live so submitting explains what is missing, instead of going dead
+            // with no reason given.
+            disabled={!isKycApproved || submitting || generatingAI}
+            title={blockedReason ?? undefined}
           >
             <Send className="size-4" aria-hidden="true" />
             {isKycApproved ? 'Submit proposal' : 'Verification required'}

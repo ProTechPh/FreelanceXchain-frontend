@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Lightbulb, Pencil, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { reportLoadFailure } from '@/lib/report-failure';
 import { skillsApi } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { validateCustomSkill } from '@/lib/custom-skill';
@@ -24,19 +25,27 @@ export function CustomSkillsManager() {
   const [actionId, setActionId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    try {
-      const { data } = await skillsApi.listCustom();
-      setSkills(data);
-    } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Unable to load custom skills.'));
-    } finally {
-      setLoading(false);
-    }
+    const { data } = await skillsApi.listCustom();
+    setSkills(data);
   }, []);
 
+  // Reported here rather than inside the loader so the toast's Retry can
+  // call it again; a self-reference inside the callback is not allowed.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void load();
+    let active = true;
+    function run() {
+      load()
+        .catch((error) => {
+          if (active) reportLoadFailure(error, 'your custom skills', run);
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+    }
+    run();
+    return () => {
+      active = false;
+    };
   }, [load]);
 
   const reset = () => {

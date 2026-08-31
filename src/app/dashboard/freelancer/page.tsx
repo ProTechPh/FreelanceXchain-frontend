@@ -17,7 +17,7 @@ import { useFreelancerAnalytics } from '@/hooks/use-analytics';
 import { AnalyticsRangeFilter } from '@/components/analytics/range-filter';
 import { DEFAULT_RANGE_PRESET, getRangeLabel, resolveRange, type RangePresetId } from '@/lib/analytics-range';
 import type { Contract, Proposal, Project } from '@/types';
-import { toast } from 'sonner';
+import { reportLoadFailure } from '@/lib/report-failure';
 import { DollarSign, FolderOpen, FileText, Star, TrendingUp, Clock, ArrowUpRight, Briefcase, Wallet } from 'lucide-react';
 import { formatAmount, formatNumber, formatRelativeTime } from '@/lib/format';
 import { StatsSkeleton } from '@/components/dashboard/skeletons';
@@ -153,14 +153,14 @@ export default function FreelancerDashboard() {
             }))
             .filter((r): r is RecommendedProjectView => r.project !== null)
         );
-      } catch {
-        toast.error('Failed to load dashboard data');
+      } catch (error) {
+        reportLoadFailure(error, 'your dashboard', () => void load());
       } finally {
         setLoading(false);
       }
     };
 
-    load();
+    void load();
   }, [currentUser]);
 
   if (loading) {

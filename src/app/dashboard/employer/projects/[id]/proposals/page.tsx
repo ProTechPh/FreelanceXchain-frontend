@@ -22,6 +22,7 @@ import {
   ChevronUp,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { reportFailure } from '@/lib/report-failure';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -105,7 +106,7 @@ export default function EmployerProjectProposalsPage() {
       setRecommendations(uniqueRecommendations);
       setProfiles(Object.fromEntries(profileEntries));
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Failed to load project proposals'));
+      reportFailure(error, 'load the proposals for this project');
     } finally {
       setLoading(false);
     }
@@ -536,7 +537,7 @@ export default function EmployerProjectProposalsPage() {
                           <Button
                             type="button"
                             size="sm"
-                            className="rounded-full gradient-primary text-primary-foreground shadow-md text-xs font-semibold"
+                            className="rounded-full gradient-primary shadow-md text-xs font-semibold"
                             onClick={() => setDecision({ proposal, action: 'accept' })}
                           >
                             <Check className="mr-1.5 size-3.5" /> Accept Proposal & Create Contract

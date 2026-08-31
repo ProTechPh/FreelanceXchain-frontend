@@ -44,7 +44,7 @@ const mockContracts = [
     role: "Smart Contract Audit & Formal Verification",
     client: "Polygon Validator Protocol",
     location: "Remote • US / EU",
-    budget: "$6,000 ETH",
+    budget: "$6,000",
     stage: "Milestone Paid 🎉",
     stageColor: "bg-info-subtle text-info dark:text-info border-info-border",
     match: "99% Skill Match",

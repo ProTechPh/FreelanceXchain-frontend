@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Bookmark, ExternalLink, Heart, Play, Save, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { reportLoadFailure } from '@/lib/report-failure';
 import { favoritesApi, savedSearchesApi } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { marketplaceFiltersToSearchParams, restoreSavedSearchFilters } from '@/lib/marketplace-search';
@@ -56,26 +57,34 @@ export function SavedMarketplace() {
   const [actionId, setActionId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    try {
-      const [favoriteResponse, searchResponse] = await Promise.all([
-        favoritesApi.list().catch(() => ({ data: [] })),
-        savedSearchesApi.list().catch(() => ({ data: [] })),
-      ]);
-      const favoriteList = ensureArray<Favorite>(favoriteResponse.data);
-      const searchList = ensureArray<SavedSearch>(searchResponse.data);
-      setFavorites(favoriteList);
-      setSearches(searchList);
-      setDrafts(Object.fromEntries(searchList.map((search) => [search.id, { name: search.name, notifyOnNew: search.notifyOnNew }])));
-    } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Unable to load saved marketplace items.'));
-    } finally {
-      setLoading(false);
-    }
+    const [favoriteResponse, searchResponse] = await Promise.all([
+      favoritesApi.list().catch(() => ({ data: [] })),
+      savedSearchesApi.list().catch(() => ({ data: [] })),
+    ]);
+    const favoriteList = ensureArray<Favorite>(favoriteResponse.data);
+    const searchList = ensureArray<SavedSearch>(searchResponse.data);
+    setFavorites(favoriteList);
+    setSearches(searchList);
+    setDrafts(Object.fromEntries(searchList.map((search) => [search.id, { name: search.name, notifyOnNew: search.notifyOnNew }])));
   }, []);
 
+  // Reported here rather than inside the loader so the toast's Retry can
+  // call it again; a self-reference inside the callback is not allowed.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void load();
+    let active = true;
+    function run() {
+      load()
+        .catch((error) => {
+          if (active) reportLoadFailure(error, 'your saved items', run);
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+    }
+    run();
+    return () => {
+      active = false;
+    };
   }, [load]);
 
   const updateSearch = async (search: SavedSearch) => {

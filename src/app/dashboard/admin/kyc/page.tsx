@@ -195,7 +195,7 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
       <CardContent className="p-5">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl gradient-primary flex items-center justify-center text-primary-foreground font-bold text-lg">
+          <div className="w-14 h-14 rounded-xl gradient-primary flex items-center justify-center font-bold text-lg">
               {initials}
             </div>
             <div>

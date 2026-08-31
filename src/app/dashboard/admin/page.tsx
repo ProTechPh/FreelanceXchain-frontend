@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { adminApi, auditLogsApi, kycApi } from '@/lib/api';
 import type { AuditLogEntry, Dispute, SystemHealth } from '@/types';
-import { toast } from 'sonner';
+import { reportLoadFailure } from '@/lib/report-failure';
 import { Users, FolderOpen, DollarSign, AlertTriangle, Activity, ArrowUpRight, Shield, BarChart3, CheckCircle, Clock } from 'lucide-react';
 import { StatsSkeleton } from '@/components/dashboard/skeletons';
 import { formatAuditAction, formatAuditResource, formatRelativeTime } from '@/lib/format';
@@ -34,39 +34,47 @@ export default function AdminDashboard() {
   const [health, setHealth] = useState<SystemHealth | null>(null);
 
   const load = useCallback(async () => {
-    try {
-      const now = new Date();
-      const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const now = new Date();
+    const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-      const [statsRes, disputesRes, kycRes, activityRes, healthRes] = await Promise.allSettled([
-        adminApi.getStats(),
-        adminApi.getDisputeManagement('open'),
-        kycApi.adminGetPending(),
-        auditLogsApi.getByDateRange(yesterday.toISOString(), now.toISOString()),
-        adminApi.getSystemHealth(),
-      ]);
+    const [statsRes, disputesRes, kycRes, activityRes, healthRes] = await Promise.allSettled([
+      adminApi.getStats(),
+      adminApi.getDisputeManagement('open'),
+      kycApi.adminGetPending(),
+      auditLogsApi.getByDateRange(yesterday.toISOString(), now.toISOString()),
+      adminApi.getSystemHealth(),
+    ]);
 
-      if (statsRes.status === 'fulfilled') setStats(statsRes.value.data);
-      if (disputesRes.status === 'fulfilled') setOpenDisputes(disputesRes.value.data.disputes);
-      if (kycRes.status === 'fulfilled') setPendingKycCount(kycRes.value.data.length);
-      if (activityRes.status === 'fulfilled') {
-        const sorted = activityRes.value.data.logs
-          .slice()
-          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-          .slice(0, 5);
-        setRecentActivity(sorted);
-      }
-      if (healthRes.status === 'fulfilled') setHealth(healthRes.value.data);
-    } catch {
-      toast.error('Failed to load dashboard data');
-    } finally {
-      setLoading(false);
+    if (statsRes.status === 'fulfilled') setStats(statsRes.value.data);
+    if (disputesRes.status === 'fulfilled') setOpenDisputes(disputesRes.value.data.disputes);
+    if (kycRes.status === 'fulfilled') setPendingKycCount(kycRes.value.data.length);
+    if (activityRes.status === 'fulfilled') {
+      const sorted = activityRes.value.data.logs
+        .slice()
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 5);
+      setRecentActivity(sorted);
     }
+    if (healthRes.status === 'fulfilled') setHealth(healthRes.value.data);
   }, []);
 
+  // Reported here rather than inside the loader so the toast's Retry can
+  // call it again; a self-reference inside the callback is not allowed.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    load();
+    let active = true;
+    function run() {
+      load()
+        .catch((error) => {
+          if (active) reportLoadFailure(error, 'your dashboard', run);
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+    }
+    run();
+    return () => {
+      active = false;
+    };
   }, [load]);
 
   if (loading) {

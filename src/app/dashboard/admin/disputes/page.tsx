@@ -12,6 +12,7 @@ import { getApiErrorMessage } from '@/lib/auth-contract';
 import { formatRelativeTime } from '@/lib/format';
 import type { Dispute, Contract, DisputeStatus } from '@/types';
 import { toast } from 'sonner';
+import { reportFailure, reportLoadFailure } from '@/lib/report-failure';
 import { Scale, AlertTriangle, Clock, CheckCircle, FileText, DollarSign } from 'lucide-react';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -42,54 +43,62 @@ export default function DisputesPage() {
   const [verifiedEvidenceIds, setVerifiedEvidenceIds] = useState<Set<string>>(new Set());
 
   const load = useCallback(async () => {
-    try {
-      const { data } = await adminApi.getDisputeManagement();
-      const rawDisputes: Dispute[] = (data.disputes || []).map((d) => {
-        const raw = d as Dispute & {
-          contract_id?: string;
-          milestone_id?: string;
-          initiator_id?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-        return {
-          ...raw,
-          id: raw.id || '',
-          contractId: raw.contractId || raw.contract_id || '',
-          milestoneId: raw.milestoneId || raw.milestone_id || '',
-          initiatorId: raw.initiatorId || raw.initiator_id || '',
-          reason: raw.reason || '',
-          status: raw.status || 'open',
-          evidence: Array.isArray(raw.evidence) ? raw.evidence : [],
-          resolution: raw.resolution ?? null,
-          createdAt: raw.createdAt || raw.created_at || new Date().toISOString(),
-          updatedAt: raw.updatedAt || raw.updated_at || new Date().toISOString(),
-        };
-      });
-      const sorted = rawDisputes
-        .slice()
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        .slice(0, 50);
-      const contracts = await Promise.all(
-        sorted.map((d) => (d.contractId ? contractsApi.get(d.contractId).then((r) => r.data).catch(() => null) : Promise.resolve(null)))
-      );
-      setViews(sorted.map((dispute, i) => ({ dispute, contract: contracts[i] })));
-    } catch {
-      toast.error('Failed to load disputes');
-    } finally {
-      setLoading(false);
-    }
+    const { data } = await adminApi.getDisputeManagement();
+    const rawDisputes: Dispute[] = (data.disputes || []).map((d) => {
+      const raw = d as Dispute & {
+        contract_id?: string;
+        milestone_id?: string;
+        initiator_id?: string;
+        created_at?: string;
+        updated_at?: string;
+      };
+      return {
+        ...raw,
+        id: raw.id || '',
+        contractId: raw.contractId || raw.contract_id || '',
+        milestoneId: raw.milestoneId || raw.milestone_id || '',
+        initiatorId: raw.initiatorId || raw.initiator_id || '',
+        reason: raw.reason || '',
+        status: raw.status || 'open',
+        evidence: Array.isArray(raw.evidence) ? raw.evidence : [],
+        resolution: raw.resolution ?? null,
+        createdAt: raw.createdAt || raw.created_at || new Date().toISOString(),
+        updatedAt: raw.updatedAt || raw.updated_at || new Date().toISOString(),
+      };
+    });
+    const sorted = rawDisputes
+      .slice()
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 50);
+    const contracts = await Promise.all(
+      sorted.map((d) => (d.contractId ? contractsApi.get(d.contractId).then((r) => r.data).catch(() => null) : Promise.resolve(null)))
+    );
+    setViews(sorted.map((dispute, i) => ({ dispute, contract: contracts[i] })));
   }, []);
 
+  // Reported here rather than inside the loader so the toast's Retry can
+  // call it again; a self-reference inside the callback is not allowed.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    load();
+    let active = true;
+    function run() {
+      load()
+        .catch((error) => {
+          if (active) reportLoadFailure(error, 'disputes', run);
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+    }
+    run();
+    return () => {
+      active = false;
+    };
   }, [load]);
 
   const handleResolve = async (disputeId: string, decision: 'freelancer_favor' | 'employer_favor') => {
     const reason = reasoning[disputeId]?.trim();
     if (!reason) {
-      toast.error('Add resolution notes before resolving');
+      toast.warning('Add resolution notes before resolving');
       return;
     }
     setResolvingId(disputeId);
@@ -97,8 +106,13 @@ export default function DisputesPage() {
       const { data: updated } = await disputesApi.resolve(disputeId, decision, reason);
       setViews((prev) => prev.map((v) => (v.dispute.id === disputeId ? { ...v, dispute: updated } : v)));
       toast.success('Dispute resolved');
-    } catch {
-      toast.error('Failed to resolve dispute — if this is unexpected, verify the admin account has the admin role on its JWT');
+    } catch (error) {
+      console.error(
+        '[disputes] resolve failed. If this is unexpected, check that the admin '
+        + 'account carries the admin role on its JWT.',
+        error,
+      );
+      reportFailure(error, 'resolve this dispute');
     } finally {
       setResolvingId(null);
     }

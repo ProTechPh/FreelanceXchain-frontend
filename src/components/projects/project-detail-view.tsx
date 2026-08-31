@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Zap, ShieldCheck, Send, Share2, ExternalLink, Paperclip, Pencil, ClipboardList, Sparkles, User, CheckCircle, FileText } from 'lucide-react';
 import { toast } from 'sonner';
+import { reportFailure } from '@/lib/report-failure';
 
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -131,9 +132,9 @@ export function ProjectDetailView({
         if (active) {
           setProject(projectData);
         }
-      } catch {
+      } catch (error) {
         if (active) {
-          toast.error('Failed to load project');
+          reportFailure(error, 'load this project');
         }
       } finally {
         if (active) {
@@ -194,7 +195,7 @@ export function ProjectDetailView({
               <h2 className="text-2xl font-bold text-foreground mb-2">Project not found</h2>
               <p className="text-muted-foreground mb-6">This project doesn&apos;t exist or has been removed.</p>
               <Link href="/projects">
-                <Button className="rounded-full gradient-primary text-primary-foreground shadow-md">
+                <Button className="rounded-full gradient-primary shadow-md">
                   Browse Projects
                 </Button>
               </Link>
@@ -275,7 +276,7 @@ export function ProjectDetailView({
                       </Link>
                     </Button>
                   )}
-                  <Button asChild className="rounded-full gradient-primary text-primary-foreground shadow-md">
+                  <Button asChild className="rounded-full gradient-primary shadow-md">
                     <Link href={`/dashboard/employer/projects/${project.id}/proposals`}>
                       <ClipboardList className="w-4 h-4 mr-2" />
                       View Proposals ({project.proposalCount ?? 0})
@@ -285,7 +286,7 @@ export function ProjectDetailView({
               )}
 
               {!isOwner && primaryAction === 'manage-proposals' && (
-                <Button asChild className="rounded-full gradient-primary text-primary-foreground shadow-md">
+                <Button asChild className="rounded-full gradient-primary shadow-md">
                   <Link href={`/dashboard/employer/projects/${project.id}/proposals`}>
                     View Proposals ({project.proposalCount ?? 0})
                   </Link>
@@ -331,7 +332,7 @@ export function ProjectDetailView({
                         AI Proposal
                       </Button>
                       <Button
-                        className="rounded-full gradient-primary text-primary-foreground shadow-md"
+                        className="rounded-full gradient-primary shadow-md"
                         onClick={() => {
                           setAutoGenerateAI(false);
                           setProposalOpen(true);

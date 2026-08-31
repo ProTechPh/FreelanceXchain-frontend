@@ -20,6 +20,7 @@ import { authApi, emailPreferencesApi, fileManagementApi } from '@/lib/api';
 import { connectWallet, formatWalletAddress, type WalletConnection } from '@/lib/wallet';
 import { formatFileSize } from '@/lib/file-storage';
 import { getApiErrorMessage } from '@/lib/auth-contract';
+import { reportFailure } from '@/lib/report-failure';
 import { safeAttachmentUrl } from '@/lib/attachment-presentation';
 import { useAuthStore } from '@/stores/authStore';
 import type { EmailPreferences, EmailPreferencesUpdate, FileInfo, FileQuota, MfaFactor } from '@/types';
@@ -189,7 +190,9 @@ export function AccountSettings() {
 
   const connect = async () => {
     if (!window.ethereum) {
-      toast.error('Install an EVM-compatible wallet such as MetaMask to continue.');
+      toast.warning('No wallet detected', {
+        description: 'Install MetaMask or another EVM-compatible wallet, then reload this page.',
+      });
       return;
     }
 
@@ -201,9 +204,7 @@ export function AccountSettings() {
       if (user) setUser({ ...user, walletAddress: data.walletAddress });
       toast.success('Wallet connected to your account.');
     } catch (error) {
-      toast.error(
-        getApiErrorMessage(error, error instanceof Error ? error.message : 'Unable to connect wallet.'),
-      );
+      reportFailure(error, 'connect your wallet', { fundsUnchanged: true });
     } finally {
       setIsConnectingWallet(false);
     }
@@ -217,7 +218,7 @@ export function AccountSettings() {
       if (user) setUser({ ...user, walletAddress: '' });
       toast.success('Wallet disconnected successfully.');
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Unable to disconnect wallet.'));
+      reportFailure(error, 'disconnect your wallet', { fundsUnchanged: true });
     } finally {
       setIsDisconnectingWallet(false);
     }

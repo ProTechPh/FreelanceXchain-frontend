@@ -9,7 +9,7 @@ import { FavoriteButton } from '@/components/marketplace/favorite-button';
 import { useAuthStore } from '@/stores/authStore';
 import type { FreelancerProfile } from '@/types';
 import { getMarketplaceReturnPath } from '@/lib/marketplace-return';
-import { toast } from 'sonner';
+import { reportFailure } from '@/lib/report-failure';
 import { MapPin, ShieldCheck, Send, ArrowLeft, DollarSign, CircleCheck, Clock, CircleMinus } from 'lucide-react';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
 import Navbar from '@/components/layout/navbar';
@@ -56,8 +56,8 @@ export default function FreelancerProfilePage() {
       try {
         const res = await freelancersApi.getPublicProfile(params?.id as string);
         setFreelancer(res.data);
-      } catch {
-        toast.error('Failed to load freelancer profile');
+      } catch (error) {
+        reportFailure(error, 'load this profile');
       } finally {
         setLoading(false);
       }
@@ -89,7 +89,7 @@ export default function FreelancerProfilePage() {
             <h2 className="text-2xl font-bold text-foreground mb-2">Freelancer not found</h2>
             <p className="text-muted-foreground mb-6">This profile doesn&apos;t exist or has been removed.</p>
             <Link href="/freelancers">
-              <Button className="rounded-full gradient-primary text-primary-foreground shadow-md">
+              <Button className="rounded-full gradient-primary shadow-md">
                 Browse Freelancers
               </Button>
             </Link>
@@ -161,7 +161,7 @@ export default function FreelancerProfilePage() {
               <div className="flex flex-wrap gap-2 sm:flex-shrink-0">
                 <FavoriteButton targetType="freelancer" targetId={freelancer.userId} />
                 {user?.role === 'employer' && (
-                  <Button asChild className="rounded-full gradient-primary text-primary-foreground shadow-md">
+                  <Button asChild className="rounded-full gradient-primary shadow-md">
                     <Link href={`/dashboard/employer/messages?recipientId=${freelancer.userId}`}>
                       <Send className="w-4 h-4 mr-2" />
                       Contact
@@ -276,7 +276,7 @@ export default function FreelancerProfilePage() {
               <div className="rounded-3xl bg-card border border-border/80 p-6 shadow-md shadow-black/5">
                 <h3 className="text-sm font-bold text-foreground mb-4">Quick Actions</h3>
                 {user?.role === 'employer' ? (
-                  <Button asChild className="w-full rounded-full gradient-primary text-primary-foreground shadow-md">
+                  <Button asChild className="w-full rounded-full gradient-primary shadow-md">
                     <Link href={`/dashboard/employer/messages?recipientId=${freelancer.userId}`}>
                       <Send className="w-4 h-4 mr-2" />
                       Send Message

@@ -101,20 +101,15 @@ export function normalizeAuthUser(user: AuthApiUser): User {
   };
 }
 
-export function getApiErrorMessage(error: unknown, fallback: string): string {
-  if (!isRecord(error) || !isRecord(error.response)) return fallback;
-
-  const data = error.response.data;
-  if (!isRecord(data)) return fallback;
-
-  if (typeof data.error === 'string' && data.error.trim()) return data.error;
-  if (typeof data.message === 'string' && data.message.trim()) return data.message;
-  if (!isRecord(data.error)) return fallback;
-
-  return typeof data.error.message === 'string' && data.error.message.trim()
-    ? data.error.message
-    : fallback;
-}
+/**
+ * Re-exported from `error-messages.ts`, which now owns all failure copy.
+ *
+ * It lived here for historical reasons while 38 modules imported it from an
+ * auth-named file. Prefer `describeFailure` for new code: this helper returns
+ * the backend string verbatim, which is right for validation errors and wrong
+ * for a 5xx stack trace.
+ */
+export { getApiErrorMessage } from './error-messages.ts';
 
 export function getRegistrationFormError(
   password: string,

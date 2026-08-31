@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { adminApi } from '@/lib/api';
 import type { AdminUser, UserRole } from '@/types';
 import { toast } from 'sonner';
+import { reportLoadFailure } from '@/lib/report-failure';
 import { Users, Search, Ban, UserCheck, ShieldCheck } from 'lucide-react';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -32,19 +33,27 @@ export default function UsersPage() {
   const [pendingActionId, setPendingActionId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    try {
-      const { data } = await adminApi.getUsers();
-      setUsers(data.users);
-    } catch {
-      toast.error('Failed to load users');
-    } finally {
-      setLoading(false);
-    }
+    const { data } = await adminApi.getUsers();
+    setUsers(data.users);
   }, []);
 
+  // Reported here rather than inside the loader so the toast's Retry can
+  // call it again; a self-reference inside the callback is not allowed.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    load();
+    let active = true;
+    function run() {
+      load()
+        .catch((error) => {
+          if (active) reportLoadFailure(error, 'users', run);
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+    }
+    run();
+    return () => {
+      active = false;
+    };
   }, [load]);
 
   const handleSuspend = async (user: AdminUser) => {

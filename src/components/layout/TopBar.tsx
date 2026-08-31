@@ -153,7 +153,7 @@ export function TopBar() {
               className="flex h-9 cursor-pointer items-center gap-2 rounded-md px-2 outline-none transition-colors duration-fast hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
             >
               <Avatar className="size-7">
-                <AvatarFallback className="text-xs gradient-primary text-primary-foreground">{initials}</AvatarFallback>
+                <AvatarFallback className="text-xs gradient-primary">{initials}</AvatarFallback>
               </Avatar>
               <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
             </DropdownMenuTrigger>

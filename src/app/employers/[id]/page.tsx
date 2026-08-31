@@ -158,7 +158,7 @@ export default function EmployerProfilePage() {
                 </div>
 
                 {user?.role === 'freelancer' && (
-                  <Button asChild className="gradient-primary text-primary-foreground shadow-md shrink-0 w-full sm:w-auto">
+                <Button asChild className="gradient-primary shadow-md shrink-0 w-full sm:w-auto">
                     <Link
                       href={
                         employerId || profile?.userId || profile?.id
