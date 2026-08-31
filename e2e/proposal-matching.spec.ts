@@ -113,5 +113,5 @@ test('freelancer generates tailored AI proposal and submits it', async ({ page }
 
   // Submit proposal
   await page.getByRole('button', { name: 'Submit proposal' }).click();
-  await expect(page.getByText('Proposal submitted successfully!')).toBeVisible();
+  await expect(page.getByText('Proposal submitted.', { exact: true })).toBeVisible();
 });
