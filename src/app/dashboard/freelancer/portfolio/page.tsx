@@ -57,9 +57,9 @@ export default function PortfolioPage() {
     if (!currentUser) return;
     try {
       const { data } = await portfolioApi.getByFreelancer(currentUser.id);
-      setItems(data);
-    } catch {
-      toast.error('Failed to load portfolio');
+      setItems(Array.isArray(data) ? data : []);
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Failed to load portfolio'));
     } finally {
       setLoading(false);
     }
