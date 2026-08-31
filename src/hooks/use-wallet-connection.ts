@@ -57,7 +57,7 @@ export function useWalletConnection() {
       if (!activeAccount) {
         setWallet(null);
         if (user) setUser({ ...user, walletAddress: '' });
-      } else if (activeAccount.toLowerCase() !== walletAddress.toLowerCase()) {
+      } else if (!walletAddress || activeAccount.toLowerCase() !== walletAddress.toLowerCase()) {
         void authApi.updateWallet(activeAccount).then(({ data }) => {
           if (user) setUser({ ...user, walletAddress: data.walletAddress });
           void refreshBalance();
@@ -84,7 +84,7 @@ export function useWalletConnection() {
       window.ethereum?.removeListener?.('accountsChanged', handleAccountsChanged);
       window.ethereum?.removeListener?.('chainChanged', handleChainChanged);
     };
-  }, [walletAddress, refreshBalance, user, setUser]);
+  }, [wallet?.address, walletAddress, refreshBalance, user, setUser]);
 
   const connect = useCallback(async () => {
     if (typeof window === 'undefined') return null;

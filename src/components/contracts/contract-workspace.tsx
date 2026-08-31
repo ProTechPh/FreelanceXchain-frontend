@@ -27,7 +27,6 @@ import { formatFileSize, safeAttachmentUrl } from '@/lib/attachment-presentation
 import { AttachmentPreviewDialog, type AttachmentPreviewTarget } from '@/components/ui/attachment-preview-dialog';
 import { getTransactionDetailRoute } from '@/lib/transaction-view';
 import { validateReviewDraft, type ReviewDraft } from '@/lib/review-form';
-import { deployEscrowFromWallet } from '@/lib/wallet';
 import { useAuthStore } from '@/stores/authStore';
 import type { Contract, ContractFundInfo, ContractPaymentStatus, Dispute, Milestone, RefundRequest, RushUpgradeRequest, Transaction, UserRole } from '@/types';
 import { ContractNegotiationPanel } from '@/components/contracts/contract-negotiation-panel';
