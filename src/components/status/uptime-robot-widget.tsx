@@ -48,7 +48,6 @@ export function UptimeRobotWidget() {
 
   const fetchStatus = useCallback(async (isManual = false) => {
     if (isManual) setRefreshing(true);
-    else setLoading(true);
     setError(null);
 
     try {
@@ -75,12 +74,41 @@ export function UptimeRobotWidget() {
   }, []);
 
   useEffect(() => {
-    fetchStatus();
+    let active = true;
+    const loadInitial = async () => {
+      try {
+        const res = await fetch(UPTIME_ROBOT_API, {
+          headers: { Accept: 'application/json' },
+          cache: 'no-store',
+        });
+        if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+        const json: ApiResponse = await res.json();
+        if (active && json.status === 'ok' && Array.isArray(json.data) && json.data.length > 0) {
+          setData(json.data[0] ?? null);
+          setStatistics(json.statistics ?? null);
+          setLastUpdated(new Date());
+        }
+      } catch (err) {
+        if (active) {
+          setError(err instanceof Error ? err.message : 'Failed to connect to UptimeRobot');
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
+    void loadInitial();
+
     // Auto-refresh every 60 seconds
     const interval = setInterval(() => {
-      fetchStatus(true);
+      void fetchStatus(true);
     }, 60000);
-    return () => clearInterval(interval);
+
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
   }, [fetchStatus]);
 
   const uptime90d = data?.['90dRatio']?.ratio ? `${parseFloat(data['90dRatio'].ratio).toFixed(2)}%` : '99.98%';

@@ -94,8 +94,8 @@ export function ComponentServicesList() {
   const [loading, setLoading] = useState(false);
   const [lastCheck, setLastCheck] = useState<Date | null>(null);
 
-  const fetchComponentStatus = useCallback(async () => {
-    setLoading(true);
+  const probeServices = useCallback(async (showLoading = false) => {
+    if (showLoading) setLoading(true);
     try {
       const res = await fetch('/api/status/components', { cache: 'no-store' });
       if (res.ok) {
@@ -108,16 +108,37 @@ export function ComponentServicesList() {
     } catch {
       // Keep optimistic initial data if fetch encounters network error
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchComponentStatus();
-    // Auto-probe every 45 seconds
-    const interval = setInterval(fetchComponentStatus, 45000);
-    return () => clearInterval(interval);
-  }, [fetchComponentStatus]);
+    let active = true;
+    const loadInitial = async () => {
+      try {
+        const res = await fetch('/api/status/components', { cache: 'no-store' });
+        if (res.ok && active) {
+          const json = await res.json();
+          if (Array.isArray(json.services) && json.services.length > 0) {
+            setServices(json.services);
+            setLastCheck(new Date());
+          }
+        }
+      } catch {
+        // Keep initial
+      }
+    };
+    void loadInitial();
+
+    const interval = setInterval(() => {
+      void probeServices(false);
+    }, 45000);
+
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [probeServices]);
 
   return (
     <section className="mx-auto max-w-5xl px-6 lg:px-8 mb-16">
@@ -140,7 +161,7 @@ export function ComponentServicesList() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={fetchComponentStatus}
+            onClick={() => void probeServices(true)}
             disabled={loading}
             className="h-8 rounded-full text-xs text-muted-foreground hover:text-foreground px-3"
             aria-label="Probe services now"

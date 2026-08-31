@@ -157,7 +157,7 @@ export async function GET() {
           latencyMs: probeResult.latencyMs,
           details: probeResult.details,
         };
-      } catch (err) {
+      } catch {
         return {
           id: probe.id,
           name: probe.name,

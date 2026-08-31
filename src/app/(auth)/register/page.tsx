@@ -43,6 +43,7 @@ export default function RegisterPage() {
         return;
       }
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination
       window.location.href = `${apiUrl}/auth/oauth/${provider}`;
     } catch (error) {
       const msg = getApiErrorMessage(error, 'Too many sign-in attempts. Please try again later.');
