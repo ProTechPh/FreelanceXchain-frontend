@@ -6,6 +6,10 @@ allowBuilds:
 # postcss needs an override rather than a lockfile refresh because next pins it
 # to an exact 8.4.31. Drop entries here once upstream ships the bumps.
 overrides:
+  # libvips CVE-2026-33327/33328/35590/35591. next declares sharp ^0.34.5, but
+  # the fix only exists in 0.35.x, so this override is intentionally outside
+  # next's declared range. Remove once next widens its range.
+  sharp@0: ^0.35.3
   postcss@8: ^8.5.23
   nanoid@3: ^3.3.18
   js-yaml@4: ^4.3.1
