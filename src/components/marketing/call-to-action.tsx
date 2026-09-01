@@ -28,7 +28,7 @@ function CallToAction() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.3 }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="relative isolate overflow-hidden rounded-3xl border border-gradient-foreground/10 bg-gradient-to-br from-gradient-from via-gradient-via to-gradient-to p-8 text-center text-gradient-foreground shadow-2xl sm:p-14"
+          className="relative isolate overflow-hidden rounded-3xl border border-gradient-foreground/10 bg-gradient-to-br from-primary-active via-primary to-primary-hover dark:from-gradient-from dark:via-gradient-via dark:to-gradient-to p-8 text-center text-gradient-foreground shadow-2xl sm:p-14"
         >
           {/* Controlled highlights keep the gradient dimensional without washing out its content. */}
           <div className="pointer-events-none absolute -right-28 -top-32 size-80 rounded-full bg-gradient-foreground/10 blur-3xl" />
@@ -36,7 +36,7 @@ function CallToAction() {
           <div className="pointer-events-none absolute inset-x-12 top-0 h-px bg-gradient-to-r from-transparent via-gradient-foreground/40 to-transparent" />
 
           {/* Badge */}
-          <div className="mb-6 inline-flex items-center gap-1.5 rounded-full border border-gradient-foreground/25 bg-gradient-foreground/10 px-3.5 py-1.5 text-xs font-bold text-gradient-foreground backdrop-blur-xs">
+          <div className="mb-6 inline-flex items-center gap-1.5 rounded-full border border-gradient-foreground/30 bg-gradient-foreground/5 px-3.5 py-1.5 text-xs font-bold text-gradient-foreground backdrop-blur-xs">
             <Sparkle className="size-3.5 fill-current text-primary-subtle dark:text-primary-active" aria-hidden="true" />
             <span>Decentralized Freelance Economy</span>
           </div>
@@ -47,7 +47,7 @@ function CallToAction() {
             <span className="text-primary-subtle dark:text-primary-active">Get started with smart escrow today.</span>
           </h2>
 
-          <p className="mx-auto mt-3 max-w-xl break-words text-xs font-normal leading-relaxed text-gradient-foreground/85 sm:mt-4 sm:text-base">
+          <p className="mx-auto mt-3 max-w-xl break-words text-xs font-normal leading-relaxed text-gradient-foreground/95 sm:mt-4 sm:text-base">
             Join verified talent and top employers closing milestone contracts with AI speed, portable reputation, and Ethereum smart contract escrow.
           </p>
 
