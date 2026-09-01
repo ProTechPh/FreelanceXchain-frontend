@@ -92,18 +92,96 @@ test('final marketplace CTA uses its high-contrast foreground palette', async ({
 
       return {
         heading: parseColor(getComputedStyle(element).color),
-        expectedHeading: parseColor(
-          rootStyles.getPropertyValue(darkTheme ? '--foreground' : '--primary-foreground').trim(),
-        ),
+        // The CTA sits on its own gradient surface in both themes, so its text
+        // takes --gradient-foreground rather than the page's --foreground.
+        expectedHeading: parseColor(rootStyles.getPropertyValue('--gradient-foreground').trim()),
         accent: accent ? parseColor(getComputedStyle(accent).color) : [],
         expectedAccent: parseColor(
-          rootStyles.getPropertyValue(darkTheme ? '--primary' : '--primary-subtle').trim(),
+          rootStyles.getPropertyValue(darkTheme ? '--primary-active' : '--primary-subtle').trim(),
         ),
       };
     });
 
     expect(colors.heading).toEqual(colors.expectedHeading);
     expect(colors.accent).toEqual(colors.expectedAccent);
+
+    // Token identity alone let this section ship unreadable once: the heading
+    // used a correct token while the badge, buttons and trust row rendered
+    // near-black on a dark card. Measure what is actually painted instead.
+    const underContrast = await heading.evaluate((element) => {
+      const card = element.closest('div.relative.isolate') as HTMLElement;
+      const canvas = document.createElement('canvas');
+      canvas.width = 1;
+      canvas.height = 1;
+      const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
+
+      // Painting through canvas resolves every colour space the stylesheet can
+      // produce - oklab() alpha tiers included - and composites translucent
+      // layers exactly as the compositor does.
+      const paint = (layers: string[]) => {
+        ctx.clearRect(0, 0, 1, 1);
+        for (const layer of layers) {
+          ctx.fillStyle = layer;
+          ctx.fillRect(0, 0, 1, 1);
+        }
+        return Array.from(ctx.getImageData(0, 0, 1, 1).data).slice(0, 3);
+      };
+
+      const luminance = (rgb: number[]) => {
+        const channel = (value: number) => {
+          const v = value / 255;
+          return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+        };
+        return 0.2126 * channel(rgb[0]) + 0.7152 * channel(rgb[1]) + 0.0722 * channel(rgb[2]);
+      };
+
+      const ratio = (a: number[], b: number[]) => {
+        const [high, low] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+        return (high + 0.05) / (low + 0.05);
+      };
+
+      const stops = getComputedStyle(card).backgroundImage.match(/rgb\([^)]*\)/g) ?? [];
+      const failures: string[] = [];
+
+      card.querySelectorAll('h2, p, span').forEach((node) => {
+        const text = (node.textContent ?? '').trim();
+        // Leaf text only, so a wrapper is not scored using its child's colour.
+        if (!text || node.querySelector('h2, p, span')) return;
+
+        const styles = getComputedStyle(node as HTMLElement);
+        const fontSize = Number.parseFloat(styles.fontSize);
+        const fontWeight = Number(styles.fontWeight) || 400;
+        const isLarge = fontSize >= 24 || (fontSize >= 18.66 && fontWeight >= 700);
+        const required = isLarge ? 3 : 4.5;
+
+        // Every painted background between the text and the card, outermost first.
+        const backgrounds: string[] = [];
+        for (
+          let parent: HTMLElement | null = node as HTMLElement;
+          parent && parent !== card.parentElement;
+          parent = parent.parentElement
+        ) {
+          const background = getComputedStyle(parent).backgroundColor;
+          if (background && background !== 'rgba(0, 0, 0, 0)') backgrounds.unshift(background);
+        }
+
+        // Score against the least favourable gradient stop.
+        let worst = Number.POSITIVE_INFINITY;
+        for (const stop of stops) {
+          const behind = paint([stop, ...backgrounds]);
+          const painted = paint([stop, ...backgrounds, styles.color]);
+          worst = Math.min(worst, ratio(painted, behind));
+        }
+
+        if (worst < required) {
+          failures.push(`"${text.slice(0, 40)}" ${worst.toFixed(2)}:1 (needs ${required}:1)`);
+        }
+      });
+
+      return failures;
+    });
+
+    expect(underContrast, `${colorScheme} CTA text below WCAG AA`).toEqual([]);
   }
 });
 
