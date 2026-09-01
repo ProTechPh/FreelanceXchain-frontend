@@ -36,8 +36,13 @@ reporting:
 2. Click **Report a vulnerability**
 3. Describe the issue, its impact, and the steps to reproduce it
 
+If you do not see a **Report a vulnerability** button, private reporting has
+not been enabled yet. In that case open an issue titled `Security contact
+request` containing **no details of the issue**, and a maintainer will open a
+private channel with you.
+
 Please do **not** open a public issue, pull request, or discussion for a
-security bug.
+security bug, or include details of one in a contact request.
 
 A useful report includes:
 
@@ -53,7 +58,7 @@ A useful report includes:
 | Acknowledgement of your report | 3 business days |
 | Initial assessment and severity | 7 business days |
 | Fix or mitigation for high severity | 30 days |
-| Fix or mitigation for other severity | Next regular release cycle |
+| Fix or mitigation for other severity | Next scheduled deployment |
 
 We will keep you updated as the report progresses, tell you plainly if we
 decide not to act and why, and credit you in the advisory when a fix ships
@@ -65,6 +70,7 @@ Please give us a reasonable chance to ship a fix before disclosing publicly.
 
 This repository runs:
 
-- **CodeQL** static analysis on every push to `main` and every pull request
+- **CodeQL** static analysis, via GitHub default setup rather than a workflow
+  file, on every push to `main` and every pull request
 - **Dependabot** for dependency and security updates
 - **CI** enforcing lint, typecheck, unit, contract, and browser tests
