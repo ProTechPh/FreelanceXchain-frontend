@@ -1,3 +1,13 @@
 allowBuilds:
   sharp: true
   unrs-resolver: true
+
+# Transitive security patches. Each stays inside the parent's major line.
+# postcss needs an override rather than a lockfile refresh because next pins it
+# to an exact 8.4.31. Drop entries here once upstream ships the bumps.
+overrides:
+  postcss@8: ^8.5.23
+  nanoid@3: ^3.3.18
+  js-yaml@4: ^4.3.1
+  brace-expansion@1: ^1.1.16
+  brace-expansion@5: ^5.0.9
