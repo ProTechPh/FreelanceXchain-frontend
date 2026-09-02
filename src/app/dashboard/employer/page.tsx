@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
 import Link from 'next/link';
 import { projectsApi, freelancersApi, reputationApi } from '@/lib/api';
@@ -36,7 +37,8 @@ function initials(name: string): string {
 
 export default function EmployerDashboard() {
   const currentUser = useAuthStore((state) => state.user);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [coreLoading, setCoreLoading] = useState(true);
   const [range, setRange] = useState<RangePresetId>(DEFAULT_RANGE_PRESET);
   const [projects, setProjects] = useState<Project[]>([]);
   const [pendingProposalCount, setPendingProposalCount] = useState(0);
@@ -64,10 +66,15 @@ export default function EmployerDashboard() {
           setProjects(myProjects);
         }
 
+        setCoreLoading(false);
+        setLoading(false);
+
         const openOrActive = myProjects
           .filter((p) => p.status === 'open' || p.status === 'in_progress')
           .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
           .slice(0, 5);
+
+        if (openOrActive.length === 0) return;
 
         const proposalLists = await Promise.all(
           openOrActive.map((p) => projectsApi.getProposals(p.id).then((r) => r.data.items).catch(() => []))
@@ -96,13 +103,14 @@ export default function EmployerDashboard() {
           recent.map(({ proposal, project }, i) => ({
             proposal,
             projectTitle: project.title,
-            freelancerName: details[i].profile?.data.name ?? 'Freelancer',
-            rating: details[i].score?.data.averageRating ?? null,
+            freelancerName: details[i]?.profile?.data.name ?? 'Freelancer',
+            rating: details[i]?.score?.data.averageRating ?? null,
           }))
         );
       } catch (error) {
         reportLoadFailure(error, 'your dashboard', () => void load());
       } finally {
+        setCoreLoading(false);
         setLoading(false);
       }
     }
@@ -125,6 +133,7 @@ export default function EmployerDashboard() {
       icon: FolderOpen,
       color: 'text-primary',
       bg: 'bg-primary/10',
+      loading: coreLoading,
     },
     {
       title: range === 'all' ? 'Total Spent' : `Spent · ${getRangeLabel(range)}`,
@@ -132,6 +141,7 @@ export default function EmployerDashboard() {
       icon: DollarSign,
       color: 'text-success',
       bg: 'bg-success-subtle',
+      loading: totalSpent === null && completedContractCount === null,
     },
     {
       title: 'Pending Proposals',
@@ -139,6 +149,7 @@ export default function EmployerDashboard() {
       icon: FileText,
       color: 'text-cyan',
       bg: 'bg-cyan/10',
+      loading: coreLoading,
     },
     {
       title: 'Completed Contracts',
@@ -146,6 +157,7 @@ export default function EmployerDashboard() {
       icon: Briefcase,
       color: 'text-warning',
       bg: 'bg-warning-subtle',
+      loading: completedContractCount === null,
     },
   ];
 
@@ -184,7 +196,11 @@ export default function EmployerDashboard() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{stat.title}</p>
-                  <p className="text-2xl font-bold mt-1">{stat.value}</p>
+                  {stat.loading ? (
+                    <Skeleton className="h-7 w-20 mt-1.5 rounded-md" />
+                  ) : (
+                    <p className="text-2xl font-bold mt-1">{stat.value}</p>
+                  )}
                 </div>
                 <div className={`w-10 h-10 rounded-lg ${stat.bg} flex items-center justify-center`}>
                   <stat.icon className={`w-5 h-5 ${stat.color}`} />
@@ -208,50 +224,56 @@ export default function EmployerDashboard() {
               </Link>
             </CardHeader>
             <CardContent className="space-y-4">
-              {activeProjects.length === 0 && (
+              {coreLoading ? (
+                <div className="space-y-3" role="status" aria-label="Loading active projects">
+                  <Skeleton className="h-24 w-full rounded-xl" />
+                  <Skeleton className="h-24 w-full rounded-xl" />
+                </div>
+              ) : activeProjects.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-8 text-center">
                   No active projects yet — post one to start receiving proposals
                 </p>
+              ) : (
+                activeProjects.map((project) => {
+                  const milestones = project.milestones ?? [];
+                  const completedCount = milestones.filter((m) => m.status === 'completed').length;
+                  const progress = milestones.length > 0 ? Math.round((completedCount / milestones.length) * 100) : 0;
+                  return (
+                    <Link
+                      key={project.id}
+                      href={`/dashboard/employer/projects/${project.id}`}
+                      className="block rounded-xl border border-border bg-secondary/50 p-4 transition-all hover:border-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h3 className="font-medium">{project.title}</h3>
+                          <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
+                            <span>{project.proposalCount ?? 0} proposals</span>
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" /> {new Date(project.deadline).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold text-primary">${project.budget.toLocaleString()}</p>
+                          <StatusBadge status={project.status} domain="project" />
+                        </div>
+                      </div>
+                      {project.status === 'in_progress' && milestones.length > 0 && (
+                        <div>
+                          <div className="flex items-center justify-between text-xs mb-1">
+                            <span className="text-muted-foreground">Progress</span>
+                            <span>{progress}%</span>
+                          </div>
+                          <div className="h-1.5 bg-background rounded-full overflow-hidden">
+                            <div className="h-full gradient-primary rounded-full transition-all" style={{ width: `${progress}%` }} />
+                          </div>
+                        </div>
+                      )}
+                    </Link>
+                  );
+                })
               )}
-              {activeProjects.map((project) => {
-                const milestones = project.milestones ?? [];
-                const completedCount = milestones.filter((m) => m.status === 'completed').length;
-                const progress = milestones.length > 0 ? Math.round((completedCount / milestones.length) * 100) : 0;
-                return (
-                  <Link
-                    key={project.id}
-                    href={`/dashboard/employer/projects/${project.id}`}
-                    className="block rounded-xl border border-border bg-secondary/50 p-4 transition-all hover:border-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="font-medium">{project.title}</h3>
-                        <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
-                          <span>{project.proposalCount ?? 0} proposals</span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" /> {new Date(project.deadline).toLocaleDateString()}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold text-primary">${project.budget.toLocaleString()}</p>
-                        <StatusBadge status={project.status} domain="project" />
-                      </div>
-                    </div>
-                    {project.status === 'in_progress' && milestones.length > 0 && (
-                      <div>
-                        <div className="flex items-center justify-between text-xs mb-1">
-                          <span className="text-muted-foreground">Progress</span>
-                          <span>{progress}%</span>
-                        </div>
-                        <div className="h-1.5 bg-background rounded-full overflow-hidden">
-                          <div className="h-full gradient-primary rounded-full transition-all" style={{ width: `${progress}%` }} />
-                        </div>
-                      </div>
-                    )}
-                  </Link>
-                );
-              })}
             </CardContent>
           </Card>
         </div>
@@ -267,27 +289,33 @@ export default function EmployerDashboard() {
             </Link>
           </CardHeader>
           <CardContent className="space-y-3">
-            {recentProposals.length === 0 && (
-              <p className="text-sm text-muted-foreground py-8 text-center">No proposals yet</p>
-            )}
-            {recentProposals.map(({ proposal, projectTitle, freelancerName, rating }) => (
-              <div key={proposal.id} className="p-3 rounded-xl bg-secondary/50 border border-border">
-                <div className="flex items-center gap-3 mb-2">
-                <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center text-xs font-bold">
-                    {initials(freelancerName)}
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">{freelancerName}</p>
-                    <p className="text-xs text-muted-foreground">{projectTitle}</p>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span className="font-medium text-primary">{proposal.proposedRate.toLocaleString()} ETH</span>
-                  {rating !== null && <span>★ {rating.toFixed(1)}</span>}
-                  <span>{relativeTime(proposal.createdAt)}</span>
-                </div>
+            {coreLoading ? (
+              <div className="space-y-3" role="status" aria-label="Loading recent proposals">
+                <Skeleton className="h-16 w-full rounded-xl" />
+                <Skeleton className="h-16 w-full rounded-xl" />
               </div>
-            ))}
+            ) : recentProposals.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-8 text-center">No proposals yet</p>
+            ) : (
+              recentProposals.map(({ proposal, projectTitle, freelancerName, rating }) => (
+                <div key={proposal.id} className="p-3 rounded-xl bg-secondary/50 border border-border">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center text-xs font-bold">
+                      {initials(freelancerName)}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">{freelancerName}</p>
+                      <p className="text-xs text-muted-foreground">{projectTitle}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span className="font-medium text-primary">{proposal.proposedRate.toLocaleString()} ETH</span>
+                    {rating !== null && <span>★ {rating.toFixed(1)}</span>}
+                    <span>{relativeTime(proposal.createdAt)}</span>
+                  </div>
+                </div>
+              ))
+            )}
           </CardContent>
         </Card>
       </div>

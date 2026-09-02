@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import {
   contractsApi,
@@ -54,7 +55,9 @@ interface RecommendedProjectView {
 
 export default function FreelancerDashboard() {
   const currentUser = useAuthStore((state) => state.user);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [coreLoading, setCoreLoading] = useState(true);
+  const [recommendedLoading, setRecommendedLoading] = useState(true);
   const [range, setRange] = useState<RangePresetId>(DEFAULT_RANGE_PRESET);
   const [averageRating, setAverageRating] = useState<number | null>(null);
   const [totalRatings, setTotalRatings] = useState<number>(0);
@@ -62,6 +65,25 @@ export default function FreelancerDashboard() {
   const [pendingProposalCount, setPendingProposalCount] = useState(0);
   const [recentProposals, setRecentProposals] = useState<RecentProposalView[]>([]);
   const [recommended, setRecommended] = useState<RecommendedProjectView[]>([]);
+
+  const projectCacheRef = useRef<Map<string, Project | null>>(new Map());
+
+  const fetchProjectDetails = async (projectIds: string[]): Promise<Map<string, Project | null>> => {
+    const missing = projectIds.filter((id) => !projectCacheRef.current.has(id));
+    if (missing.length > 0) {
+      await Promise.all(
+        missing.map(async (id) => {
+          try {
+            const res = await projectsApi.get(id);
+            projectCacheRef.current.set(id, res.data);
+          } catch {
+            projectCacheRef.current.set(id, null);
+          }
+        })
+      );
+    }
+    return projectCacheRef.current;
+  };
 
   // Analytics is the one resource on this page that moved to React Query: it is the
   // only one that refetches on a user action (the range filter), and the API caches
@@ -74,16 +96,18 @@ export default function FreelancerDashboard() {
 
   useEffect(() => {
     if (!currentUser) return;
+    let active = true;
 
-    const load = async () => {
+    // 1. Fast Load Core Dashboard Data (Contracts, Proposals, Reputation)
+    const loadCore = async () => {
       try {
-        const [contractsRes, proposalsRes, recommendationsRes, reputationRes] =
-          await Promise.allSettled([
-            contractsApi.list(),
-            proposalsApi.getMine(),
-            matchingApi.getProjectRecommendations(3),
-            reputationApi.getScore(currentUser.id),
-          ]);
+        const [contractsRes, proposalsRes, reputationRes] = await Promise.allSettled([
+          contractsApi.list(),
+          proposalsApi.getMine(),
+          reputationApi.getScore(currentUser.id),
+        ]);
+
+        if (!active) return;
 
         if (reputationRes.status === 'fulfilled') {
           setAverageRating(reputationRes.value.data.averageRating);
@@ -110,40 +134,65 @@ export default function FreelancerDashboard() {
           recentProposalsList.forEach((p) => projectIdsToFetch.add(p.projectId));
         }
 
-        let recsList: Array<{ projectId: string; matchScore: number; matchedSkills: string[] }> = [];
-        if (recommendationsRes.status === 'fulfilled') {
-          recsList = recommendationsRes.value.data;
-          recsList.forEach((r) => projectIdsToFetch.add(r.projectId));
-        }
-
-        const projectMap = new Map<string, Project | null>();
-        if (projectIdsToFetch.size > 0) {
-          await Promise.all(
-            Array.from(projectIdsToFetch).map(async (projectId) => {
-              try {
-                const res = await projectsApi.get(projectId);
-                projectMap.set(projectId, res.data);
-              } catch {
-                projectMap.set(projectId, null);
-              }
-            })
-          );
-        }
-
+        // Set initial views with cached project info and unblock core loading
         setActiveContracts(
           activeContractsList.map((contract) => ({
             contract,
-            project: projectMap.get(contract.projectId) ?? null,
+            project: projectCacheRef.current.get(contract.projectId) ?? null,
           }))
         );
 
         setRecentProposals(
           recentProposalsList.map((proposal) => ({
             proposal,
-            project: projectMap.get(proposal.projectId) ?? null,
+            project: projectCacheRef.current.get(proposal.projectId) ?? null,
           }))
         );
 
+        setCoreLoading(false);
+        setLoading(false);
+
+        // Enrich project details (titles, milestones) in background
+        if (projectIdsToFetch.size > 0) {
+          const projectMap = await fetchProjectDetails(Array.from(projectIdsToFetch));
+          if (!active) return;
+
+          setActiveContracts(
+            activeContractsList.map((contract) => ({
+              contract,
+              project: projectMap.get(contract.projectId) ?? null,
+            }))
+          );
+
+          setRecentProposals(
+            recentProposalsList.map((proposal) => ({
+              proposal,
+              project: projectMap.get(proposal.projectId) ?? null,
+            }))
+          );
+        }
+      } catch (error) {
+        if (active) reportLoadFailure(error, 'your dashboard', () => void loadCore());
+      } finally {
+        if (active) {
+          setCoreLoading(false);
+          setLoading(false);
+        }
+      }
+    };
+
+    // 2. Asynchronously / Progressively Load AI Recommendations in Background
+    const loadRecommendations = async () => {
+      try {
+        setRecommendedLoading(true);
+        const recommendationsRes = await matchingApi.getProjectRecommendations(3);
+        if (!active) return;
+
+        const recsList = recommendationsRes.data || [];
+        const recProjectIds = recsList.map((r) => r.projectId);
+        const projectMap = await fetchProjectDetails(recProjectIds);
+
+        if (!active) return;
         setRecommended(
           recsList
             .map((r) => ({
@@ -153,14 +202,20 @@ export default function FreelancerDashboard() {
             }))
             .filter((r): r is RecommendedProjectView => r.project !== null)
         );
-      } catch (error) {
-        reportLoadFailure(error, 'your dashboard', () => void load());
+      } catch {
+        // Recommendations are a background enhancement; degrade gracefully without interrupting dashboard
+        if (active) setRecommended([]);
       } finally {
-        setLoading(false);
+        if (active) setRecommendedLoading(false);
       }
     };
 
-    void load();
+    void loadCore();
+    void loadRecommendations();
+
+    return () => {
+      active = false;
+    };
   }, [currentUser]);
 
   if (loading) {
@@ -177,6 +232,7 @@ export default function FreelancerDashboard() {
       icon: DollarSign,
       color: 'text-success',
       bg: 'bg-success-subtle',
+      loading: totalEarnings === null && projectsCompleted === null,
     },
     {
       title: 'Active Contracts',
@@ -185,6 +241,7 @@ export default function FreelancerDashboard() {
       icon: FolderOpen,
       color: 'text-primary',
       bg: 'bg-primary/10',
+      loading: coreLoading,
     },
     {
       title: 'Pending Proposals',
@@ -193,6 +250,7 @@ export default function FreelancerDashboard() {
       icon: FileText,
       color: 'text-cyan',
       bg: 'bg-cyan/10',
+      loading: coreLoading,
     },
     {
       title: 'Reputation Score',
@@ -201,6 +259,7 @@ export default function FreelancerDashboard() {
       icon: Star,
       color: 'text-warning',
       bg: 'bg-warning-subtle',
+      loading: coreLoading,
     },
   ];
 
@@ -239,8 +298,14 @@ export default function FreelancerDashboard() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{stat.title}</p>
-                  <p className="text-2xl font-bold mt-1">{stat.value}</p>
-                  {stat.change && <p className="text-xs text-muted-foreground mt-1">{stat.change}</p>}
+                  {stat.loading ? (
+                    <Skeleton className="h-7 w-20 mt-1.5 rounded-md" />
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold mt-1">{stat.value}</p>
+                      {stat.change && <p className="text-xs text-muted-foreground mt-1">{stat.change}</p>}
+                    </>
+                  )}
                 </div>
                 <div className={`w-10 h-10 rounded-lg ${stat.bg} flex items-center justify-center`}>
                   <stat.icon className={`w-5 h-5 ${stat.color}`} />
@@ -264,49 +329,55 @@ export default function FreelancerDashboard() {
               </Link>
             </CardHeader>
             <CardContent className="space-y-4">
-              {activeContracts.length === 0 && (
+              {coreLoading ? (
+                <div className="space-y-3" role="status" aria-label="Loading active contracts">
+                  <Skeleton className="h-20 w-full rounded-xl" />
+                  <Skeleton className="h-20 w-full rounded-xl" />
+                </div>
+              ) : activeContracts.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-8 text-center">
                   No active contracts yet — browse projects to get started
                 </p>
+              ) : (
+                activeContracts.map(({ contract, project }) => {
+                  const milestones = project?.milestones ?? [];
+                  const completedCount = milestones.filter((m) => m.status === 'completed').length;
+                  const progress = milestones.length > 0 ? Math.round((completedCount / milestones.length) * 100) : 0;
+                  const currentMilestone = milestones.find((m) => m.status !== 'completed');
+                  return (
+                    <Link
+                      key={contract.id}
+                      href={`/dashboard/freelancer/contracts/${contract.id}`}
+                      className="block rounded-xl border border-border bg-secondary/50 p-4 transition-all hover:border-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <p className="font-medium">{project?.title ?? 'Untitled project'}</p>
+                          <p className="text-sm text-muted-foreground">{project?.employer?.name ?? project?.employer?.companyName ?? ''}</p>
+                        </div>
+                        <p className="font-semibold text-primary">${contract.totalAmount.toLocaleString()}</p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between text-xs mb-1">
+                            <span className="text-muted-foreground">{currentMilestone?.title ?? 'All milestones complete'}</span>
+                            <span className="text-muted-foreground">{progress}%</span>
+                          </div>
+                          <div className="h-1.5 bg-background rounded-full overflow-hidden">
+                            <div className="h-full gradient-primary rounded-full transition-all" style={{ width: `${progress}%` }} />
+                          </div>
+                        </div>
+                        {project?.deadline && (
+                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Clock className="w-3 h-3" />
+                            {new Date(project.deadline).toLocaleDateString()}
+                          </div>
+                        )}
+                      </div>
+                    </Link>
+                  );
+                })
               )}
-              {activeContracts.map(({ contract, project }) => {
-                const milestones = project?.milestones ?? [];
-                const completedCount = milestones.filter((m) => m.status === 'completed').length;
-                const progress = milestones.length > 0 ? Math.round((completedCount / milestones.length) * 100) : 0;
-                const currentMilestone = milestones.find((m) => m.status !== 'completed');
-                return (
-                  <Link
-                    key={contract.id}
-                    href={`/dashboard/freelancer/contracts/${contract.id}`}
-                    className="block rounded-xl border border-border bg-secondary/50 p-4 transition-all hover:border-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <p className="font-medium">{project?.title ?? 'Untitled project'}</p>
-                        <p className="text-sm text-muted-foreground">{project?.employer?.name ?? project?.employer?.companyName ?? ''}</p>
-                      </div>
-                      <p className="font-semibold text-primary">${contract.totalAmount.toLocaleString()}</p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between text-xs mb-1">
-                          <span className="text-muted-foreground">{currentMilestone?.title ?? 'All milestones complete'}</span>
-                          <span className="text-muted-foreground">{progress}%</span>
-                        </div>
-                        <div className="h-1.5 bg-background rounded-full overflow-hidden">
-                          <div className="h-full gradient-primary rounded-full transition-all" style={{ width: `${progress}%` }} />
-                        </div>
-                      </div>
-                      {project?.deadline && (
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Clock className="w-3 h-3" />
-                          {new Date(project.deadline).toLocaleDateString()}
-                        </div>
-                      )}
-                    </div>
-                  </Link>
-                );
-              })}
             </CardContent>
           </Card>
         </div>
@@ -322,22 +393,27 @@ export default function FreelancerDashboard() {
             </Link>
           </CardHeader>
           <CardContent className="space-y-3">
-            {recentProposals.length === 0 && (
-              <p className="text-sm text-muted-foreground py-8 text-center">No proposals yet</p>
-            )}
-            {recentProposals.map(({ proposal, project }) => (
-              <div key={proposal.id} className="p-3 rounded-xl bg-secondary/50 border border-border">
-                <div className="flex items-start justify-between mb-2">
-                  <p className="font-medium text-sm">{project?.title ?? 'Untitled project'}</p>
-                  <Badge className={statusColors[proposal.status]}>{proposal.status}</Badge>
-                </div>
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>{proposal.proposedRate.toLocaleString()} ETH</span>
-                  <span>{relativeTime(proposal.createdAt)}</span>
-                </div>
+            {coreLoading ? (
+              <div className="space-y-3" role="status" aria-label="Loading recent proposals">
+                <Skeleton className="h-16 w-full rounded-xl" />
+                <Skeleton className="h-16 w-full rounded-xl" />
               </div>
-            ))}
-          </CardContent>
+            ) : recentProposals.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-8 text-center">No proposals yet</p>
+            ) : (
+              recentProposals.map(({ proposal, project }) => (
+                <div key={proposal.id} className="p-3 rounded-xl bg-secondary/50 border border-border">
+                  <div className="flex items-start justify-between mb-2">
+                    <p className="font-medium text-sm">{project?.title ?? 'Untitled project'}</p>
+                    <Badge className={statusColors[proposal.status]}>{proposal.status}</Badge>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{proposal.proposedRate.toLocaleString()} ETH</span>
+                    <span>{relativeTime(proposal.createdAt)}</span>
+                  </div>
+                </div>
+              ))
+            )}</CardContent>
         </Card>
       </div>
 
@@ -352,7 +428,13 @@ export default function FreelancerDashboard() {
           </Link>
         </CardHeader>
         <CardContent>
-          {recommended.length === 0 ? (
+          {recommendedLoading ? (
+            <div className="grid md:grid-cols-3 gap-4" role="status" aria-label="Loading AI recommendations">
+              <Skeleton className="h-44 rounded-xl" />
+              <Skeleton className="h-44 rounded-xl" />
+              <Skeleton className="h-44 rounded-xl" />
+            </div>
+          ) : recommended.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center space-y-3">
               <p className="text-sm text-muted-foreground">
                 No recommendations yet — add skills to your profile to get AI-matched with projects.

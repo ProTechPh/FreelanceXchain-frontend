@@ -26,6 +26,7 @@ import { reportFailure } from '@/lib/report-failure';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Markdown } from '@/components/ui/markdown';
 import {
   Dialog,
@@ -61,6 +62,7 @@ export default function EmployerProjectProposalsPage() {
   const [profiles, setProfiles] = useState<Record<string, FreelancerProfile | null>>({});
   const [recommendations, setRecommendations] = useState<FreelancerRecommendation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [recommendationsLoading, setRecommendationsLoading] = useState(true);
   const [decision, setDecision] = useState<PendingDecision | null>(null);
   const [updating, setUpdating] = useState(false);
   const [showRecommendations, setShowRecommendations] = useState(true);
@@ -70,28 +72,19 @@ export default function EmployerProjectProposalsPage() {
     if (!projectId) return;
 
     try {
-      const [projectResponse, proposalResponse, recommendationResponse] = await Promise.all([
+      // 1. Fetch core project and proposals first to immediately unblock the UI
+      const [projectResponse, proposalResponse] = await Promise.all([
         projectsApi.get(projectId),
         projectsApi.getProposals(projectId),
-        matchingApi.getFreelancerRecommendations(projectId, 5).catch(() => ({ data: [] as FreelancerRecommendation[] })),
       ]);
       const loadedProposals = proposalResponse.data.items;
-      const loadedRecommendations = recommendationResponse.data;
-      // Deduplicate proposals and recommendations to prevent duplicate key collisions
       const uniqueProposals = loadedProposals.filter(
         (proposal, index, self) => index === self.findIndex((p) => p.id === proposal.id),
       );
-      const uniqueRecommendations = loadedRecommendations.filter(
-        (recommendation, index, self) =>
-          index === self.findIndex((r) => r.freelancerId === recommendation.freelancerId),
-      );
 
-      const freelancerIds = [...new Set([
-        ...uniqueProposals.map((proposal) => proposal.freelancerId),
-        ...uniqueRecommendations.map((recommendation) => recommendation.freelancerId),
-      ])];
-      const profileEntries = await Promise.all(
-        freelancerIds.map(async (freelancerId) => {
+      const proposalFreelancerIds = [...new Set(uniqueProposals.map((p) => p.freelancerId))];
+      const initialProfileEntries = await Promise.all(
+        proposalFreelancerIds.map(async (freelancerId) => {
           try {
             const response = await freelancersApi.getPublicProfile(freelancerId);
             return [freelancerId, response.data] as const;
@@ -103,11 +96,42 @@ export default function EmployerProjectProposalsPage() {
 
       setProject(projectResponse.data);
       setProposals(uniqueProposals);
-      setRecommendations(uniqueRecommendations);
-      setProfiles(Object.fromEntries(profileEntries));
+      setProfiles((prev) => ({ ...prev, ...Object.fromEntries(initialProfileEntries) }));
+      setLoading(false);
+
+      // 2. Fetch recommendations progressively in background
+      setRecommendationsLoading(true);
+      try {
+        const recRes = await matchingApi.getFreelancerRecommendations(projectId, 5);
+        const uniqueRecs = (recRes.data || []).filter(
+          (rec, index, self) => index === self.findIndex((r) => r.freelancerId === rec.freelancerId),
+        );
+        setRecommendations(uniqueRecs);
+
+        const missingRecIds = uniqueRecs
+          .map((r) => r.freelancerId)
+          .filter((id) => !proposalFreelancerIds.includes(id));
+
+        if (missingRecIds.length > 0) {
+          const recProfileEntries = await Promise.all(
+            missingRecIds.map(async (freelancerId) => {
+              try {
+                const response = await freelancersApi.getPublicProfile(freelancerId);
+                return [freelancerId, response.data] as const;
+              } catch {
+                return [freelancerId, null] as const;
+              }
+            }),
+          );
+          setProfiles((prev) => ({ ...prev, ...Object.fromEntries(recProfileEntries) }));
+        }
+      } catch {
+        setRecommendations([]);
+      } finally {
+        setRecommendationsLoading(false);
+      }
     } catch (error) {
       reportFailure(error, 'load the proposals for this project');
-    } finally {
       setLoading(false);
     }
   }, [projectId]);
@@ -190,7 +214,7 @@ export default function EmployerProjectProposalsPage() {
       </div>
 
       {/* Recommended Talent (AI Matches) */}
-      {recommendations.length > 0 && (
+      {(recommendationsLoading || recommendations.length > 0) && (
         <Card className="border border-primary/20 bg-primary/5 shadow-xs overflow-hidden">
           <CardHeader className="pb-3 border-b border-primary/10 bg-primary/10 flex flex-row items-center justify-between gap-2 space-y-0">
             <div className="flex items-center gap-2.5">
@@ -201,7 +225,7 @@ export default function EmployerProjectProposalsPage() {
                 <CardTitle className="text-base font-bold text-foreground flex items-center gap-2">
                   <span>Recommended talent</span>
                   <Badge variant="secondary" className="text-3xs bg-primary/10 text-primary border-primary/20">
-                    {recommendations.length} Available
+                    {recommendationsLoading ? 'Matching…' : `${recommendations.length} Available`}
                   </Badge>
                 </CardTitle>
                 <p className="text-xs text-muted-foreground">
@@ -233,84 +257,91 @@ export default function EmployerProjectProposalsPage() {
 
           {showRecommendations && (
             <CardContent className="pt-4">
-              <div className="grid gap-3 lg:grid-cols-2">
-                {recommendations.map((recommendation, idx) => {
-                  const profile = profiles[recommendation.freelancerId];
-                  const name = profile?.name || `Freelancer ${recommendation.freelancerId.slice(0, 8)}`;
-                  const initials = name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || 'FL';
+              {recommendationsLoading ? (
+                <div className="grid gap-3 lg:grid-cols-2" role="status" aria-label="Loading talent recommendations">
+                  <Skeleton className="h-44 rounded-xl" />
+                  <Skeleton className="h-44 rounded-xl" />
+                </div>
+              ) : (
+                <div className="grid gap-3 lg:grid-cols-2">
+                  {recommendations.map((recommendation, idx) => {
+                    const profile = profiles[recommendation.freelancerId];
+                    const name = profile?.name || `Freelancer ${recommendation.freelancerId.slice(0, 8)}`;
+                    const initials = name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() || 'FL';
 
-                  return (
-                    <div
-                      key={`${recommendation.freelancerId}-${idx}`}
-                      className="rounded-xl border border-border/80 bg-card p-4 shadow-xs flex flex-col justify-between space-y-3"
-                    >
-                      <div className="space-y-2.5">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div className="size-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-bold text-sm flex items-center justify-center shrink-0 shadow-sm">
-                              {initials}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="font-semibold text-sm text-foreground truncate">{name}</p>
-                              <div className="flex items-center gap-2 mt-0.5">
-                                {recommendation.totalRatings && recommendation.totalRatings > 0 ? (
-                                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                    <Star className="size-3 text-warning fill-warning" />
-                                    <span className="font-semibold text-foreground">
-                                      {(recommendation.averageRating ?? (recommendation.reputationScore / 20)).toFixed(1)}
+                    return (
+                      <div
+                        key={`${recommendation.freelancerId}-${idx}`}
+                        className="rounded-xl border border-border/80 bg-card p-4 shadow-xs flex flex-col justify-between space-y-3"
+                      >
+                        <div className="space-y-2.5">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="size-10 rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-bold text-sm flex items-center justify-center shrink-0 shadow-sm">
+                                {initials}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-semibold text-sm text-foreground truncate">{name}</p>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  {recommendation.totalRatings && recommendation.totalRatings > 0 ? (
+                                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                      <Star className="size-3 text-warning fill-warning" />
+                                      <span className="font-semibold text-foreground">
+                                        {(recommendation.averageRating ?? (recommendation.reputationScore / 20)).toFixed(1)}
+                                      </span>
+                                      <span>({recommendation.totalRatings} review{recommendation.totalRatings === 1 ? '' : 's'})</span>
                                     </span>
-                                    <span>({recommendation.totalRatings} review{recommendation.totalRatings === 1 ? '' : 's'})</span>
-                                  </span>
-                                ) : recommendation.reputationScore > 0 ? (
-                                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                    <Star className="size-3 text-warning fill-warning" />
-                                    <span className="font-semibold text-foreground">{(recommendation.reputationScore / 20).toFixed(1)}</span>
-                                    <span>({Math.round(recommendation.reputationScore)}% rep)</span>
-                                  </span>
-                                ) : (
-                                  <Badge variant="secondary" className="text-3xs bg-secondary/60 text-muted-foreground py-0">
-                                    New Talent · Unrated
-                                  </Badge>
-                                )}
+                                  ) : recommendation.reputationScore > 0 ? (
+                                    <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                      <Star className="size-3 text-warning fill-warning" />
+                                      <span className="font-semibold text-foreground">{(recommendation.reputationScore / 20).toFixed(1)}</span>
+                                      <span>({Math.round(recommendation.reputationScore)}% rep)</span>
+                                    </span>
+                                  ) : (
+                                    <Badge variant="secondary" className="text-3xs bg-secondary/60 text-muted-foreground py-0">
+                                      New Talent · Unrated
+                                    </Badge>
+                                  )}
+                                </div>
                               </div>
                             </div>
+
+                            <Badge className="bg-success-subtle text-success border border-success/30 font-semibold text-xs shrink-0">
+                              {Math.round(recommendation.combinedScore)}% fit
+                            </Badge>
                           </div>
 
-                          <Badge className="bg-success-subtle text-success border border-success/30 font-semibold text-xs shrink-0">
-                            {Math.round(recommendation.combinedScore)}% fit
-                          </Badge>
+                          {/* Matched Skills */}
+                          <div className="flex flex-wrap gap-1.5">
+                            {recommendation.matchedSkills.map((skill, skillIdx) => (
+                              <Badge key={`${skill}-${skillIdx}`} variant="secondary" className="text-3xs px-2 py-0.5">
+                                {skill}
+                              </Badge>
+                            ))}
+                          </div>
+
+                          {/* AI Match Reasoning */}
+                          <div className="p-2.5 rounded-lg bg-secondary/30 border border-border/50 text-xs text-muted-foreground leading-relaxed">
+                            <Markdown content={recommendation.reasoning} />
+                          </div>
                         </div>
 
-                        {/* Matched Skills */}
-                        <div className="flex flex-wrap gap-1.5">
-                          {recommendation.matchedSkills.map((skill, skillIdx) => (
-                            <Badge key={`${skill}-${skillIdx}`} variant="secondary" className="text-3xs px-2 py-0.5">
-                              {skill}
-                            </Badge>
-                          ))}
-                        </div>
-
-                        {/* AI Match Reasoning */}
-                        <div className="p-2.5 rounded-lg bg-secondary/30 border border-border/50 text-xs text-muted-foreground leading-relaxed">
-                          <Markdown content={recommendation.reasoning} />
+                        {/* Card Actions */}
+                        <div className="flex items-center gap-2 pt-2 border-t border-border/60">
+                          <Button asChild size="sm" variant="outline" className="text-xs h-8 flex-1">
+                            <Link href={`/freelancers/${recommendation.freelancerId}`}>View profile</Link>
+                          </Button>
+                          <Button asChild size="sm" variant="ghost" className="text-xs h-8 flex-1">
+                            <Link href={getDirectMessageRoute('employer', recommendation.freelancerId)}>
+                              <MessageSquare className="size-3.5 mr-1 text-primary" /> Message
+                            </Link>
+                          </Button>
                         </div>
                       </div>
-
-                      {/* Card Actions */}
-                      <div className="flex items-center gap-2 pt-2 border-t border-border/60">
-                        <Button asChild size="sm" variant="outline" className="text-xs h-8 flex-1">
-                          <Link href={`/freelancers/${recommendation.freelancerId}`}>View profile</Link>
-                        </Button>
-                        <Button asChild size="sm" variant="ghost" className="text-xs h-8 flex-1">
-                          <Link href={getDirectMessageRoute('employer', recommendation.freelancerId)}>
-                            <MessageSquare className="size-3.5 mr-1 text-primary" /> Message
-                          </Link>
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
             </CardContent>
           )}
         </Card>
