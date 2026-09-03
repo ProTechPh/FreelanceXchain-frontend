@@ -96,6 +96,8 @@ export function normalizeAuthUser(user: AuthApiUser): User {
     role: user.role,
     walletAddress: user.walletAddress,
     ...(user.kycStatus ? { kycStatus: user.kycStatus } : {}),
+    ...(typeof user.emailVerification === 'boolean' ? { emailVerification: user.emailVerification } : {}),
+    ...(user.authProvider ? { authProvider: user.authProvider } : {}),
     createdAt: user.createdAt,
     updatedAt: user.createdAt,
   };

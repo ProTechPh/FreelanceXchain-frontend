@@ -5,6 +5,7 @@ import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
+import { EmailVerificationGate } from './EmailVerificationGate';
 import { useAuthStore } from '@/stores/authStore';
 import type { UserRole } from '@/types';
 
@@ -19,6 +20,7 @@ export function DashboardLayout({ children, allowedRoles }: DashboardLayoutProps
   const router = useRouter();
 
   const isWrongRole = !!(allowedRoles && user && !allowedRoles.includes(user.role));
+  const isEmailUnverified = !!(user && user.role !== 'admin' && user.emailVerification === false);
 
   useEffect(() => {
     if (hasHydrated) {
@@ -56,7 +58,10 @@ export function DashboardLayout({ children, allowedRoles }: DashboardLayoutProps
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen relative">
+      {/* If email is unverified, show the Gate Modal and lock the dashboard */}
+      {isEmailUnverified && <EmailVerificationGate />}
+
       {/* Keyboard users land here first: one Tab skips the whole sidebar and
           top bar, which is otherwise ~20 stops before any page content. */}
       <a
@@ -65,8 +70,10 @@ export function DashboardLayout({ children, allowedRoles }: DashboardLayoutProps
       >
         Skip to main content
       </a>
-      <Sidebar />
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className={isEmailUnverified ? 'pointer-events-none select-none blur-[2px] opacity-40' : ''}>
+        <Sidebar />
+      </div>
+      <div className={`flex min-w-0 flex-1 flex-col ${isEmailUnverified ? 'pointer-events-none select-none blur-[2px] opacity-40' : ''}`}>
         <TopBar />
         <main
           id="dashboard-content"

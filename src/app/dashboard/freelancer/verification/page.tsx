@@ -8,10 +8,10 @@ import { kycApi } from '@/lib/api';
 import { classifyKycStatusError } from '@/lib/kyc-status-error';
 import { getKycRetryAvailability } from '@/lib/kyc-retry';
 import { getApiErrorMessage } from '@/lib/auth-contract';
-import { safeAttachmentUrl } from '@/lib/attachment-presentation';
 import type { KycVerification, UserRole } from '@/types';
-import { Shield, CheckCircle, XCircle, Clock, AlertTriangle, ExternalLink, RefreshCw, Loader2, Globe, FileText, User, Calendar } from 'lucide-react';
+import { Shield, CheckCircle, XCircle, Clock, AlertTriangle, RefreshCw, Loader2, Globe, FileText, User, Calendar } from 'lucide-react';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
+import { KycVerificationModal } from '@/components/kyc/kyc-verification-modal';
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   approved: { label: 'Approved', color: 'bg-success-subtle text-success', icon: CheckCircle },
@@ -24,11 +24,6 @@ const statusConfig: Record<string, { label: string; color: string; icon: React.E
 
 type ParticipantRole = Extract<UserRole, 'freelancer' | 'employer'>;
 
-function openVerificationUrl(value: string | null) {
-  const url = value ? safeAttachmentUrl(value) : null;
-  if (url) window.open(url, '_blank', 'noopener,noreferrer');
-}
-
 export function VerificationCenter({ role }: { role: ParticipantRole }) {
   const [verification, setVerification] = useState<KycVerification | null>(null);
   const [history, setHistory] = useState<KycVerification[]>([]);
@@ -37,6 +32,29 @@ export function VerificationCenter({ role }: { role: ParticipantRole }) {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalSessionUrl, setModalSessionUrl] = useState<string | null>(null);
+
+  const handleOpenModal = (url: string | null) => {
+    if (!url) return;
+    setModalSessionUrl(url);
+    setIsModalOpen(true);
+  };
+
+  const handleVerificationCompleted = async () => {
+    setIsModalOpen(false);
+    if (verification?.id) {
+      try {
+        const res = await kycApi.refresh(verification.id);
+        setVerification(res.data);
+        setHistory((current) => current.map((item) => item.id === res.data.id ? res.data : item));
+      } catch {
+        await fetchStatus();
+      }
+    } else {
+      await fetchStatus();
+    }
+  };
 
   const fetchStatus = useCallback(async () => {
     setLoading(true);
@@ -64,7 +82,6 @@ export function VerificationCenter({ role }: { role: ParticipantRole }) {
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchStatus();
   }, [fetchStatus]);
 
@@ -77,7 +94,7 @@ export function VerificationCenter({ role }: { role: ParticipantRole }) {
       setVerification(data);
       setHistory((current) => [data, ...current.filter((item) => item.id !== data.id)]);
       if (data.didit_session_url) {
-        openVerificationUrl(data.didit_session_url);
+        handleOpenModal(data.didit_session_url);
       }
     } catch (err: unknown) {
       setError(getApiErrorMessage(err, 'Failed to start verification'));
@@ -207,9 +224,9 @@ export function VerificationCenter({ role }: { role: ParticipantRole }) {
                     <Button
                       size="sm"
                       variant="gradient"
-                      onClick={() => openVerificationUrl(verification.didit_session_url)}
+                      onClick={() => handleOpenModal(verification.didit_session_url)}
                     >
-                      <ExternalLink className="w-4 h-4 mr-2" /> Continue Verification
+                      <Shield className="w-4 h-4 mr-2" /> Continue verification
                     </Button>
                   </div>
                 )}
@@ -289,10 +306,17 @@ export function VerificationCenter({ role }: { role: ParticipantRole }) {
           {history.length === 0 ? <p className="py-6 text-center text-sm text-muted-foreground">No previous verification attempts.</p> : <ol className="space-y-3">{history.map((attempt) => {
             const attemptConfig = statusConfig[attempt.status] ?? statusConfig.pending;
             const AttemptIcon = attemptConfig.icon;
-            return <li key={`${attempt.id}-${attempt.updated_at}`} className="flex flex-col gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-center sm:justify-between"><div><div className="flex items-center gap-2"><Badge className={attemptConfig.color}><AttemptIcon className="mr-1 h-3 w-3" />{attemptConfig.label}</Badge>{verification?.id === attempt.id && <Badge variant="outline">Current</Badge>}</div><p className="mt-2 text-xs text-muted-foreground">Started {new Date(attempt.created_at).toLocaleString()} · updated {new Date(attempt.updated_at).toLocaleString()}</p>{attempt.admin_notes && <p className="mt-2 text-sm text-muted-foreground">{attempt.admin_notes}</p>}</div>{attempt.didit_session_url && (attempt.status === 'pending' || attempt.status === 'in_progress') && <Button type="button" size="sm" variant="outline" onClick={() => openVerificationUrl(attempt.didit_session_url)}>Continue<ExternalLink className="ml-2 h-4 w-4" /></Button>}</li>;
+            return <li key={`${attempt.id}-${attempt.updated_at}`} className="flex flex-col gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-center sm:justify-between"><div><div className="flex items-center gap-2"><Badge className={attemptConfig.color}><AttemptIcon className="mr-1 h-3 w-3" />{attemptConfig.label}</Badge>{verification?.id === attempt.id && <Badge variant="outline">Current</Badge>}</div><p className="mt-2 text-xs text-muted-foreground">Started {new Date(attempt.created_at).toLocaleString()} · updated {new Date(attempt.updated_at).toLocaleString()}</p>{attempt.admin_notes && <p className="mt-2 text-sm text-muted-foreground">{attempt.admin_notes}</p>}</div>{attempt.didit_session_url && (attempt.status === 'pending' || attempt.status === 'in_progress') && <Button type="button" size="sm" variant="outline" onClick={() => handleOpenModal(attempt.didit_session_url)}>Continue<Shield className="ml-2 h-4 w-4" /></Button>}</li>;
           })}</ol>}
         </CardContent>
       </Card>
+
+      <KycVerificationModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        sessionUrl={modalSessionUrl}
+        onComplete={handleVerificationCompleted}
+      />
     </div>
   );
 }

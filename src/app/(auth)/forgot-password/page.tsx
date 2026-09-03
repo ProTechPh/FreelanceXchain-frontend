@@ -8,7 +8,6 @@ import { authApi } from '@/lib/api';
 import { toast } from 'sonner';
 import { CheckCircle, Mail } from 'lucide-react';
 import { Field } from '@/components/ui/field';
-import { GuestGuard } from '@/components/auth/guest-guard';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -30,7 +29,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <GuestGuard>
+    <>
       {sent ? (
         <div className="min-h-screen flex items-center justify-center p-8">
           <div className="w-full max-w-md space-y-6 text-center">
@@ -93,7 +92,7 @@ export default function ForgotPasswordPage() {
           </div>
         </div>
       )}
-    </GuestGuard>
+    </>
   );
 }
 

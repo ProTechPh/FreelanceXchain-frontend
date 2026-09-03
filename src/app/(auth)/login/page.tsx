@@ -74,8 +74,32 @@ export default function LoginPage() {
       toast.success('Welcome back!');
       const user = useAuthStore.getState().user;
       router.replace(`/dashboard/${user?.role || 'freelancer'}`);
-    } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Unable to sign in. Please try again.'), { duration: 5000 });
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: { code?: string } } }; code?: string } | undefined;
+      const errCode = err?.response?.data?.error?.code || err?.code;
+      const msg = getApiErrorMessage(error, 'Unable to sign in. Please try again.');
+
+      if (errCode === 'EMAIL_NOT_VERIFIED' || msg.toLowerCase().includes('verify your email')) {
+        toast.error('Email Verification Required', {
+          description: msg,
+          duration: 10000,
+          action: {
+            label: 'Resend link',
+            onClick: async () => {
+              try {
+                await authApi.resendConfirmation(email);
+                toast.success('Verification link resent!', {
+                  description: 'Please check your email inbox.',
+                });
+              } catch {
+                toast.error('Failed to resend verification email.');
+              }
+            },
+          },
+        });
+      } else {
+        toast.error(msg, { duration: 5000 });
+      }
       setIsSigningIn(false);
     }
   };

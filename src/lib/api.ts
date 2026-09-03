@@ -30,6 +30,7 @@ import type {
   MfaEnrollResponse,
   MfaFactorsResponse,
   KycVerification,
+  KycDecisionDetails,
   PortfolioItem,
   AdminUser,
   DisputeManagementData,
@@ -189,8 +190,18 @@ export const authApi = {
   forgotPassword: (email: string) =>
     api.post('/auth/forgot-password', { email }),
   
-  resetPassword: (accessToken: string, password: string) =>
-    api.post<{ message: string }>('/auth/reset-password', { accessToken, password }),
+  resetPassword: (
+    payloadOrToken: string | { userId?: string; secret?: string; accessToken?: string; password: string },
+    password?: string
+  ) => {
+    if (typeof payloadOrToken === 'string') {
+      return api.post<{ message: string }>('/auth/reset-password', { accessToken: payloadOrToken, password });
+    }
+    return api.post<{ message: string }>('/auth/reset-password', payloadOrToken);
+  },
+
+  changePassword: (currentPassword: string, newPassword: string) =>
+    api.post<{ message: string }>('/auth/change-password', { currentPassword, newPassword }),
   
   oauthLogin: (provider: 'google' | 'github') =>
     api.get<{ url: string }>(`/auth/oauth/${provider}`),
@@ -205,6 +216,9 @@ export const authApi = {
 
   resendConfirmation: (email: string) =>
     api.post<{ message: string }>('/auth/resend-confirmation', { email }),
+
+  verifyEmail: (userId: string, secret: string) =>
+    api.post<{ message: string }>('/auth/verify-email', { userId, secret }),
 
   requestEmailOtp: (email: string) =>
     api.post<{ userId: string }>('/auth/login/email-otp', { email }),
@@ -894,6 +908,9 @@ export const kycApi = {
 
   adminGetVerification: (id: string) =>
     api.get<KycVerification>(`/kyc/admin/verification/${id}`),
+
+  adminGetDecision: (id: string) =>
+    api.get<KycDecisionDetails>(`/kyc/admin/verification/${id}/decision`),
 
   adminReview: (id: string, decision: 'approved' | 'rejected', notes?: string) =>
     api.post<KycVerification>(`/kyc/admin/review/${id}`, { decision, notes }),
