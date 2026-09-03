@@ -18,9 +18,8 @@ import {
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const rawParams = new URLSearchParams(searchParams?.toString() ?? '');
-  const userId = rawParams.get('userId')?.trim() ?? '';
-  const secret = getPasswordResetToken(rawParams) ?? '';
-  const hasToken = Boolean(secret);
+  const accessToken = getPasswordResetToken(rawParams);
+  const hasToken = Boolean(accessToken);
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -31,7 +30,7 @@ function ResetPasswordForm() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!hasToken) {
+    if (!accessToken) {
       setFormError('This password reset link is invalid or incomplete.');
       return;
     }
@@ -45,11 +44,7 @@ function ResetPasswordForm() {
     setFormError(null);
     setIsSubmitting(true);
     try {
-      await authApi.resetPassword({
-        userId: userId || undefined,
-        secret,
-        password,
-      });
+      await authApi.resetPassword(accessToken, password);
       useAuthStore.getState().logout();
       setComplete(true);
     } catch (error) {
