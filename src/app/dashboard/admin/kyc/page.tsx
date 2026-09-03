@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -5,7 +6,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { kycApi } from '@/lib/api';
-import { safeAttachmentUrl } from '@/lib/attachment-presentation';
 import type { KycVerification, KycDecisionDetails, KycImages, KycWarning } from '@/types';
 import {
   Shield,
@@ -15,9 +15,9 @@ import {
   FileText,
   Globe,
   AlertTriangle,
-  ExternalLink,
   ChevronDown,
   ChevronUp,
+  ExternalLink,
   Loader2,
   Maximize2,
   Camera,

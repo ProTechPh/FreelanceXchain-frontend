@@ -18,17 +18,18 @@ function VerifyEmailContent() {
   const userId = searchParams?.get('userId');
   const secret = searchParams?.get('secret');
 
-  const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
-  const [errorMessage, setErrorMessage] = useState<string>('');
+  const hasParams = Boolean(userId && secret);
+  const [status, setStatus] = useState<'verifying' | 'success' | 'error'>(hasParams ? 'verifying' : 'error');
+  const [errorMessage, setErrorMessage] = useState<string>(
+    hasParams ? '' : 'Invalid or missing verification link parameters.'
+  );
 
   useEffect(() => {
-    let active = true;
-
     if (!userId || !secret) {
-      setStatus('error');
-      setErrorMessage('Invalid or missing verification link parameters.');
       return;
     }
+
+    let active = true;
 
     async function performVerification() {
       try {

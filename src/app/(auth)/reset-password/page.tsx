@@ -19,10 +19,7 @@ function ResetPasswordForm() {
   const searchParams = useSearchParams();
   const rawParams = new URLSearchParams(searchParams?.toString() ?? '');
   const userId = rawParams.get('userId')?.trim() ?? '';
-  const secret = rawParams.get('secret')?.trim()
-    || rawParams.get('accessToken')?.trim()
-    || rawParams.get('token')?.trim()
-    || '';
+  const secret = getPasswordResetToken(rawParams) ?? '';
   const hasToken = Boolean(secret);
 
   const [password, setPassword] = useState('');

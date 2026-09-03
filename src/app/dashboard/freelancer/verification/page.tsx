@@ -82,7 +82,6 @@ export function VerificationCenter({ role }: { role: ParticipantRole }) {
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchStatus();
   }, [fetchStatus]);
 

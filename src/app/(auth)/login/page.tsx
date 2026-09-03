@@ -74,8 +74,9 @@ export default function LoginPage() {
       toast.success('Welcome back!');
       const user = useAuthStore.getState().user;
       router.replace(`/dashboard/${user?.role || 'freelancer'}`);
-    } catch (error: any) {
-      const errCode = error?.response?.data?.error?.code || error?.code;
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: { code?: string } } }; code?: string } | undefined;
+      const errCode = err?.response?.data?.error?.code || err?.code;
       const msg = getApiErrorMessage(error, 'Unable to sign in. Please try again.');
 
       if (errCode === 'EMAIL_NOT_VERIFIED' || msg.toLowerCase().includes('verify your email')) {

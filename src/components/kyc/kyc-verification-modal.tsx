@@ -25,15 +25,17 @@ export function KycVerificationModal({
   sessionUrl,
   onComplete,
 }: KycVerificationModalProps) {
+  const [prevKey, setPrevKey] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
   const safeUrl = sessionUrl ? safeAttachmentUrl(sessionUrl) : null;
 
-  // Reset loading state when modal opens or URL changes
-  useEffect(() => {
+  const currentKey = `${open}:${sessionUrl ?? ''}`;
+  if (currentKey !== prevKey) {
+    setPrevKey(currentKey);
     if (open) {
       setIsLoading(true);
     }
-  }, [open, sessionUrl]);
+  }
 
   // Listen to postMessage events from Didit verification iframe
   const handleMessage = useCallback((event: MessageEvent) => {
