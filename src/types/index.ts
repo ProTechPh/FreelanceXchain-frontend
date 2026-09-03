@@ -53,6 +53,8 @@ export interface User {
   role: UserRole;
   walletAddress: string;
   kycStatus?: KycStatus;
+  emailVerification?: boolean;
+  authProvider?: 'email' | 'oauth';
   createdAt: string;
   updatedAt: string;
 }
@@ -642,6 +644,7 @@ export interface AuthApiUser {
   kycStatus?: KycStatus;
   createdAt: string;
   authProvider?: 'email' | 'oauth';
+  emailVerification?: boolean;
 }
 
 export interface AuthSuccessResponse {
@@ -806,6 +809,35 @@ export interface KycVerification {
   updated_at: string;
   completed_at: string | null;
   expires_at: string | null;
+  metadata?: {
+    images?: KycImages;
+    warnings?: KycWarning[];
+    [key: string]: unknown;
+  } | null;
+}
+
+export interface KycImages {
+  front_image?: string | null;
+  back_image?: string | null;
+  portrait_image?: string | null;
+  reference_image?: string | null;
+  full_front_image?: string | null;
+  full_back_image?: string | null;
+}
+
+export interface KycWarning {
+  feature?: string;
+  risk?: string;
+  short_description?: string;
+  long_description?: string;
+  log_type?: string;
+}
+
+export interface KycDecisionDetails {
+  verification: KycVerification;
+  images: KycImages;
+  warnings: KycWarning[];
+  decision?: Record<string, unknown> | null;
 }
 
 // Audit log entry (backend returns these as-is, snake_case — not mapped to camelCase)

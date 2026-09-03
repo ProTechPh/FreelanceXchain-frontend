@@ -130,3 +130,27 @@ test('retries an eligible verification and promotes the new attempt', async ({ p
   await expect(page.getByText('Pending', { exact: true }).first()).toBeVisible();
   await expect(page.getByText('Current', { exact: true })).toBeVisible();
 });
+
+test('opens the in-app verification modal when continuing a session with a session url', async ({ page }) => {
+  const current = verification({
+    status: 'pending',
+    didit_session_url: 'https://verify.didit.me/session/test-session-123',
+    decision: null,
+    admin_notes: null,
+  });
+  await authenticate(page);
+  await page.route('**/api/kyc/status', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(current) }));
+  await page.route('**/api/kyc/history', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([current]) }));
+
+  await page.goto('/dashboard/freelancer/verification');
+
+  await page.getByRole('button', { name: /Continue verification/i }).first().click();
+
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await expect(page.getByText('Identity Verification', { exact: true })).toBeVisible();
+  const iframe = page.locator('iframe[title="Identity Verification Session"]');
+  await expect(iframe).toBeVisible();
+  await expect(iframe).toHaveAttribute('src', 'https://verify.didit.me/session/test-session-123');
+  await expect(iframe).toHaveAttribute('allow', 'camera; microphone; fullscreen; autoplay; encrypted-media');
+});
+

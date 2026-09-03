@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { authApi } from '@/lib/api';
 import { Field } from '@/components/ui/field';
+import { useAuthStore } from '@/stores/authStore';
 import {
   getApiErrorMessage,
   getPasswordResetToken,
@@ -16,9 +17,14 @@ import {
 
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
-  const accessToken = getPasswordResetToken(
-    new URLSearchParams(searchParams?.toString() ?? ''),
-  );
+  const rawParams = new URLSearchParams(searchParams?.toString() ?? '');
+  const userId = rawParams.get('userId')?.trim() ?? '';
+  const secret = rawParams.get('secret')?.trim()
+    || rawParams.get('accessToken')?.trim()
+    || rawParams.get('token')?.trim()
+    || '';
+  const hasToken = Boolean(secret);
+
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
@@ -28,7 +34,7 @@ function ResetPasswordForm() {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (!accessToken) {
+    if (!hasToken) {
       setFormError('This password reset link is invalid or incomplete.');
       return;
     }
@@ -42,7 +48,12 @@ function ResetPasswordForm() {
     setFormError(null);
     setIsSubmitting(true);
     try {
-      await authApi.resetPassword(accessToken, password);
+      await authApi.resetPassword({
+        userId: userId || undefined,
+        secret,
+        password,
+      });
+      useAuthStore.getState().logout();
       setComplete(true);
     } catch (error) {
       setFormError(getApiErrorMessage(error, 'This reset link is invalid or has expired.'));
@@ -82,7 +93,7 @@ function ResetPasswordForm() {
         </p>
       </div>
 
-      {!accessToken && (
+      {!hasToken && (
         <p role="alert" className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
           This reset link is missing its recovery token. Request a new email to continue.
         </p>
@@ -130,7 +141,7 @@ function ResetPasswordForm() {
           </p>
         )}
 
-        <Button type="submit" variant="gradient" className="w-full" loading={isSubmitting} loadingText="Updating password…" disabled={!accessToken}>
+        <Button type="submit" variant="gradient" className="w-full" loading={isSubmitting} loadingText="Updating password…" disabled={!hasToken}>
           Update password
         </Button>
       </form>
@@ -145,19 +156,15 @@ function ResetPasswordForm() {
   );
 }
 
-import { GuestGuard } from '@/components/auth/guest-guard';
-
 export default function ResetPasswordPage() {
   return (
-    <GuestGuard>
-      <div className="flex min-h-screen items-center justify-center p-6">
-        <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
-          <Suspense fallback={<p role="status">Loading password reset…</p>}>
-            <ResetPasswordForm />
-          </Suspense>
-        </div>
+    <div className="flex min-h-screen items-center justify-center p-6">
+      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
+        <Suspense fallback={<p role="status">Loading password reset…</p>}>
+          <ResetPasswordForm />
+        </Suspense>
       </div>
-    </GuestGuard>
+    </div>
   );
 }
 

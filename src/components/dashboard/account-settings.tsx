@@ -6,8 +6,11 @@ import { useRouter } from 'next/navigation';
 import {
   AlertTriangle,
   ExternalLink,
+  Eye,
+  EyeOff,
   HardDrive,
   KeyRound,
+  Lock,
   Mail,
   Shield,
   ShieldAlert,
@@ -85,6 +88,89 @@ export function AccountSettings() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmationText, setDeleteConfirmationText] = useState('');
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [isResendingVerification, setIsResendingVerification] = useState(false);
+
+  const handleResendVerification = async () => {
+    if (!user?.email) return;
+    setIsResendingVerification(true);
+    try {
+      await authApi.resendConfirmation(user.email);
+      toast.success('Verification email sent! Please check your inbox.');
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Unable to send verification email.'));
+    } finally {
+      setIsResendingVerification(false);
+    }
+  };
+
+  // Password change state
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+
+  const resetPasswordForm = () => {
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setShowCurrentPassword(false);
+    setShowNewPassword(false);
+    setShowConfirmPassword(false);
+    setPasswordError(null);
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError(null);
+
+    if (!currentPassword) {
+      setPasswordError('Please enter your current password.');
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setPasswordError('New password must be at least 8 characters long.');
+      return;
+    }
+
+    if (!/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+      setPasswordError('Password must contain at least one uppercase letter, one lowercase letter, and one number.');
+      return;
+    }
+
+    if (currentPassword === newPassword) {
+      setPasswordError('New password must be different from your current password.');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError('New passwords do not match.');
+      return;
+    }
+
+    setIsChangingPassword(true);
+    try {
+      await authApi.changePassword(currentPassword, newPassword);
+      toast.success('Password changed successfully!', {
+        description: 'You have been logged out. Please sign in with your new password.',
+      });
+      setShowPasswordModal(false);
+      resetPasswordForm();
+      await logout();
+      router.push('/login');
+    } catch (error) {
+      const msg = getApiErrorMessage(error, 'Failed to change password. Please verify your current password.');
+      setPasswordError(msg);
+      toast.error(msg);
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
 
   const loadStorage = async () => {
     setStorageLoading(true);
@@ -271,18 +357,80 @@ export function AccountSettings() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <KeyRound className="size-5" /> Password
+            <Mail className="size-5" /> Email address & verification
           </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-muted-foreground">
-            Password changes use the secure email recovery flow and invalidate existing sessions.
-          </p>
-          <Button asChild variant="outline">
-            <Link href="/forgot-password">Send reset email</Link>
-          </Button>
+          <div>
+            <div className="flex items-center gap-2">
+              <p className="font-medium text-foreground">{user?.email}</p>
+              {user?.emailVerification ? (
+                <Badge variant="secondary" className="bg-success-subtle text-success border border-success-border">
+                  Verified email
+                </Badge>
+              ) : (
+                <Badge variant="secondary" className="bg-warning-subtle text-warning border border-warning-border">
+                  Unverified
+                </Badge>
+              )}
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {user?.emailVerification
+                ? 'Your email address is verified with Appwrite.'
+                : 'Your email address is unverified. Click the button to send a verification link to your inbox.'}
+            </p>
+          </div>
+          {!user?.emailVerification && (
+            <Button
+              variant="outline"
+              disabled={isResendingVerification}
+              onClick={handleResendVerification}
+            >
+              {isResendingVerification ? 'Sending…' : 'Resend verification email'}
+            </Button>
+          )}
         </CardContent>
       </Card>
+
+      {user?.authProvider === 'oauth' ? (
+        <Card>
+          <CardHeader>
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <KeyRound className="size-5" /> Password & Security
+              </CardTitle>
+              <CardDescription className="mt-1">
+                You are signed in via social authentication (OAuth). Your password is managed securely by your identity provider.
+              </CardDescription>
+            </div>
+          </CardHeader>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <KeyRound className="size-5" /> Password & Security
+                </CardTitle>
+                <CardDescription className="mt-1">
+                  Change your password by confirming your current password. For security, you will be logged out once changed.
+                </CardDescription>
+              </div>
+              <Button
+                variant="outline"
+                className="shrink-0"
+                onClick={() => {
+                  resetPasswordForm();
+                  setShowPasswordModal(true);
+                }}
+              >
+                Change password
+              </Button>
+            </div>
+          </CardHeader>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
@@ -559,6 +707,139 @@ export function AccountSettings() {
               Permanently Delete
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Change Password Dialog */}
+      <Dialog
+        open={showPasswordModal}
+        onOpenChange={(open) => {
+          if (!isChangingPassword) {
+            setShowPasswordModal(open);
+            if (!open) resetPasswordForm();
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Lock className="size-5 text-primary" /> Change Password
+            </DialogTitle>
+            <DialogDescription>
+              Enter your current password followed by your new password. You will be logged out upon changing it.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleChangePassword} className="space-y-4">
+            {passwordError && (
+              <div className="rounded-md bg-destructive/10 p-3 text-xs text-destructive border border-destructive/20">
+                {passwordError}
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <Label htmlFor="current-password">Current password</Label>
+              <div className="relative">
+                <Input
+                  id="current-password"
+                  type={showCurrentPassword ? 'text' : 'password'}
+                  placeholder="Enter current password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  disabled={isChangingPassword}
+                  required
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowCurrentPassword((prev) => !prev)}
+                  tabIndex={-1}
+                >
+                  {showCurrentPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="new-password">New password</Label>
+              <div className="relative">
+                <Input
+                  id="new-password"
+                  type={showNewPassword ? 'text' : 'password'}
+                  placeholder="Enter at least 8 characters"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  disabled={isChangingPassword}
+                  required
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowNewPassword((prev) => !prev)}
+                  tabIndex={-1}
+                >
+                  {showNewPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Must be at least 8 characters and include uppercase, lowercase, and a number.
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="confirm-password">Confirm new password</Label>
+              <div className="relative">
+                <Input
+                  id="confirm-password"
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  placeholder="Re-enter new password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  disabled={isChangingPassword}
+                  required
+                  className="pr-10"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-0 top-0 h-full px-3 text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowConfirmPassword((prev) => !prev)}
+                  tabIndex={-1}
+                >
+                  {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </Button>
+              </div>
+            </div>
+
+            <DialogFooter className="gap-2 sm:gap-0 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setShowPasswordModal(false);
+                  resetPasswordForm();
+                }}
+                disabled={isChangingPassword}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isChangingPassword || !currentPassword || !newPassword || !confirmPassword}
+                loading={isChangingPassword}
+                loadingText="Updating & logging out…"
+              >
+                Update password
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

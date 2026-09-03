@@ -11,7 +11,7 @@ import { authApi } from '@/lib/api';
 import { GuestGuard } from '@/components/auth/guest-guard';
 
 export default function RegisterPage() {
-  const { register, isLoading } = useAuthStore();
+  const { register, logout, isLoading } = useAuthStore();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [oauthError, setOauthError] = useState<string | null>(null);
@@ -55,8 +55,16 @@ export default function RegisterPage() {
   const handleSubmit = async (data: { email: string; password: string; role: UserRole }) => {
     try {
       await register(data.email, data.password, data.role);
-      toast.success('Account created successfully!');
-      router.replace(`/dashboard/${data.role}`);
+      try {
+        await logout();
+      } catch {
+        // Best effort session cleanup
+      }
+      toast.success('Registration successful!', {
+        description: 'Please check your email and click the verification link before logging in.',
+        duration: 9000,
+      });
+      router.replace('/login');
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Registration failed. Please try again.'));
     }
