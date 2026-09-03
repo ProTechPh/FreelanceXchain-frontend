@@ -213,15 +213,17 @@ export default function Navbar({
           )}
         </div>
 
-        {/* Mobile right actions — visible below sm */}
-        <div className="flex sm:hidden items-center gap-1">
-          <ThemeToggle />
-          <Button variant="ghost" size="icon" aria-label="Open search dialog" className="rounded-full h-8 w-8" onClick={() => setOpenSearch(true)}>
-            <MagnifyingGlass className="size-3.5" strokeWidth={2.5} />
-          </Button>
+        {/* Mobile right actions — the menu trigger stays until the links appear at lg */}
+        <div className="flex lg:hidden items-center gap-1">
+          <div className="flex sm:hidden items-center gap-1">
+            <ThemeToggle />
+            <Button variant="ghost" size="icon" aria-label="Open search dialog" className="rounded-full size-9" onClick={() => setOpenSearch(true)}>
+              <MagnifyingGlass className="size-3.5" strokeWidth={2.5} />
+            </Button>
+          </div>
 
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetTrigger className="inline-flex items-center justify-center h-8 w-8 rounded-full text-sm hover:bg-muted transition-colors" aria-label="Open menu">
+            <SheetTrigger className="inline-flex items-center justify-center size-9 rounded-full text-sm hover:bg-muted transition-colors" aria-label="Open menu">
               <List className="size-4" strokeWidth={2.5} />
             </SheetTrigger>
 

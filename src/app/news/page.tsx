@@ -211,7 +211,7 @@ export default function NewsPage() {
 
       <main className="grow pt-28 sm:pt-36 pb-20">
         {/* Header Hero Section */}
-        <section className="mx-auto max-w-6xl px-6 lg:px-8 mb-10 text-center">
+        <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 mb-10 text-center">
           <motion.div
             initial={reduce ? false : { opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
@@ -387,7 +387,7 @@ export default function NewsPage() {
 
         {/* Loading Skeleton */}
         {loading && articles.length === 0 && (
-          <section className="mx-auto max-w-6xl px-6 lg:px-8 mb-16">
+          <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 mb-16">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
               {[...Array(6)].map((_, i) => (
                 <div key={i} className="rounded-3xl bg-card border border-border/60 p-4 space-y-4">
@@ -403,7 +403,7 @@ export default function NewsPage() {
 
         {/* Featured Big Story Card */}
         {!loading && featuredArticle && !searchQuery && (
-          <section className="mx-auto max-w-6xl px-6 lg:px-8 mb-16">
+          <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 mb-16">
             <motion.div
               initial={reduce ? false : { opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -485,7 +485,7 @@ export default function NewsPage() {
         )}
 
         {/* Live News Grid */}
-        <section className="mx-auto max-w-6xl px-6 lg:px-8 mb-20">
+        <section className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 mb-20">
           <div className="flex items-center justify-between mb-8">
             <div>
               <h3 className="text-xl sm:text-2xl font-extrabold text-foreground tracking-tight flex items-center gap-2">
@@ -628,7 +628,7 @@ export default function NewsPage() {
         </section>
 
         {/* Newsletter & Dispatch Subscription Banner */}
-        <section className="mx-auto max-w-5xl px-6 lg:px-8">
+        <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={reduce ? false : { opacity: 0, scale: 0.96 }}
             whileInView={{ opacity: 1, scale: 1 }}

@@ -78,7 +78,7 @@ export function DashboardLayout({ children, allowedRoles }: DashboardLayoutProps
         <main
           id="dashboard-content"
           tabIndex={-1}
-          className="flex-1 px-4 py-4 sm:px-6 sm:py-6 lg:px-(--space-page-x) outline-none"
+          className="min-w-0 flex-1 px-4 py-4 sm:px-6 sm:py-6 lg:px-(--space-page-x) outline-none"
         >
           {children}
         </main>

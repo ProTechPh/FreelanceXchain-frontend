@@ -175,7 +175,6 @@ export default function AuditLogsPage() {
               description="Widen the date range to see earlier administrative actions."
             />
           ) : (
-            <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -202,7 +201,6 @@ export default function AuditLogsPage() {
                   ))}
                 </TableBody>
               </Table>
-            </div>
           )}
         </CardContent>
       </Card>
@@ -276,15 +274,14 @@ export default function AuditLogsPage() {
               />
             </div>
           ) : (
-            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Action</TableHead>
                   <TableHead>Actor</TableHead>
-                  <TableHead>Resource</TableHead>
+                  <TableHead className="hidden sm:table-cell">Resource</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>IP</TableHead>
+                  <TableHead className="hidden sm:table-cell">IP</TableHead>
                   <TableHead>Time</TableHead>
                 </TableRow>
               </TableHeader>
@@ -308,14 +305,14 @@ export default function AuditLogsPage() {
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell className="p-4 text-sm">
+                    <TableCell className="hidden p-4 text-sm sm:table-cell">
                       <span className="font-medium text-foreground">{formatAuditResource(log.resource_type)}</span>
                       {log.resource_id && <span className="font-mono text-xs text-muted-foreground ml-1.5">#{log.resource_id.slice(0, 8)}</span>}
                     </TableCell>
                     <TableCell>
                       <Badge className={statusColors[log.status]}>{log.status}</Badge>
                     </TableCell>
-                    <TableCell className="p-4 text-sm font-mono text-muted-foreground">{log.ip_address ?? '-'}</TableCell>
+                    <TableCell className="hidden p-4 text-sm font-mono text-muted-foreground sm:table-cell">{log.ip_address ?? '-'}</TableCell>
                     <TableCell className="p-4 text-sm text-muted-foreground">{formatDateTime(log.created_at)}</TableCell>
                   </TableRow>
                 ))}
@@ -333,7 +330,6 @@ export default function AuditLogsPage() {
                 )}
               </TableBody>
             </Table>
-            </div>
           )}
         </CardContent>
       </Card>

@@ -78,13 +78,13 @@ export function MessagesWorkspaceSkeleton({
       aria-live="polite"
       aria-busy="true"
       data-slot="messages-workspace-skeleton"
-      className="flex h-[calc(100vh-8rem)] overflow-hidden rounded-xl border border-border bg-card"
+      className="flex h-[calc(100dvh-8rem)] overflow-hidden rounded-xl border border-border bg-card"
     >
       <span className="sr-only">{label}</span>
 
       <div
         data-slot="conversation-list-skeleton"
-        className="flex w-80 shrink-0 flex-col border-r border-border"
+        className="flex w-full flex-col border-r border-border md:w-80 md:shrink-0"
       >
         <div className="space-y-3 border-b border-border p-4">
           <Skeleton className="h-5 w-24" />

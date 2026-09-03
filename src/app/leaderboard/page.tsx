@@ -44,7 +44,7 @@ export default function LeaderboardPage() {
 
       <main className="grow pt-28 sm:pt-36 pb-20">
         {/* Header Hero */}
-        <section className="mx-auto max-w-7xl px-6 lg:px-8 mb-12 text-center">
+        <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-12 text-center">
           <motion.div
             initial={reduce ? false : { opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
@@ -56,7 +56,7 @@ export default function LeaderboardPage() {
             </div>
 
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-foreground">
-              Top Rated Freelancers & Engineers, <br />
+              Top Rated Freelancers & Engineers, <br className="hidden sm:inline" />
               <span className="text-muted-foreground dark:text-muted-foreground font-semibold">
                 ranked by on-chain reputation.
               </span>
@@ -71,7 +71,7 @@ export default function LeaderboardPage() {
         {loading ? (
           <ListSkeleton rows={8} label="Loading leaderboard" />
         ) : (
-          <div className="mx-auto max-w-7xl px-6 lg:px-8 space-y-10">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-10">
             {/* Top 3 Podium Cards */}
             {leaderboard.length >= 3 && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -91,7 +91,7 @@ export default function LeaderboardPage() {
                 </div>
 
                 {/* 1st Place - Gold Champion */}
-                <div className="order-1 md:order-2 rounded-3xl bg-card border-2 border-primary/40 p-8 shadow-xl text-center flex flex-col justify-between scale-105 relative">
+                <div className="order-1 md:order-2 rounded-3xl bg-card border-2 border-primary/40 p-8 shadow-xl text-center flex flex-col justify-between sm:scale-105 relative">
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-warning text-warning-foreground text-2xs font-bold shadow-md flex items-center gap-1">
                     <Crown className="size-3" /> Champion
                   </div>

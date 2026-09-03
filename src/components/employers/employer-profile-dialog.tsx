@@ -111,7 +111,7 @@ export function EmployerProfileDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl p-0 overflow-hidden sm:rounded-3xl border-border bg-card shadow-2xl">
+      <DialogContent className="sm:max-w-xl p-0 overflow-hidden sm:rounded-3xl border-border bg-card shadow-2xl">
         {/* Banner Header */}
         <div className="relative bg-gradient-to-br from-primary/20 via-primary/10 to-transparent p-6 sm:p-7 border-b border-border/60">
           <DialogHeader className="p-0">
@@ -151,7 +151,7 @@ export function EmployerProfileDialog({
         </div>
 
         {/* Content Body */}
-        <div className="p-6 sm:p-7 space-y-5 max-h-[75vh] overflow-y-auto">
+        <div className="p-6 sm:p-7 space-y-5 max-h-[75dvh] overflow-y-auto">
           {/* Live Actual Reputation & Activity Grid */}
           <div>
             <h4 className="text-3xs font-bold uppercase tracking-wider text-muted-foreground mb-2.5">

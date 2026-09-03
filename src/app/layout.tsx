@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Nunito_Sans } from 'next/font/google';
 import { Providers } from '@/components/providers';
 import './globals.css';
@@ -21,6 +21,15 @@ export const metadata: Metadata = {
     shortcut: '/favicon.svg',
     apple: '/favicon.svg',
   },
+};
+
+// Declared explicitly rather than relying on the framework default: `viewportFit`
+// is what lets a full-bleed surface reach under a notch, and pinch-zoom is left
+// unrestricted because capping it fails WCAG 1.4.4.
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({

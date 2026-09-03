@@ -14,6 +14,14 @@
                 motion -> color aliases.
    ========================================================================== */
 
+/* Tailwind's defaults start at sm = 640px, which lumps every phone from 320px to
+   639px into one bucket. `xs` splits a 320px screen (one column) from a 390px+
+   screen (two columns). This must be a plain `@theme` block: `@theme inline`
+   does not register the variant. */
+@theme {
+  --breakpoint-xs: 25rem;
+}
+
 @theme inline {
   /* ---- Typography scale -------------------------------------------------
      skill.md's literal sizes (base 12px, xs 6px) were captured at the wrong
@@ -465,6 +473,20 @@
     scroll-behavior: smooth;
     scroll-padding-top: 5.5rem;
     -webkit-text-size-adjust: 100%;
+  }
+
+  /* Phones: tighter page rhythm, and an anchor offset that matches the 64px
+     dashboard header rather than the desktop floating navbar. */
+  @media (width < 40rem) {
+    :root {
+      --space-page-x: 1rem;
+      --space-section-y: 2.5rem;
+      --space-card: 1rem;
+    }
+
+    html {
+      scroll-padding-top: 4.5rem;
+    }
   }
 
   body {

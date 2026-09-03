@@ -109,7 +109,7 @@ export function CustomSkillsManager() {
           <Field label="Description" htmlFor="custom-skill-description">
 <Textarea id="custom-skill-description" rows={4} value={draft.description} onChange={(event) => setDraft((current) => ({ ...current, description: event.target.value }))} />
 </Field>
-          <div className="grid grid-cols-2 gap-3"><Field label="Years" htmlFor="custom-skill-years">
+          <div className="grid grid-cols-1 gap-3 xs:grid-cols-2"><Field label="Years" htmlFor="custom-skill-years">
 <Input id="custom-skill-years" type="number" min="0" max="50" step="0.5" value={draft.yearsOfExperience} onChange={(event) => setDraft((current) => ({ ...current, yearsOfExperience: Number(event.target.value) }))} />
 </Field><Field label="Category (optional)" htmlFor="custom-skill-category">
 <Input id="custom-skill-category" value={draft.categoryName} onChange={(event) => setDraft((current) => ({ ...current, categoryName: event.target.value }))} />

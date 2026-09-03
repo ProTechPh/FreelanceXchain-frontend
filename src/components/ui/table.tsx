@@ -11,16 +11,39 @@ import { cn } from "@/lib/utils"
  * inside its own container so the page body never scrolls sideways.
  */
 function Table({ className, containerClassName, ...props }: React.ComponentProps<"table"> & { containerClassName?: string }) {
+  const containerRef = React.useRef<HTMLDivElement>(null)
+  const [isScrollable, setIsScrollable] = React.useState(false)
+
+  // On a phone a wide table scrolls silently -- there is no scrollbar to hint
+  // that columns exist off to the right. Measure it and say so.
+  React.useEffect(() => {
+    const node = containerRef.current
+    if (!node) return
+    const measure = () => setIsScrollable(node.scrollWidth > node.clientWidth + 1)
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [])
+
   return (
-    <div
-      data-slot="table-container"
-      className={cn("relative w-full overflow-x-auto", containerClassName)}
-    >
-      <table
-        data-slot="table"
-        className={cn("w-full caption-bottom border-collapse text-sm", className)}
-        {...props}
-      />
+    <div className="w-full">
+      <div
+        ref={containerRef}
+        data-slot="table-container"
+        className={cn("relative w-full overflow-x-auto", containerClassName)}
+      >
+        <table
+          data-slot="table"
+          className={cn("w-full caption-bottom border-collapse text-sm", className)}
+          {...props}
+        />
+      </div>
+      {isScrollable && (
+        <p aria-hidden="true" className="mt-2 text-2xs text-muted-foreground sm:hidden">
+          Swipe the table sideways for more columns
+        </p>
+      )}
     </div>
   )
 }

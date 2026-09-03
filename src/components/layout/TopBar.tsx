@@ -16,7 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { MobileNav } from './MobileNav';
 import { useAuthStore } from '@/stores/authStore';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { notificationsApi } from '@/lib/api';
 import { subscribeToNotificationStream } from '@/lib/sse';
 import { WalletHeaderButton } from '@/components/wallet/wallet-header-button';
@@ -36,6 +36,8 @@ export function TopBar() {
   const [mounted, setMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const mobileSearchRef = useRef<HTMLInputElement>(null);
   const userId = user?.id;
 
   useEffect(() => {
@@ -66,6 +68,10 @@ export function TopBar() {
     };
   }, [userId]);
 
+  useEffect(() => {
+    if (searchOpen) mobileSearchRef.current?.focus();
+  }, [searchOpen]);
+
   const initials = mounted && user?.name
     ? user.name.split(' ').map((n) => n[0]).join('').toUpperCase()
     : 'U';
@@ -78,39 +84,68 @@ export function TopBar() {
   const submitSearch = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const keyword = searchQuery.trim();
+    setSearchOpen(false);
     router.push(keyword ? `${searchTarget}?keyword=${encodeURIComponent(keyword)}` : searchTarget);
   };
 
+  // The same field is needed in two places -- inline in the bar at `sm` and up,
+  // and in a full-width row beneath the bar on phones, where it cannot share the
+  // row with the menu button without colliding with it. Only one of the two is
+  // ever visible, but both are in the DOM, so each needs its own id.
+  const renderSearch = (id: string, ref?: React.Ref<HTMLInputElement>) => (
+    <form className="relative w-full" role="search" onSubmit={submitSearch}>
+      <label htmlFor={id} className="sr-only">{searchLabel}</label>
+      <Input
+        id={id}
+        ref={ref}
+        inputSize="sm"
+        type="search"
+        value={searchQuery}
+        onChange={(event) => setSearchQuery(event.target.value)}
+        placeholder={`${searchLabel}…`}
+        className="pr-10"
+      />
+      <button
+        type="submit"
+        aria-label={searchLabel}
+        className="absolute inset-y-0 right-0 flex w-10 items-center justify-center rounded-r-md text-muted-foreground outline-none transition-colors duration-fast hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <Search className="size-4" aria-hidden="true" />
+      </button>
+    </form>
+  );
+
   return (
-    <header className="sticky top-0 z-40 h-16 shrink-0 border-b border-border bg-card/80 backdrop-blur-xl">
-      <div className="flex h-full items-center justify-between gap-3 px-4 sm:px-6">
-        <div className="flex min-w-0 flex-1 items-center gap-2">
+    <header className="sticky top-0 z-40 shrink-0 border-b border-border bg-card/80 backdrop-blur-xl">
+      <div className="flex h-16 items-center justify-between gap-2 px-4 sm:gap-3 sm:px-6">
+        <div className="flex min-w-0 flex-1 items-center gap-1 sm:gap-2">
           <MobileNav role={user?.role} />
           {hasParticipantDashboard && (
-            <form className="relative w-full max-w-[180px] sm:max-w-md" role="search" onSubmit={submitSearch}>
-              <label htmlFor="dashboard-marketplace-search" className="sr-only">{searchLabel}</label>
-              <Input
-                id="dashboard-marketplace-search"
-                inputSize="sm"
-                type="search"
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder={`${searchLabel}…`}
-                className="pr-10"
-              />
-              <button
-                type="submit"
+            <>
+              {/* On a phone the field cannot sit beside the menu button: the two
+                  overlap and the menu stops being tappable. Below `sm` it is a
+                  toggle that opens the field in its own row instead. */}
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="sm:hidden"
                 aria-label={searchLabel}
-                className="absolute inset-y-0 right-0 flex w-10 items-center justify-center rounded-r-md text-muted-foreground outline-none transition-colors duration-fast hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                aria-expanded={searchOpen}
+                aria-controls="dashboard-search-row"
+                onClick={() => setSearchOpen((open) => !open)}
               >
-                <Search className="size-4" aria-hidden="true" />
-              </button>
-            </form>
+                <Search className="size-5" aria-hidden="true" />
+              </Button>
+              <div className="hidden min-w-0 flex-1 sm:block sm:max-w-md">
+                {renderSearch('dashboard-marketplace-search')}
+              </div>
+            </>
           )}
         </div>
 
         {/* Right Actions */}
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-3">
           {/* Theme toggle */}
           <ThemeToggle />
 
@@ -134,9 +169,10 @@ export function TopBar() {
             </Button>
           )}
 
-          {/* Messages */}
+          {/* Messages -- also in the sidebar/drawer nav, so it yields the space
+              on phones rather than crowding the bar. */}
           {hasParticipantDashboard && (
-            <Button asChild variant="ghost" size="icon">
+            <Button asChild variant="ghost" size="icon" className="hidden sm:inline-flex">
               <Link href={`/dashboard/${user?.role || 'freelancer'}/messages`} aria-label="Messages">
                 <MessageSquare className="size-5" aria-hidden="true" />
               </Link>
@@ -150,14 +186,14 @@ export function TopBar() {
           <DropdownMenu>
             <DropdownMenuTrigger
               aria-label="Open account menu"
-              className="flex h-9 cursor-pointer items-center gap-2 rounded-md px-2 outline-none transition-colors duration-fast hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card"
+              className="flex h-9 cursor-pointer items-center gap-1 rounded-md px-1 outline-none transition-colors duration-fast hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:gap-2 sm:px-2"
             >
               <Avatar className="size-7">
                 <AvatarFallback className="text-xs gradient-primary">{initials}</AvatarFallback>
               </Avatar>
-              <ChevronDown className="size-4 text-muted-foreground" aria-hidden="true" />
+              <ChevronDown className="hidden size-4 text-muted-foreground sm:block" aria-hidden="true" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent align="end" className="w-[min(14rem,calc(100vw-2rem))]">
               {/* The menu is a fixed width, so an address longer than it must
                   ellipsize rather than clip mid-character. `title` keeps the full
                   value reachable on hover. */}
@@ -191,6 +227,14 @@ export function TopBar() {
           </DropdownMenu>
         </div>
       </div>
+
+      {/* Phone-only search row. The bar keeps its 64px height until the field is
+          actually asked for, so nothing is displaced in the common case. */}
+      {hasParticipantDashboard && searchOpen && (
+        <div id="dashboard-search-row" className="border-t border-border px-4 py-2 sm:hidden">
+          {renderSearch('dashboard-marketplace-search-mobile', mobileSearchRef)}
+        </div>
+      )}
     </header>
   );
 }

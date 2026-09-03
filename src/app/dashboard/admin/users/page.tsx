@@ -187,7 +187,6 @@ export default function UsersPage() {
       {/* Users Table */}
       <Card className="bg-card border-border">
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
             <Table>
                 <TableHeader>
                   <TableRow>
@@ -202,9 +201,9 @@ export default function UsersPage() {
                   {filteredUsers.map((user) => (
                     <TableRow key={user.id}>
                       <TableCell>
-                        <div>
-                          <p className="font-medium">{user.name || 'Unnamed'}</p>
-                          <p className="text-sm text-muted-foreground">{user.email}</p>
+                        <div className="min-w-0 max-w-[12rem] sm:max-w-none">
+                          <p className="truncate font-medium" title={user.name || 'Unnamed'}>{user.name || 'Unnamed'}</p>
+                          <p className="truncate text-sm text-muted-foreground" title={user.email}>{user.email}</p>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -270,7 +269,6 @@ export default function UsersPage() {
                   )}
                 </TableBody>
               </Table>
-          </div>
         </CardContent>
       </Card>
     </div>

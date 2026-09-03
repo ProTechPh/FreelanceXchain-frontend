@@ -134,7 +134,7 @@ export default function TutorialsPage() {
 
       <main className="grow pt-28 sm:pt-36 pb-20">
         {/* Hero Section */}
-        <section className="mx-auto max-w-5xl px-6 lg:px-8 mb-12 text-center">
+        <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 mb-12 text-center">
           <motion.div
             initial={reduce ? false : { opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
@@ -146,7 +146,7 @@ export default function TutorialsPage() {
             </div>
 
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-foreground">
-              Master the FreelanceXchain <br />
+              Master the FreelanceXchain <br className="hidden sm:inline" />
               <span className="text-muted-foreground dark:text-muted-foreground font-semibold">
                 smart escrow ecosystem.
               </span>
@@ -177,7 +177,7 @@ export default function TutorialsPage() {
         </section>
 
         {/* Active Track Header & Description */}
-        <section className="mx-auto max-w-5xl px-6 lg:px-8 mb-10">
+        <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 mb-10">
           <div className="rounded-3xl bg-card border border-border/80 p-6 sm:p-8 shadow-sm">
             <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold">
               {currentTrack.badge}
@@ -192,7 +192,7 @@ export default function TutorialsPage() {
         </section>
 
         {/* Steps Grid */}
-        <section className="mx-auto max-w-5xl px-6 lg:px-8 mb-16">
+        <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 mb-16">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {currentTrack.steps.map((item, idx) => (
               <motion.div

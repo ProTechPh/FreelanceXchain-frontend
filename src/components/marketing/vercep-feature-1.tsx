@@ -8,7 +8,7 @@ export function WhySection() {
 
   return (
     <section id="features" className="py-20 sm:py-28 bg-background border-b border-border/40 scroll-mt-20">
-      <div className="mx-auto max-w-6xl px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <motion.div
           initial={reduce ? false : { opacity: 0, y: 12 }}

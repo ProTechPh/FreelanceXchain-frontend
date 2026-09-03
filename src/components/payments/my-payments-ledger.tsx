@@ -66,7 +66,6 @@ export function MyPaymentsLedger({ role }: { role: Extract<UserRole, 'employer' 
             }
           />
         ) : (
-          <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -109,7 +108,6 @@ export function MyPaymentsLedger({ role }: { role: Extract<UserRole, 'employer' 
                 })}
               </TableBody>
             </Table>
-          </div>
         )}
 
         {(offset > 0 || hasMore) && (

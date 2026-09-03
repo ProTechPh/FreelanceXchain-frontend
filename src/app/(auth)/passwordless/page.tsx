@@ -79,7 +79,7 @@ export default function PasswordlessPage() {
             <Field label="Email" htmlFor="passwordless-email">
               <Input id="passwordless-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
             </Field>
-            <div className="grid grid-cols-2 gap-3"><Button type="button" disabled={loading || !email.trim()} onClick={() => void requestCode()}><Mail className="mr-2 size-4" />Email code</Button><Button type="button" variant="outline" disabled={loading || !email.trim()} onClick={() => void requestMagicLink()}>Magic link</Button></div>
+            <div className="grid grid-cols-1 gap-3 xs:grid-cols-2"><Button type="button" disabled={loading || !email.trim()} onClick={() => void requestCode()}><Mail className="mr-2 size-4" />Email code</Button><Button type="button" variant="outline" disabled={loading || !email.trim()} onClick={() => void requestMagicLink()}>Magic link</Button></div>
             {userId && (
               <form className="space-y-3 border-t border-border pt-5" onSubmit={verifyCode}>
                 <Field label="One-time code" htmlFor="passwordless-code">

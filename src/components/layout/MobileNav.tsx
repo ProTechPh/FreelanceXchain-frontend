@@ -36,7 +36,7 @@ export function MobileNav({ role }: { role: UserRole | undefined }) {
       >
         <Menu className="size-5" aria-hidden="true" />
       </SheetTrigger>
-      <SheetContent side="left" className="w-[280px] p-0 sm:max-w-[280px]">
+      <SheetContent side="left" className="w-[min(280px,85vw)] p-0 sm:max-w-[280px]">
         <SheetHeader className="h-16 shrink-0 justify-center border-b border-border px-4">
           {/* The drawer needs an accessible name; the visible logo is a link, so
               the title is kept separate rather than wrapping it. */}

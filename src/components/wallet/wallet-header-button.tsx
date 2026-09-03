@@ -64,7 +64,8 @@ export function WalletHeaderButton() {
         variant="outline"
         onClick={() => void connect()}
         disabled={isConnecting}
-        className="relative flex items-center gap-2 border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary font-medium shadow-xs transition-colors"
+        aria-label="Connect Wallet"
+        className="relative flex shrink-0 items-center gap-2 border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary font-medium shadow-xs transition-colors"
       >
         {isConnecting ? (
           <>
@@ -74,7 +75,7 @@ export function WalletHeaderButton() {
         ) : (
           <>
             <Wallet className="size-4 text-primary" aria-hidden="true" />
-            <span>Connect Wallet</span>
+            <span className="hidden sm:inline">Connect Wallet</span>
           </>
         )}
       </Button>
@@ -85,7 +86,7 @@ export function WalletHeaderButton() {
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label={`Wallet ${formattedAddress}`}
-        className="flex items-center gap-2 rounded-md border border-border bg-secondary/80 hover:bg-secondary px-2.5 py-1.5 text-xs outline-none transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-ring"
+        className="flex shrink-0 items-center gap-1.5 rounded-md border border-border bg-secondary/80 hover:bg-secondary px-2 py-1.5 text-xs outline-none transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-ring sm:gap-2 sm:px-2.5"
       >
         {balance !== null && (
           <span className="hidden sm:inline-flex items-center font-semibold text-primary pr-2 border-r border-border font-sans">
@@ -94,14 +95,14 @@ export function WalletHeaderButton() {
         )}
         <span className="size-2 rounded-full bg-success shrink-0" aria-hidden="true" />
         <Wallet className="size-3.5 text-primary shrink-0" aria-hidden="true" />
-        <span className="font-mono text-foreground">{formattedAddress}</span>
-        <ChevronDown className="size-3 text-muted-foreground shrink-0" aria-hidden="true" />
+        <span className="hidden font-mono text-foreground sm:inline">{formattedAddress}</span>
+        <ChevronDown className="hidden size-3 text-muted-foreground shrink-0 sm:block" aria-hidden="true" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-72 p-2.5">
+      <DropdownMenuContent align="end" className="w-[min(18rem,calc(100vw-2rem))] p-2.5">
         <div className="px-2 py-1.5 space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-muted-foreground">Connected Wallet</span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-success-subtle px-1.5 py-0.5 text-3xs font-medium text-success">
+            <span className="inline-flex items-center gap-1 rounded-full bg-success-subtle px-1.5 py-0.5 text-2xs font-medium text-success">
               <span className="size-1.5 rounded-full bg-success" /> Active
             </span>
           </div>
@@ -112,12 +113,12 @@ export function WalletHeaderButton() {
 
           <div className="flex items-center justify-between rounded-lg bg-primary/5 p-2 border border-primary/15">
             <div>
-              <p className="text-3xs uppercase tracking-wider text-muted-foreground">On-chain Balance</p>
+              <p className="text-2xs uppercase tracking-wider text-muted-foreground">On-chain Balance</p>
               <p className="text-sm font-bold text-foreground">
                 {balance !== null ? `${balance} ${symbol}` : '—'}
               </p>
               {networkName && (
-                <p className="text-3xs text-muted-foreground">{networkName}</p>
+                <p className="text-2xs text-muted-foreground">{networkName}</p>
               )}
             </div>
             <Button

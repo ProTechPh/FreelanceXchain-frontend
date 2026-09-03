@@ -75,7 +75,7 @@ export function KycVerificationModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl max-h-[92vh] flex flex-col p-0 gap-0 overflow-hidden bg-card border-border shadow-2xl">
+      <DialogContent className="sm:max-w-3xl max-h-[92dvh] flex flex-col p-0 gap-0 overflow-hidden bg-card border-border shadow-2xl">
         {/* Header */}
         <DialogHeader className="p-4 sm:p-5 border-b border-border bg-card flex-row items-center justify-between gap-4 space-y-0">
           <div className="flex items-center gap-3 min-w-0">
@@ -94,7 +94,7 @@ export function KycVerificationModal({
         </DialogHeader>
 
         {/* Iframe Viewport */}
-        <div className="relative w-full flex-1 min-h-[560px] sm:min-h-[640px] bg-background/50 flex flex-col">
+        <div className="relative w-full flex-1 min-h-[24rem] sm:min-h-[640px] bg-background/50 flex flex-col">
           {safeUrl ? (
             <>
               {isLoading && (
@@ -111,7 +111,7 @@ export function KycVerificationModal({
               <iframe
                 src={safeUrl}
                 allow="camera; microphone; fullscreen; autoplay; encrypted-media"
-                className="w-full flex-1 min-h-[560px] sm:min-h-[640px] border-0"
+                className="w-full flex-1 min-h-[24rem] sm:min-h-[640px] border-0"
                 title="Identity Verification Session"
                 onLoad={() => setIsLoading(false)}
               />

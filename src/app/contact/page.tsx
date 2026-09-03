@@ -56,7 +56,7 @@ export default function ContactPage() {
 
       <main className="grow pt-28 sm:pt-36 pb-20">
         {/* Header Hero */}
-        <section className="mx-auto max-w-5xl px-6 lg:px-8 mb-12 text-center">
+        <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 mb-12 text-center">
           <motion.div
             initial={reduce ? false : { opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
@@ -68,7 +68,7 @@ export default function ContactPage() {
             </div>
 
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-foreground">
-              We&apos;re here to help you <br />
+              We&apos;re here to help you <br className="hidden sm:inline" />
               <span className="text-muted-foreground dark:text-muted-foreground font-semibold">
                 work and hire on-chain safely.
               </span>
@@ -81,7 +81,7 @@ export default function ContactPage() {
         </section>
 
         {/* Support Channels Grid */}
-        <section className="mx-auto max-w-5xl px-6 lg:px-8 mb-12">
+        <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 mb-12">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {SUPPORT_CHANNELS.map((channel) => (
               <div
@@ -109,7 +109,7 @@ export default function ContactPage() {
         </section>
 
         {/* Contact Form Section */}
-        <section className="mx-auto max-w-3xl px-6 lg:px-8">
+        <section className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
           <div className="rounded-3xl bg-card border border-border/80 p-6 sm:p-10 shadow-lg shadow-black/5">
             <h2 className="text-xl font-extrabold text-foreground tracking-tight mb-2">
               Send Us a Message

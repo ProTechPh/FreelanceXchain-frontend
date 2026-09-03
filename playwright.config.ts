@@ -16,7 +16,27 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
+      // The responsive suite asserts phone-only chrome (the drawer trigger, the
+      // collapsed search row), none of which exists at desktop widths.
+      testIgnore: /responsive\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
+    },
+    // The narrowest phone still in use. Everything must work here, so the
+    // responsive suite runs against it as well as a current handset.
+    {
+      name: 'mobile-320',
+      testMatch: /responsive\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 320, height: 568 },
+        isMobile: true,
+        hasTouch: true,
+      },
+    },
+    {
+      name: 'mobile-393',
+      testMatch: /responsive\.spec\.ts/,
+      use: { ...devices['Pixel 7'] },
     },
   ],
   webServer: {

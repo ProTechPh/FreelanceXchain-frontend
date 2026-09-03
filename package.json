@@ -21,7 +21,8 @@
     "typecheck": "tsc --noEmit",
     "verify:contrast": "node scripts/verify-contrast.mjs",
     "verify:tokens": "node scripts/verify-tokens.mjs",
-    "verify": "pnpm verify:contrast && pnpm verify:tokens"
+    "verify:responsive": "node scripts/verify-responsive.mjs",
+    "verify": "pnpm verify:contrast && pnpm verify:tokens && pnpm verify:responsive"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

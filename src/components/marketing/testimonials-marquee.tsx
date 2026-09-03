@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
+import { useEffect, useRef, useState } from "react";
 import { Star, Sparkles as Sparkle, CircleCheck as CheckCircle } from 'lucide-react';
 
 const testimonialsRow1 = [
@@ -90,10 +91,27 @@ function TestimonialCard({ t }: { t: (typeof testimonialsRow1)[number] }) {
 
 export function TestimonialsMarquee() {
   const reduce = useReducedMotion();
+  const rowRef = useRef<HTMLDivElement>(null);
+  // Card outer width (including its mx-2) at the current breakpoint; the initial
+  // value is the sm+ card so the first frame is not visibly wrong.
+  const [step, setStep] = useState(356);
+
+  useEffect(() => {
+    const node = rowRef.current;
+    if (!node) return;
+    const measure = () => {
+      const first = node.firstElementChild;
+      if (first) setStep(first.getBoundingClientRect().width + 16);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <section id="reviews" className="py-20 sm:py-28 bg-muted/10 overflow-hidden border-b border-border/40 scroll-mt-20">
-      <div className="mx-auto max-w-6xl px-6 lg:px-8 mb-12 text-center">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 mb-12 text-center">
         <motion.div
           initial={reduce ? false : { opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -118,13 +136,13 @@ export function TestimonialsMarquee() {
 
       {/* Scrolling marquee row 1 */}
       <div className="relative mb-3">
-        <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
-        <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+        <div className="absolute left-0 top-0 bottom-0 w-12 sm:w-24 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
+        <div className="absolute right-0 top-0 bottom-0 w-12 sm:w-24 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
         <motion.div
           animate={
             reduce
               ? undefined
-              : { x: [0, -360 * testimonialsRow1.length] }
+              : { x: [0, -step * testimonialsRow1.length] }
           }
           transition={{
             x: {
@@ -135,6 +153,7 @@ export function TestimonialsMarquee() {
             },
           }}
           className="flex"
+          ref={rowRef}
         >
           {[...testimonialsRow1, ...testimonialsRow1, ...testimonialsRow1].map((t, i) => (
             <TestimonialCard key={`row1-${i}`} t={t} />
@@ -144,13 +163,13 @@ export function TestimonialsMarquee() {
 
       {/* Scrolling marquee row 2 - reverse */}
       <div className="relative">
-        <div className="absolute left-0 top-0 bottom-0 w-24 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
-        <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+        <div className="absolute left-0 top-0 bottom-0 w-12 sm:w-24 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
+        <div className="absolute right-0 top-0 bottom-0 w-12 sm:w-24 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
         <motion.div
           animate={
             reduce
               ? undefined
-              : { x: [-360 * testimonialsRow2.length, 0] }
+              : { x: [-step * testimonialsRow2.length, 0] }
           }
           transition={{
             x: {

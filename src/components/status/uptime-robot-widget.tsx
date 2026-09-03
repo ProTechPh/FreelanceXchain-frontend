@@ -220,7 +220,7 @@ export function UptimeRobotWidget() {
         ) : (
           <TooltipProvider>
             <div className="flex items-center justify-between gap-0.5 sm:gap-1 p-2.5 rounded-2xl bg-background border border-border/70 overflow-hidden">
-              {dailyRatios.slice(-90).map((day) => {
+              {dailyRatios.slice(-90).map((day, index) => {
                 const ratioNum = parseFloat(day.ratio);
                 let barColor = 'bg-success hover:bg-success/80';
                 if (ratioNum < 95) {
@@ -241,7 +241,7 @@ export function UptimeRobotWidget() {
                   <Tooltip key={day.date} content={tooltipContent} side="top">
                     <button
                       type="button"
-                      className={`h-7 sm:h-8 flex-1 min-w-[2px] rounded-[3px] transition-all cursor-pointer ${barColor}`}
+                      className={`h-7 sm:h-8 flex-1 min-w-[2px] rounded-[3px] transition-all cursor-pointer ${index < 45 ? 'hidden sm:block' : ''} ${barColor}`}
                       aria-label={`Uptime on ${day.date}: ${day.ratio}%`}
                     />
                   </Tooltip>

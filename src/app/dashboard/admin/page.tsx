@@ -267,14 +267,14 @@ export default function AdminDashboard() {
       </Card>
 
       {/* Quick Links */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-4 gap-4">
         <Link href="/dashboard/admin/users">
           <Card className="bg-card border-border hover:border-primary/20 transition-all cursor-pointer">
             <CardContent className="p-4 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+              <div className="w-10 h-10 shrink-0 rounded-lg bg-primary/10 flex items-center justify-center">
                 <Users className="w-5 h-5 text-primary" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="font-medium">Manage Users</p>
                 <p className="text-xs text-muted-foreground">View & moderate users</p>
               </div>
@@ -284,10 +284,10 @@ export default function AdminDashboard() {
         <Link href="/dashboard/admin/disputes">
           <Card className="bg-card border-border hover:border-primary/20 transition-all cursor-pointer">
             <CardContent className="p-4 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-lg bg-warning-subtle flex items-center justify-center">
+              <div className="w-10 h-10 shrink-0 rounded-lg bg-warning-subtle flex items-center justify-center">
                 <AlertTriangle className="w-5 h-5 text-warning" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="font-medium">Disputes</p>
                 <p className="text-xs text-muted-foreground">Resolve conflicts</p>
               </div>
@@ -297,10 +297,10 @@ export default function AdminDashboard() {
         <Link href="/dashboard/admin/analytics">
           <Card className="bg-card border-border hover:border-primary/20 transition-all cursor-pointer">
             <CardContent className="p-4 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-lg bg-cyan/10 flex items-center justify-center">
+              <div className="w-10 h-10 shrink-0 rounded-lg bg-cyan/10 flex items-center justify-center">
                 <BarChart3 className="w-5 h-5 text-cyan" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="font-medium">Analytics</p>
                 <p className="text-xs text-muted-foreground">Platform insights</p>
               </div>
@@ -310,10 +310,10 @@ export default function AdminDashboard() {
         <Link href="/dashboard/admin/kyc">
           <Card className="bg-card border-border hover:border-primary/20 transition-all cursor-pointer">
             <CardContent className="p-4 flex items-center gap-4">
-              <div className="w-10 h-10 rounded-lg bg-success-subtle flex items-center justify-center">
+              <div className="w-10 h-10 shrink-0 rounded-lg bg-success-subtle flex items-center justify-center">
                 <Shield className="w-5 h-5 text-success" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="font-medium">KYC review</p>
                 <p className="text-xs text-muted-foreground">Verify identities</p>
               </div>

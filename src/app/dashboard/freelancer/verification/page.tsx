@@ -280,7 +280,7 @@ export function VerificationCenter({ role }: { role: ParticipantRole }) {
               {(verification.document_verified !== null || verification.liveness_passed !== null || verification.face_matched !== null) && (
                 <div className="space-y-2">
                   <h4 className="text-sm font-medium text-muted-foreground">Verification Checks</h4>
-                  <div className="flex gap-4">
+                  <div className="flex flex-wrap gap-x-4 gap-y-2">
                     <CheckItem label="Document" passed={verification.document_verified} />
                     <CheckItem label="Liveness" passed={verification.liveness_passed} />
                     <CheckItem label="Face Match" passed={verification.face_matched} />

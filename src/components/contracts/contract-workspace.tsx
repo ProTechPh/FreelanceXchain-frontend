@@ -261,7 +261,7 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
           <CardContent className="space-y-4">
             {paymentStatus ? (
               <>
-                <div className="grid grid-cols-3 gap-3 text-sm">
+                <div className="grid grid-cols-1 gap-3 text-sm xs:grid-cols-3">
                   <div><p className="text-muted-foreground">Total</p><p className="font-semibold">{formatAmount(paymentStatus.totalAmount)}</p></div>
                   <div><p className="text-muted-foreground">Released</p><p className="font-semibold text-success">{formatAmount(paymentStatus.releasedAmount)}</p></div>
                   <div><p className="text-muted-foreground">Pending</p><p className="font-semibold text-warning">{formatAmount(paymentStatus.pendingAmount)}</p></div>
