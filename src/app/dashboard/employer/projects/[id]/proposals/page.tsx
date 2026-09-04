@@ -202,21 +202,21 @@ export default function EmployerProjectProposalsPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Badge variant="outline" className="h-8 px-3 text-xs">
-            {proposals.length} Submitted
+            {proposals.length} submitted
           </Badge>
           <Badge className="h-8 bg-warning-subtle text-warning border-warning/30 px-3 text-xs font-semibold">
-            {pendingCount} Pending Review
+            {pendingCount} pending review
           </Badge>
           <Badge variant="secondary" className="h-8 px-3 text-xs font-semibold text-primary">
-            {project.budget.toLocaleString()} ETH Budget
+            {project.budget.toLocaleString()} ETH budget
           </Badge>
         </div>
       </div>
 
       {/* Recommended Talent (AI Matches) */}
       {(recommendationsLoading || recommendations.length > 0) && (
-        <Card className="border border-primary/20 bg-primary/5 shadow-xs overflow-hidden">
-          <CardHeader className="pb-3 border-b border-primary/10 bg-primary/10 flex flex-row items-center justify-between gap-2 space-y-0">
+        <Card className="overflow-hidden">
+          <CardHeader className="pb-3 border-b border-border/80 bg-secondary/15 flex flex-row items-center justify-between gap-2 space-y-0">
             <div className="flex items-center gap-2.5">
               <div className="size-8 rounded-lg bg-primary/15 text-primary flex items-center justify-center shrink-0">
                 <Sparkles className="size-4 animate-pulse" />
@@ -224,8 +224,8 @@ export default function EmployerProjectProposalsPage() {
               <div>
                 <CardTitle className="text-base font-bold text-foreground flex items-center gap-2">
                   <span>Recommended talent</span>
-                  <Badge variant="secondary" className="text-3xs bg-primary/10 text-primary border-primary/20">
-                    {recommendationsLoading ? 'Matching…' : `${recommendations.length} Available`}
+                  <Badge variant="secondary" className="text-2xs bg-primary/10 text-primary border-primary/20">
+                    {recommendationsLoading ? 'Matching…' : `${recommendations.length} available`}
                   </Badge>
                 </CardTitle>
                 <p className="text-xs text-muted-foreground">
@@ -272,7 +272,7 @@ export default function EmployerProjectProposalsPage() {
                     return (
                       <div
                         key={`${recommendation.freelancerId}-${idx}`}
-                        className="rounded-xl border border-border/80 bg-card p-4 shadow-xs flex flex-col justify-between space-y-3"
+                        className="rounded-xl border border-border bg-muted/40 p-4 flex flex-col justify-between space-y-3"
                       >
                         <div className="space-y-2.5">
                           <div className="flex items-start justify-between gap-3">
@@ -298,8 +298,8 @@ export default function EmployerProjectProposalsPage() {
                                       <span>({Math.round(recommendation.reputationScore)}% rep)</span>
                                     </span>
                                   ) : (
-                                    <Badge variant="secondary" className="text-3xs bg-secondary/60 text-muted-foreground py-0">
-                                      New Talent · Unrated
+                                    <Badge variant="secondary" className="text-2xs bg-secondary/60 text-muted-foreground py-0">
+                                      New talent · unrated
                                     </Badge>
                                   )}
                                 </div>
@@ -314,7 +314,7 @@ export default function EmployerProjectProposalsPage() {
                           {/* Matched Skills */}
                           <div className="flex flex-wrap gap-1.5">
                             {recommendation.matchedSkills.map((skill, skillIdx) => (
-                              <Badge key={`${skill}-${skillIdx}`} variant="secondary" className="text-3xs px-2 py-0.5">
+                              <Badge key={`${skill}-${skillIdx}`} variant="secondary" className="text-2xs px-2 py-0.5">
                                 {skill}
                               </Badge>
                             ))}
@@ -352,7 +352,7 @@ export default function EmployerProjectProposalsPage() {
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold tracking-tight text-foreground flex items-center gap-2">
             <FileText className="size-5 text-primary" />
-            Submitted Proposals
+            Submitted proposals
             <Badge variant="secondary" className="text-xs">
               {proposals.length}
             </Badge>
@@ -395,8 +395,8 @@ export default function EmployerProjectProposalsPage() {
                           <CardTitle className="truncate text-base font-bold text-foreground">
                             {freelancerName}
                           </CardTitle>
-                          <Badge variant="secondary" className="bg-success-subtle text-success border border-success/20 text-3xs py-0.5">
-                            <ShieldCheck className="size-3 mr-1" /> Verified Talent
+                          <Badge variant="secondary" className="bg-success-subtle text-success border border-success/20 text-2xs py-0.5">
+                            <ShieldCheck className="size-3 mr-1" /> Verified talent
                           </Badge>
                         </div>
                         <p className="mt-1 text-xs text-muted-foreground">
@@ -459,7 +459,7 @@ export default function EmployerProjectProposalsPage() {
                           </div>
                           <div className="min-w-0">
                             <p className="font-semibold text-xs text-foreground truncate">Detailed Proposal Document Attached</p>
-                            <p className="text-3xs text-muted-foreground">{proposalBriefDoc.filename} ({formatFileSize(proposalBriefDoc.size)})</p>
+                            <p className="text-2xs text-muted-foreground">{proposalBriefDoc.filename} ({formatFileSize(proposalBriefDoc.size)})</p>
                           </div>
                         </div>
                         <Button
@@ -498,7 +498,7 @@ export default function EmployerProjectProposalsPage() {
                                   <Paperclip className="size-4 text-primary shrink-0" />
                                   <div className="min-w-0">
                                     <p className="font-medium truncate text-foreground">{attachment.filename}</p>
-                                    <p className="text-3xs text-muted-foreground">{formatFileSize(attachment.size)}</p>
+                                    <p className="text-2xs text-muted-foreground">{formatFileSize(attachment.size)}</p>
                                   </div>
                                 </div>
 
@@ -536,7 +536,7 @@ export default function EmployerProjectProposalsPage() {
                                       </Button>
                                     </>
                                   ) : (
-                                    <span className="text-3xs text-muted-foreground">Unavailable</span>
+                                    <span className="text-2xs text-muted-foreground">Unavailable</span>
                                   )}
                                 </div>
                               </div>
@@ -577,9 +577,7 @@ export default function EmployerProjectProposalsPage() {
                       )}
 
                       {proposal.status === 'accepted' && (
-                        <Badge className="bg-success-subtle text-success border border-success/30 font-semibold text-xs px-3 py-1 rounded-full">
-                          <Check className="mr-1 size-3.5" /> Accepted Contract Created
-                        </Badge>
+                        <StatusBadge status="accepted" domain="proposal" label="Contract created" />
                       )}
                     </div>
                   </CardContent>

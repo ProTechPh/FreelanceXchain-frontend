@@ -12,6 +12,7 @@ import type { KycVerification, UserRole } from '@/types';
 import { Shield, CheckCircle, XCircle, Clock, AlertTriangle, RefreshCw, Loader2, Globe, FileText, User, Calendar } from 'lucide-react';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
 import { KycVerificationModal } from '@/components/kyc/kyc-verification-modal';
+import { HelpHint } from '@/components/onboarding/help-hint';
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   approved: { label: 'Approved', color: 'bg-success-subtle text-success', icon: CheckCircle },
@@ -139,6 +140,7 @@ export function VerificationCenter({ role }: { role: ParticipantRole }) {
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Identity verification</h1>
           <p className="text-muted-foreground">{roleDescription}</p>
+          <HelpHint topic="kyc" className="pt-2" />
         </div>
       </div>
 

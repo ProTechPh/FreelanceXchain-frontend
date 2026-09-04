@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Bell, MessageSquare, LogOut, User, Settings, ChevronDown, Search, Shield, Bookmark, History } from 'lucide-react';
+import { Bell, MessageSquare, LogOut, User, Settings, ChevronDown, Compass, Search, Shield, Bookmark, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -20,6 +20,7 @@ import { useState, useEffect, useRef } from 'react';
 import { notificationsApi } from '@/lib/api';
 import { subscribeToNotificationStream } from '@/lib/sse';
 import { WalletHeaderButton } from '@/components/wallet/wallet-header-button';
+import { useStartTour } from '@/components/onboarding/tour-launcher';
 
 const participantAccountItems = [
   { label: 'Profile', path: 'profile', icon: User },
@@ -33,6 +34,7 @@ const participantAccountItems = [
 export function TopBar() {
   const { user, logout } = useAuthStore();
   const router = useRouter();
+  const { startTour, canStartTour } = useStartTour();
   const [mounted, setMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [unreadNotifications, setUnreadNotifications] = useState(0);
@@ -154,6 +156,7 @@ export function TopBar() {
             <Button asChild variant="ghost" size="icon" className="relative">
               <Link
                 href={`/dashboard/${user.role}/notifications`}
+                data-tour="notifications"
                 aria-label={`Notifications${unreadNotifications > 0 ? ` (${unreadNotifications} unread)` : ''}`}
               >
                 <Bell className="size-5" aria-hidden="true" />
@@ -185,6 +188,7 @@ export function TopBar() {
           {/* User Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger
+              data-tour="account"
               aria-label="Open account menu"
               className="flex h-9 cursor-pointer items-center gap-1 rounded-md px-1 outline-none transition-colors duration-fast hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:gap-2 sm:px-2"
             >
@@ -217,6 +221,14 @@ export function TopBar() {
                       <item.icon className="size-4" aria-hidden="true" /> {item.label}
                     </DropdownMenuItem>
                   ))}
+                  {canStartTour && (
+                    <DropdownMenuItem
+                      onClick={() => startTour()}
+                      className="flex items-center gap-2 cursor-pointer"
+                    >
+                      <Compass className="size-4" aria-hidden="true" /> Product tour
+                    </DropdownMenuItem>
+                  )}
                 </>
               )}
               <DropdownMenuSeparator />

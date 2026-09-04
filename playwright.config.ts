@@ -1,5 +1,26 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const BASE_URL = 'http://127.0.0.1:3100';
+
+/** Mirrors the shape zustand's `persist` writes for the `onboarding-tour` store. */
+const TOUR_ALREADY_SEEN = {
+  cookies: [],
+  origins: [
+    {
+      origin: BASE_URL,
+      localStorage: [
+        {
+          name: 'onboarding-tour',
+          value: JSON.stringify({
+            state: { completedByRole: { freelancer: 1, employer: 1 }, autoStart: true },
+            version: 0,
+          }),
+        },
+      ],
+    },
+  ],
+};
+
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
@@ -10,7 +31,13 @@ export default defineConfig({
     timeout: 10_000,
   },
   use: {
-    baseURL: 'http://127.0.0.1:3100',
+    baseURL: BASE_URL,
+    // The onboarding tour auto-starts for a participant who has never seen it,
+    // which would put a scrim over every dashboard assertion in this suite.
+    // Seeding it as already completed here keeps all the existing specs honest
+    // without editing any of them; `e2e/onboarding-tour.spec.ts` opts back out
+    // with its own `test.use({ storageState: … })`.
+    storageState: TOUR_ALREADY_SEEN,
     trace: 'on-first-retry',
   },
   projects: [
@@ -45,7 +72,7 @@ export default defineConfig({
       NEXT_DIST_DIR: '.next-e2e',
       NEXT_PUBLIC_API_URL: 'http://127.0.0.1:3100/api',
     },
-    url: 'http://127.0.0.1:3100',
+    url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },

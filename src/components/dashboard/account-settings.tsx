@@ -26,6 +26,7 @@ import { getApiErrorMessage } from '@/lib/auth-contract';
 import { reportFailure } from '@/lib/report-failure';
 import { safeAttachmentUrl } from '@/lib/attachment-presentation';
 import { useAuthStore } from '@/stores/authStore';
+import { TourSettingsCard } from '@/components/onboarding/tour-settings-card';
 import type { EmailPreferences, EmailPreferencesUpdate, FileInfo, FileQuota, MfaFactor } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -501,6 +502,8 @@ export function AccountSettings() {
             ))}
         </CardContent>
       </Card>
+
+      <TourSettingsCard />
 
       <Card>
         <CardHeader>

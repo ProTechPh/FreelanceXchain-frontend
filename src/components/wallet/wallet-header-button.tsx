@@ -65,6 +65,7 @@ export function WalletHeaderButton() {
         onClick={() => void connect()}
         disabled={isConnecting}
         aria-label="Connect Wallet"
+        data-tour="wallet"
         className="relative flex shrink-0 items-center gap-2 border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary font-medium shadow-xs transition-colors"
       >
         {isConnecting ? (
@@ -86,6 +87,7 @@ export function WalletHeaderButton() {
     <DropdownMenu>
       <DropdownMenuTrigger
         aria-label={`Wallet ${formattedAddress}`}
+        data-tour="wallet"
         className="flex shrink-0 items-center gap-1.5 rounded-md border border-border bg-secondary/80 hover:bg-secondary px-2 py-1.5 text-xs outline-none transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-ring sm:gap-2 sm:px-2.5"
       >
         {balance !== null && (

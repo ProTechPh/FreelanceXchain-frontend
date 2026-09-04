@@ -4,6 +4,7 @@ import { ArrowRight, Loader2, ShieldCheck, Sparkles, Wallet } from 'lucide-react
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useWalletConnection } from '@/hooks/use-wallet-connection';
+import { HelpHint } from '@/components/onboarding/help-hint';
 
 interface WalletConnectBannerProps {
   role?: 'freelancer' | 'employer';
@@ -42,6 +43,7 @@ export function WalletConnectBanner({ role = 'freelancer', className = '' }: Wal
                 ? 'Link your Ethereum or Polygon wallet (e.g. MetaMask) to automatically receive milestone escrow payouts and build verified on-chain work history.'
                 : 'Link your Web3 wallet (e.g. MetaMask) to fund project escrows securely, approve milestone payments, and manage on-chain contracts.'}
             </p>
+            <HelpHint topic={isFreelancer ? 'wallet' : 'escrow'} className="pt-1" />
           </div>
         </div>
 

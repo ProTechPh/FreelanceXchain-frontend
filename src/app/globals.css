@@ -146,6 +146,10 @@
   --color-ring: var(--ring);
   /* Modal/sheet scrim. Resolves per theme — see the note in .dark. */
   --color-overlay: var(--overlay);
+  /* Onboarding-tour scrim. Deliberately separate from --overlay: a centred
+     modal wants a gentle wash, whereas a spotlight has to say "everything but
+     this is off right now", which 10% black in light theme cannot do. */
+  --color-tour-scrim: var(--tour-scrim);
   /* Text/iconography sitting ON a .gradient-primary surface. Distinct from
      --primary-foreground, which belongs on the solid --primary fill: in dark
      that fill is bright so its foreground is near-black, whereas the gradient
@@ -246,6 +250,7 @@
   /* Exactly the previous hardcoded bg-black/10, so light is unchanged.
      Dark needs far more because its page is no longer near-black. */
   --overlay: rgb(0 0 0 / 0.10);
+  --tour-scrim: rgb(0 0 0 / 0.55);
 
   /* Hairline on the brand-locked near-black logo tiles. Only needed in dark,
      where the page is no longer near-black and they would read as holes. */
@@ -416,6 +421,7 @@
      page behind it: the previous hardcoded bg-black/10 gave almost no
      figure-ground once the base stopped being near-black. */
   --overlay: rgb(0 0 0 / 0.62);
+  --tour-scrim: rgb(0 0 0 / 0.72);
   --tile-plate-edge: var(--border-strong);
 
   /* The dark ramp travels HUE (teal -> green) at near-constant luminance,
