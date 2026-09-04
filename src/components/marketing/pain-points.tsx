@@ -26,7 +26,7 @@ export function PainPoints() {
 
   return (
     <section className="py-20 sm:py-28 bg-muted/20 border-b border-border/40">
-      <div className="mx-auto max-w-6xl px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={reduce ? false : { opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}

@@ -134,7 +134,7 @@ export function AttachmentPreviewDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden bg-card border-border shadow-2xl">
+      <DialogContent className="sm:max-w-3xl max-h-[90dvh] flex flex-col p-0 gap-0 overflow-hidden bg-card border-border shadow-2xl">
         {/* Header */}
         <DialogHeader className="p-4 sm:p-5 border-b border-border bg-card flex-row items-center justify-between gap-4 space-y-0">
           <div className="flex items-center gap-3 min-w-0">
@@ -249,7 +249,7 @@ export function AttachmentPreviewDialog({
                   <img
                     src={url}
                     alt={displayFilename}
-                    className="max-h-[65vh] max-w-full rounded-xl object-contain shadow-md"
+                    className="max-h-[65dvh] max-w-full rounded-xl object-contain shadow-md"
                     onError={() => setImageFailed(true)}
                   />
                 </div>
@@ -257,7 +257,7 @@ export function AttachmentPreviewDialog({
 
               {/* PDF Display */}
               {isPdf && url && (
-                <div className="w-full h-[65vh] rounded-2xl overflow-hidden border border-border shadow-md">
+                <div className="w-full h-[65dvh] rounded-2xl overflow-hidden border border-border shadow-md">
                   <iframe src={url} className="w-full h-full border-0" title={displayFilename} />
                 </div>
               )}

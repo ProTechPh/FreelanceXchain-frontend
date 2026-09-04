@@ -141,7 +141,7 @@ export function ComponentServicesList() {
   }, [probeServices]);
 
   return (
-    <section className="mx-auto max-w-5xl px-6 lg:px-8 mb-16">
+    <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 mb-16">
       <div className="flex items-center justify-between gap-4 mb-4">
         <div>
           <h3 className="text-lg font-extrabold text-foreground tracking-tight">

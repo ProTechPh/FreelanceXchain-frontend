@@ -217,7 +217,7 @@ export default function AdminEmailPage() {
   ];
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] gap-4 p-4 sm:p-6">
+    <div className="flex flex-col h-[calc(100dvh-4rem)] gap-4 p-4 sm:p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <Mail className="w-6 h-6 text-primary" />
@@ -321,9 +321,9 @@ export default function AdminEmailPage() {
         </div>
       </div>
 
-      <div className="flex flex-1 gap-4 overflow-hidden">
-        {/* Folder sidebar */}
-        <div className="hidden sm:block w-48 shrink-0 space-y-1">
+      <div className="flex flex-1 flex-col gap-4 overflow-hidden sm:flex-row">
+        {/* Folder sidebar — a wrapping chip row on phones, a rail from sm up */}
+        <div className="flex w-full shrink-0 flex-wrap gap-1 sm:w-48 sm:flex-col sm:flex-nowrap">
           {folders.map((f) => (
             <button
               key={f.key}
@@ -331,7 +331,7 @@ export default function AdminEmailPage() {
                 setCurrentFolder(f.key);
                 setSelectedEmail(null);
               }}
-              className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex items-center gap-2 w-auto sm:w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                 currentFolder === f.key
                   ? 'bg-primary/10 text-primary'
                   : 'text-muted-foreground hover:bg-muted'

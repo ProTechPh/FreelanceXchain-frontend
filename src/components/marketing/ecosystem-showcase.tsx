@@ -309,7 +309,7 @@ function AnimatedColumn({
             aria-label={item.name}
             title={item.name}
             role="img"
-            className="group relative w-13 h-13 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-2xl sm:rounded-3xl bg-card border border-border/80 shadow-md shadow-black/5 hover:border-primary/60 hover:shadow-xl flex items-center justify-center p-2.5 sm:p-3.5 transition-all duration-200 cursor-pointer shrink-0"
+            className="group relative w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-2xl sm:rounded-3xl bg-card border border-border/80 shadow-md shadow-black/5 hover:border-primary/60 hover:shadow-xl flex items-center justify-center p-2.5 sm:p-3.5 transition-all duration-200 cursor-pointer shrink-0"
           >
             <div className="w-full h-full flex items-center justify-center pointer-events-none">
               {item.icon}
@@ -343,7 +343,7 @@ export function EcosystemShowcase() {
       {/* Background Soft Glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[450px] bg-primary/5 rounded-full blur-3xl pointer-events-none -z-10" />
 
-      <div className="mx-auto max-w-6xl px-6 lg:px-8 text-center mb-12">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 text-center mb-12">
         <motion.div
           initial={reduce ? false : { opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}

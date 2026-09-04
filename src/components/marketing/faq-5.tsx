@@ -62,16 +62,16 @@ export const Faq5 = ({
   faqs = defaultFaqs,
 }: Faq5Props) => {
   return (
-    <section className="py-32">
-      <div className="container">
+    <section className="py-20 sm:py-28 lg:py-32">
+      <div className="mx-auto w-full max-w-5xl px-4 sm:px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <Badge className="text-xs font-medium">{badge}</Badge>
-          <h1 className="mt-4 text-4xl font-semibold">{heading}</h1>
+          <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl lg:text-5xl">{heading}</h1>
           <p className="mt-6 font-medium text-muted-foreground">
             {description}
           </p>
         </div>
-        <div className="mx-auto mt-14 max-w-screen-sm">
+        <div className="mx-auto mt-10 max-w-2xl sm:mt-14">
           {faqs.map((faq, index) => (
             <div key={index} className="mb-8 flex gap-4">
               <span className="flex size-6 shrink-0 items-center justify-center rounded-sm bg-secondary font-mono text-xs text-primary">

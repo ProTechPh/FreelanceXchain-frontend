@@ -340,7 +340,7 @@ export function MessagesWorkspace() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] rounded-xl overflow-hidden border border-border bg-card">
+    <div className="flex h-[calc(100dvh-8rem)] rounded-xl overflow-hidden border border-border bg-card">
       {/* Conversations List */}
       <div className={cn('w-full md:w-80 border-r border-border flex flex-col', chatRecipient ? 'hidden md:flex' : 'flex')}>
         <div className="p-4 border-b border-border">
@@ -469,7 +469,7 @@ export function MessagesWorkspace() {
       </div>
 
       {/* Chat Area */}
-      <div className={cn('flex-1 flex flex-col', !chatRecipient ? 'hidden md:flex' : 'flex')}>
+      <div className={cn('flex min-w-0 flex-1 flex-col', !chatRecipient ? 'hidden md:flex' : 'flex')}>
         {!chatRecipient ? (
           <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
             Select a conversation to start chatting
@@ -477,8 +477,8 @@ export function MessagesWorkspace() {
         ) : (
           <>
             {/* Chat Header */}
-            <div className="p-4 border-b border-border flex items-center justify-between">
-              <div className="flex items-center gap-3">
+            <div className="p-4 border-b border-border flex min-w-0 items-center justify-between">
+              <div className="flex min-w-0 items-center gap-3">
                 <Button
                   variant="ghost"
                   size="icon"
@@ -491,15 +491,15 @@ export function MessagesWorkspace() {
                 >
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
-                <Avatar className="w-10 h-10">
+                <Avatar className="w-10 h-10 shrink-0">
                   <AvatarFallback className="gradient-primary text-sm">
                     {initials(chatRecipient.name)}
                   </AvatarFallback>
                 </Avatar>
-                <div>
-                  <p className="font-medium">{chatRecipient.name}</p>
+                <div className="min-w-0">
+                  <p className="truncate font-medium" title={chatRecipient.name}>{chatRecipient.name}</p>
                   {chatRecipient.email && (
-                    <p className="text-xs text-muted-foreground">{chatRecipient.email}</p>
+                    <p className="truncate text-xs text-muted-foreground" title={chatRecipient.email}>{chatRecipient.email}</p>
                   )}
                 </div>
               </div>

@@ -77,7 +77,8 @@ Status meanings:
 | `GET /analytics/platform`, `/admin/platform-stats`, `/notifications/sse-stats` | Canonical alternative | Admin analytics, stats, system health, and live notification behavior already cover the product/operations surfaces without duplicate dashboards. |
 | `/health`, root metadata, `robots.txt`, `sitemap.xml` | Backend-only | Monitoring and crawler endpoints, not interactive frontend actions. |
 | Blockchain, KYC, and inbox webhook routes | Backend-only | Inbound provider callbacks must never be invoked from the browser. |
-| Legacy client-side escrow deployment, project deletion, account deletion, earnings withdrawal, CAPTCHA, and local-only privacy/onboarding state | Unsupported legacy | No current approved backend product contract exists; controls remain absent rather than simulated. |
+| Legacy client-side escrow deployment, project deletion, account deletion, earnings withdrawal, CAPTCHA, and local-only privacy state | Unsupported legacy | No current approved backend product contract exists; controls remain absent rather than simulated. |
+| Onboarding-tour completion and its auto-start preference | Intentionally client-side | There is no generic user-preferences route (only `/email-preferences`), and the tour teaches the UI rather than recording anything about the account. It persists in `localStorage` under `onboarding-tour`, and the settings copy says so rather than implying it syncs across devices. |
 
 ## Contract notes
 

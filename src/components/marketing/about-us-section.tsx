@@ -58,7 +58,7 @@ export default function AboutUsSection() {
   return (
     <div className="w-full">
       {/* Hero Intro */}
-      <section className="mx-auto max-w-5xl px-6 lg:px-8 mb-16 text-center">
+      <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 mb-16 text-center">
         <motion.div
           initial={reduce ? false : { opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
@@ -70,7 +70,7 @@ export default function AboutUsSection() {
           </div>
 
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-foreground">
-            Building the trustless standard <br />
+            Building the trustless standard <br className="hidden sm:inline" />
             <span className="text-muted-foreground dark:text-muted-foreground font-semibold">
               for the global freelance economy.
             </span>
@@ -83,7 +83,7 @@ export default function AboutUsSection() {
       </section>
 
       {/* Stats Counter Bar */}
-      <section className="mx-auto max-w-5xl px-6 lg:px-8 mb-16">
+      <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 mb-16">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {STATS.map((stat) => (
             <div
@@ -98,7 +98,7 @@ export default function AboutUsSection() {
       </section>
 
       {/* Four Core Pillars */}
-      <section className="mx-auto max-w-5xl px-6 lg:px-8 mb-20">
+      <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 mb-20">
         <div className="text-center mb-10">
           <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
             How We Empower Freelancers & Employers
@@ -131,7 +131,7 @@ export default function AboutUsSection() {
       </section>
 
       {/* Bottom Mission CTA */}
-      <section className="mx-auto max-w-5xl px-6 lg:px-8">
+      <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <div className="rounded-3xl bg-primary text-primary-foreground p-8 sm:p-12 text-center relative overflow-hidden shadow-xl">
           <div className="relative z-10 max-w-2xl mx-auto space-y-4">
             <h3 className="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight text-primary-foreground">

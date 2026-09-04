@@ -90,16 +90,16 @@ export default function SystemHealthPage() {
       {/* Overall Status */}
       <Card className="bg-card border-border">
         <CardContent className="p-6">
-          <div className="flex items-center gap-4">
-            <div className={`w-16 h-16 rounded-2xl ${allHealthy ? 'bg-success-subtle' : 'bg-destructive-subtle'} flex items-center justify-center`}>
+          <div className="flex flex-wrap items-center gap-4">
+            <div className={`w-16 h-16 shrink-0 rounded-2xl ${allHealthy ? 'bg-success-subtle' : 'bg-destructive-subtle'} flex items-center justify-center`}>
               {allHealthy ? (
                 <CheckCircle className="w-8 h-8 text-success" />
               ) : (
                 <AlertTriangle className="w-8 h-8 text-destructive" />
               )}
             </div>
-            <div>
-              <h2 className={`text-2xl font-bold ${allHealthy ? 'text-success' : 'text-destructive'}`}>
+            <div className="min-w-0">
+              <h2 className={`text-xl font-bold sm:text-2xl ${allHealthy ? 'text-success' : 'text-destructive'}`}>
                 {allHealthy ? 'All Systems Operational' : 'Degraded'}
               </h2>
               <p className="text-muted-foreground">

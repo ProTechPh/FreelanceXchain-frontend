@@ -26,6 +26,7 @@ import { getApiErrorMessage } from '@/lib/auth-contract';
 import { reportFailure } from '@/lib/report-failure';
 import { safeAttachmentUrl } from '@/lib/attachment-presentation';
 import { useAuthStore } from '@/stores/authStore';
+import { TourSettingsCard } from '@/components/onboarding/tour-settings-card';
 import type { EmailPreferences, EmailPreferencesUpdate, FileInfo, FileQuota, MfaFactor } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -362,8 +363,8 @@ export function AccountSettings() {
         </CardHeader>
         <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <div className="flex items-center gap-2">
-              <p className="font-medium text-foreground">{user?.email}</p>
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
+              <p className="min-w-0 truncate font-medium text-foreground" title={user?.email}>{user?.email}</p>
               {user?.emailVerification ? (
                 <Badge variant="secondary" className="bg-success-subtle text-success border border-success-border">
                   Verified email
@@ -501,6 +502,8 @@ export function AccountSettings() {
             ))}
         </CardContent>
       </Card>
+
+      <TourSettingsCard />
 
       <Card>
         <CardHeader>

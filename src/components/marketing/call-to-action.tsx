@@ -22,7 +22,7 @@ function CallToAction() {
 
   return (
     <section className="bg-gradient-to-b from-background via-primary-subtle/30 to-background py-20 sm:py-28">
-      <div className="mx-auto max-w-5xl px-6 lg:px-8">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={reduce ? false : { opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}

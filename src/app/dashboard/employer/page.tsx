@@ -17,6 +17,7 @@ import { DollarSign, FolderOpen, FileText, Users, Clock, ArrowUpRight, PlusCircl
 import { formatAmount, formatRelativeTime } from '@/lib/format';
 import { StatsSkeleton } from '@/components/dashboard/skeletons';
 import { WalletConnectBanner } from '@/components/wallet/wallet-connect-banner';
+import { TourStepLink } from '@/components/onboarding/tour-step-link';
 import { WalletBalanceCard } from '@/components/wallet/wallet-balance-card';
 
 interface RecentProposalView {
@@ -134,6 +135,7 @@ export default function EmployerDashboard() {
       color: 'text-primary',
       bg: 'bg-primary/10',
       loading: coreLoading,
+      tour: undefined,
     },
     {
       title: range === 'all' ? 'Total Spent' : `Spent · ${getRangeLabel(range)}`,
@@ -142,6 +144,10 @@ export default function EmployerDashboard() {
       color: 'text-success',
       bg: 'bg-success-subtle',
       loading: totalSpent === null && completedContractCount === null,
+      // Named, not positional: the money tile is first for freelancers and
+      // second here, and anchoring the tour by index pointed the "what you have
+      // spent" step at Active Projects.
+      tour: 'earnings',
     },
     {
       title: 'Pending Proposals',
@@ -150,6 +156,7 @@ export default function EmployerDashboard() {
       color: 'text-cyan',
       bg: 'bg-cyan/10',
       loading: coreLoading,
+      tour: undefined,
     },
     {
       title: 'Completed Contracts',
@@ -158,6 +165,7 @@ export default function EmployerDashboard() {
       color: 'text-warning',
       bg: 'bg-warning-subtle',
       loading: completedContractCount === null,
+      tour: undefined,
     },
   ];
 
@@ -176,7 +184,7 @@ export default function EmployerDashboard() {
           />
         </div>
         <Link href="/dashboard/employer/projects/new" className="shrink-0">
-          <Button variant="gradient" className="w-full sm:w-auto">
+          <Button variant="gradient" data-tour="primary-cta" className="w-full sm:w-auto">
             <PlusCircle className="w-4 h-4 mr-2" /> Post Project
           </Button>
         </Link>
@@ -191,7 +199,7 @@ export default function EmployerDashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat) => (
-          <Card key={stat.title} className="bg-card border-border">
+          <Card key={stat.title} data-tour={stat.tour} className="bg-card border-border">
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div>
@@ -214,7 +222,7 @@ export default function EmployerDashboard() {
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Active Projects */}
         <div className="lg:col-span-2">
-          <Card className="bg-card border-border">
+          <Card data-tour="active-work" className="bg-card border-border">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-lg">Active Projects</CardTitle>
               <Link href="/dashboard/employer/projects">
@@ -230,9 +238,12 @@ export default function EmployerDashboard() {
                   <Skeleton className="h-24 w-full rounded-xl" />
                 </div>
               ) : activeProjects.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-8 text-center">
-                  No active projects yet — post one to start receiving proposals
-                </p>
+                <div className="flex flex-col items-center gap-2 py-8 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    No active projects yet — post one to start receiving proposals
+                  </p>
+                  <TourStepLink step="contracts">How contracts and milestones work</TourStepLink>
+                </div>
               ) : (
                 activeProjects.map((project) => {
                   const milestones = project.milestones ?? [];
@@ -279,7 +290,7 @@ export default function EmployerDashboard() {
         </div>
 
         {/* Recent Proposals */}
-        <Card className="bg-card border-border">
+        <Card data-tour="proposals" className="bg-card border-border">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg">Recent Proposals</CardTitle>
             <Link href="/dashboard/employer/projects">
@@ -295,7 +306,10 @@ export default function EmployerDashboard() {
                 <Skeleton className="h-16 w-full rounded-xl" />
               </div>
             ) : recentProposals.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-8 text-center">No proposals yet</p>
+              <div className="flex flex-col items-center gap-2 py-8 text-center">
+                <p className="text-sm text-muted-foreground">No proposals yet</p>
+                <TourStepLink step="proposals">How bids are ranked</TourStepLink>
+              </div>
             ) : (
               recentProposals.map(({ proposal, projectTitle, freelancerName, rating }) => (
                 <div key={proposal.id} className="p-3 rounded-xl bg-secondary/50 border border-border">

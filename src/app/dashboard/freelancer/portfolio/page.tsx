@@ -371,7 +371,7 @@ export default function PortfolioPage() {
 
       {/* Add / Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[600px] max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingId ? 'Edit Portfolio Item' : 'Add Portfolio Item'}

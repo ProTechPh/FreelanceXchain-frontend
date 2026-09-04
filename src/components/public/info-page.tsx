@@ -20,7 +20,7 @@ export function InfoPage({
 
       <main className="grow pt-28 sm:pt-36 pb-20">
         {/* Header Hero */}
-        <section className="mx-auto max-w-4xl px-6 lg:px-8 mb-12 text-center">
+        <section className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 mb-12 text-center">
           <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold mb-4 border border-primary/20 shadow-xs">
             <Sparkle className="size-3.5 fill-primary" fill="currentColor" />
             <span>{badge}</span>
@@ -36,7 +36,7 @@ export function InfoPage({
         </section>
 
         {/* Content Card */}
-        <div className="mx-auto max-w-4xl px-6 lg:px-8">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
           <div className="rounded-3xl bg-card border border-border/80 shadow-lg shadow-black/5 p-6 sm:p-10 lg:p-12 prose prose-slate dark:prose-invert max-w-none space-y-8">
             {children}
           </div>

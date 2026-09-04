@@ -132,17 +132,19 @@ export default function AnalyticsPage() {
             {growthData.length === 0 ? (
               <p className="text-sm text-muted-foreground py-16 text-center">No growth data yet</p>
             ) : (
-              <div className="h-64 flex items-end gap-2">
-                {growthData.map((data) => (
-                  <div key={data.month} className="flex-1 flex flex-col items-center gap-2">
-                    <div
-                      className="w-full gradient-primary rounded-t-lg transition-all hover:opacity-80"
-                      style={{ height: `${Math.max(4, (data.count / maxGrowth) * 200)}px` }}
-                      title={`${data.count} new users`}
-                    />
-                    <span className="text-xs text-muted-foreground">{data.month.slice(5)}</span>
-                  </div>
-                ))}
+              <div className="overflow-x-auto">
+                <div className="h-64 flex items-end gap-2">
+                  {growthData.map((data) => (
+                    <div key={data.month} className="flex-1 min-w-8 flex flex-col items-center gap-2">
+                      <div
+                        className="w-full gradient-primary rounded-t-lg transition-all hover:opacity-80"
+                        style={{ height: `${Math.max(4, (data.count / maxGrowth) * 200)}px` }}
+                        title={`${data.count} new users`}
+                      />
+                      <span className="text-xs text-muted-foreground">{data.month.slice(5)}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </CardContent>

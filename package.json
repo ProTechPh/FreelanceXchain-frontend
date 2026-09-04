@@ -18,10 +18,13 @@
     "test:project-actions": "node --test --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON src/lib/project-actions.test.mjs",
     "test:proposal-management": "node --test --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON src/lib/proposal-management.test.mjs",
     "test:dashboard-message-route": "node --test --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON src/lib/dashboard-message-route.test.mjs",
+    "test:onboarding-tour": "node --test --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON src/lib/onboarding-tour.test.mjs",
+    "test:help-topics": "node --test --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON src/lib/help-topics.test.mjs",
     "typecheck": "tsc --noEmit",
     "verify:contrast": "node scripts/verify-contrast.mjs",
     "verify:tokens": "node scripts/verify-tokens.mjs",
-    "verify": "pnpm verify:contrast && pnpm verify:tokens"
+    "verify:responsive": "node scripts/verify-responsive.mjs",
+    "verify": "pnpm verify:contrast && pnpm verify:tokens && pnpm verify:responsive"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

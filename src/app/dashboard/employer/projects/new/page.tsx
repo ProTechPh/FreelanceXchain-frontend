@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge, badgeVariants } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { HelpHint } from '@/components/onboarding/help-hint';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -368,9 +369,12 @@ export default function CreateProjectPage() {
 
           {currentStep === 2 && (
             <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">Milestones</h2>
-                <Button type="button" variant="outline" size="sm" onClick={addMilestone}>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex flex-col gap-1">
+                  <h2 className="text-lg font-semibold">Milestones</h2>
+                  <HelpHint topic="milestones" />
+                </div>
+                <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={addMilestone}>
                   <Plus className="w-4 h-4 mr-2" /> Add Milestone
                 </Button>
               </div>

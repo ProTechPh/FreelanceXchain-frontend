@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { EmailVerificationGate } from './EmailVerificationGate';
+import { OnboardingTour } from '@/components/onboarding/onboarding-tour';
 import { useAuthStore } from '@/stores/authStore';
 import type { UserRole } from '@/types';
 
@@ -62,6 +63,11 @@ export function DashboardLayout({ children, allowedRoles }: DashboardLayoutProps
       {/* If email is unverified, show the Gate Modal and lock the dashboard */}
       {isEmailUnverified && <EmailVerificationGate />}
 
+      {/* Renders nothing unless the tour is actually running. `suppressed` is
+          the same flag that blurs the dashboard, so the two can never disagree
+          about whether a tour may run. */}
+      <OnboardingTour suppressed={isEmailUnverified} />
+
       {/* Keyboard users land here first: one Tab skips the whole sidebar and
           top bar, which is otherwise ~20 stops before any page content. */}
       <a
@@ -78,7 +84,7 @@ export function DashboardLayout({ children, allowedRoles }: DashboardLayoutProps
         <main
           id="dashboard-content"
           tabIndex={-1}
-          className="flex-1 px-4 py-4 sm:px-6 sm:py-6 lg:px-(--space-page-x) outline-none"
+          className="min-w-0 flex-1 px-4 py-4 sm:px-6 sm:py-6 lg:px-(--space-page-x) outline-none"
         >
           {children}
         </main>

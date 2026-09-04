@@ -538,7 +538,7 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
                     value={reviewNotes}
                     onChange={(e) => setReviewNotes(e.target.value)}
                   />
-                  <div className="flex gap-3 mt-3">
+                  <div className="flex flex-wrap gap-3 mt-3">
                     <Button
                       size="sm"
                       className="bg-success hover:bg-success/90 text-success-foreground"
@@ -583,7 +583,7 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
       {/* Fullscreen Lightbox Modal */}
       {selectedImage && (
         <Dialog open={!!selectedImage} onOpenChange={(open) => { if (!open) setSelectedImage(null); }}>
-          <DialogContent className="sm:max-w-4xl max-h-[95vh] flex flex-col p-0 gap-0 overflow-hidden bg-card border-border shadow-2xl">
+          <DialogContent className="sm:max-w-4xl max-h-[95dvh] flex flex-col p-0 gap-0 overflow-hidden bg-card border-border shadow-2xl">
             <DialogHeader className="p-4 border-b border-border flex-row items-center justify-between gap-4 space-y-0">
               <DialogTitle className="text-sm font-semibold">{selectedImage.title}</DialogTitle>
               <Button
@@ -595,11 +595,11 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
                 <ExternalLink className="size-3.5" /> Open original
               </Button>
             </DialogHeader>
-            <div className="p-4 flex items-center justify-center bg-black/80 max-h-[78vh] overflow-auto">
+            <div className="p-4 flex items-center justify-center bg-black/80 max-h-[78dvh] overflow-auto">
               <img
                 src={selectedImage.url}
                 alt={selectedImage.title}
-                className="max-w-full max-h-[75vh] object-contain rounded shadow-lg"
+                className="max-w-full max-h-[75dvh] object-contain rounded shadow-lg"
               />
             </div>
           </DialogContent>
@@ -622,16 +622,16 @@ function InfoCell({ label, value, icon: Icon }: { label: string; value: string; 
 
 function DetailCell({ label, value }: { label: string; value: string }) {
   return (
-    <div className="p-2 rounded bg-secondary/30">
+    <div className="min-w-0 p-2 rounded bg-secondary/30">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-sm">{value}</p>
+      <p className="text-sm break-words">{value}</p>
     </div>
   );
 }
 
 function ResultCell({ label, passed, extra }: { label: string; passed: boolean | null; extra?: string }) {
   return (
-    <div className="p-2 rounded bg-secondary/30 flex items-center gap-2">
+    <div className="min-w-0 p-2 rounded bg-secondary/30 flex items-center gap-2">
       {passed === null ? (
         <Clock className="w-4 h-4 text-neutral" />
       ) : passed ? (
@@ -639,9 +639,9 @@ function ResultCell({ label, passed, extra }: { label: string; passed: boolean |
       ) : (
         <XCircle className="w-4 h-4 text-destructive" />
       )}
-      <div>
-        <p className="text-xs text-muted-foreground">{label}</p>
-        {extra && <p className="text-xs">{extra}</p>}
+      <div className="min-w-0">
+        <p className="text-xs text-muted-foreground break-words">{label}</p>
+        {extra && <p className="text-xs break-words">{extra}</p>}
       </div>
     </div>
   );

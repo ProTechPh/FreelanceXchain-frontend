@@ -14,6 +14,14 @@
                 motion -> color aliases.
    ========================================================================== */
 
+/* Tailwind's defaults start at sm = 640px, which lumps every phone from 320px to
+   639px into one bucket. `xs` splits a 320px screen (one column) from a 390px+
+   screen (two columns). This must be a plain `@theme` block: `@theme inline`
+   does not register the variant. */
+@theme {
+  --breakpoint-xs: 25rem;
+}
+
 @theme inline {
   /* ---- Typography scale -------------------------------------------------
      skill.md's literal sizes (base 12px, xs 6px) were captured at the wrong
@@ -138,6 +146,10 @@
   --color-ring: var(--ring);
   /* Modal/sheet scrim. Resolves per theme — see the note in .dark. */
   --color-overlay: var(--overlay);
+  /* Onboarding-tour scrim. Deliberately separate from --overlay: a centred
+     modal wants a gentle wash, whereas a spotlight has to say "everything but
+     this is off right now", which 10% black in light theme cannot do. */
+  --color-tour-scrim: var(--tour-scrim);
   /* Text/iconography sitting ON a .gradient-primary surface. Distinct from
      --primary-foreground, which belongs on the solid --primary fill: in dark
      that fill is bright so its foreground is near-black, whereas the gradient
@@ -238,6 +250,7 @@
   /* Exactly the previous hardcoded bg-black/10, so light is unchanged.
      Dark needs far more because its page is no longer near-black. */
   --overlay: rgb(0 0 0 / 0.10);
+  --tour-scrim: rgb(0 0 0 / 0.55);
 
   /* Hairline on the brand-locked near-black logo tiles. Only needed in dark,
      where the page is no longer near-black and they would read as holes. */
@@ -408,6 +421,7 @@
      page behind it: the previous hardcoded bg-black/10 gave almost no
      figure-ground once the base stopped being near-black. */
   --overlay: rgb(0 0 0 / 0.62);
+  --tour-scrim: rgb(0 0 0 / 0.72);
   --tile-plate-edge: var(--border-strong);
 
   /* The dark ramp travels HUE (teal -> green) at near-constant luminance,
@@ -465,6 +479,20 @@
     scroll-behavior: smooth;
     scroll-padding-top: 5.5rem;
     -webkit-text-size-adjust: 100%;
+  }
+
+  /* Phones: tighter page rhythm, and an anchor offset that matches the 64px
+     dashboard header rather than the desktop floating navbar. */
+  @media (width < 40rem) {
+    :root {
+      --space-page-x: 1rem;
+      --space-section-y: 2.5rem;
+      --space-card: 1rem;
+    }
+
+    html {
+      scroll-padding-top: 4.5rem;
+    }
   }
 
   body {

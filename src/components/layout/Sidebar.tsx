@@ -25,6 +25,7 @@ export function Sidebar() {
 
   return (
     <aside
+      data-tour="nav"
       className={cn(
         'sticky top-0 hidden h-screen shrink-0 flex-col border-r border-sidebar-border bg-sidebar lg:flex',
         'transition-[width] duration-base ease-out',

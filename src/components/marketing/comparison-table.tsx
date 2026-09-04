@@ -65,7 +65,7 @@ export function ComparisonTable() {
 
   return (
     <section id="compare" className="py-20 sm:py-28 bg-background border-b border-border/40 scroll-mt-20">
-      <div className="mx-auto max-w-5xl px-6 lg:px-8">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <motion.div
           initial={reduce ? false : { opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}

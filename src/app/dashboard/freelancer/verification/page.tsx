@@ -12,6 +12,7 @@ import type { KycVerification, UserRole } from '@/types';
 import { Shield, CheckCircle, XCircle, Clock, AlertTriangle, RefreshCw, Loader2, Globe, FileText, User, Calendar } from 'lucide-react';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
 import { KycVerificationModal } from '@/components/kyc/kyc-verification-modal';
+import { HelpHint } from '@/components/onboarding/help-hint';
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   approved: { label: 'Approved', color: 'bg-success-subtle text-success', icon: CheckCircle },
@@ -139,6 +140,7 @@ export function VerificationCenter({ role }: { role: ParticipantRole }) {
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Identity verification</h1>
           <p className="text-muted-foreground">{roleDescription}</p>
+          <HelpHint topic="kyc" className="pt-2" />
         </div>
       </div>
 
@@ -280,7 +282,7 @@ export function VerificationCenter({ role }: { role: ParticipantRole }) {
               {(verification.document_verified !== null || verification.liveness_passed !== null || verification.face_matched !== null) && (
                 <div className="space-y-2">
                   <h4 className="text-sm font-medium text-muted-foreground">Verification Checks</h4>
-                  <div className="flex gap-4">
+                  <div className="flex flex-wrap gap-x-4 gap-y-2">
                     <CheckItem label="Document" passed={verification.document_verified} />
                     <CheckItem label="Liveness" passed={verification.liveness_passed} />
                     <CheckItem label="Face Match" passed={verification.face_matched} />
