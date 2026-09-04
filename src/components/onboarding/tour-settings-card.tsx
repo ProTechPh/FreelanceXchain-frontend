@@ -2,6 +2,8 @@
 
 import { Compass } from 'lucide-react';
 
+import { getTourAutoStart } from '@/lib/onboarding-tour';
+import { useAuthStore } from '@/stores/authStore';
 import { useTourStore } from '@/stores/tourStore';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,7 +18,10 @@ import { useStartTour } from './tour-launcher';
  */
 export function TourSettingsCard() {
   const { startTour, canStartTour } = useStartTour();
-  const autoStart = useTourStore((state) => state.autoStart);
+  const user = useAuthStore((state) => state.user);
+  const progressByUser = useTourStore((state) => state.progressByUser);
+  const autoStartByDefault = useTourStore((state) => state.autoStartByDefault);
+  const autoStart = getTourAutoStart(progressByUser, user?.id, user?.role, autoStartByDefault);
   const setAutoStart = useTourStore((state) => state.setAutoStart);
 
   if (!canStartTour) return null;
@@ -38,7 +43,7 @@ export function TourSettingsCard() {
           <Switch
             checked={autoStart}
             aria-label="Show the tour on my next visit"
-            onCheckedChange={(checked) => setAutoStart(checked)}
+            onCheckedChange={(checked) => setAutoStart(user?.id, user?.role, checked)}
           />
         </div>
         <div className="flex flex-col gap-4 pt-2 sm:flex-row sm:items-center sm:justify-between">

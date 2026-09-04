@@ -498,10 +498,11 @@ export function OnboardingTour({ suppressed = false }: { suppressed?: boolean })
 
   const isRunning = useTourStore((state) => state.isRunning);
   const hasHydrated = useTourStore((state) => state.hasHydrated);
-  const autoStart = useTourStore((state) => state.autoStart);
-  const completedByRole = useTourStore((state) => state.completedByRole);
+  const progressByUser = useTourStore((state) => state.progressByUser);
+  const autoStartByDefault = useTourStore((state) => state.autoStartByDefault);
   const start = useTourStore((state) => state.start);
   const pendingRole = useTourStore((state) => state.pendingRole);
+  const pendingUserId = useTourStore((state) => state.pendingUserId);
   const pendingStepId = useTourStore((state) => state.pendingStepId);
   const clearPending = useTourStore((state) => state.clearPending);
 
@@ -510,11 +511,11 @@ export function OnboardingTour({ suppressed = false }: { suppressed?: boolean })
   // A replay requested from another route picks itself up once the dashboard
   // home -- where the anchors live -- has actually rendered.
   useEffect(() => {
-    if (!pendingRole || suppressed) return;
+    if (!pendingUserId || !pendingRole || suppressed) return;
     if (!isDashboardHome(pathname, pendingRole)) return;
-    start(pendingRole, pendingStepId ?? undefined);
+    start(pendingUserId, pendingRole, pendingStepId ?? undefined);
     clearPending();
-  }, [pendingRole, pendingStepId, pathname, suppressed, start, clearPending]);
+  }, [pendingUserId, pendingRole, pendingStepId, pathname, suppressed, start, clearPending]);
 
   useEffect(() => {
     if (suppressed) return;
@@ -523,27 +524,29 @@ export function OnboardingTour({ suppressed = false }: { suppressed?: boolean })
         hasHydrated,
         authHasHydrated,
         isAuthenticated,
+        userId: user?.id,
         role,
         // `suppressed` is the authoritative gate; this stays as a second guard
         // for callers that do not pass it.
         emailVerification: user?.emailVerification,
-        autoStart,
-        completedByRole,
+        autoStartByDefault,
+        progressByUser,
         pathname,
         isRunning,
       })
     ) {
-      start(role);
+      start(user?.id, role);
     }
   }, [
     suppressed,
     hasHydrated,
     authHasHydrated,
     isAuthenticated,
+    user?.id,
     role,
     user?.emailVerification,
-    autoStart,
-    completedByRole,
+    autoStartByDefault,
+    progressByUser,
     pathname,
     isRunning,
     start,

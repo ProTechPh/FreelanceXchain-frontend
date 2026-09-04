@@ -1,12 +1,18 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { EmailVerificationGate } from './EmailVerificationGate';
 import { OnboardingTour } from '@/components/onboarding/onboarding-tour';
+import { FirstLoginKycReminder } from '@/components/kyc/first-login-kyc-reminder';
+import {
+  getKycReminderStorageKey,
+  shouldOfferKycReminder,
+} from '@/lib/first-login-kyc';
+import { isDashboardHome, isTourRole } from '@/lib/onboarding-tour';
 import { useAuthStore } from '@/stores/authStore';
 import type { UserRole } from '@/types';
 
@@ -19,9 +25,20 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children, allowedRoles }: DashboardLayoutProps) {
   const { user, isAuthenticated, isLoading, loadUser, hasHydrated } = useAuthStore();
   const router = useRouter();
+  const pathname = usePathname();
+  const [kycReminder, setKycReminder] = useState<{
+    contextKey: string | null;
+    status: 'hidden' | 'open' | 'navigating';
+  }>({ contextKey: null, status: 'hidden' });
 
   const isWrongRole = !!(allowedRoles && user && !allowedRoles.includes(user.role));
   const isEmailUnverified = !!(user && user.role !== 'admin' && user.emailVerification === false);
+  const reminderContextKey = `${user?.id ?? ''}:${user?.role ?? ''}:${user?.kycStatus ?? ''}:${pathname ?? ''}`;
+  const isParticipantHome = isDashboardHome(pathname, user?.role);
+  const isReminderResolved = kycReminder.contextKey === reminderContextKey;
+  const isKycExperienceBlocking = isParticipantHome && (
+    !isReminderResolved || kycReminder.status === 'open' || kycReminder.status === 'navigating'
+  );
 
   useEffect(() => {
     if (hasHydrated) {
@@ -40,6 +57,56 @@ export function DashboardLayout({ children, allowedRoles }: DashboardLayoutProps
       router.push(`/dashboard/${user.role}`);
     }
   }, [hasHydrated, isLoading, isAuthenticated, isWrongRole, user, router]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const seenThisSession = user?.id
+      ? sessionStorage.getItem(getKycReminderStorageKey(user.id)) === 'true'
+      : false;
+    const shouldOpen = shouldOfferKycReminder({
+      authHasHydrated: hasHydrated,
+      isAuthenticated,
+      userId: user?.id,
+      role: user?.role,
+      emailVerification: user?.emailVerification,
+      kycStatus: user?.kycStatus,
+      pathname,
+      seenThisSession,
+    });
+
+    queueMicrotask(() => {
+      if (!cancelled) {
+        setKycReminder({ contextKey: reminderContextKey, status: shouldOpen ? 'open' : 'hidden' });
+      }
+    });
+
+    return () => { cancelled = true; };
+  }, [
+    hasHydrated,
+    isAuthenticated,
+    pathname,
+    reminderContextKey,
+    user?.emailVerification,
+    user?.id,
+    user?.kycStatus,
+    user?.role,
+  ]);
+
+  const rememberKycReminder = () => {
+    if (user?.id) sessionStorage.setItem(getKycReminderStorageKey(user.id), 'true');
+  };
+
+  const handleKycLater = () => {
+    rememberKycReminder();
+    setKycReminder({ contextKey: reminderContextKey, status: 'hidden' });
+  };
+
+  const handleKycVerify = () => {
+    if (!user || !isTourRole(user.role)) return;
+    rememberKycReminder();
+    setKycReminder({ contextKey: reminderContextKey, status: 'navigating' });
+    router.push(`/dashboard/${user.role}/verification`);
+  };
 
   if (!hasHydrated || isLoading) {
     return (
@@ -63,10 +130,19 @@ export function DashboardLayout({ children, allowedRoles }: DashboardLayoutProps
       {/* If email is unverified, show the Gate Modal and lock the dashboard */}
       {isEmailUnverified && <EmailVerificationGate />}
 
+      {user && isTourRole(user.role) && (
+        <FirstLoginKycReminder
+          open={isReminderResolved && kycReminder.status === 'open'}
+          role={user.role}
+          onLater={handleKycLater}
+          onVerify={handleKycVerify}
+        />
+      )}
+
       {/* Renders nothing unless the tour is actually running. `suppressed` is
           the same flag that blurs the dashboard, so the two can never disagree
           about whether a tour may run. */}
-      <OnboardingTour suppressed={isEmailUnverified} />
+      <OnboardingTour suppressed={isEmailUnverified || isKycExperienceBlocking} />
 
       {/* Keyboard users land here first: one Tab skips the whole sidebar and
           top bar, which is otherwise ~20 stops before any page content. */}
