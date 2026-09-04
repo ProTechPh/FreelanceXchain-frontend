@@ -12,8 +12,11 @@ const TOUR_ALREADY_SEEN = {
         {
           name: 'onboarding-tour',
           value: JSON.stringify({
-            state: { completedByRole: { freelancer: 1, employer: 1 }, autoStart: true },
-            version: 0,
+            // Most specs exercise a dashboard feature rather than onboarding.
+            // The dedicated onboarding specs use an empty storage state and
+            // therefore retain the production default of auto-starting.
+            state: { progressByUser: {}, autoStartByDefault: false },
+            version: 1,
           }),
         },
       ],

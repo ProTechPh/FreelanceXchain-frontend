@@ -8,25 +8,29 @@ import {
   getTourSteps,
   isTourRole,
   markCompleted,
-  type CompletedByRole,
+  setTourAutoStart,
+  type TourProgressByUser,
 } from '@/lib/onboarding-tour';
 import type { UserRole } from '@/types';
 
 interface TourState {
-  /** Which roles have finished which version of the tour. */
-  completedByRole: CompletedByRole;
-  /** Whether the tour offers itself on the next first-run opportunity. */
-  autoStart: boolean;
+  /** Per-account completion and auto-start preferences. */
+  progressByUser: TourProgressByUser;
+  /** Application-level default; production keeps this enabled. */
+  autoStartByDefault: boolean;
   isRunning: boolean;
   stepIndex: number;
   /** The role the running tour is teaching. */
   activeRole: UserRole | null;
+  /** The account whose progress the running tour will update. */
+  activeUserId: string | null;
   /**
    * A start that is waiting on navigation. Replaying from Settings has to reach
    * the dashboard home first, because that is where the CTA and active-work
    * anchors live -- starting in place would spotlight nothing.
    */
   pendingRole: UserRole | null;
+  pendingUserId: string | null;
   /** The step a pending start should open on. */
   pendingStepId: string | null;
   /**
@@ -39,9 +43,9 @@ interface TourState {
   /** Mirrors the auth store: guards against acting before rehydration. */
   hasHydrated: boolean;
 
-  start: (role: UserRole | undefined | null, stepId?: string) => void;
+  start: (userId: string | undefined | null, role: UserRole | undefined | null, stepId?: string) => void;
   /** Start once the dashboard home is reached. */
-  requestStart: (role: UserRole | undefined | null, stepId?: string) => void;
+  requestStart: (userId: string | undefined | null, role: UserRole | undefined | null, stepId?: string) => void;
   clearPending: () => void;
   next: () => void;
   back: () => void;
@@ -49,7 +53,7 @@ interface TourState {
   /** Leave early. Still records completion so it does not reappear uninvited. */
   skip: () => void;
   finish: () => void;
-  setAutoStart: (value: boolean) => void;
+  setAutoStart: (userId: string | undefined | null, role: UserRole | undefined | null, value: boolean) => void;
   setCardHeight: (value: number) => void;
   setHasHydrated: (value: boolean) => void;
 }
@@ -57,33 +61,37 @@ interface TourState {
 export const useTourStore = create<TourState>()(
   persist(
     (set, get) => ({
-      completedByRole: {},
-      autoStart: true,
+      progressByUser: {},
+      autoStartByDefault: true,
       isRunning: false,
       stepIndex: 0,
       activeRole: null,
+      activeUserId: null,
       pendingRole: null,
+      pendingUserId: null,
       pendingStepId: null,
       cardHeight: 0,
       hasHydrated: false,
 
-      start: (role, stepId) => {
-        if (!isTourRole(role) || getTourSteps(role).length === 0) return;
+      start: (userId, role, stepId) => {
+        if (!userId || !isTourRole(role) || getTourSteps(role).length === 0) return;
         set({
           isRunning: true,
           stepIndex: getStepIndexById(role, stepId),
           activeRole: role,
+          activeUserId: userId,
           pendingRole: null,
+          pendingUserId: null,
           pendingStepId: null,
         });
       },
 
-      requestStart: (role, stepId) => {
-        if (!isTourRole(role) || getTourSteps(role).length === 0) return;
-        set({ pendingRole: role, pendingStepId: stepId ?? null });
+      requestStart: (userId, role, stepId) => {
+        if (!userId || !isTourRole(role) || getTourSteps(role).length === 0) return;
+        set({ pendingRole: role, pendingUserId: userId, pendingStepId: stepId ?? null });
       },
 
-      clearPending: () => set({ pendingRole: null, pendingStepId: null }),
+      clearPending: () => set({ pendingRole: null, pendingUserId: null, pendingStepId: null }),
 
       next: () => {
         const { stepIndex, activeRole } = get();
@@ -106,32 +114,38 @@ export const useTourStore = create<TourState>()(
       },
 
       skip: () => {
-        const { activeRole, completedByRole } = get();
+        const { activeRole, activeUserId, progressByUser } = get();
         set({
           isRunning: false,
           stepIndex: 0,
           activeRole: null,
+          activeUserId: null,
           pendingRole: null,
+          pendingUserId: null,
           pendingStepId: null,
           cardHeight: 0,
-          completedByRole: markCompleted(completedByRole, activeRole),
+          progressByUser: markCompleted(progressByUser, activeUserId, activeRole),
         });
       },
 
       finish: () => {
-        const { activeRole, completedByRole } = get();
+        const { activeRole, activeUserId, progressByUser } = get();
         set({
           isRunning: false,
           stepIndex: 0,
           activeRole: null,
+          activeUserId: null,
           pendingRole: null,
+          pendingUserId: null,
           pendingStepId: null,
           cardHeight: 0,
-          completedByRole: markCompleted(completedByRole, activeRole),
+          progressByUser: markCompleted(progressByUser, activeUserId, activeRole),
         });
       },
 
-      setAutoStart: (value: boolean) => set({ autoStart: value }),
+      setAutoStart: (userId, role, value) => set((state) => ({
+        progressByUser: setTourAutoStart(state.progressByUser, userId, role, value),
+      })),
 
       setCardHeight: (value: number) => {
         // Sub-pixel churn from a ResizeObserver would re-render the drawer on
@@ -147,9 +161,14 @@ export const useTourStore = create<TourState>()(
       // Only the durable preferences persist. Whether a tour is mid-flight is
       // deliberately not restored across a reload.
       partialize: (state) => ({
-        completedByRole: state.completedByRole,
-        autoStart: state.autoStart,
+        progressByUser: state.progressByUser,
+        autoStartByDefault: state.autoStartByDefault,
       }),
+      version: 1,
+      migrate: (persistedState, version) => {
+        if (version < 1) return { progressByUser: {}, autoStartByDefault: true };
+        return persistedState as TourState;
+      },
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);
       },

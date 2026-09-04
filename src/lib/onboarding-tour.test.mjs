@@ -5,12 +5,14 @@ import {
   TOUR_VERSION,
   clampStepIndex,
   getStepProgressLabel,
+  getTourAutoStart,
   getTourSteps,
   isDashboardHome,
   isTourCompleted,
   isTourRole,
   markCompleted,
   resolveStepTarget,
+  setTourAutoStart,
   shouldAutoStartTour,
   stepOpensNav,
 } from './onboarding-tour.ts';
@@ -19,10 +21,11 @@ const baseAutoStart = {
   hasHydrated: true,
   authHasHydrated: true,
   isAuthenticated: true,
+  userId: 'freelancer-1',
   role: 'freelancer',
   emailVerification: true,
-  autoStart: true,
-  completedByRole: {},
+  autoStartByDefault: true,
+  progressByUser: {},
   pathname: '/dashboard/freelancer',
   isRunning: false,
 };
@@ -159,31 +162,50 @@ test('the tour does not auto-start for signed-out visitors or administrators', (
   assert.equal(shouldAutoStartTour({ ...baseAutoStart, role: 'admin', pathname: '/dashboard/admin' }), false);
 });
 
-test('a completed tour is not offered again, and the preference can turn it off', () => {
-  assert.equal(shouldAutoStartTour({ ...baseAutoStart, completedByRole: { freelancer: TOUR_VERSION } }), false);
-  assert.equal(shouldAutoStartTour({ ...baseAutoStart, autoStart: false }), false);
+test('a completed tour is not offered again, and the account preference can turn it off', () => {
+  const completed = markCompleted({}, 'freelancer-1', 'freelancer');
+  const disabled = setTourAutoStart({}, 'freelancer-1', 'freelancer', false);
+
+  assert.equal(shouldAutoStartTour({ ...baseAutoStart, progressByUser: completed }), false);
+  assert.equal(shouldAutoStartTour({ ...baseAutoStart, progressByUser: disabled }), false);
   assert.equal(shouldAutoStartTour({ ...baseAutoStart, isRunning: true }), false);
 });
 
-test('completion is recorded per role, so switching roles teaches the new one', () => {
-  const completed = markCompleted({}, 'freelancer');
+test('completion is recorded per account and role', () => {
+  const completed = markCompleted({}, 'freelancer-1', 'freelancer');
 
-  assert.deepEqual(completed, { freelancer: TOUR_VERSION });
-  assert.equal(isTourCompleted(completed, 'freelancer'), true);
-  assert.equal(isTourCompleted(completed, 'employer'), false);
-  assert.equal(shouldAutoStartTour({ ...baseAutoStart, completedByRole: completed, role: 'employer', pathname: '/dashboard/employer' }), true);
+  assert.deepEqual(completed, {
+    'freelancer-1': { freelancer: { completedVersion: TOUR_VERSION } },
+  });
+  assert.equal(isTourCompleted(completed, 'freelancer-1', 'freelancer'), true);
+  assert.equal(isTourCompleted(completed, 'freelancer-2', 'freelancer'), false);
+  assert.equal(isTourCompleted(completed, 'freelancer-1', 'employer'), false);
+  assert.equal(shouldAutoStartTour({ ...baseAutoStart, progressByUser: completed, userId: 'freelancer-2' }), true);
 });
 
 test('a completion recorded against an older version is offered again', () => {
-  const stale = { freelancer: TOUR_VERSION - 1 };
+  const stale = { 'freelancer-1': { freelancer: { completedVersion: TOUR_VERSION - 1 } } };
 
-  assert.equal(isTourCompleted(stale, 'freelancer'), false);
-  assert.equal(shouldAutoStartTour({ ...baseAutoStart, completedByRole: stale }), true);
+  assert.equal(isTourCompleted(stale, 'freelancer-1', 'freelancer'), false);
+  assert.equal(shouldAutoStartTour({ ...baseAutoStart, progressByUser: stale }), true);
 });
 
 test('administrators are treated as already done so nothing tries to run for them', () => {
-  assert.equal(isTourCompleted({}, 'admin'), true);
-  assert.deepEqual(markCompleted({}, 'admin'), {});
+  assert.equal(isTourCompleted({}, 'admin-1', 'admin'), true);
+  assert.deepEqual(markCompleted({}, 'admin-1', 'admin'), {});
+});
+
+test('auto-start preferences do not leak between accounts with the same role', () => {
+  const preferences = setTourAutoStart({}, 'freelancer-1', 'freelancer', false);
+
+  assert.equal(getTourAutoStart(preferences, 'freelancer-1', 'freelancer'), false);
+  assert.equal(getTourAutoStart(preferences, 'freelancer-2', 'freelancer'), true);
+  assert.equal(getTourAutoStart(preferences, 'freelancer-1', 'employer'), true);
+});
+
+test('a disabled application default suppresses unconfigured accounts', () => {
+  assert.equal(getTourAutoStart({}, 'freelancer-1', 'freelancer', false), false);
+  assert.equal(shouldAutoStartTour({ ...baseAutoStart, autoStartByDefault: false }), false);
 });
 
 test('the step index is clamped to the available steps', () => {

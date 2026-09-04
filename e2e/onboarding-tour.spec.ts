@@ -102,7 +102,9 @@ test.describe('first run', () => {
     await dialog.getByRole('button', { name: 'Finish' }).click();
     await expect(dialog).toHaveCount(0);
 
-    expect((await readTourState(page)).completedByRole).toEqual({ freelancer: 1 });
+    expect((await readTourState(page)).progressByUser).toEqual({
+      'freelancer-1': { freelancer: { completedVersion: 1 } },
+    });
   });
 
   test('a completed tour does not come back on reload', async ({ page }) => {

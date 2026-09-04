@@ -16,6 +16,7 @@ import { useTourStore } from '@/stores/tourStore';
  */
 export function useStartTour() {
   const router = useRouter();
+  const userId = useAuthStore((state) => state.user?.id);
   const role = useAuthStore((state) => state.user?.role);
   const start = useTourStore((state) => state.start);
   const requestStart = useTourStore((state) => state.requestStart);
@@ -23,17 +24,17 @@ export function useStartTour() {
   const canStartTour = isTourRole(role);
 
   const startTour = useCallback((stepId?: string) => {
-    if (!isTourRole(role)) return;
+    if (!userId || !isTourRole(role)) return;
 
     const home = `/dashboard/${role}`;
     if (isDashboardHome(window.location.pathname, role)) {
-      start(role, stepId);
+      start(userId, role, stepId);
       return;
     }
 
-    requestStart(role, stepId);
+    requestStart(userId, role, stepId);
     router.push(home);
-  }, [role, router, start, requestStart]);
+  }, [userId, role, router, start, requestStart]);
 
   return { startTour, canStartTour };
 }

@@ -7,6 +7,7 @@ import {
   isMfaRequiredResponse,
   normalizeAuthUser,
 } from '@/lib/auth-contract';
+import { getKycReminderStorageKey } from '@/lib/first-login-kyc';
 
 interface AuthState {
   user: User | null;
@@ -24,6 +25,10 @@ interface AuthState {
   beginMfa: (mfaSessionToken: string) => void;
   clearMfa: () => void;
   setHasHydrated: (value: boolean) => void;
+}
+
+function beginKycReminderSession(userId: string) {
+  sessionStorage.removeItem(getKycReminderStorageKey(userId));
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -52,6 +57,7 @@ export const useAuthStore = create<AuthState>()(
 
           localStorage.setItem('access_token', data.accessToken);
           localStorage.setItem('refresh_token', data.refreshToken);
+          beginKycReminderSession(data.user.id);
           set({
             user: normalizeAuthUser(data.user),
             isAuthenticated: true,
@@ -76,6 +82,7 @@ export const useAuthStore = create<AuthState>()(
 
           localStorage.setItem('access_token', data.accessToken);
           localStorage.setItem('refresh_token', data.refreshToken);
+          beginKycReminderSession(data.user.id);
           set({ user: normalizeAuthUser(data.user), isAuthenticated: true, isLoading: false });
         } catch (error) {
           set({ isLoading: false });
@@ -84,6 +91,7 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: async () => {
+        const userId = useAuthStore.getState().user?.id;
         try {
           await authApi.logout();
         } catch {
@@ -91,6 +99,7 @@ export const useAuthStore = create<AuthState>()(
         } finally {
           localStorage.removeItem('access_token');
           localStorage.removeItem('refresh_token');
+          if (userId) sessionStorage.removeItem(getKycReminderStorageKey(userId));
           set({ user: null, isAuthenticated: false, mfaPending: false, mfaSessionToken: null });
         }
       },
@@ -120,6 +129,7 @@ export const useAuthStore = create<AuthState>()(
       completeMfa: (response: AuthSuccessResponse) => {
         localStorage.setItem('access_token', response.accessToken);
         localStorage.setItem('refresh_token', response.refreshToken);
+        beginKycReminderSession(response.user.id);
         set({
           user: normalizeAuthUser(response.user),
           isAuthenticated: true,

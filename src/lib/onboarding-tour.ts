@@ -254,11 +254,42 @@ export function getStepIndexById(role: UserRole | undefined | null, stepId: stri
   return index === -1 ? 0 : index;
 }
 
-export type CompletedByRole = Partial<Record<TourRole, number>>;
+export interface TourProgress {
+  completedVersion?: number;
+  autoStart?: boolean;
+}
 
-export function isTourCompleted(completedByRole: CompletedByRole, role: UserRole | undefined | null): boolean {
+export type TourProgressByUser = Record<
+  string,
+  Partial<Record<TourRole, TourProgress>>
+>;
+
+function getTourProgress(
+  progressByUser: TourProgressByUser,
+  userId: string | undefined | null,
+  role: UserRole | undefined | null,
+): TourProgress | undefined {
+  if (!userId || !isTourRole(role)) return undefined;
+  return progressByUser[userId]?.[role];
+}
+
+export function isTourCompleted(
+  progressByUser: TourProgressByUser,
+  userId: string | undefined | null,
+  role: UserRole | undefined | null,
+): boolean {
   if (!isTourRole(role)) return true;
-  return completedByRole[role] === TOUR_VERSION;
+  return getTourProgress(progressByUser, userId, role)?.completedVersion === TOUR_VERSION;
+}
+
+export function getTourAutoStart(
+  progressByUser: TourProgressByUser,
+  userId: string | undefined | null,
+  role: UserRole | undefined | null,
+  autoStartByDefault = true,
+): boolean {
+  if (!userId || !isTourRole(role)) return false;
+  return getTourProgress(progressByUser, userId, role)?.autoStart ?? autoStartByDefault;
 }
 
 /** `/dashboard/freelancer` and `/dashboard/employer`, trailing slash tolerated. */
@@ -274,14 +305,15 @@ export interface AutoStartInput {
   /** The auth store has rehydrated; without this `user` is not trustworthy yet. */
   authHasHydrated: boolean;
   isAuthenticated: boolean;
+  userId: string | undefined | null;
   role: UserRole | undefined | null;
   /**
    * `false` means `EmailVerificationGate` is blurring and disabling the whole
    * dashboard. A tour must never run behind it.
    */
   emailVerification: boolean | undefined;
-  autoStart: boolean;
-  completedByRole: CompletedByRole;
+  autoStartByDefault: boolean;
+  progressByUser: TourProgressByUser;
   pathname: string | null | undefined;
   isRunning: boolean;
 }
@@ -289,11 +321,12 @@ export interface AutoStartInput {
 export function shouldAutoStartTour(input: AutoStartInput): boolean {
   if (!input.hasHydrated || !input.authHasHydrated) return false;
   if (!input.isAuthenticated) return false;
+  if (!input.userId) return false;
   if (!isTourRole(input.role)) return false;
   if (input.emailVerification === false) return false;
-  if (!input.autoStart) return false;
+  if (!getTourAutoStart(input.progressByUser, input.userId, input.role, input.autoStartByDefault)) return false;
   if (input.isRunning) return false;
-  if (isTourCompleted(input.completedByRole, input.role)) return false;
+  if (isTourCompleted(input.progressByUser, input.userId, input.role)) return false;
   // Only the dashboard home carries the CTA and active-work anchors, and it is
   // the only route the existing e2e suites reach with a seeded participant.
   return isDashboardHome(input.pathname, input.role);
@@ -305,9 +338,41 @@ export function clampStepIndex(index: number, total: number): number {
   return Math.min(Math.max(Math.trunc(index), 0), total - 1);
 }
 
-export function markCompleted(completedByRole: CompletedByRole, role: UserRole | undefined | null): CompletedByRole {
-  if (!isTourRole(role)) return completedByRole;
-  return { ...completedByRole, [role]: TOUR_VERSION };
+export function markCompleted(
+  progressByUser: TourProgressByUser,
+  userId: string | undefined | null,
+  role: UserRole | undefined | null,
+): TourProgressByUser {
+  if (!userId || !isTourRole(role)) return progressByUser;
+  return {
+    ...progressByUser,
+    [userId]: {
+      ...progressByUser[userId],
+      [role]: {
+        ...progressByUser[userId]?.[role],
+        completedVersion: TOUR_VERSION,
+      },
+    },
+  };
+}
+
+export function setTourAutoStart(
+  progressByUser: TourProgressByUser,
+  userId: string | undefined | null,
+  role: UserRole | undefined | null,
+  autoStart: boolean,
+): TourProgressByUser {
+  if (!userId || !isTourRole(role)) return progressByUser;
+  return {
+    ...progressByUser,
+    [userId]: {
+      ...progressByUser[userId],
+      [role]: {
+        ...progressByUser[userId]?.[role],
+        autoStart,
+      },
+    },
+  };
 }
 
 /** Announced in the tour's live region, and rendered beside the step dots. */
