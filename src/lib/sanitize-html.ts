@@ -96,13 +96,9 @@ function isSafeUrl(url: string, allowImageData = false): boolean {
     return false;
   }
 
-  // Neutralize common javascript / vbscript pseudo-protocol evasion (including control characters)
+  // Neutralize dangerous pseudo-protocols (javascript:, vbscript:, data:)
   const normalized = trimmed.replace(/[\x00-\x1F\x7F-\x9F\s]/g, '');
-  if (normalized.startsWith('javascript:') || normalized.startsWith('vbscript:')) {
-    return false;
-  }
-
-  if (trimmed.startsWith('data:')) {
+  if (normalized.startsWith('javascript:') || normalized.startsWith('vbscript:') || normalized.startsWith('data:')) {
     if (allowImageData && /^data:image\/(png|jpe?g|gif|webp);base64,[a-z0-9+/=]+$/i.test(trimmed)) {
       return true;
     }

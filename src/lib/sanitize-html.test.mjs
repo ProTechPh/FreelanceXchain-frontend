@@ -52,7 +52,7 @@ test('sanitizeHtml handles null and non-string inputs safely', () => {
 test('sanitizeHtml rejects protocol-relative URLs to prevent scheme bypass', () => {
   const payload = '<a href="//evil.com/phish">Phish</a>';
   const clean = sanitizeHtml(payload);
-  assert.ok(!clean.includes('//evil.com'));
+  assert.ok(!clean.includes('href='));
   assert.ok(clean.includes('Phish'));
 });
 
