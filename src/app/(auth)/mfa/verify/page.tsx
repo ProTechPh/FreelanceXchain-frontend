@@ -79,6 +79,7 @@ export default function MfaVerifyPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        <Field label="Verification Code" htmlFor="code">
           <Input
             id="code"
             type="text"
