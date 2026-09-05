@@ -95,6 +95,7 @@ test('participant sees storage quota and can delete an owned file', async ({ pag
   await expect(page.getByText('proposal.pdf')).toBeVisible();
   await expect(page.getByText('1.5 KB · proposal attachments')).toBeVisible();
   await page.getByRole('button', { name: 'Delete proposal.pdf' }).click();
+  await page.getByRole('button', { name: 'Delete File' }).click();
   await expect(page.getByText('File deleted.')).toBeVisible();
   await expect(page.getByText('No proposal or portfolio files stored.')).toBeVisible();
   expect(deleteCount).toBe(1);

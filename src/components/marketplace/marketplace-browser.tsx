@@ -530,10 +530,10 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
                             size="icon-xs"
                             variant="ghost"
                             aria-label={`Delete saved search ${savedSearch.name}`}
-                            className="size-6 text-muted-foreground hover:text-destructive"
+                            className="size-7 sm:size-6 text-muted-foreground hover:text-destructive"
                             onClick={() => void deleteSavedSearch(savedSearch.id)}
                           >
-                            <Trash2 className="size-3" aria-hidden="true" />
+                            <Trash2 className="size-3.5 sm:size-3" aria-hidden="true" />
                           </Button>
                         </li>
                       ))}
@@ -592,7 +592,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
                         size="icon"
                         variant="secondary"
                         className={cn(
-                          "absolute right-4 top-4 z-10 size-8 rounded-full border border-border bg-card/90 shadow-xs backdrop-blur-xs",
+                          "absolute right-3.5 top-3.5 z-10 size-10 sm:size-8 rounded-full border border-border bg-card/90 shadow-xs backdrop-blur-xs flex items-center justify-center",
                           favorite && "text-destructive",
                         )}
                         aria-label={favorite ? `Remove ${kind} from favorites` : `Save ${kind} to favorites`}
@@ -600,7 +600,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
                         disabled={favoriteActionId === targetId}
                         onClick={() => void toggleFavorite(targetId)}
                       >
-                        <Heart className="size-3.5" fill={favorite ? "currentColor" : "none"} aria-hidden="true" />
+                        <Heart className="size-4 sm:size-3.5" fill={favorite ? "currentColor" : "none"} aria-hidden="true" />
                       </Button>
                     )}
                   </div>
@@ -619,7 +619,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
                 loadingText="Loading…"
                 onClick={() => void loadResults(filters, items.length, true)}
               >
-                Load more projects
+                Load more {kind === "freelancer" ? "freelancers" : "projects"}
               </Button>
             </div>
           )}

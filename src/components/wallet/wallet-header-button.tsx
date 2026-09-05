@@ -137,7 +137,7 @@ export function WalletHeaderButton() {
           </div>
         </div>
 
-        {isMainnet && (
+        {isMainnet && process.env.NODE_ENV === 'development' && (
           <>
             <DropdownMenuSeparator />
             <DropdownMenuItem

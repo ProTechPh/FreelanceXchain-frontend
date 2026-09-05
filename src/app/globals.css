@@ -710,3 +710,19 @@
     transform: none !important;
   }
 }
+
+/* ---- Mobile Safe Area Utilities -------------------------------------------
+   Avoid collisions with device notches, dynamic islands, and home indicators. */
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+@utility mb-safe {
+  margin-bottom: env(safe-area-inset-bottom, 0px);
+}
+@utility h-safe-screen {
+  height: 100dvh;
+}
+

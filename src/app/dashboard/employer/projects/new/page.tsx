@@ -22,7 +22,7 @@ import {
 } from '@/lib/project-submission';
 import { toast } from 'sonner';
 import { reportFailure } from '@/lib/report-failure';
-import { ChevronRight, ChevronLeft, Plus, X, Upload, FileText, DollarSign, Clock, Target, Sparkles } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Plus, X, Upload, FileText, DollarSign, Clock, Target, Sparkles, AlertCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Field } from '@/components/ui/field';
 
@@ -50,6 +50,7 @@ export default function CreateProjectPage() {
   const [extractingSkills, setExtractingSkills] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     let active = true;
@@ -89,12 +90,25 @@ export default function CreateProjectPage() {
     files,
   });
 
-  const showFormError = (message: string) => {
+  const clearFieldError = (field: string) => {
+    setFieldErrors((current) => {
+      if (!current[field]) return current;
+      const next = { ...current };
+      delete next[field];
+      return next;
+    });
+  };
+
+  const showFormError = (message: string, fieldKey?: string) => {
     setFormError(message);
+    if (fieldKey) {
+      setFieldErrors((current) => ({ ...current, [fieldKey]: message }));
+    }
     toast.error(message);
   };
 
   const addSkill = (skill: ProjectSubmissionSkill) => {
+    clearFieldError('skills');
     setSkills((current) => current.some((item) => item.id === skill.id)
       ? current
       : [...current, skill]);
@@ -106,7 +120,7 @@ export default function CreateProjectPage() {
 
   const suggestSkills = async () => {
     if (!description.trim()) {
-      showFormError('Add a project description before suggesting skills.');
+      showFormError('Add a project description before suggesting skills.', 'description');
       return;
     }
 
@@ -120,6 +134,7 @@ export default function CreateProjectPage() {
         const selectedIds = new Set(current.map((skill) => skill.id));
         return [...current, ...suggestions.filter((skill) => !selectedIds.has(skill.id))];
       });
+      clearFieldError('skills');
       toast.success(
         suggestions.length > 0
           ? `Added ${suggestions.length} suggested skill${suggestions.length === 1 ? '' : 's'}.`
@@ -140,9 +155,10 @@ export default function CreateProjectPage() {
     );
     const error = validateProjectFiles(next);
     if (error) {
-      showFormError(error);
+      showFormError(error, 'files');
       return;
     }
+    clearFieldError('files');
     setFormError(null);
     setFiles(next);
   };
@@ -156,12 +172,73 @@ export default function CreateProjectPage() {
   };
 
   const updateMilestone = (index: number, field: string, value: string) => {
+    clearFieldError(`milestone-${index}-${field}`);
     const updated = [...milestones];
     (updated[index] as Record<string, string>)[field] = value;
     setMilestones(updated);
   };
 
   const handleNext = () => {
+    setFieldErrors({});
+
+    if (currentStep === 1) {
+      if (title.trim().length < 5) {
+        showFormError('Project title must be at least 5 characters.', 'title');
+        return;
+      }
+      if (description.trim().length < 20) {
+        showFormError('Project description must be at least 20 characters.', 'description');
+        return;
+      }
+      if (skills.length === 0) {
+        showFormError('Select at least one required skill.', 'skills');
+        return;
+      }
+      const fileError = validateProjectFiles(files);
+      if (fileError) {
+        showFormError(fileError, 'files');
+        return;
+      }
+    }
+
+    if (currentStep === 2) {
+      for (const [index, milestone] of milestones.entries()) {
+        if (!milestone.title.trim()) {
+          showFormError(`Milestone ${index + 1} needs a title.`, `milestone-${index}-title`);
+          return;
+        }
+        if (!milestone.description.trim()) {
+          showFormError(`Milestone ${index + 1} needs a description.`, `milestone-${index}-description`);
+          return;
+        }
+        const amount = Number(milestone.amount);
+        if (!Number.isFinite(amount) || amount <= 0) {
+          showFormError(`Milestone ${index + 1} needs a positive amount.`, `milestone-${index}-amount`);
+          return;
+        }
+      }
+    }
+
+    if (currentStep === 3) {
+      const budgetNumber = Number(budget);
+      if (!Number.isFinite(budgetNumber) || budgetNumber <= 0) {
+        showFormError('Total budget must be greater than 0.', 'budget');
+        return;
+      }
+      if (!deadline) {
+        showFormError('Select a project deadline.', 'deadline');
+        return;
+      }
+      const milestoneTotal = milestones.reduce(
+        (total, milestone) => total + Number(milestone.amount),
+        0,
+      );
+      if (Math.abs(milestoneTotal - budgetNumber) > 0.01) {
+        showFormError('Milestone amounts must equal the total budget.', 'budget');
+        return;
+      }
+    }
+
     const error = validateProjectStep(currentStep, getForm());
     if (error) {
       showFormError(error);
@@ -181,6 +258,7 @@ export default function CreateProjectPage() {
 
   const handlePrevious = () => {
     setFormError(null);
+    setFieldErrors({});
     setCurrentStep((step) => Math.max(1, step - 1));
   };
 
@@ -248,26 +326,34 @@ export default function CreateProjectPage() {
               <div>
                 <h2 className="text-lg font-semibold mb-4">Project Details</h2>
                 <div className="space-y-4">
-                  <Field label="Project Title" htmlFor="title">
-<Input
+                  <Field label="Project Title" htmlFor="title" error={fieldErrors.title} required>
+                    <Input
                       id="title"
                       placeholder="e.g., E-commerce Platform Development"
                       value={title}
-                      onChange={(e) => setTitle(e.target.value)}
+                      onChange={(e) => {
+                        setTitle(e.target.value);
+                        clearFieldError('title');
+                      }}
                     />
-</Field>
-                  <Field label="Description" htmlFor="description">
-<Textarea
+                  </Field>
+                  <Field label="Description" htmlFor="description" error={fieldErrors.description} required>
+                    <Textarea
                       id="description"
                       placeholder="Describe your project in detail..."
                       rows={6}
                       value={description}
-                      onChange={(e) => setDescription(e.target.value)}
+                      onChange={(e) => {
+                        setDescription(e.target.value);
+                        clearFieldError('description');
+                      }}
                     />
-</Field>
+                  </Field>
                   <div className="space-y-2">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <Label id="required-skills-label">Required Skills</Label>
+                      <Label id="required-skills-label">
+                        Required Skills <span className="text-destructive" aria-hidden="true">*</span>
+                      </Label>
                       <Button
                         type="button"
                         variant="outline"
@@ -281,6 +367,12 @@ export default function CreateProjectPage() {
                         Suggest from description
                       </Button>
                     </div>
+                    {fieldErrors.skills && (
+                      <p role="alert" className="flex items-start gap-1.5 text-xs font-medium text-destructive">
+                        <AlertCircle className="mt-px size-3.5 shrink-0" aria-hidden="true" />
+                        {fieldErrors.skills}
+                      </p>
+                    )}
                     <div className="flex flex-wrap gap-2 mb-3">
                       {skills.map((skill) => (
                         <Badge key={skill.id} variant="secondary" className="text-sm py-1.5 px-3">
@@ -349,6 +441,12 @@ export default function CreateProjectPage() {
                         }}
                       />
                     </label>
+                    {fieldErrors.files && (
+                      <p role="alert" className="flex items-start gap-1.5 text-xs font-medium text-destructive">
+                        <AlertCircle className="mt-px size-3.5 shrink-0" aria-hidden="true" />
+                        {fieldErrors.files}
+                      </p>
+                    )}
                     {files.length > 0 && (
                       <ul className="space-y-2" aria-label="Selected project attachments">
                         {files.map((file) => (
@@ -400,17 +498,25 @@ export default function CreateProjectPage() {
                       )}
                     </div>
                     <div className="grid md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor={`milestone-${index}-title`}>Title</Label>
+                      <Field
+                        label="Title"
+                        htmlFor={`milestone-${index}-title`}
+                        error={fieldErrors[`milestone-${index}-title`]}
+                        required
+                      >
                         <Input
                           id={`milestone-${index}-title`}
                           placeholder="e.g., UI Design"
                           value={milestone.title}
                           onChange={(e) => updateMilestone(index, 'title', e.target.value)}
                         />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor={`milestone-${index}-amount`}>Amount (ETH)</Label>
+                      </Field>
+                      <Field
+                        label="Amount (ETH)"
+                        htmlFor={`milestone-${index}-amount`}
+                        error={fieldErrors[`milestone-${index}-amount`]}
+                        required
+                      >
                         <Input
                           id={`milestone-${index}-amount`}
                           type="number"
@@ -420,16 +526,22 @@ export default function CreateProjectPage() {
                           value={milestone.amount}
                           onChange={(e) => updateMilestone(index, 'amount', e.target.value)}
                         />
-                      </div>
-                      <div className="md:col-span-2 space-y-2">
-                        <Label htmlFor={`milestone-${index}-description`}>Description</Label>
-                        <Textarea
-                          id={`milestone-${index}-description`}
-                          placeholder="Describe the deliverables..."
-                          rows={2}
-                          value={milestone.description}
-                          onChange={(e) => updateMilestone(index, 'description', e.target.value)}
-                        />
+                      </Field>
+                      <div className="md:col-span-2">
+                        <Field
+                          label="Description"
+                          htmlFor={`milestone-${index}-description`}
+                          error={fieldErrors[`milestone-${index}-description`]}
+                          required
+                        >
+                          <Textarea
+                            id={`milestone-${index}-description`}
+                            placeholder="Describe the deliverables..."
+                            rows={2}
+                            value={milestone.description}
+                            onChange={(e) => updateMilestone(index, 'description', e.target.value)}
+                          />
+                        </Field>
                       </div>
                     </div>
                   </div>
@@ -455,6 +567,8 @@ export default function CreateProjectPage() {
                       label="Total Budget (ETH)"
                       htmlFor="budget"
                       description={`Calculated sum of all milestones: ${milestonesTotal.toLocaleString('en-US', { maximumFractionDigits: 6 })} ETH`}
+                      error={fieldErrors.budget}
+                      required
                     >
                       <Input
                         id="budget"
@@ -463,7 +577,10 @@ export default function CreateProjectPage() {
                         step="any"
                         placeholder={milestonesTotal > 0 ? String(milestonesTotal) : "0.00"}
                         value={budget}
-                        onChange={(e) => setBudget(e.target.value)}
+                        onChange={(e) => {
+                          setBudget(e.target.value);
+                          clearFieldError('budget');
+                        }}
                       />
                     </Field>
 
@@ -477,6 +594,7 @@ export default function CreateProjectPage() {
                           className="h-7 text-xs border-warning/40 text-warning hover:bg-warning/10"
                           onClick={() => {
                             setBudget(String(milestonesTotal));
+                            clearFieldError('budget');
                             setFormError(null);
                           }}
                         >
@@ -489,13 +607,18 @@ export default function CreateProjectPage() {
                       label="Target Completion Deadline"
                       htmlFor="deadline"
                       description="The target delivery date for all project deliverables and milestone completion."
+                      error={fieldErrors.deadline}
+                      required
                     >
                       <Input
                         id="deadline"
                         type="date"
                         min={new Date().toISOString().split('T')[0]}
                         value={deadline}
-                        onChange={(e) => setDeadline(e.target.value)}
+                        onChange={(e) => {
+                          setDeadline(e.target.value);
+                          clearFieldError('deadline');
+                        }}
                       />
                     </Field>
 

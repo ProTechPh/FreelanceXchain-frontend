@@ -84,6 +84,7 @@ export function AccountSettings() {
   const [storageLoading, setStorageLoading] = useState(true);
   const [storageAvailable, setStorageAvailable] = useState(true);
   const [deletingFile, setDeletingFile] = useState<string | null>(null);
+  const [fileToDelete, setFileToDelete] = useState<FileInfo | null>(null);
 
   // Account deletion dialog state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -311,14 +312,16 @@ export function AccountSettings() {
     }
   };
 
-  const deleteFile = async (file: FileInfo) => {
-    if (!window.confirm(`Delete “${file.name}” from your storage?`)) return;
+  const confirmDeleteFile = async () => {
+    if (!fileToDelete) return;
+    const file = fileToDelete;
     setDeletingFile(file.path);
     try {
       await fileManagementApi.remove(file.bucket, file.path);
       setStorageLoading(true);
       await loadStorage();
       toast.success('File deleted.');
+      setFileToDelete(null);
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Unable to delete this file.'));
     } finally {
@@ -618,7 +621,7 @@ export function AccountSettings() {
                             size="icon"
                             aria-label={`Delete ${file.name}`}
                             disabled={deletingFile === file.path}
-                            onClick={() => void deleteFile(file)}
+                            onClick={() => setFileToDelete(file)}
                           >
                             <Trash2 className="size-4 text-destructive" />
                           </Button>
@@ -843,6 +846,40 @@ export function AccountSettings() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* File Deletion Confirmation Modal */}
+      <Dialog
+        open={fileToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && !deletingFile) setFileToDelete(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-destructive">Delete File?</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete <strong className="text-foreground">&quot;{fileToDelete?.name}&quot;</strong> from your storage? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setFileToDelete(null)}
+              disabled={Boolean(deletingFile)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              loading={Boolean(deletingFile)}
+              loadingText="Deleting…"
+              onClick={confirmDeleteFile}
+            >
+              Delete File
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

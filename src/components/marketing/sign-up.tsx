@@ -345,9 +345,9 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                     />
                     <label htmlFor="terms" className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
                       I agree to the{' '}
-                      <a href="/terms" className="text-primary font-bold hover:underline">Terms of Service</a>
+                      <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary font-bold hover:underline">Terms of Service</a>
                       {' '}and{' '}
-                      <a href="/privacy" className="text-primary font-bold hover:underline">Privacy Policy</a>
+                      <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-primary font-bold hover:underline">Privacy Policy</a>
                     </label>
                   </div>
 

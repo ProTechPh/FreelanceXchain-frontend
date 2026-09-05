@@ -12,6 +12,14 @@ import { toast } from 'sonner';
 import { reportLoadFailure } from '@/lib/report-failure';
 import { Clock, CheckCircle, XCircle, FileText } from 'lucide-react';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 const statusConfig: Record<ProposalStatus, { icon: typeof Clock; color: string; bg: string; label: string }> = {
   pending: { icon: Clock, color: 'text-warning', bg: 'bg-warning-subtle', label: 'Pending' },
@@ -30,6 +38,7 @@ export default function ProposalsPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<ProposalStatus>('pending');
   const [withdrawingId, setWithdrawingId] = useState<string | null>(null);
+  const [confirmWithdrawProposal, setConfirmWithdrawProposal] = useState<ProposalView | null>(null);
 
   const load = useCallback(async () => {
     const { data: all } = await proposalsApi.getMine();
@@ -167,9 +176,9 @@ export default function ProposalsPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-destructive"
+                        className="text-destructive hover:bg-destructive/10"
                         disabled={withdrawingId === proposal.id}
-                        onClick={() => handleWithdraw(proposal.id)}
+                        onClick={() => setConfirmWithdrawProposal({ proposal, project })}
                       >
                         {withdrawingId === proposal.id ? 'Withdrawing…' : 'Withdraw'}
                       </Button>
@@ -188,6 +197,49 @@ export default function ProposalsPage() {
           </TabsContent>
         ))}
       </Tabs>
+
+      {/* Proposal Withdrawal Confirmation Modal */}
+      <Dialog
+        open={confirmWithdrawProposal !== null}
+        onOpenChange={(open) => {
+          if (!open && !withdrawingId) setConfirmWithdrawProposal(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-destructive">Withdraw this proposal?</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to withdraw your proposal for{' '}
+              <strong className="text-foreground">
+                &quot;{confirmWithdrawProposal?.project?.title ?? 'this project'}&quot;
+              </strong>
+              ? You will be removed from consideration and cannot un-withdraw.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmWithdrawProposal(null)}
+              disabled={Boolean(withdrawingId)}
+            >
+              Keep Proposal
+            </Button>
+            <Button
+              variant="destructive"
+              loading={Boolean(withdrawingId)}
+              loadingText="Withdrawing…"
+              onClick={async () => {
+                if (!confirmWithdrawProposal) return;
+                const id = confirmWithdrawProposal.proposal.id;
+                await handleWithdraw(id);
+                setConfirmWithdrawProposal(null);
+              }}
+            >
+              Confirm Withdrawal
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

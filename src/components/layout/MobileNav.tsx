@@ -85,7 +85,7 @@ export function MobileNav({ role }: { role: UserRole | undefined }) {
         // just invites closing the drawer the step is describing.
         showCloseButton={!forcedOpen}
         className={cn(
-          'w-[min(280px,85vw)] p-0 sm:max-w-[280px]',
+          'w-[min(280px,85vw)] p-0 sm:max-w-[280px] pb-safe flex flex-col',
           // Shortened for the tour, the nav scrolls. Fading its last rows says
           // "there is more below" where a hard slice through an icon just looks
           // like a rendering fault.

@@ -80,18 +80,21 @@ export default function MfaVerifyPage() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <Field label="Verification Code" htmlFor="code">
-<Input
+          <Input
             id="code"
             type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            autoComplete="one-time-code"
             placeholder="000000"
             value={code}
             onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
             maxLength={6}
-            className="text-center text-2xl tracking-[0.5em] font-mono"
+            className="text-center text-2xl tracking-[0.5em] font-mono h-12"
             required
             autoFocus
           />
-</Field>
+        </Field>
 
         <Button type="submit" variant="gradient" className="w-full" disabled={isVerifying || code.length !== 6}>
           {isVerifying ? 'Verifying...' : 'Verify'}
