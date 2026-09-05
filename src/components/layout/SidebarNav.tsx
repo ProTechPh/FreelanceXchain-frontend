@@ -34,7 +34,7 @@ function NavLink({
       // colour change alone never conveyed that.
       aria-current={active ? 'page' : undefined}
       className={cn(
-        'flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium lg:py-2',
+        'flex min-h-[44px] items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium lg:min-h-[36px] lg:py-2',
         'transition-colors duration-fast ease-out outline-none',
         'focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:ring-offset-2 focus-visible:ring-offset-sidebar',
         active

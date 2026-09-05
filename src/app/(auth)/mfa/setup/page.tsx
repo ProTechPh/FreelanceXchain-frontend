@@ -107,6 +107,36 @@ export default function MfaSetupPage() {
         </p>
       </div>
 
+      {/* Progress Steps Indicator */}
+      <div className="flex items-center justify-between gap-2 border-b border-border/80 pb-4">
+        {[
+          { key: 'enroll', label: 'Setup' },
+          { key: 'verify', label: 'Verify' },
+          { key: 'complete', label: 'Complete' },
+        ].map((s, idx) => {
+          const stepOrder: Step[] = ['enroll', 'verify', 'complete'];
+          const currentIdx = stepOrder.indexOf(step);
+          const isPassed = currentIdx > idx;
+          const isCurrent = currentIdx === idx;
+          return (
+            <div key={s.key} className="flex-1 text-center">
+              <div
+                className={`h-1.5 w-full rounded-full transition-colors ${
+                  isPassed || isCurrent ? 'bg-primary' : 'bg-muted'
+                }`}
+              />
+              <span
+                className={`mt-1.5 block text-xs font-semibold ${
+                  isCurrent ? 'text-primary' : isPassed ? 'text-foreground' : 'text-muted-foreground'
+                }`}
+              >
+                {idx + 1}. {s.label}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
       {step === 'enroll' && (
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
@@ -167,19 +197,22 @@ export default function MfaSetupPage() {
           </div>
 
           <form onSubmit={handleVerify} className="space-y-4">
-            <Field label="3. Enter the 6-digit code from your authenticator app" htmlFor="code">
-<Input
-                id="code"
-                type="text"
-                placeholder="000000"
-                value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                maxLength={6}
-                className="text-center text-2xl tracking-[0.5em] font-mono"
-                required
-                autoFocus
-              />
-</Field>
+          <Field label="3. Enter the 6-digit code from your authenticator app" htmlFor="code">
+            <Input
+              id="code"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              autoComplete="one-time-code"
+              placeholder="000000"
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              maxLength={6}
+              className="text-center text-2xl tracking-[0.5em] font-mono h-12"
+              required
+              autoFocus
+            />
+          </Field>
             <Button type="submit" variant="gradient" className="w-full" disabled={isVerifying || code.length !== 6}>
               {isVerifying ? 'Verifying...' : 'Verify & Enable'}
             </Button>

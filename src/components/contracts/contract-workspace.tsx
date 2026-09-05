@@ -39,6 +39,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
 import { ContractPaymentHistory } from '@/components/contracts/contract-payment-history';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { qk } from '@/lib/query-keys';
 
 type ParticipantRole = Extract<UserRole, 'employer' | 'freelancer'>;
@@ -63,6 +71,8 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
   const [reviewEligibility, setReviewEligibility] = useState<{ canRate: boolean; reason?: string } | null>(null);
   const [review, setReview] = useState<ReviewDraft>(initialReview);
   const [previewAttachment, setPreviewAttachment] = useState<AttachmentPreviewTarget | null>(null);
+  const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
+  const [approvingMilestone, setApprovingMilestone] = useState<Milestone | null>(null);
 
   const loadWorkspace = useCallback(async () => {
     try {
@@ -244,12 +254,10 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
               <Button
                 variant="destructive"
                 disabled={actionId === 'cancel'}
-                onClick={() => {
-                  if (window.confirm('Cancel this pending contract?')) {
-                    void runAction('cancel', () => contractsApi.cancel(contract.id), 'Contract cancelled.');
-                  }
-                }}
-              >Cancel contract</Button>
+                onClick={() => setConfirmCancelOpen(true)}
+              >
+                Cancel contract
+              </Button>
             )}
           </div>
         </CardContent>
@@ -405,7 +413,7 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
 
                 {permissions.canApprove && (
                   <div className="flex flex-col gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-end">
-                    <Button disabled={actionId === milestone.id} onClick={() => runAction(milestone.id, () => milestonesApi.approve(milestone.id), 'Milestone approved and payment released.')}>Approve and release</Button>
+                    <Button disabled={actionId === milestone.id} onClick={() => setApprovingMilestone(milestone)}>Approve and release</Button>
                     <div className="flex-1 space-y-2"><Label htmlFor={`reject-${milestone.id}`}>Revision reason</Label><Input id={`reject-${milestone.id}`} value={rejectionReasons[milestone.id] ?? ''} onChange={(event) => setRejectionReasons((current) => ({ ...current, [milestone.id]: event.target.value }))} /></div>
                     <Button variant="outline" disabled={actionId === milestone.id || !(rejectionReasons[milestone.id] ?? '').trim()} onClick={() => runAction(milestone.id, () => milestonesApi.reject(milestone.id, rejectionReasons[milestone.id]!), 'Revision requested.')}>Request revision</Button>
                   </div>
@@ -462,6 +470,78 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
         }}
         attachment={previewAttachment}
       />
+
+      {/* Contract Cancellation Confirmation Modal */}
+      <Dialog open={confirmCancelOpen} onOpenChange={setConfirmCancelOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-destructive">Cancel this contract?</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to cancel this pending contract? This will release any uncommitted escrow and close the workspace.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setConfirmCancelOpen(false)} disabled={actionId === 'cancel'}>
+              Keep Contract
+            </Button>
+            <Button
+              variant="destructive"
+              loading={actionId === 'cancel'}
+              loadingText="Cancelling…"
+              onClick={() => {
+                setConfirmCancelOpen(false);
+                void runAction('cancel', () => contractsApi.cancel(contract.id), 'Contract cancelled.');
+              }}
+            >
+              Confirm Cancellation
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Milestone Approval & Escrow Release Confirmation Modal */}
+      <Dialog
+        open={approvingMilestone !== null}
+        onOpenChange={(open) => {
+          if (!open && !actionId) setApprovingMilestone(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">Approve Milestone & Release Payment?</DialogTitle>
+            <DialogDescription>
+              This will approve milestone <strong>&quot;{approvingMilestone?.title}&quot;</strong> and transfer{' '}
+              <strong className="text-foreground">{approvingMilestone?.amount.toLocaleString()} ETH</strong> from smart contract escrow directly to the freelancer. This blockchain transaction is permanent and cannot be reversed.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setApprovingMilestone(null)}
+              disabled={Boolean(actionId)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="gradient"
+              loading={Boolean(actionId)}
+              loadingText="Releasing funds…"
+              onClick={async () => {
+                if (!approvingMilestone) return;
+                const id = approvingMilestone.id;
+                setApprovingMilestone(null);
+                await runAction(
+                  id,
+                  () => milestonesApi.approve(id),
+                  'Milestone approved and payment released.',
+                );
+              }}
+            >
+              Confirm & Release Payment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

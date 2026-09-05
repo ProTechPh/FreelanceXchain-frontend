@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Clock, DollarSign, Users, Zap, ShieldCheck, Briefcase } from 'lucide-react';
+import { Clock, Coins, Users, Zap, ShieldCheck, Briefcase } from 'lucide-react';
 import { MarketplaceBrowser } from "@/components/marketplace/marketplace-browser";
 import { PublicMarketplaceShell } from "@/components/marketplace/public-marketplace-shell";
 import type { Project } from "@/types";
@@ -83,7 +83,7 @@ function ProjectResult({ project, listingQuery }: { project: Project; listingQue
         <div className="pt-5 border-t border-border/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-5 text-sm">
             <span className="flex items-center gap-1.5 font-bold text-foreground">
-              <DollarSign className="w-4 h-4 text-success" />
+              <Coins className="w-4 h-4 text-primary" />
               {project.budget.toLocaleString()} ETH
             </span>
             <span className="flex items-center gap-1.5 text-muted-foreground">

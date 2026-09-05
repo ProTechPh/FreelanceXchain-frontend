@@ -81,7 +81,7 @@ export function WalletBalanceCard({ role = 'employer', className = '' }: WalletB
                     {networkName}
                   </span>
                 )}
-                {isMainnet && (
+                {isMainnet && process.env.NODE_ENV === 'development' && (
                   <Button
                     type="button"
                     variant="outline"

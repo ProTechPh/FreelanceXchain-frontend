@@ -217,17 +217,17 @@ export default function Navbar({
         <div className="flex lg:hidden items-center gap-1">
           <div className="flex sm:hidden items-center gap-1">
             <ThemeToggle />
-            <Button variant="ghost" size="icon" aria-label="Open search dialog" className="rounded-full size-9" onClick={() => setOpenSearch(true)}>
-              <MagnifyingGlass className="size-3.5" strokeWidth={2.5} />
+            <Button variant="ghost" size="icon" aria-label="Open search dialog" className="rounded-full size-10 sm:size-9" onClick={() => setOpenSearch(true)}>
+              <MagnifyingGlass className="size-4 sm:size-3.5" strokeWidth={2.5} />
             </Button>
           </div>
 
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetTrigger className="inline-flex items-center justify-center size-9 rounded-full text-sm hover:bg-muted transition-colors" aria-label="Open menu">
-              <List className="size-4" strokeWidth={2.5} />
+            <SheetTrigger className="inline-flex items-center justify-center size-10 sm:size-9 rounded-full text-sm hover:bg-muted transition-colors" aria-label="Open menu">
+              <List className="size-4.5 sm:size-4" strokeWidth={2.5} />
             </SheetTrigger>
 
-            <SheetContent side="right" className="w-full max-w-sm overflow-y-auto px-6">
+            <SheetContent side="right" className="w-full max-w-sm overflow-y-auto px-6 pb-safe">
               <SheetHeader className="mb-6">
                 <SheetTitle className="flex items-center">
                   <FreelanceXchainLogo iconSize={32} />
