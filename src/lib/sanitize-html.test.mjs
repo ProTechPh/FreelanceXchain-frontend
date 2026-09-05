@@ -48,3 +48,20 @@ test('sanitizeHtml handles null and non-string inputs safely', () => {
   assert.equal(sanitizeHtml(null), '');
   assert.equal(sanitizeHtml(undefined), '');
 });
+
+test('sanitizeHtml rejects protocol-relative URLs to prevent scheme bypass', () => {
+  const payload = '<a href="//evil.com/phish">Phish</a>';
+  const clean = sanitizeHtml(payload);
+  assert.ok(!clean.includes('//evil.com'));
+  assert.ok(clean.includes('Phish'));
+});
+
+test('sanitizeHtml handles script end tags with spaces and attributes', () => {
+  const payload = '<p>Start</p><script>alert(1)</script ><script>alert(2)</script  foo="bar"><p>End</p>';
+  const clean = sanitizeHtml(payload);
+  assert.ok(!clean.includes('<script'));
+  assert.ok(!clean.includes('alert'));
+  assert.ok(clean.includes('<p>Start</p>'));
+  assert.ok(clean.includes('<p>End</p>'));
+});
+

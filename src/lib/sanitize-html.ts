@@ -68,6 +68,20 @@ const ALLOWED_TAGS = new Set([
   'ul',
 ]);
 
+const ALLOWED_ATTRIBUTES = new Set([
+  'alt',
+  'title',
+  'width',
+  'height',
+  'class',
+  'id',
+  'align',
+  'valign',
+  'border',
+  'cellpadding',
+  'cellspacing',
+]);
+
 const ALLOWED_PROTOCOLS = new Set(['http:', 'https:', 'mailto:', 'tel:']);
 
 /**
@@ -77,7 +91,14 @@ function isSafeUrl(url: string, allowImageData = false): boolean {
   const trimmed = url.trim().toLowerCase();
   if (!trimmed) return false;
 
-  if (trimmed.startsWith('javascript:') || trimmed.startsWith('vbscript:')) {
+  // Reject protocol-relative URLs (e.g. //evil.com) which bypass scheme validation
+  if (trimmed.startsWith('//') || trimmed.startsWith('\\\\')) {
+    return false;
+  }
+
+  // Neutralize common javascript / vbscript pseudo-protocol evasion (including control characters)
+  const normalized = trimmed.replace(/[\x00-\x1F\x7F-\x9F\s]/g, '');
+  if (normalized.startsWith('javascript:') || normalized.startsWith('vbscript:')) {
     return false;
   }
 
@@ -192,20 +213,213 @@ export function sanitizeHtml(dirtyHtml: string): string {
 
       return doc.body.innerHTML;
     } catch {
-      // Fall through to regex sanitizer
+      // Fall through to tokenizer sanitizer
     }
   }
 
-  let clean = dirtyHtml;
+  return sanitizeHtmlNonDom(dirtyHtml);
+}
 
-  clean = clean.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
-  clean = clean.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '');
-  clean = clean.replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '');
-  clean = clean.replace(/<object\b[^<]*(?:(?!<\/object>)<[^<]*)*<\/object>/gi, '');
-  clean = clean.replace(/<embed\b[^<]*(?:(?!<\/embed>)<[^<]*)*<\/embed>/gi, '');
-  clean = clean.replace(/\s+on[a-z]+\s*=\s*(?:'[^']*'|"[^"]*"|[^\s>]+)/gi, '');
-  clean = clean.replace(/href\s*=\s*['"]?\s*javascript:[^'">\s]*/gi, 'href="#"');
-  clean = clean.replace(/src\s*=\s*['"]?\s*javascript:[^'">\s]*/gi, 'src=""');
+function escapeHtmlAttr(val: string): string {
+  return val
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
 
-  return clean;
+function parseAndSanitizeAttributes(tagName: string, attrText: string): string[] {
+  const allowedAttrs: string[] = [];
+  let pos = 0;
+  const len = attrText.length;
+
+  while (pos < len) {
+    while (pos < len && /\s/.test(attrText[pos])) {
+      pos++;
+    }
+    if (pos >= len) break;
+
+    const nameStart = pos;
+    while (pos < len && /[^\s=/><]/.test(attrText[pos])) {
+      pos++;
+    }
+    const rawAttrName = attrText.slice(nameStart, pos).toLowerCase();
+    if (!rawAttrName) {
+      pos++;
+      continue;
+    }
+
+    while (pos < len && /\s/.test(attrText[pos])) {
+      pos++;
+    }
+
+    let attrValue = '';
+    if (pos < len && attrText[pos] === '=') {
+      pos++;
+      while (pos < len && /\s/.test(attrText[pos])) {
+        pos++;
+      }
+      if (pos < len) {
+        const quote = attrText[pos];
+        if (quote === '"' || quote === "'") {
+          pos++;
+          const valStart = pos;
+          while (pos < len && attrText[pos] !== quote) {
+            pos++;
+          }
+          attrValue = attrText.slice(valStart, pos);
+          if (pos < len) pos++;
+        } else {
+          const valStart = pos;
+          while (pos < len && /[^\s>]/.test(attrText[pos])) {
+            pos++;
+          }
+          attrValue = attrText.slice(valStart, pos);
+        }
+      }
+    }
+
+    // Strip inline event handlers (onerror, onload, onclick, etc.)
+    if (rawAttrName.startsWith('on')) {
+      continue;
+    }
+
+    if (rawAttrName === 'href') {
+      if (isSafeUrl(attrValue)) {
+        allowedAttrs.push(`href="${escapeHtmlAttr(attrValue)}"`);
+        allowedAttrs.push('target="_blank"');
+        allowedAttrs.push('rel="noopener noreferrer nofollow"');
+      }
+      continue;
+    }
+
+    if (rawAttrName === 'src') {
+      if (isSafeUrl(attrValue, tagName === 'img')) {
+        allowedAttrs.push(`src="${escapeHtmlAttr(attrValue)}"`);
+      }
+      continue;
+    }
+
+    if (rawAttrName === 'style') {
+      const clean = sanitizeStyle(attrValue);
+      if (clean) {
+        allowedAttrs.push(`style="${escapeHtmlAttr(clean)}"`);
+      }
+      continue;
+    }
+
+    if (ALLOWED_ATTRIBUTES.has(rawAttrName)) {
+      allowedAttrs.push(`${rawAttrName}="${escapeHtmlAttr(attrValue)}"`);
+    }
+  }
+
+  return allowedAttrs;
+}
+
+/**
+ * Tokenizer-based sanitizer for non-DOM environments (SSR / test runners)
+ * Avoids fragile regular expression tag filtering (CWE-116, CWE-79).
+ */
+function sanitizeHtmlNonDom(dirtyHtml: string): string {
+  let result = '';
+  let i = 0;
+  const len = dirtyHtml.length;
+
+  while (i < len) {
+    const nextLt = dirtyHtml.indexOf('<', i);
+    if (nextLt === -1) {
+      result += dirtyHtml.slice(i);
+      break;
+    }
+
+    result += dirtyHtml.slice(i, nextLt);
+    i = nextLt;
+
+    if (dirtyHtml.startsWith('<!--', i)) {
+      const endComment = dirtyHtml.indexOf('-->', i + 4);
+      if (endComment === -1) {
+        break;
+      }
+      i = endComment + 3;
+      continue;
+    }
+
+    let inQuote: string | null = null;
+    let tagEnd = -1;
+    for (let j = i + 1; j < len; j++) {
+      const ch = dirtyHtml[j];
+      if (inQuote) {
+        if (ch === inQuote) inQuote = null;
+      } else if (ch === '"' || ch === "'") {
+        inQuote = ch;
+      } else if (ch === '>') {
+        tagEnd = j;
+        break;
+      }
+    }
+
+    if (tagEnd === -1) {
+      break;
+    }
+
+    const rawTag = dirtyHtml.slice(i + 1, tagEnd).trim();
+    i = tagEnd + 1;
+
+    const isClosing = rawTag.startsWith('/');
+    const tagContent = isClosing ? rawTag.slice(1).trim() : rawTag;
+
+    let nameEnd = 0;
+    while (nameEnd < tagContent.length && /[a-zA-Z0-9-]/.test(tagContent[nameEnd])) {
+      nameEnd++;
+    }
+    const tagName = tagContent.slice(0, nameEnd).toLowerCase();
+
+    if (!tagName) {
+      continue;
+    }
+
+    if (DANGEROUS_TAGS.has(tagName)) {
+      if (!isClosing) {
+        let searchIndex = i;
+        while (searchIndex < len) {
+          const closeIdx = dirtyHtml.indexOf('</', searchIndex);
+          if (closeIdx === -1) {
+            i = len;
+            break;
+          }
+          const closeGt = dirtyHtml.indexOf('>', closeIdx);
+          if (closeGt === -1) {
+            i = len;
+            break;
+          }
+          const closeTagContent = dirtyHtml.slice(closeIdx + 2, closeGt).trim().toLowerCase();
+          if (
+            closeTagContent === tagName ||
+            closeTagContent.startsWith(tagName + ' ') ||
+            closeTagContent.startsWith(tagName + '\t')
+          ) {
+            i = closeGt + 1;
+            break;
+          }
+          searchIndex = closeIdx + 2;
+        }
+      }
+      continue;
+    }
+
+    if (ALLOWED_TAGS.has(tagName)) {
+      if (isClosing) {
+        result += `</${tagName}>`;
+      } else {
+        const isSelfClosing = tagContent.endsWith('/');
+        const attrText = tagContent.slice(nameEnd, isSelfClosing ? tagContent.length - 1 : undefined).trim();
+        const attrs = parseAndSanitizeAttributes(tagName, attrText);
+        const attrStr = attrs.length > 0 ? ' ' + attrs.join(' ') : '';
+        result += isSelfClosing ? `<${tagName}${attrStr}/>` : `<${tagName}${attrStr}>`;
+      }
+    }
+  }
+
+  return result;
 }
