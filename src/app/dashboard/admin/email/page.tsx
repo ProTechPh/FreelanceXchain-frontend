@@ -26,6 +26,7 @@ import { emailApi, type SenderProfile } from '@/lib/api';
 import { toast } from 'sonner';
 import { reportFailure } from '@/lib/report-failure';
 import { getApiErrorMessage } from '@/lib/auth-contract';
+import { sanitizeHtml } from '@/lib/sanitize-html';
 
 type EmailItem = {
   id: string;
@@ -476,7 +477,7 @@ export default function AdminEmailPage() {
               {selectedEmail.html_body ? (
                 <div
                   className="prose prose-sm dark:prose-invert max-w-none"
-                  dangerouslySetInnerHTML={{ __html: selectedEmail.html_body }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedEmail.html_body) }}
                 />
               ) : (
                 <pre className="whitespace-pre-wrap text-sm font-sans">
