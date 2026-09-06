@@ -165,7 +165,11 @@ export default function AnalyticsPage() {
               <p className="text-sm text-muted-foreground py-16 text-center">No growth data yet</p>
             ) : (
               <div className="overflow-x-auto">
-                <div className="h-64 flex items-end gap-2">
+                <div
+                  className="h-64 flex items-end gap-2"
+                  role="img"
+                  aria-label={`User growth chart: ${growthData.map((d) => `${d.month}: ${d.count} users`).join(', ')}`}
+                >
                   {growthData.map((data) => (
                     <div key={data.month} className="flex-1 min-w-8 flex flex-col items-center gap-2">
                       <div

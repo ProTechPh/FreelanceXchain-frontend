@@ -5,6 +5,7 @@ import axios from 'axios';
 import { Briefcase, Pencil, Plus, Save, Trash2, UserRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { employersApi, freelancersApi, skillsApi } from '@/lib/api';
+import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import {
   validateEmployerProfile,
@@ -56,6 +57,20 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
   const [saving, setSaving] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  // Track dirty state for unsaved changes warning
+  const isFreelancerDirty = JSON.stringify(freelancerForm) !== JSON.stringify(emptyFreelancerForm) ||
+    (freelancerProfile?.bio !== freelancerForm.bio) ||
+    (freelancerProfile?.hourlyRate !== freelancerForm.hourlyRate) ||
+    (freelancerProfile?.availability !== freelancerForm.availability);
+
+  const isEmployerDirty = JSON.stringify(employerForm) !== JSON.stringify(emptyEmployerForm) ||
+    (employerProfile?.companyName !== employerForm.companyName) ||
+    (employerProfile?.description !== employerForm.description) ||
+    (employerProfile?.industry !== employerForm.industry);
+
+  const isDirty = role === 'freelancer' ? isFreelancerDirty : isEmployerDirty;
+  useUnsavedChangesWarning(isDirty && !saving);
 
   const loadProfile = useCallback(async () => {
     setLoading(true);

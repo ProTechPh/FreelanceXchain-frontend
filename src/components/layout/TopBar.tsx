@@ -243,12 +243,16 @@ export function TopBar() {
       </div>
 
       {/* Phone-only search row. The bar keeps its 64px height until the field is
-          actually asked for, so nothing is displaced in the common case. */}
+          actually asked for, so nothing is displaced in the common case.
+          Uses transform+opacity instead of max-height to avoid CLS. */}
       <div
         id="dashboard-search-row"
         className={`border-t border-border px-4 sm:hidden overflow-hidden transition-all duration-200 ease-out ${
-          hasParticipantDashboard && searchOpen ? 'max-h-20 py-2 opacity-100' : 'max-h-0 py-0 opacity-0 border-t-transparent'
+          hasParticipantDashboard && searchOpen
+            ? 'py-2 opacity-100'
+            : 'py-0 opacity-0 pointer-events-none border-t-transparent'
         }`}
+        aria-hidden={!searchOpen}
       >
         {hasParticipantDashboard && renderSearch('dashboard-marketplace-search-mobile')}
       </div>

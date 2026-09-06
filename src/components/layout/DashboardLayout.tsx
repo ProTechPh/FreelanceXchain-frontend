@@ -58,6 +58,10 @@ export function DashboardLayout({ children, allowedRoles }: DashboardLayoutProps
     }
   }, [hasHydrated, isLoading, isAuthenticated, isWrongRole, user, router]);
 
+  const isRedirecting =
+    (hasHydrated && !isLoading && !isAuthenticated) ||
+    (hasHydrated && !isLoading && isAuthenticated && isWrongRole);
+
   useEffect(() => {
     let cancelled = false;
     const seenThisSession = user?.id
@@ -171,7 +175,16 @@ export function DashboardLayout({ children, allowedRoles }: DashboardLayoutProps
   }
 
   if (!isAuthenticated || isWrongRole) {
-    return null;
+    return isRedirecting ? (
+      <div
+        role="status"
+        aria-live="polite"
+        className="flex min-h-screen items-center justify-center bg-background"
+      >
+        <span className="sr-only">Redirecting…</span>
+        <div className="size-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    ) : null;
   }
 
   return (

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 
@@ -12,6 +12,8 @@ import { FreelanceXchainIcon } from '@/components/ui/freelancexchain-logo';
 import { SidebarNav } from './SidebarNav';
 import { SidebarUserCard } from './SidebarUserCard';
 
+const SIDEBAR_COLLAPSED_KEY = 'freelancex-sidebar-collapsed';
+
 /**
  * Desktop dashboard sidebar.
  *
@@ -22,6 +24,23 @@ import { SidebarUserCard } from './SidebarUserCard';
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const user = useAuthStore((s) => s.user);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
+      if (stored !== null) setCollapsed(stored === 'true');
+    } catch {}
+  }, []);
+
+  const toggleCollapsed = () => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(next));
+      } catch {}
+      return next;
+    });
+  };
 
   return (
     <aside
@@ -61,7 +80,7 @@ export function Sidebar() {
             className={cn('w-full', collapsed && 'mx-auto w-9')}
             aria-expanded={!collapsed}
             aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            onClick={() => setCollapsed((value) => !value)}
+            onClick={toggleCollapsed}
           >
             {collapsed ? (
               <PanelLeftOpen className="size-4" aria-hidden="true" />

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge, badgeVariants } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -52,6 +53,11 @@ export default function CreateProjectPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  // Warn if user tries to leave with unsaved changes
+  const isDirty = title !== '' || description !== '' || skills.length > 0 || budget !== '' || deadline !== '' ||
+    milestones.some(m => m.title !== '' || m.description !== '' || m.amount !== '') || files.length > 0;
+  useUnsavedChangesWarning(isDirty && !isSubmitting);
 
   useEffect(() => {
     let active = true;

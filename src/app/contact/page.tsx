@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 import Navbar from "@/components/layout/navbar";
@@ -32,9 +32,13 @@ const SUPPORT_CHANNELS = [
   },
 ];
 
+const SUPPORT_EMAIL = "support@freelancexchain.com";
+
 export default function ContactPage() {
   const reduce = useReducedMotion();
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -43,11 +47,46 @@ export default function ContactPage() {
     message: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const validate = useCallback(() => {
+    const newErrors: Record<string, string> = {};
+    if (!formData.name.trim()) newErrors.name = "Name is required.";
+    if (!formData.email.trim()) newErrors.email = "Email is required.";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = "Please enter a valid email address.";
+    if (!formData.subject.trim()) newErrors.subject = "Subject is required.";
+    if (!formData.message.trim()) newErrors.message = "Message is required.";
+    else if (formData.message.trim().length < 10) newErrors.message = "Message must be at least 10 characters.";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }, [formData]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.name && formData.email && formData.message) {
+    if (!validate()) return;
+
+    setSubmitting(true);
+    try {
+      const mailtoBody = [
+        `Category: ${formData.category}`,
+        `Name: ${formData.name}`,
+        `Email: ${formData.email}`,
+        "",
+        formData.message,
+      ].join("\n");
+
+      const mailtoUrl = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(`[${formData.category}] ${formData.subject}`)}&body=${encodeURIComponent(mailtoBody)}`;
+      window.location.href = mailtoUrl;
+
       setSubmitted(true);
+    } catch {
+      setErrors({ submit: "Something went wrong. Please try again or email us directly." });
+    } finally {
+      setSubmitting(false);
     }
+  };
+
+  const updateField = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
   };
 
   return (
@@ -121,9 +160,10 @@ export default function ContactPage() {
             {submitted ? (
               <div className="p-8 text-center rounded-2xl bg-primary/10 border border-primary/20 space-y-3">
                 <CheckCircle className="size-12 text-primary mx-auto" fill="currentColor" />
-                <h3 className="text-lg font-bold text-foreground">Message Sent Successfully</h3>
+                <h3 className="text-lg font-bold text-foreground">Message Ready to Send</h3>
                 <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                  Thank you for contacting FreelanceXchain support. A ticket has been created and our team will get back to you at {formData.email}.
+                  Your email client should open with the message pre-filled. If it doesn&apos;t, you can reach us at{" "}
+                  <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary font-medium hover:underline">{SUPPORT_EMAIL}</a>.
                 </p>
                 <Button
                   variant="outline"
@@ -138,38 +178,45 @@ export default function ContactPage() {
                 </Button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4" noValidate>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-foreground">Your Name</label>
+                    <label htmlFor="contact-name" className="text-xs font-bold text-foreground">Your Name</label>
                     <input
+                      id="contact-name"
                       type="text"
-                      required
                       placeholder="e.g. Satoshi Nakamoto"
                       value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl bg-background border border-border/80 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 text-foreground"
+                      onChange={(e) => updateField("name", e.target.value)}
+                      aria-invalid={Boolean(errors.name)}
+                      aria-describedby={errors.name ? "contact-name-error" : undefined}
+                      className="w-full px-4 py-2.5 rounded-xl bg-background border text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 text-foreground border-border/80"
                     />
+                    {errors.name && <p id="contact-name-error" className="text-xs text-destructive" role="alert">{errors.name}</p>}
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-foreground">Email Address</label>
+                    <label htmlFor="contact-email" className="text-xs font-bold text-foreground">Email Address</label>
                     <input
+                      id="contact-email"
                       type="email"
-                      required
                       placeholder="satoshi@example.com"
                       value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl bg-background border border-border/80 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 text-foreground"
+                      onChange={(e) => updateField("email", e.target.value)}
+                      aria-invalid={Boolean(errors.email)}
+                      aria-describedby={errors.email ? "contact-email-error" : undefined}
+                      className="w-full px-4 py-2.5 rounded-xl bg-background border text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 text-foreground border-border/80"
                     />
+                    {errors.email && <p id="contact-email-error" className="text-xs text-destructive" role="alert">{errors.email}</p>}
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-foreground">Category</label>
+                    <label htmlFor="contact-category" className="text-xs font-bold text-foreground">Category</label>
                     <select
+                      id="contact-category"
                       value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      onChange={(e) => updateField("category", e.target.value)}
                       className="w-full px-4 py-2.5 rounded-xl bg-background border border-border/80 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 text-foreground"
                     >
                       <option>General Inquiry</option>
@@ -181,37 +228,51 @@ export default function ContactPage() {
                     </select>
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-foreground">Subject</label>
+                    <label htmlFor="contact-subject" className="text-xs font-bold text-foreground">Subject</label>
                     <input
+                      id="contact-subject"
                       type="text"
-                      required
                       placeholder="Summary of your request"
                       value={formData.subject}
-                      onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                      className="w-full px-4 py-2.5 rounded-xl bg-background border border-border/80 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 text-foreground"
+                      onChange={(e) => updateField("subject", e.target.value)}
+                      aria-invalid={Boolean(errors.subject)}
+                      aria-describedby={errors.subject ? "contact-subject-error" : undefined}
+                      className="w-full px-4 py-2.5 rounded-xl bg-background border text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 text-foreground border-border/80"
                     />
+                    {errors.subject && <p id="contact-subject-error" className="text-xs text-destructive" role="alert">{errors.subject}</p>}
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-foreground">Message</label>
+                  <label htmlFor="contact-message" className="text-xs font-bold text-foreground">Message</label>
                   <textarea
-                    required
+                    id="contact-message"
                     rows={4}
                     placeholder="Provide details about your question, contract ID, or issue..."
                     value={formData.message}
-                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                    onChange={(e) => updateField("message", e.target.value)}
+                    aria-invalid={Boolean(errors.message)}
+                    aria-describedby={errors.message ? "contact-message-error" : undefined}
                     className="w-full px-4 py-2.5 rounded-xl bg-background border border-border/80 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 text-foreground resize-y"
                   />
+                  {errors.message && <p id="contact-message-error" className="text-xs text-destructive" role="alert">{errors.message}</p>}
                 </div>
+
+                {errors.submit && <p className="text-xs text-destructive" role="alert">{errors.submit}</p>}
 
                 <Button
                   type="submit"
+                  disabled={submitting}
                   className="w-full py-3 rounded-full bg-primary text-primary-foreground font-bold text-sm shadow-md hover:bg-primary/90 cursor-pointer"
                 >
-                  Submit Inquiry
+                  {submitting ? "Opening email client..." : "Submit Inquiry"}
                   <PaperPlaneTilt className="size-4 ml-2" strokeWidth={2.5} />
                 </Button>
+
+                <p className="text-center text-xs text-muted-foreground">
+                  Or email us directly at{" "}
+                  <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary font-medium hover:underline">{SUPPORT_EMAIL}</a>
+                </p>
               </form>
             )}
           </div>
