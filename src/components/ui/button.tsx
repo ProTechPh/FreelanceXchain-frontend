@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils"
 //    guards on the disabled styles below.
 const buttonVariants = cva(
   [
-    "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap",
+    "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap touch-manipulation",
     "rounded-md font-semibold",
     "transition-[background-color,border-color,color,box-shadow,transform]",
     "duration-fast ease-out",

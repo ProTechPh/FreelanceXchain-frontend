@@ -145,7 +145,7 @@ export default function Navbar({
         {/* Desktop auth — hidden below sm */}
         <div className="hidden sm:flex items-center gap-1.5 sm:gap-2 shrink-0">
           <ThemeToggle />
-          <Button variant="ghost" size="icon" aria-label="Open search dialog" className="rounded-full h-8 w-8 shrink-0" onClick={() => setOpenSearch(true)}>
+          <Button variant="ghost" size="icon" aria-label="Open search dialog" className="rounded-full size-8 shrink-0 touch-manipulation" onClick={() => setOpenSearch(true)}>
             <MagnifyingGlass className="size-3.5" strokeWidth={2.5} />
           </Button>
           {isLoggedIn ? (
@@ -156,7 +156,7 @@ export default function Navbar({
               <DropdownMenu>
                 <DropdownMenuTrigger
                   aria-label="Open account menu"
-                  className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full outline-none transition-opacity duration-fast hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring"
+                  className="flex size-8 cursor-pointer items-center justify-center rounded-full outline-none transition-opacity duration-fast hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring touch-manipulation"
                 >
                   <Avatar className="size-7">
                     <AvatarFallback className="text-xs gradient-primary font-bold">
@@ -217,13 +217,13 @@ export default function Navbar({
         <div className="flex lg:hidden items-center gap-1">
           <div className="flex sm:hidden items-center gap-1">
             <ThemeToggle />
-            <Button variant="ghost" size="icon" aria-label="Open search dialog" className="rounded-full size-10 sm:size-9" onClick={() => setOpenSearch(true)}>
+            <Button variant="ghost" size="icon" aria-label="Open search dialog" className="rounded-full size-10 sm:size-9 touch-manipulation" onClick={() => setOpenSearch(true)}>
               <MagnifyingGlass className="size-4 sm:size-3.5" strokeWidth={2.5} />
             </Button>
           </div>
 
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetTrigger className="inline-flex items-center justify-center size-10 sm:size-9 rounded-full text-sm hover:bg-muted transition-colors" aria-label="Open menu">
+            <SheetTrigger className="inline-flex items-center justify-center size-10 sm:size-9 rounded-full text-sm hover:bg-muted transition-colors touch-manipulation" aria-label="Open menu">
               <List className="size-4.5 sm:size-4" strokeWidth={2.5} />
             </SheetTrigger>
 

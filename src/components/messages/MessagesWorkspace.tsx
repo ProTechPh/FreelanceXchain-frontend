@@ -482,7 +482,7 @@ export function MessagesWorkspace() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="md:hidden -ml-2 size-10 rounded-full"
+                  className="md:hidden -ml-2 size-11 sm:size-10 rounded-full touch-manipulation"
                   onClick={() => {
                     setSelectedId(null);
                     setDirectRecipient(null);
@@ -590,9 +590,9 @@ export function MessagesWorkspace() {
 
             {/* Message Input */}
             <div className="p-4 border-t border-border pb-safe">
-              {messageFiles.length > 0 && <ul className="mb-3 flex flex-wrap gap-2" aria-label="Selected message attachments">{messageFiles.map((file) => <li key={`${file.name}-${file.size}-${file.lastModified}`} className="flex max-w-60 items-center gap-2 rounded-lg border border-border px-2 py-1 text-xs"><Paperclip className="h-3.5 w-3.5 shrink-0" /><span className="min-w-0 truncate">{file.name}</span><span className="shrink-0 text-muted-foreground">{formatFileSize(file.size)}</span><button type="button" aria-label={`Remove ${file.name}`} className="rounded-sm hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={() => setMessageFiles((current) => current.filter((candidate) => candidate !== file))}><X className="h-3.5 w-3.5" /></button></li>)}</ul>}
+              {messageFiles.length > 0 && <ul className="mb-3 flex flex-wrap gap-2" aria-label="Selected message attachments">{messageFiles.map((file) => <li key={`${file.name}-${file.size}-${file.lastModified}`} className="flex max-w-60 items-center gap-2 rounded-lg border border-border px-2 py-1 text-xs"><Paperclip className="h-3.5 w-3.5 shrink-0" /><span className="min-w-0 truncate">{file.name}</span><span className="shrink-0 text-muted-foreground">{formatFileSize(file.size)}</span><button type="button" aria-label={`Remove ${file.name}`} className="p-1 -m-0.5 rounded-sm hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring inline-flex items-center justify-center touch-manipulation" onClick={() => setMessageFiles((current) => current.filter((candidate) => candidate !== file))}><X className="h-3.5 w-3.5" /></button></li>)}</ul>}
               <div className="flex items-center gap-3">
-                <label htmlFor="message-attachments" className="inline-flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-md border border-border hover:bg-accent focus-within:ring-2 focus-within:ring-ring" aria-label="Attach files">
+                <label htmlFor="message-attachments" className="inline-flex size-11 sm:size-10 shrink-0 cursor-pointer items-center justify-center rounded-md border border-border hover:bg-accent focus-within:ring-2 focus-within:ring-ring touch-manipulation" aria-label="Attach files">
                   <Paperclip className="h-4 w-4" />
                   <input id="message-attachments" type="file" multiple className="sr-only" accept=".pdf,.doc,.docx,.xlsx,.pptx,.txt,.csv,.png,.jpg,.jpeg,.gif,.webp,.zip,.rar,.7z,.mp4,.webm,.mov" onChange={(event) => {
                     const next = [...messageFiles, ...Array.from(event.target.files ?? [])];
@@ -616,7 +616,7 @@ export function MessagesWorkspace() {
                   className="flex-1"
                   disabled={sending}
                 />
-                <Button variant="gradient" size="icon" aria-label="Send message" onClick={handleSend} loading={sending} disabled={!newMessage.trim()} className="size-10 shrink-0">
+                <Button variant="gradient" size="icon" aria-label="Send message" onClick={handleSend} loading={sending} disabled={!newMessage.trim()} className="size-11 sm:size-10 shrink-0 touch-manipulation">
                   <Send className="size-5" aria-hidden="true" />
                 </Button>
               </div>

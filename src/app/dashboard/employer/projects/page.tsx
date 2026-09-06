@@ -11,6 +11,7 @@ import type { Project, ProjectStatus } from '@/types';
 import { reportLoadFailure } from '@/lib/report-failure';
 import { PlusCircle, Clock, DollarSign, Users, Eye, FolderSearch, ClipboardList, Pencil } from 'lucide-react';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
+import { formatAmount, formatDate } from '@/lib/format';
 
 export default function EmployerProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -40,13 +41,13 @@ export default function EmployerProjectsPage() {
     };
   }, [load]);
 
+  const countByStatus = (status: ProjectStatus) => projects.filter((p) => p.status === status).length;
+
   if (loading) {
     return (
-      <ListSkeleton rows={4} label="Loading projects" />
+      <ListSkeleton rows={4} label="Loading your projects" />
     );
   }
-
-  const countByStatus = (status: ProjectStatus) => projects.filter((p) => p.status === status).length;
 
   return (
     <div className="space-y-6">
@@ -56,11 +57,11 @@ export default function EmployerProjectsPage() {
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground">My projects</h1>
           <p className="text-muted-foreground">Manage your project listings</p>
         </div>
-        <Link href="/dashboard/employer/projects/new" className="shrink-0">
-          <Button variant="gradient" className="w-full sm:w-auto">
+        <Button asChild variant="gradient" className="w-full sm:w-auto shrink-0">
+          <Link href="/dashboard/employer/projects/new">
             <PlusCircle className="w-4 h-4 mr-2" /> Post Project
-          </Button>
-        </Link>
+          </Link>
+        </Button>
       </div>
 
       {/* Stats */}
@@ -98,11 +99,11 @@ export default function EmployerProjectsPage() {
             <FolderSearch className="w-6 h-6 text-muted-foreground" />
           </div>
           <p className="text-muted-foreground">You haven&apos;t posted any projects yet</p>
-          <Link href="/dashboard/employer/projects/new">
-            <Button variant="gradient">
+          <Button asChild variant="gradient">
+            <Link href="/dashboard/employer/projects/new">
               <PlusCircle className="w-4 h-4 mr-2" /> Post your first project
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
       ) : (
         <div className="space-y-4">
@@ -128,7 +129,7 @@ export default function EmployerProjectsPage() {
                 <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-4">
                   <div className="flex items-center gap-1">
                     <DollarSign className="w-4 h-4" />
-                    <span className="font-medium text-primary">{project.budget.toLocaleString()} ETH</span>
+                    <span className="font-medium text-primary">{formatAmount(project.budget)}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Users className="w-4 h-4" />
@@ -136,28 +137,30 @@ export default function EmployerProjectsPage() {
                   </div>
                   <div className="flex items-center gap-1">
                     <Clock className="w-4 h-4" />
-                    Deadline: {new Date(project.deadline).toLocaleDateString()}
+                    Deadline: {formatDate(project.deadline)}
                   </div>
-                  <span>Created {new Date(project.createdAt).toLocaleDateString()}</span>
+                  <span>Created {formatDate(project.createdAt)}</span>
                 </div>
 
                 <div className="flex items-center gap-3">
                   {['draft', 'open'].includes(project.status) && (
-                    <Link href={`/dashboard/employer/projects/${project.id}/edit`}>
-                      <Button variant="outline" size="sm"><Pencil className="mr-2 size-4" />Edit</Button>
-                    </Link>
-                  )}
-                  <Link href={`/dashboard/employer/projects/${project.id}`}>
-                    <Button variant="outline" size="sm">
-                      <Eye className="w-4 h-4 mr-2" /> View
+                    <Button asChild variant="outline" size="sm">
+                      <Link href={`/dashboard/employer/projects/${project.id}/edit`}>
+                        <Pencil className="mr-2 size-4" />Edit
+                      </Link>
                     </Button>
-                  </Link>
-                  <Link href={`/dashboard/employer/projects/${project.id}/proposals`}>
-                    <Button variant="outline" size="sm">
+                  )}
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={`/dashboard/employer/projects/${project.id}`}>
+                      <Eye className="w-4 h-4 mr-2" /> View
+                    </Link>
+                  </Button>
+                  <Button asChild variant="outline" size="sm">
+                    <Link href={`/dashboard/employer/projects/${project.id}/proposals`}>
                       <ClipboardList className="w-4 h-4 mr-2" />
                       Proposals ({project.proposalCount ?? 0})
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                 </div>
               </CardContent>
             </Card>

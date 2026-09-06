@@ -13,6 +13,7 @@ import { Shield, CheckCircle, XCircle, Clock, AlertTriangle, RefreshCw, Loader2,
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
 import { KycVerificationModal } from '@/components/kyc/kyc-verification-modal';
 import { HelpHint } from '@/components/onboarding/help-hint';
+import { formatDate, formatDateTime } from '@/lib/format';
 
 const statusConfig: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   approved: { label: 'Approved', color: 'bg-success-subtle text-success', icon: CheckCircle },
@@ -208,7 +209,7 @@ export function VerificationCenter({ role }: { role: ParticipantRole }) {
                   </Badge>
                   {verification.expires_at && verification.status === 'approved' && (
                     <span className="text-xs text-muted-foreground">
-                      Expires {new Date(verification.expires_at).toLocaleDateString()}
+                      Expires {formatDate(verification.expires_at)}
                     </span>
                   )}
                 </div>
@@ -272,7 +273,7 @@ export function VerificationCenter({ role }: { role: ParticipantRole }) {
                       <Calendar className="w-3 h-3" /> Verified On
                     </p>
                     <p className="text-sm font-medium mt-1">
-                      {verification.completed_at ? new Date(verification.completed_at).toLocaleDateString() : 'N/A'}
+                      {verification.completed_at ? formatDate(verification.completed_at) : 'N/A'}
                     </p>
                   </div>
                 </div>
@@ -308,7 +309,7 @@ export function VerificationCenter({ role }: { role: ParticipantRole }) {
           {history.length === 0 ? <p className="py-6 text-center text-sm text-muted-foreground">No previous verification attempts.</p> : <ol className="space-y-3">{history.map((attempt) => {
             const attemptConfig = statusConfig[attempt.status] ?? statusConfig.pending;
             const AttemptIcon = attemptConfig.icon;
-            return <li key={`${attempt.id}-${attempt.updated_at}`} className="flex flex-col gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-center sm:justify-between"><div><div className="flex items-center gap-2"><Badge className={attemptConfig.color}><AttemptIcon className="mr-1 h-3 w-3" />{attemptConfig.label}</Badge>{verification?.id === attempt.id && <Badge variant="outline">Current</Badge>}</div><p className="mt-2 text-xs text-muted-foreground">Started {new Date(attempt.created_at).toLocaleString()} · updated {new Date(attempt.updated_at).toLocaleString()}</p>{attempt.admin_notes && <p className="mt-2 text-sm text-muted-foreground">{attempt.admin_notes}</p>}</div>{attempt.didit_session_url && (attempt.status === 'pending' || attempt.status === 'in_progress') && <Button type="button" size="sm" variant="outline" onClick={() => handleOpenModal(attempt.didit_session_url)}>Continue<Shield className="ml-2 h-4 w-4" /></Button>}</li>;
+            return <li key={`${attempt.id}-${attempt.updated_at}`} className="flex flex-col gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-center sm:justify-between"><div><div className="flex items-center gap-2"><Badge className={attemptConfig.color}><AttemptIcon className="mr-1 h-3 w-3" />{attemptConfig.label}</Badge>{verification?.id === attempt.id && <Badge variant="outline">Current</Badge>}</div><p className="mt-2 text-xs text-muted-foreground">Started {formatDateTime(attempt.created_at)} · updated {formatDateTime(attempt.updated_at)}</p>{attempt.admin_notes && <p className="mt-2 text-sm text-muted-foreground">{attempt.admin_notes}</p>}</div>{attempt.didit_session_url && (attempt.status === 'pending' || attempt.status === 'in_progress') && <Button type="button" size="sm" variant="outline" onClick={() => handleOpenModal(attempt.didit_session_url)}>Continue<Shield className="ml-2 h-4 w-4" /></Button>}</li>;
           })}</ol>}
         </CardContent>
       </Card>

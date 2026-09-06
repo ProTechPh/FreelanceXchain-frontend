@@ -14,7 +14,7 @@ import { DEFAULT_RANGE_PRESET, getRangeLabel, resolveRange, type RangePresetId }
 import type { Project, Proposal } from '@/types';
 import { reportLoadFailure } from '@/lib/report-failure';
 import { DollarSign, FolderOpen, FileText, Users, Clock, ArrowUpRight, PlusCircle, Briefcase } from 'lucide-react';
-import { formatAmount, formatRelativeTime } from '@/lib/format';
+import { formatAmount, formatRelativeTime, formatDate } from '@/lib/format';
 import { StatsSkeleton } from '@/components/dashboard/skeletons';
 import { WalletConnectBanner } from '@/components/wallet/wallet-connect-banner';
 import { TourStepLink } from '@/components/onboarding/tour-step-link';
@@ -38,7 +38,7 @@ function initials(name: string): string {
 
 export default function EmployerDashboard() {
   const currentUser = useAuthStore((state) => state.user);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [coreLoading, setCoreLoading] = useState(true);
   const [range, setRange] = useState<RangePresetId>(DEFAULT_RANGE_PRESET);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -183,11 +183,11 @@ export default function EmployerDashboard() {
             className="mt-3"
           />
         </div>
-        <Link href="/dashboard/employer/projects/new" className="shrink-0">
-          <Button variant="gradient" data-tour="primary-cta" className="w-full sm:w-auto">
+        <Button asChild variant="gradient" data-tour="primary-cta" className="w-full sm:w-auto shrink-0">
+          <Link href="/dashboard/employer/projects/new">
             <PlusCircle className="w-4 h-4 mr-2" /> Post Project
-          </Button>
-        </Link>
+          </Link>
+        </Button>
       </div>
 
       {/* Wallet Connect Banner if unlinked */}
@@ -225,11 +225,11 @@ export default function EmployerDashboard() {
           <Card data-tour="active-work" className="bg-card border-border">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-lg">Active Projects</CardTitle>
-              <Link href="/dashboard/employer/projects">
-                <Button variant="ghost" size="sm">
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/dashboard/employer/projects">
                   View All <ArrowUpRight className="w-4 h-4 ml-1" />
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </CardHeader>
             <CardContent className="space-y-4">
               {coreLoading ? (
@@ -261,12 +261,12 @@ export default function EmployerDashboard() {
                           <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
                             <span>{project.proposalCount ?? 0} proposals</span>
                             <span className="flex items-center gap-1">
-                              <Clock className="w-3 h-3" /> {new Date(project.deadline).toLocaleDateString()}
+                              <Clock className="w-3 h-3" /> {formatDate(project.deadline)}
                             </span>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="font-semibold text-primary">${project.budget.toLocaleString()}</p>
+                          <p className="font-semibold text-primary">{formatAmount(project.budget)}</p>
                           <StatusBadge status={project.status} domain="project" />
                         </div>
                       </div>
@@ -293,11 +293,11 @@ export default function EmployerDashboard() {
         <Card data-tour="proposals" className="bg-card border-border">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg">Recent Proposals</CardTitle>
-            <Link href="/dashboard/employer/projects">
-              <Button variant="ghost" size="sm">
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/dashboard/employer/projects">
                 View All <ArrowUpRight className="w-4 h-4 ml-1" />
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </CardHeader>
           <CardContent className="space-y-3">
             {coreLoading ? (
@@ -323,7 +323,7 @@ export default function EmployerDashboard() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span className="font-medium text-primary">{proposal.proposedRate.toLocaleString()} ETH</span>
+                    <span className="font-medium text-primary">{formatAmount(proposal.proposedRate)}</span>
                     {rating !== null && <span>★ {rating.toFixed(1)}</span>}
                     <span>{relativeTime(proposal.createdAt)}</span>
                   </div>

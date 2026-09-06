@@ -10,7 +10,7 @@ import type { AuditLogEntry, Dispute, SystemHealth } from '@/types';
 import { reportLoadFailure } from '@/lib/report-failure';
 import { Users, FolderOpen, DollarSign, AlertTriangle, Activity, ArrowUpRight, Shield, BarChart3, CheckCircle, Clock } from 'lucide-react';
 import { StatsSkeleton } from '@/components/dashboard/skeletons';
-import { formatAuditAction, formatAuditResource, formatRelativeTime } from '@/lib/format';
+import { formatAmount, formatAuditAction, formatAuditResource, formatNumber, formatRelativeTime } from '@/lib/format';
 
 function formatUptime(seconds: number): string {
   const days = Math.floor(seconds / 86400);
@@ -86,21 +86,21 @@ export default function AdminDashboard() {
   const statTiles = [
     {
       title: 'Total Users',
-      value: stats ? stats.totalUsers.toLocaleString() : '—',
+      value: stats ? formatNumber(stats.totalUsers) : '—',
       icon: Users,
       color: 'text-primary',
       bg: 'bg-primary/10',
     },
     {
       title: 'Active Projects',
-      value: stats ? stats.activeProjects.toLocaleString() : '—',
+      value: stats ? formatNumber(stats.activeProjects) : '—',
       icon: FolderOpen,
       color: 'text-cyan',
       bg: 'bg-cyan/10',
     },
     {
       title: 'Total Transaction Volume',
-      value: stats ? `$${stats.totalTransactionVolume.toLocaleString()}` : '—',
+      value: stats ? formatAmount(stats.totalTransactionVolume) : '—',
       icon: DollarSign,
       color: 'text-success',
       bg: 'bg-success-subtle',
@@ -140,16 +140,16 @@ export default function AdminDashboard() {
           <p className="text-muted-foreground">Platform overview and management</p>
         </div>
         <div className="flex flex-wrap gap-2 shrink-0">
-          <Link href="/dashboard/admin/analytics">
-            <Button variant="outline" size="sm" className="w-full sm:w-auto">
+          <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
+            <Link href="/dashboard/admin/analytics">
               <BarChart3 className="w-4 h-4 mr-2" /> Analytics
-            </Button>
-          </Link>
-          <Link href="/dashboard/admin/system">
-            <Button variant="outline" size="sm" className="w-full sm:w-auto">
+            </Link>
+          </Button>
+          <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
+            <Link href="/dashboard/admin/system">
               <Activity className="w-4 h-4 mr-2" /> System Health
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </div>
       </div>
 
@@ -200,11 +200,11 @@ export default function AdminDashboard() {
         <Card className="bg-card border-border lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg">Recent Activity</CardTitle>
-            <Link href="/dashboard/admin/audit-logs">
-              <Button variant="ghost" size="sm">
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/dashboard/admin/audit-logs">
                 View All <ArrowUpRight className="w-4 h-4 ml-1" />
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </CardHeader>
           <CardContent className="space-y-3">
             {recentActivity.length === 0 && (
@@ -239,11 +239,11 @@ export default function AdminDashboard() {
           <CardTitle className="text-lg flex items-center gap-2">
             <Activity className="w-5 h-5" /> Platform Health
           </CardTitle>
-          <Link href="/dashboard/admin/system">
-            <Button variant="ghost" size="sm">
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/dashboard/admin/system">
               Details <ArrowUpRight className="w-4 h-4 ml-1" />
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

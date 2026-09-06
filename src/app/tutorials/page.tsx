@@ -220,16 +220,17 @@ export default function TutorialsPage() {
                 </div>
 
                 <div className="mt-6 pt-4 border-t border-border/50 flex items-center justify-between">
-                  <Link href={item.href}>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="rounded-full text-xs font-bold hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all cursor-pointer"
-                    >
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full text-xs font-bold hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all cursor-pointer"
+                  >
+                    <Link href={item.href}>
                       {item.action}
                       <ArrowRight className="size-3 ml-1.5" strokeWidth={2.5} />
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                 </div>
               </motion.div>
             ))}

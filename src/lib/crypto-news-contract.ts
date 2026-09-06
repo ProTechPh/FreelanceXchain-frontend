@@ -109,8 +109,8 @@ export function formatNewsDate(dateInput?: string | Record<string, unknown> | nu
   try {
     const d = new Date(dateStr);
     if (Number.isNaN(d.getTime())) return dateStr;
-    // Uses the client browser/device's local timezone
-    return d.toLocaleDateString(undefined, {
+    // Uses the client browser/device's local timezone with pinned locale
+    return d.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
@@ -130,8 +130,8 @@ export function formatNewsDateTime(dateInput?: string | Record<string, unknown> 
   try {
     const d = new Date(dateStr);
     if (Number.isNaN(d.getTime())) return dateStr;
-    // Uses the client browser/device's local timezone and clock
-    return d.toLocaleString(undefined, {
+    // Uses the client browser/device's local timezone and clock with pinned locale
+    return d.toLocaleString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',

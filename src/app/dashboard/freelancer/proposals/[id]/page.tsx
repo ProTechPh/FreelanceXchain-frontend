@@ -16,6 +16,7 @@ import { Markdown } from '@/components/ui/markdown';
 import { AttachmentPreviewDialog, type AttachmentPreviewTarget } from '@/components/ui/attachment-preview-dialog';
 import type { ProposalWithEmployerHistory } from '@/types';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
+import { formatAmount, formatDateTime } from '@/lib/format';
 
 export default function FreelancerProposalDetailPage() {
   const params = useParams<{ id: string }>();
@@ -89,7 +90,7 @@ export default function FreelancerProposalDetailPage() {
         <div className="space-y-6 lg:col-span-2">
           <Card><CardHeader><CardTitle>Proposal</CardTitle></CardHeader><CardContent className="space-y-5">
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-lg border border-border bg-secondary/30 p-3"><p className="text-xs text-muted-foreground">Proposed rate</p><p className="mt-1 font-semibold text-primary">{proposal.proposedRate.toLocaleString()} ETH</p></div>
+              <div className="rounded-lg border border-border bg-secondary/30 p-3"><p className="text-xs text-muted-foreground">Proposed rate</p><p className="mt-1 font-semibold text-primary">{formatAmount(proposal.proposedRate)}</p></div>
               <div className="rounded-lg border border-border bg-secondary/30 p-3"><p className="text-xs text-muted-foreground">Estimated delivery</p><p className="mt-1 font-semibold">{proposal.estimatedDuration} days</p></div>
             </div>
             {proposal.coverLetter && (
@@ -163,7 +164,7 @@ export default function FreelancerProposalDetailPage() {
             <div className="flex items-center justify-between text-sm"><span className="flex items-center gap-2 text-muted-foreground"><Clock className="h-4 w-4" />Completed projects</span><strong>{employerHistory.completedProjectsCount}</strong></div>
             <div className="flex items-center justify-between text-sm"><span className="flex items-center gap-2 text-muted-foreground"><Star className="h-4 w-4" />Employer rating</span><strong>{employerHistory.reviewCount > 0 ? `${employerHistory.averageRating.toFixed(1)} (${employerHistory.reviewCount})` : 'Not yet rated'}</strong></div>
           </CardContent></Card>
-          <Card><CardHeader><CardTitle className="text-base">Submitted</CardTitle></CardHeader><CardContent className="text-sm text-muted-foreground">{new Date(proposal.createdAt).toLocaleString()}</CardContent></Card>
+          <Card><CardHeader><CardTitle className="text-base">Submitted</CardTitle></CardHeader><CardContent className="text-sm text-muted-foreground">{formatDateTime(proposal.createdAt)}</CardContent></Card>
         </div>
       </div>
 

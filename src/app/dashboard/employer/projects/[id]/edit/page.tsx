@@ -306,8 +306,8 @@ function EditProjectContent() {
                             </div>
                             <div className="flex items-center gap-1 shrink-0">
                               {safeUrl && (
-                                <Button asChild size="icon" variant="ghost" className="size-7 text-muted-foreground hover:text-foreground">
-                                  <a href={safeUrl} target="_blank" rel="noopener noreferrer" title="View file">
+                                <Button asChild size="icon" variant="ghost" className="size-8 sm:size-7 text-muted-foreground hover:text-foreground touch-manipulation">
+                                  <a href={safeUrl} target="_blank" rel="noopener noreferrer" title="View file" aria-label={`View ${att.filename}`}>
                                     <ExternalLink className="size-3.5" />
                                   </a>
                                 </Button>
@@ -316,9 +316,10 @@ function EditProjectContent() {
                                 type="button"
                                 size="icon"
                                 variant="ghost"
-                                className="size-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                className="size-8 sm:size-7 text-destructive hover:text-destructive hover:bg-destructive/10 touch-manipulation"
                                 onClick={() => removeExistingAttachment(index)}
                                 title="Remove attachment"
+                                aria-label={`Remove attachment ${att.filename}`}
                               >
                                 <Trash2 className="size-3.5" />
                               </Button>
@@ -366,9 +367,10 @@ function EditProjectContent() {
                               type="button"
                               size="icon"
                               variant="ghost"
-                              className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0"
+                              className="size-8 sm:size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0 touch-manipulation"
                               onClick={() => removeNewFile(index)}
                               title="Cancel file"
+                              aria-label={`Cancel file ${file.name}`}
                             >
                               <X className="size-3.5" />
                             </Button>

@@ -12,6 +12,7 @@ import { getApiErrorMessage } from '@/lib/auth-contract';
 import type { Project } from '@/types';
 import { CardGridSkeleton } from '@/components/dashboard/skeletons';
 import { Markdown } from '@/components/ui/markdown';
+import { formatAmount, formatDate } from '@/lib/format';
 
 interface RecommendationView extends ProjectRecommendation {
   project: Project;
@@ -116,8 +117,7 @@ export default function FreelancerRecommendationsPage() {
                       {item.project.title}
                     </CardTitle>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      ${item.project.budget.toLocaleString()} USDC · due{' '}
-                      {new Date(item.project.deadline).toLocaleDateString()}
+                      {formatAmount(item.project.budget)} · due {formatDate(item.project.deadline)}
                     </p>
                   </div>
                   <Badge className="bg-success-subtle text-success shrink-0">

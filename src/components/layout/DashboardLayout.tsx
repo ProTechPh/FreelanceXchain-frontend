@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
+import { BottomNav } from './BottomNav';
 import { EmailVerificationGate } from './EmailVerificationGate';
 import { OnboardingTour } from '@/components/onboarding/onboarding-tour';
 import { FirstLoginKycReminder } from '@/components/kyc/first-login-kyc-reminder';
@@ -208,10 +209,11 @@ export function DashboardLayout({ children, allowedRoles }: DashboardLayoutProps
         <main
           id="dashboard-content"
           tabIndex={-1}
-          className="min-w-0 flex-1 px-4 py-4 sm:px-6 sm:py-6 lg:px-(--space-page-x) outline-none"
+          className="min-w-0 flex-1 px-4 py-4 sm:px-6 sm:py-6 lg:px-(--space-page-x) pb-20 lg:pb-6 outline-none"
         >
           {children}
         </main>
+        <BottomNav role={user?.role} />
       </div>
     </div>
   );

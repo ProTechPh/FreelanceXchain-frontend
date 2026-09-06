@@ -18,11 +18,20 @@ import type { Project, Proposal } from '@/types';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { getProjectPrimaryAction } from '@/lib/project-actions';
 import { formatFileSize, safeAttachmentUrl } from '@/lib/attachment-presentation';
+import { formatAmount } from '@/lib/format';
 import { useAuthStore } from '@/stores/authStore';
 import { getMarketplaceReturnPath } from '@/lib/marketplace-return';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
 import { Markdown } from '@/components/ui/markdown';
 import { AttachmentPreviewDialog, type AttachmentPreviewTarget } from '@/components/ui/attachment-preview-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import Navbar from '@/components/layout/navbar';
 import { FooterSection } from '@/components/layout/footer-section';
 
@@ -75,6 +84,7 @@ export function ProjectDetailView({
   const [employerDialogOpen, setEmployerDialogOpen] = useState(false);
   const [myProposal, setMyProposal] = useState<Proposal | null>(null);
   const [withdrawingProposal, setWithdrawingProposal] = useState(false);
+  const [confirmWithdrawOpen, setConfirmWithdrawOpen] = useState(false);
   const [previewAttachment, setPreviewAttachment] = useState<AttachmentPreviewTarget | null>(null);
   const user = useAuthStore((state) => state.user);
 
@@ -194,11 +204,11 @@ export function ProjectDetailView({
               <p className="text-3xl mb-4">🔍</p>
               <h2 className="text-2xl font-bold text-foreground mb-2">Project not found</h2>
               <p className="text-muted-foreground mb-6">This project doesn&apos;t exist or has been removed.</p>
-              <Link href="/projects">
-                <Button className="rounded-full gradient-primary shadow-md">
+              <Button asChild className="rounded-full gradient-primary shadow-md">
+                <Link href="/projects">
                   Browse Projects
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
           </main>
           <FooterSection />
@@ -389,7 +399,7 @@ export function ProjectDetailView({
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3.5 rounded-xl bg-card border border-border text-xs">
                     <div>
                       <span className="text-muted-foreground block">Proposed Rate</span>
-                      <span className="text-sm font-bold text-primary">{myProposal.proposedRate.toLocaleString()} ETH</span>
+                      <span className="text-sm font-bold text-primary">{formatAmount(myProposal.proposedRate)}</span>
                     </div>
                     <div>
                       <span className="text-muted-foreground block">Estimated Delivery</span>
@@ -474,7 +484,7 @@ export function ProjectDetailView({
                         size="sm"
                         variant="outline"
                         className="text-xs text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
-                        onClick={() => handleWithdrawProposal(myProposal.id)}
+                        onClick={() => setConfirmWithdrawOpen(true)}
                         disabled={withdrawingProposal}
                       >
                         {withdrawingProposal ? 'Withdrawing...' : 'Withdraw Proposal'}
@@ -575,7 +585,7 @@ export function ProjectDetailView({
                           </div>
                           <div className="flex items-center gap-3 shrink-0">
                             <StatusBadge status={milestone.status} domain="milestone" size="sm" />
-                            <p className="font-bold text-sm text-primary">{milestone.amount.toLocaleString()} ETH</p>
+                            <p className="font-bold text-sm text-primary">{formatAmount(milestone.amount)}</p>
                           </div>
                         </div>
                       </div>
@@ -617,7 +627,7 @@ export function ProjectDetailView({
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Budget</span>
-                  <span className="font-bold text-primary text-lg">{project.budget.toLocaleString()} ETH</span>
+                  <span className="font-bold text-primary text-lg">{formatAmount(project.budget)}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Deadline</span>
@@ -737,6 +747,48 @@ export function ProjectDetailView({
           project={project}
         />
       )}
+
+      {/* Proposal Withdrawal Confirmation Modal */}
+      <Dialog
+        open={confirmWithdrawOpen}
+        onOpenChange={(open) => {
+          if (!open && !withdrawingProposal) setConfirmWithdrawOpen(false);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-destructive">Withdraw this proposal?</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to withdraw your proposal for{' '}
+              <strong className="text-foreground">
+                &quot;{project?.title ?? 'this project'}&quot;
+              </strong>
+              ? You will be removed from consideration and cannot un-withdraw.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmWithdrawOpen(false)}
+              disabled={withdrawingProposal}
+            >
+              Keep Proposal
+            </Button>
+            <Button
+              variant="destructive"
+              loading={withdrawingProposal}
+              loadingText="Withdrawing…"
+              onClick={async () => {
+                if (!myProposal) return;
+                await handleWithdrawProposal(myProposal.id);
+                setConfirmWithdrawOpen(false);
+              }}
+            >
+              Confirm Withdrawal
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 

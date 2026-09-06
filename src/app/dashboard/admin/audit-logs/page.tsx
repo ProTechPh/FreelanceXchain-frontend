@@ -274,62 +274,64 @@ export default function AuditLogsPage() {
               />
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Action</TableHead>
-                  <TableHead>Actor</TableHead>
-                  <TableHead className="hidden sm:table-cell">Resource</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="hidden sm:table-cell">IP</TableHead>
-                  <TableHead>Time</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {logs.map((log) => (
-                  <TableRow key={log.id}>
-                    <TableCell className="p-4">
-                      <div className="flex flex-col gap-0.5">
-                        <span className="font-semibold text-sm text-foreground">{formatAuditAction(log.action)}</span>
-                        <span className="font-mono text-xs text-muted-foreground">{log.action}</span>
-                      </div>
-                      {log.error_message && (
-                        <p className="text-xs text-destructive mt-1 max-w-xs truncate" title={log.error_message}>{log.error_message}</p>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <User aria-hidden="true" className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm font-mono" title={log.actor_id ?? log.user_id ?? undefined}>
-                          {(log.actor_id ?? log.user_id ?? 'system').slice(0, 8)}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden p-4 text-sm sm:table-cell">
-                      <span className="font-medium text-foreground">{formatAuditResource(log.resource_type)}</span>
-                      {log.resource_id && <span className="font-mono text-xs text-muted-foreground ml-1.5">#{log.resource_id.slice(0, 8)}</span>}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={statusColors[log.status]}>{log.status}</Badge>
-                    </TableCell>
-                    <TableCell className="hidden p-4 text-sm font-mono text-muted-foreground sm:table-cell">{log.ip_address ?? '-'}</TableCell>
-                    <TableCell className="p-4 text-sm text-muted-foreground">{formatDateTime(log.created_at)}</TableCell>
-                  </TableRow>
-                ))}
-                {logs.length === 0 && (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={6} className="py-10">
-                      <EmptyState
-                        size="sm"
-                        icon={ClipboardList}
-                        title="No audit entries match your filters"
-                        description="Try widening the date range or clearing the action filter."
-                      />
-                    </TableCell>
+                    <TableHead>Action</TableHead>
+                    <TableHead>Actor</TableHead>
+                    <TableHead className="hidden sm:table-cell">Resource</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="hidden sm:table-cell">IP</TableHead>
+                    <TableHead>Time</TableHead>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {logs.map((log) => (
+                    <TableRow key={log.id}>
+                      <TableCell className="p-4">
+                        <div className="flex flex-col gap-0.5">
+                          <span className="font-semibold text-sm text-foreground">{formatAuditAction(log.action)}</span>
+                          <span className="font-mono text-xs text-muted-foreground">{log.action}</span>
+                        </div>
+                        {log.error_message && (
+                          <p className="text-xs text-destructive mt-1 max-w-xs truncate" title={log.error_message}>{log.error_message}</p>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <User aria-hidden="true" className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-sm font-mono" title={log.actor_id ?? log.user_id ?? undefined}>
+                            {(log.actor_id ?? log.user_id ?? 'system').slice(0, 8)}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden p-4 text-sm sm:table-cell">
+                        <span className="font-medium text-foreground">{formatAuditResource(log.resource_type)}</span>
+                        {log.resource_id && <span className="font-mono text-xs text-muted-foreground ml-1.5">#{log.resource_id.slice(0, 8)}</span>}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={statusColors[log.status]}>{log.status}</Badge>
+                      </TableCell>
+                      <TableCell className="hidden p-4 text-sm font-mono text-muted-foreground sm:table-cell">{log.ip_address ?? '-'}</TableCell>
+                      <TableCell className="p-4 text-sm text-muted-foreground">{formatDateTime(log.created_at)}</TableCell>
+                    </TableRow>
+                  ))}
+                  {logs.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={6} className="py-10">
+                        <EmptyState
+                          size="sm"
+                          icon={ClipboardList}
+                          title="No audit entries match your filters"
+                          description="Try widening the date range or clearing the action filter."
+                        />
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>

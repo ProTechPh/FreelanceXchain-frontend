@@ -24,6 +24,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
 import { Field } from '@/components/ui/field';
+import { formatDate, formatDateTime } from '@/lib/format';
 
 type ProfileRole = Extract<UserRole, 'employer' | 'freelancer'>;
 
@@ -301,8 +302,8 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
               <CardContent className="space-y-4">
                 {(freelancerProfile.experience ?? []).map((experience) => (
                   <div key={experience.id} className="flex flex-col gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div><p className="font-semibold">{experience.title}</p><p className="text-sm text-muted-foreground">{experience.company} · {new Date(experience.startDate).toLocaleDateString()} – {experience.endDate ? new Date(experience.endDate).toLocaleDateString() : 'Present'}</p><p className="mt-2 text-sm">{experience.description}</p></div>
-                    <div className="flex gap-1"><Button type="button" size="icon" variant="ghost" aria-label={`Edit ${experience.title}`} onClick={() => editExperience(experience)}><Pencil className="size-4" /></Button><Button type="button" size="icon" variant="ghost" aria-label={`Delete ${experience.title}`} disabled={actionId === `experience:${experience.id}`} onClick={() => void removeExperience(experience.id)}><Trash2 className="size-4 text-destructive" /></Button></div>
+                    <div><p className="font-semibold">{experience.title}</p><p className="text-sm text-muted-foreground">{experience.company} · {formatDate(experience.startDate)} – {experience.endDate ? formatDate(experience.endDate) : 'Present'}</p><p className="mt-2 text-sm">{experience.description}</p></div>
+                    <div className="flex gap-1"><Button type="button" size="icon" variant="ghost" className="touch-manipulation" aria-label={`Edit ${experience.title}`} onClick={() => editExperience(experience)}><Pencil className="size-4" /></Button><Button type="button" size="icon" variant="ghost" className="touch-manipulation" aria-label={`Delete ${experience.title}`} disabled={actionId === `experience:${experience.id}`} onClick={() => void removeExperience(experience.id)}><Trash2 className="size-4 text-destructive" /></Button></div>
                   </div>
                 ))}
                 {freelancerProfile.experience.length === 0 && <p className="text-sm text-muted-foreground">No experience added yet.</p>}
@@ -340,7 +341,7 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
 <Input id="industry" value={employerForm.industry} onChange={(event) => setEmployerForm((current) => ({ ...current, industry: event.target.value }))} />
 </Field>
             <div className="space-y-2 sm:col-span-2"><Label htmlFor="company-description">Company description</Label><Textarea id="company-description" rows={6} value={employerForm.description} onChange={(event) => setEmployerForm((current) => ({ ...current, description: event.target.value }))} /></div>
-            {employerProfile && <p className="text-xs text-muted-foreground sm:col-span-2">Company profile last updated {new Date(employerProfile.updatedAt).toLocaleString()}.</p>}
+            {employerProfile && <p className="text-xs text-muted-foreground sm:col-span-2">Company profile last updated {formatDateTime(employerProfile.updatedAt)}.</p>}
           </CardContent>
         </Card>
       )}

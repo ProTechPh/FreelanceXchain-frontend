@@ -127,10 +127,11 @@ export function WalletHeaderButton() {
               type="button"
               variant="ghost"
               size="icon"
-              className="size-7 text-muted-foreground hover:text-foreground"
+              className="size-8 sm:size-7 touch-manipulation text-muted-foreground hover:text-foreground"
               disabled={isLoadingBalance}
               onClick={handleRefresh}
               title="Refresh Balance"
+              aria-label="Refresh Balance"
             >
               <RefreshCw className={`size-3.5 ${isLoadingBalance ? 'animate-spin' : ''}`} />
             </Button>

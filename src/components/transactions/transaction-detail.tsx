@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
+import { formatAmount, formatDateTime } from '@/lib/format';
 
 type ParticipantRole = Extract<UserRole, 'employer' | 'freelancer'>;
 
@@ -59,9 +60,9 @@ export function TransactionDetail({ transactionId, role }: { transactionId: stri
         <CardHeader><CardTitle className="flex items-center gap-2"><ReceiptText className="size-5" />Ledger entry</CardTitle></CardHeader>
         <CardContent className="grid gap-5 sm:grid-cols-2">
           <div><p className="text-sm text-muted-foreground">Type</p><p className="font-medium capitalize">{transaction.type.replaceAll('_', ' ')}</p></div>
-          <div><p className="text-sm text-muted-foreground">Amount</p><p className="text-xl font-semibold">${transaction.amount.toLocaleString()}</p></div>
-          <div><p className="text-sm text-muted-foreground">Created</p><p>{new Date(transaction.created_at).toLocaleString()}</p></div>
-          <div><p className="text-sm text-muted-foreground">Updated</p><p>{new Date(transaction.updated_at).toLocaleString()}</p></div>
+          <div><p className="text-sm text-muted-foreground">Amount</p><p className="text-xl font-semibold">{formatAmount(transaction.amount)}</p></div>
+          <div><p className="text-sm text-muted-foreground">Created</p><p>{formatDateTime(transaction.created_at)}</p></div>
+          <div><p className="text-sm text-muted-foreground">Updated</p><p>{formatDateTime(transaction.updated_at)}</p></div>
           {transaction.contract_id && <div><p className="text-sm text-muted-foreground">Contract</p><Button asChild variant="link" className="h-auto p-0"><Link href={`/dashboard/${role}/contracts/${transaction.contract_id}`}>{transaction.contract_id}</Link></Button></div>}
           {transaction.milestone_id && <div><p className="text-sm text-muted-foreground">Milestone</p><p className="break-all font-mono text-xs">{transaction.milestone_id}</p></div>}
           {transaction.from_user_id && <div><p className="text-sm text-muted-foreground">From user</p><p className="break-all font-mono text-xs">{transaction.from_user_id}</p></div>}

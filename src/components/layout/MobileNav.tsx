@@ -56,7 +56,7 @@ export function MobileNav({ role }: { role: UserRole | undefined }) {
             size="icon"
             aria-label="Open navigation menu"
             data-tour="nav-trigger"
-            className="lg:hidden"
+            className="size-11 sm:size-10 lg:hidden touch-manipulation"
           />
         }
       >

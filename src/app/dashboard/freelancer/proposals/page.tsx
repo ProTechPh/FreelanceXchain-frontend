@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { reportLoadFailure } from '@/lib/report-failure';
 import { Clock, CheckCircle, XCircle, FileText } from 'lucide-react';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
+import { formatAmount, formatDate } from '@/lib/format';
 import {
   Dialog,
   DialogContent,
@@ -155,22 +156,26 @@ export default function ProposalsPage() {
                     </Badge>
                   </div>
                   <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                    <span className="font-medium text-primary">{proposal.proposedRate.toLocaleString()} ETH</span>
+                    <span className="font-medium text-primary">{formatAmount(proposal.proposedRate)}</span>
                     <span>{proposal.estimatedDuration} days</span>
                     <span className="flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       {status === 'pending' ? 'Submitted' : statusConfig[status].label}{' '}
-                      {new Date(status === 'pending' ? proposal.createdAt : proposal.updatedAt).toLocaleDateString()}
+                      {formatDate(status === 'pending' ? proposal.createdAt : proposal.updatedAt)}
                     </span>
                   </div>
                   <div className="mt-4 flex gap-3">
-                    <Link href={`/dashboard/freelancer/proposals/${proposal.id}`}>
-                      <Button variant="outline" size="sm">View Proposal</Button>
-                    </Link>
-                    {project && (
-                      <Link href={`/dashboard/freelancer/projects/${project.id}`}>
-                        <Button variant="ghost" size="sm">View Project</Button>
+                    <Button asChild variant="outline" size="sm">
+                      <Link href={`/dashboard/freelancer/proposals/${proposal.id}`}>
+                        View Proposal
                       </Link>
+                    </Button>
+                    {project && (
+                      <Button asChild variant="ghost" size="sm">
+                        <Link href={`/dashboard/freelancer/projects/${project.id}`}>
+                          View Project
+                        </Link>
+                      </Button>
                     )}
                     {status === 'pending' && (
                       <Button
@@ -184,11 +189,11 @@ export default function ProposalsPage() {
                       </Button>
                     )}
                     {status === 'accepted' && (
-                      <Link href="/dashboard/freelancer/contracts">
-                        <Button variant="gradient" size="sm">
+                      <Button asChild variant="gradient" size="sm">
+                        <Link href="/dashboard/freelancer/contracts">
                           <FileText className="w-4 h-4 mr-2" /> View Contract
-                        </Button>
-                      </Link>
+                        </Link>
+                      </Button>
                     )}
                   </div>
                 </CardContent>

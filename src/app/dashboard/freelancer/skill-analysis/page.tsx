@@ -91,7 +91,7 @@ export default function SkillAnalysisPage() {
         <CardContent className="space-y-4">
           <form className="space-y-3" onSubmit={extractSkills}><Field label="Job description, résumé, or project brief" htmlFor="skill-source-text">
 <Textarea id="skill-source-text" rows={6} value={text} onChange={(event) => setText(event.target.value)} />
-</Field><Button type="submit" disabled={extracting || !text.trim()}>{extracting ? 'Extracting…' : 'Extract skills'}</Button></form>
+</Field><Button type="submit" loading={extracting} loadingText="Extracting skills…" disabled={!text.trim()}>Extract skills</Button></form>
           {extracted.length > 0 && <div className="flex flex-wrap gap-2 border-t border-border pt-4">{extracted.map((skill) => <Badge key={skill.skillId} variant="secondary">{skill.skillName} · {Math.round(skill.confidence * 100)}%</Badge>)}</div>}
         </CardContent>
       </Card>
