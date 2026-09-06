@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ThemeProvider, useTheme } from 'next-themes';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
+import { WebVitals } from '@/components/web-vitals';
 
 function ThemedToaster() {
   const { resolvedTheme } = useTheme();
@@ -48,6 +49,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         enableSystem
         disableTransitionOnChange
       >
+        <WebVitals />
         {children}
         <ThemedToaster />
       </ThemeProvider>

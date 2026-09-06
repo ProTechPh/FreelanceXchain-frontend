@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu as List, Search as MagnifyingGlass, Zap as Lightning, Users, Newspaper, LogOut, LayoutDashboard, User } from 'lucide-react';
+import { Menu as List, Search as MagnifyingGlass, LogOut, LayoutDashboard, User } from 'lucide-react';
 import * as React from "react";
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -21,15 +21,13 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import {
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
+import dynamic from 'next/dynamic';
 import Link from "next/link";
+
+const NavSearchDialog = dynamic(
+  () => import('./nav-search-dialog').then((mod) => mod.NavSearchDialog),
+  { ssr: false }
+);
 import { FreelanceXchainLogo } from "@/components/ui/freelancexchain-logo";
 import { useAuthStore } from '@/stores/authStore';
 
@@ -77,7 +75,6 @@ export default function Navbar({
   const [mounted, setMounted] = React.useState(false);
   const [openSearch, setOpenSearch] = React.useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
-  const [globalSearchQuery, setGlobalSearchQuery] = React.useState('');
 
   React.useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -294,44 +291,8 @@ export default function Navbar({
         </div>
       </div>
 
-      {/* Search dialog */}
-      <CommandDialog open={openSearch} onOpenChange={setOpenSearch}>
-        <CommandInput value={globalSearchQuery} onValueChange={setGlobalSearchQuery} placeholder="Search projects, freelancers, features..." />
-        <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
-          {globalSearchQuery.trim() && (
-            <CommandGroup className="text-muted-foreground" heading="Search marketplace">
-               <CommandItem asChild value={`Search projects ${globalSearchQuery}`}>
-                 <Link href={`/projects?keyword=${encodeURIComponent(globalSearchQuery.trim())}`} onClick={() => setOpenSearch(false)}>
-                   <Lightning className="size-4" strokeWidth={1.5} />Search projects for &quot;{globalSearchQuery.trim()}&quot;
-                 </Link>
-               </CommandItem>
-               <CommandItem asChild value={`Search freelancers ${globalSearchQuery}`}>
-                 <Link href={`/freelancers?keyword=${encodeURIComponent(globalSearchQuery.trim())}`} onClick={() => setOpenSearch(false)}>
-                   <Users className="size-4" strokeWidth={1.5} />Search talent for &quot;{globalSearchQuery.trim()}&quot;
-                 </Link>
-               </CommandItem>
-            </CommandGroup>
-          )}
-          <CommandGroup className="text-muted-foreground" heading="Quick Links">
-            <CommandItem asChild value="browse projects">
-              <Link href="/projects" onClick={() => setOpenSearch(false)}>
-                <Lightning className="size-4" strokeWidth={1.5} />Browse Projects
-              </Link>
-            </CommandItem>
-            <CommandItem asChild value="find freelancers">
-              <Link href="/freelancers" onClick={() => setOpenSearch(false)}>
-                <Users className="size-4" strokeWidth={1.5} />Find Talent
-              </Link>
-            </CommandItem>
-            <CommandItem asChild value="crypto news">
-              <Link href="/news" onClick={() => setOpenSearch(false)}>
-                <Newspaper className="size-4" strokeWidth={1.5} />Crypto News
-              </Link>
-            </CommandItem>
-          </CommandGroup>
-        </CommandList>
-      </CommandDialog>
+      {/* Search dialog - loaded dynamically on demand to optimize initial bundle */}
+      {openSearch && <NavSearchDialog open={openSearch} onOpenChange={setOpenSearch} />}
     </nav>
   );
 }
