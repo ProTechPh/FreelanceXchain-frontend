@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 
@@ -22,15 +22,14 @@ const SIDEBAR_COLLAPSED_KEY = 'freelancex-sidebar-collapsed';
  * of link styles for both.
  */
 export function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false);
-  const user = useAuthStore((s) => s.user);
-
-  useEffect(() => {
+  const [collapsed, setCollapsed] = useState(() => {
     try {
-      const stored = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
-      if (stored !== null) setCollapsed(stored === 'true');
-    } catch {}
-  }, []);
+      return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  });
+  const user = useAuthStore((s) => s.user);
 
   const toggleCollapsed = () => {
     setCollapsed((prev) => {

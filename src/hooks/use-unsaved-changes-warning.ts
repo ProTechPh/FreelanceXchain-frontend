@@ -1,7 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 /**
  * Warns users before they leave a page with unsaved form changes.
@@ -13,7 +12,6 @@ export function useUnsavedChangesWarning(
   isDirty: boolean,
   message = 'You have unsaved changes. Are you sure you want to leave?',
 ) {
-  const router = useRouter();
   const shouldWarn = useRef(false);
 
   // Warn on browser navigation (refresh, close tab)
@@ -28,15 +26,6 @@ export function useUnsavedChangesWarning(
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [isDirty, message]);
-
-  // Warn on Next.js router navigation
-  const onRouterNavigation = useCallback(
-    (url: string) => {
-      if (!isDirty) return true;
-      return window.confirm(message);
-    },
-    [isDirty, message],
-  );
 
   useEffect(() => {
     if (!isDirty) return;
@@ -72,17 +61,17 @@ export function useUnsavedChangesWarning(
  * plus the current dirty state.
  */
 export function useDirtyFormTracker(initialValues: Record<string, unknown>) {
-  const initialValuesRef = useRef(initialValues);
-  const savedValuesRef = useRef(initialValues);
+  const [savedValues, setSavedValues] = useState(initialValues);
+  const [trackedValues, setTrackedValues] = useState(initialValues);
 
-  const isDirty = JSON.stringify(savedValuesRef.current) !== JSON.stringify(initialValuesRef.current);
+  const isDirty = JSON.stringify(savedValues) !== JSON.stringify(trackedValues);
 
   const markSaved = useCallback(() => {
-    savedValuesRef.current = { ...initialValuesRef.current };
-  }, []);
+    setSavedValues({ ...trackedValues });
+  }, [trackedValues]);
 
   const updateValues = useCallback((newValues: Record<string, unknown>) => {
-    initialValuesRef.current = { ...initialValuesRef.current, ...newValues };
+    setTrackedValues((prev) => ({ ...prev, ...newValues }));
   }, []);
 
   return { isDirty, markSaved, updateValues };
