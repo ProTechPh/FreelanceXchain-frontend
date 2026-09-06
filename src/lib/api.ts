@@ -42,6 +42,7 @@ import type {
   EmailPreferencesUpdate,
   SkillTrend,
   PlatformMetrics,
+  MarketplaceLiquidityReport,
   SkillTaxonomy,
   Skill,
   UserRole,
@@ -882,6 +883,9 @@ export const analyticsApi = {
 
   getPlatform: () =>
     api.get<PlatformMetrics>('/analytics/platform'),
+
+  getLiquidityReport: () =>
+    api.get<MarketplaceLiquidityReport>('/analytics/liquidity'),
 };
 
 export const kycApi = {
