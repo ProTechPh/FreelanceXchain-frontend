@@ -24,6 +24,10 @@ const nextConfig: NextConfig = {
         hostname: 'upload.wikimedia.org',
         pathname: '/wikipedia/commons/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
     ],
   },
   async headers() {
@@ -64,7 +68,7 @@ const nextConfig: NextConfig = {
                 ? "script-src 'self' 'unsafe-eval' 'unsafe-inline'"
                 : "script-src 'self' 'unsafe-inline'",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' blob: data: https://*.appwrite.io https://cloud.appwrite.io https://cdn.worldvectorlogo.com https://upload.wikimedia.org",
+              "img-src 'self' blob: data: https: http:",
               "font-src 'self' data:",
               "connect-src 'self' https://*.appwrite.io https://cloud.appwrite.io https://api.freelancexchain.works http://localhost:* http://127.0.0.1:* wss: ws:",
               "frame-src 'self'",
