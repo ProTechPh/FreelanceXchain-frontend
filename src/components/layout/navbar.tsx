@@ -233,17 +233,37 @@ export default function Navbar({
               </SheetHeader>
 
               <div className="flex flex-col gap-6">
-                <div className="flex w-full flex-col divide-y divide-border/40">
-                  {menu.map((item) => (
-                    <Link
-                      key={item.title}
-                      href={item.url}
-                      onClick={(e) => handleSmoothScroll(e, item.url)}
-                      className="flex items-center py-3 text-sm font-semibold text-foreground/80 hover:text-foreground transition-colors"
-                    >
-                      {item.title}
-                    </Link>
-                  ))}
+                <div className="flex flex-col gap-4">
+                  <div>
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 px-1">Product</p>
+                    <div className="flex flex-col">
+                      {menu.filter((item) => ["/#features", "/#ecosystem", "/#compare", "/#reviews", "/#faq"].includes(item.url)).map((item) => (
+                        <Link
+                          key={item.title}
+                          href={item.url}
+                          onClick={(e) => handleSmoothScroll(e, item.url)}
+                          className="flex items-center py-2.5 text-sm font-semibold text-foreground/80 hover:text-foreground transition-colors"
+                        >
+                          {item.title}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 px-1">Marketplace</p>
+                    <div className="flex flex-col">
+                      {menu.filter((item) => ["/projects", "/freelancers", "/news"].includes(item.url)).map((item) => (
+                        <Link
+                          key={item.title}
+                          href={item.url}
+                          onClick={(e) => handleSmoothScroll(e, item.url)}
+                          className="flex items-center py-2.5 text-sm font-semibold text-foreground/80 hover:text-foreground transition-colors"
+                        >
+                          {item.title}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
                 {isLoggedIn ? (
