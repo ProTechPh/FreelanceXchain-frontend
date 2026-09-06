@@ -38,6 +38,7 @@ export default function NewsPage() {
   const [fearGreed, setFearGreed] = useState<FearGreedIndexData | null>(null);
   const [prices, setPrices] = useState<Record<string, { usd: number; change24h?: number }>>({});
   const [, setLastRefreshed] = useState<Date>(new Date());
+  const [visibleCount, setVisibleCount] = useState(9);
 
   // Fetch Live Crypto News & Market Data from backend API proxy
   const loadCryptoNews = useCallback(async (coinSymbol?: string, categoryFilter?: string, searchQ?: string) => {
@@ -529,8 +530,9 @@ export default function NewsPage() {
               </Button>
             </div>
           ) : (
+            <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-              {displayArticles.map((article, idx) => {
+              {displayArticles.slice(0, visibleCount).map((article, idx) => {
                 const imageUrl = extractCryptoArticleImage(article, article.category);
 
                 return (
@@ -627,6 +629,19 @@ export default function NewsPage() {
                 );
               })}
             </div>
+
+            {visibleCount < displayArticles.length && (
+              <div className="flex justify-center mt-8">
+                <Button
+                  variant="outline"
+                  className="rounded-full text-xs font-bold px-6 cursor-pointer"
+                  onClick={() => setVisibleCount((prev) => prev + 9)}
+                >
+                  Load More ({displayArticles.length - visibleCount} remaining)
+                </Button>
+              </div>
+            )}
+            </>
           )}
         </section>
 

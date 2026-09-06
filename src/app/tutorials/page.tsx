@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 import Navbar from "@/components/layout/navbar";
 import { FooterSection } from "@/components/layout/footer-section";
-import { Sparkles as Sparkle, CircleCheck as CheckCircle, User, Briefcase, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Sparkles as Sparkle, CircleCheck as CheckCircle, User, Briefcase, ShieldCheck, ArrowRight, Search } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 
 const TUTORIAL_TRACKS = [
@@ -125,8 +125,15 @@ const TUTORIAL_TRACKS = [
 export default function TutorialsPage() {
   const reduce = useReducedMotion();
   const [activeTab, setActiveTab] = useState("freelancers");
+  const [tutorialSearch, setTutorialSearch] = useState("");
 
   const currentTrack = TUTORIAL_TRACKS.find((t) => t.id === activeTab) || TUTORIAL_TRACKS[0];
+
+  const filteredSteps = currentTrack.steps.filter((step) => {
+    if (!tutorialSearch) return true;
+    const term = tutorialSearch.toLowerCase();
+    return step.title.toLowerCase().includes(term) || step.description.toLowerCase().includes(term);
+  });
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -193,8 +200,20 @@ export default function TutorialsPage() {
 
         {/* Steps Grid */}
         <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 mb-16">
+          {/* Tutorial Search */}
+          <div className="relative max-w-md mx-auto mb-8">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search tutorial steps..."
+              value={tutorialSearch}
+              onChange={(e) => setTutorialSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 rounded-full bg-card border border-border/80 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 shadow-xs text-foreground placeholder:text-muted-foreground"
+            />
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {currentTrack.steps.map((item, idx) => (
+            {filteredSteps.map((item, idx) => (
               <motion.div
                 key={item.step}
                 initial={reduce ? false : { opacity: 0, y: 16 }}

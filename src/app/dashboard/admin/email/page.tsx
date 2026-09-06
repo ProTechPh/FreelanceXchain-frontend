@@ -333,7 +333,7 @@ export default function AdminEmailPage() {
                 setCurrentFolder(f.key);
                 setSelectedEmail(null);
               }}
-              className={`flex items-center gap-2 w-auto sm:w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex items-center gap-2 w-auto sm:w-full px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                 currentFolder === f.key
                   ? 'bg-primary/10 text-primary'
                   : 'text-muted-foreground hover:bg-muted'
@@ -380,7 +380,7 @@ export default function AdminEmailPage() {
                     <div
                       key={email.id}
                       onClick={() => openEmail(email)}
-                      className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-muted/50 ${
+                      className={`flex items-center gap-3 px-4 py-3.5 cursor-pointer transition-colors hover:bg-muted/50 ${
                         !email.is_read ? 'bg-primary/5 font-medium' : ''
                       }`}
                     >
@@ -457,7 +457,7 @@ export default function AdminEmailPage() {
             </CardHeader>
             <Separator />
             <CardContent className="flex-1 overflow-y-auto pt-4">
-              <div className="space-y-3 mb-4">
+              <div className="space-y-4 mb-4">
                 <div className="flex items-center justify-between text-sm">
                   <span>
                     <span className="text-muted-foreground">From: </span>
