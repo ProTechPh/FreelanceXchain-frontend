@@ -19,6 +19,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 type MarketplaceKind = "project" | "freelancer";
@@ -94,6 +102,8 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
   const [loading, setLoading] = useState(true);
   const [savingSearch, setSavingSearch] = useState(false);
   const [hasMore, setHasMore] = useState(false);
+  const [searchToDelete, setSearchToDelete] = useState<SavedSearch | null>(null);
+  const [isDeletingSearch, setIsDeletingSearch] = useState(false);
   const selectedFilterCount = [
     Boolean(filters.keyword.trim()),
     filters.skillIds.length > 0,
@@ -291,12 +301,15 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
   };
 
   const deleteSavedSearch = async (id: string) => {
+    setIsDeletingSearch(true);
     try {
       await savedSearchesApi.remove(id);
       setSavedSearches((current) => current.filter((savedSearch) => savedSearch.id !== id));
       toast.success("Saved search deleted.");
     } catch (error) {
       toast.error(getApiErrorMessage(error, "Unable to delete this saved search."));
+    } finally {
+      setIsDeletingSearch(false);
     }
   };
 
@@ -530,8 +543,8 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
                             size="icon-xs"
                             variant="ghost"
                             aria-label={`Delete saved search ${savedSearch.name}`}
-                            className="size-7 sm:size-6 text-muted-foreground hover:text-destructive"
-                            onClick={() => void deleteSavedSearch(savedSearch.id)}
+                            className="size-8 sm:size-7 flex items-center justify-center text-muted-foreground hover:text-destructive touch-manipulation"
+                            onClick={() => setSearchToDelete(savedSearch)}
                           >
                             <Trash2 className="size-3.5 sm:size-3" aria-hidden="true" />
                           </Button>
@@ -592,7 +605,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
                         size="icon"
                         variant="secondary"
                         className={cn(
-                          "absolute right-3.5 top-3.5 z-10 size-10 sm:size-8 rounded-full border border-border bg-card/90 shadow-xs backdrop-blur-xs flex items-center justify-center",
+                          "absolute right-3.5 top-3.5 z-10 size-11 sm:size-9 rounded-full border border-border bg-card/90 shadow-xs backdrop-blur-xs flex items-center justify-center",
                           favorite && "text-destructive",
                         )}
                         aria-label={favorite ? `Remove ${kind} from favorites` : `Save ${kind} to favorites`}
@@ -600,7 +613,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
                         disabled={favoriteActionId === targetId}
                         onClick={() => void toggleFavorite(targetId)}
                       >
-                        <Heart className="size-4 sm:size-3.5" fill={favorite ? "currentColor" : "none"} aria-hidden="true" />
+                        <Heart className={cn("size-5 sm:size-4", favorite && "fill-current")} />
                       </Button>
                     )}
                   </div>
@@ -623,6 +636,45 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
               </Button>
             </div>
           )}
+
+      {/* Delete Saved Search Confirmation Dialog */}
+      <Dialog
+        open={searchToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && !isDeletingSearch) setSearchToDelete(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-destructive">Delete Saved Search?</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete <strong className="text-foreground">&quot;{searchToDelete?.name}&quot;</strong>? This saved filter preset will be permanently removed.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setSearchToDelete(null)}
+              disabled={isDeletingSearch}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              loading={isDeletingSearch}
+              loadingText="Deleting…"
+              onClick={async () => {
+                if (!searchToDelete) return;
+                const id = searchToDelete.id;
+                setSearchToDelete(null);
+                await deleteSavedSearch(id);
+              }}
+            >
+              Delete Search
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

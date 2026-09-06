@@ -141,16 +141,16 @@ export default function AboutUsSection() {
               Join thousands of Web3 engineers, designers, and employers transacting safely through smart contract escrow.
             </p>
             <div className="pt-4 flex flex-wrap items-center justify-center gap-3">
-              <Link href={primaryHref}>
-                <Button className="rounded-full bg-primary-foreground text-primary hover:bg-primary-foreground/90 text-xs font-bold px-6 py-3 shadow-md">
+              <Button asChild className="rounded-full bg-primary-foreground text-primary hover:bg-primary-foreground/90 text-xs font-bold px-6 py-3 shadow-md">
+                <Link href={primaryHref}>
                   {primaryText}
-                </Button>
-              </Link>
-              <Link href="/projects">
-                <Button variant="outline" className="rounded-full border-primary-foreground/40 text-primary-foreground hover:bg-primary-foreground/10 text-xs font-bold px-6 py-3">
+                </Link>
+              </Button>
+              <Button asChild variant="outline" className="rounded-full border-primary-foreground/40 text-primary-foreground hover:bg-primary-foreground/10 text-xs font-bold px-6 py-3">
+                <Link href="/projects">
                   Browse Open Projects
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
           </div>
         </div>

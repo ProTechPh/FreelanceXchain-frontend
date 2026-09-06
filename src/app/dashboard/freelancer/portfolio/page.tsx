@@ -10,6 +10,8 @@ import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -53,6 +55,7 @@ export default function PortfolioPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<PortfolioItem | null>(null);
 
   const load = useCallback(async () => {
     if (!currentUser) return;
@@ -160,7 +163,6 @@ export default function PortfolioPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Delete this portfolio item? This cannot be undone.')) return;
     setDeletingId(id);
     try {
       await portfolioApi.delete(id);
@@ -315,7 +317,7 @@ export default function PortfolioPage() {
                       variant="secondary"
                       size="sm"
                       className="bg-background/90 backdrop-blur shadow-sm text-destructive hover:bg-destructive/10"
-                      onClick={() => handleDelete(item.id)}
+                      onClick={() => setItemToDelete(item)}
                       disabled={deletingId === item.id}
                     >
                       <Trash2 className="w-3.5 h-3.5 mr-1" /> {deletingId === item.id ? 'Deleting…' : 'Delete'}
@@ -346,7 +348,7 @@ export default function PortfolioPage() {
 
                     {item.completedAt && (
                       <p className="text-xs text-muted-foreground mb-3">
-                        Completed {new Date(item.completedAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}
+                        Completed {new Date(item.completedAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
                       </p>
                     )}
 
@@ -476,6 +478,45 @@ export default function PortfolioPage() {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Portfolio Item Confirmation Dialog */}
+      <Dialog
+        open={itemToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && !deletingId) setItemToDelete(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-destructive">Delete Portfolio Item?</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete <strong className="text-foreground">&quot;{itemToDelete?.title}&quot;</strong>? This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setItemToDelete(null)}
+              disabled={Boolean(deletingId)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              loading={Boolean(deletingId)}
+              loadingText="Deleting…"
+              onClick={async () => {
+                if (!itemToDelete) return;
+                const id = itemToDelete.id;
+                setItemToDelete(null);
+                await handleDelete(id);
+              }}
+            >
+              Delete Item
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

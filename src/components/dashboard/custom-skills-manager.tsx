@@ -14,6 +14,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Field } from '@/components/ui/field';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 const emptyDraft = { name: '', description: '', yearsOfExperience: 0, categoryName: '', suggestForGlobal: false };
 
@@ -23,6 +31,7 @@ export function CustomSkillsManager() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionId, setActionId] = useState<string | null>(null);
+  const [skillToDelete, setSkillToDelete] = useState<UserCustomSkill | null>(null);
 
   const load = useCallback(async () => {
     const { data } = await skillsApi.listCustom();
@@ -83,7 +92,6 @@ export function CustomSkillsManager() {
   };
 
   const remove = async (skill: UserCustomSkill) => {
-    if (!window.confirm(`Delete the custom skill “${skill.name}”?`)) return;
     setActionId(skill.id);
     try {
       await skillsApi.deleteCustom(skill.id);
@@ -98,37 +106,78 @@ export function CustomSkillsManager() {
   };
 
   return (
-    <Card className="mx-auto max-w-5xl">
-      <CardHeader><CardTitle className="flex items-center gap-2"><Lightbulb className="size-5 text-primary" />Custom skills</CardTitle><p className="text-sm text-muted-foreground">Add specialties missing from the global taxonomy and optionally suggest them for platform-wide review.</p></CardHeader>
-      <CardContent className="grid gap-6 lg:grid-cols-2">
-        <form className="space-y-4 rounded-lg border border-border p-4" onSubmit={save}>
-          <h3 className="font-semibold">{editingId ? 'Edit custom skill' : 'New custom skill'}</h3>
-          <Field label="Name" htmlFor="custom-skill-name">
-<Input id="custom-skill-name" value={draft.name} onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))} />
-</Field>
-          <Field label="Description" htmlFor="custom-skill-description">
-<Textarea id="custom-skill-description" rows={4} value={draft.description} onChange={(event) => setDraft((current) => ({ ...current, description: event.target.value }))} />
-</Field>
-          <div className="grid grid-cols-1 gap-3 xs:grid-cols-2"><Field label="Years" htmlFor="custom-skill-years">
-<Input id="custom-skill-years" type="number" min="0" max="50" step="0.5" value={draft.yearsOfExperience} onChange={(event) => setDraft((current) => ({ ...current, yearsOfExperience: Number(event.target.value) }))} />
-</Field><Field label="Category (optional)" htmlFor="custom-skill-category">
-<Input id="custom-skill-category" value={draft.categoryName} onChange={(event) => setDraft((current) => ({ ...current, categoryName: event.target.value }))} />
-</Field></div>
-          {!editingId && <label className="flex items-start gap-2 text-sm"><input className="mt-1" type="checkbox" checked={draft.suggestForGlobal} onChange={(event) => setDraft((current) => ({ ...current, suggestForGlobal: event.target.checked }))} /><span><span className="font-medium">Suggest for the global taxonomy</span><span className="block text-muted-foreground">Administrators can review popular requests.</span></span></label>}
-          <div className="flex gap-2"><Button type="submit" disabled={actionId === 'save'}><Plus className="mr-2 size-4" />{editingId ? 'Save changes' : 'Add custom skill'}</Button>{editingId && <Button type="button" variant="ghost" onClick={reset}>Cancel</Button>}</div>
-        </form>
+    <>
+      <Card className="mx-auto max-w-5xl">
+        <CardHeader><CardTitle className="flex items-center gap-2"><Lightbulb className="size-5 text-primary" />Custom skills</CardTitle><p className="text-sm text-muted-foreground">Add specialties missing from the global taxonomy and optionally suggest them for platform-wide review.</p></CardHeader>
+        <CardContent className="grid gap-6 lg:grid-cols-2">
+          <form className="space-y-4 rounded-lg border border-border p-4" onSubmit={save}>
+            <h3 className="font-semibold">{editingId ? 'Edit custom skill' : 'New custom skill'}</h3>
+            <Field label="Name" htmlFor="custom-skill-name">
+  <Input id="custom-skill-name" value={draft.name} onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))} />
+  </Field>
+            <Field label="Description" htmlFor="custom-skill-description">
+  <Textarea id="custom-skill-description" rows={4} value={draft.description} onChange={(event) => setDraft((current) => ({ ...current, description: event.target.value }))} />
+  </Field>
+            <div className="grid grid-cols-1 gap-3 xs:grid-cols-2"><Field label="Years" htmlFor="custom-skill-years">
+  <Input id="custom-skill-years" type="number" min="0" max="50" step="0.5" value={draft.yearsOfExperience} onChange={(event) => setDraft((current) => ({ ...current, yearsOfExperience: Number(event.target.value) }))} />
+  </Field><Field label="Category (optional)" htmlFor="custom-skill-category">
+  <Input id="custom-skill-category" value={draft.categoryName} onChange={(event) => setDraft((current) => ({ ...current, categoryName: event.target.value }))} />
+  </Field></div>
+            {!editingId && <label className="flex items-start gap-2 text-sm"><input className="mt-1" type="checkbox" checked={draft.suggestForGlobal} onChange={(event) => setDraft((current) => ({ ...current, suggestForGlobal: event.target.checked }))} /><span><span className="font-medium">Suggest for the global taxonomy</span><span className="block text-muted-foreground">Administrators can review popular requests.</span></span></label>}
+            <div className="flex gap-2"><Button type="submit" disabled={actionId === 'save'}><Plus className="mr-2 size-4" />{editingId ? 'Save changes' : 'Add custom skill'}</Button>{editingId && <Button type="button" variant="ghost" onClick={reset}>Cancel</Button>}</div>
+          </form>
 
-        <div className="space-y-3">
-          {loading && <p role="status" className="text-sm text-muted-foreground">Loading custom skills…</p>}
-          {!loading && skills.length === 0 && <p className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">No custom skills yet.</p>}
-          {skills.map((skill) => (
-            <div key={skill.id} className="rounded-lg border border-border p-4">
-              <div className="flex items-start justify-between gap-3"><div><p className="font-semibold">{skill.name}</p><p className="mt-1 text-sm text-muted-foreground">{skill.description}</p></div><div className="flex gap-1"><Button type="button" variant="ghost" size="icon" aria-label={`Edit ${skill.name}`} onClick={() => edit(skill)}><Pencil className="size-4" /></Button><Button type="button" variant="ghost" size="icon" aria-label={`Delete ${skill.name}`} disabled={actionId === skill.id} onClick={() => void remove(skill)}><Trash2 className="size-4 text-destructive" /></Button></div></div>
-              <div className="mt-3 flex flex-wrap gap-2"><Badge variant="secondary">{skill.yearsOfExperience} years</Badge>{skill.categoryName && <Badge variant="outline">{skill.categoryName}</Badge>}{skill.suggestedForGlobal && <Badge>Suggested globally</Badge>}</div>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+          <div className="space-y-3">
+            {loading && <p role="status" className="text-sm text-muted-foreground">Loading custom skills…</p>}
+            {!loading && skills.length === 0 && <p className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-muted-foreground">No custom skills yet.</p>}
+            {skills.map((skill) => (
+              <div key={skill.id} className="rounded-lg border border-border p-4">
+                <div className="flex items-start justify-between gap-3"><div><p className="font-semibold">{skill.name}</p><p className="mt-1 text-sm text-muted-foreground">{skill.description}</p></div><div className="flex gap-1"><Button type="button" variant="ghost" size="icon" aria-label={`Edit ${skill.name}`} onClick={() => edit(skill)}><Pencil className="size-4" /></Button><Button type="button" variant="ghost" size="icon" aria-label={`Delete ${skill.name}`} disabled={actionId === skill.id} onClick={() => setSkillToDelete(skill)}><Trash2 className="size-4 text-destructive" /></Button></div></div>
+                <div className="mt-3 flex flex-wrap gap-2"><Badge variant="secondary">{skill.yearsOfExperience} years</Badge>{skill.categoryName && <Badge variant="outline">{skill.categoryName}</Badge>}{skill.suggestedForGlobal && <Badge>Suggested globally</Badge>}</div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Delete Custom Skill Confirmation Dialog */}
+      <Dialog
+        open={skillToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && !actionId) setSkillToDelete(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-destructive">Delete Custom Skill?</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete <strong className="text-foreground">&quot;{skillToDelete?.name}&quot;</strong>? This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setSkillToDelete(null)}
+              disabled={Boolean(actionId)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              loading={Boolean(actionId)}
+              loadingText="Deleting…"
+              onClick={async () => {
+                if (!skillToDelete) return;
+                const skill = skillToDelete;
+                setSkillToDelete(null);
+                await remove(skill);
+              }}
+            >
+              Delete Skill
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

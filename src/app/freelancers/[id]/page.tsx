@@ -10,6 +10,7 @@ import { useAuthStore } from '@/stores/authStore';
 import type { FreelancerProfile } from '@/types';
 import { getMarketplaceReturnPath } from '@/lib/marketplace-return';
 import { reportFailure } from '@/lib/report-failure';
+import { formatAmount } from '@/lib/format';
 import { MapPin, ShieldCheck, Send, ArrowLeft, DollarSign, CircleCheck, Clock, CircleMinus } from 'lucide-react';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
 import Navbar from '@/components/layout/navbar';
@@ -88,11 +89,11 @@ export default function FreelancerProfilePage() {
             <p className="text-3xl mb-4">👤</p>
             <h2 className="text-2xl font-bold text-foreground mb-2">Freelancer not found</h2>
             <p className="text-muted-foreground mb-6">This profile doesn&apos;t exist or has been removed.</p>
-            <Link href="/freelancers">
-              <Button className="rounded-full gradient-primary shadow-md">
+            <Button asChild className="rounded-full gradient-primary shadow-md">
+              <Link href="/freelancers">
                 Browse Freelancers
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
         </main>
         <FooterSection />
@@ -152,7 +153,7 @@ export default function FreelancerProfilePage() {
                   </span>
                   <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
                     <DollarSign className="w-4 h-4" />
-                    <span className="font-bold text-primary">${freelancer.hourlyRate}/hr</span>
+                    <span className="font-bold text-primary">{formatAmount(freelancer.hourlyRate)}/hr</span>
                   </span>
                 </div>
               </div>
@@ -239,7 +240,7 @@ export default function FreelancerProfilePage() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Hourly Rate</span>
-                    <span className="font-bold text-primary">${freelancer.hourlyRate}/hr</span>
+                    <span className="font-bold text-primary">{formatAmount(freelancer.hourlyRate)}/hr</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Availability</span>

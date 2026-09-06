@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ExternalLink, Eye, FileText, Link2, Plus, Scale, ShieldCheck, Trash2, Upload } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Eye, FileText, Link2, Plus, Scale, ShieldCheck, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { reportFailure } from '@/lib/report-failure';
 import { contractsApi, disputesApi, milestonesApi } from '@/lib/api';
@@ -22,6 +22,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { EmptyState } from '@/components/ui/empty-state';
+import { formatDateTime } from '@/lib/format';
 
 type ParticipantRole = Extract<UserRole, 'employer' | 'freelancer'>;
 const emptyDraft: DisputeDraft = { contractId: '', milestoneId: '', reason: '' };
@@ -205,7 +206,7 @@ export function DisputeCenter({ role, disputeId }: { role: ParticipantRole; disp
   };
 
   const deleteEvidence = async (disputeId: string, evidenceId: string) => {
-    if (!window.confirm('Delete this unverified evidence?')) return;
+    if (typeof window !== 'undefined' && window.confirm && !window.confirm('Delete this unverified evidence?')) return;
     setActionId(`delete:${evidenceId}`);
     try {
       await disputesApi.deleteEvidence(disputeId, evidenceId);
@@ -231,7 +232,7 @@ export function DisputeCenter({ role, disputeId }: { role: ParticipantRole; disp
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <div>
-        {disputeId && <Button asChild variant="ghost" className="-ml-3 mb-2"><Link href={`/dashboard/${role}/disputes`}>Back to disputes</Link></Button>}
+        {disputeId && <Button asChild variant="ghost" className="-ml-3 mb-2"><Link href={`/dashboard/${role}/disputes`}><ArrowLeft className="mr-2 size-4" />Back to disputes</Link></Button>}
         <h1 className="text-2xl font-extrabold tracking-tight text-foreground">{disputeId ? 'Dispute details' : 'Disputes'}</h1>
         <p className="text-muted-foreground">{disputeId ? 'Review the case, linked contract, resolution, and submitted evidence.' : 'Open a case for a submitted milestone and provide evidence for review.'}</p>
       </div>
@@ -261,7 +262,7 @@ export function DisputeCenter({ role, disputeId }: { role: ParticipantRole; disp
           return (
             <Card key={dispute.id}>
               <CardHeader>
-                <div className="flex items-start justify-between gap-3"><div><CardTitle className="text-base">{contract?.project?.title || contract?.title || `Contract ${dispute.contractId.slice(0, 8)}`}</CardTitle><p className="mt-1 text-sm text-muted-foreground">Opened {new Date(dispute.createdAt).toLocaleString()}</p></div><StatusBadge status={dispute.status} domain="dispute" /></div>
+                <div className="flex items-start justify-between gap-3"><div><CardTitle className="text-base">{contract?.project?.title || contract?.title || `Contract ${dispute.contractId.slice(0, 8)}`}</CardTitle><p className="mt-1 text-sm text-muted-foreground">Opened {formatDateTime(dispute.createdAt)}</p></div><StatusBadge status={dispute.status} domain="dispute" /></div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="rounded-lg bg-muted p-3 text-sm"><span className="font-medium">Reason:</span> {dispute.reason}</p>

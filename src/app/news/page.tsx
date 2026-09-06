@@ -7,6 +7,7 @@ import Navbar from "@/components/layout/navbar";
 import { FooterSection } from "@/components/layout/footer-section";
 import { Sparkles as Sparkle, ExternalLink as ArrowSquareOut, Search as MagnifyingGlass, BookOpen, Clock, Calendar as CalendarBlank, CircleCheck as CheckCircle, Send as PaperPlaneTilt, RefreshCw as ArrowsClockwise, TrendingUp as TrendUp, TrendingDown as TrendDown, Newspaper, Flame as Fire, Bitcoin as CurrencyBtc, Coins as CurrencyEth, Coins, Globe, Radio as Broadcast, Tag } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { formatAmount } from "@/lib/format";
 import { cryptoNewsApi } from "@/lib/api";
 import {
   normalizeCryptoPriceMap,
@@ -264,7 +265,7 @@ export default function NewsPage() {
                   <div className="inline-flex items-center gap-1.5 bg-muted/50 px-2.5 py-1 rounded-lg border border-border/60">
                     <CurrencyBtc className="size-3.5 text-warning" strokeWidth={2.5} />
                     <span className="text-foreground font-bold">
-                      ${prices.bitcoin.usd.toLocaleString()}
+                      {formatAmount(prices.bitcoin.usd)}
                     </span>
                     {prices.bitcoin.change24h !== undefined && (
                       <span
@@ -287,7 +288,7 @@ export default function NewsPage() {
                   <div className="inline-flex items-center gap-1.5 bg-muted/50 px-2.5 py-1 rounded-lg border border-border/60">
                     <CurrencyEth className="size-3.5 text-info" strokeWidth={2.5} />
                     <span className="text-foreground font-bold">
-                      ${prices.ethereum.usd.toLocaleString()}
+                      {formatAmount(prices.ethereum.usd)}
                     </span>
                     {prices.ethereum.change24h !== undefined && (
                       <span
@@ -310,7 +311,7 @@ export default function NewsPage() {
                   <div className="hidden sm:inline-flex items-center gap-1.5 bg-muted/50 px-2.5 py-1 rounded-lg border border-border/60">
                     <Coins className="size-3.5 text-info" strokeWidth={2.5} />
                     <span className="text-foreground font-bold">
-                      ${prices.solana.usd.toLocaleString()}
+                      {formatAmount(prices.solana.usd)}
                     </span>
                   </div>
                 )}

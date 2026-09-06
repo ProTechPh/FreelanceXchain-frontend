@@ -48,6 +48,7 @@ import { getDirectMessageRoute } from '@/lib/dashboard-message-route';
 import { AttachmentPreviewDialog, type AttachmentPreviewTarget } from '@/components/ui/attachment-preview-dialog';
 import type { FreelancerProfile, Project, Proposal } from '@/types';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
+import { formatAmount } from '@/lib/format';
 
 interface PendingDecision {
   proposal: Proposal;
@@ -208,7 +209,7 @@ export default function EmployerProjectProposalsPage() {
             {pendingCount} pending review
           </Badge>
           <Badge variant="secondary" className="h-8 px-3 text-xs font-semibold text-primary">
-            {project.budget.toLocaleString()} ETH budget
+            {formatAmount(project.budget)} budget
           </Badge>
         </div>
       </div>
@@ -418,7 +419,7 @@ export default function EmployerProjectProposalsPage() {
                         </div>
                         <div>
                           <span className="text-xs text-muted-foreground block">Proposed Rate</span>
-                          <span className="font-bold text-base text-primary">{proposal.proposedRate.toLocaleString()} ETH</span>
+                          <span className="font-bold text-base text-primary">{formatAmount(proposal.proposedRate)}</span>
                         </div>
                       </div>
 

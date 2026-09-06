@@ -23,7 +23,7 @@ import {
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { hasApprovedKyc } from '@/lib/kyc-eligibility';
-import { formatAmount } from '@/lib/format';
+import { formatAmount, formatDate, formatDateTime } from '@/lib/format';
 import { formatFileSize, safeAttachmentUrl } from '@/lib/attachment-presentation';
 import { AttachmentPreviewDialog, type AttachmentPreviewTarget } from '@/components/ui/attachment-preview-dialog';
 import { getTransactionDetailRoute } from '@/lib/transaction-view';
@@ -347,8 +347,8 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-                  <span><span className="text-muted-foreground">Amount:</span> {milestone.amount.toLocaleString()} ETH</span>
-                  <span><span className="text-muted-foreground">Due:</span> {milestone.dueDate ? new Date(milestone.dueDate).toLocaleDateString() : 'Not set'}</span>
+                  <span><span className="text-muted-foreground">Amount:</span> {formatAmount(milestone.amount)}</span>
+                  <span><span className="text-muted-foreground">Due:</span> {milestone.dueDate ? formatDate(milestone.dueDate) : 'Not set'}</span>
                 </div>
                 {milestone.rejectionReason && <p className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">Revision requested: {milestone.rejectionReason}</p>}
                 {(milestone.deliverableFiles ?? []).length > 0 && (
@@ -437,7 +437,7 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
                     <Link href={getTransactionDetailRoute(role, transaction.id)} className="flex items-center justify-between rounded-md outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">
                       <div>
                         <p className="font-medium capitalize">{transaction.type.replaceAll('_', ' ')}</p>
-                        <p className="text-xs text-muted-foreground">{new Date(transaction.created_at).toLocaleString()}</p>
+                        <p className="text-xs text-muted-foreground">{formatDateTime(transaction.created_at)}</p>
                         {transaction.transaction_hash && (
                           <p className="font-mono text-xs text-primary/80 truncate max-w-[200px]">
                             {transaction.transaction_hash.slice(0, 10)}…{transaction.transaction_hash.slice(-8)}
@@ -445,7 +445,7 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
                         )}
                       </div>
                       <div className="text-right">
-                        <p>{transaction.amount.toLocaleString()} ETH</p>
+                        <p>{formatAmount(transaction.amount)}</p>
                         <Badge variant="secondary" className="capitalize">{transaction.status}</Badge>
                       </div>
                     </Link>
@@ -510,8 +510,8 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
           <DialogHeader>
             <DialogTitle className="text-foreground">Approve Milestone & Release Payment?</DialogTitle>
             <DialogDescription>
-              This will approve milestone <strong>&quot;{approvingMilestone?.title}&quot;</strong> and transfer{' '}
-              <strong className="text-foreground">{approvingMilestone?.amount.toLocaleString()} ETH</strong> from smart contract escrow directly to the freelancer. This blockchain transaction is permanent and cannot be reversed.
+              This will approve milestone <strong>&quot;{approvingMilestone?.title}&quot;</strong> and release{' '}
+              <strong className="text-foreground">{formatAmount(approvingMilestone?.amount)}</strong> from smart contract escrow directly to the freelancer. This blockchain transaction is permanent and cannot be reversed.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0">

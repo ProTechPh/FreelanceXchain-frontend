@@ -49,11 +49,11 @@ export default function ForgotPasswordPage() {
                 Try again
               </button>
             </p>
-            <Link href="/login">
-              <Button variant="outline" className="w-full">
+            <Button asChild variant="outline" className="w-full">
+              <Link href="/login">
                 Back to sign in
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
         </div>
       ) : (
@@ -83,11 +83,11 @@ export default function ForgotPasswordPage() {
 
               <Button type="submit" variant="gradient" className="w-full" loading={isLoading} loadingText="Sending...">Send reset link</Button>
 
-              <Link href="/login">
-                <Button variant="ghost" className="w-full">
+              <Button asChild variant="ghost" className="w-full">
+                <Link href="/login">
                   ← Back to sign in
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </form>
           </div>
         </div>

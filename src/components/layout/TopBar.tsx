@@ -131,7 +131,7 @@ export function TopBar() {
                 type="button"
                 variant="ghost"
                 size="icon"
-                className="sm:hidden"
+                className="size-11 sm:size-10 sm:hidden touch-manipulation"
                 aria-label={searchLabel}
                 aria-expanded={searchOpen}
                 aria-controls="dashboard-search-row"
@@ -153,7 +153,7 @@ export function TopBar() {
 
           {/* Notifications */}
           {user && (
-            <Button asChild variant="ghost" size="icon" className="relative">
+            <Button asChild variant="ghost" size="icon" className="relative size-11 sm:size-10 touch-manipulation">
               <Link
                 href={`/dashboard/${user.role}/notifications`}
                 data-tour="notifications"
@@ -163,7 +163,7 @@ export function TopBar() {
                 {unreadNotifications > 0 && (
                   <span
                     aria-hidden="true"
-                    className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-2xs font-semibold text-destructive-foreground"
+                    className="absolute top-1 right-1 sm:-right-1 sm:-top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-2xs font-semibold text-destructive-foreground"
                   >
                     {unreadNotifications > 99 ? '99+' : unreadNotifications}
                   </span>
@@ -190,7 +190,7 @@ export function TopBar() {
             <DropdownMenuTrigger
               data-tour="account"
               aria-label="Open account menu"
-              className="flex h-9 cursor-pointer items-center gap-1 rounded-md px-1 outline-none transition-colors duration-fast hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:gap-2 sm:px-2"
+              className="flex min-h-[44px] min-w-[44px] sm:h-9 sm:min-h-0 sm:min-w-0 cursor-pointer items-center justify-center gap-1 rounded-md px-1 outline-none transition-colors duration-fast hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:gap-2 sm:px-2 touch-manipulation"
             >
               <Avatar className="size-7">
                 <AvatarFallback className="text-xs gradient-primary">{initials}</AvatarFallback>

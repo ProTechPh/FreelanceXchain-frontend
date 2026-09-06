@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
+import { formatAmount, formatDateTime } from '@/lib/format';
 
 type ParticipantRole = Extract<UserRole, 'employer' | 'freelancer'>;
 
@@ -96,7 +97,7 @@ export function ParticipantTransactions({ role }: { role: ParticipantRole }) {
           { label: 'Completed outgoing', value: totals.outgoing, icon: ArrowUpRight },
           { label: 'Net this month', value: totals.netThisMonth, icon: WalletCards },
         ].map((stat) => (
-          <Card key={stat.label}><CardContent className="flex items-center gap-3 p-4"><div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary"><stat.icon className="size-5" /></div><div><p className="text-xl font-bold">${stat.value.toLocaleString()}</p><p className="text-xs text-muted-foreground">{stat.label}</p></div></CardContent></Card>
+          <Card key={stat.label}><CardContent className="flex items-center gap-3 p-4"><div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary"><stat.icon className="size-5" /></div><div><p className="text-xl font-bold">{formatAmount(stat.value)}</p><p className="text-xs text-muted-foreground">{stat.label}</p></div></CardContent></Card>
         ))}
       </div>
 
@@ -184,8 +185,8 @@ export function ParticipantTransactions({ role }: { role: ParticipantRole }) {
                 return (
                   <li key={transaction.id}>
                     <Link href={getTransactionDetailRoute(role, transaction.id)} className="flex flex-col gap-3 rounded-lg px-2 py-4 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:flex-row sm:items-center sm:justify-between">
-                      <div className="flex items-center gap-3"><div className="flex size-10 items-center justify-center rounded-lg bg-muted"><ReceiptText className="size-5 text-primary" /></div><div><p className="font-medium">{typeLabels[transaction.type] || transaction.type.replaceAll('_', ' ')}</p><p className="text-sm text-muted-foreground">{new Date(transaction.created_at).toLocaleString()}</p></div></div>
-                      <div className="text-left sm:text-right"><p className={signedAmount > 0 ? 'font-semibold text-success' : 'font-semibold'}>{signedAmount > 0 ? '+' : signedAmount < 0 ? '−' : ''}${Math.abs(transaction.amount).toLocaleString()}</p><Badge variant="secondary">{transaction.status}</Badge></div>
+                      <div className="flex items-center gap-3"><div className="flex size-10 items-center justify-center rounded-lg bg-muted"><ReceiptText className="size-5 text-primary" /></div><div><p className="font-medium">{typeLabels[transaction.type] || transaction.type.replaceAll('_', ' ')}</p><p className="text-sm text-muted-foreground">{formatDateTime(transaction.created_at)}</p></div></div>
+                      <div className="text-left sm:text-right"><p className={signedAmount > 0 ? 'font-semibold text-success' : 'font-semibold'}>{signedAmount > 0 ? '+' : signedAmount < 0 ? '−' : ''}{formatAmount(Math.abs(transaction.amount))}</p><Badge variant="secondary">{transaction.status}</Badge></div>
                     </Link>
                   </li>
                 );

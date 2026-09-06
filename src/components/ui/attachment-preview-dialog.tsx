@@ -167,7 +167,7 @@ export function AttachmentPreviewDialog({
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-8 px-2.5 text-xs gap-1.5 rounded-lg"
+                className="h-9 sm:h-8 px-2.5 text-xs gap-1.5 rounded-lg touch-manipulation"
                 onClick={handleCopy}
               >
                 {copied ? <Check className="size-3.5 text-success" /> : <Copy className="size-3.5" />}
@@ -181,7 +181,7 @@ export function AttachmentPreviewDialog({
                   asChild
                   variant="outline"
                   size="sm"
-                  className="h-8 px-2.5 text-xs gap-1.5 rounded-lg"
+                  className="h-9 sm:h-8 px-2.5 text-xs gap-1.5 rounded-lg touch-manipulation"
                 >
                   <a href={url} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="size-3.5" />
@@ -192,7 +192,7 @@ export function AttachmentPreviewDialog({
                   asChild
                   variant="default"
                   size="sm"
-                  className="h-8 px-2.5 text-xs gap-1.5 rounded-lg gradient-primary"
+                  className="h-9 sm:h-8 px-2.5 text-xs gap-1.5 rounded-lg gradient-primary touch-manipulation"
                 >
                   <a href={url} download={displayFilename} target="_blank" rel="noopener noreferrer">
                     <Download className="size-3.5" />

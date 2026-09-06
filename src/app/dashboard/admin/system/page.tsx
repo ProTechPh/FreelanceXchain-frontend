@@ -9,6 +9,7 @@ import type { SystemHealth } from '@/types';
 import { reportLoadFailure } from '@/lib/report-failure';
 import { Database, HardDrive, Clock, CheckCircle, AlertTriangle, RefreshCw } from 'lucide-react';
 import { StatsSkeleton } from '@/components/dashboard/skeletons';
+import { formatDateTime } from '@/lib/format';
 
 function formatUptime(seconds: number): string {
   const days = Math.floor(seconds / 86400);
@@ -103,7 +104,7 @@ export default function SystemHealthPage() {
                 {allHealthy ? 'All Systems Operational' : 'Degraded'}
               </h2>
               <p className="text-muted-foreground">
-                {health && `Last checked ${new Date(health.timestamp).toLocaleString()}`}
+                {health && `Last checked ${formatDateTime(health.timestamp)}`}
               </p>
             </div>
           </div>

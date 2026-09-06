@@ -8,6 +8,7 @@ import { MarketplaceBrowser } from "@/components/marketplace/marketplace-browser
 import { PublicMarketplaceShell } from "@/components/marketplace/public-marketplace-shell";
 import type { FreelancerProfile } from "@/types";
 import { marketplaceFiltersFromSearchParams } from "@/lib/marketplace-search";
+import { formatAmount } from "@/lib/format";
 
 const availabilityConfig: Record<string, { colors: string; icon: React.ReactNode; label: string }> = {
   available: {
@@ -86,7 +87,7 @@ function FreelancerResult({ freelancer, listingQuery }: { freelancer: Freelancer
         {/* Footer: Price + CTA */}
         <div className="pt-4 border-t border-border/50 flex items-center justify-between mt-5">
           <span className="font-bold text-primary text-lg">
-            ${freelancer.hourlyRate}<span className="text-sm font-medium text-muted-foreground">/hr</span>
+            {formatAmount(freelancer.hourlyRate)}<span className="text-sm font-medium text-muted-foreground">/hr</span>
           </span>
           <span className="inline-flex items-center gap-1.5 text-sm font-bold text-foreground/80 group-hover:text-primary transition-colors">
             View Profile

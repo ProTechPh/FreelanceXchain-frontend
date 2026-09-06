@@ -8,6 +8,7 @@ import { MarketplaceBrowser } from "@/components/marketplace/marketplace-browser
 import { PublicMarketplaceShell } from "@/components/marketplace/public-marketplace-shell";
 import type { Project } from "@/types";
 import { marketplaceFiltersFromSearchParams } from "@/lib/marketplace-search";
+import { formatAmount } from "@/lib/format";
 
 function formatDeadline(dateStr: string): string {
   try {
@@ -84,7 +85,7 @@ function ProjectResult({ project, listingQuery }: { project: Project; listingQue
           <div className="flex flex-wrap items-center gap-5 text-sm">
             <span className="flex items-center gap-1.5 font-bold text-foreground">
               <Coins className="w-4 h-4 text-primary" />
-              {project.budget.toLocaleString()} ETH
+              {formatAmount(project.budget)}
             </span>
             <span className="flex items-center gap-1.5 text-muted-foreground">
               <Clock className="w-4 h-4" />

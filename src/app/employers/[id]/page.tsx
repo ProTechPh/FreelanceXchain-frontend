@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { employersApi, reputationApi, projectsApi } from '@/lib/api';
+import { reportLoadFailure } from '@/lib/report-failure';
 import { getDirectMessageRoute } from '@/lib/dashboard-message-route';
 import type { EmployerProfile, AggregatedReputationScore, Project } from '@/types';
 import { useAuthStore } from '@/stores/authStore';
@@ -50,6 +51,8 @@ export default function EmployerProfilePage() {
 
         if (profileRes.status === 'fulfilled' && profileRes.value.data) {
           setProfile(profileRes.value.data);
+        } else if (profileRes.status === 'rejected') {
+          reportLoadFailure(profileRes.reason, 'this employer profile', () => void loadData());
         }
 
         if (scoreRes.status === 'fulfilled' && scoreRes.value.data) {
@@ -81,6 +84,27 @@ export default function EmployerProfilePage() {
         <Navbar />
         <main className="flex-1 pt-28 pb-20 max-w-4xl mx-auto px-4 w-full">
           <DetailSkeleton label="Loading employer profile" />
+        </main>
+        <FooterSection />
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="flex min-h-screen flex-col bg-background">
+        <Navbar />
+        <main className="flex-1 pt-28 pb-20 flex items-center justify-center">
+          <div className="text-center rounded-3xl bg-card border border-border/80 p-12 shadow-md shadow-black/5 max-w-md mx-auto">
+            <p className="text-3xl mb-4">🏢</p>
+            <h2 className="text-2xl font-bold text-foreground mb-2">Employer not found</h2>
+            <p className="text-muted-foreground mb-6">This employer profile doesn&apos;t exist or has been removed.</p>
+            <Button asChild className="rounded-full gradient-primary shadow-md">
+              <Link href="/projects">
+                Browse Projects
+              </Link>
+            </Button>
+          </div>
         </main>
         <FooterSection />
       </div>

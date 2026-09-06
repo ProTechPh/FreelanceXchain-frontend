@@ -20,7 +20,7 @@ import { DEFAULT_RANGE_PRESET, getRangeLabel, resolveRange, type RangePresetId }
 import type { Contract, Proposal, Project } from '@/types';
 import { reportLoadFailure } from '@/lib/report-failure';
 import { DollarSign, FolderOpen, FileText, Star, TrendingUp, Clock, ArrowUpRight, Briefcase, Wallet } from 'lucide-react';
-import { formatAmount, formatNumber, formatRelativeTime } from '@/lib/format';
+import { formatAmount, formatNumber, formatRelativeTime, formatDate } from '@/lib/format';
 import { StatsSkeleton } from '@/components/dashboard/skeletons';
 import { WalletConnectBanner } from '@/components/wallet/wallet-connect-banner';
 import { TourStepLink } from '@/components/onboarding/tour-step-link';
@@ -56,7 +56,7 @@ interface RecommendedProjectView {
 
 export default function FreelancerDashboard() {
   const currentUser = useAuthStore((state) => state.user);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [coreLoading, setCoreLoading] = useState(true);
   const [recommendedLoading, setRecommendedLoading] = useState(true);
   const [range, setRange] = useState<RangePresetId>(DEFAULT_RANGE_PRESET);
@@ -283,11 +283,11 @@ export default function FreelancerDashboard() {
             className="mt-3"
           />
         </div>
-        <Link href="/dashboard/freelancer/projects" className="shrink-0">
-          <Button variant="gradient" data-tour="primary-cta" className="w-full sm:w-auto">
+        <Button asChild variant="gradient" data-tour="primary-cta" className="w-full sm:w-auto shrink-0">
+          <Link href="/dashboard/freelancer/projects">
             <Briefcase className="w-4 h-4 mr-2" /> Browse Projects
-          </Button>
-        </Link>
+          </Link>
+        </Button>
       </div>
 
       {/* Wallet Connect Banner if unlinked */}
@@ -328,11 +328,11 @@ export default function FreelancerDashboard() {
           <Card data-tour="active-work" className="bg-card border-border">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-lg">Active Contracts</CardTitle>
-              <Link href="/dashboard/freelancer/contracts">
-                <Button variant="ghost" size="sm">
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/dashboard/freelancer/contracts">
                   View All <ArrowUpRight className="w-4 h-4 ml-1" />
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </CardHeader>
             <CardContent className="space-y-4">
               {coreLoading ? (
@@ -364,7 +364,7 @@ export default function FreelancerDashboard() {
                           <p className="font-medium">{project?.title ?? 'Untitled project'}</p>
                           <p className="text-sm text-muted-foreground">{project?.employer?.name ?? project?.employer?.companyName ?? ''}</p>
                         </div>
-                        <p className="font-semibold text-primary">${contract.totalAmount.toLocaleString()}</p>
+                        <p className="font-semibold text-primary">{formatAmount(contract.totalAmount)}</p>
                       </div>
                       <div className="flex items-center gap-4">
                         <div className="flex-1">
@@ -379,7 +379,7 @@ export default function FreelancerDashboard() {
                         {project?.deadline && (
                           <div className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Clock className="w-3 h-3" />
-                            {new Date(project.deadline).toLocaleDateString()}
+                            {formatDate(project.deadline)}
                           </div>
                         )}
                       </div>
@@ -395,11 +395,11 @@ export default function FreelancerDashboard() {
         <Card data-tour="proposals" className="bg-card border-border">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg">Recent Proposals</CardTitle>
-            <Link href="/dashboard/freelancer/proposals">
-              <Button variant="ghost" size="sm">
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/dashboard/freelancer/proposals">
                 View All <ArrowUpRight className="w-4 h-4 ml-1" />
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </CardHeader>
           <CardContent className="space-y-3">
             {coreLoading ? (
@@ -420,7 +420,7 @@ export default function FreelancerDashboard() {
                     <Badge className={statusColors[proposal.status]}>{proposal.status}</Badge>
                   </div>
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>{proposal.proposedRate.toLocaleString()} ETH</span>
+                    <span>{formatAmount(proposal.proposedRate)}</span>
                     <span>{relativeTime(proposal.createdAt)}</span>
                   </div>
                 </div>
@@ -433,11 +433,11 @@ export default function FreelancerDashboard() {
       <Card className="bg-card border-border">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-lg">AI Recommended Projects</CardTitle>
-          <Link href="/dashboard/freelancer/recommendations">
-            <Button variant="ghost" size="sm">
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/dashboard/freelancer/recommendations">
               View All <ArrowUpRight className="w-4 h-4 ml-1" />
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </CardHeader>
         <CardContent>
           {recommendedLoading ? (
@@ -467,7 +467,7 @@ export default function FreelancerDashboard() {
                     <h3 className="font-medium">{project.title}</h3>
                     <Badge className="bg-success-subtle text-success">{Math.round(matchScore)}% Match</Badge>
                   </div>
-                  <p className="text-sm text-primary font-medium mb-2">${project.budget.toLocaleString()}</p>
+                  <p className="text-sm text-primary font-medium mb-2">{formatAmount(project.budget)}</p>
                   <div className="flex flex-wrap gap-1.5 mb-3">
                     {matchedSkills.map((skill) => (
                       <Badge key={skill} variant="secondary" className="text-xs">

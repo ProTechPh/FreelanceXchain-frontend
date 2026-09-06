@@ -17,6 +17,7 @@ import type { Contract, KycStatus, RefundRequest, RushUpgradeRequest } from '@/t
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { formatAmount, formatDate } from '@/lib/format';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -219,7 +220,7 @@ export function ContractNegotiationPanel({
       <Card>
         <CardHeader><CardTitle className="flex items-center gap-2"><FastForward className="size-5 text-primary" />Rush upgrade</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          {contract.rushFee > 0 && <p className="rounded-lg bg-primary/10 p-3 text-sm">A {contract.rushFee.toLocaleString()} ETH rush fee is active on this contract.</p>}
+          {contract.rushFee > 0 && <p className="rounded-lg bg-primary/10 p-3 text-sm">A {formatAmount(contract.rushFee)} rush fee is active on this contract.</p>}
 
           {canCreateRush && (
             <div className="space-y-3 rounded-lg border border-border p-4">
@@ -284,7 +285,7 @@ export function ContractNegotiationPanel({
           )}
 
           {rushRequests.length === 0 && !canCreateRush && contract.rushFee === 0 && <p className="text-sm text-muted-foreground">Rush negotiation is available to a verified employer while the contract is active.</p>}
-          {rushRequests.length > 0 && <ul className="space-y-2 border-t border-border pt-3 text-sm">{rushRequests.map((request) => <li key={request.id} className="flex items-center justify-between gap-3"><span>{new Date(request.createdAt).toLocaleDateString()} · {request.counterPercentage ?? request.proposedPercentage}%</span><Badge variant="secondary">{request.status.replace('_', ' ')}</Badge></li>)}</ul>}
+          {rushRequests.length > 0 && <ul className="space-y-2 border-t border-border pt-3 text-sm">{rushRequests.map((request) => <li key={request.id} className="flex items-center justify-between gap-3"><span>{formatDate(request.createdAt)} · {request.counterPercentage ?? request.proposedPercentage}%</span><Badge variant="secondary">{request.status.replace('_', ' ')}</Badge></li>)}</ul>}
         </CardContent>
       </Card>
 
@@ -297,7 +298,7 @@ export function ContractNegotiationPanel({
 <Textarea id="refund-reason" rows={3} value={refundReason} onChange={(event) => setRefundReason(event.target.value)} placeholder="Explain why the remaining escrow should be refunded" />
 </Field>
               <Field label="Amount (optional)" htmlFor="refund-amount">
-<Input id="refund-amount" type="number" min="0.01" step="0.01" max={contract.totalAmount} value={refundAmount} onChange={(event) => setRefundAmount(event.target.value)} placeholder={`Full remaining escrow (up to ${contract.totalAmount} ETH)`} />
+<Input id="refund-amount" type="number" min="0.01" step="0.01" max={contract.totalAmount} value={refundAmount} onChange={(event) => setRefundAmount(event.target.value)} placeholder={`Full remaining escrow (up to ${formatAmount(contract.totalAmount)})`} />
 </Field>
               <Button type="button" disabled={actionId === 'refund-request'} onClick={requestRefund}><BadgeDollarSign className="mr-2 size-4" />{actionId === 'refund-request' ? 'Submitting…' : 'Request refund'}</Button>
             </div>
@@ -310,7 +311,7 @@ export function ContractNegotiationPanel({
               const rejectionReason = rejectionReasons[refund.id] ?? '';
               return (
                 <li key={refund.id} className="space-y-3 rounded-lg border border-border p-4 text-sm">
-                  <div className="flex flex-wrap items-start justify-between gap-2"><div><p className="font-medium">{refund.amount.toLocaleString()} ETH {refund.is_partial ? 'partial refund' : 'refund'}</p><p className="mt-1 text-muted-foreground">{refund.reason}</p></div><StatusBadge status={refund.status} domain="refund" /></div>
+                  <div className="flex flex-wrap items-start justify-between gap-2"><div><p className="font-medium">{formatAmount(refund.amount)} {refund.is_partial ? 'partial refund' : 'refund'}</p><p className="mt-1 text-muted-foreground">{refund.reason}</p></div><StatusBadge status={refund.status} domain="refund" /></div>
                   {refund.rejection_reason && <p className="text-destructive">Rejected: {refund.rejection_reason}</p>}
                   {refund.requested_by === currentUserId && refund.status === 'pending' && <p className="text-muted-foreground">Waiting for the other participant to respond.</p>}
                   {canDecide && (

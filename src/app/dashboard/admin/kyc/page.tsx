@@ -29,6 +29,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
+import { formatDate, formatDateTime } from '@/lib/format';
 
 const statusColors: Record<string, string> = {
   pending: 'bg-warning-subtle text-warning',
@@ -308,7 +309,7 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
             <InfoCell label="Nationality" value={nationality} icon={Globe} />
             <InfoCell label="Document" value={documentType} icon={FileText} />
-            <InfoCell label="Submitted" value={activeV.created_at ? new Date(activeV.created_at).toLocaleDateString() : 'N/A'} icon={Clock} />
+            <InfoCell label="Submitted" value={activeV.created_at ? formatDate(activeV.created_at) : 'N/A'} icon={Clock} />
             <div className="p-3 rounded-lg bg-secondary/50 border border-border">
               <p className="text-xs text-muted-foreground">Checks</p>
               <div className="flex gap-2 mt-1">
@@ -378,7 +379,7 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
                           alt="Document Front"
                           className="w-full h-full object-contain group-hover:scale-105 transition duration-200"
                         />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs font-medium gap-1">
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-primary-foreground text-xs font-medium gap-1">
                           <Maximize2 className="w-4 h-4" /> Enlarge
                         </div>
                       </div>
@@ -401,7 +402,7 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
                           alt="Document Back"
                           className="w-full h-full object-contain group-hover:scale-105 transition duration-200"
                         />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs font-medium gap-1">
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-primary-foreground text-xs font-medium gap-1">
                           <Maximize2 className="w-4 h-4" /> Enlarge
                         </div>
                       </div>
@@ -426,7 +427,7 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
                           alt="Live Selfie"
                           className="w-full h-full object-contain group-hover:scale-105 transition duration-200"
                         />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs font-medium gap-1">
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-primary-foreground text-xs font-medium gap-1">
                           <Maximize2 className="w-4 h-4" /> Enlarge
                         </div>
                       </div>
@@ -449,7 +450,7 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
                           alt="ID Portrait Crop"
                           className="w-full h-full object-contain group-hover:scale-105 transition duration-200"
                         />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-white text-xs font-medium gap-1">
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-primary-foreground text-xs font-medium gap-1">
                           <Maximize2 className="w-4 h-4" /> Enlarge
                         </div>
                       </div>
@@ -570,7 +571,7 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
                   <h4 className="text-sm font-medium text-muted-foreground mb-2">Review History</h4>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     <DetailCell label="Reviewed By" value={v.reviewed_by} />
-                    <DetailCell label="Reviewed At" value={v.reviewed_at ? new Date(v.reviewed_at).toLocaleString() : 'N/A'} />
+                    <DetailCell label="Reviewed At" value={v.reviewed_at ? formatDateTime(v.reviewed_at) : 'N/A'} />
                     <DetailCell label="Notes" value={v.admin_notes || 'N/A'} />
                   </div>
                 </div>

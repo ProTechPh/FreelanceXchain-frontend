@@ -10,6 +10,7 @@ import type { ReputationScore } from "@/types";
 import { reportLoadFailure } from '@/lib/report-failure';
 import { Trophy, Star, ShieldCheck, Crown } from 'lucide-react';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
+import { EmptyState } from '@/components/ui/empty-state';
 
 export default function LeaderboardPage() {
   const reduce = useReducedMotion();
@@ -130,34 +131,42 @@ export default function LeaderboardPage() {
               {/* Leaderboard Table Card */}
               <div className="lg:col-span-2 rounded-3xl bg-card border border-border/80 p-6 sm:p-8 shadow-md shadow-black/5">
                 <h2 className="text-lg font-bold text-foreground mb-4">Complete Rankings</h2>
-                <div className="space-y-2.5">
-                  {leaderboard.map((entry, index) => (
-                    <Link key={entry.user_id} href={`/freelancers/${entry.user_id}`}>
-                      <div className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-background border border-border/60 hover:border-primary/40 transition-all cursor-pointer">
-                        <div className="flex items-center gap-3.5">
-                          <span className="w-7 text-center font-bold text-xs text-muted-foreground">
-                            #{index + 1}
-                          </span>
-                          <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary font-bold text-xs flex items-center justify-center">
-                            {index + 1}
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-1.5">
-                              <p className="font-bold text-foreground text-sm">User {entry.user_id.slice(0, 8)}</p>
-                              <ShieldCheck className="size-3.5 text-success" />
+                {leaderboard.length === 0 ? (
+                  <EmptyState
+                    icon={Trophy}
+                    title="No rankings available yet"
+                    description="Rankings will appear here as freelancers complete milestone contracts and receive on-chain reputation scores."
+                  />
+                ) : (
+                  <div className="space-y-2.5">
+                    {leaderboard.map((entry, index) => (
+                      <Link key={entry.user_id} href={`/freelancers/${entry.user_id}`}>
+                        <div className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-background border border-border/60 hover:border-primary/40 transition-all cursor-pointer">
+                          <div className="flex items-center gap-3.5">
+                            <span className="w-7 text-center font-bold text-xs text-muted-foreground">
+                              #{index + 1}
+                            </span>
+                            <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary font-bold text-xs flex items-center justify-center">
+                              {index + 1}
                             </div>
-                            <p className="text-2xs text-muted-foreground">{entry.total_ratings} reviews</p>
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <p className="font-bold text-foreground text-sm">User {entry.user_id.slice(0, 8)}</p>
+                                <ShieldCheck className="size-3.5 text-success" />
+                              </div>
+                              <p className="text-2xs text-muted-foreground">{entry.total_ratings} reviews</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1 font-bold text-foreground text-sm">
+                            <Star className="size-3.5 text-warning fill-warning" />
+                            <span>{entry.overall_score.toFixed(2)}</span>
                           </div>
                         </div>
-
-                        <div className="flex items-center gap-1 font-bold text-foreground text-sm">
-                          <Star className="size-3.5 text-warning fill-warning" />
-                          <span>{entry.overall_score.toFixed(2)}</span>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Sidebar Cards */}

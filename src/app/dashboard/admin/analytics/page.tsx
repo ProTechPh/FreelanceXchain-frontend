@@ -8,6 +8,7 @@ import type { AdminAnalytics, SkillTrend } from '@/types';
 import { reportLoadFailure } from '@/lib/report-failure';
 import { TrendingUp, Users, DollarSign, FolderOpen, Star } from 'lucide-react';
 import { StatsSkeleton } from '@/components/dashboard/skeletons';
+import { formatAmount, formatNumber } from '@/lib/format';
 
 interface LeaderboardEntry {
   userId: string;
@@ -61,14 +62,14 @@ export default function AnalyticsPage() {
   const metrics = [
     {
       title: 'Total Revenue (platform fees)',
-      value: analytics ? `$${analytics.totalRevenue.toLocaleString()}` : '—',
+      value: analytics ? formatAmount(analytics.totalRevenue) : '—',
       icon: DollarSign,
       color: 'text-success',
       bg: 'bg-success-subtle',
     },
     {
       title: 'Total Users',
-      value: analytics ? analytics.totalUsers.toLocaleString() : '—',
+      value: analytics ? formatNumber(analytics.totalUsers) : '—',
       change: analytics ? `+${analytics.userGrowth} last 30 days` : undefined,
       icon: Users,
       color: 'text-primary',
@@ -76,7 +77,7 @@ export default function AnalyticsPage() {
     },
     {
       title: 'Total Projects',
-      value: analytics ? analytics.totalProjects.toLocaleString() : '—',
+      value: analytics ? formatNumber(analytics.totalProjects) : '—',
       change: analytics ? `+${analytics.projectGrowth} last 30 days` : undefined,
       icon: FolderOpen,
       color: 'text-cyan',
@@ -84,7 +85,7 @@ export default function AnalyticsPage() {
     },
     {
       title: 'Active Contracts',
-      value: analytics ? analytics.activeContracts.toLocaleString() : '—',
+      value: analytics ? formatNumber(analytics.activeContracts) : '—',
       icon: TrendingUp,
       color: 'text-warning',
       bg: 'bg-warning-subtle',

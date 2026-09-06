@@ -27,6 +27,7 @@ import { toast } from 'sonner';
 import { reportFailure } from '@/lib/report-failure';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { sanitizeHtml } from '@/lib/sanitize-html';
+import { formatDate, formatDateTime } from '@/lib/format';
 
 type EmailItem = {
   id: string;
@@ -402,7 +403,7 @@ export default function AdminEmailPage() {
                           </span>
                           <span className="text-xs text-muted-foreground shrink-0 flex items-center gap-1">
                             <Clock className="w-3 h-3" />
-                            {new Date(email.received_at).toLocaleDateString()}
+                            {formatDate(email.received_at)}
                           </span>
                         </div>
                         <p className="text-sm truncate text-muted-foreground">
@@ -465,7 +466,7 @@ export default function AdminEmailPage() {
                     </span>
                   </span>
                   <span className="text-xs text-muted-foreground">
-                    {new Date(selectedEmail.received_at).toLocaleString()}
+                    {formatDateTime(selectedEmail.received_at)}
                   </span>
                 </div>
                 <div className="text-sm">

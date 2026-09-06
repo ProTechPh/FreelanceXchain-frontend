@@ -21,6 +21,7 @@ import { Markdown } from '@/components/ui/markdown';
 import { Alert } from '@/components/ui/alert';
 import { Field, useField } from '@/components/ui/field';
 import { reportFailure } from '@/lib/report-failure';
+import { formatAmount } from '@/lib/format';
 import { proposalsApi, matchingApi, type AIProposalResult } from '@/lib/api';
 import {
   MAX_FILE_COUNT,
@@ -80,7 +81,7 @@ ${highlights.map((h) => `- ${h}`).join('\n')}
 ${coverLetter}
 
 ## Proposed Milestones & Delivery Schedule
-${milestones.map((m, i) => `${i + 1}. **${m.title}** ($${m.amount.toLocaleString()} - ${m.durationDays} days)\n   ${m.description}`).join('\n\n')}
+${milestones.map((m, i) => `${i + 1}. **${m.title}** (${formatAmount(m.amount)} - ${m.durationDays} days)\n   ${m.description}`).join('\n\n')}
 
 ---
 Submitted via FreelanceXchain Decentralized Platform with Smart Contract Escrow Protection.
@@ -424,7 +425,7 @@ export function ProposalDialog({
                         <Badge variant="outline" className="shrink-0 px-1.5 py-0 text-2xs">{m.durationDays}d</Badge>
                       </div>
                       <p className="line-clamp-2 text-2xs text-muted-foreground break-words">{m.description}</p>
-                      <p className="text-xs font-medium text-primary">${m.amount.toLocaleString()} USDC</p>
+                      <p className="text-xs font-medium text-primary">{formatAmount(m.amount)}</p>
                     </div>
                   ))}
                 </div>
