@@ -10,6 +10,8 @@ const nextConfig: NextConfig = {
       '@radix-ui/react-slot',
       'motion',
       'sonner',
+      '@tanstack/react-query',
+      'cmdk',
     ],
   },
   images: {

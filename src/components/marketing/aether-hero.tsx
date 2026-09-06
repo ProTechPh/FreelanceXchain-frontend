@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 import { FreelanceXchainIcon } from "@/components/ui/freelancexchain-logo";
@@ -81,16 +81,19 @@ export default function AetherHero() {
   const primaryHref = isLoggedIn ? `/dashboard/${user.role || 'freelancer'}` : '/register';
   const primaryText = isLoggedIn ? 'Go to Dashboard' : 'Get Started Free';
 
-  const filteredContracts =
-    selectedFilter === "All"
-      ? mockContracts
-      : mockContracts.filter((c) =>
-          selectedFilter === "Escrow Funded"
-            ? c.stage.includes("Escrow Funded")
-            : selectedFilter === "Milestones"
-            ? c.stage.includes("Milestone")
-            : c.stage.includes(selectedFilter)
-        );
+  const filteredContracts = useMemo(
+    () =>
+      selectedFilter === "All"
+        ? mockContracts
+        : mockContracts.filter((c) =>
+            selectedFilter === "Escrow Funded"
+              ? c.stage.includes("Escrow Funded")
+              : selectedFilter === "Milestones"
+              ? c.stage.includes("Milestone")
+              : c.stage.includes(selectedFilter)
+          ),
+    [selectedFilter]
+  );
 
   return (
     <section
