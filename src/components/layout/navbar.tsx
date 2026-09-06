@@ -126,6 +126,7 @@ export default function Navbar({
               <Link
                 key={item.title}
                 href={item.url}
+                aria-current={isActive ? 'page' : undefined}
                 onClick={(e) => handleSmoothScroll(e, item.url)}
                 className={`px-2.5 xl:px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
                   isActive 
@@ -142,7 +143,7 @@ export default function Navbar({
         {/* Desktop auth — hidden below sm */}
         <div className="hidden sm:flex items-center gap-1.5 sm:gap-2 shrink-0">
           <ThemeToggle />
-          <Button variant="ghost" size="icon" aria-label="Open search dialog" className="rounded-full size-8 shrink-0 touch-manipulation" onClick={() => setOpenSearch(true)}>
+          <Button variant="ghost" size="icon" aria-label="Open search dialog" className="rounded-full size-10 shrink-0 touch-manipulation" onClick={() => setOpenSearch(true)}>
             <MagnifyingGlass className="size-3.5" strokeWidth={2.5} />
           </Button>
           {isLoggedIn ? (
