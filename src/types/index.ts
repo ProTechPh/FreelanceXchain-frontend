@@ -581,6 +581,8 @@ export interface AdminAnalytics {
   totalUsers: number;
   totalProjects: number;
   totalRevenue: number;
+  grossMarketplaceVolume?: number;
+  platformFeeRate?: number;
   activeContracts: number;
   userGrowth: number;
   projectGrowth: number;
@@ -622,6 +624,24 @@ export interface PlatformMetrics {
   totalTransactionVolume: number;
   activeUsers: number;
   completionRate: number;
+}
+
+export interface SkillLiquidityMetric {
+  skillName: string;
+  projectDemandCount: number;
+  talentSupplyCount: number;
+  talentToDemandRatio: number;
+  liquidityStatus: 'shortage' | 'balanced' | 'surplus';
+  actionRecommendation: string;
+}
+
+export interface MarketplaceLiquidityReport {
+  overallLiquidityScore: number;
+  skillsAnalyzed: number;
+  shortageSkills: SkillLiquidityMetric[];
+  balancedSkills: SkillLiquidityMetric[];
+  surplusSkills: SkillLiquidityMetric[];
+  generatedAt: string;
 }
 
 export interface LoginRequest {
