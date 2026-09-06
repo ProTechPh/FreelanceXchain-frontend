@@ -16,6 +16,14 @@ import { reportFailure, reportLoadFailure } from '@/lib/report-failure';
 import { Scale, AlertTriangle, Clock, CheckCircle, FileText, DollarSign } from 'lucide-react';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { EmptyState } from '@/components/ui/empty-state';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 const statusColors: Record<DisputeStatus, string> = {
   open: 'bg-destructive-subtle text-destructive',
@@ -41,6 +49,7 @@ export default function DisputesPage() {
   const [reasoning, setReasoning] = useState<Record<string, string>>({});
   const [verifyingEvidenceId, setVerifyingEvidenceId] = useState<string | null>(null);
   const [verifiedEvidenceIds, setVerifiedEvidenceIds] = useState<Set<string>>(new Set());
+  const [confirmResolve, setConfirmResolve] = useState<{ disputeId: string; decision: 'freelancer_favor' | 'employer_favor' } | null>(null);
 
   const load = useCallback(async () => {
     const { data } = await adminApi.getDisputeManagement();
@@ -292,7 +301,7 @@ export default function DisputesPage() {
                           variant="gradient"
                           size="sm"
                           disabled={resolvingId === dispute.id}
-                          onClick={() => handleResolve(dispute.id, 'freelancer_favor')}
+                          onClick={() => setConfirmResolve({ disputeId: dispute.id, decision: 'freelancer_favor' })}
                         >
                           <CheckCircle className="w-4 h-4 mr-2" /> Resolve in Favor of Freelancer
                         </Button>
@@ -301,7 +310,7 @@ export default function DisputesPage() {
                           size="sm"
                           className="text-success border-success-border"
                           disabled={resolvingId === dispute.id}
-                          onClick={() => handleResolve(dispute.id, 'employer_favor')}
+                          onClick={() => setConfirmResolve({ disputeId: dispute.id, decision: 'employer_favor' })}
                         >
                           <CheckCircle className="w-4 h-4 mr-2" /> Resolve in Favor of Employer
                         </Button>
@@ -323,6 +332,48 @@ export default function DisputesPage() {
           </TabsContent>
         ))}
       </Tabs>
+
+      {/* Resolve Confirmation Dialog */}
+      <Dialog
+        open={confirmResolve !== null}
+        onOpenChange={(open) => {
+          if (!open && !resolvingId) setConfirmResolve(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-destructive">Resolve this dispute?</DialogTitle>
+            <DialogDescription>
+              This action is <strong>permanent and cannot be reversed</strong>. The escrow funds will be released to the{' '}
+              <strong className="text-foreground">
+                {confirmResolve?.decision === 'freelancer_favor' ? 'freelancer' : 'employer'}
+              </strong>.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmResolve(null)}
+              disabled={Boolean(resolvingId)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              loading={Boolean(resolvingId)}
+              loadingText="Resolving…"
+              onClick={() => {
+                if (confirmResolve) {
+                  handleResolve(confirmResolve.disputeId, confirmResolve.decision);
+                  setConfirmResolve(null);
+                }
+              }}
+            >
+              Confirm Resolution
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

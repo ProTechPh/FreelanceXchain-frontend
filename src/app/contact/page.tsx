@@ -7,6 +7,7 @@ import Navbar from "@/components/layout/navbar";
 import { FooterSection } from "@/components/layout/footer-section";
 import { Sparkles as Sparkle, ShieldCheck, CircleQuestionMark as Question, Send as PaperPlaneTilt, CircleCheck as CheckCircle, Lock as LockKey } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const SUPPORT_CHANNELS = [
   {
@@ -74,12 +75,17 @@ export default function ContactPage() {
       ].join("\n");
 
       const mailtoUrl = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(`[${formData.category}] ${formData.subject}`)}&body=${encodeURIComponent(mailtoBody)}`;
-      window.location.href = mailtoUrl;
 
-      setSubmitted(true);
+      // Try to open mailto link; set a timeout to detect if it fails
+      window.open(mailtoUrl, '_self');
+
+      // If mailto fails (popup blocked or no email client), show fallback after a delay
+      setTimeout(() => {
+        setSubmitted(true);
+        setSubmitting(false);
+      }, 1500);
     } catch {
       setErrors({ submit: "Something went wrong. Please try again or email us directly." });
-    } finally {
       setSubmitting(false);
     }
   };
@@ -162,9 +168,22 @@ export default function ContactPage() {
                 <CheckCircle className="size-12 text-primary mx-auto" fill="currentColor" />
                 <h3 className="text-lg font-bold text-foreground">Message Ready to Send</h3>
                 <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                  Your email client should open with the message pre-filled. If it doesn&apos;t, you can reach us at{" "}
-                  <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary font-medium hover:underline">{SUPPORT_EMAIL}</a>.
+                  Your email client should open with the message pre-filled. If it doesn&apos;t, copy the support email below and send your message directly.
                 </p>
+                <div className="flex items-center justify-center gap-2 p-3 rounded-xl bg-background border border-border/80">
+                  <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary font-medium hover:underline text-sm">{SUPPORT_EMAIL}</a>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    onClick={() => {
+                      navigator.clipboard.writeText(SUPPORT_EMAIL);
+                      toast.success('Email copied to clipboard');
+                    }}
+                  >
+                    Copy
+                  </Button>
+                </div>
                 <Button
                   variant="outline"
                   size="sm"

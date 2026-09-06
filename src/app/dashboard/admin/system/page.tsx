@@ -51,6 +51,14 @@ export default function SystemHealthPage() {
     load();
   }, [load]);
 
+  // Auto-refresh every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadRef.current(true);
+    }, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   if (loading) {
     return (
       <StatsSkeleton label="Loading system health" />
