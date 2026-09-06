@@ -10,7 +10,6 @@ import { toast } from 'sonner';
 import { Shield, Copy, CheckCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import QRCode from 'qrcode';
 import { Field } from '@/components/ui/field';
 
 type Step = 'enroll' | 'verify' | 'complete';
@@ -30,6 +29,7 @@ export default function MfaSetupPage() {
 
   const generateQrCode = useCallback(async (totpUri: string) => {
     try {
+      const QRCode = (await import('qrcode')).default;
       const dataUrl = await QRCode.toDataURL(totpUri, {
         width: 200,
         margin: 2,

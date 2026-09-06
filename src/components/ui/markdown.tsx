@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { cn } from '@/lib/utils';
@@ -53,9 +53,9 @@ function preprocessMarkdown(text: string): string {
 }
 
 export function Markdown({ content, className }: MarkdownProps) {
-  if (!content) return null;
+  const processedContent = useMemo(() => preprocessMarkdown(content), [content]);
 
-  const processedContent = preprocessMarkdown(content);
+  if (!content) return null;
 
   return (
     <div
