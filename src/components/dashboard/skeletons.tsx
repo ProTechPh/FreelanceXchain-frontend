@@ -75,7 +75,7 @@ export function StatsSkeleton({
 }) {
   return (
     <Frame label={label} className={cn('space-y-6', className)}>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: tiles }).map((_, index) => (
           <div key={index} className="space-y-3 rounded-xl border border-border bg-card p-5">
             <Skeleton className="size-9 rounded-lg" />

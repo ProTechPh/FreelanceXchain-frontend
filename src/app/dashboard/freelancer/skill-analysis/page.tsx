@@ -2,9 +2,9 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { BookOpen, BrainCircuit, CheckCircle2, Search, TrendingUp } from 'lucide-react';
+import { BookOpen, BrainCircuit, CheckCircle2, Plus, Search, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
-import { matchingApi, type ExtractedSkill, type SkillGapAnalysis } from '@/lib/api';
+import { matchingApi, freelancersApi, type ExtractedSkill, type SkillGapAnalysis } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,7 @@ export default function SkillAnalysisPage() {
   const [extracted, setExtracted] = useState<ExtractedSkill[]>([]);
   const [loadingAnalysis, setLoadingAnalysis] = useState(true);
   const [extracting, setExtracting] = useState(false);
+  const [addedSkills, setAddedSkills] = useState<Set<string>>(new Set());
 
   const loadAnalysis = useCallback(async () => {
     setLoadingAnalysis(true);
@@ -54,6 +55,16 @@ export default function SkillAnalysisPage() {
       toast.error(getApiErrorMessage(error, 'Unable to extract skills from this text.'));
     } finally {
       setExtracting(false);
+    }
+  };
+
+  const addSkillToProfile = async (skillName: string) => {
+    try {
+      await freelancersApi.addSkills([{ name: skillName, yearsOfExperience: 0 }]);
+      setAddedSkills((prev) => new Set(prev).add(skillName));
+      toast.success(`Added "${skillName}" to your profile`);
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Unable to add skill to profile.'));
     }
   };
 
@@ -92,7 +103,29 @@ export default function SkillAnalysisPage() {
           <form className="space-y-3" onSubmit={extractSkills}><Field label="Job description, résumé, or project brief" htmlFor="skill-source-text">
 <Textarea id="skill-source-text" rows={6} value={text} onChange={(event) => setText(event.target.value)} />
 </Field><Button type="submit" loading={extracting} loadingText="Extracting skills…" disabled={!text.trim()}>Extract skills</Button></form>
-          {extracted.length > 0 && <div className="flex flex-wrap gap-2 border-t border-border pt-4">{extracted.map((skill) => <Badge key={skill.skillId} variant="secondary">{skill.skillName} · {Math.round(skill.confidence * 100)}%</Badge>)}</div>}
+          {extracted.length > 0 && <div className="space-y-2 border-t border-border pt-4">
+            <p className="text-sm text-muted-foreground">Extracted skills — click to add to your profile:</p>
+            <div className="flex flex-wrap gap-2">
+              {extracted.map((skill) => {
+                const isAdded = addedSkills.has(skill.skillName);
+                return (
+                  <Badge key={skill.skillId} variant={isAdded ? 'default' : 'secondary'} className={isAdded ? 'bg-success-subtle text-success' : ''}>
+                    {skill.skillName} · {Math.round(skill.confidence * 100)}%
+                    {!isAdded && (
+                      <button
+                        type="button"
+                        onClick={() => void addSkillToProfile(skill.skillName)}
+                        className="ml-1.5 inline-flex items-center justify-center rounded-full hover:bg-primary/20 p-0.5 transition-colors"
+                        aria-label={`Add ${skill.skillName} to profile`}
+                      >
+                        <Plus className="w-3 h-3" />
+                      </button>
+                    )}
+                  </Badge>
+                );
+              })}
+            </div>
+          </div>}
         </CardContent>
       </Card>
     </div>

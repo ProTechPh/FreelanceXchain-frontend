@@ -4,6 +4,11 @@ import { FooterSection } from "@/components/layout/footer-section";
 import { UptimeRobotWidget } from "@/components/status/uptime-robot-widget";
 import { ComponentServicesList } from "@/components/status/component-services-list";
 
+export const metadata = {
+  title: 'System Status | FreelanceXchain',
+  description: 'Real-time status and uptime monitoring for FreelanceXchain platform services.',
+};
+
 export default function StatusPage() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">

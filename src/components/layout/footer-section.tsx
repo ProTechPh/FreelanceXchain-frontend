@@ -20,11 +20,10 @@ const footerLinks: FooterSection[] = [
 	{
 		label: 'Product',
 		links: [
-			{ title: 'AI Apply', href: '/#features' },
-			{ title: 'Personalized Documents', href: '/#features' },
-			{ title: 'Application Tracking', href: '/#features' },
+			{ title: 'Features', href: '/#features' },
 			{ title: 'Smart Escrow', href: '/#features' },
 			{ title: 'Browse Projects', href: '/projects' },
+			{ title: 'Find Talent', href: '/freelancers' },
 		],
 	},
 	{

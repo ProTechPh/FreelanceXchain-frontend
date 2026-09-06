@@ -12,6 +12,8 @@ import { FreelanceXchainIcon } from '@/components/ui/freelancexchain-logo';
 import { SidebarNav } from './SidebarNav';
 import { SidebarUserCard } from './SidebarUserCard';
 
+const SIDEBAR_COLLAPSED_KEY = 'freelancex-sidebar-collapsed';
+
 /**
  * Desktop dashboard sidebar.
  *
@@ -20,8 +22,24 @@ import { SidebarUserCard } from './SidebarUserCard';
  * of link styles for both.
  */
 export function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  });
   const user = useAuthStore((s) => s.user);
+
+  const toggleCollapsed = () => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(next));
+      } catch {}
+      return next;
+    });
+  };
 
   return (
     <aside
@@ -61,7 +79,7 @@ export function Sidebar() {
             className={cn('w-full', collapsed && 'mx-auto w-9')}
             aria-expanded={!collapsed}
             aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            onClick={() => setCollapsed((value) => !value)}
+            onClick={toggleCollapsed}
           >
             {collapsed ? (
               <PanelLeftOpen className="size-4" aria-hidden="true" />

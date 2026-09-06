@@ -126,6 +126,7 @@ export default function Navbar({
               <Link
                 key={item.title}
                 href={item.url}
+                aria-current={isActive ? 'page' : undefined}
                 onClick={(e) => handleSmoothScroll(e, item.url)}
                 className={`px-2.5 xl:px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
                   isActive 
@@ -142,7 +143,7 @@ export default function Navbar({
         {/* Desktop auth — hidden below sm */}
         <div className="hidden sm:flex items-center gap-1.5 sm:gap-2 shrink-0">
           <ThemeToggle />
-          <Button variant="ghost" size="icon" aria-label="Open search dialog" className="rounded-full size-8 shrink-0 touch-manipulation" onClick={() => setOpenSearch(true)}>
+          <Button variant="ghost" size="icon" aria-label="Open search dialog" className="rounded-full size-10 shrink-0 touch-manipulation" onClick={() => setOpenSearch(true)}>
             <MagnifyingGlass className="size-3.5" strokeWidth={2.5} />
           </Button>
           {isLoggedIn ? (
@@ -232,17 +233,37 @@ export default function Navbar({
               </SheetHeader>
 
               <div className="flex flex-col gap-6">
-                <div className="flex w-full flex-col divide-y divide-border/40">
-                  {menu.map((item) => (
-                    <Link
-                      key={item.title}
-                      href={item.url}
-                      onClick={(e) => handleSmoothScroll(e, item.url)}
-                      className="flex items-center py-3 text-sm font-semibold text-foreground/80 hover:text-foreground transition-colors"
-                    >
-                      {item.title}
-                    </Link>
-                  ))}
+                <div className="flex flex-col gap-4">
+                  <div>
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 px-1">Product</p>
+                    <div className="flex flex-col">
+                      {menu.filter((item) => ["/#features", "/#ecosystem", "/#compare", "/#reviews", "/#faq"].includes(item.url)).map((item) => (
+                        <Link
+                          key={item.title}
+                          href={item.url}
+                          onClick={(e) => handleSmoothScroll(e, item.url)}
+                          className="flex items-center py-2.5 text-sm font-semibold text-foreground/80 hover:text-foreground transition-colors"
+                        >
+                          {item.title}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 px-1">Marketplace</p>
+                    <div className="flex flex-col">
+                      {menu.filter((item) => ["/projects", "/freelancers", "/news"].includes(item.url)).map((item) => (
+                        <Link
+                          key={item.title}
+                          href={item.url}
+                          onClick={(e) => handleSmoothScroll(e, item.url)}
+                          className="flex items-center py-2.5 text-sm font-semibold text-foreground/80 hover:text-foreground transition-colors"
+                        >
+                          {item.title}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
                 {isLoggedIn ? (

@@ -23,7 +23,7 @@ import { useAuthStore } from '@/stores/authStore';
 import type { ConversationWithDetails, Message, Project } from '@/types';
 import { toast } from 'sonner';
 import { reportFailure, reportLoadFailure } from '@/lib/report-failure';
-import { Send, Search, Check, CheckCheck, MessageSquare, ExternalLink, FileText, Paperclip, X, ArrowLeft, Briefcase } from 'lucide-react';
+import { Send, Search, Check, CheckCheck, MessageSquare, ExternalLink, FileText, Paperclip, X, ArrowLeft, Briefcase, ChevronUp, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MessagesWorkspaceSkeleton, MessageThreadSkeleton } from '@/components/messages/messages-workspace-skeleton';
 
@@ -52,6 +52,7 @@ export function MessagesWorkspace() {
   const [newMessage, setNewMessage] = useState('');
   const [messageFiles, setMessageFiles] = useState<File[]>([]);
   const [search, setSearch] = useState('');
+  const [messageSearch, setMessageSearch] = useState('');
   const [loadingConversations, setLoadingConversations] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sending, setSending] = useState(false);
@@ -307,6 +308,27 @@ export function MessagesWorkspace() {
       c.otherUser.email.toLowerCase().includes(term)
     );
   });
+  const filteredMessages = messages.filter((msg) => {
+    if (!messageSearch) return true;
+    const term = messageSearch.toLowerCase();
+    return msg.content.toLowerCase().includes(term);
+  });
+
+  const messageSearchMatches = messageSearch ? filteredMessages.length : 0;
+  const [messageSearchIdx, setMessageSearchIdx] = useState(0);
+
+  const scrollToMessage = (direction: 'next' | 'prev') => {
+    if (filteredMessages.length === 0) return;
+    const nextIdx = direction === 'next'
+      ? (messageSearchIdx + 1) % filteredMessages.length
+      : (messageSearchIdx - 1 + filteredMessages.length) % filteredMessages.length;
+    setMessageSearchIdx(nextIdx);
+    const msgId = filteredMessages[nextIdx]?.id;
+    if (msgId) {
+      document.getElementById(`msg-${msgId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
   const filteredContacts = conversationlessContacts.filter((contact) => {
     if (!search) return true;
     const term = search.toLowerCase();
@@ -477,7 +499,7 @@ export function MessagesWorkspace() {
         ) : (
           <>
             {/* Chat Header */}
-            <div className="p-4 border-b border-border flex min-w-0 items-center justify-between">
+            <div className="p-4 border-b border-border flex min-w-0 items-center justify-between gap-2">
               <div className="flex min-w-0 items-center gap-3">
                 <Button
                   variant="ghost"
@@ -502,6 +524,25 @@ export function MessagesWorkspace() {
                     <p className="truncate text-xs text-muted-foreground" title={chatRecipient.email}>{chatRecipient.email}</p>
                   )}
                 </div>
+              </div>
+              {/* In-conversation search */}
+              <div className="hidden sm:flex items-center gap-1.5 shrink-0">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                  <Input
+                    placeholder="Search in chat..."
+                    className="pl-8 h-8 w-44 text-xs"
+                    value={messageSearch}
+                    onChange={(e) => { setMessageSearch(e.target.value); setMessageSearchIdx(0); }}
+                  />
+                </div>
+                {messageSearch && (
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <span>{messageSearchIdx + 1}/{messageSearchMatches}</span>
+                    <button type="button" onClick={() => scrollToMessage('prev')} className="p-0.5 hover:text-foreground"><ChevronUp className="size-3.5" /></button>
+                    <button type="button" onClick={() => scrollToMessage('next')} className="p-0.5 hover:text-foreground"><ChevronDown className="size-3.5" /></button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -551,8 +592,9 @@ export function MessagesWorkspace() {
               ) : (
                 messages.map((msg) => {
                   const isMine = currentUser?.id === msg.sender_id;
+                  const isHighlighted = messageSearch && filteredMessages.some((m) => m.id === msg.id);
                   return (
-                    <div key={msg.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
+                    <div key={msg.id} id={`msg-${msg.id}`} className={`flex ${isMine ? 'justify-end' : 'justify-start'} ${isHighlighted ? 'ring-2 ring-primary/40 rounded-2xl' : ''}`}>
                       <div
                         className={`max-w-[70%] p-3 rounded-2xl ${
                           isMine

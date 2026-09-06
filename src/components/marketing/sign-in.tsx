@@ -218,7 +218,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                   <span className="text-muted-foreground">Keep me signed in</span>
                 </label>
                 <button type="button" onClick={onResetPassword} className="text-primary font-bold hover:underline">
-                  Reset password
+                  Forgot password?
                 </button>
               </div>
 

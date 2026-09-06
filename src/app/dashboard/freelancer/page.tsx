@@ -21,7 +21,6 @@ import type { Contract, Proposal, Project } from '@/types';
 import { reportLoadFailure } from '@/lib/report-failure';
 import { DollarSign, FolderOpen, FileText, Star, TrendingUp, Clock, ArrowUpRight, Briefcase, Wallet } from 'lucide-react';
 import { formatAmount, formatNumber, formatRelativeTime, formatDate } from '@/lib/format';
-import { StatsSkeleton } from '@/components/dashboard/skeletons';
 import { WalletConnectBanner } from '@/components/wallet/wallet-connect-banner';
 import { TourStepLink } from '@/components/onboarding/tour-step-link';
 import { WalletBalanceCard } from '@/components/wallet/wallet-balance-card';
@@ -56,7 +55,6 @@ interface RecommendedProjectView {
 
 export default function FreelancerDashboard() {
   const currentUser = useAuthStore((state) => state.user);
-  const [loading, setLoading] = useState(true);
   const [coreLoading, setCoreLoading] = useState(true);
   const [recommendedLoading, setRecommendedLoading] = useState(true);
   const [range, setRange] = useState<RangePresetId>(DEFAULT_RANGE_PRESET);
@@ -151,7 +149,6 @@ export default function FreelancerDashboard() {
         );
 
         setCoreLoading(false);
-        setLoading(false);
 
         // Enrich project details (titles, milestones) in background
         if (projectIdsToFetch.size > 0) {
@@ -177,7 +174,6 @@ export default function FreelancerDashboard() {
       } finally {
         if (active) {
           setCoreLoading(false);
-          setLoading(false);
         }
       }
     };
@@ -218,12 +214,6 @@ export default function FreelancerDashboard() {
       active = false;
     };
   }, [currentUser]);
-
-  if (loading) {
-    return (
-      <StatsSkeleton label="Loading dashboard" />
-    );
-  }
 
   const stats = [
     {

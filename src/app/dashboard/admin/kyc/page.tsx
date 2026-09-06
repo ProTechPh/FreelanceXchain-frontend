@@ -25,9 +25,12 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { toast } from 'sonner';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { formatDate, formatDateTime } from '@/lib/format';
 
@@ -100,12 +103,13 @@ export default function KycReviewPage() {
     setReviewing(id);
     try {
       await kycApi.adminReview(id, decision, reviewNotes || undefined);
+      toast.success(`User ${decision === 'approved' ? 'approved' : 'rejected'} successfully`);
       setReviewNotes('');
       setExpandedId(null);
       fetchVerifications(filter);
       fetchStats();
     } catch {
-      // error handled silently
+      toast.error(`Failed to ${decision === 'approved' ? 'approve' : 'reject'} user. Please try again.`);
     } finally {
       setReviewing(null);
     }
@@ -213,6 +217,7 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
   const [decisionDetails, setDecisionDetails] = useState<KycDecisionDetails | null>(null);
   const [loadingDecision, setLoadingDecision] = useState(false);
   const [selectedImage, setSelectedImage] = useState<{ url: string; title: string } | null>(null);
+  const [confirmDecision, setConfirmDecision] = useState<'approved' | 'rejected' | null>(null);
   const fetchedRef = useRef(false);
 
   useEffect(() => {
@@ -379,7 +384,7 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
                           alt="Document Front"
                           className="w-full h-full object-contain group-hover:scale-105 transition duration-200"
                         />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-primary-foreground text-xs font-medium gap-1">
+                        <div className="absolute inset-0 bg-black/40 sm:opacity-0 sm:group-hover:opacity-100 transition flex items-center justify-center text-primary-foreground text-xs font-medium gap-1">
                           <Maximize2 className="w-4 h-4" /> Enlarge
                         </div>
                       </div>
@@ -402,7 +407,7 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
                           alt="Document Back"
                           className="w-full h-full object-contain group-hover:scale-105 transition duration-200"
                         />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-primary-foreground text-xs font-medium gap-1">
+                        <div className="absolute inset-0 bg-black/40 sm:opacity-0 sm:group-hover:opacity-100 transition flex items-center justify-center text-primary-foreground text-xs font-medium gap-1">
                           <Maximize2 className="w-4 h-4" /> Enlarge
                         </div>
                       </div>
@@ -427,7 +432,7 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
                           alt="Live Selfie"
                           className="w-full h-full object-contain group-hover:scale-105 transition duration-200"
                         />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-primary-foreground text-xs font-medium gap-1">
+                        <div className="absolute inset-0 bg-black/40 sm:opacity-0 sm:group-hover:opacity-100 transition flex items-center justify-center text-primary-foreground text-xs font-medium gap-1">
                           <Maximize2 className="w-4 h-4" /> Enlarge
                         </div>
                       </div>
@@ -450,7 +455,7 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
                           alt="ID Portrait Crop"
                           className="w-full h-full object-contain group-hover:scale-105 transition duration-200"
                         />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center text-primary-foreground text-xs font-medium gap-1">
+                        <div className="absolute inset-0 bg-black/40 sm:opacity-0 sm:group-hover:opacity-100 transition flex items-center justify-center text-primary-foreground text-xs font-medium gap-1">
                           <Maximize2 className="w-4 h-4" /> Enlarge
                         </div>
                       </div>
@@ -545,7 +550,7 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
                       className="bg-success hover:bg-success/90 text-success-foreground"
                       loading={reviewing}
                       loadingText="Approving…"
-                      onClick={() => onReview(v.id, 'approved')}
+                      onClick={() => setConfirmDecision('approved')}
                     >
                       <CheckCircle className="size-4" aria-hidden="true" />
                       Approve
@@ -556,7 +561,7 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
                       className="text-destructive border-destructive-border hover:bg-destructive-subtle"
                       loading={reviewing}
                       loadingText="Rejecting…"
-                      onClick={() => onReview(v.id, 'rejected')}
+                      onClick={() => setConfirmDecision('rejected')}
                     >
                       <XCircle className="size-4" aria-hidden="true" />
                       Reject
@@ -606,6 +611,50 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
           </DialogContent>
         </Dialog>
       )}
+
+      {/* KYC Review Confirmation Dialog */}
+      <Dialog
+        open={confirmDecision !== null}
+        onOpenChange={(open) => {
+          if (!open && !reviewing) setConfirmDecision(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className={confirmDecision === 'approved' ? 'text-success' : 'text-destructive'}>
+              {confirmDecision === 'approved' ? 'Approve this user?' : 'Reject this user?'}
+            </DialogTitle>
+            <DialogDescription>
+              {confirmDecision === 'approved'
+                ? `This will grant ${fullName} verified status. They will gain full access to platform features.`
+                : `This will reject ${fullName}'s verification. They will need to resubmit their documents.`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmDecision(null)}
+              disabled={Boolean(reviewing)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant={confirmDecision === 'approved' ? 'default' : 'destructive'}
+              className={confirmDecision === 'approved' ? 'bg-success hover:bg-success/90 text-success-foreground' : ''}
+              loading={Boolean(reviewing)}
+              loadingText={confirmDecision === 'approved' ? 'Approving…' : 'Rejecting…'}
+              onClick={() => {
+                if (confirmDecision) {
+                  onReview(v.id, confirmDecision);
+                  setConfirmDecision(null);
+                }
+              }}
+            >
+              {confirmDecision === 'approved' ? 'Confirm Approval' : 'Confirm Rejection'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

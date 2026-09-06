@@ -48,6 +48,7 @@ export default function UsersPage() {
   const [suspendReason, setSuspendReason] = useState('');
   const [userToVerify, setUserToVerify] = useState<AdminUser | null>(null);
   const [verifyReason, setVerifyReason] = useState('');
+  const [userToUnsuspend, setUserToUnsuspend] = useState<AdminUser | null>(null);
 
   const load = useCallback(async () => {
     const { data } = await adminApi.getUsers();
@@ -100,6 +101,7 @@ export default function UsersPage() {
       await adminApi.unsuspendUser(user.id);
       setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, isActive: true } : u)));
       toast.success('User unsuspended');
+      setUserToUnsuspend(null);
     } catch {
       toast.error('Failed to unsuspend user');
     } finally {
@@ -212,8 +214,8 @@ export default function UsersPage() {
         </div>
       </div>
 
-      {/* Users Table */}
-      <Card className="bg-card border-border">
+      {/* Users Table — Desktop */}
+      <Card className="bg-card border-border hidden md:block">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
@@ -249,7 +251,7 @@ export default function UsersPage() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-9 w-9 sm:h-8 sm:w-8 text-primary touch-manipulation"
+                            className="h-8 w-8 text-primary touch-manipulation"
                             title={user.kycVerified ? 'KYC verified' : 'Manually verify KYC'}
                             aria-label={user.kycVerified ? 'KYC verified' : `Manually verify KYC for ${user.name || user.email}`}
                             disabled={pendingActionId === user.id || user.kycVerified}
@@ -264,7 +266,7 @@ export default function UsersPage() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-9 w-9 sm:h-8 sm:w-8 text-warning touch-manipulation"
+                              className="h-8 w-8 text-warning touch-manipulation"
                               title="Suspend user"
                               aria-label={`Suspend ${user.name || user.email}`}
                               disabled={pendingActionId === user.id}
@@ -279,11 +281,11 @@ export default function UsersPage() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-9 w-9 sm:h-8 sm:w-8 text-success touch-manipulation"
+                              className="h-8 w-8 text-success touch-manipulation"
                               title="Unsuspend user"
                               aria-label={`Unsuspend ${user.name || user.email}`}
                               disabled={pendingActionId === user.id}
-                              onClick={() => handleUnsuspend(user)}
+                              onClick={() => setUserToUnsuspend(user)}
                             >
                               <UserCheck className="w-4 h-4" />
                             </Button>
@@ -309,6 +311,85 @@ export default function UsersPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Users Cards — Mobile */}
+      <div className="space-y-3 md:hidden">
+        {filteredUsers.length === 0 ? (
+          <Card className="bg-card border-border">
+            <CardContent className="py-10">
+              <EmptyState
+                size="sm"
+                icon={Users}
+                title="No users match your filters"
+                description="Try clearing the search or selecting a different role."
+              />
+            </CardContent>
+          </Card>
+        ) : (
+          filteredUsers.map((user) => (
+            <Card key={user.id} className="bg-card border-border">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="font-medium truncate" title={user.name || 'Unnamed'}>{user.name || 'Unnamed'}</p>
+                    <p className="text-sm text-muted-foreground truncate" title={user.email}>{user.email}</p>
+                  </div>
+                  <Badge className={statusColors[user.isActive ? 'active' : 'suspended']}>
+                    {user.isActive ? 'active' : 'suspended'}
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Badge className={roleColors[user.role]}>{user.role}</Badge>
+                    <span className="text-xs text-muted-foreground">{formatDate(user.createdAt)}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-9 text-primary touch-manipulation"
+                      aria-label={user.kycVerified ? 'KYC verified' : `Manually verify KYC for ${user.name || user.email}`}
+                      disabled={pendingActionId === user.id || user.kycVerified}
+                      onClick={() => {
+                        setUserToVerify(user);
+                        setVerifyReason('');
+                      }}
+                    >
+                      <ShieldCheck className="w-4 h-4" />
+                    </Button>
+                    {user.isActive ? (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 text-warning touch-manipulation"
+                        aria-label={`Suspend ${user.name || user.email}`}
+                        disabled={pendingActionId === user.id}
+                        onClick={() => {
+                          setUserToSuspend(user);
+                          setSuspendReason('');
+                        }}
+                      >
+                        <Ban className="w-4 h-4" />
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 text-success touch-manipulation"
+                        aria-label={`Unsuspend ${user.name || user.email}`}
+                        disabled={pendingActionId === user.id}
+                        onClick={() => setUserToUnsuspend(user)}
+                      >
+                        <UserCheck className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
 
       {/* Suspend User Modal */}
       <Dialog
@@ -402,6 +483,42 @@ export default function UsersPage() {
               onClick={confirmVerify}
             >
               Verify User
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Unsuspend User Confirmation Modal */}
+      <Dialog
+        open={userToUnsuspend !== null}
+        onOpenChange={(open) => {
+          if (!open && !pendingActionId) setUserToUnsuspend(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-success">Unsuspend User</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to unsuspend <strong className="text-foreground">{userToUnsuspend?.name || userToUnsuspend?.email}</strong>? They will immediately regain full access to their account.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setUserToUnsuspend(null)}
+              disabled={Boolean(pendingActionId)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="gradient"
+              loading={Boolean(pendingActionId)}
+              loadingText="Unsuspending…"
+              onClick={() => {
+                if (userToUnsuspend) handleUnsuspend(userToUnsuspend);
+              }}
+            >
+              Unsuspend User
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Clock, Coins, Users, Zap, ShieldCheck, Briefcase } from 'lucide-react';
+import { Clock, Coins, Users, Zap, Briefcase } from 'lucide-react';
 import { MarketplaceBrowser } from "@/components/marketplace/marketplace-browser";
 import { PublicMarketplaceShell } from "@/components/marketplace/public-marketplace-shell";
 import type { Project } from "@/types";
@@ -35,10 +35,6 @@ function ProjectResult({ project, listingQuery }: { project: Project; listingQue
       <div className="rounded-3xl bg-card border border-border/80 p-6 sm:p-7 shadow-md shadow-black/5 hover:border-primary/50 hover:shadow-xl transition-all duration-300">
         {/* Header: Badges */}
         <div className="mb-4 flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-success bg-success/10 border border-success/20 px-3 py-1 rounded-full">
-            <ShieldCheck className="w-3.5 h-3.5" />
-            Escrow Protected
-          </span>
           {project.isRush && (
             <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-warning bg-warning/10 border border-warning/20 px-3 py-1 rounded-full">
               <Zap className="w-3.5 h-3.5" />

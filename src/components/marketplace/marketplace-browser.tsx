@@ -232,22 +232,31 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
   };
 
   const toggleFavorite = async (targetId: string) => {
+    const isFavorited = favoriteIds.has(targetId);
+    // Optimistic update
+    setFavoriteIds((current) => {
+      const next = new Set(current);
+      if (isFavorited) next.delete(targetId);
+      else next.add(targetId);
+      return next;
+    });
     setFavoriteActionId(targetId);
     try {
-      if (favoriteIds.has(targetId)) {
+      if (isFavorited) {
         await favoritesApi.remove(kind, targetId);
-        setFavoriteIds((current) => {
-          const next = new Set(current);
-          next.delete(targetId);
-          return next;
-        });
         toast.success(`Removed from favorites.`);
       } else {
         await favoritesApi.add(kind, targetId);
-        setFavoriteIds((current) => new Set(current).add(targetId));
         toast.success(`Saved to favorites.`);
       }
     } catch (error) {
+      // Revert optimistic update on failure
+      setFavoriteIds((current) => {
+        const next = new Set(current);
+        if (isFavorited) next.add(targetId);
+        else next.delete(targetId);
+        return next;
+      });
       toast.error(getApiErrorMessage(error, "Unable to update favorites."));
     } finally {
       setFavoriteActionId(null);
@@ -474,8 +483,8 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
               </div>
 
               {!isDashboard && (
-                <div className="flex gap-2 pt-2">
-                  <Button type="submit" className={control}>Apply filters</Button>
+                <div className="sticky bottom-0 -mx-6 -mb-6 sm:mx-0 sm:mb-0 bg-background/95 backdrop-blur-sm border-t border-border/80 px-6 py-3 sm:px-0 sm:py-0 sm:static sm:border-0 sm:bg-transparent sm:backdrop-blur-none flex gap-2 pt-2">
+                  <Button type="submit" className={cn("flex-1 sm:flex-none", control)}>Apply filters</Button>
                   <Button type="button" variant="outline" className={control} onClick={resetFilters}>Reset</Button>
                 </div>
               )}
@@ -605,7 +614,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
                         size="icon"
                         variant="secondary"
                         className={cn(
-                          "absolute right-3.5 top-3.5 z-10 size-11 sm:size-9 rounded-full border border-border bg-card/90 shadow-xs backdrop-blur-xs flex items-center justify-center",
+                          "absolute right-3 top-3 z-10 size-11 rounded-full border border-border bg-card/90 shadow-xs backdrop-blur-xs flex items-center justify-center",
                           favorite && "text-destructive",
                         )}
                         aria-label={favorite ? `Remove ${kind} from favorites` : `Save ${kind} to favorites`}

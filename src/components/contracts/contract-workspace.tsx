@@ -405,17 +405,53 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
 
                 {permissions.canSubmit && (
                   <div className="space-y-3 rounded-lg border border-border p-4">
-                    <div className="space-y-2"><Label htmlFor={`files-${milestone.id}`}>Deliverable files</Label><Input id={`files-${milestone.id}`} type="file" multiple onChange={(event) => setFiles((current) => ({ ...current, [milestone.id]: Array.from(event.target.files ?? []) }))} /></div>
-                    <div className="space-y-2"><Label htmlFor={`notes-${milestone.id}`}>Submission notes</Label><textarea id={`notes-${milestone.id}`} className="min-h-24 w-full rounded-lg border border-input bg-transparent p-3 text-sm" value={notes[milestone.id] ?? ''} onChange={(event) => setNotes((current) => ({ ...current, [milestone.id]: event.target.value }))} /></div>
-                    <Button disabled={actionId === milestone.id} onClick={() => submitMilestone(milestone)}>Submit milestone</Button>
+                    <div className="space-y-2">
+                      <Label htmlFor={`files-${milestone.id}`}>Deliverable files</Label>
+                      <Input id={`files-${milestone.id}`} type="file" multiple aria-describedby={`files-hint-${milestone.id}`} onChange={(event) => setFiles((current) => ({ ...current, [milestone.id]: Array.from(event.target.files ?? []) }))} />
+                      <p id={`files-hint-${milestone.id}`} className="text-xs text-muted-foreground">Upload the files that demonstrate this milestone is complete.</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`notes-${milestone.id}`}>Submission notes</Label>
+                      <textarea id={`notes-${milestone.id}`} aria-describedby={`notes-hint-${milestone.id}`} className="min-h-24 w-full rounded-lg border border-input bg-transparent p-3 text-sm" value={notes[milestone.id] ?? ''} onChange={(event) => setNotes((current) => ({ ...current, [milestone.id]: event.target.value }))} />
+                      <p id={`notes-hint-${milestone.id}`} className="text-xs text-muted-foreground">Describe what you delivered and any relevant context for the employer.</p>
+                    </div>
+                    <Button
+                      disabled={actionId === milestone.id}
+                      onClick={() => submitMilestone(milestone)}
+                      aria-label={`Submit milestone: ${milestone.title}`}
+                    >
+                      Submit milestone
+                    </Button>
                   </div>
                 )}
 
                 {permissions.canApprove && (
                   <div className="flex flex-col gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-end">
-                    <Button disabled={actionId === milestone.id} onClick={() => setApprovingMilestone(milestone)}>Approve and release</Button>
-                    <div className="flex-1 space-y-2"><Label htmlFor={`reject-${milestone.id}`}>Revision reason</Label><Input id={`reject-${milestone.id}`} value={rejectionReasons[milestone.id] ?? ''} onChange={(event) => setRejectionReasons((current) => ({ ...current, [milestone.id]: event.target.value }))} /></div>
-                    <Button variant="outline" disabled={actionId === milestone.id || !(rejectionReasons[milestone.id] ?? '').trim()} onClick={() => runAction(milestone.id, () => milestonesApi.reject(milestone.id, rejectionReasons[milestone.id]!), 'Revision requested.')}>Request revision</Button>
+                    <Button
+                      disabled={actionId === milestone.id}
+                      onClick={() => setApprovingMilestone(milestone)}
+                      aria-label={`Approve milestone: ${milestone.title}`}
+                    >
+                      Approve and release
+                    </Button>
+                    <div className="flex-1 space-y-2">
+                      <Label htmlFor={`reject-${milestone.id}`}>Revision reason</Label>
+                      <Input
+                        id={`reject-${milestone.id}`}
+                        aria-describedby={`reject-hint-${milestone.id}`}
+                        value={rejectionReasons[milestone.id] ?? ''}
+                        onChange={(event) => setRejectionReasons((current) => ({ ...current, [milestone.id]: event.target.value }))}
+                      />
+                      <p id={`reject-hint-${milestone.id}`} className="text-xs text-muted-foreground">Explain what needs to be changed before you can approve.</p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      disabled={actionId === milestone.id || !(rejectionReasons[milestone.id] ?? '').trim()}
+                      onClick={() => runAction(milestone.id, () => milestonesApi.reject(milestone.id, rejectionReasons[milestone.id]!), 'Revision requested.')}
+                      aria-label={`Request revision for milestone: ${milestone.title}`}
+                    >
+                      Request revision
+                    </Button>
                   </div>
                 )}
               </CardContent>

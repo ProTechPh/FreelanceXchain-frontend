@@ -8,14 +8,17 @@ import { FooterSection } from "@/components/layout/footer-section";
 import { reputationApi } from "@/lib/api";
 import type { ReputationScore } from "@/types";
 import { reportLoadFailure } from '@/lib/report-failure';
-import { Trophy, Star, ShieldCheck, Crown } from 'lucide-react';
+import { Trophy, Star, ShieldCheck, Crown, ArrowUpDown } from 'lucide-react';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { EmptyState } from '@/components/ui/empty-state';
+
+type SortKey = 'rating' | 'reviews';
 
 export default function LeaderboardPage() {
   const reduce = useReducedMotion();
   const [leaderboard, setLeaderboard] = useState<ReputationScore[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sortBy, setSortBy] = useState<SortKey>('rating');
 
   useEffect(() => {
     async function fetchLeaderboard() {
@@ -73,6 +76,25 @@ export default function LeaderboardPage() {
           <ListSkeleton rows={8} label="Loading leaderboard" />
         ) : (
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-10">
+            {/* Sort Controls */}
+            <div className="flex items-center justify-center gap-2">
+              <ArrowUpDown className="size-4 text-muted-foreground" />
+              <span className="text-xs font-semibold text-muted-foreground">Sort by:</span>
+              {([['rating', 'Highest Rating'], ['reviews', 'Most Reviews']] as const).map(([key, label]) => (
+                <button
+                  key={key}
+                  onClick={() => setSortBy(key)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                    sortBy === key
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'bg-card border border-border/80 text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
             {/* Top 3 Podium Cards */}
             {leaderboard.length >= 3 && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -139,7 +161,11 @@ export default function LeaderboardPage() {
                   />
                 ) : (
                   <div className="space-y-2.5">
-                    {leaderboard.map((entry, index) => (
+                    {[...leaderboard].sort((a, b) =>
+                      sortBy === 'rating'
+                        ? b.overall_score - a.overall_score
+                        : b.total_ratings - a.total_ratings
+                    ).map((entry, index) => (
                       <Link key={entry.user_id} href={`/freelancers/${entry.user_id}`}>
                         <div className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-background border border-border/60 hover:border-primary/40 transition-all cursor-pointer">
                           <div className="flex items-center gap-3.5">

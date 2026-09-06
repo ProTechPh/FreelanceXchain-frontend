@@ -7,6 +7,14 @@ import { ArrowLeft, BriefcaseBusiness, Clock, ExternalLink, FileText, Star } fro
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { formatFileSize, safeAttachmentUrl } from '@/lib/attachment-presentation';
 import { proposalsApi } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/auth-contract';
@@ -24,6 +32,7 @@ export default function FreelancerProposalDetailPage() {
   const [details, setDetails] = useState<ProposalWithEmployerHistory | null>(null);
   const [loading, setLoading] = useState(true);
   const [withdrawing, setWithdrawing] = useState(false);
+  const [confirmWithdraw, setConfirmWithdraw] = useState(false);
   const [previewAttachment, setPreviewAttachment] = useState<AttachmentPreviewTarget | null>(null);
 
   const load = useCallback(async () => {
@@ -154,7 +163,7 @@ export default function FreelancerProposalDetailPage() {
                 </ul>
               </div>
             )}
-            <div className="flex flex-wrap gap-2 border-t border-border pt-4"><Button asChild variant="outline"><Link href={`/dashboard/freelancer/projects/${project.id}`}>View project</Link></Button>{proposal.status === 'pending' && <Button type="button" variant="ghost" className="text-destructive" disabled={withdrawing} onClick={() => void withdraw()}>{withdrawing ? 'Withdrawing…' : 'Withdraw proposal'}</Button>}</div>
+            <div className="flex flex-wrap gap-2 border-t border-border pt-4"><Button asChild variant="outline"><Link href={`/dashboard/freelancer/projects/${project.id}`}>View project</Link></Button>{proposal.status === 'pending' && <Button type="button" variant="ghost" className="text-destructive" disabled={withdrawing} onClick={() => setConfirmWithdraw(true)}>{withdrawing ? 'Withdrawing…' : 'Withdraw proposal'}</Button>}</div>
           </CardContent></Card>
         </div>
 
@@ -175,6 +184,44 @@ export default function FreelancerProposalDetailPage() {
         }}
         attachment={previewAttachment}
       />
+
+      {/* Withdraw Confirmation Dialog */}
+      <Dialog
+        open={confirmWithdraw}
+        onOpenChange={(open) => {
+          if (!open && !withdrawing) setConfirmWithdraw(false);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-destructive">Withdraw this proposal?</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to withdraw your proposal for{' '}
+              <strong className="text-foreground">&quot;{project.title}&quot;</strong>?
+              You will be removed from consideration and cannot un-withdraw.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setConfirmWithdraw(false)}
+              disabled={withdrawing}
+            >
+              Keep Proposal
+            </Button>
+            <Button
+              variant="destructive"
+              loading={withdrawing}
+              loadingText="Withdrawing…"
+              onClick={() => {
+                void withdraw().then(() => setConfirmWithdraw(false));
+              }}
+            >
+              Confirm Withdrawal
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

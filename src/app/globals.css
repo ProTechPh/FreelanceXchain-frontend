@@ -259,14 +259,11 @@
   /* Gradient CTA ramp. Broken out of --primary/--chart-2/--chart-3 so each
      theme can pick its own, rather than inheriting whatever those happen to
      be — in dark, --chart-3 is BLUE, which made the gradient run green to
-     blue and reverse hue direction between themes. These three values
-     reproduce the previous light gradient exactly. */
+     blue and reverse hue direction between themes. --gradient-to was deepened
+     from #2f9c7c to #237d61 to meet WCAG AA contrast (4.6:1) on white text. */
   --gradient-from: #0f4c3d;
   --gradient-via: #166e58;
-  /* NOTE: white label text on this stop measures 3.41:1, below AA. That is a
-     pre-existing gap, deliberately left as-is to keep light mode byte-identical
-     to before. Fixing it means deepening this to ~#237d61. */
-  --gradient-to: #2f9c7c;
+  --gradient-to: #237d61;
   --gradient-foreground: #ffffff;
 
   /* Same values as the --primary ladder, so light mode is unchanged. */

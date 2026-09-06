@@ -159,6 +159,15 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
           <div className="flex flex-col gap-5 sm:gap-6">
             {step === 'role' ? (
               <>
+                {/* Back link */}
+                <Link
+                  href="/"
+                  className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  <ArrowLeft className="size-4" />
+                  Back to home
+                </Link>
+
                 {/* Header */}
                 <div>
                   <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-foreground">

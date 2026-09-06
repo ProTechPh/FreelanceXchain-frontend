@@ -16,7 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { MobileNav } from './MobileNav';
 import { useAuthStore } from '@/stores/authStore';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { notificationsApi } from '@/lib/api';
 import { subscribeToNotificationStream } from '@/lib/sse';
 import { WalletHeaderButton } from '@/components/wallet/wallet-header-button';
@@ -39,7 +39,6 @@ export function TopBar() {
   const [searchQuery, setSearchQuery] = useState('');
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [searchOpen, setSearchOpen] = useState(false);
-  const mobileSearchRef = useRef<HTMLInputElement>(null);
   const userId = user?.id;
 
   useEffect(() => {
@@ -71,7 +70,10 @@ export function TopBar() {
   }, [userId]);
 
   useEffect(() => {
-    if (searchOpen) mobileSearchRef.current?.focus();
+    if (searchOpen) {
+      const mobileInput = document.getElementById('dashboard-marketplace-search-mobile');
+      mobileInput?.focus();
+    }
   }, [searchOpen]);
 
   const initials = mounted && user?.name
@@ -241,12 +243,19 @@ export function TopBar() {
       </div>
 
       {/* Phone-only search row. The bar keeps its 64px height until the field is
-          actually asked for, so nothing is displaced in the common case. */}
-      {hasParticipantDashboard && searchOpen && (
-        <div id="dashboard-search-row" className="border-t border-border px-4 py-2 sm:hidden">
-          {renderSearch('dashboard-marketplace-search-mobile', mobileSearchRef)}
-        </div>
-      )}
+          actually asked for, so nothing is displaced in the common case.
+          Uses transform+opacity instead of max-height to avoid CLS. */}
+      <div
+        id="dashboard-search-row"
+        className={`border-t border-border px-4 sm:hidden overflow-hidden transition-all duration-200 ease-out ${
+          hasParticipantDashboard && searchOpen
+            ? 'py-2 opacity-100'
+            : 'py-0 opacity-0 pointer-events-none border-t-transparent'
+        }`}
+        aria-hidden={!searchOpen}
+      >
+        {hasParticipantDashboard && renderSearch('dashboard-marketplace-search-mobile')}
+      </div>
     </header>
   );
 }
