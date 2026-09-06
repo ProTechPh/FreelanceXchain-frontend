@@ -451,7 +451,7 @@ export default function FreelancerDashboard() {
               <p className="text-sm text-muted-foreground">
                 No recommendations yet — add skills to your profile to get AI-matched with projects.
               </p>
-              <Button asChild size="sm" variant="outline">
+              <Button asChild size="sm" variant="gradient">
                 <Link href="/dashboard/freelancer/profile">Set up skills →</Link>
               </Button>
             </div>

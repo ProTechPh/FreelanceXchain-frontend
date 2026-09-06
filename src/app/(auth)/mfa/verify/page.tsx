@@ -8,6 +8,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { authApi } from '@/lib/api';
 import { toast } from 'sonner';
 import { Shield, ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
 import { getApiErrorMessage, isAuthSuccessResponse } from '@/lib/auth-contract';
 import { Field } from '@/components/ui/field';
 
@@ -62,7 +63,24 @@ export default function MfaVerifyPage() {
   };
 
   if (!mfaPending || !mfaSessionToken) {
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center p-8">
+        <div className="w-full max-w-md space-y-6 text-center">
+          <div className="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+            <Shield className="w-8 h-8 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Session expired</h1>
+            <p className="text-muted-foreground mt-2">
+              Your MFA session has expired. Please sign in again to continue.
+            </p>
+          </div>
+          <Button asChild variant="gradient" className="w-full">
+            <Link href="/login">Back to sign in</Link>
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   return (
