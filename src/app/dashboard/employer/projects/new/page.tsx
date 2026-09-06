@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { matchingApi, projectsApi, skillsApi } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { formatFileSize } from '@/lib/attachment-presentation';
+import { formatAmount } from '@/lib/format';
 import {
   ProjectFormValidationError,
   submitProject,
@@ -217,6 +218,14 @@ export default function CreateProjectPage() {
           return;
         }
       }
+      // Auto-sync budget from milestone total when advancing to step 3
+      const milestoneTotal = milestones.reduce(
+        (total, milestone) => total + Number(milestone.amount || 0),
+        0,
+      );
+      if (milestoneTotal > 0) {
+        setBudget(milestoneTotal.toFixed(2));
+      }
     }
 
     if (currentStep === 3) {
@@ -243,13 +252,6 @@ export default function CreateProjectPage() {
     if (error) {
       showFormError(error);
       return;
-    }
-
-    if (currentStep === 2) {
-      const milestoneSum = milestones.reduce((sum, m) => sum + (parseFloat(m.amount) || 0), 0);
-      if (milestoneSum > 0 && (!budget || parseFloat(budget) === 0)) {
-        setBudget(milestoneSum.toFixed(2));
-      }
     }
 
     setFormError(null);
@@ -688,7 +690,7 @@ export default function CreateProjectPage() {
                     {milestones.map((m, i) => (
                       <div key={i} className="flex items-center justify-between text-sm">
                         <span>{m.title || `Milestone ${i + 1}`}</span>
-                        <span className="font-medium">${m.amount || '0'}</span>
+                        <span className="font-medium">{formatAmount(Number(m.amount) || 0)}</span>
                       </div>
                     ))}
                   </div>

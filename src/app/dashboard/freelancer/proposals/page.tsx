@@ -68,19 +68,6 @@ export default function ProposalsPage() {
     };
   }, [load]);
 
-  const handleWithdraw = async (id: string) => {
-    setWithdrawingId(id);
-    try {
-      const { data: updated } = await proposalsApi.withdraw(id);
-      setProposals((prev) => prev.map((p) => (p.proposal.id === id ? { ...p, proposal: updated } : p)));
-      toast.success('Proposal withdrawn');
-    } catch {
-      toast.error('Failed to withdraw proposal');
-    } finally {
-      setWithdrawingId(null);
-    }
-  };
-
   const byStatus = (status: ProposalStatus) => proposals.filter((p) => p.proposal.status === status);
 
   if (loading) {
@@ -236,8 +223,17 @@ export default function ProposalsPage() {
               onClick={async () => {
                 if (!confirmWithdrawProposal) return;
                 const id = confirmWithdrawProposal.proposal.id;
-                await handleWithdraw(id);
-                setConfirmWithdrawProposal(null);
+                setWithdrawingId(id);
+                try {
+                  const { data: updated } = await proposalsApi.withdraw(id);
+                  setProposals((prev) => prev.map((p) => (p.proposal.id === id ? { ...p, proposal: updated } : p)));
+                  toast.success('Proposal withdrawn');
+                  setConfirmWithdrawProposal(null);
+                } catch {
+                  toast.error('Failed to withdraw proposal');
+                } finally {
+                  setWithdrawingId(null);
+                }
               }}
             >
               Confirm Withdrawal

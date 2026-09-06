@@ -83,7 +83,7 @@ export default function PasswordlessPage() {
             {userId && (
               <form className="space-y-3 border-t border-border pt-5" onSubmit={verifyCode}>
                 <Field label="One-time code" htmlFor="passwordless-code">
-                  <Input id="passwordless-code" inputMode="numeric" autoComplete="one-time-code" value={code} onChange={(event) => setCode(event.target.value)} />
+                  <Input id="passwordless-code" inputMode="numeric" autoComplete="one-time-code" maxLength={6} pattern="[0-9]*" placeholder="000000" value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))} className="text-center text-2xl tracking-[0.5em] font-mono h-12" />
                 </Field>
                 <Button className="w-full" type="submit" disabled={loading || !code.trim()}>Verify and sign in</Button>
               </form>

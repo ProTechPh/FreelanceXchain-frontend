@@ -90,7 +90,12 @@ export default function MfaSetupPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (!hasHydrated || !isAuthenticated) {
+  if (!hasHydrated) {
+    return null;
+  }
+
+  if (!isAuthenticated) {
+    router.replace('/login');
     return null;
   }
 
