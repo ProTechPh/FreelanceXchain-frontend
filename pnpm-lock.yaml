@@ -53,9 +53,6 @@ importers:
       ethers:
         specifier: ^6.17.0
         version: 6.17.0
-      framer-motion:
-        specifier: ^13.1.1
-        version: 13.1.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       lucide-react:
         specifier: ^1.17.0
         version: 1.17.0(react@19.2.7)

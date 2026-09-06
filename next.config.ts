@@ -2,6 +2,16 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   distDir: process.env.NEXT_DIST_DIR || '.next',
+  experimental: {
+    optimizePackageImports: [
+      'lucide-react',
+      '@radix-ui/react-accordion',
+      '@radix-ui/react-navigation-menu',
+      '@radix-ui/react-slot',
+      'motion',
+      'sonner',
+    ],
+  },
   images: {
     remotePatterns: [
       {
