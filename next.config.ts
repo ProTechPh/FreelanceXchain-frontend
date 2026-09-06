@@ -82,7 +82,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' blob: data: https: http:",
               "font-src 'self' data:",
-              "connect-src 'self' https://*.appwrite.io https://cloud.appwrite.io https://api.freelancexchain.works http://localhost:* http://127.0.0.1:* wss: ws:",
+              "connect-src 'self' https://*.appwrite.io https://cloud.appwrite.io https://api.freelancexchain.works https://stats.uptimerobot.com http://localhost:* http://127.0.0.1:* wss: ws:",
               "frame-src 'self'",
               "object-src 'none'",
               "base-uri 'self'",
