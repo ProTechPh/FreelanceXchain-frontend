@@ -292,6 +292,8 @@ function EditProjectContent() {
                                 <img
                                   src={safeUrl}
                                   alt={att.filename}
+                                  loading="lazy"
+                                  decoding="async"
                                   className="size-10 rounded-lg object-cover border border-border shrink-0"
                                 />
                               ) : (
@@ -351,6 +353,8 @@ function EditProjectContent() {
                                 <img
                                   src={previewUrl}
                                   alt={file.name}
+                                  loading="lazy"
+                                  decoding="async"
                                   className="size-10 rounded-lg object-cover border border-primary/20 shrink-0"
                                 />
                               ) : (

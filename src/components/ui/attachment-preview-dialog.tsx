@@ -249,6 +249,7 @@ export function AttachmentPreviewDialog({
                   <img
                     src={url}
                     alt={displayFilename}
+                    decoding="async"
                     className="max-h-[65dvh] max-w-full rounded-xl object-contain shadow-md"
                     onError={() => setImageFailed(true)}
                   />

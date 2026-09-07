@@ -281,6 +281,7 @@ export default function PortfolioPage() {
                       alt={item.title}
                       className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.01]"
                       loading="lazy"
+                      decoding="async"
                       onError={(e) => {
                         const target = e.currentTarget;
                         try {
@@ -430,6 +431,8 @@ export default function PortfolioPage() {
                   <img
                     src={livePreviewUrl}
                     alt="Preview"
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover object-top"
                   />
                 </div>

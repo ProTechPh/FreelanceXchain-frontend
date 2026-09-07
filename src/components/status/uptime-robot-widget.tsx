@@ -290,7 +290,7 @@ export function UptimeRobotWidget() {
                 } else if (ratioNum < 98) {
                   barColor = 'bg-warning hover:bg-warning/80';
                 } else if (ratioNum < 99.5) {
-                  barColor = 'bg-emerald-500/90 hover:bg-emerald-500';
+                  barColor = 'bg-success/90 hover:bg-success';
                 }
 
                 const tooltipContent = (
