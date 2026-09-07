@@ -342,7 +342,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                       </button>
                     </div>
                     {password && confirmPassword && password !== confirmPassword && (
-                      <p className="text-sm text-destructive mt-1">Passwords don't match</p>
+                      <p className="text-sm text-destructive mt-1">Passwords don&apos;t match</p>
                     )}
                     {password && confirmPassword && password === confirmPassword && (
                       <p className="text-sm text-green-600 mt-1">Passwords match ✓</p>

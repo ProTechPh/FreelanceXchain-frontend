@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { useContractPaymentHistory } from '@/hooks/use-payments';
 import {
   getPaymentDirection,

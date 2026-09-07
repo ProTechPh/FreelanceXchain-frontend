@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { CircleDollarSign, FileCheck2, FolderOpen } from 'lucide-react';
 import { reportLoadFailure } from '@/lib/report-failure';
@@ -11,7 +11,6 @@ import type { Contract, UserRole } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { EmptyState } from '@/components/ui/empty-state';
 import { formatAmount, formatDate } from '@/lib/format';
@@ -20,8 +19,9 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const fetchRef = useRef<() => void>(() => {});
 
-  const fetchContracts = () => {
+  const fetchContracts = useCallback(() => {
     let active = true;
     setLoading(true);
     setError(false);
@@ -32,7 +32,7 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
       .catch((err) => {
         if (active) {
           setError(true);
-          reportLoadFailure(err, 'your contracts', fetchContracts);
+          reportLoadFailure(err, 'your contracts', () => fetchRef.current());
         }
       })
       .finally(() => {
@@ -41,11 +41,16 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
     return () => {
       active = false;
     };
-  };
+  }, []);
 
   useEffect(() => {
+    fetchRef.current = () => void fetchContracts();
+  }, [fetchContracts]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     return fetchContracts();
-  }, []);
+  }, [fetchContracts]);
 
   const active = contracts.filter((contract) => contract.status === 'active').length;
   const totalValue = contracts.reduce((total, contract) => total + contract.totalAmount, 0);

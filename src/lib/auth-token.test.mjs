@@ -4,7 +4,6 @@ import test from 'node:test';
 import {
   clearAccessToken,
   getAccessToken,
-  isCookieSupported,
   setAccessToken,
 } from './auth-token.ts';
 

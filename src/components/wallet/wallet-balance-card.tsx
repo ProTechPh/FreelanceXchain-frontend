@@ -30,6 +30,7 @@ export function WalletBalanceCard({ role = 'employer', className = '' }: WalletB
   const [lastSynced, setLastSynced] = useState<string | null>(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLastSynced(new Date().toLocaleTimeString());
   }, []);
 

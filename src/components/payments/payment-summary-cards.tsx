@@ -3,9 +3,7 @@
 import { TrendingDown, TrendingUp } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { StatsSkeleton } from '@/components/dashboard/skeletons';
 import { usePaymentSummary } from '@/hooks/use-payments';
-import { formatAmount } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 /**

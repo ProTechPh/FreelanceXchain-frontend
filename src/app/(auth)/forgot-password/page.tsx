@@ -42,7 +42,7 @@ export default function ForgotPasswordPage() {
                 We&apos;ve sent a password reset link to<br className="hidden sm:inline" />
                 <span className="font-medium text-foreground">{email}</span>
               </p>
-              <p className="text-sm text-muted-foreground mt-2">Don't see it? Check your spam/junk folder. It may take a few minutes.</p>
+              <p className="text-sm text-muted-foreground mt-2">Don&apos;t see it? Check your spam/junk folder. It may take a few minutes.</p>
             </div>
             <p className="text-sm text-muted-foreground">
               Didn&apos;t receive the email?{' '}
