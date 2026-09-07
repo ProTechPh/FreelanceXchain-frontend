@@ -348,7 +348,7 @@ function EditProjectContent() {
                             className="flex items-center justify-between p-2.5 rounded-xl border border-primary/30 bg-primary/5 gap-3"
                           >
                             <div className="flex items-center gap-2.5 min-w-0">
-                              {isImage && previewUrl ? (
+                              {isImage && previewUrl && previewUrl.startsWith('blob:') ? (
                                 // eslint-disable-next-line @next/next/no-img-element
                                 <img
                                   src={previewUrl}
