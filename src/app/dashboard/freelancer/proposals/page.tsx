@@ -6,9 +6,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { proposalsApi, projectsApi } from '@/lib/api';
 import type { Proposal, Project, ProposalStatus } from '@/types';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/toast';
 import { reportLoadFailure } from '@/lib/report-failure';
 import { Clock, CheckCircle, XCircle, FileText } from 'lucide-react';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
@@ -70,6 +71,10 @@ export default function ProposalsPage() {
 
   const byStatus = (status: ProposalStatus) => proposals.filter((p) => p.proposal.status === status);
 
+  const handleRefresh = useCallback(async () => {
+    await load();
+  }, [load]);
+
   if (loading) {
     return (
       <ListSkeleton rows={4} label="Loading proposals" />
@@ -79,7 +84,8 @@ export default function ProposalsPage() {
   const statuses: ProposalStatus[] = ['pending', 'accepted', 'rejected', 'withdrawn'];
 
   return (
-    <div className="space-y-6">
+    <PullToRefresh onRefresh={handleRefresh} className="min-h-screen">
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
@@ -214,7 +220,7 @@ export default function ProposalsPage() {
               onClick={() => setConfirmWithdrawProposal(null)}
               disabled={Boolean(withdrawingId)}
             >
-              Keep Proposal
+                            Keep Proposal
             </Button>
             <Button
               variant="destructive"
@@ -223,12 +229,13 @@ export default function ProposalsPage() {
               onClick={async () => {
                 if (!confirmWithdrawProposal) return;
                 const id = confirmWithdrawProposal.proposal.id;
+                const previousState = proposals.find((p) => p.proposal.id === id);
                 setWithdrawingId(id);
                 try {
                   const { data: updated } = await proposalsApi.withdraw(id);
                   setProposals((prev) => prev.map((p) => (p.proposal.id === id ? { ...p, proposal: updated } : p)));
-                  toast.success('Proposal withdrawn');
                   setConfirmWithdrawProposal(null);
+                  toast.success('Proposal withdrawn');
                 } catch {
                   toast.error('Failed to withdraw proposal');
                 } finally {
@@ -241,6 +248,7 @@ export default function ProposalsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </PullToRefresh>
   );
 }

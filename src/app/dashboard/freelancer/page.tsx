@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StatsSkeleton, ListSkeleton } from '@/components/dashboard/skeletons';
+import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import Link from 'next/link';
 import {
   contractsApi,
