@@ -7,15 +7,24 @@
 // the Next.js server and the browser and produce a hydration mismatch. Every
 // helper here pins an explicit locale so server and client always agree.
 
-const LOCALE = 'en-US';
+const DEFAULT_LOCALE = 'en-US';
+
+/**
+ * Get the effective locale to use for formatting.
+ * Falls back to DEFAULT_LOCALE if userLocale is not provided.
+ */
+function getLocale(userLocale?: string): string {
+  return userLocale || DEFAULT_LOCALE;
+}
 
 const currencyFormatters = new Map<string, Intl.NumberFormat>();
 
-function currencyFormatter(currency: string, fractionDigits: number): Intl.NumberFormat {
-  const key = `${currency}:${fractionDigits}`;
+function currencyFormatter(currency: string, fractionDigits: number, locale?: string): Intl.NumberFormat {
+  const effectiveLocale = getLocale(locale);
+  const key = `${effectiveLocale}:${currency}:${fractionDigits}`;
   let formatter = currencyFormatters.get(key);
   if (!formatter) {
-    formatter = new Intl.NumberFormat(LOCALE, {
+    formatter = new Intl.NumberFormat(effectiveLocale, {
       style: 'currency',
       currency,
       minimumFractionDigits: fractionDigits,
@@ -30,6 +39,8 @@ export interface AmountOptions {
   currency?: string;
   /** Force decimals. Defaults to 2 for fractional values, 0 for whole ones. */
   fractionDigits?: number;
+  /** User locale for formatting. Defaults to 'en-US' if not specified. */
+  locale?: string;
 }
 
 /**
@@ -40,16 +51,16 @@ export interface AmountOptions {
 export function formatAmount(value: number | string | null | undefined, options: AmountOptions = {}): string {
   const amount = typeof value === 'string' ? Number(value) : value;
   if (amount == null || !Number.isFinite(amount)) return '—';
-  const { currency = 'USD' } = options;
+  const { currency = 'USD', locale } = options;
   const fractionDigits = options.fractionDigits ?? (Number.isInteger(amount) ? 0 : 2);
-  return currencyFormatter(currency, fractionDigits).format(amount);
+  return currencyFormatter(currency, fractionDigits, locale).format(amount);
 }
 
 /** Compact form for KPI tiles and charts: $1.2K, $3.4M. */
-export function formatAmountCompact(value: number | null | undefined, currency = 'USD'): string {
+export function formatAmountCompact(value: number | null | undefined, currency = 'USD', locale?: string): string {
   if (value == null || !Number.isFinite(value)) return '—';
-  if (Math.abs(value) < 1000) return formatAmount(value, { currency });
-  return new Intl.NumberFormat(LOCALE, {
+  if (Math.abs(value) < 1000) return formatAmount(value, { currency, locale });
+  return new Intl.NumberFormat(getLocale(locale), {
     style: 'currency',
     currency,
     notation: 'compact',
@@ -58,9 +69,9 @@ export function formatAmountCompact(value: number | null | undefined, currency =
 }
 
 /** Plain number with thousands separators. */
-export function formatNumber(value: number | null | undefined, fractionDigits = 0): string {
+export function formatNumber(value: number | null | undefined, fractionDigits = 0, locale?: string): string {
   if (value == null || !Number.isFinite(value)) return '—';
-  return new Intl.NumberFormat(LOCALE, {
+  return new Intl.NumberFormat(getLocale(locale), {
     minimumFractionDigits: fractionDigits,
     maximumFractionDigits: fractionDigits,
   }).format(value);
@@ -73,9 +84,9 @@ export function formatScore(value: number | null | undefined): string {
 }
 
 /** Percentage from an already-scaled value (12.5 -> "12.5%"). */
-export function formatPercent(value: number | null | undefined, fractionDigits = 0): string {
+export function formatPercent(value: number | null | undefined, fractionDigits = 0, locale?: string): string {
   if (value == null || !Number.isFinite(value)) return '—';
-  return `${formatNumber(value, fractionDigits)}%`;
+  return `${formatNumber(value, fractionDigits, locale)}%`;
 }
 
 function toDate(value: string | number | Date | null | undefined): Date | null {
@@ -85,26 +96,28 @@ function toDate(value: string | number | Date | null | undefined): Date | null {
 }
 
 /** Date only: "Aug 25, 2026". */
-export function formatDate(value: string | number | Date | null | undefined): string {
+export function formatDate(value: string | number | Date | null | undefined, locale?: string): string {
   const date = toDate(value);
   if (!date) return '—';
-  return new Intl.DateTimeFormat(LOCALE, { dateStyle: 'medium' }).format(date);
+  return new Intl.DateTimeFormat(getLocale(locale), { dateStyle: 'medium' }).format(date);
 }
 
 /** Date and time: "Aug 25, 2026, 10:14 PM". */
-export function formatDateTime(value: string | number | Date | null | undefined): string {
+export function formatDateTime(value: string | number | Date | null | undefined, locale?: string): string {
   const date = toDate(value);
   if (!date) return '—';
-  return new Intl.DateTimeFormat(LOCALE, { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+  return new Intl.DateTimeFormat(getLocale(locale), { dateStyle: 'medium', timeStyle: 'short' }).format(date);
 }
 
 /**
  * Relative time: "3 days ago", "in 2 hours".
  * Pass `now` explicitly when rendering on the server so output stays stable.
+ * Pass `locale` to format for a specific user locale.
  */
 export function formatRelativeTime(
   value: string | number | Date | null | undefined,
   now: Date = new Date(),
+  locale?: string
 ): string {
   const date = toDate(value);
   if (!date) return '—';
@@ -117,7 +130,7 @@ export function formatRelativeTime(
     ['hour', 3600],
     ['minute', 60],
   ];
-  const rtf = new Intl.RelativeTimeFormat(LOCALE, { numeric: 'auto' });
+  const rtf = new Intl.RelativeTimeFormat(getLocale(locale), { numeric: 'auto' });
   for (const [unit, secondsInUnit] of units) {
     if (Math.abs(seconds) >= secondsInUnit) {
       return rtf.format(Math.round(seconds / secondsInUnit), unit);
