@@ -4,6 +4,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Menu } from 'lucide-react';
 
+import { Tooltip } from '@/components/ui/tooltip';
+
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -49,19 +51,21 @@ export function MobileNav({ role }: { role: UserRole | undefined }) {
         setOpen(next);
       }}
     >
-      <SheetTrigger
-        render={
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label="Open navigation menu"
-            data-tour="nav-trigger"
-            className="size-11 sm:size-10 lg:hidden touch-manipulation"
-          />
-        }
-      >
-        <Menu className="size-5" aria-hidden="true" />
-      </SheetTrigger>
+      <Tooltip content="Open navigation menu">
+        <SheetTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Open navigation menu"
+              data-tour="nav-trigger"
+              className="size-11 sm:size-10 lg:hidden touch-manipulation"
+            />
+          }
+        >
+          <Menu className="size-5" aria-hidden="true" />
+        </SheetTrigger>
+      </Tooltip>
       <SheetContent
         side="left"
         data-tour="nav-drawer"

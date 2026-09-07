@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Tooltip } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -143,9 +144,11 @@ export default function Navbar({
         {/* Desktop auth — hidden below sm */}
         <div className="hidden sm:flex items-center gap-1.5 sm:gap-2 shrink-0">
           <ThemeToggle />
-          <Button variant="ghost" size="icon" aria-label="Open search dialog" className="rounded-full size-10 shrink-0 touch-manipulation" onClick={() => setOpenSearch(true)}>
-            <MagnifyingGlass className="size-3.5" strokeWidth={2.5} />
-          </Button>
+          <Tooltip content="Search">
+            <Button variant="ghost" size="icon" aria-label="Open search dialog" className="rounded-full size-11 shrink-0 touch-manipulation" onClick={() => setOpenSearch(true)}>
+              <MagnifyingGlass className="size-3.5" strokeWidth={2.5} />
+            </Button>
+          </Tooltip>
           {isLoggedIn ? (
             <div className="flex items-center gap-1.5 sm:gap-2">
               <Button asChild size="sm" className="shrink-0 rounded-full bg-primary text-primary-foreground text-xs font-bold px-4 hover:bg-primary/90 shadow-sm whitespace-nowrap">
@@ -154,7 +157,7 @@ export default function Navbar({
               <DropdownMenu>
                 <DropdownMenuTrigger
                   aria-label="Open account menu"
-                  className="flex size-8 cursor-pointer items-center justify-center rounded-full outline-none transition-opacity duration-fast hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring touch-manipulation"
+                  className="flex size-10 p-0.5 cursor-pointer items-center justify-center rounded-full outline-none transition-opacity duration-fast hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring touch-manipulation"
                 >
                   <Avatar className="size-7">
                     <AvatarFallback className="text-xs gradient-primary font-bold">
@@ -215,13 +218,13 @@ export default function Navbar({
         <div className="flex lg:hidden items-center gap-1">
           <div className="flex sm:hidden items-center gap-1">
             <ThemeToggle />
-            <Button variant="ghost" size="icon" aria-label="Open search dialog" className="rounded-full size-10 sm:size-9 touch-manipulation" onClick={() => setOpenSearch(true)}>
+            <Button variant="ghost" size="icon" aria-label="Open search dialog" className="rounded-full size-11 sm:size-9 touch-manipulation" onClick={() => setOpenSearch(true)}>
               <MagnifyingGlass className="size-4 sm:size-3.5" strokeWidth={2.5} />
             </Button>
           </div>
 
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetTrigger className="inline-flex items-center justify-center size-10 sm:size-9 rounded-full text-sm hover:bg-muted transition-colors touch-manipulation" aria-label="Open menu">
+            <SheetTrigger className="inline-flex items-center justify-center size-11 sm:size-9 rounded-full text-sm hover:bg-muted transition-colors touch-manipulation" aria-label="Open menu">
               <List className="size-4.5 sm:size-4" strokeWidth={2.5} />
             </SheetTrigger>
 

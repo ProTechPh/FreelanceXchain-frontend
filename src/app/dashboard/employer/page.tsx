@@ -16,7 +16,7 @@ import type { Project, Proposal } from '@/types';
 import { reportLoadFailure } from '@/lib/report-failure';
 import { DollarSign, FolderOpen, FileText, Users, Clock, ArrowUpRight, PlusCircle, Briefcase } from 'lucide-react';
 import { formatAmount, formatRelativeTime, formatDate } from '@/lib/format';
-import { StatsSkeleton } from '@/components/dashboard/skeletons';
+import { StatsSkeleton, ListSkeleton } from '@/components/dashboard/skeletons';
 import { WalletConnectBanner } from '@/components/wallet/wallet-connect-banner';
 import { TourStepLink } from '@/components/onboarding/tour-step-link';
 import { WalletBalanceCard } from '@/components/wallet/wallet-balance-card';
@@ -101,7 +101,7 @@ export default function EmployerDashboard() {
 
         const recent = allProposals
           .sort((a, b) => new Date(b.proposal.createdAt).getTime() - new Date(a.proposal.createdAt).getTime())
-          .slice(0, 3);
+          .slice(0, 5);
 
         const details = await Promise.all(
           recent.map(async ({ proposal }) => {
@@ -299,10 +299,7 @@ export default function EmployerDashboard() {
             </CardHeader>
             <CardContent className="space-y-4">
               {coreLoading ? (
-                <div className="space-y-3" role="status" aria-label="Loading active projects">
-                  <Skeleton className="h-24 w-full rounded-xl" />
-                  <Skeleton className="h-24 w-full rounded-xl" />
-                </div>
+                <ListSkeleton rows={2} label="Loading active projects" />
               ) : activeProjects.length === 0 ? (
                 <div className="flex flex-col items-center gap-2 py-8 text-center">
                   <p className="text-sm text-muted-foreground">
@@ -311,45 +308,56 @@ export default function EmployerDashboard() {
                   <TourStepLink step="contracts">How contracts and milestones work</TourStepLink>
                 </div>
               ) : (
-                activeProjects.map((project) => {
-                  const milestones = project.milestones ?? [];
-                  const completedCount = milestones.filter((m) => m.status === 'completed').length;
-                  const progress = milestones.length > 0 ? Math.round((completedCount / milestones.length) * 100) : 0;
-                  return (
-                    <Link
-                      key={project.id}
-                      href={`/dashboard/employer/projects/${project.id}`}
-                      className="block rounded-xl border border-border bg-secondary/50 p-4 transition-all hover:border-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <h3 className="font-medium">{project.title}</h3>
-                          <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
-                            <span>{project.proposalCount ?? 0} proposals</span>
-                            <span className="flex items-center gap-1">
-                              <Clock className="w-3 h-3" /> {formatDate(project.deadline)}
-                            </span>
+                <>
+                  {activeProjects.slice(0, 4).map((project) => {
+                    const milestones = project.milestones ?? [];
+                    const completedCount = milestones.filter((m) => m.status === 'completed').length;
+                    const progress = milestones.length > 0 ? Math.round((completedCount / milestones.length) * 100) : 0;
+                    return (
+                      <Link
+                        key={project.id}
+                        href={`/dashboard/employer/projects/${project.id}`}
+                        className="block rounded-xl border border-border bg-secondary/50 p-4 transition-all hover:border-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <h3 className="font-medium">{project.title}</h3>
+                            <div className="flex items-center gap-3 mt-1 text-sm text-muted-foreground">
+                              <span>{project.proposalCount ?? 0} proposals</span>
+                              <span className="flex items-center gap-1">
+                                <Clock className="w-3 h-3" /> {formatDate(project.deadline)}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-semibold text-primary">{formatAmount(project.budget)}</p>
+                            <StatusBadge status={project.status} domain="project" />
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className="font-semibold text-primary">{formatAmount(project.budget)}</p>
-                          <StatusBadge status={project.status} domain="project" />
-                        </div>
-                      </div>
-                      {project.status === 'in_progress' && milestones.length > 0 && (
-                        <div>
-                          <div className="flex items-center justify-between text-xs mb-1">
-                            <span className="text-muted-foreground">Progress</span>
-                            <span>{progress}%</span>
+                        {project.status === 'in_progress' && milestones.length > 0 && (
+                          <div>
+                            <div className="flex items-center justify-between text-xs mb-1">
+                              <span className="text-muted-foreground">Progress</span>
+                              <span>{progress}%</span>
+                            </div>
+                            <div className="h-1.5 bg-background rounded-full overflow-hidden">
+                              <div className="h-full gradient-primary rounded-full transition-all" style={{ width: `${progress}%` }} />
+                            </div>
                           </div>
-                          <div className="h-1.5 bg-background rounded-full overflow-hidden">
-                            <div className="h-full gradient-primary rounded-full transition-all" style={{ width: `${progress}%` }} />
-                          </div>
-                        </div>
-                      )}
-                    </Link>
-                  );
-                })
+                        )}
+                      </Link>
+                    );
+                  })}
+                  {activeProjects.length > 4 && (
+                    <div className="flex justify-center pt-2">
+                      <Button variant="link" asChild>
+                        <Link href="/dashboard/employer/projects">
+                          View all ({activeProjects.length})
+                        </Link>
+                      </Button>
+                    </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
@@ -367,38 +375,46 @@ export default function EmployerDashboard() {
           </CardHeader>
           <CardContent className="space-y-3">
             {coreLoading ? (
-              <div className="space-y-3" role="status" aria-label="Loading recent proposals">
-                <Skeleton className="h-16 w-full rounded-xl" />
-                <Skeleton className="h-16 w-full rounded-xl" />
-              </div>
+              <ListSkeleton rows={2} label="Loading recent proposals" />
             ) : recentProposals.length === 0 ? (
               <div className="flex flex-col items-center gap-2 py-8 text-center">
                 <p className="text-sm text-muted-foreground">No proposals yet</p>
                 <TourStepLink step="proposals">How bids are ranked</TourStepLink>
               </div>
             ) : (
-              recentProposals.map(({ proposal, projectTitle, freelancerName, rating, projectId }) => (
-                <Link
-                  key={proposal.id}
-                  href={`/dashboard/employer/projects/${projectId}/proposals`}
-                  className="block p-3 rounded-xl bg-secondary/50 border border-border transition-all hover:border-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center text-xs font-bold">
-                      {initials(freelancerName)}
+              <>
+                {recentProposals.slice(0, 4).map(({ proposal, projectTitle, freelancerName, rating, projectId }) => (
+                  <Link
+                    key={proposal.id}
+                    href={`/dashboard/employer/projects/${projectId}/proposals`}
+                    className="block p-3 rounded-xl bg-secondary/50 border border-border transition-all hover:border-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-8 h-8 rounded-full gradient-primary flex items-center justify-center text-xs font-bold">
+                        {initials(freelancerName)}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{freelancerName}</p>
+                        <p className="text-xs text-muted-foreground">{projectTitle}</p>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">{freelancerName}</p>
-                      <p className="text-xs text-muted-foreground">{projectTitle}</p>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span className="font-medium text-primary">{formatAmount(proposal.proposedRate)}</span>
+                      {rating !== null && <span>★ {rating.toFixed(1)}</span>}
+                      <span>{relativeTime(proposal.createdAt)}</span>
                     </div>
+                  </Link>
+                ))}
+                {recentProposals.length > 4 && (
+                  <div className="flex justify-center pt-2">
+                    <Button variant="link" asChild>
+                      <Link href="/dashboard/employer/projects">
+                        View all ({recentProposals.length})
+                      </Link>
+                    </Button>
                   </div>
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span className="font-medium text-primary">{formatAmount(proposal.proposedRate)}</span>
-                    {rating !== null && <span>★ {rating.toFixed(1)}</span>}
-                    <span>{relativeTime(proposal.createdAt)}</span>
-                  </div>
-                </Link>
-              ))
+                )}
+              </>
             )}
           </CardContent>
         </Card>

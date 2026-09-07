@@ -79,6 +79,8 @@ export function ProjectDetailView({
   const searchParams = useSearchParams();
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const [proposalOpen, setProposalOpen] = useState(false);
   const [autoGenerateAI, setAutoGenerateAI] = useState(false);
   const [employerDialogOpen, setEmployerDialogOpen] = useState(false);
@@ -123,6 +125,8 @@ export function ProjectDetailView({
   useEffect(() => {
     let active = true;
     const fetchProject = async () => {
+      setLoading(true);
+      setFetchError(false);
       try {
         const res = await projectsApi.get(projectId);
         let projectData = res.data;
@@ -144,6 +148,7 @@ export function ProjectDetailView({
         }
       } catch (error) {
         if (active) {
+          setFetchError(true);
           reportFailure(error, 'load this project');
         }
       } finally {
@@ -159,7 +164,7 @@ export function ProjectDetailView({
     return () => {
       active = false;
     };
-  }, [projectId]);
+  }, [projectId, retryCount]);
 
   const fallbackBackPath = defaultBackHref ?? (mode === 'public' ? '/projects' : '/dashboard/freelancer/projects');
   const backPath = getMarketplaceReturnPath(searchParams?.get('returnTo') ?? null, fallbackBackPath);
@@ -192,6 +197,31 @@ export function ProjectDetailView({
       );
     }
     return <DetailSkeleton label="Loading project" />;
+  }
+
+  if (fetchError && !project) {
+    if (mode === 'public') {
+      return (
+        <div className="flex min-h-screen flex-col bg-background">
+          <Navbar />
+          <main className="flex-1 pt-28 pb-20 flex items-center justify-center">
+            <div className="flex flex-col items-center justify-center p-8 text-center bg-card rounded-3xl border border-border/80 shadow-md max-w-md mx-auto">
+              <p className="text-lg font-medium">Failed to load project</p>
+              <p className="text-muted-foreground mt-1">Check your connection and try again.</p>
+              <Button className="mt-4 rounded-full gradient-primary" onClick={() => setRetryCount(c => c + 1)}>Try Again</Button>
+            </div>
+          </main>
+          <FooterSection />
+        </div>
+      );
+    }
+    return (
+      <div className="flex flex-col items-center justify-center p-8 text-center">
+        <p className="text-lg font-medium">Failed to load project</p>
+        <p className="text-muted-foreground mt-1">Check your connection and try again.</p>
+        <Button className="mt-4" onClick={() => setRetryCount(c => c + 1)}>Try Again</Button>
+      </div>
+    );
   }
 
   if (!project) {
@@ -445,7 +475,7 @@ export function ProjectDetailView({
                                   type="button"
                                   size="sm"
                                   variant="ghost"
-                                  className="h-7 text-xs px-2 shrink-0 hover:text-primary hover:bg-primary/10"
+                                  className="h-7 min-h-[44px] sm:min-h-0 sm:h-7 text-xs px-2 shrink-0 hover:text-primary hover:bg-primary/10"
                                   onClick={() =>
                                     setPreviewAttachment({
                                       filename: att.filename,
@@ -536,7 +566,7 @@ export function ProjectDetailView({
                               type="button"
                               variant="ghost"
                               size="sm"
-                              className="rounded-full hover:text-primary hover:bg-primary/10"
+                              className="rounded-full min-h-[44px] sm:min-h-0 sm:h-8 hover:text-primary hover:bg-primary/10"
                               onClick={() =>
                                 setPreviewAttachment({
                                   filename: attachment.filename,

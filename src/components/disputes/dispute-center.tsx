@@ -23,6 +23,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { EmptyState } from '@/components/ui/empty-state';
 import { formatDateTime } from '@/lib/format';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 type ParticipantRole = Extract<UserRole, 'employer' | 'freelancer'>;
 const emptyDraft: DisputeDraft = { contractId: '', milestoneId: '', reason: '' };
@@ -41,6 +42,7 @@ export function DisputeCenter({ role, disputeId }: { role: ParticipantRole; disp
   const [loadingMilestones, setLoadingMilestones] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
   const [previewAttachment, setPreviewAttachment] = useState<AttachmentPreviewTarget | null>(null);
+  const [deletingEvidence, setDeletingEvidence] = useState<{ disputeId: string; evidenceId: string } | null>(null);
 
   const verified = canUseDisputeActions(user?.kycStatus);
   const verificationPath = `/dashboard/${role}/verification`;
@@ -206,7 +208,6 @@ export function DisputeCenter({ role, disputeId }: { role: ParticipantRole; disp
   };
 
   const deleteEvidence = async (disputeId: string, evidenceId: string) => {
-    if (typeof window !== 'undefined' && window.confirm && !window.confirm('Delete this unverified evidence?')) return;
     setActionId(`delete:${evidenceId}`);
     try {
       await disputesApi.deleteEvidence(disputeId, evidenceId);
@@ -337,7 +338,7 @@ export function DisputeCenter({ role, disputeId }: { role: ParticipantRole; disp
                               variant="ghost"
                               aria-label={`Delete ${evidence.evidenceType} evidence`}
                               disabled={actionId === `delete:${evidence.id}`}
-                              onClick={() => void deleteEvidence(dispute.id, evidence.id)}
+                              onClick={() => setDeletingEvidence({ disputeId: dispute.id, evidenceId: evidence.id })}
                             >
                               <Trash2 className="size-4 text-destructive" />
                             </Button>
@@ -370,6 +371,31 @@ export function DisputeCenter({ role, disputeId }: { role: ParticipantRole; disp
         }}
         attachment={previewAttachment}
       />
+
+      <Dialog open={Boolean(deletingEvidence)} onOpenChange={(open) => !open && setDeletingEvidence(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Evidence</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this unverified evidence? This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setDeletingEvidence(null)}>Cancel</Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (deletingEvidence) {
+                  void deleteEvidence(deletingEvidence.disputeId, deletingEvidence.evidenceId);
+                }
+                setDeletingEvidence(null);
+              }}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

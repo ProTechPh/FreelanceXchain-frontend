@@ -24,6 +24,10 @@ const DANGEROUS_TAGS = new Set([
   'svg',
   'math',
   'noscript',
+  'template',
+  'slot',
+  'canvas',
+  'dialog',
 ]);
 
 const ALLOWED_TAGS = new Set([

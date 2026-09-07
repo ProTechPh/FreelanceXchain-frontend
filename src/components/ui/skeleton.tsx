@@ -20,22 +20,22 @@ function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
-/** Pre-composed text block: n lines with a short final line. */
-function SkeletonText({
-  lines = 3,
-  className,
-  ...props
-}: React.ComponentProps<"div"> & { lines?: number }) {
+function SkeletonCard({ className }: { className?: string }) {
+  return <Skeleton className={cn('h-32 w-full rounded-xl', className)} />
+}
+
+function SkeletonText({ className, lines = 1 }: { className?: string; lines?: number }) {
   return (
-    <div data-slot="skeleton-text" className={cn("space-y-2", className)} {...props}>
-      {Array.from({ length: lines }).map((_, index) => (
-        <Skeleton
-          key={index}
-          className={cn("h-4", index === lines - 1 && lines > 1 && "w-2/3")}
-        />
+    <div className={cn('space-y-2', className)}>
+      {Array.from({ length: lines }).map((_, i) => (
+        <Skeleton key={i} className="h-4 w-full rounded" />
       ))}
     </div>
   )
 }
 
-export { Skeleton, SkeletonText }
+function SkeletonAvatar({ className }: { className?: string }) {
+  return <Skeleton className={cn('h-10 w-10 rounded-full', className)} />
+}
+
+export { Skeleton, SkeletonCard, SkeletonText, SkeletonAvatar }

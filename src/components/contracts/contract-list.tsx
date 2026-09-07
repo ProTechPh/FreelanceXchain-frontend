@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { CircleDollarSign, FileCheck2, FolderOpen } from 'lucide-react';
 import { reportLoadFailure } from '@/lib/report-failure';
@@ -10,7 +10,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import type { Contract, UserRole } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ListSkeleton } from '@/components/dashboard/skeletons';
+import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { EmptyState } from '@/components/ui/empty-state';
 import { formatAmount, formatDate } from '@/lib/format';
@@ -18,26 +18,39 @@ import { formatAmount, formatDate } from '@/lib/format';
 export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'freelancer'> }) {
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const fetchRef = useRef<() => void>(() => {});
 
-  useEffect(() => {
+  const fetchContracts = useCallback(() => {
     let active = true;
-    function run() {
-      contractsApi.list({ limit: 50 })
-        .then(({ data }) => {
-          if (active) setContracts(data.items);
-        })
-        .catch((error) => {
-          if (active) reportLoadFailure(error, 'your contracts', run);
-        })
-        .finally(() => {
-          if (active) setLoading(false);
-        });
-    }
-    run();
+    setLoading(true);
+    setError(false);
+    contractsApi.list({ limit: 50 })
+      .then(({ data }) => {
+        if (active) setContracts(data.items);
+      })
+      .catch((err) => {
+        if (active) {
+          setError(true);
+          reportLoadFailure(err, 'your contracts', () => fetchRef.current());
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
     return () => {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    fetchRef.current = () => void fetchContracts();
+  }, [fetchContracts]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    return fetchContracts();
+  }, [fetchContracts]);
 
   const active = contracts.filter((contract) => contract.status === 'active').length;
   const totalValue = contracts.reduce((total, contract) => total + contract.totalAmount, 0);
@@ -51,7 +64,18 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
       />
 
       {loading ? (
-        <ListSkeleton rows={4} label="Loading contracts" />
+        <div className="space-y-4">
+          <Skeleton className="h-24 w-full rounded-xl" />
+          <Skeleton className="h-24 w-full rounded-xl" />
+          <Skeleton className="h-24 w-full rounded-xl" />
+        </div>
+      ) : error ? (
+        <EmptyState
+          icon={FolderOpen}
+          title="Failed to load contracts"
+          description="We couldn't load your contracts at this time."
+          action={<Button onClick={fetchContracts}>Retry</Button>}
+        />
       ) : (
         <>
       <div className="grid gap-4 sm:grid-cols-3">

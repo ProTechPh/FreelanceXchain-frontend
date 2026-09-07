@@ -85,6 +85,10 @@ import {
   isCsrfValidationFailure,
 } from '@/lib/csrf-token';
 import { normalizeFreelancerProfile } from '@/lib/freelancer-profile-contract';
+import {
+  clearAccessToken,
+  getAccessToken,
+} from '@/lib/auth-token';
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 
@@ -118,11 +122,9 @@ type CsrfRetryConfig = InternalAxiosRequestConfig & {
 
 api.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('access_token');
-      if (token && config.headers) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
+    const token = getAccessToken();
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
 
     const method = (config.method ?? 'get').toUpperCase();
@@ -158,10 +160,9 @@ api.interceptors.response.use(
     }
 
     if (error.response?.status === 401) {
+      clearAccessToken();
       if (typeof window !== 'undefined') {
         const currentPath = window.location.pathname;
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
         if (currentPath !== '/login' && currentPath !== '/register') {
           // eslint-disable-next-line @next/next/no-location-assign-relative-destination
           window.location.href = '/login';
@@ -185,8 +186,8 @@ export const authApi = {
   getMe: () =>
     api.get<{ user: AuthApiUser }>('/auth/me'),
   
-  refreshToken: (refreshToken: string) =>
-    api.post<AuthSuccessResponse>('/auth/refresh', { refreshToken }),
+  refreshToken: (refreshToken?: string) =>
+    api.post<AuthSuccessResponse>('/auth/refresh', refreshToken ? { refreshToken } : {}),
   
   forgotPassword: (email: string) =>
     api.post('/auth/forgot-password', { email }),
@@ -491,6 +492,9 @@ export const rushUpgradesApi = {
 
   declineCounter: (requestId: string) =>
     api.post<RushUpgradeRequest>(`/rush-upgrade-requests/${requestId}/decline-counter`),
+
+  withdraw: (requestId: string) =>
+    api.post<{ message: string }>(`/rush-upgrade-requests/${requestId}/withdraw`),
 };
 
 export const refundsApi = {
@@ -505,6 +509,9 @@ export const refundsApi = {
 
   reject: (refundId: string, reason: string) =>
     api.post<RefundRequest>(`/escrow/refunds/${refundId}/reject`, { reason }),
+
+  withdraw: (refundId: string) =>
+    api.post<{ message: string }>(`/escrow/refunds/${refundId}/withdraw`),
 };
 
 export const milestonesApi = {

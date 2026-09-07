@@ -88,6 +88,7 @@ const buttonVariants = cva(
       },
       size: {
         xs: "h-7 gap-1.5 px-2 text-2xs",
+        // sm: compact for desktop; on mobile use min-h-[44px] wrapper
         sm: "h-9 px-3 text-sm",
         default: "h-10 px-4 text-sm",
         lg: "h-11 px-6 text-base",

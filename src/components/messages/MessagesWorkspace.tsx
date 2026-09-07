@@ -23,9 +23,10 @@ import { useAuthStore } from '@/stores/authStore';
 import type { ConversationWithDetails, Message, Project } from '@/types';
 import { toast } from 'sonner';
 import { reportFailure, reportLoadFailure } from '@/lib/report-failure';
-import { Send, Search, Check, CheckCheck, MessageSquare, ExternalLink, FileText, Paperclip, X, ArrowLeft, Briefcase, ChevronUp, ChevronDown } from 'lucide-react';
+import { Send, Search, Check, CheckCheck, MessageSquare, ExternalLink, FileText, Paperclip, X, ArrowLeft, Briefcase, ChevronUp, ChevronDown, Pencil, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MessagesWorkspaceSkeleton, MessageThreadSkeleton } from '@/components/messages/messages-workspace-skeleton';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
 function initials(name: string): string {
   return name
@@ -59,6 +60,8 @@ export function MessagesWorkspace() {
   const [directRecipient, setDirectRecipient] = useState<ConversationWithDetails['otherUser'] | null>(null);
   const [acceptedContacts, setAcceptedContacts] = useState<ConversationWithDetails['otherUser'][]>([]);
   const [inquiredProject, setInquiredProject] = useState<Project | null>(null);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const selectedIdRef = useRef<string | null>(null);
   useEffect(() => {
     selectedIdRef.current = selectedId;
@@ -408,6 +411,11 @@ export function MessagesWorkspace() {
                     ? 'No conversations yet'
                     : 'No matches'}
                 </p>
+                <div className="flex flex-col sm:flex-row gap-2 mt-4">
+                  <Button asChild variant="default">
+                    <Link href="/projects">Browse Projects</Link>
+                  </Button>
+                </div>
               </div>
             )}
           {filteredConversations.map((conv) => {
@@ -596,13 +604,33 @@ export function MessagesWorkspace() {
                   return (
                     <div key={msg.id} id={`msg-${msg.id}`} className={`flex ${isMine ? 'justify-end' : 'justify-start'} ${isHighlighted ? 'ring-2 ring-primary/40 rounded-2xl' : ''}`}>
                       <div
-                        className={`max-w-[70%] p-3 rounded-2xl ${
+                        className={`group relative max-w-[70%] p-3 rounded-2xl ${
                           isMine
                             ? 'gradient-primary rounded-br-md'
                             : 'bg-secondary border border-border rounded-bl-md'
                         }`}
                       >
-                        <p className="text-sm">{msg.content}</p>
+                        {isMine && (
+                          <div className="absolute -top-2 right-0 hidden group-hover:flex gap-1 z-10 bg-background border border-border rounded-md shadow-sm">
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditingMessageId(msg.id)}>
+                              <Pencil className="h-3 w-3" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => setDeleteConfirmId(msg.id)}>
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        )}
+                        {editingMessageId === msg.id ? (
+                          <div className="flex flex-col gap-2">
+                            <Input defaultValue={msg.content} className="h-8 text-sm bg-background text-foreground" />
+                            <div className="flex gap-2 justify-end">
+                              <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => setEditingMessageId(null)}>Cancel</Button>
+                              <Button size="sm" className="h-6 px-2 text-xs" onClick={() => { /* TODO: save edit */ setEditingMessageId(null); }}>Save</Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-sm">{msg.content}</p>
+                        )}
                         {(msg.attachments ?? []).length > 0 && (
                           <ul className="mt-2 space-y-1.5" aria-label="Message attachments">
                             {(msg.attachments ?? []).map((attachment) => {
@@ -666,6 +694,20 @@ export function MessagesWorkspace() {
           </>
         )}
       </div>
+      <Dialog open={!!deleteConfirmId} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Message</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Delete this message? This cannot be undone.
+          </p>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setDeleteConfirmId(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={() => { console.log('TODO: delete', deleteConfirmId); setDeleteConfirmId(null); }}>Delete</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

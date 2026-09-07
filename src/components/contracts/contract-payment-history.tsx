@@ -4,7 +4,7 @@ import { ArrowDownLeft, ArrowUpRight, ExternalLink, Receipt } from 'lucide-react
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { EmptyState } from '@/components/ui/empty-state';
-import { ListSkeleton } from '@/components/dashboard/skeletons';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useContractPaymentHistory } from '@/hooks/use-payments';
 import {
   getPaymentDirection,
@@ -48,7 +48,11 @@ export function ContractPaymentHistory({
       </CardHeader>
       <CardContent>
         {isPending ? (
-          <ListSkeleton rows={3} />
+          <div className="space-y-4">
+            <Skeleton className="h-16 w-full rounded-md" />
+            <Skeleton className="h-16 w-full rounded-md" />
+            <Skeleton className="h-16 w-full rounded-md" />
+          </div>
         ) : isError ? (
           <EmptyState
             size="sm"

@@ -382,6 +382,8 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
                         <img
                           src={frontDoc}
                           alt="Document Front"
+                          loading="lazy"
+                          decoding="async"
                           className="w-full h-full object-contain group-hover:scale-105 transition duration-200"
                         />
                         <div className="absolute inset-0 bg-black/40 sm:opacity-0 sm:group-hover:opacity-100 transition flex items-center justify-center text-primary-foreground text-xs font-medium gap-1">
@@ -405,6 +407,8 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
                         <img
                           src={backDoc}
                           alt="Document Back"
+                          loading="lazy"
+                          decoding="async"
                           className="w-full h-full object-contain group-hover:scale-105 transition duration-200"
                         />
                         <div className="absolute inset-0 bg-black/40 sm:opacity-0 sm:group-hover:opacity-100 transition flex items-center justify-center text-primary-foreground text-xs font-medium gap-1">
@@ -430,6 +434,8 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
                         <img
                           src={selfie}
                           alt="Live Selfie"
+                          loading="lazy"
+                          decoding="async"
                           className="w-full h-full object-contain group-hover:scale-105 transition duration-200"
                         />
                         <div className="absolute inset-0 bg-black/40 sm:opacity-0 sm:group-hover:opacity-100 transition flex items-center justify-center text-primary-foreground text-xs font-medium gap-1">
@@ -453,6 +459,8 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
                         <img
                           src={portrait}
                           alt="ID Portrait Crop"
+                          loading="lazy"
+                          decoding="async"
                           className="w-full h-full object-contain group-hover:scale-105 transition duration-200"
                         />
                         <div className="absolute inset-0 bg-black/40 sm:opacity-0 sm:group-hover:opacity-100 transition flex items-center justify-center text-primary-foreground text-xs font-medium gap-1">
@@ -605,6 +613,7 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
               <img
                 src={selectedImage.url}
                 alt={selectedImage.title}
+                decoding="async"
                 className="max-w-full max-h-[75dvh] object-contain rounded shadow-lg"
               />
             </div>

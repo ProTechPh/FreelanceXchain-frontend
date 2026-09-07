@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Check, Copy, ExternalLink, Network, RefreshCw, Wallet } from 'lucide-react';
 import { toast } from 'sonner';
@@ -27,6 +27,12 @@ export function WalletBalanceCard({ role = 'employer', className = '' }: WalletB
   } = useWalletConnection();
 
   const [copied, setCopied] = useState(false);
+  const [lastSynced, setLastSynced] = useState<string | null>(null);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setLastSynced(new Date().toLocaleTimeString());
+  }, []);
 
   if (!isConnected) {
     return null;
@@ -37,7 +43,7 @@ export function WalletBalanceCard({ role = 'employer', className = '' }: WalletB
     try {
       await navigator.clipboard.writeText(walletAddress);
       setCopied(true);
-      toast.success('Wallet address copied');
+      toast.success('Address copied to clipboard!');
       setTimeout(() => setCopied(false), 2000);
     } catch {
       toast.error('Failed to copy address');
@@ -67,15 +73,17 @@ export function WalletBalanceCard({ role = 'employer', className = '' }: WalletB
               </div>
               <div className="mt-0.5 flex flex-wrap items-center gap-2">
                 <span className="font-mono text-sm font-bold text-foreground">{formattedAddress}</span>
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="icon"
                   onClick={handleCopy}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className="h-11 w-11 text-muted-foreground hover:text-foreground transition-colors"
                   aria-label="Copy wallet address"
                   title="Copy address"
                 >
                   {copied ? <Check className="size-3.5 text-success" /> : <Copy className="size-3.5" />}
-                </button>
+                </Button>
                 {networkName && (
                   <span className="text-2xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                     {networkName}
@@ -109,12 +117,18 @@ export function WalletBalanceCard({ role = 'employer', className = '' }: WalletB
                   size="icon"
                   className="size-6 text-muted-foreground hover:text-foreground"
                   disabled={isLoadingBalance}
-                  onClick={() => void refreshBalance()}
+                  onClick={() => {
+                    void refreshBalance();
+                    setLastSynced(new Date().toLocaleTimeString());
+                  }}
                   title="Refresh balance"
                 >
                   <RefreshCw className={`size-3 ${isLoadingBalance ? 'animate-spin' : ''}`} />
                 </Button>
               </div>
+              {lastSynced && (
+                <p className="text-xs text-muted-foreground mt-1">Synced {lastSynced}</p>
+              )}
             </div>
 
             <Button asChild variant="outline" size="sm" className="shrink-0">

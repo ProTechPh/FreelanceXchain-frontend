@@ -58,7 +58,7 @@ function EmptyState({
         <p className="max-w-prose text-sm text-muted-foreground">{description}</p>
       )}
       {(action || secondaryAction) && (
-        <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
           {action}
           {secondaryAction}
         </div>

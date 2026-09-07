@@ -422,9 +422,9 @@ function TourOverlay() {
           </div>
           <Button
             variant="ghost"
-            size="icon-sm"
+            size="icon"
             aria-label="End the tour"
-            className="-mr-1 -mt-1 shrink-0"
+            className="-mr-1 -mt-1 shrink-0 min-h-[44px] min-w-[44px]"
             onClick={skip}
           >
             <X className="size-4" aria-hidden="true" />

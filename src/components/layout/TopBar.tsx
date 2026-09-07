@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Bell, MessageSquare, LogOut, User, Settings, ChevronDown, Compass, Search, Shield, Bookmark, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { Tooltip } from '@/components/ui/tooltip';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -129,18 +130,20 @@ export function TopBar() {
               {/* On a phone the field cannot sit beside the menu button: the two
                   overlap and the menu stops being tappable. Below `sm` it is a
                   toggle that opens the field in its own row instead. */}
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="size-11 sm:size-10 sm:hidden touch-manipulation"
-                aria-label={searchLabel}
-                aria-expanded={searchOpen}
-                aria-controls="dashboard-search-row"
-                onClick={() => setSearchOpen((open) => !open)}
-              >
-                <Search className="size-5" aria-hidden="true" />
-              </Button>
+              <Tooltip content={searchLabel}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-11 sm:size-10 sm:hidden touch-manipulation"
+                  aria-label={searchLabel}
+                  aria-expanded={searchOpen}
+                  aria-controls="dashboard-search-row"
+                  onClick={() => setSearchOpen((open) => !open)}
+                >
+                  <Search className="size-5" aria-hidden="true" />
+                </Button>
+              </Tooltip>
               <div className="hidden min-w-0 flex-1 sm:block sm:max-w-md">
                 {renderSearch('dashboard-marketplace-search')}
               </div>
@@ -155,33 +158,37 @@ export function TopBar() {
 
           {/* Notifications */}
           {user && (
-            <Button asChild variant="ghost" size="icon" className="relative size-11 sm:size-10 touch-manipulation">
-              <Link
-                href={`/dashboard/${user.role}/notifications`}
-                data-tour="notifications"
-                aria-label={`Notifications${unreadNotifications > 0 ? ` (${unreadNotifications} unread)` : ''}`}
-              >
-                <Bell className="size-5" aria-hidden="true" />
-                {unreadNotifications > 0 && (
-                  <span
-                    aria-hidden="true"
-                    className="absolute top-1 right-1 sm:-right-1 sm:-top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-2xs font-semibold text-destructive-foreground"
-                  >
-                    {unreadNotifications > 99 ? '99+' : unreadNotifications}
-                  </span>
-                )}
-              </Link>
-            </Button>
+            <Tooltip content={`Notifications${unreadNotifications > 0 ? ` (${unreadNotifications} unread)` : ''}`}>
+              <Button asChild variant="ghost" size="icon" className="relative size-11 sm:size-10 touch-manipulation">
+                <Link
+                  href={`/dashboard/${user.role}/notifications`}
+                  data-tour="notifications"
+                  aria-label={`Notifications${unreadNotifications > 0 ? ` (${unreadNotifications} unread)` : ''}`}
+                >
+                  <Bell className="size-5" aria-hidden="true" />
+                  {unreadNotifications > 0 && (
+                    <span
+                      aria-hidden="true"
+                      className="absolute top-1 right-1 sm:-right-1 sm:-top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-2xs font-semibold text-destructive-foreground"
+                    >
+                      {unreadNotifications > 99 ? '99+' : unreadNotifications}
+                    </span>
+                  )}
+                </Link>
+              </Button>
+            </Tooltip>
           )}
 
           {/* Messages -- also in the sidebar/drawer nav, so it yields the space
               on phones rather than crowding the bar. */}
           {hasParticipantDashboard && (
-            <Button asChild variant="ghost" size="icon" className="hidden sm:inline-flex">
-              <Link href={`/dashboard/${user?.role || 'freelancer'}/messages`} aria-label="Messages">
-                <MessageSquare className="size-5" aria-hidden="true" />
-              </Link>
-            </Button>
+            <Tooltip content="Messages">
+              <Button asChild variant="ghost" size="icon" className="hidden sm:inline-flex">
+                <Link href={`/dashboard/${user?.role || 'freelancer'}/messages`} aria-label="Messages">
+                  <MessageSquare className="size-5" aria-hidden="true" />
+                </Link>
+              </Button>
+            </Tooltip>
           )}
 
           {/* Wallet */}

@@ -12,6 +12,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Alert } from '@/components/ui/alert';
 
 export interface ServiceComponentHealth {
   id: string;
@@ -93,6 +94,7 @@ export function ComponentServicesList() {
   const [services, setServices] = useState<ServiceComponentHealth[]>(INITIAL_SERVICES);
   const [loading, setLoading] = useState(false);
   const [lastCheck, setLastCheck] = useState<Date | null>(null);
+  const [fetchError, setFetchError] = useState(false);
 
   const probeServices = useCallback(async (showLoading = false) => {
     if (showLoading) setLoading(true);
@@ -106,6 +108,7 @@ export function ComponentServicesList() {
         }
       }
     } catch {
+      setFetchError(true);
       // Keep optimistic initial data if fetch encounters network error
     } finally {
       if (showLoading) setLoading(false);
@@ -125,6 +128,7 @@ export function ComponentServicesList() {
           }
         }
       } catch {
+        setFetchError(true);
         // Keep initial
       }
     };
@@ -171,6 +175,10 @@ export function ComponentServicesList() {
           </Button>
         </div>
       </div>
+
+      {fetchError && (
+        <Alert tone="warning" title="Live status unavailable" description="Showing last known state." className="mb-4" live={false} />
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {services.map((service) => {

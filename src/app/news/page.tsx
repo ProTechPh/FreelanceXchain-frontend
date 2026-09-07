@@ -419,6 +419,8 @@ export default function NewsPage() {
                   src={extractCryptoArticleImage(featuredArticle, featuredArticle.category)}
                   alt={featuredArticle.title}
                   referrerPolicy="no-referrer"
+                  decoding="async"
+                  fetchPriority="high"
                   onError={(e) => {
                     e.currentTarget.onerror = null;
                     e.currentTarget.src = "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=1200&auto=format&fit=crop&q=80";
@@ -551,6 +553,8 @@ export default function NewsPage() {
                           src={imageUrl}
                           alt={article.title}
                           referrerPolicy="no-referrer"
+                          loading="lazy"
+                          decoding="async"
                           onError={(e) => {
                             e.currentTarget.onerror = null;
                             e.currentTarget.src = "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&auto=format&fit=crop&q=80";

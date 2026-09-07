@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, ExternalLink, ShieldCheck, AlertCircle, CheckCircle2, Clock, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipProvider } from '@/components/ui/tooltip';
+import { Alert } from '@/components/ui/alert';
 
 const INTERNAL_STATUS_API = '/api/status/uptimerobot';
 const UPTIME_ROBOT_API = 'https://stats.uptimerobot.com/api/getMonitorList/6VI6R2PTC5';
@@ -263,14 +264,18 @@ export function UptimeRobotWidget() {
           <span className="text-foreground font-bold">{uptime90d}</span>
         </div>
 
+        {error && (
+          <Alert tone="warning" title="Live telemetry unavailable" description="Showing cached data. The uptime history below may not reflect the current state." className="mb-4" live={false} />
+        )}
+
         {loading ? (
           <div className="h-9 w-full rounded-xl bg-muted/40 animate-pulse flex items-center justify-center text-xs text-muted-foreground font-medium">
             Loading telemetry history…
           </div>
-        ) : error && dailyRatios.length === 0 ? (
+        ) : dailyRatios.length === 0 ? (
           <div className="p-4 rounded-2xl bg-destructive-subtle border border-destructive-border text-xs text-destructive flex items-center gap-2">
             <AlertCircle className="size-4 shrink-0" />
-            <span>Unable to load live history bars. Live status is still verified operational via public health check.</span>
+            <span>Unable to load live history bars.</span>
           </div>
         ) : (
           <TooltipProvider>
@@ -290,7 +295,7 @@ export function UptimeRobotWidget() {
                 } else if (ratioNum < 98) {
                   barColor = 'bg-warning hover:bg-warning/80';
                 } else if (ratioNum < 99.5) {
-                  barColor = 'bg-emerald-500/90 hover:bg-emerald-500';
+                  barColor = 'bg-success/90 hover:bg-success';
                 }
 
                 const tooltipContent = (

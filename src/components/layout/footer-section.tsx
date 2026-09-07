@@ -107,7 +107,7 @@ export function FooterSection() {
 												<Link
 													href={link.href}
 													onClick={(e) => handleSmoothScroll(e, link.href)}
-													className="hover:text-primary transition-colors duration-150"
+													className="hover:text-primary transition-colors duration-150 py-1 block"
 												>
 													{link.title}
 												</Link>

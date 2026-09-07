@@ -274,7 +274,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                       id="email" 
                       name="email" 
                       type="email" 
-                      placeholder="you@example.com" 
+                      placeholder="name@example.com" 
                       value={email} 
                       onChange={(e) => setEmail(e.target.value)} 
                       className="w-full px-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-border/80 bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all placeholder:text-muted-foreground/60" 
@@ -341,6 +341,12 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                         )}
                       </button>
                     </div>
+                    {password && confirmPassword && password !== confirmPassword && (
+                      <p className="text-sm text-destructive mt-1">Passwords don&apos;t match</p>
+                    )}
+                    {password && confirmPassword && password === confirmPassword && (
+                      <p className="text-sm text-green-600 mt-1">Passwords match ✓</p>
+                    )}
                   </div>
 
                   {/* Terms checkbox */}

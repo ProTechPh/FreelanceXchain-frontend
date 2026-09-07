@@ -468,6 +468,9 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
                         placeholder="5000"
                         className={control}
                       />
+                      {filters.minBudget !== undefined && filters.maxBudget !== undefined && filters.minBudget > filters.maxBudget && (
+                        <p className="text-sm text-destructive mt-1">Min budget cannot exceed max budget</p>
+                      )}
                     </div>
                   </>
                 )}
@@ -552,7 +555,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
                             size="icon-xs"
                             variant="ghost"
                             aria-label={`Delete saved search ${savedSearch.name}`}
-                            className="size-8 sm:size-7 flex items-center justify-center text-muted-foreground hover:text-destructive touch-manipulation"
+                            className="size-8 sm:size-7 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 flex items-center justify-center text-muted-foreground hover:text-destructive touch-manipulation"
                             onClick={() => setSearchToDelete(savedSearch)}
                           >
                             <Trash2 className="size-3.5 sm:size-3" aria-hidden="true" />

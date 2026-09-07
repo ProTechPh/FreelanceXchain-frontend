@@ -1,4 +1,5 @@
 import { API_URL } from './api';
+import { getAccessToken } from './auth-token';
 import type { Notification } from '@/types';
 
 const RECONNECT_DELAYS_MS = [1000, 2000, 4000, 8000, 8000];
@@ -52,15 +53,21 @@ class NotificationStreamManager {
   private async connect() {
     if (this.isConnecting || this.isConnected || this.listeners.size === 0) return;
 
-    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-    if (!token) return;
+    const token = getAccessToken();
+    if (!token && typeof window === 'undefined') return;
 
     this.isConnecting = true;
     this.controller = new AbortController();
 
     try {
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(`${API_URL}/notifications/stream`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers,
+        credentials: 'include',
         signal: this.controller.signal,
       });
 

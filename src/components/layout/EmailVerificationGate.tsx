@@ -21,7 +21,7 @@ export function EmailVerificationGate() {
     setIsResending(true);
     try {
       await authApi.resendConfirmation(user.email);
-      toast.success('Verification link sent!', {
+      toast.success('Verification email sent!', {
         description: `We've sent a new confirmation link to ${user.email}. Check your spam or inbox.`,
       });
       setCooldown(60);

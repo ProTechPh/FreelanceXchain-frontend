@@ -37,6 +37,7 @@ test('participant deletes their own unverified evidence', async ({ page }) => {
   await page.goto('/dashboard/employer/disputes');
   await expect(page.getByRole('link', { name: 'Open evidence' })).toHaveAttribute('href', 'https://files.example.com/report');
   await page.getByRole('button', { name: 'Delete link evidence' }).click();
+  await page.getByRole('button', { name: 'Delete', exact: true }).click();
   await expect(page.getByText('Evidence deleted.')).toBeVisible();
   await expect(page.getByRole('list', { name: 'Submitted evidence' })).toBeHidden();
   expect(deleted).toBe(true);
