@@ -65,3 +65,13 @@ test('sanitizeHtml handles script end tags with spaces and attributes', () => {
   assert.ok(clean.includes('<p>End</p>'));
 });
 
+test('sanitizeHtml removes template and slot elements to prevent mXSS', () => {
+  const payload = '<p>Hello</p><template><script>alert("xss")</script><p>Inner</p></template><slot>SlotContent</slot>';
+  const clean = sanitizeHtml(payload);
+  assert.ok(!clean.includes('<template'));
+  assert.ok(!clean.includes('<script'));
+  assert.ok(!clean.includes('alert'));
+  assert.ok(clean.includes('<p>Hello</p>'));
+});
+
+

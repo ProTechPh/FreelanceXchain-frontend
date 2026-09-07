@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
+import { getAccessToken } from '@/lib/auth-token';
 
 interface GuestGuardProps {
   children: React.ReactNode;
@@ -22,7 +23,7 @@ export function GuestGuard({ children }: GuestGuardProps) {
 
   useEffect(() => {
     if (hasHydrated && !isAuthenticated) {
-      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+      const token = getAccessToken();
       if (token) {
         loadUser();
       }

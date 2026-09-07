@@ -7,10 +7,16 @@ import {
   isMfaRequiredResponse,
   normalizeAuthUser,
 } from '@/lib/auth-contract';
+import {
+  getAccessToken,
+  setAccessToken as setTokenStorage,
+  clearAccessToken as clearTokenStorage,
+} from '@/lib/auth-token';
 import { getKycReminderStorageKey } from '@/lib/first-login-kyc';
 
 interface AuthState {
   user: User | null;
+  accessToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   mfaPending: boolean;
@@ -21,6 +27,7 @@ interface AuthState {
   logout: () => Promise<void>;
   loadUser: () => Promise<void>;
   setUser: (user: User | null) => void;
+  setAccessToken: (token: string | null) => void;
   completeMfa: (response: AuthSuccessResponse) => void;
   beginMfa: (mfaSessionToken: string) => void;
   clearMfa: () => void;
@@ -35,6 +42,7 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
+      accessToken: null,
       isAuthenticated: false,
       isLoading: false,
       mfaPending: false,
@@ -55,11 +63,11 @@ export const useAuthStore = create<AuthState>()(
             throw new Error('The server returned an invalid authentication response');
           }
 
-          localStorage.setItem('access_token', data.accessToken);
-          localStorage.setItem('refresh_token', data.refreshToken);
+          setTokenStorage(data.accessToken);
           beginKycReminderSession(data.user.id);
           set({
             user: normalizeAuthUser(data.user),
+            accessToken: data.accessToken,
             isAuthenticated: true,
             isLoading: false,
             mfaPending: false,
@@ -80,10 +88,14 @@ export const useAuthStore = create<AuthState>()(
             throw new Error('The server returned an invalid registration response');
           }
 
-          localStorage.setItem('access_token', data.accessToken);
-          localStorage.setItem('refresh_token', data.refreshToken);
+          setTokenStorage(data.accessToken);
           beginKycReminderSession(data.user.id);
-          set({ user: normalizeAuthUser(data.user), isAuthenticated: true, isLoading: false });
+          set({
+            user: normalizeAuthUser(data.user),
+            accessToken: data.accessToken,
+            isAuthenticated: true,
+            isLoading: false,
+          });
         } catch (error) {
           set({ isLoading: false });
           throw error;
@@ -97,17 +109,24 @@ export const useAuthStore = create<AuthState>()(
         } catch {
           // Ignore logout errors
         } finally {
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('refresh_token');
+          clearTokenStorage();
           if (userId) sessionStorage.removeItem(getKycReminderStorageKey(userId));
-          set({ user: null, isAuthenticated: false, mfaPending: false, mfaSessionToken: null });
+          set({
+            user: null,
+            accessToken: null,
+            isAuthenticated: false,
+            mfaPending: false,
+            mfaSessionToken: null,
+          });
         }
       },
 
       loadUser: async () => {
-        const token = localStorage.getItem('access_token');
-        if (!token) {
-          set({ isAuthenticated: false, user: null, isLoading: false });
+        const hasToken = !!getAccessToken();
+        const wasAuthenticated = useAuthStore.getState().isAuthenticated;
+
+        if (!hasToken && !wasAuthenticated) {
+          set({ isAuthenticated: false, user: null, accessToken: null, isLoading: false });
           return;
         }
 
@@ -118,20 +137,40 @@ export const useAuthStore = create<AuthState>()(
 
         try {
           const { data } = await authApi.getMe();
-          set({ user: normalizeAuthUser(data.user), isAuthenticated: true, isLoading: false });
+          set({
+            user: normalizeAuthUser(data.user),
+            accessToken: getAccessToken(),
+            isAuthenticated: true,
+            isLoading: false,
+          });
         } catch {
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('refresh_token');
-          set({ user: null, isAuthenticated: false, isLoading: false });
+          try {
+            const { data: refreshData } = await authApi.refreshToken();
+            if (isAuthSuccessResponse(refreshData)) {
+              setTokenStorage(refreshData.accessToken);
+              set({
+                user: normalizeAuthUser(refreshData.user),
+                accessToken: refreshData.accessToken,
+                isAuthenticated: true,
+                isLoading: false,
+              });
+              return;
+            }
+          } catch {
+            // Refresh also failed
+          }
+
+          clearTokenStorage();
+          set({ user: null, accessToken: null, isAuthenticated: false, isLoading: false });
         }
       },
 
       completeMfa: (response: AuthSuccessResponse) => {
-        localStorage.setItem('access_token', response.accessToken);
-        localStorage.setItem('refresh_token', response.refreshToken);
+        setTokenStorage(response.accessToken);
         beginKycReminderSession(response.user.id);
         set({
           user: normalizeAuthUser(response.user),
+          accessToken: response.accessToken,
           isAuthenticated: true,
           mfaPending: false,
           mfaSessionToken: null,
@@ -151,6 +190,11 @@ export const useAuthStore = create<AuthState>()(
       },
 
       setUser: (user) => set({ user }),
+
+      setAccessToken: (token) => {
+        setTokenStorage(token);
+        set({ accessToken: token });
+      },
 
       setHasHydrated: (value: boolean) => set({ hasHydrated: value }),
     }),

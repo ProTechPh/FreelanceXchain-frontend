@@ -61,7 +61,10 @@ test('new OAuth user can choose a role and finish registration', async ({ page }
     access_token: 'oauth-secret',
   });
   expect(registrationBody).toEqual({ accessToken: 'oauth-secret', role: 'employer' });
-  expect(await page.evaluate(() => localStorage.getItem('access_token'))).toBe('app-access-token');
+  expect(await page.evaluate(() => {
+    const raw = localStorage.getItem('auth-storage');
+    return raw ? JSON.parse(raw)?.state?.isAuthenticated : false;
+  })).toBe(true);
 });
 
 test('OAuth callback without a token returns the user to sign in safely', async ({ page }) => {

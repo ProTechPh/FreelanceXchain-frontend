@@ -38,7 +38,10 @@ test('existing user signs in with an email one-time code', async ({ page }) => {
   await page.getByRole('button', { name: 'Verify and sign in' }).click();
   await expect(page).toHaveURL(/\/dashboard\/freelancer/);
   expect(verifyBody).toEqual({ userId: 'freelancer-1', secret: '123456' });
-  expect(await page.evaluate(() => localStorage.getItem('access_token'))).toBe('passwordless-access');
+  expect(await page.evaluate(() => {
+    const raw = localStorage.getItem('auth-storage');
+    return raw ? JSON.parse(raw)?.state?.isAuthenticated : false;
+  })).toBe(true);
 });
 
 test('user can request another account confirmation email', async ({ page }) => {
