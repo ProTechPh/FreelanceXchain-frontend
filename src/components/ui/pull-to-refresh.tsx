@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef, useEffect, type ReactNode } from 'react';
+import { useState, useCallback, useRef, type ReactNode } from 'react';
 import { RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -92,13 +92,7 @@ export function PullToRefresh({
     }
   }, [pullDistance, threshold, isRefreshing, disabled, onRefresh]);
 
-  useEffect(() => {
-    if (disabled) {
-      setIsPulling(false);
-      setPullDistance(0);
-      isDraggingRef.current = false;
-    }
-  }, [disabled]);
+  
 
   const progress = Math.min(pullDistance / threshold, 1);
   const showIndicator = isPulling || isRefreshing;

@@ -229,7 +229,6 @@ export default function ProposalsPage() {
               onClick={async () => {
                 if (!confirmWithdrawProposal) return;
                 const id = confirmWithdrawProposal.proposal.id;
-                const previousState = proposals.find((p) => p.proposal.id === id);
                 setWithdrawingId(id);
                 try {
                   const { data: updated } = await proposalsApi.withdraw(id);

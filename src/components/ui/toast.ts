@@ -106,11 +106,8 @@ export const toast = {
   /** Custom toast with full control. */
   custom: sonnerToast.custom,
 
-    /** Loading state toast. */
+  /** Loading state toast. */
   loading: sonnerToast.loading,
-
-  /** Dismiss a specific toast or all toasts. */
-  dismiss: sonnerToast.dismiss,
 };
 
 export { Toaster } from './sonner';
