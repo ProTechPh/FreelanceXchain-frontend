@@ -4,6 +4,7 @@ import { TrendingDown, TrendingUp } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePaymentSummary } from '@/hooks/use-payments';
+import { formatAmount } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
 /**
@@ -80,7 +81,7 @@ export function PaymentSummaryCards({
                       missing && 'text-muted-foreground',
                     )}
                   >
-                    {missing ? 'Unavailable' : `${Number(tile.value).toLocaleString()} ${LEDGER_CURRENCY}`}
+                    {missing ? 'Unavailable' : formatAmount(tile.value, { currency: LEDGER_CURRENCY, fractionDigits: 4 })}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {missing
