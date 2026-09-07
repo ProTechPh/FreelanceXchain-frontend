@@ -492,6 +492,9 @@ export const rushUpgradesApi = {
 
   declineCounter: (requestId: string) =>
     api.post<RushUpgradeRequest>(`/rush-upgrade-requests/${requestId}/decline-counter`),
+
+  withdraw: (requestId: string) =>
+    api.post<{ message: string }>(`/rush-upgrade-requests/${requestId}/withdraw`),
 };
 
 export const refundsApi = {
@@ -506,6 +509,9 @@ export const refundsApi = {
 
   reject: (refundId: string, reason: string) =>
     api.post<RefundRequest>(`/escrow/refunds/${refundId}/reject`, { reason }),
+
+  withdraw: (refundId: string) =>
+    api.post<{ message: string }>(`/escrow/refunds/${refundId}/withdraw`),
 };
 
 export const milestonesApi = {

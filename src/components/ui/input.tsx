@@ -17,11 +17,12 @@ const fieldVariants = cva(
     "disabled:pointer-events-none disabled:cursor-not-allowed disabled:border-border disabled:bg-muted disabled:text-muted-foreground disabled:placeholder:text-muted-foreground",
     "aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/30",
     "aria-invalid:focus-visible:border-destructive aria-invalid:focus-visible:ring-destructive/40",
+    "aria-[invalid=true]:border-destructive aria-[invalid=true]:focus-visible:ring-destructive",
   ].join(" "),
   {
     variants: {
       inputSize: {
-        sm: "h-9 px-2.5 text-sm",
+        sm: "h-10 px-2.5 text-sm",
         // Matches Button's default height so labels, fields and actions align.
         default: "h-10 px-3 text-sm",
         lg: "h-11 px-3.5 text-base",

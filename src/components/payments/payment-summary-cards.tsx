@@ -2,6 +2,7 @@
 
 import { TrendingDown, TrendingUp } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { StatsSkeleton } from '@/components/dashboard/skeletons';
 import { usePaymentSummary } from '@/hooks/use-payments';
 import { formatAmount } from '@/lib/format';
@@ -12,6 +13,7 @@ import { cn } from '@/lib/utils';
  * written with a hardcoded 'ETH' (api src/utils/payment-records.ts) and these
  * totals are sums of those records — formatting them as USD would misstate them.
  */
+// TODO: This should be dynamic based on user's payment currency
 const LEDGER_CURRENCY = 'ETH';
 
 /**
@@ -35,7 +37,12 @@ export function PaymentSummaryCards({
   const { data, isPending, isError } = usePaymentSummary();
 
   if (isPending) {
-    return <StatsSkeleton tiles={show === 'both' ? 2 : 1} label="Loading payment summary" />;
+    return (
+      <div className={cn('grid gap-4', show === 'both' ? 'sm:grid-cols-2' : '', className)}>
+        <Skeleton className="h-[120px] w-full rounded-xl" />
+        {show === 'both' && <Skeleton className="h-[120px] w-full rounded-xl" />}
+      </div>
+    );
   }
 
   const unavailable = isError || data?.available === false;
@@ -75,7 +82,7 @@ export function PaymentSummaryCards({
                       missing && 'text-muted-foreground',
                     )}
                   >
-                    {missing ? 'Unavailable' : formatAmount(tile.value, { currency: LEDGER_CURRENCY, fractionDigits: 4 })}
+                    {missing ? 'Unavailable' : `${Number(tile.value).toLocaleString()} ${LEDGER_CURRENCY}`}
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {missing

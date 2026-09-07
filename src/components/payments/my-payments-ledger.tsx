@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useMyPayments } from '@/hooks/use-payments';
@@ -46,7 +47,11 @@ export function MyPaymentsLedger({ role }: { role: Extract<UserRole, 'employer' 
       </CardHeader>
       <CardContent className="space-y-4">
         {isPending ? (
-          <ListSkeleton rows={4} label="Loading payments" />
+          <div className="space-y-2">
+            <Skeleton className="h-12 w-full rounded-md" />
+            <Skeleton className="h-12 w-full rounded-md" />
+            <Skeleton className="h-12 w-full rounded-md" />
+          </div>
         ) : isError ? (
           <EmptyState
             size="sm"
@@ -61,7 +66,7 @@ export function MyPaymentsLedger({ role }: { role: Extract<UserRole, 'employer' 
             title={offset === 0 ? 'No payments yet' : 'No more payments'}
             description={
               offset === 0
-                ? 'Escrow deposits, milestone releases and refunds appear here once a contract starts moving money.'
+                ? 'No payments yet. Payments will appear here once you complete projects.'
                 : 'You have reached the end of the ledger.'
             }
           />
@@ -97,11 +102,11 @@ export function MyPaymentsLedger({ role }: { role: Extract<UserRole, 'employer' 
                       <TableCell
                         className={cn(
                           'text-right tabular-nums',
-                          direction === 'in' ? 'text-success' : 'text-foreground',
+                          direction === 'in' ? 'text-success' : 'text-destructive',
                         )}
                       >
                         {direction === 'in' ? '+' : direction === 'out' ? '−' : ''}
-                        {formatAmount(record.amount, { currency: record.currency, fractionDigits: 4 })}
+                        {Number(record.amount).toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 })} {record.currency}
                       </TableCell>
                     </TableRow>
                   );

@@ -67,7 +67,7 @@ export function BottomNav({ role }: { role: UserRole | undefined }) {
   return (
     <nav
       aria-label="Mobile navigation"
-      className="fixed bottom-0 inset-x-0 z-30 border-t border-border bg-card/95 backdrop-blur-md pb-safe lg:hidden"
+      className="fixed bottom-0 inset-x-0 z-30 border-t border-border bg-card/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
       <div className="flex h-16 items-center justify-around px-1">
         {items.map((item) => {
@@ -99,7 +99,7 @@ export function BottomNav({ role }: { role: UserRole | undefined }) {
                   aria-hidden="true"
                 />
               </div>
-              <span className="truncate max-w-[64px] leading-tight">{item.label}</span>
+              <span className="text-[10px] leading-tight mt-0.5">{item.label}</span>
             </Link>
           );
         })}

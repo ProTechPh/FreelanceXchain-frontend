@@ -10,6 +10,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import type { Contract, UserRole } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -18,25 +19,32 @@ import { formatAmount, formatDate } from '@/lib/format';
 export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'freelancer'> }) {
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  useEffect(() => {
+  const fetchContracts = () => {
     let active = true;
-    function run() {
-      contractsApi.list({ limit: 50 })
-        .then(({ data }) => {
-          if (active) setContracts(data.items);
-        })
-        .catch((error) => {
-          if (active) reportLoadFailure(error, 'your contracts', run);
-        })
-        .finally(() => {
-          if (active) setLoading(false);
-        });
-    }
-    run();
+    setLoading(true);
+    setError(false);
+    contractsApi.list({ limit: 50 })
+      .then(({ data }) => {
+        if (active) setContracts(data.items);
+      })
+      .catch((err) => {
+        if (active) {
+          setError(true);
+          reportLoadFailure(err, 'your contracts', fetchContracts);
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
     return () => {
       active = false;
     };
+  };
+
+  useEffect(() => {
+    return fetchContracts();
   }, []);
 
   const active = contracts.filter((contract) => contract.status === 'active').length;
@@ -51,7 +59,18 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
       />
 
       {loading ? (
-        <ListSkeleton rows={4} label="Loading contracts" />
+        <div className="space-y-4">
+          <Skeleton className="h-24 w-full rounded-xl" />
+          <Skeleton className="h-24 w-full rounded-xl" />
+          <Skeleton className="h-24 w-full rounded-xl" />
+        </div>
+      ) : error ? (
+        <EmptyState
+          icon={FolderOpen}
+          title="Failed to load contracts"
+          description="We couldn't load your contracts at this time."
+          action={<Button onClick={fetchContracts}>Retry</Button>}
+        />
       ) : (
         <>
       <div className="grid gap-4 sm:grid-cols-3">

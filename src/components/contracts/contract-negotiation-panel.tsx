@@ -224,7 +224,16 @@ export function ContractNegotiationPanel({
 
           {canCreateRush && (
             <div className="space-y-3 rounded-lg border border-border p-4">
-              <div className="space-y-2"><Label htmlFor="rush-percentage">Proposed rush fee</Label><div className="flex items-center gap-2"><Input id="rush-percentage" type="number" min="0.01" max="100" step="0.01" value={rushPercentage} onChange={(event) => setRushPercentage(event.target.value)} /><span className="text-sm text-muted-foreground">%</span></div></div>
+              <div className="space-y-2">
+                <Label htmlFor="rush-percentage">Proposed rush fee</Label>
+                <div className="flex items-center gap-2">
+                  <Input id="rush-percentage" type="number" min="0.01" max="100" step="0.01" value={rushPercentage} onChange={(event) => setRushPercentage(event.target.value)} />
+                  <span className="text-sm text-muted-foreground">%</span>
+                </div>
+                {rushPercentage && !isNaN(Number(rushPercentage)) && (
+                  <p className="text-sm text-muted-foreground">Estimated fee: {(contract.baseAmount * Number(rushPercentage) / 100).toFixed(4)} ETH</p>
+                )}
+              </div>
               <Button type="button" disabled={actionId === 'rush-request'} onClick={requestRush}>{actionId === 'rush-request' ? 'Requesting…' : 'Request rush upgrade'}</Button>
             </div>
           )}
@@ -281,6 +290,12 @@ export function ContractNegotiationPanel({
                   <Button type="button" variant="outline" disabled={actionId === `rush-${openRushRequest.id}`} onClick={() => void runAction(`rush-${openRushRequest.id}`, () => rushUpgradesApi.declineCounter(openRushRequest.id), 'Counter-offer declined.')}>Decline counter</Button>
                 </div>
               )}
+
+              {openRushRequest.requestedBy === currentUserId && (openRushRequest.status === 'pending' || openRushRequest.status === 'counter_offered') && (
+                <div className="mt-2">
+                  <Button type="button" variant="outline" size="sm" disabled={actionId === `rush-withdraw-${openRushRequest.id}`} onClick={() => void runAction(`rush-withdraw-${openRushRequest.id}`, () => rushUpgradesApi.withdraw(openRushRequest.id), 'Rush upgrade request withdrawn.')}>Withdraw request</Button>
+                </div>
+              )}
             </div>
           )}
 
@@ -313,7 +328,12 @@ export function ContractNegotiationPanel({
                 <li key={refund.id} className="space-y-3 rounded-lg border border-border p-4 text-sm">
                   <div className="flex flex-wrap items-start justify-between gap-2"><div><p className="font-medium">{formatAmount(refund.amount)} {refund.is_partial ? 'partial refund' : 'refund'}</p><p className="mt-1 text-muted-foreground">{refund.reason}</p></div><StatusBadge status={refund.status} domain="refund" /></div>
                   {refund.rejection_reason && <p className="text-destructive">Rejected: {refund.rejection_reason}</p>}
-                  {refund.requested_by === currentUserId && refund.status === 'pending' && <p className="text-muted-foreground">Waiting for the other participant to respond.</p>}
+                  {refund.requested_by === currentUserId && refund.status === 'pending' && (
+                    <div className="flex flex-wrap items-center gap-4">
+                      <p className="text-muted-foreground">Waiting for the other participant to respond.</p>
+                      <Button type="button" variant="outline" size="sm" disabled={actionId === `refund-withdraw-${refund.id}`} onClick={() => void runAction(`refund-withdraw-${refund.id}`, () => refundsApi.withdraw(refund.id), 'Refund request withdrawn.')}>Withdraw request</Button>
+                    </div>
+                  )}
                   {canDecide && (
                     <div className="space-y-3">
                       <div className="flex gap-2"><Button type="button" disabled={actionId === `refund-${refund.id}`} onClick={() => void runAction(`refund-${refund.id}`, () => refundsApi.approve(refund.id), 'Refund approved.')}>Approve refund</Button></div>

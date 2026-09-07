@@ -179,7 +179,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                   id="login-email" 
                   name="email" 
                   type="email" 
-                  placeholder="you@example.com" 
+                  placeholder="name@example.com" 
                   className="w-full px-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-border/80 bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all placeholder:text-muted-foreground/60" 
                   required 
                 />

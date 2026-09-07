@@ -23,6 +23,8 @@ function ResetPasswordForm() {
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [confirmPasswordError, setConfirmPasswordError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [complete, setComplete] = useState(false);
@@ -102,10 +104,21 @@ function ResetPasswordForm() {
             onChange={(event) => {
               setPassword(event.target.value);
               setFormError(null);
+              if (passwordError) setPasswordError(null);
+            }}
+            onBlur={() => {
+              if (password.length > 0 && password.length < 8) {
+                setPasswordError('Password must be at least 8 characters');
+              } else {
+                setPasswordError(null);
+              }
             }}
             aria-describedby="password-requirements reset-error"
             required
           />
+          {passwordError && (
+            <p className="text-sm text-destructive mt-1">{passwordError}</p>
+          )}
           <p id="password-requirements" className="text-xs text-muted-foreground">
             8–72 characters with uppercase, lowercase, a number, and @$!%*?&amp;.
           </p>
@@ -121,10 +134,21 @@ function ResetPasswordForm() {
             onChange={(event) => {
               setConfirmPassword(event.target.value);
               setFormError(null);
+              if (confirmPasswordError) setConfirmPasswordError(null);
+            }}
+            onBlur={() => {
+              if (confirmPassword.length > 0 && confirmPassword !== password) {
+                setConfirmPasswordError('Passwords do not match');
+              } else {
+                setConfirmPasswordError(null);
+              }
             }}
             aria-describedby="reset-error"
             required
           />
+          {confirmPasswordError && (
+            <p className="text-sm text-destructive mt-1">{confirmPasswordError}</p>
+          )}
 </Field>
 
         {formError && (

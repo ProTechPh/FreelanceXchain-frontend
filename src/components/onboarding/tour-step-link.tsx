@@ -33,6 +33,7 @@ export function TourStepLink({
         'inline-flex items-center gap-1 rounded-md text-xs font-semibold text-primary',
         'transition-colors duration-fast ease-out outline-none',
         'hover:text-primary-hover focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+        'min-h-[44px]',
         className,
       )}
     >

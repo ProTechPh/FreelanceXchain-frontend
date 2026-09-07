@@ -72,6 +72,7 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
   const [review, setReview] = useState<ReviewDraft>(initialReview);
   const [previewAttachment, setPreviewAttachment] = useState<AttachmentPreviewTarget | null>(null);
   const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
+  const [confirmDisputeOpen, setConfirmDisputeOpen] = useState(false);
   const [approvingMilestone, setApprovingMilestone] = useState<Milestone | null>(null);
 
   const loadWorkspace = useCallback(async () => {
@@ -428,11 +429,12 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
                 {permissions.canApprove && (
                   <div className="flex flex-col gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-end">
                     <Button
+                      className="bg-success text-success-foreground hover:bg-success/90"
                       disabled={actionId === milestone.id}
                       onClick={() => setApprovingMilestone(milestone)}
                       aria-label={`Approve milestone: ${milestone.title}`}
                     >
-                      Approve and release
+                      Release Payment
                     </Button>
                     <div className="flex-1 space-y-2">
                       <Label htmlFor={`reject-${milestone.id}`}>Revision reason</Label>
@@ -492,7 +494,10 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
           </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle>Disputes</CardTitle></CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardTitle>Disputes</CardTitle>
+            <Button variant="destructive" size="sm" onClick={() => setConfirmDisputeOpen(true)}>File Dispute</Button>
+          </CardHeader>
           <CardContent className="space-y-3">
             {disputes.length === 0 ? <p className="text-sm text-muted-foreground">No disputes for this contract.</p> : disputes.map((dispute) => <Link key={dispute.id} href={`/dashboard/${role}/disputes/${dispute.id}`} className="flex items-start gap-2 rounded-lg border border-border p-3 text-sm transition-colors hover:border-primary/30"><AlertTriangle className="mt-0.5 size-4 text-warning" /><div><p className="font-medium">{dispute.reason}</p><p className="text-muted-foreground">{dispute.status.replace('_', ' ')}</p></div></Link>)}
           </CardContent>
@@ -546,8 +551,8 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
           <DialogHeader>
             <DialogTitle className="text-foreground">Approve Milestone & Release Payment?</DialogTitle>
             <DialogDescription>
-              This will approve milestone <strong>&quot;{approvingMilestone?.title}&quot;</strong> and release{' '}
-              <strong className="text-foreground">{formatAmount(approvingMilestone?.amount)}</strong> from smart contract escrow directly to the freelancer. This blockchain transaction is permanent and cannot be reversed.
+              You are about to release payment for <strong>&quot;{approvingMilestone?.title}&quot;</strong> ({formatAmount(approvingMilestone?.amount)}).
+              This will transfer funds to the freelancer. This cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0">
@@ -574,6 +579,28 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
               }}
             >
               Confirm & Release Payment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={confirmDisputeOpen} onOpenChange={setConfirmDisputeOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-destructive">File a Dispute?</DialogTitle>
+            <DialogDescription>
+              Filing a dispute will freeze the contract funds. A mediator will review the case.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setConfirmDisputeOpen(false)}>Cancel</Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                setConfirmDisputeOpen(false);
+                void runAction('dispute', () => contractsApi.getDisputes(contract.id), 'Dispute filed successfully.');
+              }}
+            >
+              Confirm
             </Button>
           </DialogFooter>
         </DialogContent>

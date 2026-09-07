@@ -32,6 +32,7 @@ export function HelpHint({ topic, className }: { topic: HelpTopicId; className?:
           'transition-colors duration-fast ease-out outline-none',
           'hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
           open && 'text-foreground',
+          'min-h-[44px] min-w-[44px]'
         )}
       >
         <CircleHelp className="size-3.5 shrink-0" aria-hidden="true" />

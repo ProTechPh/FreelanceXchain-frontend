@@ -400,13 +400,17 @@ export function ProposalDialog({
                   <Markdown content={editableCoverLetter} className="text-xs sm:text-sm" />
                 </div>
               ) : (
-                <Textarea
-                  value={editableCoverLetter}
-                  onChange={(e) => handleCoverLetterChange(e.target.value)}
-                  rows={8}
-                  className="max-h-52 min-h-40 font-mono text-2xs leading-relaxed sm:max-h-none sm:text-xs"
-                  placeholder="Customize your proposal pitch here..."
-                />
+                <div>
+                  <Textarea
+                    value={editableCoverLetter}
+                    onChange={(e) => handleCoverLetterChange(e.target.value)}
+                    rows={8}
+                    className="max-h-52 min-h-40 font-mono text-2xs leading-relaxed sm:max-h-none sm:text-xs"
+                    placeholder="Customize your proposal pitch here..."
+                    maxLength={2000}
+                  />
+                  <p className="text-xs text-muted-foreground text-right mt-1">{editableCoverLetter.length} / 2000</p>
+                </div>
               )}
             </div>
 
@@ -544,7 +548,7 @@ export function ProposalDialog({
                     </span>
                     <button
                       type="button"
-                      className="ml-2 shrink-0 text-muted-foreground hover:text-destructive"
+                      className="ml-2 shrink-0 p-2 text-muted-foreground hover:text-destructive touch-manipulation"
                       onClick={() => setForm((c) => ({ ...c, files: c.files.filter((_, i) => i !== idx) }))}
                     >
                       <X className="size-3.5" />

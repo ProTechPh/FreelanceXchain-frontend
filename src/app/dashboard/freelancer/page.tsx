@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { StatsSkeleton, ListSkeleton } from '@/components/dashboard/skeletons';
 import Link from 'next/link';
 import {
   contractsApi,
@@ -129,7 +130,7 @@ export default function FreelancerDashboard() {
           recentProposalsList = all
             .slice()
             .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-            .slice(0, 3);
+            .slice(0, 5); // Increased slice to allow for > 4 check
           recentProposalsList.forEach((p) => projectIdsToFetch.add(p.projectId));
         }
 
@@ -214,6 +215,11 @@ export default function FreelancerDashboard() {
       active = false;
     };
   }, [currentUser]);
+
+  const hasData = activeContracts.length > 0 || recentProposals.length > 0;
+  if (coreLoading && !hasData) {
+    return <StatsSkeleton label="Loading dashboard" />;
+  }
 
   const stats = [
     {
@@ -326,10 +332,7 @@ export default function FreelancerDashboard() {
             </CardHeader>
             <CardContent className="space-y-4">
               {coreLoading ? (
-                <div className="space-y-3" role="status" aria-label="Loading active contracts">
-                  <Skeleton className="h-20 w-full rounded-xl" />
-                  <Skeleton className="h-20 w-full rounded-xl" />
-                </div>
+                <ListSkeleton rows={2} label="Loading active contracts" />
               ) : activeContracts.length === 0 ? (
                 <div className="flex flex-col items-center gap-2 py-8 text-center">
                   <p className="text-sm text-muted-foreground">
@@ -338,44 +341,55 @@ export default function FreelancerDashboard() {
                   <TourStepLink step="contracts">How contracts and milestones work</TourStepLink>
                 </div>
               ) : (
-                activeContracts.map(({ contract, project }) => {
-                  const milestones = project?.milestones ?? [];
-                  const completedCount = milestones.filter((m) => m.status === 'completed').length;
-                  const progress = milestones.length > 0 ? Math.round((completedCount / milestones.length) * 100) : 0;
-                  const currentMilestone = milestones.find((m) => m.status !== 'completed');
-                  return (
-                    <Link
-                      key={contract.id}
-                      href={`/dashboard/freelancer/contracts/${contract.id}`}
-                      className="block rounded-xl border border-border bg-secondary/50 p-4 transition-all hover:border-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    >
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <p className="font-medium">{project?.title ?? 'Untitled project'}</p>
-                          <p className="text-sm text-muted-foreground">{project?.employer?.name ?? project?.employer?.companyName ?? ''}</p>
+                <>
+                  {activeContracts.slice(0, 4).map(({ contract, project }) => {
+                    const milestones = project?.milestones ?? [];
+                    const completedCount = milestones.filter((m) => m.status === 'completed').length;
+                    const progress = milestones.length > 0 ? Math.round((completedCount / milestones.length) * 100) : 0;
+                    const currentMilestone = milestones.find((m) => m.status !== 'completed');
+                    return (
+                      <Link
+                        key={contract.id}
+                        href={`/dashboard/freelancer/contracts/${contract.id}`}
+                        className="block rounded-xl border border-border bg-secondary/50 p-4 transition-all hover:border-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <p className="font-medium">{project?.title ?? 'Untitled project'}</p>
+                            <p className="text-sm text-muted-foreground">{project?.employer?.name ?? project?.employer?.companyName ?? ''}</p>
+                          </div>
+                          <p className="font-semibold text-primary">{formatAmount(contract.totalAmount)}</p>
                         </div>
-                        <p className="font-semibold text-primary">{formatAmount(contract.totalAmount)}</p>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between text-xs mb-1">
-                            <span className="text-muted-foreground">{currentMilestone?.title ?? 'All milestones complete'}</span>
-                            <span className="text-muted-foreground">{progress}%</span>
+                        <div className="flex items-center gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between text-xs mb-1">
+                              <span className="text-muted-foreground">{currentMilestone?.title ?? 'All milestones complete'}</span>
+                              <span className="text-muted-foreground">{progress}%</span>
+                            </div>
+                            <div className="h-1.5 bg-background rounded-full overflow-hidden">
+                              <div className="h-full gradient-primary rounded-full transition-all" style={{ width: `${progress}%` }} />
+                            </div>
                           </div>
-                          <div className="h-1.5 bg-background rounded-full overflow-hidden">
-                            <div className="h-full gradient-primary rounded-full transition-all" style={{ width: `${progress}%` }} />
-                          </div>
+                          {project?.deadline && (
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Clock className="w-3 h-3" />
+                              {formatDate(project.deadline)}
+                            </div>
+                          )}
                         </div>
-                        {project?.deadline && (
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Clock className="w-3 h-3" />
-                            {formatDate(project.deadline)}
-                          </div>
-                        )}
-                      </div>
-                    </Link>
-                  );
-                })
+                      </Link>
+                    );
+                  })}
+                  {activeContracts.length > 4 && (
+                    <div className="flex justify-center pt-2">
+                      <Button variant="link" asChild>
+                        <Link href="/dashboard/freelancer/contracts">
+                          View all ({activeContracts.length})
+                        </Link>
+                      </Button>
+                    </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
@@ -393,29 +407,38 @@ export default function FreelancerDashboard() {
           </CardHeader>
           <CardContent className="space-y-3">
             {coreLoading ? (
-              <div className="space-y-3" role="status" aria-label="Loading recent proposals">
-                <Skeleton className="h-16 w-full rounded-xl" />
-                <Skeleton className="h-16 w-full rounded-xl" />
-              </div>
+              <ListSkeleton rows={2} label="Loading recent proposals" />
             ) : recentProposals.length === 0 ? (
               <div className="flex flex-col items-center gap-2 py-8 text-center">
                 <p className="text-sm text-muted-foreground">No proposals yet</p>
                 <TourStepLink step="proposals">How to write one that wins</TourStepLink>
               </div>
             ) : (
-              recentProposals.map(({ proposal, project }) => (
-                <div key={proposal.id} className="p-3 rounded-xl bg-secondary/50 border border-border">
-                  <div className="flex items-start justify-between mb-2">
-                    <p className="font-medium text-sm">{project?.title ?? 'Untitled project'}</p>
-                    <Badge className={statusColors[proposal.status]}>{proposal.status}</Badge>
+              <>
+                {recentProposals.slice(0, 4).map(({ proposal, project }) => (
+                  <div key={proposal.id} className="p-3 rounded-xl bg-secondary/50 border border-border">
+                    <div className="flex items-start justify-between mb-2">
+                      <p className="font-medium text-sm">{project?.title ?? 'Untitled project'}</p>
+                      <Badge className={statusColors[proposal.status]}>{proposal.status}</Badge>
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>{formatAmount(proposal.proposedRate)}</span>
+                      <span>{relativeTime(proposal.createdAt)}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>{formatAmount(proposal.proposedRate)}</span>
-                    <span>{relativeTime(proposal.createdAt)}</span>
+                ))}
+                {recentProposals.length > 4 && (
+                  <div className="flex justify-center pt-2">
+                    <Button variant="link" asChild>
+                      <Link href="/dashboard/freelancer/proposals">
+                        View all ({recentProposals.length})
+                      </Link>
+                    </Button>
                   </div>
-                </div>
-              ))
-            )}</CardContent>
+                )}
+              </>
+            )}
+          </CardContent>
         </Card>
       </div>
 
