@@ -498,6 +498,7 @@ export function OnboardingTour({ suppressed = false }: { suppressed?: boolean })
 
   const isRunning = useTourStore((state) => state.isRunning);
   const hasHydrated = useTourStore((state) => state.hasHydrated);
+  const hasSyncedFromBackend = useTourStore((state) => state.hasSyncedFromBackend);
   const progressByUser = useTourStore((state) => state.progressByUser);
   const autoStartByDefault = useTourStore((state) => state.autoStartByDefault);
   const start = useTourStore((state) => state.start);
@@ -505,8 +506,15 @@ export function OnboardingTour({ suppressed = false }: { suppressed?: boolean })
   const pendingUserId = useTourStore((state) => state.pendingUserId);
   const pendingStepId = useTourStore((state) => state.pendingStepId);
   const clearPending = useTourStore((state) => state.clearPending);
+  const syncFromBackend = useTourStore((state) => state.syncFromBackend);
 
   const role = user?.role;
+
+  // Sync tour preferences from backend on first load
+  useEffect(() => {
+    if (!authHasHydrated || !user?.id || hasSyncedFromBackend) return;
+    syncFromBackend(user.id);
+  }, [authHasHydrated, user?.id, hasSyncedFromBackend, syncFromBackend]);
 
   // A replay requested from another route picks itself up once the dashboard
   // home -- where the anchors live -- has actually rendered.
@@ -519,6 +527,9 @@ export function OnboardingTour({ suppressed = false }: { suppressed?: boolean })
 
   useEffect(() => {
     if (suppressed) return;
+    // Wait for both localStorage hydration and backend sync before auto-starting
+    if (!hasHydrated || !hasSyncedFromBackend) return;
+    
     if (
       shouldAutoStartTour({
         hasHydrated,
@@ -540,6 +551,7 @@ export function OnboardingTour({ suppressed = false }: { suppressed?: boolean })
   }, [
     suppressed,
     hasHydrated,
+    hasSyncedFromBackend,
     authHasHydrated,
     isAuthenticated,
     user?.id,

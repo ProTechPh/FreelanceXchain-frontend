@@ -33,8 +33,7 @@ export function TourSettingsCard() {
           <Compass className="size-5" /> Product tour
         </CardTitle>
         <CardDescription className="mt-1">
-          A short walkthrough of your dashboard. It is stored on this device, so it will not follow you to another
-          browser.
+          A short walkthrough of your dashboard. Your preferences sync across all your devices.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">

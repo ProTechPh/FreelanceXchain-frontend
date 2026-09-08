@@ -11,6 +11,7 @@ import {
   setTourAutoStart,
   type TourProgressByUser,
 } from '@/lib/onboarding-tour';
+import { userPreferencesApi } from '@/lib/api';
 import type { UserRole } from '@/types';
 
 interface TourState {
@@ -42,6 +43,8 @@ interface TourState {
   cardHeight: number;
   /** Mirrors the auth store: guards against acting before rehydration. */
   hasHydrated: boolean;
+  /** Whether preferences have been synced from backend. */
+  hasSyncedFromBackend: boolean;
 
   start: (userId: string | undefined | null, role: UserRole | undefined | null, stepId?: string) => void;
   /** Start once the dashboard home is reached. */
@@ -56,6 +59,10 @@ interface TourState {
   setAutoStart: (userId: string | undefined | null, role: UserRole | undefined | null, value: boolean) => void;
   setCardHeight: (value: number) => void;
   setHasHydrated: (value: boolean) => void;
+  /** Sync preferences from backend database. */
+  syncFromBackend: (userId: string) => Promise<void>;
+  /** Sync current state to backend database. */
+  syncToBackend: () => Promise<void>;
 }
 
 export const useTourStore = create<TourState>()(
@@ -72,6 +79,7 @@ export const useTourStore = create<TourState>()(
       pendingStepId: null,
       cardHeight: 0,
       hasHydrated: false,
+      hasSyncedFromBackend: false,
 
       start: (userId, role, stepId) => {
         if (!userId || !isTourRole(role) || getTourSteps(role).length === 0) return;
@@ -113,7 +121,7 @@ export const useTourStore = create<TourState>()(
         set({ stepIndex: clampStepIndex(index, getTourSteps(activeRole).length) });
       },
 
-      skip: () => {
+      skip: async () => {
         const { activeRole, activeUserId, progressByUser } = get();
         set({
           isRunning: false,
@@ -126,9 +134,11 @@ export const useTourStore = create<TourState>()(
           cardHeight: 0,
           progressByUser: markCompleted(progressByUser, activeUserId, activeRole),
         });
+        // Sync to backend
+        await get().syncToBackend();
       },
 
-      finish: () => {
+      finish: async () => {
         const { activeRole, activeUserId, progressByUser } = get();
         set({
           isRunning: false,
@@ -141,11 +151,17 @@ export const useTourStore = create<TourState>()(
           cardHeight: 0,
           progressByUser: markCompleted(progressByUser, activeUserId, activeRole),
         });
+        // Sync to backend
+        await get().syncToBackend();
       },
 
-      setAutoStart: (userId, role, value) => set((state) => ({
-        progressByUser: setTourAutoStart(state.progressByUser, userId, role, value),
-      })),
+      setAutoStart: async (userId, role, value) => {
+        set((state) => ({
+          progressByUser: setTourAutoStart(state.progressByUser, userId, role, value),
+        }));
+        // Sync to backend
+        await get().syncToBackend();
+      },
 
       setCardHeight: (value: number) => {
         // Sub-pixel churn from a ResizeObserver would re-render the drawer on
@@ -155,6 +171,48 @@ export const useTourStore = create<TourState>()(
       },
 
       setHasHydrated: (value: boolean) => set({ hasHydrated: value }),
+
+      syncFromBackend: async (userId: string) => {
+        try {
+          const response = await userPreferencesApi.get();
+          const data = response.data;
+          
+          if (data.tourProgress) {
+            // Convert backend format to frontend format
+            const progressByUser: TourProgressByUser = {
+              [userId]: data.tourProgress,
+            };
+            
+            set({
+              progressByUser,
+              hasSyncedFromBackend: true,
+            });
+          } else {
+            set({ hasSyncedFromBackend: true });
+          }
+        } catch (error) {
+          // Silently fail - will use localStorage as fallback
+          console.error('Failed to sync tour preferences from backend:', error);
+          set({ hasSyncedFromBackend: true });
+        }
+      },
+
+      syncToBackend: async () => {
+        const { activeRole, activeUserId, progressByUser, autoStartByDefault } = get();
+        if (!activeUserId || !isTourRole(activeRole)) return;
+
+        try {
+          const roleProgress = progressByUser[activeUserId]?.[activeRole];
+          await userPreferencesApi.updateTourProgress({
+            role: activeRole,
+            completedVersion: roleProgress?.completedVersion,
+            autoStart: roleProgress?.autoStart ?? autoStartByDefault,
+          });
+        } catch (error) {
+          // Silently fail - localStorage is the fallback
+          console.error('Failed to sync tour preferences to backend:', error);
+        }
+      },
     }),
     {
       name: TOUR_STORAGE_KEY,
