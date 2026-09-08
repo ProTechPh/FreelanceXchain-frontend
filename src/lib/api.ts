@@ -266,6 +266,27 @@ export const emailPreferencesApi = {
     api.post<{ message: string }>('/email-preferences/unsubscribe-all'),
 };
 
+export interface UserPreferences {
+  id: string;
+  userId: string;
+  tourProgress?: Partial<Record<'freelancer' | 'employer', {
+    completedVersion?: number;
+    autoStart?: boolean;
+  }>>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const userPreferencesApi = {
+  get: () => api.get<UserPreferences>('/user-preferences'),
+
+  updateTourProgress: (data: {
+    role: 'freelancer' | 'employer';
+    completedVersion?: number;
+    autoStart?: boolean;
+  }) => api.patch<UserPreferences>('/user-preferences/tour-progress', data),
+};
+
 function normalizeFreelancerProfileResponse(
   response: AxiosResponse<FreelancerProfile>,
 ): AxiosResponse<FreelancerProfile> {
