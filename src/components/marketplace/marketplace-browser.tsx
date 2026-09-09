@@ -416,7 +416,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
               <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                 {appliedFilters.keyword.trim() && (
                   <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
-                    "{appliedFilters.keyword.trim()}"
+                    &quot;{appliedFilters.keyword.trim()}&quot;
                     <button
                       type="button"
                       onClick={() => {
