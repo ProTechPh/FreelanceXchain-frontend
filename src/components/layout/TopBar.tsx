@@ -122,7 +122,7 @@ export function TopBar() {
 
   return (
     <header className="sticky top-0 z-40 shrink-0 border-b border-border bg-card/80 backdrop-blur-xl">
-      <div className="flex h-16 items-center justify-between gap-2 px-4 sm:gap-3 sm:px-6">
+      <div className="flex h-14 sm:h-16 items-center justify-between gap-2 px-3 sm:gap-3 sm:px-6">
         <div className="flex min-w-0 flex-1 items-center gap-1 sm:gap-2">
           <MobileNav role={user?.role} />
           {hasParticipantDashboard && (
@@ -135,7 +135,7 @@ export function TopBar() {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="size-11 sm:size-10 sm:hidden touch-manipulation"
+                  className="size-10 sm:hidden touch-manipulation"
                   aria-label={searchLabel}
                   aria-expanded={searchOpen}
                   aria-controls="dashboard-search-row"
@@ -159,7 +159,7 @@ export function TopBar() {
           {/* Notifications */}
           {user && (
             <Tooltip content={`Notifications${unreadNotifications > 0 ? ` (${unreadNotifications} unread)` : ''}`}>
-              <Button asChild variant="ghost" size="icon" className="relative size-11 sm:size-10 touch-manipulation">
+              <Button asChild variant="ghost" size="icon" className="relative size-10 sm:size-10 touch-manipulation">
                 <Link
                   href={`/dashboard/${user.role}/notifications`}
                   data-tour="notifications"
@@ -199,7 +199,7 @@ export function TopBar() {
             <DropdownMenuTrigger
               data-tour="account"
               aria-label="Open account menu"
-              className="flex min-h-[44px] min-w-[44px] sm:h-9 sm:min-h-0 sm:min-w-0 cursor-pointer items-center justify-center gap-1 rounded-md px-1 outline-none transition-colors duration-fast hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:gap-2 sm:px-2 touch-manipulation"
+              className="flex min-h-[40px] min-w-[40px] sm:h-9 sm:min-h-0 sm:min-w-0 cursor-pointer items-center justify-center gap-1 rounded-md px-1 outline-none transition-colors duration-fast hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:gap-2 sm:px-2 touch-manipulation"
             >
               <Avatar className="size-7">
                 <AvatarFallback className="text-xs gradient-primary">{initials}</AvatarFallback>
@@ -249,20 +249,15 @@ export function TopBar() {
         </div>
       </div>
 
-      {/* Phone-only search row. The bar keeps its 64px height until the field is
-          actually asked for, so nothing is displaced in the common case.
-          Uses transform+opacity instead of max-height to avoid CLS. */}
-      <div
-        id="dashboard-search-row"
-        className={`border-t border-border px-4 sm:hidden overflow-hidden transition-all duration-200 ease-out ${
-          hasParticipantDashboard && searchOpen
-            ? 'py-2 opacity-100'
-            : 'py-0 opacity-0 pointer-events-none border-t-transparent'
-        }`}
-        aria-hidden={!searchOpen}
-      >
-        {hasParticipantDashboard && renderSearch('dashboard-marketplace-search-mobile')}
-      </div>
+      {/* Phone-only search row: only rendered when searchOpen is true so it takes zero height when closed */}
+      {hasParticipantDashboard && searchOpen && (
+        <div
+          id="dashboard-search-row"
+          className="border-t border-border px-3 py-2 sm:hidden animate-in fade-in duration-150"
+        >
+          {renderSearch('dashboard-marketplace-search-mobile')}
+        </div>
+      )}
     </header>
   );
 }

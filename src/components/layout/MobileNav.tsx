@@ -30,7 +30,7 @@ import type { UserRole } from '@/types';
  * This renders the same `SidebarNav` inside a drawer, and closes on navigation
  * so the user is never left staring at the menu they just used.
  */
-export function MobileNav({ role }: { role: UserRole | undefined }) {
+export function MobileNav({ role, className }: { role: UserRole | undefined; className?: string }) {
   const [open, setOpen] = useState(false);
   const isBelowLarge = useIsBelowLarge();
   const tourWantsNav = useTourStore((state) => state.isRunning && stepOpensNav(state.activeRole, state.stepIndex));
@@ -59,11 +59,11 @@ export function MobileNav({ role }: { role: UserRole | undefined }) {
               size="icon"
               aria-label="Open navigation menu"
               data-tour="nav-trigger"
-              className="size-11 sm:size-10 lg:hidden touch-manipulation"
+              className={cn("size-11 sm:size-10 lg:hidden touch-manipulation", className)}
             />
           }
         >
-          <Menu className="size-5" aria-hidden="true" />
+          <Menu className={cn("size-5", className?.includes("size-8") && "size-4 sm:size-5")} aria-hidden="true" />
         </SheetTrigger>
       </Tooltip>
       <SheetContent

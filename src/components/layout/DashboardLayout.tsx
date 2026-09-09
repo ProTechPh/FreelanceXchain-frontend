@@ -14,6 +14,7 @@ import {
 } from '@/lib/first-login-kyc';
 import { isDashboardHome, isTourRole } from '@/lib/onboarding-tour';
 import { useAuthStore } from '@/stores/authStore';
+import { cn } from '@/lib/utils';
 import type { UserRole } from '@/types';
 
 interface DashboardLayoutProps {
@@ -222,7 +223,12 @@ export function DashboardLayout({ children, allowedRoles }: DashboardLayoutProps
         <main
           id="dashboard-content"
           tabIndex={-1}
-          className="min-w-0 flex-1 px-4 py-4 sm:px-6 sm:py-6 lg:px-(--space-page-x) pb-20 lg:pb-6 outline-none"
+          className={cn(
+            "min-w-0 flex-1 outline-none",
+            pathname?.includes('/messages')
+              ? "px-2 pt-1 pb-0 sm:px-4 sm:pt-2 sm:pb-20 lg:px-6 lg:py-4 lg:pb-6 overflow-hidden"
+              : "px-4 py-4 sm:px-6 sm:py-6 lg:px-(--space-page-x) pb-20 lg:pb-6"
+          )}
         >
           {children}
         </main>
