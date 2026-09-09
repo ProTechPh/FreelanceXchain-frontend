@@ -6,12 +6,11 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { proposalsApi, projectsApi } from '@/lib/api';
 import type { Proposal, Project, ProposalStatus } from '@/types';
 import { toast } from '@/components/ui/toast';
 import { reportLoadFailure } from '@/lib/report-failure';
-import { Clock, CheckCircle, XCircle, FileText } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, FileText, RefreshCw } from 'lucide-react';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { formatAmount, formatDate } from '@/lib/format';
 import {
@@ -22,6 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 
 const statusConfig: Record<ProposalStatus, { icon: typeof Clock; color: string; bg: string; label: string }> = {
   pending: { icon: Clock, color: 'text-warning', bg: 'bg-warning-subtle', label: 'Pending' },
@@ -84,31 +84,47 @@ export default function ProposalsPage() {
   const statuses: ProposalStatus[] = ['pending', 'accepted', 'rejected', 'withdrawn'];
 
   return (
-    <PullToRefresh onRefresh={handleRefresh} className="min-h-screen">
-      <div className="space-y-6">
+    <div className="space-y-6 w-full max-w-full">
       {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground">My proposals</h1>
-          <p className="text-muted-foreground">Track and manage your submitted proposals</p>
+          <p className="text-sm text-muted-foreground">Track and manage your submitted proposals</p>
         </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => void handleRefresh()}
+          className="self-start sm:self-auto gap-2 text-xs"
+        >
+          <RefreshCw className="size-3.5" />
+          <span>Refresh</span>
+        </Button>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         {statuses.map((status) => {
           const config = statusConfig[status];
           const count = byStatus(status).length;
+          const isActive = activeTab === status;
           return (
-            <Card key={status} className="bg-card border-border">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-lg ${config.bg} flex items-center justify-center`}>
-                    <config.icon className={`w-5 h-5 ${config.color}`} />
+            <Card
+              key={status}
+              onClick={() => setActiveTab(status)}
+              className={cn(
+                "bg-card border-border cursor-pointer transition-all duration-fast hover:border-primary/50 touch-manipulation min-w-0 overflow-hidden",
+                isActive && "border-primary/60 ring-1 ring-primary/40 bg-primary/[0.03]"
+              )}
+            >
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-center gap-2.5 sm:gap-3">
+                  <div className={`size-8 sm:size-10 rounded-lg ${config.bg} flex items-center justify-center shrink-0`}>
+                    <config.icon className={`size-4 sm:size-5 ${config.color}`} />
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold">{count}</p>
-                    <p className="text-xs text-muted-foreground capitalize">{status}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-lg sm:text-2xl font-bold leading-tight">{count}</p>
+                    <p className="text-3xs sm:text-xs text-muted-foreground capitalize truncate">{status}</p>
                   </div>
                 </div>
               </CardContent>
@@ -118,14 +134,16 @@ export default function ProposalsPage() {
       </div>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ProposalStatus)}>
-        <TabsList>
-          {statuses.map((status) => (
-            <TabsTrigger key={status} value={status}>
-              {statusConfig[status].label} ({byStatus(status).length})
-            </TabsTrigger>
-          ))}
-        </TabsList>
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as ProposalStatus)} className="w-full">
+        <div className="w-full overflow-x-auto no-scrollbar pb-1">
+          <TabsList className="inline-flex w-full sm:w-auto min-w-max justify-start sm:justify-center">
+            {statuses.map((status) => (
+              <TabsTrigger key={status} value={status} className="shrink-0 text-xs sm:text-sm px-3 py-1.5 whitespace-nowrap">
+                {statusConfig[status].label} ({byStatus(status).length})
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
 
         {statuses.map((status) => (
           <TabsContent key={status} value={status} className="space-y-4">
@@ -135,36 +153,44 @@ export default function ProposalsPage() {
               </p>
             )}
             {byStatus(status).map(({ proposal, project }) => (
-              <Card key={proposal.id} className="bg-card border-border">
-                <CardContent className="p-5">
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h3 className="font-semibold text-lg">{project?.title ?? 'Untitled project'}</h3>
-                      <p className="text-sm text-muted-foreground">
+              <Card key={proposal.id} className="bg-card border-border min-w-0 overflow-hidden">
+                <CardContent className="p-4 sm:p-5">
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-semibold text-base sm:text-lg break-words line-clamp-2" title={project?.title ?? 'Untitled project'}>
+                        {project?.title ?? 'Untitled project'}
+                      </h3>
+                      <p className="text-xs sm:text-sm text-muted-foreground truncate mt-0.5">
                         {project?.employer?.companyName ?? project?.employer?.name ?? ''}
                       </p>
                     </div>
-                    <Badge className={`${statusConfig[status].bg} ${statusConfig[status].color}`}>
+                    <Badge className={cn("shrink-0 text-2xs sm:text-xs", statusConfig[status].bg, statusConfig[status].color)}>
                       {statusConfig[status].label}
                     </Badge>
                   </div>
-                  <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                    <span className="font-medium text-primary">{formatAmount(proposal.proposedRate)}</span>
-                    <span>{proposal.estimatedDuration} days</span>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs sm:text-sm text-muted-foreground">
+                    <span className="font-bold text-primary">{formatAmount(proposal.proposedRate)}</span>
+                    <span className="flex items-center gap-1"><Clock className="size-3 shrink-0" />{proposal.estimatedDuration} days</span>
                     <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
                       {status === 'pending' ? 'Submitted' : statusConfig[status].label}{' '}
                       {formatDate(status === 'pending' ? proposal.createdAt : proposal.updatedAt)}
                     </span>
                   </div>
-                  <div className="mt-4 flex gap-3">
-                    <Button asChild variant="outline" size="sm">
+                  <div className="mt-4 pt-3 border-t border-border/60 flex flex-wrap items-center gap-2">
+                    {status === 'accepted' && (
+                      <Button asChild variant="gradient" size="sm" className="h-8 text-xs font-semibold shrink-0">
+                        <Link href="/dashboard/freelancer/contracts">
+                          <FileText className="size-3.5 mr-1.5" /> View Contract
+                        </Link>
+                      </Button>
+                    )}
+                    <Button asChild variant="outline" size="sm" className="h-8 text-xs shrink-0">
                       <Link href={`/dashboard/freelancer/proposals/${proposal.id}`}>
                         View Proposal
                       </Link>
                     </Button>
                     {project && (
-                      <Button asChild variant="ghost" size="sm">
+                      <Button asChild variant="ghost" size="sm" className="h-8 text-xs shrink-0">
                         <Link href={`/dashboard/freelancer/projects/${project.id}`}>
                           View Project
                         </Link>
@@ -174,18 +200,11 @@ export default function ProposalsPage() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-destructive hover:bg-destructive/10"
+                        className="h-8 text-xs text-destructive hover:bg-destructive/10 shrink-0"
                         disabled={withdrawingId === proposal.id}
                         onClick={() => setConfirmWithdrawProposal({ proposal, project })}
                       >
                         {withdrawingId === proposal.id ? 'Withdrawing…' : 'Withdraw'}
-                      </Button>
-                    )}
-                    {status === 'accepted' && (
-                      <Button asChild variant="gradient" size="sm">
-                        <Link href="/dashboard/freelancer/contracts">
-                          <FileText className="w-4 h-4 mr-2" /> View Contract
-                        </Link>
                       </Button>
                     )}
                   </div>
@@ -247,7 +266,6 @@ export default function ProposalsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      </div>
-    </PullToRefresh>
+    </div>
   );
 }

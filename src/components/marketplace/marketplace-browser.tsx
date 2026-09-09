@@ -104,6 +104,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
   const [hasMore, setHasMore] = useState(false);
   const [searchToDelete, setSearchToDelete] = useState<SavedSearch | null>(null);
   const [isDeletingSearch, setIsDeletingSearch] = useState(false);
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const selectedFilterCount = [
     Boolean(filters.keyword.trim()),
     filters.skillIds.length > 0,
@@ -361,10 +362,284 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
 
           {/* Search & filters.
               On the dashboard these sit in one toolbar row: stacked full-width
-              fields pushed the first project roughly 700px down the page, which
-              is the opposite of what a browse view should do. Same controls and
-              same labels — nothing is hidden behind a disclosure. */}
-          <div className={cn("border border-border/80 bg-card shadow-md shadow-black/5", panel)}>
+          {/* Mobile Search & Filter Toolbar */}
+          <div className="sm:hidden space-y-2.5">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                setAppliedFilters({ ...filters });
+              }}
+              className="flex items-center gap-2"
+            >
+              <div className="relative flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                <Input
+                  id="mobile-search-input"
+                  value={filters.keyword}
+                  onChange={(event) => setFilters((current) => ({ ...current, keyword: event.target.value }))}
+                  placeholder={`Search ${kind === "project" ? "projects" : "freelancers"}…`}
+                  className={cn("pl-9 pr-8 h-10 text-sm", control)}
+                />
+                {filters.keyword && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFilters((current) => ({ ...current, keyword: "" }));
+                      setAppliedFilters((current) => ({ ...current, keyword: "" }));
+                    }}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
+                    aria-label="Clear keyword search"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                )}
+              </div>
+              <Button
+                type="button"
+                variant={selectedFilterCount > 0 ? "default" : "outline"}
+                className={cn("h-10 px-3.5 shrink-0 gap-1.5 touch-manipulation", control)}
+                onClick={() => setMobileFilterOpen(true)}
+                aria-label={`Open filters${selectedFilterCount > 0 ? `, ${selectedFilterCount} active` : ""}`}
+              >
+                <ListFilter className="size-4" aria-hidden="true" />
+                <span className="text-xs font-semibold">Filters</span>
+                {selectedFilterCount > 0 && (
+                  <span className="flex size-4.5 items-center justify-center rounded-full bg-primary-foreground text-primary text-3xs font-bold">
+                    {selectedFilterCount}
+                  </span>
+                )}
+              </Button>
+            </form>
+
+            {/* Active filter chips on mobile */}
+            {selectedFilterCount > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                {appliedFilters.keyword.trim() && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                    "{appliedFilters.keyword.trim()}"
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFilters((current) => ({ ...current, keyword: "" }));
+                        setAppliedFilters((current) => ({ ...current, keyword: "" }));
+                      }}
+                      className="hover:opacity-70 p-0.5"
+                      aria-label="Remove keyword filter"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  </span>
+                )}
+                {appliedFilters.skillIds.length > 0 && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                    {skills.find((s) => s.id === appliedFilters.skillIds[0])?.name || "Skill"}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFilters((current) => ({ ...current, skillIds: [] }));
+                        setAppliedFilters((current) => ({ ...current, skillIds: [] }));
+                      }}
+                      className="hover:opacity-70 p-0.5"
+                      aria-label="Remove skill filter"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  </span>
+                )}
+                {kind === "project" && (appliedFilters.minBudget !== undefined || appliedFilters.maxBudget !== undefined) && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                    ${appliedFilters.minBudget ?? 0} - ${appliedFilters.maxBudget ? `$${appliedFilters.maxBudget}` : "any"}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFilters((current) => {
+                          const next = { ...current };
+                          delete next.minBudget;
+                          delete next.maxBudget;
+                          return next;
+                        });
+                        setAppliedFilters((current) => {
+                          const next = { ...current };
+                          delete next.minBudget;
+                          delete next.maxBudget;
+                          return next;
+                        });
+                      }}
+                      className="hover:opacity-70 p-0.5"
+                      aria-label="Remove budget filter"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  </span>
+                )}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                  onClick={resetFilters}
+                >
+                  Clear all
+                </Button>
+              </div>
+            )}
+
+            {/* Saved search chips on mobile */}
+            {user && savedSearches.length > 0 && (
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+                <span className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider shrink-0 mr-1">Saved:</span>
+                {savedSearches.map((savedSearch) => (
+                  <button
+                    key={savedSearch.id}
+                    type="button"
+                    onClick={() => void runSavedSearch(savedSearch)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-secondary text-secondary-foreground border border-border shrink-0 hover:border-primary/50 transition-colors"
+                  >
+                    <span>{savedSearch.name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Mobile Filter Dialog */}
+          <Dialog open={mobileFilterOpen} onOpenChange={setMobileFilterOpen}>
+            <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <ListFilter className="size-4 text-primary" />
+                  Filter {kind === "project" ? "Projects" : "Freelancers"}
+                </DialogTitle>
+                <DialogDescription>
+                  Adjust your search criteria to find matching {kind === "project" ? "projects" : "freelancers"}.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="mobile-skill-select" className="text-xs font-semibold text-foreground">
+                    Skill
+                  </Label>
+                  <div className="relative">
+                    <select
+                      id="mobile-skill-select"
+                      aria-label="Skill"
+                      value={filters.skillIds[0] ?? ""}
+                      onChange={(event) => {
+                        const val = event.target.value;
+                        setFilters((current) => ({ ...current, skillIds: val ? [val] : [] }));
+                      }}
+                      className="h-10 w-full appearance-none border border-input bg-background px-3 pr-10 text-sm text-foreground rounded-md hover:border-foreground/30 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40"
+                    >
+                      <option value="">All skills</option>
+                      {skills.map((skill) => (
+                        <option key={skill.id} value={skill.id}>
+                          {skill.name}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                  </div>
+                </div>
+
+                {kind === "project" && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="mobile-min-budget" className="text-xs font-semibold text-foreground">
+                        Min budget ($)
+                      </Label>
+                      <Input
+                        id="mobile-min-budget"
+                        type="number"
+                        min="0"
+                        inputMode="numeric"
+                        value={filters.minBudget ?? ""}
+                        onChange={(event) => setFilters((current) => updateBudget(current, "minBudget", event.target.value))}
+                        placeholder="500"
+                        className="rounded-md"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="mobile-max-budget" className="text-xs font-semibold text-foreground">
+                        Max budget ($)
+                      </Label>
+                      <Input
+                        id="mobile-max-budget"
+                        type="number"
+                        min="0"
+                        inputMode="numeric"
+                        value={filters.maxBudget ?? ""}
+                        onChange={(event) => setFilters((current) => updateBudget(current, "maxBudget", event.target.value))}
+                        placeholder="5000"
+                        className="rounded-md"
+                      />
+                    </div>
+                  </div>
+                )}
+                {filters.minBudget !== undefined && filters.maxBudget !== undefined && filters.minBudget > filters.maxBudget && (
+                  <p className="text-xs text-destructive">Min budget cannot exceed max budget</p>
+                )}
+
+                {user && (
+                  <div className="pt-3 border-t border-border space-y-2">
+                    <Label htmlFor="mobile-saved-name" className="text-xs font-semibold text-muted-foreground">
+                      Save as Search Preset
+                    </Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="mobile-saved-name"
+                        value={savedSearchName}
+                        onChange={(event) => setSavedSearchName(event.target.value)}
+                        placeholder="e.g. React & Solidity gigs"
+                        className="text-xs h-9 rounded-md flex-1"
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={saveSearch}
+                        loading={savingSearch}
+                        disabled={!savedSearchName.trim()}
+                        className="h-9 shrink-0 text-xs gap-1"
+                      >
+                        <BookmarkPlus className="size-3.5" aria-hidden="true" />
+                        Save
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <DialogFooter className="flex-row items-center justify-between sm:justify-end gap-2 pt-2 border-t border-border">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    resetFilters();
+                    setMobileFilterOpen(false);
+                  }}
+                  disabled={loading}
+                >
+                  Reset
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => {
+                    setAppliedFilters({ ...filters });
+                    setMobileFilterOpen(false);
+                  }}
+                  disabled={loading}
+                  className="gap-1.5"
+                >
+                  <ListFilter className="size-3.5" />
+                  Apply Filters
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Search & filters (Desktop: sm and above). */}
+          <div className={cn("hidden sm:block border border-border/80 bg-card shadow-md shadow-black/5", panel)}>
             <form
               className={isDashboard ? "" : "space-y-6"}
               onSubmit={submitSearch}
@@ -494,10 +769,9 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
             </form>
           </div>
 
-          {/* Saved searches. On the dashboard this is a single row of chips
-              rather than a second full-width panel below the filters. */}
+          {/* Saved searches (Desktop: sm and above). */}
           {user && (
-            <div className={cn("border border-border bg-card shadow-xs", isDashboard ? "rounded-lg p-3" : panel)}>
+            <div className={cn("hidden sm:block border border-border bg-card shadow-xs", isDashboard ? "rounded-lg p-3" : panel)}>
               <div className={cn(isDashboard ? "flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between" : "grid gap-6 lg:grid-cols-2")}>
                 <form className={isDashboard ? "flex items-end gap-2" : "space-y-3"} onSubmit={saveSearch}>
                   {!isDashboard && (

@@ -13,8 +13,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useWalletConnection } from '@/hooks/use-wallet-connection';
+import { cn } from '@/lib/utils';
 
-export function WalletHeaderButton() {
+export function WalletHeaderButton({ compact }: { compact?: boolean } = {}) {
   const router = useRouter();
   const {
     user,
@@ -66,7 +67,10 @@ export function WalletHeaderButton() {
         disabled={isConnecting}
         aria-label="Connect Wallet"
         data-tour="wallet"
-        className="relative flex shrink-0 items-center gap-2 border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary font-medium shadow-xs transition-colors"
+        className={cn(
+          "relative flex shrink-0 items-center gap-1.5 sm:gap-2 border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary font-medium shadow-xs transition-colors",
+          compact ? "h-8 px-2 text-xs sm:h-9 sm:px-3 sm:text-sm" : ""
+        )}
       >
         {isConnecting ? (
           <>
@@ -75,7 +79,7 @@ export function WalletHeaderButton() {
           </>
         ) : (
           <>
-            <Wallet className="size-4 text-primary" aria-hidden="true" />
+            <Wallet className="size-3.5 sm:size-4 text-primary" aria-hidden="true" />
             <span className="hidden sm:inline">Connect Wallet</span>
           </>
         )}
@@ -88,7 +92,10 @@ export function WalletHeaderButton() {
       <DropdownMenuTrigger
         aria-label={`Wallet ${formattedAddress}`}
         data-tour="wallet"
-        className="flex shrink-0 items-center gap-1.5 rounded-md border border-border bg-secondary/80 hover:bg-secondary px-2 py-1.5 text-xs outline-none transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-ring sm:gap-2 sm:px-2.5"
+        className={cn(
+          "flex shrink-0 items-center gap-1.5 rounded-md border border-border bg-secondary/80 hover:bg-secondary outline-none transition-colors cursor-pointer focus-visible:ring-2 focus-visible:ring-ring sm:gap-2 sm:px-2.5",
+          compact ? "px-1.5 py-1 text-2xs sm:px-2 sm:py-1.5 sm:text-xs" : "px-2 py-1.5 text-xs"
+        )}
       >
         {balance !== null && (
           <span className="hidden sm:inline-flex items-center font-semibold text-primary pr-2 border-r border-border font-sans">

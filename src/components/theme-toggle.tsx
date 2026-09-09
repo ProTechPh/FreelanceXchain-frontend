@@ -22,7 +22,7 @@ const ICON: Record<ThemeChoice, typeof Sun> = {
   system: Monitor,
 };
 
-export function ThemeToggle() {
+export function ThemeToggle({ className }: { className?: string } = {}) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -46,8 +46,9 @@ export function ThemeToggle() {
       aria-label={`Theme: ${LABEL[current]}. Switch to ${LABEL[next]}.`}
       title={`Theme: ${LABEL[current]}`}
       onClick={() => setTheme(next)}
+      className={className}
     >
-      <Icon className="size-5" aria-hidden="true" />
+      <Icon className={className?.includes("size-8") ? "size-4 sm:size-5" : "size-5"} aria-hidden="true" />
     </Button>
   );
 }
