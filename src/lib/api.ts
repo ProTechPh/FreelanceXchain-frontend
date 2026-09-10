@@ -120,6 +120,10 @@ type CsrfRetryConfig = InternalAxiosRequestConfig & {
   csrfRetryAttempted?: boolean;
 };
 
+function isSessionRecoveryRequest(config: InternalAxiosRequestConfig | undefined): boolean {
+  return config?.url === '/auth/me' || config?.url === '/auth/refresh';
+}
+
 api.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     const token = getAccessToken();
@@ -161,7 +165,7 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401) {
       clearAccessToken();
-      if (typeof window !== 'undefined') {
+      if (!isSessionRecoveryRequest(requestConfig) && typeof window !== 'undefined') {
         const currentPath = window.location.pathname;
         if (currentPath !== '/login' && currentPath !== '/register') {
           // eslint-disable-next-line @next/next/no-location-assign-relative-destination
@@ -986,4 +990,3 @@ export const cryptoNewsApi = {
 };
 
 export default api;
-

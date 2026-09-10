@@ -14,6 +14,8 @@ import {
 import { userPreferencesApi } from '@/lib/api';
 import type { UserRole } from '@/types';
 
+const tourSyncsInFlight = new Set<string>();
+
 interface TourState {
   /** Per-account completion and auto-start preferences. */
   progressByUser: TourProgressByUser;
@@ -43,8 +45,8 @@ interface TourState {
   cardHeight: number;
   /** Mirrors the auth store: guards against acting before rehydration. */
   hasHydrated: boolean;
-  /** Whether preferences have been synced from backend. */
-  hasSyncedFromBackend: boolean;
+  /** The account whose preferences were most recently synced from the backend. */
+  syncedUserId: string | null;
 
   start: (userId: string | undefined | null, role: UserRole | undefined | null, stepId?: string) => void;
   /** Start once the dashboard home is reached. */
@@ -62,7 +64,7 @@ interface TourState {
   /** Sync preferences from backend database. */
   syncFromBackend: (userId: string) => Promise<void>;
   /** Sync current state to backend database. */
-  syncToBackend: () => Promise<void>;
+  syncToBackend: (userId: string | undefined | null, role: UserRole | undefined | null) => Promise<void>;
 }
 
 export const useTourStore = create<TourState>()(
@@ -79,7 +81,7 @@ export const useTourStore = create<TourState>()(
       pendingStepId: null,
       cardHeight: 0,
       hasHydrated: false,
-      hasSyncedFromBackend: false,
+      syncedUserId: null,
 
       start: (userId, role, stepId) => {
         if (!userId || !isTourRole(role) || getTourSteps(role).length === 0) return;
@@ -135,7 +137,7 @@ export const useTourStore = create<TourState>()(
           progressByUser: markCompleted(progressByUser, activeUserId, activeRole),
         });
         // Sync to backend
-        await get().syncToBackend();
+        await get().syncToBackend(activeUserId, activeRole);
       },
 
       finish: async () => {
@@ -152,7 +154,7 @@ export const useTourStore = create<TourState>()(
           progressByUser: markCompleted(progressByUser, activeUserId, activeRole),
         });
         // Sync to backend
-        await get().syncToBackend();
+        await get().syncToBackend(activeUserId, activeRole);
       },
 
       setAutoStart: async (userId, role, value) => {
@@ -160,7 +162,7 @@ export const useTourStore = create<TourState>()(
           progressByUser: setTourAutoStart(state.progressByUser, userId, role, value),
         }));
         // Sync to backend
-        await get().syncToBackend();
+        await get().syncToBackend(userId, role);
       },
 
       setCardHeight: (value: number) => {
@@ -173,38 +175,69 @@ export const useTourStore = create<TourState>()(
       setHasHydrated: (value: boolean) => set({ hasHydrated: value }),
 
       syncFromBackend: async (userId: string) => {
+        // React Strict Mode may replay the mount effect before the first request
+        // settles. Track in-flight work without claiming that sync has finished,
+        // since auto-start must wait for the server response to be merged.
+        if (get().syncedUserId === userId || tourSyncsInFlight.has(userId)) return;
+        tourSyncsInFlight.add(userId);
+
         try {
           const response = await userPreferencesApi.get();
-          const data = response.data;
-          
-          if (data.tourProgress) {
-            // Convert backend format to frontend format
-            const progressByUser: TourProgressByUser = {
-              [userId]: data.tourProgress,
+          const remoteProgress = response.data.tourProgress ?? {};
+          const localProgress = get().progressByUser[userId] ?? {};
+          const mergedProgress = { ...localProgress };
+          const rolesToBackfill: Array<'freelancer' | 'employer'> = [];
+
+          for (const role of ['freelancer', 'employer'] as const) {
+            const localRoleProgress = localProgress[role];
+            const remoteRoleProgress = remoteProgress[role];
+            if (!localRoleProgress && !remoteRoleProgress) continue;
+
+            const completedVersion = Math.max(
+              localRoleProgress?.completedVersion ?? -1,
+              remoteRoleProgress?.completedVersion ?? -1,
+            );
+            mergedProgress[role] = {
+              ...localRoleProgress,
+              ...remoteRoleProgress,
+              ...(completedVersion >= 0 ? { completedVersion } : {}),
             };
-            
-            set({
-              progressByUser,
-              hasSyncedFromBackend: true,
-            });
-          } else {
-            set({ hasSyncedFromBackend: true });
+
+            if (
+              completedVersion > (remoteRoleProgress?.completedVersion ?? -1)
+              || (localRoleProgress?.autoStart !== undefined && remoteRoleProgress?.autoStart === undefined)
+            ) {
+              rolesToBackfill.push(role);
+            }
           }
+
+          set((state) => ({
+            progressByUser: {
+              ...state.progressByUser,
+              [userId]: mergedProgress,
+            },
+            syncedUserId: userId,
+          }));
+
+          await Promise.all(rolesToBackfill.map((role) => get().syncToBackend(userId, role)));
         } catch (error) {
           // Silently fail - will use localStorage as fallback
           console.error('Failed to sync tour preferences from backend:', error);
-          set({ hasSyncedFromBackend: true });
+          set({ syncedUserId: userId });
+        } finally {
+          tourSyncsInFlight.delete(userId);
         }
       },
 
-      syncToBackend: async () => {
-        const { activeRole, activeUserId, progressByUser, autoStartByDefault } = get();
-        if (!activeUserId || !isTourRole(activeRole)) return;
+      syncToBackend: async (userId, role) => {
+        if (!userId || !isTourRole(role)) return;
+
+        const { progressByUser, autoStartByDefault } = get();
 
         try {
-          const roleProgress = progressByUser[activeUserId]?.[activeRole];
+          const roleProgress = progressByUser[userId]?.[role];
           await userPreferencesApi.updateTourProgress({
-            role: activeRole,
+            role,
             completedVersion: roleProgress?.completedVersion,
             autoStart: roleProgress?.autoStart ?? autoStartByDefault,
           });
