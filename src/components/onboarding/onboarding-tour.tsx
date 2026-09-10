@@ -498,7 +498,7 @@ export function OnboardingTour({ suppressed = false }: { suppressed?: boolean })
 
   const isRunning = useTourStore((state) => state.isRunning);
   const hasHydrated = useTourStore((state) => state.hasHydrated);
-  const hasSyncedFromBackend = useTourStore((state) => state.hasSyncedFromBackend);
+  const syncedUserId = useTourStore((state) => state.syncedUserId);
   const progressByUser = useTourStore((state) => state.progressByUser);
   const autoStartByDefault = useTourStore((state) => state.autoStartByDefault);
   const start = useTourStore((state) => state.start);
@@ -509,6 +509,7 @@ export function OnboardingTour({ suppressed = false }: { suppressed?: boolean })
   const syncFromBackend = useTourStore((state) => state.syncFromBackend);
 
   const role = user?.role;
+  const hasSyncedFromBackend = syncedUserId === user?.id;
 
   // Sync tour preferences from backend on first load
   useEffect(() => {

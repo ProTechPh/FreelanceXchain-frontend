@@ -25,7 +25,12 @@ function buildUser(role: 'freelancer' | 'employer' | 'admin', overrides: Record<
   };
 }
 
+type TourRole = 'freelancer' | 'employer';
+type TourProgress = Partial<Record<TourRole, { completedVersion?: number; autoStart?: boolean }>>;
+
 async function authenticate(page: Page, user: ReturnType<typeof buildUser>) {
+  let tourProgress: TourProgress = {};
+
   await page.addInitScript((storedUser) => {
     localStorage.setItem('access_token', 'app-access-token');
     localStorage.setItem('refresh_token', 'app-refresh-token');
@@ -44,6 +49,39 @@ async function authenticate(page: Page, user: ReturnType<typeof buildUser>) {
     headers: { 'set-cookie': 'psifi.x-csrf-token=e2e-csrf-token; Path=/; SameSite=Lax' },
     body: JSON.stringify({ cookieName: 'psifi.x-csrf-token' }),
   }));
+  await page.route('**/api/user-preferences', (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({
+      id: 'preferences-1',
+      userId: user.id,
+      tourProgress,
+      createdAt,
+      updatedAt: createdAt,
+    }),
+  }));
+  await page.route('**/api/user-preferences/tour-progress', async (route) => {
+    const update = route.request().postDataJSON() as {
+      role: TourRole;
+      completedVersion?: number;
+      autoStart?: boolean;
+    };
+    const { role, ...roleProgress } = update;
+    tourProgress = { ...tourProgress, [role]: roleProgress };
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        id: 'preferences-1',
+        userId: user.id,
+        tourProgress,
+        createdAt,
+        updatedAt: createdAt,
+      }),
+    });
+  });
+
+  return { getTourProgress: () => tourProgress };
 }
 
 const tourDialog = (page: Page) => page.getByRole('dialog').filter({ has: page.getByRole('button', { name: 'Skip tour' }) });
@@ -118,6 +156,43 @@ test.describe('first run', () => {
     await page.reload();
     await page.waitForLoadState('networkidle');
     await expect(tourDialog(page)).toHaveCount(0);
+  });
+
+  test('completion is saved by the API and survives a new browser session', async ({ page }) => {
+    const user = buildUser('freelancer');
+    const preferences = await authenticate(page, user);
+
+    await page.goto('/dashboard/freelancer');
+    await expect(tourDialog(page)).toBeVisible();
+    await tourDialog(page).getByRole('button', { name: 'Skip tour' }).click();
+
+    await expect.poll(() => preferences.getTourProgress().freelancer?.completedVersion).toBe(1);
+
+    await page.evaluate(() => localStorage.removeItem('onboarding-tour'));
+    await page.reload();
+    await page.waitForLoadState('networkidle');
+    await expect(tourDialog(page)).toHaveCount(0);
+  });
+
+  test('an existing local completion is kept and backfilled when the API is empty', async ({ page }) => {
+    const user = buildUser('freelancer');
+
+    await page.addInitScript(({ userId, version }) => {
+      localStorage.setItem('onboarding-tour', JSON.stringify({
+        state: {
+          progressByUser: {
+            [userId]: { freelancer: { completedVersion: version } },
+          },
+          autoStartByDefault: true,
+        },
+        version: 1,
+      }));
+    }, { userId: user.id, version: 1 });
+    const preferences = await authenticate(page, user);
+
+    await page.goto('/dashboard/freelancer');
+    await expect(tourDialog(page)).toHaveCount(0);
+    await expect.poll(() => preferences.getTourProgress().freelancer?.completedVersion).toBe(1);
   });
 
   test('Escape ends the tour and hands focus back to the dashboard', async ({ page }) => {

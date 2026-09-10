@@ -18,7 +18,15 @@ function buildUser(id = 'freelancer-new', role: 'freelancer' | 'employer' = 'fre
   } as const;
 }
 
-async function mockAuthenticatedShell(page: Page, user: ReturnType<typeof buildUser>) {
+type TourProgress = Partial<Record<'freelancer' | 'employer', {
+  completedVersion?: number;
+  autoStart?: boolean;
+}>>;
+
+async function mockAuthenticatedShell(page: Page, initialUser: ReturnType<typeof buildUser>) {
+  let user = initialUser;
+  const tourProgressByUser: Record<string, TourProgress> = {};
+
   await page.route('**/auth/csrf-token', (route) => route.fulfill({
     status: 200,
     contentType: 'application/json',
@@ -46,6 +54,49 @@ async function mockAuthenticatedShell(page: Page, user: ReturnType<typeof buildU
     body: JSON.stringify({ count: 0 }),
   }));
   await page.route('**/api/notifications/stream', (route) => route.abort());
+  await page.route('**/api/user-preferences', (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({
+      id: `preferences-${user.id}`,
+      userId: user.id,
+      tourProgress: tourProgressByUser[user.id] ?? {},
+      createdAt,
+      updatedAt: createdAt,
+    }),
+  }));
+  await page.route('**/api/user-preferences/tour-progress', async (route) => {
+    const update = route.request().postDataJSON() as {
+      role: 'freelancer' | 'employer';
+      completedVersion?: number;
+      autoStart?: boolean;
+    };
+    const { role, ...roleProgress } = update;
+    tourProgressByUser[user.id] = {
+      ...tourProgressByUser[user.id],
+      [role]: roleProgress,
+    };
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        id: `preferences-${user.id}`,
+        userId: user.id,
+        tourProgress: tourProgressByUser[user.id],
+        createdAt,
+        updatedAt: createdAt,
+      }),
+    });
+  });
+
+  return {
+    setUser: (nextUser: ReturnType<typeof buildUser>) => {
+      user = nextUser;
+    },
+    setTourProgress: (userId: string, progress: TourProgress) => {
+      tourProgressByUser[userId] = progress;
+    },
+  };
 }
 
 const tourDialog = (page: Page) => page.getByRole('dialog').filter({
@@ -164,6 +215,27 @@ test('a second account with the same role receives its own onboarding tour', asy
 
   await page.goto('/dashboard/freelancer');
   await expect(tourDialog(page)).toBeVisible();
+});
+
+test('switching accounts loads the next user\'s saved tour completion', async ({ page }) => {
+  const firstUser = { ...buildUser('freelancer-1'), kycStatus: 'approved' as const };
+  const secondUser = { ...buildUser('freelancer-2'), kycStatus: 'approved' as const };
+  const session = await mockAuthenticatedShell(page, firstUser);
+  session.setTourProgress(secondUser.id, { freelancer: { completedVersion: 1 } });
+
+  await signInWithEmail(page, firstUser);
+  await expect(tourDialog(page)).toBeVisible();
+  await tourDialog(page).getByRole('button', { name: 'Skip tour' }).click();
+  await expect(tourDialog(page)).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Open account menu' }).click();
+  await page.getByRole('menuitem', { name: 'Log out' }).click();
+  await expect(page).toHaveURL(/\/login$/);
+
+  session.setUser(secondUser);
+  await signInWithEmail(page, secondUser);
+  await page.waitForLoadState('networkidle');
+  await expect(tourDialog(page)).toHaveCount(0);
 });
 
 test('the KYC reminder stays usable from 320px through desktop widths', async ({ page }) => {
