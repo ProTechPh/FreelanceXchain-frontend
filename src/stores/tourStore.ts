@@ -14,6 +14,8 @@ import {
 import { userPreferencesApi } from '@/lib/api';
 import type { UserRole } from '@/types';
 
+const tourSyncsInFlight = new Set<string>();
+
 interface TourState {
   /** Per-account completion and auto-start preferences. */
   progressByUser: TourProgressByUser;
@@ -173,6 +175,12 @@ export const useTourStore = create<TourState>()(
       setHasHydrated: (value: boolean) => set({ hasHydrated: value }),
 
       syncFromBackend: async (userId: string) => {
+        // React Strict Mode may replay the mount effect before the first request
+        // settles. Track in-flight work without claiming that sync has finished,
+        // since auto-start must wait for the server response to be merged.
+        if (get().syncedUserId === userId || tourSyncsInFlight.has(userId)) return;
+        tourSyncsInFlight.add(userId);
+
         try {
           const response = await userPreferencesApi.get();
           const remoteProgress = response.data.tourProgress ?? {};
@@ -216,6 +224,8 @@ export const useTourStore = create<TourState>()(
           // Silently fail - will use localStorage as fallback
           console.error('Failed to sync tour preferences from backend:', error);
           set({ syncedUserId: userId });
+        } finally {
+          tourSyncsInFlight.delete(userId);
         }
       },
 

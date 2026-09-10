@@ -196,7 +196,12 @@ export const useAuthStore = create<AuthState>()(
         set({ accessToken: token });
       },
 
-      setHasHydrated: (value: boolean) => set({ hasHydrated: value }),
+      setHasHydrated: (value: boolean) => set((state) => ({
+        hasHydrated: value,
+        // A persisted user is only a hint that a session existed. Keep protected
+        // UI unmounted until loadUser validates or refreshes that session.
+        isLoading: value && state.isAuthenticated ? true : state.isLoading,
+      })),
     }),
     {
       name: 'auth-storage',

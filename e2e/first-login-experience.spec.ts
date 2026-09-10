@@ -217,6 +217,71 @@ test('a second account with the same role receives its own onboarding tour', asy
   await expect(tourDialog(page)).toBeVisible();
 });
 
+test('restores the session before syncing tour preferences on reload', async ({ page }) => {
+  const user = { ...buildUser('returning-freelancer'), kycStatus: 'approved' as const };
+  const restoredAccessToken = 'restored-access-token';
+  const preferenceAuthorizationHeaders: Array<string | null> = [];
+  let refreshRequestCount = 0;
+
+  await page.addInitScript((storedUser) => {
+    localStorage.setItem('auth-storage', JSON.stringify({
+      state: { user: storedUser, isAuthenticated: true },
+      version: 0,
+    }));
+  }, user);
+  await mockAuthenticatedShell(page, user);
+  await page.route('**/api/auth/me', (route) => route.fulfill({
+    status: 401,
+    contentType: 'application/json',
+    body: JSON.stringify({ error: { code: 'UNAUTHORIZED', message: 'Access token expired' } }),
+  }));
+  await page.route('**/api/auth/refresh', (route) => {
+    refreshRequestCount += 1;
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        user,
+        accessToken: restoredAccessToken,
+        refreshToken: 'rotated-refresh-token',
+      }),
+    });
+  });
+  await page.route('**/api/user-preferences', (route) => {
+    const authorization = route.request().headers().authorization ?? null;
+    preferenceAuthorizationHeaders.push(authorization);
+
+    if (authorization !== `Bearer ${restoredAccessToken}`) {
+      return route.fulfill({
+        status: 401,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: { code: 'UNAUTHORIZED', message: 'Missing access token' } }),
+      });
+    }
+
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        id: `preferences-${user.id}`,
+        userId: user.id,
+        tourProgress: { freelancer: { completedVersion: 1 } },
+        createdAt,
+        updatedAt: createdAt,
+      }),
+    });
+  });
+
+  await page.goto('/dashboard/freelancer');
+
+  await expect(page).toHaveURL(/\/dashboard\/freelancer$/);
+  await expect.poll(() => preferenceAuthorizationHeaders).toEqual([
+    `Bearer ${restoredAccessToken}`,
+  ]);
+  expect(refreshRequestCount).toBe(1);
+  await expect(tourDialog(page)).toHaveCount(0);
+});
+
 test('switching accounts loads the next user\'s saved tour completion', async ({ page }) => {
   const firstUser = { ...buildUser('freelancer-1'), kycStatus: 'approved' as const };
   const secondUser = { ...buildUser('freelancer-2'), kycStatus: 'approved' as const };
