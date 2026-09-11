@@ -75,3 +75,74 @@ test('a failed sign-in returns the button to its normal state', async ({ page })
   await expect(submit).toContainText(/sign in/i);
   await expect(submit).not.toHaveAttribute('aria-busy', 'true');
 });
+
+test('oauth buttons on login report progress and block duplicate clicks', async ({ page }) => {
+  await page.route('**/api/auth/oauth/google', async () => {
+    await new Promise(() => {});
+  });
+
+  await page.goto('/login');
+
+  const googleBtn = page.getByRole('button', { name: /^google$/i });
+  const githubBtn = page.getByRole('button', { name: /^github$/i });
+  const submitBtn = page.locator('form button[type="submit"]');
+
+  await expect(googleBtn).toBeEnabled();
+  await expect(githubBtn).toBeEnabled();
+
+  await googleBtn.click();
+
+  const loadingGoogleBtn = page.getByRole('button', { name: /google/i });
+  await expect(loadingGoogleBtn).toHaveAttribute('aria-busy', 'true');
+  await expect(loadingGoogleBtn).toBeDisabled();
+  await expect(loadingGoogleBtn).toContainText(/connecting/i);
+  await expect(loadingGoogleBtn.locator('svg.animate-spin')).toBeVisible();
+
+  await expect(githubBtn).toBeDisabled();
+  await expect(submitBtn).toBeDisabled();
+});
+
+test('a failed oauth attempt returns buttons to normal state', async ({ page }) => {
+  await page.route('**/auth/csrf-token', (r) =>
+    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ cookieName: 'x' }) }),
+  );
+  await page.route('**/api/auth/oauth/google', (r) =>
+    r.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ message: 'OAuth service unavailable' }) }),
+  );
+
+  await page.goto('/login');
+  const googleBtn = page.getByRole('button', { name: /^google$/i });
+
+  await googleBtn.click();
+
+  await expect(googleBtn).toBeEnabled({ timeout: 10_000 });
+  await expect(googleBtn).not.toHaveAttribute('aria-busy', 'true');
+  await expect(googleBtn).toContainText(/google/i);
+});
+
+test('oauth buttons on register report progress and block role interaction', async ({ page }) => {
+  await page.route('**/api/auth/oauth/google', async () => {
+    await new Promise(() => {});
+  });
+
+  await page.goto('/register');
+
+  const googleBtn = page.getByRole('button', { name: /^google$/i });
+  const githubBtn = page.getByRole('button', { name: /^github$/i });
+  const freelancerCard = page.getByRole('button', { name: /freelancer/i });
+
+  await expect(googleBtn).toBeEnabled();
+  await expect(freelancerCard).toBeEnabled();
+
+  await googleBtn.click();
+
+  const loadingGoogleBtn = page.getByRole('button', { name: /google/i });
+  await expect(loadingGoogleBtn).toHaveAttribute('aria-busy', 'true');
+  await expect(loadingGoogleBtn).toBeDisabled();
+  await expect(loadingGoogleBtn).toContainText(/connecting/i);
+  await expect(loadingGoogleBtn.locator('svg.animate-spin')).toBeVisible();
+
+  await expect(githubBtn).toBeDisabled();
+  await expect(freelancerCard).toBeDisabled();
+});
+

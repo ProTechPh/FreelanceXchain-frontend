@@ -15,6 +15,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [oauthError, setOauthError] = useState<string | null>(null);
+  const [oauthLoading, setOauthLoading] = useState<'google' | 'github' | null>(null);
 
   // Parse OAuth error from URL query parameters
   useEffect(() => {
@@ -35,6 +36,8 @@ export default function RegisterPage() {
   }, [searchParams]);
 
   const handleOAuth = async (provider: 'google' | 'github') => {
+    if (isLoading || oauthLoading) return;
+    setOauthLoading(provider);
     setOauthError(null);
     try {
       const { data } = await authApi.oauthLogin(provider);
@@ -46,6 +49,7 @@ export default function RegisterPage() {
       // eslint-disable-next-line @next/next/no-location-assign-relative-destination
       window.location.href = `${apiUrl}/auth/oauth/${provider}`;
     } catch (error) {
+      setOauthLoading(null);
       const msg = getApiErrorMessage(error, 'Too many attempts. Please try again later.');
       setOauthError(msg);
       toast.error(msg);
@@ -53,6 +57,7 @@ export default function RegisterPage() {
   };
 
   const handleSubmit = async (data: { email: string; password: string; role: UserRole }) => {
+    if (isLoading || oauthLoading) return;
     try {
       await register(data.email, data.password, data.role);
       try {
@@ -78,6 +83,7 @@ export default function RegisterPage() {
         onGithubSignIn={() => void handleOAuth('github')}
         onSignIn={() => router.push('/login')}
         isLoading={isLoading}
+        oauthLoading={oauthLoading}
         oauthError={oauthError}
       />
     </GuestGuard>

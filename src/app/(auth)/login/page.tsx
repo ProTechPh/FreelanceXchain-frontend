@@ -15,6 +15,7 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [oauthError, setOauthError] = useState<string | null>(null);
+  const [oauthLoading, setOauthLoading] = useState<'google' | 'github' | null>(null);
 
   // Parse OAuth error from URL query parameters
   useEffect(() => {
@@ -35,6 +36,8 @@ export default function LoginPage() {
   }, [searchParams]);
 
   const handleOAuth = async (provider: 'google' | 'github') => {
+    if (isSigningIn || oauthLoading) return;
+    setOauthLoading(provider);
     setOauthError(null);
     try {
       const { data } = await authApi.oauthLogin(provider);
@@ -46,6 +49,7 @@ export default function LoginPage() {
       // eslint-disable-next-line @next/next/no-location-assign-relative-destination
       window.location.href = `${apiUrl}/auth/oauth/${provider}`;
     } catch (error) {
+      setOauthLoading(null);
       const msg = getApiErrorMessage(error, 'Too many sign-in attempts. Please try again later.');
       setOauthError(msg);
       toast.error(msg);
@@ -54,7 +58,7 @@ export default function LoginPage() {
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (isSigningIn) return;
+    if (isSigningIn || oauthLoading) return;
 
     const formData = new FormData(e.currentTarget);
     const email = formData.get('email') as string;
@@ -110,6 +114,7 @@ export default function LoginPage() {
         homeHref="/"
         onSignIn={handleSignIn}
         loading={isSigningIn}
+        oauthLoading={oauthLoading}
         onGoogleSignIn={() => handleOAuth('google')}
         onGithubSignIn={() => handleOAuth('github')}
         onResetPassword={() => router.push('/forgot-password')}
