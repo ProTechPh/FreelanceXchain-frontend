@@ -17,8 +17,10 @@ const starKeys = [
   [1, 'oneStar'],
 ] as const;
 
-export function ReputationOverview() {
-  const userId = useAuthStore((state) => state.user?.id);
+export function ReputationOverview({ role }: { role?: 'freelancer' | 'employer' } = {}) {
+  const user = useAuthStore((state) => state.user);
+  const userId = user?.id;
+  const effectiveRole = role ?? (user?.role === 'employer' ? 'employer' : 'freelancer');
   const [score, setScore] = useState<AggregatedReputationScore | null>(null);
   const [breakdown, setBreakdown] = useState<ReputationBreakdown | null>(null);
   const [history, setHistory] = useState<ReputationHistoryEntry[]>([]);
@@ -61,12 +63,19 @@ export function ReputationOverview() {
     { label: 'Work quality', value: (score?.workQuality ?? 0).toFixed(1), icon: Star },
     { label: 'Communication', value: (score?.communication ?? 0).toFixed(1), icon: Users },
     { label: 'Professionalism', value: (score?.professionalism ?? 0).toFixed(1), icon: Award },
-    { label: 'Would work again', value: `${score?.wouldWorkAgainPercentage ?? 0}%`, icon: TrendingUp },
+    { label: effectiveRole === 'employer' ? 'Would work with again' : 'Would work again', value: `${score?.wouldWorkAgainPercentage ?? 0}%`, icon: TrendingUp },
   ];
 
   return (
     <div className="space-y-6">
-      <div><h1 className="text-2xl font-extrabold tracking-tight text-foreground">Reputation</h1><p className="text-muted-foreground">Backend-verified ratings, delivery signals, and completed work.</p></div>
+      <div>
+        <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Reputation</h1>
+        <p className="text-muted-foreground">
+          {effectiveRole === 'employer'
+            ? 'Ratings and feedback from freelancers you have collaborated with on smart contracts.'
+            : 'Backend-verified ratings, delivery signals, and completed work.'}
+        </p>
+      </div>
 
       <Card className="relative overflow-hidden border-border bg-card"><div className="absolute inset-0 gradient-primary opacity-5" /><CardContent className="relative grid gap-8 p-6 md:grid-cols-[auto_1fr] md:items-center"><div className="text-center"><div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full gradient-primary"><span className="text-3xl font-bold">{overall.toFixed(1)}</span></div><div className="mt-2 flex items-center justify-center gap-1">{[1, 2, 3, 4, 5].map((star) => <Star key={star} className={`h-4 w-4 ${star <= Math.round(overall) ?'fill-warning text-warning':'text-neutral'}`} />)}</div><p className="mt-1 text-sm text-muted-foreground">{totalRatings} review{totalRatings === 1 ?'':'s'}</p></div><div className="space-y-2">{starKeys.map(([stars, key]) => { const count = breakdown?.[key] ?? 0; return <div key={stars} className="flex items-center gap-3"><span className="w-4 text-sm">{stars}</span><Star className="h-4 w-4 fill-warning text-warning" /><div className="h-2 flex-1 overflow-hidden rounded-full bg-background"><div className="h-full rounded-full bg-warning"style={{ width: totalRatings > 0 ? `${(count / totalRatings) * 100}%` :'0%'}} /></div><span className="w-8 text-sm text-muted-foreground">{count}</span></div>; })}</div></CardContent></Card>
 
@@ -76,7 +85,33 @@ export function ReputationOverview() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card><CardHeader><CardTitle className="flex items-center gap-2"><History className="h-5 w-5" />Rating history</CardTitle></CardHeader><CardContent>{history.length === 0 ? <p className="py-8 text-center text-sm text-muted-foreground">No rating history yet.</p> : <ul className="space-y-3">{history.map((entry) => <li key={entry.month} className="grid grid-cols-[auto_1fr_auto] items-center gap-3 text-sm xs:grid-cols-[5rem_1fr_auto]"><span>{new Date(`${entry.month}-01T00:00:00Z`).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' })}</span><div className="h-2 overflow-hidden rounded-full bg-secondary"><div className="h-full rounded-full bg-primary" style={{ width: `${(entry.averageRating / 5) * 100}%` }} /></div><span>{entry.averageRating.toFixed(1)} ({entry.count})</span></li>)}</ul>}</CardContent></Card>
-        <Card><CardHeader><CardTitle>Delivery record</CardTitle></CardHeader><CardContent className="grid grid-cols-1 gap-4 xs:grid-cols-2"><div className="rounded-lg border border-border p-4"><BriefcaseBusiness className="mb-3 h-5 w-5 text-primary" /><p className="text-2xl font-bold">{score?.completedContracts ?? 0}</p><p className="text-xs text-muted-foreground">Completed contracts</p></div><div className="rounded-lg border border-border p-4"><TrendingUp className="mb-3 h-5 w-5 text-success" /><p className="text-2xl font-bold">{score?.onTimeDeliveryRate ?? 0}%</p><p className="text-xs text-muted-foreground">On-time delivery</p></div><div className="flex items-center gap-2 rounded-lg bg-secondary/40 p-3 text-sm text-muted-foreground xs:col-span-2"><ShieldCheck className="h-5 w-5 text-primary" />{syncedRatings > 0 ? `${syncedRatings} rating${syncedRatings === 1 ? '' : 's'} include a valid blockchain transaction reference.` : 'No blockchain transaction references are available for these ratings.'}</div></CardContent></Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>{effectiveRole === 'employer' ? 'Contract record' : 'Delivery record'}</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 gap-4 xs:grid-cols-2">
+            <div className="rounded-lg border border-border p-4">
+              <BriefcaseBusiness className="mb-3 h-5 w-5 text-primary" />
+              <p className="text-2xl font-bold">{score?.completedContracts ?? 0}</p>
+              <p className="text-xs text-muted-foreground">Completed contracts</p>
+            </div>
+            <div className="rounded-lg border border-border p-4">
+              <TrendingUp className="mb-3 h-5 w-5 text-success" />
+              <p className="text-2xl font-bold">
+                {effectiveRole === 'employer'
+                  ? `${score?.wouldWorkAgainPercentage ?? 100}%`
+                  : `${score?.onTimeDeliveryRate ?? 0}%`}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {effectiveRole === 'employer' ? 'Rehire recommendation' : 'On-time delivery'}
+              </p>
+            </div>
+            <div className="flex items-center gap-2 rounded-lg bg-secondary/40 p-3 text-sm text-muted-foreground xs:col-span-2">
+              <ShieldCheck className="h-5 w-5 text-primary" />
+              {syncedRatings > 0 ? `${syncedRatings} rating${syncedRatings === 1 ? '' : 's'} include a valid blockchain transaction reference.` : 'No blockchain transaction references are available for these ratings.'}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">

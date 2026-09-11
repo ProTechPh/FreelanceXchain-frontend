@@ -33,6 +33,14 @@ import type { Contract, ContractFundInfo, ContractPaymentStatus, Dispute, Milest
 import { ContractNegotiationPanel } from '@/components/contracts/contract-negotiation-panel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -72,7 +80,6 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
   const [review, setReview] = useState<ReviewDraft>(initialReview);
   const [previewAttachment, setPreviewAttachment] = useState<AttachmentPreviewTarget | null>(null);
   const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
-  const [confirmDisputeOpen, setConfirmDisputeOpen] = useState(false);
   const [approvingMilestone, setApprovingMilestone] = useState<Milestone | null>(null);
 
   const loadWorkspace = useCallback(async () => {
@@ -211,7 +218,28 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
-      <Button asChild variant="ghost" className="-ml-3"><Link href={`/dashboard/${role}/contracts`}><ArrowLeft className="mr-2 size-4" />Back to contracts</Link></Button>
+      <div className="space-y-3">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink href={`/dashboard/${role}`}>Dashboard</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink href={`/dashboard/${role}/contracts`}>Contracts</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>{contract.project?.title || `Contract #${contract.id.slice(0, 8)}`}</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+        <Button asChild variant="ghost" size="sm" className="-ml-3 text-muted-foreground hover:text-foreground">
+          <Link href={`/dashboard/${role}/contracts`}>
+            <ArrowLeft className="mr-2 size-4" />Back to contracts
+          </Link>
+        </Button>
+      </div>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
@@ -496,7 +524,9 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0">
             <CardTitle>Disputes</CardTitle>
-            <Button variant="destructive" size="sm" onClick={() => setConfirmDisputeOpen(true)}>File Dispute</Button>
+            <Button variant="destructive" size="sm" asChild>
+              <Link href={`/dashboard/${role}/disputes?contractId=${contract.id}`}>File Dispute</Link>
+            </Button>
           </CardHeader>
           <CardContent className="space-y-3">
             {disputes.length === 0 ? <p className="text-sm text-muted-foreground">No disputes for this contract.</p> : disputes.map((dispute) => <Link key={dispute.id} href={`/dashboard/${role}/disputes/${dispute.id}`} className="flex items-start gap-2 rounded-lg border border-border p-3 text-sm transition-colors hover:border-primary/30"><AlertTriangle className="mt-0.5 size-4 text-warning" /><div><p className="font-medium">{dispute.reason}</p><p className="text-muted-foreground">{dispute.status.replace('_', ' ')}</p></div></Link>)}
@@ -513,7 +543,7 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
       />
 
       {/* Contract Cancellation Confirmation Modal */}
-      <Dialog open={confirmCancelOpen} onOpenChange={setConfirmCancelOpen}>
+      <Dialog open={confirmCancelOpen} onOpenChange={(open) => { if (!actionId) setConfirmCancelOpen(open); }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-destructive">Cancel this contract?</DialogTitle>
@@ -529,9 +559,10 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
               variant="destructive"
               loading={actionId === 'cancel'}
               loadingText="Cancelling…"
-              onClick={() => {
+              disabled={actionId === 'cancel'}
+              onClick={async () => {
+                await runAction('cancel', () => contractsApi.cancel(contract.id), 'Contract cancelled.');
                 setConfirmCancelOpen(false);
-                void runAction('cancel', () => contractsApi.cancel(contract.id), 'Contract cancelled.');
               }}
             >
               Confirm Cancellation
@@ -570,37 +601,15 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
               onClick={async () => {
                 if (!approvingMilestone) return;
                 const id = approvingMilestone.id;
-                setApprovingMilestone(null);
                 await runAction(
                   id,
                   () => milestonesApi.approve(id),
                   'Milestone approved and payment released.',
                 );
+                setApprovingMilestone(null);
               }}
             >
               Confirm & Release Payment
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={confirmDisputeOpen} onOpenChange={setConfirmDisputeOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-destructive">File a Dispute?</DialogTitle>
-            <DialogDescription>
-              Filing a dispute will freeze the contract funds. A mediator will review the case.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setConfirmDisputeOpen(false)}>Cancel</Button>
-            <Button
-              variant="destructive"
-              onClick={() => {
-                setConfirmDisputeOpen(false);
-                void runAction('dispute', () => contractsApi.getDisputes(contract.id), 'Dispute filed successfully.');
-              }}
-            >
-              Confirm
             </Button>
           </DialogFooter>
         </DialogContent>

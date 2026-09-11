@@ -149,6 +149,17 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
   }, [appliedFilters, loadResults]);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const searchParams = marketplaceFiltersToSearchParams(appliedFilters);
+    const queryString = searchParams.toString();
+    const currentSearch = window.location.search.replace(/^\?/, "");
+    if (currentSearch !== queryString) {
+      const nextUrl = window.location.pathname + (queryString ? `?${queryString}` : "");
+      window.history.replaceState(null, "", nextUrl);
+    }
+  }, [appliedFilters]);
+
+  useEffect(() => {
     async function loadAuxiliaryData() {
       // None of this blocks browsing — it fills in filters, saved searches and
       // favourites. Four independent failures used to mean four red toasts at

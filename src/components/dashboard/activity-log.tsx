@@ -12,6 +12,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { EmptyState } from '@/components/ui/empty-state';
+import { PullToRefresh } from '@/components/ui/pull-to-refresh';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 import { formatAuditAction, formatAuditResource, formatDateTime } from '@/lib/format';
 
 export function ActivityLog() {
@@ -56,13 +59,76 @@ export function ActivityLog() {
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><h1 className="flex items-center gap-2 text-2xl font-bold"><History className="size-6" />Activity log</h1><p className="text-muted-foreground">Review account, security, and marketplace actions recorded by the platform.</p></div><Button type="button" variant="outline" disabled={loading} onClick={() => void load()}><RefreshCw className="mr-2 size-4" />Refresh</Button></div>
-      <Card><CardContent className="grid gap-4 p-4 sm:grid-cols-[1fr_220px]"><div className="space-y-2"><Label htmlFor="activity-search">Search activity</Label><div className="relative"><Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><Input id="activity-search" className="pl-10" value={query} onChange={(event) => setQuery(event.target.value)} /></div></div><div className="space-y-2"><Label htmlFor="activity-status">Status</Label><select id="activity-status" className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm" value={status} onChange={(event) => setStatus(event.target.value as typeof status)}><option value="all">All statuses</option><option value="success">Success</option><option value="failure">Failure</option><option value="pending">Pending</option></select></div></CardContent></Card>
-      {loading ? <ListSkeleton rows={5} label="Loading activity" /> : filtered.length === 0 ? <EmptyState
-          icon={History}
-          title="No activity matches these filters"
-          description="Try clearing the search or widening the date range."
-        /> : <Card><CardContent className="p-0"><ul className="divide-y divide-border">{filtered.map((log) => <li key={log.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-semibold text-foreground">{formatAuditAction(log.action)}</p><p className="mt-1 text-sm text-muted-foreground">{formatAuditResource(log.resource_type)} · {formatDateTime(log.created_at)}</p>{log.error_message && <p className="mt-1 text-sm text-destructive">{log.error_message}</p>}</div><div className="flex items-center gap-3"><Badge variant={log.status === 'failure' ? 'destructive' : 'secondary'}>{log.status}</Badge>{log.ip_address && <span className="font-mono text-xs text-muted-foreground">{log.ip_address}</span>}</div></li>)}</ul></CardContent></Card>}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="flex items-center gap-2 text-2xl font-bold">
+            <History className="size-6" />Activity log
+          </h1>
+          <p className="text-muted-foreground">Review account, security, and marketplace actions recorded by the platform.</p>
+        </div>
+        <Button type="button" variant="outline" disabled={loading} onClick={() => void load()}>
+          <RefreshCw className={cn("mr-2 size-4", loading && "animate-spin")} />
+          Refresh
+        </Button>
+      </div>
+
+      <Card>
+        <CardContent className="grid gap-4 p-4 sm:grid-cols-[1fr_220px]">
+          <div className="space-y-2">
+            <Label htmlFor="activity-search">Search activity</Label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input id="activity-search" className="pl-10" value={query} onChange={(event) => setQuery(event.target.value)} />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="activity-status">Status</Label>
+            <Select value={status} onValueChange={(val) => { if (val) setStatus(val as typeof status); }}>
+              <SelectTrigger id="activity-status" className="h-9">
+                <SelectValue placeholder="All statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All statuses</SelectItem>
+                <SelectItem value="success">Success</SelectItem>
+                <SelectItem value="failure">Failure</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      <PullToRefresh onRefresh={load}>
+        {loading ? (
+          <ListSkeleton rows={5} label="Loading activity" />
+        ) : filtered.length === 0 ? (
+          <EmptyState
+            icon={History}
+            title="No activity matches these filters"
+            description="Try clearing your search query or selecting all statuses."
+          />
+        ) : (
+          <Card>
+            <CardContent className="p-0">
+              <ul className="divide-y divide-border">
+                {filtered.map((log) => (
+                  <li key={log.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="font-semibold text-foreground">{formatAuditAction(log.action)}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">{formatAuditResource(log.resource_type)} · {formatDateTime(log.created_at)}</p>
+                      {log.error_message && <p className="mt-1 text-sm text-destructive">{log.error_message}</p>}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Badge variant={log.status === 'failure' ? 'destructive' : 'secondary'}>{log.status}</Badge>
+                      {log.ip_address && <span className="font-mono text-xs text-muted-foreground">{log.ip_address}</span>}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
+      </PullToRefresh>
     </div>
   );
 }

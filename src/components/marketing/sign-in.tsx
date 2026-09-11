@@ -126,21 +126,14 @@ export const SignInPage: React.FC<SignInPageProps> = ({
         </div>
       </div>
 
-      {/* Mobile features banner (visible on mobile, hidden on lg+) */}
-      <div className="lg:hidden bg-gradient-to-br from-primary via-primary to-chart-2 dark:from-gradient-from dark:via-gradient-via dark:to-gradient-to p-5 text-gradient-foreground">
-        <Link href="/" className="flex items-center gap-2.5 mb-4">
-          <FreelanceXchainLogo iconSize={28} className="text-gradient-foreground [&_span]:text-gradient-foreground" />
+      {/* Mobile brand header (compact on mobile, hidden on lg+ where left sidebar shows) */}
+      <div className="lg:hidden bg-gradient-to-r from-primary via-primary to-chart-2 dark:from-gradient-from dark:via-gradient-via dark:to-gradient-to px-5 py-3.5 text-gradient-foreground flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-2.5">
+          <FreelanceXchainLogo iconSize={24} className="text-gradient-foreground [&_span]:text-gradient-foreground" />
         </Link>
-        <div className="flex flex-col gap-3">
-          {features.map((feature) => (
-            <div key={feature} className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-foreground/15 flex items-center justify-center shrink-0">
-                <CheckIcon />
-              </div>
-              <span className="text-gradient-foreground font-semibold text-sm">{feature}</span>
-            </div>
-          ))}
-        </div>
+        <span className="text-xs font-medium text-gradient-foreground/80 hidden xs:inline">
+          Escrow &amp; AI Marketplace
+        </span>
       </div>
 
       {/* Right side - Form */}

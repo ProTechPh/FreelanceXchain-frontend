@@ -178,18 +178,39 @@ export function ProposalDialog({
     }
   }, [open, initialGenerateAI, project, aiProposal, generatingAI, handleGenerateAI]);
 
+  const [confirmDiscardOpen, setConfirmDiscardOpen] = useState(false);
+
+  const isDirty = Boolean(
+    editableCoverLetter.trim() ||
+    form.proposedRate ||
+    form.estimatedDuration ||
+    form.files.length > 0 ||
+    customNotes.trim() ||
+    aiProposal
+  );
+
+  const resetAndClose = () => {
+    setForm(EMPTY_FORM);
+    setAiProposal(null);
+    setCustomNotes('');
+    setShowCustomNotes(false);
+    setEditableCoverLetter('');
+    setFieldError(null);
+    setConfirmDiscardOpen(false);
+    onOpenChange(false);
+  };
+
   const handleOpenChange = (nextOpen: boolean) => {
-    if (!submitting && !generatingAI) {
-      if (!nextOpen) {
-        setForm(EMPTY_FORM);
-        setAiProposal(null);
-        setCustomNotes('');
-        setShowCustomNotes(false);
-        setEditableCoverLetter('');
-        setFieldError(null);
-      }
-      onOpenChange(nextOpen);
+    if (submitting || generatingAI) return;
+    if (!nextOpen && isDirty) {
+      setConfirmDiscardOpen(true);
+      return;
     }
+    if (!nextOpen) {
+      resetAndClose();
+      return;
+    }
+    onOpenChange(nextOpen);
   };
 
   const handleCoverLetterChange = (newText: string) => {
@@ -232,7 +253,7 @@ export function ProposalDialog({
       await submitProposal(proposalsApi, project.id, submissionForm);
       toast.success('Proposal submitted.');
       onSubmitted?.();
-      handleOpenChange(false);
+      resetAndClose();
     } catch (error) {
       // A rule the backend enforces but the client does not know about still
       // belongs on the form, not in a toast.
@@ -247,8 +268,9 @@ export function ProposalDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="flex max-h-[calc(100dvh-1rem)] w-[calc(100%-1rem)] max-w-[calc(100%-1rem)] flex-col gap-0 overflow-hidden p-0 sm:max-h-[90dvh] sm:w-full sm:max-w-2xl">
+    <>
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogContent className="flex max-h-[calc(100dvh-1rem)] w-[calc(100%-1rem)] max-w-[calc(100%-1rem)] flex-col gap-0 overflow-hidden p-0 sm:max-h-[90dvh] sm:w-full sm:max-w-2xl">
         <DialogHeader className="shrink-0 gap-1.5 border-b border-border/60 px-4 pt-4 pr-12 pb-3 text-left sm:px-5 sm:pt-5">
           <div className="flex flex-wrap items-center gap-2">
             <DialogTitle className="text-lg font-bold sm:text-xl">Submit Proposal</DialogTitle>
@@ -591,5 +613,25 @@ export function ProposalDialog({
         </form>
       </DialogContent>
     </Dialog>
+
+    <Dialog open={confirmDiscardOpen} onOpenChange={setConfirmDiscardOpen}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Discard unsaved proposal?</DialogTitle>
+          <DialogDescription>
+            You have unsaved changes in your proposal pitch. If you exit now, your draft will be discarded.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button variant="outline" onClick={() => setConfirmDiscardOpen(false)}>
+            Keep Editing
+          </Button>
+          <Button variant="destructive" onClick={resetAndClose}>
+            Discard Draft
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  </>
   );
 }

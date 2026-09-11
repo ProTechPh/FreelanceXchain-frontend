@@ -1,7 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { ArrowLeft, ExternalLink, Eye, FileText, Link2, Plus, Scale, ShieldCheck, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { reportFailure } from '@/lib/report-failure';
@@ -24,11 +25,19 @@ import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { EmptyState } from '@/components/ui/empty-state';
 import { formatDateTime } from '@/lib/format';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 
 type ParticipantRole = Extract<UserRole, 'employer' | 'freelancer'>;
 const emptyDraft: DisputeDraft = { contractId: '', milestoneId: '', reason: '' };
 
-export function DisputeCenter({ role, disputeId }: { role: ParticipantRole; disputeId?: string }) {
+function DisputeCenterInner({ role, disputeId }: { role: ParticipantRole; disputeId?: string }) {
   const user = useAuthStore((state) => state.user);
   const [disputes, setDisputes] = useState<Dispute[]>([]);
   const [contracts, setContracts] = useState<Contract[]>([]);
@@ -44,14 +53,13 @@ export function DisputeCenter({ role, disputeId }: { role: ParticipantRole; disp
   const [previewAttachment, setPreviewAttachment] = useState<AttachmentPreviewTarget | null>(null);
   const [deletingEvidence, setDeletingEvidence] = useState<{ disputeId: string; evidenceId: string } | null>(null);
 
+  const searchParams = useSearchParams();
+  const contractIdParam = searchParams?.get('contractId') || '';
+
   const verified = canUseDisputeActions(user?.kycStatus);
   const verificationPath = `/dashboard/${role}/verification`;
 
   const load = useCallback(async () => {
-    if (!verified) {
-      setLoading(false);
-      return;
-    }
     setLoading(true);
     try {
       const [disputeItems, contractResponse] = await Promise.all([
@@ -85,13 +93,17 @@ export function DisputeCenter({ role, disputeId }: { role: ParticipantRole; disp
     } finally {
       setLoading(false);
     }
-  }, [disputeId, verified]);
+  }, [disputeId]);
 
   useEffect(() => {
-    // Dispute data is available only after the authenticated user's KYC state is known.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (contractIdParam && contracts.length > 0 && !draft.contractId) {
+      void selectContract(contractIdParam);
+    }
+  }, [contractIdParam, contracts, draft.contractId]);
 
   const activeContracts = contracts.filter((contract) => contract.status === 'active');
   const contractsById = useMemo(() => new Map(contracts.map((contract) => [contract.id, contract])), [contracts]);
@@ -220,35 +232,77 @@ export function DisputeCenter({ role, disputeId }: { role: ParticipantRole; disp
     }
   };
 
-  if (!verified) {
-    return (
-      <Card className="border-warning-border bg-warning-subtle"><CardContent className="flex flex-col items-center gap-4 py-12 text-center"><ShieldCheck className="size-10 text-warning" /><div><h1 className="text-xl font-semibold">Verification required</h1><p className="mt-1 text-muted-foreground">Verify your identity to view or open a dispute.</p></div><Button asChild><Link href={verificationPath}>Complete verification</Link></Button></CardContent></Card>
-    );
-  }
-
   if (loading) {
     return <ListSkeleton rows={3} label="Loading disputes" />;
   }
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
+      {!verified && (
+        <Card className="border-warning-border bg-warning-subtle">
+          <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="flex items-center gap-2 text-sm">
+              <ShieldCheck className="size-5 text-warning shrink-0" />
+              Identity verification is required to file a new dispute or submit evidence.
+            </p>
+            <Button asChild size="sm" variant="outline">
+              <Link href={verificationPath}>Complete verification</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       <div>
-        {disputeId && <Button asChild variant="ghost" className="-ml-3 mb-2"><Link href={`/dashboard/${role}/disputes`}><ArrowLeft className="mr-2 size-4" />Back to disputes</Link></Button>}
+        {disputeId && (
+          <div className="space-y-3 mb-4">
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink href={`/dashboard/${role}`}>Dashboard</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink href={`/dashboard/${role}/disputes`}>Disputes</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>Case #{disputeId.slice(0, 8)}</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+            <Button asChild variant="ghost" size="sm" className="-ml-3 text-muted-foreground hover:text-foreground">
+              <Link href={`/dashboard/${role}/disputes`}>
+                <ArrowLeft className="mr-2 size-4" />Back to disputes
+              </Link>
+            </Button>
+          </div>
+        )}
         <h1 className="text-2xl font-extrabold tracking-tight text-foreground">{disputeId ? 'Dispute details' : 'Disputes'}</h1>
         <p className="text-muted-foreground">{disputeId ? 'Review the case, linked contract, resolution, and submitted evidence.' : 'Open a case for a submitted milestone and provide evidence for review.'}</p>
       </div>
 
-      {!disputeId && <Card>
-        <CardHeader><CardTitle className="flex items-center gap-2"><Plus className="size-5" />Open a dispute</CardTitle></CardHeader>
-        <CardContent>
-          <form className="grid gap-4 sm:grid-cols-2" onSubmit={createDispute}>
-            <div className="space-y-2"><Label htmlFor="dispute-contract">Active contract</Label><select id="dispute-contract" className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm" value={draft.contractId} onChange={(event) => void selectContract(event.target.value)}><option value="">Choose a contract</option>{activeContracts.map((contract) => <option key={contract.id} value={contract.id}>{contract.project?.title || contract.title || `Contract ${contract.id.slice(0, 8)}`}</option>)}</select></div>
-            <div className="space-y-2"><Label htmlFor="dispute-milestone">Submitted milestone</Label><select id="dispute-milestone" disabled={!draft.contractId || loadingMilestones} className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm" value={draft.milestoneId} onChange={(event) => setDraft((current) => ({ ...current, milestoneId: event.target.value }))}><option value="">{loadingMilestones ? 'Loading…' : 'Choose a milestone'}</option>{milestones.map((milestone) => <option key={milestone.id} value={milestone.id}>{milestone.title}</option>)}</select></div>
-            <div className="space-y-2 sm:col-span-2"><Label htmlFor="dispute-reason">Reason</Label><Textarea id="dispute-reason" rows={4} value={draft.reason} onChange={(event) => setDraft((current) => ({ ...current, reason: event.target.value }))} placeholder="Describe the problem and the resolution you are seeking." /></div>
-            <Button className="sm:col-span-2 sm:w-fit" type="submit" disabled={actionId === 'create'}><Scale className="mr-2 size-4" />{actionId === 'create' ? 'Opening…' : 'Open dispute'}</Button>
-          </form>
-        </CardContent>
-      </Card>}
+      {!disputeId && (
+        verified ? (
+          <Card>
+            <CardHeader><CardTitle className="flex items-center gap-2"><Plus className="size-5" />Open a dispute</CardTitle></CardHeader>
+            <CardContent>
+              <form className="grid gap-4 sm:grid-cols-2" onSubmit={createDispute}>
+                <div className="space-y-2"><Label htmlFor="dispute-contract">Active contract</Label><select id="dispute-contract" className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm" value={draft.contractId} onChange={(event) => void selectContract(event.target.value)}><option value="">Choose a contract</option>{activeContracts.map((contract) => <option key={contract.id} value={contract.id}>{contract.project?.title || contract.title || `Contract ${contract.id.slice(0, 8)}`}</option>)}</select></div>
+                <div className="space-y-2"><Label htmlFor="dispute-milestone">Submitted milestone</Label><select id="dispute-milestone" disabled={!draft.contractId || loadingMilestones} className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm" value={draft.milestoneId} onChange={(event) => setDraft((current) => ({ ...current, milestoneId: event.target.value }))}><option value="">{loadingMilestones ? 'Loading…' : 'Choose a milestone'}</option>{milestones.map((milestone) => <option key={milestone.id} value={milestone.id}>{milestone.title}</option>)}</select></div>
+                <div className="space-y-2 sm:col-span-2"><Label htmlFor="dispute-reason">Reason</Label><Textarea id="dispute-reason" rows={4} value={draft.reason} onChange={(event) => setDraft((current) => ({ ...current, reason: event.target.value }))} placeholder="Describe the problem and the resolution you are seeking." /></div>
+                <Button className="sm:col-span-2 sm:w-fit" type="submit" disabled={actionId === 'create'}><Scale className="mr-2 size-4" />{actionId === 'create' ? 'Opening…' : 'Open dispute'}</Button>
+              </form>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card className="border-dashed">
+            <CardHeader><CardTitle className="flex items-center gap-2 text-muted-foreground"><Plus className="size-5" />Open a dispute</CardTitle></CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">Identity verification is required before you can open a new dispute against funded contract milestones.</p>
+            </CardContent>
+          </Card>
+        )
+      )}
 
       <section className="space-y-4" aria-labelledby="cases-heading">
         <h2 id="cases-heading" className="text-xl font-semibold">{disputeId ? 'Case' : 'Your cases'}</h2>
@@ -350,11 +404,20 @@ export function DisputeCenter({ role, disputeId }: { role: ParticipantRole; disp
                 )}
 
                 {dispute.status !== 'resolved' && (
-                  <div className="grid gap-4 rounded-lg border border-border p-4 lg:grid-cols-3">
-                    <div className="space-y-2"><Label htmlFor={`evidence-text-${dispute.id}`}>Evidence notes</Label><Textarea id={`evidence-text-${dispute.id}`} value={evidenceText[dispute.id] ?? ''} onChange={(event) => setEvidenceText((current) => ({ ...current, [dispute.id]: event.target.value }))} /><Button type="button" size="sm" disabled={actionId === `evidence:${dispute.id}`} onClick={() => void submitTextEvidence(dispute.id)}>Submit notes</Button></div>
-                    <div className="space-y-2"><Label htmlFor={`evidence-file-${dispute.id}`}>Evidence file</Label><Input id={`evidence-file-${dispute.id}`} type="file" onChange={(event) => setEvidenceFiles((current) => ({ ...current, [dispute.id]: event.target.files?.[0] ?? null }))} /><Button type="button" size="sm" variant="outline" disabled={actionId === `file:${dispute.id}`} onClick={() => void submitFileEvidence(dispute.id)}><Upload className="mr-2 size-4" />Upload file</Button></div>
-                    <div className="space-y-2"><Label htmlFor={`evidence-link-${dispute.id}`}>Evidence link</Label><Input id={`evidence-link-${dispute.id}`} type="url" placeholder="https://…" value={evidenceLinks[dispute.id] ?? ''} onChange={(event) => setEvidenceLinks((current) => ({ ...current, [dispute.id]: event.target.value }))} /><Button type="button" size="sm" variant="outline" disabled={actionId === `link:${dispute.id}`} onClick={() => void submitLinkEvidence(dispute.id)}><Link2 className="mr-2 size-4" />Submit link</Button></div>
-                  </div>
+                  verified ? (
+                    <div className="grid gap-4 rounded-lg border border-border p-4 lg:grid-cols-3">
+                      <div className="space-y-2"><Label htmlFor={`evidence-text-${dispute.id}`}>Evidence notes</Label><Textarea id={`evidence-text-${dispute.id}`} value={evidenceText[dispute.id] ?? ''} onChange={(event) => setEvidenceText((current) => ({ ...current, [dispute.id]: event.target.value }))} /><Button type="button" size="sm" disabled={actionId === `evidence:${dispute.id}`} onClick={() => void submitTextEvidence(dispute.id)}>Submit notes</Button></div>
+                      <div className="space-y-2"><Label htmlFor={`evidence-file-${dispute.id}`}>Evidence file</Label><Input id={`evidence-file-${dispute.id}`} type="file" onChange={(event) => setEvidenceFiles((current) => ({ ...current, [dispute.id]: event.target.files?.[0] ?? null }))} /><Button type="button" size="sm" variant="outline" disabled={actionId === `file:${dispute.id}`} onClick={() => void submitFileEvidence(dispute.id)}><Upload className="mr-2 size-4" />Upload file</Button></div>
+                      <div className="space-y-2"><Label htmlFor={`evidence-link-${dispute.id}`}>Evidence link</Label><Input id={`evidence-link-${dispute.id}`} type="url" placeholder="https://…" value={evidenceLinks[dispute.id] ?? ''} onChange={(event) => setEvidenceLinks((current) => ({ ...current, [dispute.id]: event.target.value }))} /><Button type="button" size="sm" variant="outline" disabled={actionId === `link:${dispute.id}`} onClick={() => void submitLinkEvidence(dispute.id)}><Link2 className="mr-2 size-4" />Submit link</Button></div>
+                    </div>
+                  ) : (
+                    <div className="rounded-lg border border-dashed border-border p-4 text-xs text-muted-foreground flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <span>Complete KYC verification to submit evidence notes, documents, or links for this dispute.</span>
+                      <Button asChild size="sm" variant="outline" className="text-xs h-7 shrink-0 w-fit">
+                        <Link href={verificationPath}>Verify identity</Link>
+                      </Button>
+                    </div>
+                  )
                 )}
 
                 {dispute.status === 'resolved' && dispute.resolution && <div className="rounded-lg border border-success-border bg-success-subtle p-3 text-sm"><p className="font-medium">Resolution: {dispute.resolution.decision.replace('_', ' ')}</p><p className="mt-1 text-muted-foreground">{dispute.resolution.reasoning}</p></div>}
@@ -397,5 +460,13 @@ export function DisputeCenter({ role, disputeId }: { role: ParticipantRole; disp
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+export function DisputeCenter(props: { role: ParticipantRole; disputeId?: string }) {
+  return (
+    <Suspense fallback={<ListSkeleton rows={3} label="Loading disputes" />}>
+      <DisputeCenterInner {...props} />
+    </Suspense>
   );
 }

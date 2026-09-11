@@ -7,6 +7,7 @@ import Navbar from "@/components/layout/navbar";
 import { FooterSection } from "@/components/layout/footer-section";
 import { Sparkles as Sparkle, CircleCheck as CheckCircle, User, Briefcase, ShieldCheck, ArrowRight, Search } from 'lucide-react';
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 
 const TUTORIAL_TRACKS = [
   {
@@ -212,48 +213,66 @@ export default function TutorialsPage() {
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filteredSteps.map((item, idx) => (
-              <motion.div
-                key={item.step}
-                initial={reduce ? false : { opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.35, delay: idx * 0.08 }}
-                className="rounded-3xl bg-card border border-border/80 p-6 sm:p-8 shadow-md shadow-black/5 hover:border-primary/50 hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="w-10 h-10 rounded-2xl bg-primary/10 text-primary font-black text-sm flex items-center justify-center border border-primary/20">
-                      {item.step}
-                    </span>
-                    <CheckCircle className="size-5 text-success" fill="currentColor" />
+          {filteredSteps.length === 0 ? (
+            <div className="py-12 text-center">
+              <EmptyState
+                icon={Search}
+                title="No tutorial steps found"
+                description={`No steps in the ${currentTrack.label} track matched "${tutorialSearch}". Try searching for another keyword or switch tracks.`}
+                action={
+                  <Button variant="outline" size="sm" onClick={() => setTutorialSearch('')}>
+                    Clear search
+                  </Button>
+                }
+              />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {filteredSteps.map((item, idx) => (
+                <motion.div
+                  key={item.step}
+                  initial={reduce ? false : { opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, delay: idx * 0.08 }}
+                  className="rounded-3xl bg-card border border-border/80 p-6 sm:p-8 shadow-md shadow-black/5 hover:border-primary/50 hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="w-10 h-10 rounded-2xl bg-primary/10 text-primary font-black text-sm flex items-center justify-center border border-primary/20">
+                        {item.step}
+                      </span>
+                      <CheckCircle className="size-5 text-success" fill="currentColor" />
+                    </div>
+
+                    <h3 className="text-lg font-bold text-foreground tracking-tight leading-snug">
+                      {item.title}
+                    </h3>
+
+                    <p className="mt-2 text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                      {item.description}
+                    </p>
                   </div>
 
-                  <h3 className="text-lg font-bold text-foreground tracking-tight leading-snug">
-                    {item.title}
-                  </h3>
-
-                  <p className="mt-2 text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                    {item.description}
-                  </p>
-                </div>
-
-                <div className="mt-6 pt-4 border-t border-border/50 flex items-center justify-between">
-                  <Button
-                    asChild
-                    variant="outline"
-                    size="sm"
-                    className="rounded-full text-xs font-bold hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all cursor-pointer"
-                  >
-                    <Link href={item.href}>
-                      {item.action}
-                      <ArrowRight className="size-3 ml-1.5" strokeWidth={2.5} />
-                    </Link>
-                  </Button>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+                  <div className="mt-6 pt-4 border-t border-border/50 flex items-center justify-between">
+                    <span className="text-2xs font-medium text-muted-foreground">
+                      {item.href.startsWith('/dashboard') ? 'Requires sign in' : 'Public page'}
+                    </span>
+                    <Button
+                      asChild
+                      variant="outline"
+                      size="sm"
+                      className="rounded-full text-xs font-bold hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all cursor-pointer"
+                    >
+                      <Link href={item.href}>
+                        {item.action}
+                        <ArrowRight className="size-3 ml-1.5" strokeWidth={2.5} />
+                      </Link>
+                    </Button>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
         </section>
       </main>
 

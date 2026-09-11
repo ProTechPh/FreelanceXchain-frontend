@@ -22,6 +22,9 @@ import type {
 
 type NewsCategory = { label: string; coin?: string; filter?: string };
 
+import { toast } from "sonner";
+import { useAuthStore } from "@/stores/authStore";
+
 export default function NewsPage() {
   const reduce = useReducedMotion();
   const [, startTransition] = useTransition();
@@ -30,7 +33,18 @@ export default function NewsPage() {
   const [selectedCategory, setSelectedCategory] = useState('All News');
   const [searchQuery, setSearchQuery] = useState("");
   const [subscribed, setSubscribed] = useState(false);
+  const [subscribedEmail, setSubscribedEmail] = useState<string | null>(null);
   const [emailInput, setEmailInput] = useState("");
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('fxc_newsletter_subscribed');
+      if (stored) {
+        setSubscribed(true);
+        setSubscribedEmail(stored);
+      }
+    } catch {}
+  }, []);
 
   // Live Crypto News & Market State
   const [articles, setArticles] = useState<CryptoNewsArticle[]>([]);
@@ -194,9 +208,15 @@ export default function NewsPage() {
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
-    if (emailInput.trim()) {
+    const cleanEmail = emailInput.trim();
+    if (cleanEmail) {
+      try {
+        localStorage.setItem('fxc_newsletter_subscribed', cleanEmail);
+      } catch {}
       setSubscribed(true);
+      setSubscribedEmail(cleanEmail);
       setEmailInput("");
+      toast.success('Subscribed to Crypto Wire newsletter!');
     }
   };
 
@@ -675,9 +695,14 @@ export default function NewsPage() {
               </p>
 
               {subscribed ? (
-                <div className="mt-6 inline-flex items-center gap-2 px-5 py-3 rounded-full bg-primary-foreground text-primary font-bold text-sm shadow-md">
-                  <CheckCircle className="size-5 text-success" fill="currentColor" />
-                  <span>You are subscribed to the Crypto Wire!</span>
+                <div className="mt-6 inline-flex flex-col sm:flex-row items-center gap-2 px-5 py-3 rounded-full bg-primary-foreground text-primary font-bold text-sm shadow-md">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="size-5 text-success" fill="currentColor" />
+                    <span>You are subscribed to the Crypto Wire!</span>
+                  </div>
+                  {subscribedEmail && (
+                    <span className="text-xs font-medium opacity-80">({subscribedEmail})</span>
+                  )}
                 </div>
               ) : (
                 <form

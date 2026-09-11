@@ -3,13 +3,13 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { KeyRound, Mail } from 'lucide-react';
+import { CheckCircle2, KeyRound, Mail, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { authApi } from '@/lib/api';
 import { getApiErrorMessage, isAuthSuccessResponse, isRegistrationRequiredResponse } from '@/lib/auth-contract';
 import { useAuthStore } from '@/stores/authStore';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Field } from '@/components/ui/field';
 import { GuestGuard } from '@/components/auth/guest-guard';
@@ -20,36 +20,39 @@ export default function PasswordlessPage() {
   const [email, setEmail] = useState('');
   const [userId, setUserId] = useState('');
   const [code, setCode] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [activeAction, setActiveAction] = useState<'code' | 'magic' | 'verify' | null>(null);
+  const [magicLinkSent, setMagicLinkSent] = useState(false);
 
   const requestCode = async () => {
-    setLoading(true);
+    setActiveAction('code');
     try {
       const { data } = await authApi.requestEmailOtp(email.trim());
       setUserId(data.userId);
+      setMagicLinkSent(false);
       toast.success('A one-time code was sent to your email.');
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Unable to send an email code.'));
     } finally {
-      setLoading(false);
+      setActiveAction(null);
     }
   };
 
   const requestMagicLink = async () => {
-    setLoading(true);
+    setActiveAction('magic');
     try {
       await authApi.requestMagicUrl(email.trim());
+      setMagicLinkSent(true);
       toast.success('Magic sign-in link sent. Check your email.');
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Unable to send a magic link.'));
     } finally {
-      setLoading(false);
+      setActiveAction(null);
     }
   };
 
   const verifyCode = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setLoading(true);
+    setActiveAction('verify');
     try {
       const { data } = await authApi.verifyPasswordlessToken(userId, code.trim());
       if (isAuthSuccessResponse(data)) {
@@ -66,7 +69,7 @@ export default function PasswordlessPage() {
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'The code is invalid or expired.'));
     } finally {
-      setLoading(false);
+      setActiveAction(null);
     }
   };
 
@@ -74,22 +77,135 @@ export default function PasswordlessPage() {
     <GuestGuard>
       <div className="flex min-h-screen items-center justify-center bg-muted/30 p-6">
         <Card className="w-full max-w-md">
-          <CardHeader><CardTitle><h1 className="flex items-center gap-2"><KeyRound className="size-5" />Passwordless sign in</h1></CardTitle></CardHeader>
-          <CardContent className="space-y-5">
-            <Field label="Email" htmlFor="passwordless-email">
-              <Input id="passwordless-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
-            </Field>
-            <div className="grid grid-cols-1 gap-3 xs:grid-cols-2"><Button type="button" disabled={loading || !email.trim()} onClick={() => void requestCode()}><Mail className="mr-2 size-4" />Email code</Button><Button type="button" variant="outline" disabled={loading || !email.trim()} onClick={() => void requestMagicLink()}>Magic link</Button></div>
-            {userId && (
-              <form className="space-y-3 border-t border-border pt-5" onSubmit={verifyCode}>
-                <Field label="One-time code" htmlFor="passwordless-code">
-                  <Input id="passwordless-code" inputMode="numeric" autoComplete="one-time-code" maxLength={6} pattern="[0-9]*" placeholder="000000" value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))} className="text-center text-2xl tracking-[0.5em] font-mono h-12" />
+          {magicLinkSent ? (
+            <>
+              <CardHeader className="text-center pb-2">
+                <div className="mx-auto size-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-3">
+                  <Mail className="size-6" />
+                </div>
+                <CardTitle className="text-xl font-bold">Check your email</CardTitle>
+                <CardDescription className="text-sm">
+                  We sent a magic sign-in link to <strong className="text-foreground">{email}</strong>.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4 pt-2">
+                <p className="text-xs text-muted-foreground text-center leading-relaxed">
+                  Click the link inside the email to sign in instantly. Don&apos;t see it? Check your spam or promotions folder.
+                </p>
+                <div className="flex flex-col gap-2 pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    loading={activeAction === 'magic'}
+                    loadingText="Resending link…"
+                    disabled={activeAction !== null}
+                    onClick={() => void requestMagicLink()}
+                  >
+                    <RefreshCw className="mr-2 size-3.5" />
+                    Resend magic link
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full text-xs"
+                    onClick={() => setMagicLinkSent(false)}
+                  >
+                    Use a different email or one-time code
+                  </Button>
+                </div>
+                <p className="text-center text-xs text-muted-foreground pt-2">
+                  <Link href="/login" className="text-primary hover:underline">Back to password sign in</Link>
+                </p>
+              </CardContent>
+            </>
+          ) : (
+            <>
+              <CardHeader>
+                <CardTitle>
+                  <h1 className="flex items-center gap-2 text-xl font-bold">
+                    <KeyRound className="size-5 text-primary" />
+                    Passwordless sign in
+                  </h1>
+                </CardTitle>
+                <CardDescription>
+                  Sign in securely with a one-time email code or a magic link.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                <Field label="Email address" htmlFor="passwordless-email">
+                  <Input
+                    id="passwordless-email"
+                    type="email"
+                    placeholder="name@example.com"
+                    value={email}
+                    onChange={(event) => {
+                      setEmail(event.target.value);
+                      if (userId) setUserId('');
+                    }}
+                    required
+                  />
                 </Field>
-                <Button className="w-full" type="submit" disabled={loading || !code.trim()}>Verify and sign in</Button>
-              </form>
-            )}
-            <p className="text-center text-sm text-muted-foreground"><Link href="/login" className="text-primary hover:underline">Back to password sign in</Link></p>
-          </CardContent>
+                <div className="grid grid-cols-1 gap-3 xs:grid-cols-2">
+                  <Button
+                    type="button"
+                    loading={activeAction === 'code'}
+                    loadingText="Sending…"
+                    disabled={activeAction !== null || !email.trim()}
+                    onClick={() => void requestCode()}
+                  >
+                    <Mail className="mr-2 size-4" />
+                    Email code
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    loading={activeAction === 'magic'}
+                    loadingText="Sending…"
+                    disabled={activeAction !== null || !email.trim()}
+                    onClick={() => void requestMagicLink()}
+                  >
+                    Magic link
+                  </Button>
+                </div>
+
+                {userId && (
+                  <form className="space-y-3 border-t border-border pt-5" onSubmit={verifyCode}>
+                    <div className="rounded-lg bg-primary/5 border border-primary/20 p-3 text-xs text-foreground">
+                      Enter the 6-digit verification code sent to <strong>{email}</strong>.
+                    </div>
+                    <Field label="One-time verification code" htmlFor="passwordless-code">
+                      <Input
+                        id="passwordless-code"
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        maxLength={6}
+                        pattern="[0-9]*"
+                        placeholder="000000"
+                        value={code}
+                        onChange={(event) => setCode(event.target.value.replace(/\D/g, '').slice(0, 6))}
+                        className="text-center text-2xl tracking-[0.5em] font-mono h-12"
+                        required
+                        autoFocus
+                      />
+                    </Field>
+                    <Button
+                      className="w-full"
+                      type="submit"
+                      loading={activeAction === 'verify'}
+                      loadingText="Verifying…"
+                      disabled={activeAction !== null || code.trim().length !== 6}
+                    >
+                      Verify and sign in
+                    </Button>
+                  </form>
+                )}
+                <p className="text-center text-sm text-muted-foreground">
+                  <Link href="/login" className="text-primary hover:underline">Back to password sign in</Link>
+                </p>
+              </CardContent>
+            </>
+          )}
         </Card>
       </div>
     </GuestGuard>

@@ -110,6 +110,11 @@ export default function Navbar({
     }
   };
 
+  const handleMobileNavClick = (e: React.MouseEvent<HTMLAnchorElement>, url: string) => {
+    handleSmoothScroll(e, url);
+    setMobileMenuOpen(false);
+  };
+
   return (
     <nav className="fixed top-4 left-0 right-0 z-50 px-3 sm:px-6 pointer-events-none flex justify-center">
       <div className="pointer-events-auto max-w-7xl w-full mx-auto px-4 sm:px-5 h-14 rounded-full bg-card/90 backdrop-blur-md border border-border/80 shadow-md shadow-black/5 flex items-center justify-between gap-2 lg:gap-4">
@@ -244,7 +249,7 @@ export default function Navbar({
                         <Link
                           key={item.title}
                           href={item.url}
-                          onClick={(e) => handleSmoothScroll(e, item.url)}
+                          onClick={(e) => handleMobileNavClick(e, item.url)}
                           className="flex items-center py-2.5 text-sm font-semibold text-foreground/80 hover:text-foreground transition-colors"
                         >
                           {item.title}
@@ -259,7 +264,7 @@ export default function Navbar({
                         <Link
                           key={item.title}
                           href={item.url}
-                          onClick={(e) => handleSmoothScroll(e, item.url)}
+                          onClick={(e) => handleMobileNavClick(e, item.url)}
                           className="flex items-center py-2.5 text-sm font-semibold text-foreground/80 hover:text-foreground transition-colors"
                         >
                           {item.title}

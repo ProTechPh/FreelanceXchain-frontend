@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Progress } from '@/components/ui/progress';
 import { formatAmount, formatDate } from '@/lib/format';
 
 export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'freelancer'> }) {
@@ -140,9 +141,7 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
                     <div><p className="text-muted-foreground">Progress</p><p className="font-semibold">{progress}%</p></div>
                     <div><p className="text-muted-foreground">Created</p><p className="font-semibold">{formatDate(contract.createdAt)}</p></div>
                   </div>
-                  <div className="h-2 overflow-hidden rounded-full bg-muted" aria-label={`${progress}% complete`}>
-                    <div className="h-full bg-primary" style={{ width: `${progress}%` }} />
-                  </div>
+                  <Progress value={progress} label={`Contract progress: ${progress}%`} />
                   <Button asChild variant="outline">
                     <Link href={getContractDetailRoute(role, contract.id)}>View contract</Link>
                   </Button>

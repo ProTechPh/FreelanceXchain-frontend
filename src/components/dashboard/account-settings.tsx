@@ -34,6 +34,7 @@ import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 import {
   Dialog,
   DialogContent,
@@ -574,22 +575,18 @@ export function AccountSettings() {
                     {quota.files} file{quota.files === 1 ? '' : 's'}
                   </span>
                 </div>
-                <div
-                  className="h-2 overflow-hidden rounded-full bg-muted"
-                  role="progressbar"
-                  aria-label="Storage used"
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  aria-valuenow={Math.round(quota.percentage)}
-                >
-                  <div
-                    className="h-full rounded-full bg-primary"
-                    style={{ width: `${Math.min(100, quota.percentage)}%` }}
-                  />
-                </div>
+                <Progress
+                  value={Math.round(quota.percentage)}
+                  label="Storage used"
+                  className="h-2"
+                />
               </div>
               {files.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No proposal or portfolio files stored.</p>
+                <p className="text-sm text-muted-foreground">
+                  {user?.role === 'employer'
+                    ? 'No project attachments or company documents stored.'
+                    : 'No proposal, contract, or portfolio files stored.'}
+                </p>
               ) : (
                 <ul className="divide-y divide-border rounded-lg border border-border">
                   {files.map((file) => {
@@ -637,7 +634,7 @@ export function AccountSettings() {
       </Card>
 
       {/* Danger Zone: Account Deletion (GDPR / Data Privacy Compliance) */}
-      {user?.role === 'freelancer' && (
+      {(user?.role === 'freelancer' || user?.role === 'employer') && (
         <Card className="border-destructive/40 bg-destructive/5">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-destructive">

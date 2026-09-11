@@ -14,12 +14,28 @@ import { formatFileSize, safeAttachmentUrl } from '@/lib/attachment-presentation
 import type { Project, ProjectStatus, Attachment } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
 import { Field } from '@/components/ui/field';
 import { Badge } from '@/components/ui/badge';
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 
 const MAX_FILES = 10;
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -44,6 +60,7 @@ function EditProjectContent() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingProgress, setUploadingProgress] = useState(false);
+  const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
 
   useEffect(() => {
     if (!projectId) return;
@@ -107,7 +124,21 @@ function EditProjectContent() {
   };
 
   const removeExistingAttachment = (index: number) => {
+    const removed = existingAttachments[index];
+    if (!removed) return;
     setExistingAttachments((prev) => prev.filter((_, i) => i !== index));
+    toast('Attachment removed', {
+      action: {
+        label: 'Undo',
+        onClick: () => {
+          setExistingAttachments((prev) => {
+            const next = [...prev];
+            next.splice(index, 0, removed);
+            return next;
+          });
+        },
+      },
+    });
   };
 
   const removeNewFile = (index: number) => {
@@ -126,13 +157,7 @@ function EditProjectContent() {
     setNewFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const save = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (title.trim().length < 5) return toast.error('Project title must be at least 5 characters.');
-    if (description.trim().length < 20) return toast.error('Project description must be at least 20 characters.');
-    if (!Number.isFinite(Number(budget)) || Number(budget) <= 0) return toast.error('Budget must be greater than 0.');
-    if (!deadline) return toast.error('Choose a deadline.');
-
+  const executeSave = async () => {
     setSaving(true);
     try {
       let finalAttachments: Attachment[] = [...existingAttachments];
@@ -176,6 +201,21 @@ function EditProjectContent() {
     }
   };
 
+  const save = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (title.trim().length < 5) return toast.error('Project title must be at least 5 characters.');
+    if (description.trim().length < 20) return toast.error('Project description must be at least 20 characters.');
+    if (!Number.isFinite(Number(budget)) || Number(budget) <= 0) return toast.error('Budget must be greater than 0.');
+    if (!deadline) return toast.error('Choose a deadline.');
+
+    if (status === 'cancelled' && project?.status !== 'cancelled') {
+      setConfirmCancelOpen(true);
+      return;
+    }
+
+    await executeSave();
+  };
+
   if (loading) return <DetailSkeleton label="Loading project" />;
   if (!project)
     return (
@@ -188,12 +228,35 @@ function EditProjectContent() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 pb-12">
-      <Button asChild variant="ghost" className="-ml-3">
-        <Link href="/dashboard/employer/projects">
-          <ArrowLeft className="mr-2 size-4" />
-          Back to projects
-        </Link>
-      </Button>
+      <div className="space-y-3">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/dashboard/employer">Dashboard</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink href="/dashboard/employer/projects">Projects</BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink href={`/dashboard/employer/projects/${projectId}`}>
+                {project.title || 'Project'}
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbPage>Edit</BreadcrumbPage>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+        <Button asChild variant="ghost" size="sm" className="-ml-3 text-muted-foreground hover:text-foreground">
+          <Link href="/dashboard/employer/projects">
+            <ArrowLeft className="mr-2 size-4" />
+            Back to projects
+          </Link>
+        </Button>
+      </div>
 
       <Card>
         <CardHeader>
@@ -424,6 +487,33 @@ function EditProjectContent() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={confirmCancelOpen} onOpenChange={setConfirmCancelOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-destructive">Cancel this project?</DialogTitle>
+            <DialogDescription>
+              Marking this project as cancelled will close open bidding and notify applicants. This action cannot be reversed.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setConfirmCancelOpen(false)} disabled={saving}>
+              Keep Project Active
+            </Button>
+            <Button
+              variant="destructive"
+              loading={saving}
+              loadingText="Cancelling project…"
+              onClick={async () => {
+                setConfirmCancelOpen(false);
+                await executeSave();
+              }}
+            >
+              Confirm Cancellation
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

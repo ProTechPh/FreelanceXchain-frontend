@@ -5,6 +5,7 @@ import { getRegistrationFormError } from '@/lib/auth-contract';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { FreelanceXchainLogo } from '@/components/ui/freelancexchain-logo';
+import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
 const GoogleIcon = () => (
@@ -67,11 +68,13 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  const [confirmTouched, setConfirmTouched] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
   const handleRoleSelect = (selectedRole: UserRole) => {
     setRole(selectedRole);
     setStep('details');
+    setConfirmTouched(false);
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -141,21 +144,14 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
         </div>
       </div>
 
-      {/* Mobile features banner (visible on mobile, hidden on lg+) */}
-      <div className="lg:hidden bg-gradient-to-br from-primary via-primary to-chart-2 dark:from-gradient-from dark:via-gradient-via dark:to-gradient-to p-6 text-gradient-foreground">
-        <Link href="/" className="flex items-center gap-2.5 mb-5">
-          <FreelanceXchainLogo iconSize={28} className="text-gradient-foreground [&_span]:text-gradient-foreground" />
+      {/* Mobile brand header (compact on mobile, hidden on lg+ where left sidebar shows) */}
+      <div className="lg:hidden bg-gradient-to-r from-primary via-primary to-chart-2 dark:from-gradient-from dark:via-gradient-via dark:to-gradient-to px-5 py-3.5 text-gradient-foreground flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-2.5">
+          <FreelanceXchainLogo iconSize={24} className="text-gradient-foreground [&_span]:text-gradient-foreground" />
         </Link>
-        <div className="flex flex-col gap-3">
-          {features.map((feature) => (
-            <div key={feature} className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-foreground/15 flex items-center justify-center shrink-0">
-                <CheckIcon />
-              </div>
-              <span className="text-gradient-foreground font-semibold text-sm">{feature}</span>
-            </div>
-          ))}
-        </div>
+        <span className="text-xs font-medium text-gradient-foreground/80 hidden xs:inline">
+          Escrow &amp; AI Marketplace
+        </span>
       </div>
 
       {/* Right side - Form */}
@@ -172,6 +168,23 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                   <ArrowLeft className="size-4" />
                   Back to home
                 </Link>
+
+                {/* Step indicator */}
+                <div className="flex items-center gap-2" aria-label="Step 1 of 2: Choose your role">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
+                    <span className="flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-2xs font-bold">
+                      1
+                    </span>
+                    <span>Role</span>
+                  </div>
+                  <div className="h-0.5 w-8 rounded-full bg-border" />
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+                    <span className="flex size-5 items-center justify-center rounded-full bg-muted text-muted-foreground border border-border text-2xs font-bold">
+                      2
+                    </span>
+                    <span>Account</span>
+                  </div>
+                </div>
 
                 {/* Header */}
                 <div>
@@ -283,6 +296,24 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                     <ArrowLeft className="w-4 h-4" />
                     Back
                   </button>
+
+                  {/* Step indicator */}
+                  <div className="flex items-center gap-2 mb-3" aria-label="Step 2 of 2: Account details">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
+                      <span className="flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-2xs font-bold">
+                        ✓
+                      </span>
+                      <span>Role</span>
+                    </div>
+                    <div className="h-0.5 w-8 rounded-full bg-primary" />
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-primary">
+                      <span className="flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-2xs font-bold">
+                        2
+                      </span>
+                      <span>Account</span>
+                    </div>
+                  </div>
+
                   <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-foreground">
                     <span className="text-primary">{role === 'freelancer' ? 'Freelancer' : 'Employer'}</span> account
                   </h1>
@@ -312,10 +343,10 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                         id="password" 
                         name="password" 
                         type={showPassword ? 'text' : 'password'} 
-                        placeholder="Create a strong password" 
+                        placeholder="Create a password" 
                         value={password} 
                         onChange={(e) => { setPassword(e.target.value); setFormError(null); }} 
-                        aria-describedby="password-requirements registration-error" 
+                        aria-describedby="password-requirements" 
                         className="w-full px-4 py-3 sm:py-3.5 pr-12 rounded-xl sm:rounded-2xl border border-border/80 bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all placeholder:text-muted-foreground/60" 
                         required 
                       />
@@ -347,6 +378,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                         placeholder="Confirm your password" 
                         value={confirmPassword} 
                         onChange={(e) => { setConfirmPassword(e.target.value); setFormError(null); }} 
+                        onBlur={() => setConfirmTouched(true)}
                         aria-describedby="registration-error" 
                         className="w-full px-4 py-3 sm:py-3.5 pr-12 rounded-xl sm:rounded-2xl border border-border/80 bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all placeholder:text-muted-foreground/60" 
                         required 
@@ -364,7 +396,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                         )}
                       </button>
                     </div>
-                    {password && confirmPassword && password !== confirmPassword && (
+                    {password && confirmPassword && (confirmTouched || confirmPassword.length >= password.length) && password !== confirmPassword && (
                       <p className="text-sm text-destructive mt-1">Passwords don&apos;t match</p>
                     )}
                     {password && confirmPassword && password === confirmPassword && (
