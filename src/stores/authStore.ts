@@ -137,15 +137,17 @@ export const useAuthStore = create<AuthState>()(
 
         try {
           const { data } = await authApi.getMe();
+          const token = getAccessToken();
           set({
             user: normalizeAuthUser(data.user),
-            accessToken: getAccessToken(),
+            accessToken: token,
             isAuthenticated: true,
             isLoading: false,
           });
         } catch {
           try {
-            const { data: refreshData } = await authApi.refreshToken();
+            const currentToken = getAccessToken();
+            const { data: refreshData } = await authApi.refreshToken(currentToken ?? undefined);
             if (isAuthSuccessResponse(refreshData)) {
               setTokenStorage(refreshData.accessToken);
               set({
@@ -207,9 +209,13 @@ export const useAuthStore = create<AuthState>()(
       name: 'auth-storage',
       partialize: (state) => ({
         user: state.user,
+        accessToken: state.accessToken,
         isAuthenticated: state.isAuthenticated,
       }),
       onRehydrateStorage: () => (state) => {
+        if (state?.accessToken) {
+          setTokenStorage(state.accessToken);
+        }
         state?.setHasHydrated(true);
       },
     }

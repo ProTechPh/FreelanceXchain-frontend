@@ -121,7 +121,14 @@ type CsrfRetryConfig = InternalAxiosRequestConfig & {
 };
 
 function isSessionRecoveryRequest(config: InternalAxiosRequestConfig | undefined): boolean {
-  return config?.url === '/auth/me' || config?.url === '/auth/refresh';
+  if (!config?.url) return false;
+  const url = config.url;
+  return (
+    url === '/auth/me' ||
+    url === '/auth/refresh' ||
+    url.endsWith('/auth/me') ||
+    url.endsWith('/auth/refresh')
+  );
 }
 
 api.interceptors.request.use(
@@ -190,8 +197,10 @@ export const authApi = {
   getMe: () =>
     api.get<{ user: AuthApiUser }>('/auth/me'),
   
-  refreshToken: (refreshToken?: string) =>
-    api.post<AuthSuccessResponse>('/auth/refresh', refreshToken ? { refreshToken } : {}),
+  refreshToken: (refreshToken?: string) => {
+    const token = refreshToken || getAccessToken() || undefined;
+    return api.post<AuthSuccessResponse>('/auth/refresh', token ? { refreshToken: token } : {});
+  },
   
   forgotPassword: (email: string) =>
     api.post('/auth/forgot-password', { email }),
