@@ -44,7 +44,9 @@ export type NotificationType =
   | 'rush_upgrade_accepted'
   | 'rush_upgrade_declined'
   | 'rush_upgrade_counter_offered'
-  | 'message';
+  | 'message'
+  | 'saved_search_match'
+  | 'project_match';
 
 export interface User {
   id: string;
@@ -577,6 +579,23 @@ export interface SystemHealth {
   timestamp: string;
 }
 
+export interface FunnelStageMetric {
+  stage: string;
+  label: string;
+  count: number;
+  conversionRate: number;
+  overallRate: number;
+  dropoffCount: number;
+  dropoffRate: number;
+}
+
+export interface FunnelMetricsReport {
+  stages: FunnelStageMetric[];
+  totalRegistered: number;
+  overallConversionRate: number;
+  generatedAt: string;
+}
+
 export interface AdminAnalytics {
   totalUsers: number;
   totalProjects: number;
@@ -588,6 +607,13 @@ export interface AdminAnalytics {
   projectGrowth: number;
   userGrowthData: { month: string; count: number }[];
   projectActivityData: { month: string; count: number }[];
+  escrowFundingRate?: number;
+  repeatEmployerRate?: number;
+  rushUpgradeAdoptionRate?: number;
+  rushFeeRevenue?: number;
+  realizedRevenue?: number;
+  timeToFirstProposalHours?: number;
+  disputeRate?: number;
 }
 
 export interface FreelancerAnalytics {

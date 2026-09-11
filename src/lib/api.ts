@@ -43,6 +43,8 @@ import type {
   SkillTrend,
   PlatformMetrics,
   MarketplaceLiquidityReport,
+  FunnelMetricsReport,
+  FunnelStageMetric,
   SkillTaxonomy,
   Skill,
   UserRole,
@@ -918,6 +920,9 @@ export const analyticsApi = {
 
   getLiquidityReport: () =>
     api.get<MarketplaceLiquidityReport>('/analytics/liquidity'),
+
+  getFunnelMetrics: () =>
+    api.get<FunnelMetricsReport>('/analytics/funnel'),
 };
 
 export const kycApi = {
