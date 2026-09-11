@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CheckCircle2, KeyRound, Mail, RefreshCw } from 'lucide-react';
+import { KeyRound, Mail, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { authApi } from '@/lib/api';
 import { getApiErrorMessage, isAuthSuccessResponse, isRegistrationRequiredResponse } from '@/lib/auth-contract';

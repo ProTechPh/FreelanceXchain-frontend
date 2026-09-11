@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 import Navbar from "@/components/layout/navbar";
 import { FooterSection } from "@/components/layout/footer-section";
-import { Sparkles as Sparkle, ShieldCheck, CircleQuestionMark as Question, Send as PaperPlaneTilt, CircleCheck as CheckCircle, Lock as LockKey, Mail, Copy } from 'lucide-react';
+import { Sparkles as Sparkle, ShieldCheck, CircleQuestionMark as Question, Lock as LockKey, Mail, Copy } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   Building2,
@@ -36,7 +36,6 @@ import {
 
 export default function EmployerProfilePage() {
   const params = useParams();
-  const router = useRouter();
   const employerId = params?.id as string;
   const [profile, setProfile] = useState<EmployerProfile | null>(null);
   const [reputationScore, setReputationScore] = useState<AggregatedReputationScore | null>(null);

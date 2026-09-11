@@ -23,7 +23,6 @@ import type {
 type NewsCategory = { label: string; coin?: string; filter?: string };
 
 import { toast } from "sonner";
-import { useAuthStore } from "@/stores/authStore";
 
 export default function NewsPage() {
   const reduce = useReducedMotion();
@@ -32,19 +31,21 @@ export default function NewsPage() {
   const [categories, setCategories] = useState<NewsCategory[]>([{ label: 'All News' }]);
   const [selectedCategory, setSelectedCategory] = useState('All News');
   const [searchQuery, setSearchQuery] = useState("");
-  const [subscribed, setSubscribed] = useState(false);
-  const [subscribedEmail, setSubscribedEmail] = useState<string | null>(null);
-  const [emailInput, setEmailInput] = useState("");
-
-  useEffect(() => {
+  const [subscribed, setSubscribed] = useState(() => {
     try {
-      const stored = localStorage.getItem('fxc_newsletter_subscribed');
-      if (stored) {
-        setSubscribed(true);
-        setSubscribedEmail(stored);
-      }
-    } catch {}
-  }, []);
+      return Boolean(typeof window !== 'undefined' && localStorage.getItem('fxc_newsletter_subscribed'));
+    } catch {
+      return false;
+    }
+  });
+  const [subscribedEmail, setSubscribedEmail] = useState<string | null>(() => {
+    try {
+      return typeof window !== 'undefined' ? localStorage.getItem('fxc_newsletter_subscribed') : null;
+    } catch {
+      return null;
+    }
+  });
+  const [emailInput, setEmailInput] = useState("");
 
   // Live Crypto News & Market State
   const [articles, setArticles] = useState<CryptoNewsArticle[]>([]);

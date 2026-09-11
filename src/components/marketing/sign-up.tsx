@@ -5,7 +5,6 @@ import { getRegistrationFormError } from '@/lib/auth-contract';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { FreelanceXchainLogo } from '@/components/ui/freelancexchain-logo';
-import { cn } from '@/lib/utils';
 import Link from 'next/link';
 
 const GoogleIcon = () => (

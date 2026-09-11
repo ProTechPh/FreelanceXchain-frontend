@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { ArrowLeft, ExternalLink, Eye, FileText, Link2, Plus, Scale, ShieldCheck, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
-import { reportFailure } from '@/lib/report-failure';
+import { reportFailure, reportLoadFailure } from '@/lib/report-failure';
 import { contractsApi, disputesApi, milestonesApi } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { canUseDisputeActions, validateDisputeDraft, validateEvidenceLink, type DisputeDraft } from '@/lib/dispute-form';
@@ -39,77 +39,105 @@ const emptyDraft: DisputeDraft = { contractId: '', milestoneId: '', reason: '' }
 
 function DisputeCenterInner({ role, disputeId }: { role: ParticipantRole; disputeId?: string }) {
   const user = useAuthStore((state) => state.user);
+  const searchParams = useSearchParams();
+  const contractIdParam = searchParams?.get('contractId') || '';
+
   const [disputes, setDisputes] = useState<Dispute[]>([]);
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [milestones, setMilestones] = useState<Milestone[]>([]);
-  const [draft, setDraft] = useState<DisputeDraft>(emptyDraft);
+  const [draft, setDraft] = useState<DisputeDraft>(() => ({
+    contractId: contractIdParam,
+    milestoneId: '',
+    reason: '',
+  }));
   const [evidenceText, setEvidenceText] = useState<Record<string, string>>({});
   const [evidenceLinks, setEvidenceLinks] = useState<Record<string, string>>({});
   const [evidenceFiles, setEvidenceFiles] = useState<Record<string, File | null>>({});
   const [evidenceByDispute, setEvidenceByDispute] = useState<Record<string, DisputeEvidence[]>>({});
   const [loading, setLoading] = useState(true);
-  const [loadingMilestones, setLoadingMilestones] = useState(false);
+  const [loadingMilestones, setLoadingMilestones] = useState(() => Boolean(contractIdParam));
   const [actionId, setActionId] = useState<string | null>(null);
   const [previewAttachment, setPreviewAttachment] = useState<AttachmentPreviewTarget | null>(null);
   const [deletingEvidence, setDeletingEvidence] = useState<{ disputeId: string; evidenceId: string } | null>(null);
 
-  const searchParams = useSearchParams();
-  const contractIdParam = searchParams?.get('contractId') || '';
-
   const verified = canUseDisputeActions(user?.kycStatus);
   const verificationPath = `/dashboard/${role}/verification`;
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [disputeItems, contractResponse] = await Promise.all([
-        disputeId
-          ? disputesApi.get(disputeId).then(({ data }) => [data])
-          : disputesApi.list({ limit: 100 }).then(({ data }) => data.items),
-        contractsApi.list({ limit: 100 }),
-      ]);
-      setDisputes(disputeItems);
-      setContracts(contractResponse.data.items);
-      const evidenceEntries = await Promise.all(disputeItems.map(async (dispute) => {
-        try {
-          const { data } = await disputesApi.listEvidence(dispute.id);
-          return [dispute.id, data] as const;
-        } catch {
-          return [dispute.id, dispute.evidence.map((evidence) => ({
-            id: evidence.id,
-            disputeId: dispute.id,
-            submittedBy: evidence.submitterId,
-            evidenceType: evidence.type,
-            description: evidence.content,
-            fileUrl: evidence.type === 'text' ? undefined : evidence.content,
-            createdAt: evidence.submittedAt,
-            updatedAt: evidence.submittedAt,
-          }))] as const;
+  useEffect(() => {
+    if (!contractIdParam) return;
+    let active = true;
+    milestonesApi.listForContract(contractIdParam)
+      .then(({ data }) => {
+        if (active) {
+          setMilestones(data.map(normalizeMilestone).filter((milestone) => milestone.status === 'submitted'));
         }
-      }));
-      setEvidenceByDispute(Object.fromEntries(evidenceEntries));
-    } catch (error) {
-      reportFailure(error, 'load disputes');
-    } finally {
-      setLoading(false);
-    }
+      })
+      .catch((error) => {
+        if (active) {
+          reportFailure(error, 'load the submitted milestones');
+        }
+      })
+      .finally(() => {
+        if (active) {
+          setLoadingMilestones(false);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [contractIdParam]);
+
+  const load = useCallback(async () => {
+    const [disputeItems, contractResponse] = await Promise.all([
+      disputeId
+        ? disputesApi.get(disputeId).then(({ data }) => [data])
+        : disputesApi.list({ limit: 100 }).then(({ data }) => data.items),
+      contractsApi.list({ limit: 100 }),
+    ]);
+    setDisputes(disputeItems);
+    setContracts(contractResponse.data.items);
+    const evidenceEntries = await Promise.all(disputeItems.map(async (dispute) => {
+      try {
+        const { data } = await disputesApi.listEvidence(dispute.id);
+        return [dispute.id, data] as const;
+      } catch {
+        return [dispute.id, dispute.evidence.map((evidence) => ({
+          id: evidence.id,
+          disputeId: dispute.id,
+          submittedBy: evidence.submitterId,
+          evidenceType: evidence.type,
+          description: evidence.content,
+          fileUrl: evidence.type === 'text' ? undefined : evidence.content,
+          createdAt: evidence.submittedAt,
+          updatedAt: evidence.submittedAt,
+        }))] as const;
+      }
+    }));
+    setEvidenceByDispute(Object.fromEntries(evidenceEntries));
   }, [disputeId]);
 
   useEffect(() => {
-    void load();
-  }, [load]);
-
-  useEffect(() => {
-    if (contractIdParam && contracts.length > 0 && !draft.contractId) {
-      void selectContract(contractIdParam);
+    let active = true;
+    function run() {
+      load()
+        .catch((error) => {
+          if (active) reportLoadFailure(error, 'disputes', run);
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
     }
-  }, [contractIdParam, contracts, draft.contractId]);
+    run();
+    return () => {
+      active = false;
+    };
+  }, [load]);
 
   const activeContracts = contracts.filter((contract) => contract.status === 'active');
   const contractsById = useMemo(() => new Map(contracts.map((contract) => [contract.id, contract])), [contracts]);
 
   const selectContract = async (contractId: string) => {
-    setDraft({ contractId, milestoneId: '', reason: draft.reason });
+    setDraft((current) => ({ contractId, milestoneId: '', reason: current.reason }));
     setMilestones([]);
     if (!contractId) return;
 
