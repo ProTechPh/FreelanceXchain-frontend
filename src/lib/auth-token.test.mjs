@@ -5,6 +5,7 @@ import {
   clearAccessToken,
   getAccessToken,
   setAccessToken,
+  resetInMemoryToken,
 } from './auth-token.ts';
 
 function createMockStorage() {
@@ -26,12 +27,14 @@ test.beforeEach(() => {
   });
 });
 
-test('stores and retrieves access token from memory', () => {
+test('stores and retrieves access token from memory and storage', () => {
   setAccessToken('test-access-token');
   assert.equal(getAccessToken(), 'test-access-token');
+  assert.equal(globalThis.localStorage.getItem('access_token'), 'test-access-token');
 
   clearAccessToken();
   assert.equal(getAccessToken(), null);
+  assert.equal(globalThis.localStorage.getItem('access_token'), null);
 });
 
 test('prioritizes in-memory token over localStorage fallback', () => {
@@ -52,29 +55,16 @@ test('purges refresh_token from client storage whenever access token is updated'
   assert.equal(globalThis.localStorage.getItem('refresh_token'), null);
 });
 
-test('does not write access token to localStorage when cookies are supported', () => {
-  Object.defineProperty(globalThis, 'navigator', {
-    value: { cookieEnabled: true },
-    configurable: true,
-    writable: true,
-  });
+test('persists access token to storage across simulated browser closes', () => {
+  setAccessToken('persistent-token');
+  assert.equal(getAccessToken(), 'persistent-token');
 
-  setAccessToken('cookie-enabled-token');
-  assert.equal(getAccessToken(), 'cookie-enabled-token');
-  assert.equal(globalThis.localStorage.getItem('access_token'), null);
-});
-
-test('writes access token to localStorage fallback only when cookies are explicitly disabled', () => {
-  Object.defineProperty(globalThis, 'navigator', {
-    value: { cookieEnabled: false },
-    configurable: true,
-    writable: true,
-  });
-
-  setAccessToken('fallback-token');
-  assert.equal(getAccessToken(), 'fallback-token');
-  assert.equal(globalThis.localStorage.getItem('access_token'), 'fallback-token');
+  // Simulate closing and reopening the browser: memory is reset, but localStorage persists
+  resetInMemoryToken();
+  assert.equal(globalThis.localStorage.getItem('access_token'), 'persistent-token');
+  assert.equal(getAccessToken(), 'persistent-token');
 
   clearAccessToken();
+  assert.equal(getAccessToken(), null);
   assert.equal(globalThis.localStorage.getItem('access_token'), null);
 });

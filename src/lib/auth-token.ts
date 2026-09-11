@@ -40,8 +40,8 @@ export function isCookieSupported(): boolean {
 
 /**
  * Retrieves the currently active access token.
- * Prioritizes the secure in-memory token.
- * Falls back to storage if present (for test harnesses or pre-seeded environments).
+ * Prioritizes the fast in-memory token.
+ * Falls back to storage if memory is not yet hydrated (e.g. after browser reopen).
  */
 export function getAccessToken(): string | null {
   if (inMemoryAccessToken) {
@@ -49,14 +49,18 @@ export function getAccessToken(): string | null {
   }
   const storage = getStorage();
   if (storage) {
-    return storage.getItem('access_token');
+    const storedToken = storage.getItem('access_token');
+    if (storedToken) {
+      inMemoryAccessToken = storedToken;
+      return storedToken;
+    }
   }
   return null;
 }
 
 /**
- * Sets the active access token in memory.
- * If cookies are disabled in the environment, safely falls back to storage.
+ * Sets the active access token in memory and persists to storage
+ * so the authenticated session survives browser closing/reopening.
  * Always purges any legacy refresh_token from client storage.
  */
 export function setAccessToken(token: string | null): void {
@@ -67,13 +71,10 @@ export function setAccessToken(token: string | null): void {
     // Purge legacy refresh tokens from client-accessible storage
     storage.removeItem('refresh_token');
 
-    // If cookies are completely disabled in the browser, fallback to storage for persistence
-    if (!isCookieSupported()) {
-      if (token) {
-        storage.setItem('access_token', token);
-      } else {
-        storage.removeItem('access_token');
-      }
+    if (token) {
+      storage.setItem('access_token', token);
+    } else {
+      storage.removeItem('access_token');
     }
   }
 }
@@ -89,4 +90,11 @@ export function clearAccessToken(): void {
     storage.removeItem('access_token');
     storage.removeItem('refresh_token');
   }
+}
+
+/**
+ * Resets the in-memory token cache (used for tests simulating browser restarts).
+ */
+export function resetInMemoryToken(): void {
+  inMemoryAccessToken = null;
 }
