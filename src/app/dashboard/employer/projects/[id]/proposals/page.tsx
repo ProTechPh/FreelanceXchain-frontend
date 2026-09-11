@@ -25,6 +25,14 @@ import { toast } from 'sonner';
 import { reportFailure } from '@/lib/report-failure';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Markdown } from '@/components/ui/markdown';
@@ -191,11 +199,34 @@ export default function EmployerProjectProposalsPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <Button asChild variant="ghost" size="sm" className="-ml-3 mb-2 text-muted-foreground hover:text-foreground">
-            <Link href={`/dashboard/employer/projects/${project.id}`}>
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back to project
-            </Link>
-          </Button>
+          <div className="space-y-3 mb-3">
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="/dashboard/employer">Dashboard</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="/dashboard/employer/projects">Projects</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink href={`/dashboard/employer/projects/${project.id}`}>
+                    {project.title}
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>Proposals</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+            <Button asChild variant="ghost" size="sm" className="-ml-3 text-muted-foreground hover:text-foreground">
+              <Link href={`/dashboard/employer/projects/${project.id}`}>
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to project
+              </Link>
+            </Button>
+          </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">Project proposals</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Review applicant proposals and AI matches for <span className="font-semibold text-foreground">“{project.title}”</span>

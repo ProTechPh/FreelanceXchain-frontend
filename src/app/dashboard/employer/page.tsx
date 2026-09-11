@@ -368,8 +368,8 @@ export default function EmployerDashboard() {
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg">Recent Proposals</CardTitle>
             <Button asChild variant="ghost" size="sm">
-              <Link href="/dashboard/employer/projects">
-                View All <ArrowUpRight className="w-4 h-4 ml-1" />
+              <Link href={recentProposals.length === 1 ? `/dashboard/employer/projects/${recentProposals[0].projectId}/proposals` : "/dashboard/employer/projects"}>
+                {recentProposals.length === 1 ? 'View Proposals' : 'View in Projects'} <ArrowUpRight className="w-4 h-4 ml-1" />
               </Link>
             </Button>
           </CardHeader>

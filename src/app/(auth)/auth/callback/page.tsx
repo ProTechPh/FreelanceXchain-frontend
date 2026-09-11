@@ -175,7 +175,15 @@ export default function OAuthCallbackPage() {
   return (
     <div className="flex min-h-screen items-center justify-center p-6">
       <div className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
-        <Suspense fallback={<p role="status">Loading OAuth response…</p>}>
+        <Suspense
+          fallback={
+            <div className="space-y-4 text-center" role="status" aria-live="polite">
+              <LoaderCircle className="mx-auto size-10 animate-spin text-primary" aria-hidden="true" />
+              <h1 className="text-xl font-semibold">Completing secure sign-in</h1>
+              <p className="text-sm text-muted-foreground">Keep this page open while we verify your credentials…</p>
+            </div>
+          }
+        >
           <OAuthCallbackContent />
         </Suspense>
       </div>

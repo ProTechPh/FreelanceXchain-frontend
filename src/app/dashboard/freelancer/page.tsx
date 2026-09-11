@@ -416,16 +416,22 @@ export default function FreelancerDashboard() {
             ) : (
               <>
                 {recentProposals.slice(0, 4).map(({ proposal, project }) => (
-                  <div key={proposal.id} className="p-3 rounded-xl bg-secondary/50 border border-border">
+                  <Link
+                    key={proposal.id}
+                    href={`/dashboard/freelancer/proposals/${proposal.id}`}
+                    className="block p-3 rounded-xl bg-secondary/50 border border-border transition-colors hover:border-primary/40 hover:bg-secondary/70"
+                  >
                     <div className="flex items-start justify-between mb-2">
-                      <p className="font-medium text-sm">{project?.title ?? 'Untitled project'}</p>
+                      <p className="font-medium text-sm text-foreground hover:text-primary transition-colors">
+                        {project?.title ?? 'Untitled project'}
+                      </p>
                       <Badge className={statusColors[proposal.status]}>{proposal.status}</Badge>
                     </div>
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <span>{formatAmount(proposal.proposedRate)}</span>
                       <span>{relativeTime(proposal.createdAt)}</span>
                     </div>
-                  </div>
+                  </Link>
                 ))}
                 {recentProposals.length > 4 && (
                   <div className="flex justify-center pt-2">

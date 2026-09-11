@@ -36,9 +36,22 @@ export function GuestGuard({ children }: GuestGuardProps) {
     }
   }, [hasHydrated, isAuthenticated, user, router]);
 
-  // While rehydrating state or if currently authenticated (redirect in flight),
-  // render a loading indicator to prevent flashing guest forms or allowing interaction.
-  if (!hasHydrated || (isAuthenticated && user)) {
+  // While rehydrating state, render a neutral loading spinner to prevent flashing guest forms.
+  if (!hasHydrated) {
+    return (
+      <div
+        role="status"
+        aria-live="polite"
+        className="flex min-h-screen items-center justify-center bg-background"
+      >
+        <Loader2 className="size-8 animate-spin text-primary" aria-hidden="true" />
+        <span className="sr-only">Loading…</span>
+      </div>
+    );
+  }
+
+  // If currently authenticated (redirect in flight), show destination message.
+  if (isAuthenticated && user) {
     return (
       <div
         role="status"

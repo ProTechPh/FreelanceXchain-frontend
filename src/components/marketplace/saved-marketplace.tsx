@@ -175,7 +175,13 @@ export function SavedMarketplace() {
               icon={Bookmark}
               title="No saved searches yet"
               description="Save a set of filters while browsing and it will appear here, ready to re-run or turn into match alerts."
-              action={<Button asChild><Link href="/projects">Browse projects</Link></Button>}
+              action={
+                <Button asChild>
+                  <Link href={user?.role === 'employer' ? '/freelancers' : '/projects'}>
+                    {user?.role === 'employer' ? 'Browse talent' : 'Browse projects'}
+                  </Link>
+                </Button>
+              }
             /> : safeSearches.map((search) => {
             const draft = drafts[search.id] ?? { name: search.name, notifyOnNew: search.notifyOnNew };
             const resultCount = resultCounts[search.id];

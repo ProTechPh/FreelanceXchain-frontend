@@ -11,10 +11,19 @@ import type { FreelancerProfile } from '@/types';
 import { getMarketplaceReturnPath } from '@/lib/marketplace-return';
 import { reportFailure } from '@/lib/report-failure';
 import { formatAmount } from '@/lib/format';
+import { getApiErrorMessage } from '@/lib/auth-contract';
 import { MapPin, ShieldCheck, Send, ArrowLeft, DollarSign, CircleCheck, Clock, CircleMinus } from 'lucide-react';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
 import Navbar from '@/components/layout/navbar';
 import { FooterSection } from '@/components/layout/footer-section';
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 
 const availabilityConfig: Record<string, { colors: string; icon: React.ReactNode; label: string }> = {
   available: {
@@ -50,23 +59,36 @@ export default function FreelancerProfilePage() {
   const searchParams = useSearchParams();
   const [freelancer, setFreelancer] = useState<FreelancerProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   const user = useAuthStore((state) => state.user);
 
   useEffect(() => {
+    let active = true;
     const fetchFreelancer = async () => {
+      setLoading(true);
+      setFetchError(null);
       try {
         const res = await freelancersApi.getPublicProfile(params?.id as string);
-        setFreelancer(res.data);
-      } catch (error) {
+        if (active) setFreelancer(res.data);
+      } catch (error: unknown) {
+        if (!active) return;
+        const status = (error as { response?: { status?: number } })?.response?.status;
+        if (status !== 404) {
+          setFetchError(getApiErrorMessage(error, 'Unable to load profile. Please check your connection.'));
+        }
         reportFailure(error, 'load this profile');
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
     if (params?.id) {
-      fetchFreelancer();
+      void fetchFreelancer();
     }
-  }, [params?.id]);
+    return () => {
+      active = false;
+    };
+  }, [params?.id, retryCount]);
 
   if (loading) {
     return (
@@ -74,6 +96,30 @@ export default function FreelancerProfilePage() {
         <Navbar />
         <main className="flex-1 pt-28 pb-20">
           <DetailSkeleton label="Loading profile" />
+        </main>
+        <FooterSection />
+      </div>
+    );
+  }
+
+  if (fetchError && !freelancer) {
+    return (
+      <div className="flex min-h-screen flex-col bg-background">
+        <Navbar />
+        <main className="flex-1 pt-28 pb-20 flex items-center justify-center">
+          <div className="text-center rounded-3xl bg-card border border-border/80 p-8 sm:p-12 shadow-md shadow-black/5 max-w-md mx-auto space-y-4">
+            <p className="text-3xl">⚠️</p>
+            <h2 className="text-xl font-bold text-foreground">Failed to load profile</h2>
+            <p className="text-sm text-muted-foreground">{fetchError}</p>
+            <div className="flex flex-col gap-2 pt-2">
+              <Button className="rounded-full gradient-primary" onClick={() => setRetryCount((c) => c + 1)}>
+                Try Again
+              </Button>
+              <Button asChild variant="outline" className="rounded-full">
+                <Link href="/freelancers">Browse Freelancers</Link>
+              </Button>
+            </div>
+          </div>
         </main>
         <FooterSection />
       </div>
@@ -114,14 +160,31 @@ export default function FreelancerProfilePage() {
         <div className="relative border-b border-border/80 bg-card/50 backdrop-blur-xl">
           <div className="absolute inset-0 gradient-primary opacity-5" />
           <div className="relative max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-            {/* Back Button */}
-            <Link 
-              href={marketplaceBackPath}
-              className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back to freelancers
-            </Link>
+            {/* Breadcrumbs & Back Navigation */}
+            <div className="space-y-3 mb-6">
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem>
+                    <BreadcrumbLink href="/">Home</BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbLink href="/freelancers">Freelancers</BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>{freelancer.name || 'Freelancer'}</BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+              <Link 
+                href={marketplaceBackPath}
+                className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back to freelancers
+              </Link>
+            </div>
 
             <div className="flex flex-col sm:flex-row items-start gap-6">
               {/* Avatar */}
@@ -281,6 +344,13 @@ export default function FreelancerProfilePage() {
                     <Link href={`/dashboard/employer/messages?recipientId=${freelancer.userId}`}>
                       <Send className="w-4 h-4 mr-2" />
                       Send Message
+                    </Link>
+                  </Button>
+                ) : !user ? (
+                  <Button asChild className="w-full rounded-full gradient-primary shadow-md">
+                    <Link href={`/login?returnTo=${encodeURIComponent(`/freelancers/${params?.id}`)}`}>
+                      <Send className="w-4 h-4 mr-2" />
+                      Sign in to Contact
                     </Link>
                   </Button>
                 ) : (

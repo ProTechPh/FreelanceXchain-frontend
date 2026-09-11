@@ -14,6 +14,7 @@ import { reportFailure, reportLoadFailure } from '@/lib/report-failure';
 import { FileText, DollarSign, MessageSquare, CheckCircle, XCircle, AlertTriangle, Clock, Star, RefreshCw, BellOff, type LucideIcon } from 'lucide-react';
 import { formatRelativeTime } from '@/lib/format';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
+import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 
 const ICON_BY_TYPE: Record<NotificationType, { icon: LucideIcon; color: string; bg: string }> = {
   proposal_received: { icon: FileText, color: 'text-info', bg: 'bg-info-subtle' },
@@ -169,48 +170,50 @@ export function NotificationsCenter() {
         </Button>
       </div>
 
-      {/* Notifications List */}
-      {visible.length === 0 ? (
-        <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-          <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center">
-            <BellOff className="w-6 h-6 text-muted-foreground" />
-          </div>
-          <p className="text-muted-foreground">
-            {tab === 'unread' ? "You're all caught up" : 'No notifications yet'}
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {visible.map((notification) => {
-            const { icon: Icon, color, bg } = ICON_BY_TYPE[notification.type];
-            const destination = role ? getNotificationDestination(notification, role) : null;
-            const notificationContent = (
-              <div className="flex items-start gap-4">
-                <div className={`w-10 h-10 rounded-lg ${bg} flex items-center justify-center shrink-0`}><Icon className={`w-5 h-5 ${color}`} /></div>
-                <div className="flex-1 min-w-0"><div className="flex items-center gap-2"><p className={`font-medium ${!notification.isRead ? 'text-foreground' : 'text-muted-foreground'}`}>{notification.title}</p>{!notification.isRead && <div className="w-2 h-2 rounded-full bg-primary" />}</div><p className="text-sm text-muted-foreground mt-0.5">{notification.message}</p><p className="text-xs text-muted-foreground mt-1 flex items-center gap-1"><Clock className="w-3 h-3" /> {relativeTime(notification.createdAt)}</p></div>
-              </div>
-            );
-            return (
-              <Card
-                key={notification.id}
-                className={`bg-card border-border transition-all hover:border-primary/20 ${
-                  !notification.isRead ? 'border-l-2 border-l-primary' : ''
-                }`}
-              >
-                <CardContent className="p-0">{destination ? <Link href={destination} className="block rounded-xl p-4 outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={() => { if (!notification.isRead) void markRead(notification.id); }}>{notificationContent}</Link> : <button type="button" className="block w-full rounded-xl p-4 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={() => { if (!notification.isRead) void markRead(notification.id); }}>{notificationContent}</button>}</CardContent>
-              </Card>
-            );
-          })}
-          {hasMore && tab === 'all' && (
-            <div className="flex justify-center pt-2">
-              <Button variant="outline" size="sm" onClick={loadMore} loading={loadingMore} loadingText="Loading…">
-                <RefreshCw className="size-4" aria-hidden="true" />
-                Load more
-              </Button>
+      {/* Notifications List with PullToRefresh */}
+      <PullToRefresh onRefresh={loadFirstPage}>
+        {visible.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+            <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center">
+              <BellOff className="w-6 h-6 text-muted-foreground" />
             </div>
-          )}
-        </div>
-      )}
+            <p className="text-muted-foreground">
+              {tab === 'unread' ? "You're all caught up" : 'No notifications yet'}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {visible.map((notification) => {
+              const { icon: Icon, color, bg } = ICON_BY_TYPE[notification.type];
+              const destination = role ? getNotificationDestination(notification, role) : null;
+              const notificationContent = (
+                <div className="flex items-start gap-4">
+                  <div className={`w-10 h-10 rounded-lg ${bg} flex items-center justify-center shrink-0`}><Icon className={`w-5 h-5 ${color}`} /></div>
+                  <div className="flex-1 min-w-0"><div className="flex items-center gap-2"><p className={`font-medium ${!notification.isRead ? 'text-foreground' : 'text-muted-foreground'}`}>{notification.title}</p>{!notification.isRead && <div className="w-2 h-2 rounded-full bg-primary" />}</div><p className="text-sm text-muted-foreground mt-0.5">{notification.message}</p><p className="text-xs text-muted-foreground mt-1 flex items-center gap-1"><Clock className="w-3 h-3" /> {relativeTime(notification.createdAt)}</p></div>
+                </div>
+              );
+              return (
+                <Card
+                  key={notification.id}
+                  className={`bg-card border-border transition-all hover:border-primary/20 ${
+                    !notification.isRead ? 'border-l-2 border-l-primary' : ''
+                  }`}
+                >
+                  <CardContent className="p-0">{destination ? <Link href={destination} className="block rounded-xl p-4 outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={() => { if (!notification.isRead) void markRead(notification.id); }}>{notificationContent}</Link> : <button type="button" className="block w-full rounded-xl p-4 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={() => { if (!notification.isRead) void markRead(notification.id); }}>{notificationContent}</button>}</CardContent>
+                </Card>
+              );
+            })}
+            {hasMore && tab === 'all' && (
+              <div className="flex justify-center pt-2">
+                <Button variant="outline" size="sm" onClick={loadMore} loading={loadingMore} loadingText="Loading…">
+                  <RefreshCw className="size-4" aria-hidden="true" />
+                  Load more
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </PullToRefresh>
     </div>
   );
 }

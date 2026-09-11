@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { useAuthStore } from '@/stores/authStore';
 import { authApi } from '@/lib/api';
 import { toast } from 'sonner';
-import { Shield, Copy, CheckCircle, ArrowLeft } from 'lucide-react';
+import { Shield, Copy, CheckCircle, ArrowLeft, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Field } from '@/components/ui/field';
@@ -17,13 +17,14 @@ type Step = 'enroll' | 'verify' | 'complete';
 export default function MfaSetupPage() {
   const [step, setStep] = useState<Step>('enroll');
   const [secret, setSecret] = useState('');
-  const [, setUri] = useState('');
+  const [uri, setUri] = useState('');
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState('');
   const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
   const [code, setCode] = useState('');
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [savedCodesConfirmed, setSavedCodesConfirmed] = useState(false);
   const { user, isAuthenticated, hasHydrated } = useAuthStore();
   const router = useRouter();
 
@@ -87,6 +88,7 @@ export default function MfaSetupPage() {
   const copyRecoveryCodes = () => {
     navigator.clipboard.writeText(recoveryCodes.join('\n'));
     setCopied(true);
+    setSavedCodesConfirmed(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
@@ -170,20 +172,34 @@ export default function MfaSetupPage() {
               </div>
             )}
             <p className="text-xs text-muted-foreground mb-2">Or enter this secret manually:</p>
-            <div className="flex items-center gap-2">
-              <code className="flex-1 p-2 bg-muted rounded text-sm font-mono break-all">{secret}</code>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  navigator.clipboard.writeText(secret);
-                  toast.success('Secret copied!');
-                }}
-              >
-                <Copy className="w-4 h-4" />
-              </Button>
+              <div className="flex items-center gap-2 mb-3">
+                <code className="flex-1 p-2 bg-muted rounded text-sm font-mono break-all">{secret}</code>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    navigator.clipboard.writeText(secret);
+                    toast.success('Secret copied!');
+                  }}
+                >
+                  <Copy className="w-4 h-4" />
+                </Button>
+              </div>
+
+              {uri && (
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="w-full sm:hidden"
+                >
+                  <a href={uri}>
+                    <ExternalLink className="mr-2 size-4" />
+                    Open in Authenticator App
+                  </a>
+                </Button>
+              )}
             </div>
-          </div>
 
           <div className="p-4 rounded-lg bg-card border border-border">
             <p className="text-sm font-medium mb-2">2. Save your recovery codes</p>
@@ -199,6 +215,18 @@ export default function MfaSetupPage() {
               {copied ? <CheckCircle className="w-4 h-4 mr-2" /> : <Copy className="w-4 h-4 mr-2" />}
               {copied ? 'Copied!' : 'Copy Recovery Codes'}
             </Button>
+            <div className="flex items-start gap-2.5 pt-3 mt-3 border-t border-border/50">
+              <input
+                type="checkbox"
+                id="confirm-saved-codes"
+                checked={savedCodesConfirmed}
+                onChange={(e) => setSavedCodesConfirmed(e.target.checked)}
+                className="mt-0.5 rounded border-border accent-primary cursor-pointer"
+              />
+              <label htmlFor="confirm-saved-codes" className="text-xs text-foreground cursor-pointer select-none font-medium">
+                I have saved and stored these recovery codes in a safe place
+              </label>
+            </div>
           </div>
 
           <form onSubmit={handleVerify} className="space-y-4">
@@ -218,7 +246,7 @@ export default function MfaSetupPage() {
               autoFocus
             />
           </Field>
-            <Button type="submit" variant="gradient" className="w-full" disabled={isVerifying || code.length !== 6}>
+            <Button type="submit" variant="gradient" className="w-full" disabled={isVerifying || code.length !== 6 || !savedCodesConfirmed}>
               {isVerifying ? 'Verifying...' : 'Verify & Enable'}
             </Button>
           </form>

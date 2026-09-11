@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 import Navbar from "@/components/layout/navbar";
 import { FooterSection } from "@/components/layout/footer-section";
-import { Sparkles as Sparkle, ShieldCheck, CircleQuestionMark as Question, Send as PaperPlaneTilt, CircleCheck as CheckCircle, Lock as LockKey } from 'lucide-react';
+import { Sparkles as Sparkle, ShieldCheck, CircleQuestionMark as Question, Lock as LockKey, Mail, Copy } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -39,6 +39,8 @@ export default function ContactPage() {
   const reduce = useReducedMotion();
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [lastMailtoUrl, setLastMailtoUrl] = useState('');
+  const [formattedMessage, setFormattedMessage] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
     name: "",
@@ -75,17 +77,15 @@ export default function ContactPage() {
       ].join("\n");
 
       const mailtoUrl = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(`[${formData.category}] ${formData.subject}`)}&body=${encodeURIComponent(mailtoBody)}`;
+      setLastMailtoUrl(mailtoUrl);
+      setFormattedMessage(`Subject: [${formData.category}] ${formData.subject}\n\n${mailtoBody}`);
 
-      // Try to open mailto link; set a timeout to detect if it fails
       window.open(mailtoUrl, '_self');
 
-      // If mailto fails (popup blocked or no email client), show fallback after a delay
-      setTimeout(() => {
-        setSubmitted(true);
-        setSubmitting(false);
-      }, 1500);
+      setSubmitted(true);
+      setSubmitting(false);
     } catch {
-      setErrors({ submit: "Something went wrong. Please try again or email us directly." });
+      setErrors({ submit: "Something went wrong. Please email us directly." });
       setSubmitting(false);
     }
   };
@@ -164,37 +164,56 @@ export default function ContactPage() {
             </p>
 
             {submitted ? (
-              <div className="p-8 text-center rounded-2xl bg-primary/10 border border-primary/20 space-y-3">
-                <CheckCircle className="size-12 text-primary mx-auto" fill="currentColor" />
-                <h3 className="text-lg font-bold text-foreground">Message Ready to Send</h3>
-                <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                  Your email client should open with the message pre-filled. If it doesn&apos;t, copy the support email below and send your message directly.
+              <div className="p-6 sm:p-8 text-center rounded-2xl bg-card border border-border space-y-4 shadow-sm">
+                <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                  <Mail className="size-6" />
+                </div>
+                <h3 className="text-lg font-bold text-foreground">Email Draft Ready</h3>
+                <p className="text-xs sm:text-sm text-muted-foreground max-w-md mx-auto">
+                  Your email app should have opened with your inquiry pre-filled. Please review the details and click send in your email client.
                 </p>
-                <div className="flex items-center justify-center gap-2 p-3 rounded-xl bg-background border border-border/80">
-                  <a href={`mailto:${SUPPORT_EMAIL}`} className="text-primary font-medium hover:underline text-sm">{SUPPORT_EMAIL}</a>
+
+                <div className="flex flex-col gap-2.5 max-w-sm mx-auto pt-2">
+                  <Button asChild variant="gradient" className="w-full">
+                    <a href={lastMailtoUrl}>Open in Email App Again</a>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => {
+                      navigator.clipboard.writeText(formattedMessage);
+                      toast.success('Inquiry details copied to clipboard');
+                    }}
+                  >
+                    <Copy className="size-4 mr-2" />
+                    Copy Formatted Message
+                  </Button>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 px-2 text-xs"
+                    className="text-xs"
                     onClick={() => {
                       navigator.clipboard.writeText(SUPPORT_EMAIL);
-                      toast.success('Email copied to clipboard');
+                      toast.success('Support email copied to clipboard');
                     }}
                   >
-                    Copy
+                    Copy Support Email ({SUPPORT_EMAIL})
                   </Button>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="rounded-full text-xs font-bold mt-2"
-                  onClick={() => {
-                    setSubmitted(false);
-                    setFormData({ name: "", email: "", category: "General Inquiry", subject: "", message: "" });
-                  }}
-                >
-                  Send Another Message
-                </Button>
+
+                <div className="pt-4 border-t border-border">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => {
+                      setSubmitted(false);
+                      setFormData({ name: "", email: "", category: "General Inquiry", subject: "", message: "" });
+                    }}
+                  >
+                    Compose Another Message
+                  </Button>
+                </div>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4" noValidate>
@@ -284,8 +303,8 @@ export default function ContactPage() {
                   disabled={submitting}
                   className="w-full py-3 rounded-full bg-primary text-primary-foreground font-bold text-sm shadow-md hover:bg-primary/90 cursor-pointer"
                 >
-                  {submitting ? "Opening email client..." : "Submit Inquiry"}
-                  <PaperPlaneTilt className="size-4 ml-2" strokeWidth={2.5} />
+                  <Mail className="size-4 mr-2" />
+                  {submitting ? "Opening email app…" : "Draft Email to Support"}
                 </Button>
 
                 <p className="text-center text-xs text-muted-foreground">

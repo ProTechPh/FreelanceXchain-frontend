@@ -38,6 +38,10 @@ test('lets freelancers submit proposals only while the project is open', () => {
   );
 });
 
-test('does not expose proposal actions before a viewer is authenticated', () => {
-  assert.equal(getProjectPrimaryAction(null, openProject), 'none');
+test('exposes sign-in CTA for unauthenticated visitors on open projects', () => {
+  assert.equal(getProjectPrimaryAction(null, openProject), 'sign-in-to-submit');
+  assert.equal(
+    getProjectPrimaryAction(null, { ...openProject, status: 'in_progress' }),
+    'none',
+  );
 });

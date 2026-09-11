@@ -53,19 +53,37 @@ export function formatAmount(value: number | string | null | undefined, options:
   if (amount == null || !Number.isFinite(amount)) return '—';
   const { currency = 'USD', locale } = options;
   const fractionDigits = options.fractionDigits ?? (Number.isInteger(amount) ? 0 : 2);
-  return currencyFormatter(currency, fractionDigits, locale).format(amount);
+
+  try {
+    return currencyFormatter(currency, fractionDigits, locale).format(amount);
+  } catch {
+    const formattedNum = new Intl.NumberFormat(getLocale(locale), {
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: fractionDigits,
+    }).format(amount);
+    return `${currency} ${formattedNum}`;
+  }
 }
 
 /** Compact form for KPI tiles and charts: $1.2K, $3.4M. */
 export function formatAmountCompact(value: number | null | undefined, currency = 'USD', locale?: string): string {
   if (value == null || !Number.isFinite(value)) return '—';
   if (Math.abs(value) < 1000) return formatAmount(value, { currency, locale });
-  return new Intl.NumberFormat(getLocale(locale), {
-    style: 'currency',
-    currency,
-    notation: 'compact',
-    maximumFractionDigits: 1,
-  }).format(value);
+
+  try {
+    return new Intl.NumberFormat(getLocale(locale), {
+      style: 'currency',
+      currency,
+      notation: 'compact',
+      maximumFractionDigits: 1,
+    }).format(value);
+  } catch {
+    const compactNum = new Intl.NumberFormat(getLocale(locale), {
+      notation: 'compact',
+      maximumFractionDigits: 1,
+    }).format(value);
+    return `${currency} ${compactNum}`;
+  }
 }
 
 /** Plain number with thousands separators. */

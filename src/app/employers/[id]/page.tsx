@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   Building2,
@@ -19,20 +19,30 @@ import { Card, CardContent } from '@/components/ui/card';
 import { employersApi, reputationApi, projectsApi } from '@/lib/api';
 import { reportLoadFailure } from '@/lib/report-failure';
 import { getDirectMessageRoute } from '@/lib/dashboard-message-route';
+import { getApiErrorMessage } from '@/lib/auth-contract';
 import type { EmployerProfile, AggregatedReputationScore, Project } from '@/types';
 import { useAuthStore } from '@/stores/authStore';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
 import Navbar from '@/components/layout/navbar';
 import { FooterSection } from '@/components/layout/footer-section';
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 
 export default function EmployerProfilePage() {
   const params = useParams();
-  const router = useRouter();
   const employerId = params?.id as string;
   const [profile, setProfile] = useState<EmployerProfile | null>(null);
   const [reputationScore, setReputationScore] = useState<AggregatedReputationScore | null>(null);
   const [employerProjects, setEmployerProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
   const user = useAuthStore((state) => state.user);
 
   useEffect(() => {
@@ -40,6 +50,8 @@ export default function EmployerProfilePage() {
 
     let active = true;
     const loadData = async () => {
+      setLoading(true);
+      setFetchError(null);
       try {
         const [profileRes, scoreRes, projectsRes] = await Promise.allSettled([
           employersApi.getPublicProfile(employerId),
@@ -51,7 +63,12 @@ export default function EmployerProfilePage() {
 
         if (profileRes.status === 'fulfilled' && profileRes.value.data) {
           setProfile(profileRes.value.data);
+          setFetchError(null);
         } else if (profileRes.status === 'rejected') {
+          const status = (profileRes.reason as { response?: { status?: number } })?.response?.status;
+          if (status !== 404) {
+            setFetchError(getApiErrorMessage(profileRes.reason, 'Unable to load employer profile. Please check your connection.'));
+          }
           reportLoadFailure(profileRes.reason, 'this employer profile', () => void loadData());
         }
 
@@ -76,7 +93,7 @@ export default function EmployerProfilePage() {
     return () => {
       active = false;
     };
-  }, [employerId]);
+  }, [employerId, retryCount]);
 
   if (loading) {
     return (
@@ -84,6 +101,30 @@ export default function EmployerProfilePage() {
         <Navbar />
         <main className="flex-1 pt-28 pb-20 max-w-4xl mx-auto px-4 w-full">
           <DetailSkeleton label="Loading employer profile" />
+        </main>
+        <FooterSection />
+      </div>
+    );
+  }
+
+  if (fetchError && !profile) {
+    return (
+      <div className="flex min-h-screen flex-col bg-background">
+        <Navbar />
+        <main className="flex-1 pt-28 pb-20 flex items-center justify-center">
+          <div className="text-center rounded-3xl bg-card border border-border/80 p-8 sm:p-12 shadow-md shadow-black/5 max-w-md mx-auto space-y-4">
+            <p className="text-3xl">⚠️</p>
+            <h2 className="text-xl font-bold text-foreground">Failed to load profile</h2>
+            <p className="text-sm text-muted-foreground">{fetchError}</p>
+            <div className="flex flex-col gap-2 pt-2">
+              <Button className="rounded-full gradient-primary" onClick={() => setRetryCount((c) => c + 1)}>
+                Try Again
+              </Button>
+              <Button asChild variant="outline" className="rounded-full">
+                <Link href="/projects">Browse Projects</Link>
+              </Button>
+            </div>
+          </div>
         </main>
         <FooterSection />
       </div>
@@ -122,12 +163,12 @@ export default function EmployerProfilePage() {
     ? new Date(profile.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
     : 'August 2026';
 
-  const initials =
-    name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .slice(0, 3) || 'EMP';
+  const initials = companyName
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
 
   const totalReviews = reputationScore?.totalRatings ?? 0;
   const avgRating = reputationScore?.averageRating ?? 0;
@@ -139,14 +180,34 @@ export default function EmployerProfilePage() {
       <Navbar />
       <main className="flex-1 pt-28 pb-20">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 space-y-6">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.back()}
-            className="-ml-3 text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="size-4 mr-2" /> Back
-          </Button>
+          {/* Breadcrumbs & Back Navigation */}
+          <div className="space-y-3">
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="/">Home</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="/projects">Projects</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>{companyName}</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="-ml-3 text-muted-foreground hover:text-foreground"
+            >
+              <Link href="/projects">
+                <ArrowLeft className="size-4 mr-2" /> Back to projects
+              </Link>
+            </Button>
+          </div>
 
           {/* Profile Header Banner */}
           <Card className="overflow-hidden border-border bg-card shadow-sm rounded-3xl">

@@ -23,7 +23,7 @@ import { cn } from "@/lib/utils"
 //    guards on the disabled styles below.
 const buttonVariants = cva(
   [
-    "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap touch-manipulation",
+    "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap touch-manipulation relative",
     "rounded-md font-semibold",
     "transition-[background-color,border-color,color,box-shadow,transform]",
     "duration-fast ease-out",
@@ -87,14 +87,13 @@ const buttonVariants = cva(
         ].join(" "),
       },
       size: {
-        xs: "h-7 gap-1.5 px-2 text-2xs",
-        // sm: compact for desktop; on mobile use min-h-[44px] wrapper
-        sm: "h-9 px-3 text-sm",
+        xs: "h-7 gap-1.5 px-2 text-2xs after:content-[''] after:absolute after:top-1/2 after:left-1/2 after:-translate-x-1/2 after:-translate-y-1/2 after:min-w-[44px] after:min-h-[44px] after:w-full after:h-full sm:after:hidden",
+        sm: "h-9 px-3 text-sm after:content-[''] after:absolute after:top-1/2 after:left-1/2 after:-translate-x-1/2 after:-translate-y-1/2 after:min-w-[44px] after:min-h-[44px] after:w-full after:h-full sm:after:hidden",
         default: "h-10 px-4 text-sm",
         lg: "h-11 px-6 text-base",
         icon: "size-10",
-        "icon-sm": "size-9",
-        "icon-xs": "size-7",
+        "icon-sm": "size-9 after:content-[''] after:absolute after:top-1/2 after:left-1/2 after:-translate-x-1/2 after:-translate-y-1/2 after:min-w-[44px] after:min-h-[44px] after:w-full after:h-full sm:after:hidden",
+        "icon-xs": "size-7 after:content-[''] after:absolute after:top-1/2 after:left-1/2 after:-translate-x-1/2 after:-translate-y-1/2 after:min-w-[44px] after:min-h-[44px] after:w-full after:h-full sm:after:hidden",
       },
     },
     defaultVariants: {

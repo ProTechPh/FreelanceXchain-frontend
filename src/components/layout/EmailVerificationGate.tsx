@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { Mail, RefreshCw, LogOut, AlertCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { Mail, RefreshCw, LogOut, AlertCircle, Compass } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { authApi } from '@/lib/api';
@@ -16,6 +17,14 @@ export function EmailVerificationGate() {
   const [isChecking, setIsChecking] = useState(false);
   const [cooldown, setCooldown] = useState(0);
 
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setInterval(() => {
+      setCooldown((c) => Math.max(0, c - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
+
   const handleResend = async () => {
     if (!user?.email || cooldown > 0 || isResending) return;
     setIsResending(true);
@@ -25,15 +34,6 @@ export function EmailVerificationGate() {
         description: `We've sent a new confirmation link to ${user.email}. Check your spam or inbox.`,
       });
       setCooldown(60);
-      const interval = setInterval(() => {
-        setCooldown((prev) => {
-          if (prev <= 1) {
-            clearInterval(interval);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
     } catch {
       toast.error('Failed to resend email. Please try again in a few moments.');
     } finally {
@@ -116,15 +116,28 @@ export function EmailVerificationGate() {
             {cooldown > 0 ? `Resend link (${cooldown}s)` : isResending ? 'Sending...' : 'Resend verification link'}
           </Button>
 
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full gap-2 text-xs text-muted-foreground hover:text-destructive"
-            onClick={handleLogout}
-          >
-            <LogOut className="size-3.5" />
-            Log out
-          </Button>
+          <div className="flex items-center justify-between w-full pt-1">
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <Link href="/projects">
+                <Compass className="size-3.5" />
+                Browse marketplace
+              </Link>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-1.5 text-xs text-muted-foreground hover:text-destructive"
+              onClick={handleLogout}
+            >
+              <LogOut className="size-3.5" />
+              Log out
+            </Button>
+          </div>
         </CardFooter>
       </Card>
     </div>

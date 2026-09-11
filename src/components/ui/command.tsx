@@ -36,9 +36,11 @@ interface CommandDialogProps {
 const CommandDialog = ({ children, ...props }: CommandDialogProps) => {
   return (
     <Dialog {...props}>
-      <DialogTitle></DialogTitle>
-      <DialogDescription></DialogDescription>
-      <DialogContent className="overflow-hidden p-0 sm:max-w-lg [&>button:last-child]:hidden">
+      <DialogContent className="overflow-hidden p-0 sm:max-w-lg">
+        <DialogTitle className="sr-only">Quick Search</DialogTitle>
+        <DialogDescription className="sr-only">
+          Search platform commands, navigation, and contracts
+        </DialogDescription>
         <Command data-slot="command-dialog">
           {children}
         </Command>

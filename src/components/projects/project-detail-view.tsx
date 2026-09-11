@@ -32,6 +32,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 import Navbar from '@/components/layout/navbar';
 import { FooterSection } from '@/components/layout/footer-section';
 
@@ -271,13 +279,34 @@ export function ProjectDetailView({
       <div className={mode === 'public' ? 'relative border-b border-border/80 bg-card/50 backdrop-blur-xl' : 'space-y-4 mb-6'}>
         {mode === 'public' && <div className="absolute inset-0 gradient-primary opacity-5" />}
         <div className={mode === 'public' ? 'relative max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12' : ''}>
-          {/* Back Button */}
-          <Button asChild variant="ghost" size="sm" className="-ml-3 mb-4 text-muted-foreground hover:text-foreground">
-            <Link href={backPath}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              {defaultBackLabel}
-            </Link>
-          </Button>
+          {/* Breadcrumbs & Back Navigation */}
+          <div className="space-y-3 mb-4">
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink href={mode === 'public' ? '/' : `/dashboard/${user?.role || 'employer'}`}>
+                    {mode === 'public' ? 'Home' : 'Dashboard'}
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink href={mode === 'public' ? '/projects' : `/dashboard/${user?.role || 'employer'}/projects`}>
+                    Projects
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>{project.title}</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+            <Button asChild variant="ghost" size="sm" className="-ml-3 text-muted-foreground hover:text-foreground">
+              <Link href={backPath}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                {defaultBackLabel}
+              </Link>
+            </Button>
+          </div>
 
           <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
             {/* Title + Meta */}
@@ -383,6 +412,14 @@ export function ProjectDetailView({
                     </>
                   )}
                 </>
+              )}
+
+              {primaryAction === 'sign-in-to-submit' && (
+                <Button asChild className="rounded-full gradient-primary shadow-md">
+                  <Link href={`/login?returnTo=${encodeURIComponent(`/projects/${project.id}`)}`}>
+                    <Send className="w-4 h-4 mr-2" /> Sign in to Submit Proposal
+                  </Link>
+                </Button>
               )}
             </div>
           </div>

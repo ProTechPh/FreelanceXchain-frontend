@@ -3,7 +3,7 @@
 import { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { CheckCircle, KeyRound } from 'lucide-react';
+import { CheckCircle, Eye, EyeOff, KeyRound } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { authApi } from '@/lib/api';
@@ -23,6 +23,8 @@ function ResetPasswordForm() {
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [confirmPasswordError, setConfirmPasswordError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
@@ -95,61 +97,83 @@ function ResetPasswordForm() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <Field label="New password" htmlFor="password">
-<Input
-            id="password"
-            name="password"
-            type="password"
-            autoComplete="new-password"
-            value={password}
-            onChange={(event) => {
-              setPassword(event.target.value);
-              setFormError(null);
-              if (passwordError) setPasswordError(null);
-            }}
-            onBlur={() => {
-              if (password.length > 0 && password.length < 8) {
-                setPasswordError('Password must be at least 8 characters');
-              } else {
-                setPasswordError(null);
-              }
-            }}
-            aria-describedby="password-requirements reset-error"
-            required
-          />
+          <div className="relative">
+            <Input
+              id="password"
+              name="password"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="new-password"
+              value={password}
+              onChange={(event) => {
+                setPassword(event.target.value);
+                setFormError(null);
+                if (passwordError) setPasswordError(null);
+              }}
+              onBlur={() => {
+                if (password.length > 0 && password.length < 8) {
+                  setPasswordError('Password must be at least 8 characters');
+                } else {
+                  setPasswordError(null);
+                }
+              }}
+              aria-describedby="password-requirements reset-error"
+              className="pr-10"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              className="absolute inset-y-0 right-2.5 flex items-center text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </button>
+          </div>
           {passwordError && (
             <p className="text-sm text-destructive mt-1">{passwordError}</p>
           )}
           <p id="password-requirements" className="text-xs text-muted-foreground">
             8–72 characters with uppercase, lowercase, a number, and @$!%*?&amp;.
           </p>
-</Field>
+        </Field>
 
         <Field label="Confirm new password" htmlFor="confirm-password">
-<Input
-            id="confirm-password"
-            name="confirmPassword"
-            type="password"
-            autoComplete="new-password"
-            value={confirmPassword}
-            onChange={(event) => {
-              setConfirmPassword(event.target.value);
-              setFormError(null);
-              if (confirmPasswordError) setConfirmPasswordError(null);
-            }}
-            onBlur={() => {
-              if (confirmPassword.length > 0 && confirmPassword !== password) {
-                setConfirmPasswordError('Passwords do not match');
-              } else {
-                setConfirmPasswordError(null);
-              }
-            }}
-            aria-describedby="reset-error"
-            required
-          />
+          <div className="relative">
+            <Input
+              id="confirm-password"
+              name="confirmPassword"
+              type={showConfirmPassword ? 'text' : 'password'}
+              autoComplete="new-password"
+              value={confirmPassword}
+              onChange={(event) => {
+                setConfirmPassword(event.target.value);
+                setFormError(null);
+                if (confirmPasswordError) setConfirmPasswordError(null);
+              }}
+              onBlur={() => {
+                if (confirmPassword.length > 0 && confirmPassword !== password) {
+                  setConfirmPasswordError('Passwords do not match');
+                } else {
+                  setConfirmPasswordError(null);
+                }
+              }}
+              aria-describedby="reset-error"
+              className="pr-10"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+              className="absolute inset-y-0 right-2.5 flex items-center text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </button>
+          </div>
           {confirmPasswordError && (
             <p className="text-sm text-destructive mt-1">{confirmPasswordError}</p>
           )}
-</Field>
+        </Field>
 
         {formError && (
           <p id="reset-error" role="alert" className="text-sm text-destructive">
@@ -176,7 +200,23 @@ export default function ResetPasswordPage() {
   return (
     <div className="flex min-h-screen items-center justify-center p-6">
       <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-sm sm:p-8">
-        <Suspense fallback={<p role="status">Loading password reset…</p>}>
+        <Suspense
+          fallback={
+            <div className="space-y-4 animate-pulse" role="status" aria-label="Loading password reset form">
+              <div className="h-6 w-48 bg-muted rounded-md" />
+              <div className="h-4 w-72 bg-muted rounded-md" />
+              <div className="space-y-2 pt-2">
+                <div className="h-4 w-24 bg-muted rounded-md" />
+                <div className="h-10 w-full bg-muted rounded-md" />
+              </div>
+              <div className="space-y-2">
+                <div className="h-4 w-32 bg-muted rounded-md" />
+                <div className="h-10 w-full bg-muted rounded-md" />
+              </div>
+              <div className="h-10 w-full bg-muted rounded-md mt-4" />
+            </div>
+          }
+        >
           <ResetPasswordForm />
         </Suspense>
       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 import Navbar from "@/components/layout/navbar";
@@ -14,9 +14,13 @@ import { EmptyState } from '@/components/ui/empty-state';
 
 type SortKey = 'rating' | 'reviews';
 
+interface LeaderboardItem extends ReputationScore {
+  userName?: string;
+}
+
 export default function LeaderboardPage() {
   const reduce = useReducedMotion();
-  const [leaderboard, setLeaderboard] = useState<ReputationScore[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<SortKey>('rating');
 
@@ -27,6 +31,7 @@ export default function LeaderboardPage() {
         setLeaderboard(
           res.data.map((entry) => ({
             user_id: entry.userId,
+            userName: entry.userName || `Freelancer ${entry.userId.slice(0, 8)}`,
             overall_score: entry.averageRating,
             total_ratings: entry.totalRatings,
             breakdown: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
@@ -41,6 +46,14 @@ export default function LeaderboardPage() {
     }
     void fetchLeaderboard();
   }, []);
+
+  const sortedLeaderboard = useMemo(() => {
+    return [...leaderboard].sort((a, b) =>
+      sortBy === 'rating'
+        ? b.overall_score - a.overall_score
+        : b.total_ratings - a.total_ratings
+    );
+  }, [leaderboard, sortBy]);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
@@ -96,7 +109,7 @@ export default function LeaderboardPage() {
             </div>
 
             {/* Top 3 Podium Cards */}
-            {leaderboard.length >= 3 && (
+            {sortedLeaderboard.length >= 3 && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* 2nd Place */}
                 <div className="order-2 md:order-1 rounded-3xl bg-card border border-border/80 p-6 shadow-md text-center flex flex-col justify-between hover:border-primary/50 transition-all">
@@ -104,12 +117,12 @@ export default function LeaderboardPage() {
                     <div className="w-10 h-10 rounded-full bg-neutral-subtle text-neutral font-extrabold text-sm flex items-center justify-center mx-auto mb-3">
                       #2
                     </div>
-                    <h3 className="font-bold text-foreground text-base">User {leaderboard[1].user_id.slice(0, 8)}</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">{leaderboard[1].total_ratings} completed milestones</p>
+                    <h3 className="font-bold text-foreground text-base truncate px-2">{sortedLeaderboard[1].userName}</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">{sortedLeaderboard[1].total_ratings} completed milestones</p>
                   </div>
                   <div className="mt-4 pt-4 border-t border-border/50 flex items-center justify-center gap-1 text-sm font-bold text-foreground">
                     <Star className="size-4 text-warning fill-warning" />
-                    <span>{leaderboard[1].overall_score.toFixed(2)} Rating</span>
+                    <span>{sortedLeaderboard[1].overall_score.toFixed(2)} Rating</span>
                   </div>
                 </div>
 
@@ -122,12 +135,12 @@ export default function LeaderboardPage() {
                     <div className="w-12 h-12 rounded-full bg-warning-subtle text-warning font-black text-lg flex items-center justify-center mx-auto mb-3">
                       #1
                     </div>
-                    <h3 className="font-extrabold text-foreground text-lg">User {leaderboard[0].user_id.slice(0, 8)}</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">{leaderboard[0].total_ratings} completed milestones</p>
+                    <h3 className="font-extrabold text-foreground text-lg truncate px-2">{sortedLeaderboard[0].userName}</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">{sortedLeaderboard[0].total_ratings} completed milestones</p>
                   </div>
                   <div className="mt-4 pt-4 border-t border-border/50 flex items-center justify-center gap-1.5 text-base font-extrabold text-primary">
                     <Star className="size-4 text-warning fill-warning" />
-                    <span>{leaderboard[0].overall_score.toFixed(2)} Rating</span>
+                    <span>{sortedLeaderboard[0].overall_score.toFixed(2)} Rating</span>
                   </div>
                 </div>
 
@@ -137,12 +150,12 @@ export default function LeaderboardPage() {
                     <div className="w-10 h-10 rounded-full bg-warning-subtle text-warning font-extrabold text-sm flex items-center justify-center mx-auto mb-3">
                       #3
                     </div>
-                    <h3 className="font-bold text-foreground text-base">User {leaderboard[2].user_id.slice(0, 8)}</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">{leaderboard[2].total_ratings} completed milestones</p>
+                    <h3 className="font-bold text-foreground text-base truncate px-2">{sortedLeaderboard[2].userName}</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">{sortedLeaderboard[2].total_ratings} completed milestones</p>
                   </div>
                   <div className="mt-4 pt-4 border-t border-border/50 flex items-center justify-center gap-1 text-sm font-bold text-foreground">
                     <Star className="size-4 text-warning fill-warning" />
-                    <span>{leaderboard[2].overall_score.toFixed(2)} Rating</span>
+                    <span>{sortedLeaderboard[2].overall_score.toFixed(2)} Rating</span>
                   </div>
                 </div>
               </div>
@@ -153,7 +166,7 @@ export default function LeaderboardPage() {
               {/* Leaderboard Table Card */}
               <div className="lg:col-span-2 rounded-3xl bg-card border border-border/80 p-6 sm:p-8 shadow-md shadow-black/5">
                 <h2 className="text-lg font-bold text-foreground mb-4">Complete Rankings</h2>
-                {leaderboard.length === 0 ? (
+                {sortedLeaderboard.length === 0 ? (
                   <EmptyState
                     icon={Trophy}
                     title="No rankings available yet"
@@ -161,11 +174,7 @@ export default function LeaderboardPage() {
                   />
                 ) : (
                   <div className="space-y-2.5">
-                    {[...leaderboard].sort((a, b) =>
-                      sortBy === 'rating'
-                        ? b.overall_score - a.overall_score
-                        : b.total_ratings - a.total_ratings
-                    ).map((entry, index) => (
+                    {sortedLeaderboard.map((entry, index) => (
                       <Link key={entry.user_id} href={`/freelancers/${entry.user_id}`}>
                         <div className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-background border border-border/60 hover:border-primary/40 transition-all cursor-pointer">
                           <div className="flex items-center gap-3.5">
@@ -177,7 +186,7 @@ export default function LeaderboardPage() {
                             </div>
                             <div>
                               <div className="flex items-center gap-1.5">
-                                <p className="font-bold text-foreground text-sm">User {entry.user_id.slice(0, 8)}</p>
+                                <p className="font-bold text-foreground text-sm">{entry.userName}</p>
                                 <ShieldCheck className="size-3.5 text-success" />
                               </div>
                               <p className="text-2xs text-muted-foreground">{entry.total_ratings} reviews</p>

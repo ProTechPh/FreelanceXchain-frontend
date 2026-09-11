@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { contractsApi, employersApi, fileUploadsApi, freelancersApi, messagesApi, projectsApi } from '@/lib/api';
 import { formatFileSize, safeAttachmentUrl } from '@/lib/attachment-presentation';
-import { formatRelativeTime } from '@/lib/format';
+import { formatAmount, formatRelativeTime } from '@/lib/format';
 import { MessageAttachmentValidationError, sendMessageWithAttachments, validateMessageAttachments } from '@/lib/message-attachment';
 import {
   getRealtimeMessage,
@@ -23,10 +23,9 @@ import { useAuthStore } from '@/stores/authStore';
 import type { ConversationWithDetails, Message, Project } from '@/types';
 import { toast } from 'sonner';
 import { reportFailure, reportLoadFailure } from '@/lib/report-failure';
-import { Send, Search, Check, CheckCheck, MessageSquare, ExternalLink, FileText, Paperclip, X, ArrowLeft, Briefcase, ChevronUp, ChevronDown, Pencil, Trash2 } from 'lucide-react';
+import { Send, Search, Check, CheckCheck, MessageSquare, ExternalLink, FileText, Paperclip, X, ArrowLeft, Briefcase, ChevronUp, ChevronDown, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MessagesWorkspaceSkeleton, MessageThreadSkeleton } from '@/components/messages/messages-workspace-skeleton';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
 function initials(name: string): string {
   return name
@@ -60,12 +59,18 @@ export function MessagesWorkspace() {
   const [directRecipient, setDirectRecipient] = useState<ConversationWithDetails['otherUser'] | null>(null);
   const [acceptedContacts, setAcceptedContacts] = useState<ConversationWithDetails['otherUser'][]>([]);
   const [inquiredProject, setInquiredProject] = useState<Project | null>(null);
-  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const selectedIdRef = useRef<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const prevMessagesLengthRef = useRef(0);
+
+  const handleCopyMessage = (msgId: string, text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedMessageId(msgId);
+    toast.success('Message copied');
+    setTimeout(() => setCopiedMessageId(null), 2000);
+  };
 
   const scrollToBottom = useCallback((smooth = false) => {
     if (messagesEndRef.current) {
@@ -368,7 +373,8 @@ export function MessagesWorkspace() {
   });
 
   const handleSend = async () => {
-    const content = newMessage.trim();
+    const rawContent = newMessage.trim();
+    const content = rawContent || (messageFiles.length === 1 ? messageFiles[0].name : `Shared ${messageFiles.length} files`);
     if (!content || !chatRecipient || sending) return;
 
     setSending(true);
@@ -600,7 +606,7 @@ export function MessagesWorkspace() {
                 </div>
                 <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
                   <span className="text-xs font-bold text-foreground px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-card border border-border">
-                    ${inquiredProject.budget} USDC
+                    {formatAmount(inquiredProject.budget)}
                   </span>
                   <Button asChild variant="outline" size="sm" className="h-7 text-xs rounded-lg border-border">
                     <Link
@@ -639,27 +645,21 @@ export function MessagesWorkspace() {
                             : 'bg-secondary border border-border rounded-bl-md'
                         }`}
                       >
-                        {isMine && (
-                          <div className="absolute -top-2 right-0 hidden group-hover:flex gap-1 z-10 bg-background border border-border rounded-md shadow-sm">
-                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditingMessageId(msg.id)}>
-                              <Pencil className="h-3 w-3" />
-                            </Button>
-                            <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive" onClick={() => setDeleteConfirmId(msg.id)}>
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        )}
-                        {editingMessageId === msg.id ? (
-                          <div className="flex flex-col gap-2">
-                            <Input defaultValue={msg.content} className="h-8 text-sm bg-background text-foreground" />
-                            <div className="flex gap-2 justify-end">
-                              <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => setEditingMessageId(null)}>Cancel</Button>
-                              <Button size="sm" className="h-6 px-2 text-xs" onClick={() => { /* TODO: save edit */ setEditingMessageId(null); }}>Save</Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <p className="text-sm">{msg.content}</p>
-                        )}
+                        <div className="absolute -top-2.5 right-1 opacity-70 hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity z-10 bg-background/95 backdrop-blur-xs border border-border rounded-md shadow-xs flex items-center">
+                          <button
+                            type="button"
+                            aria-label="Copy message text"
+                            className="p-1 text-muted-foreground hover:text-foreground transition-colors touch-manipulation"
+                            onClick={() => handleCopyMessage(msg.id, msg.content)}
+                          >
+                            {copiedMessageId === msg.id ? (
+                              <Check className="size-3 text-success" />
+                            ) : (
+                              <Copy className="size-3" />
+                            )}
+                          </button>
+                        </div>
+                        <p className="text-sm select-text break-words">{msg.content}</p>
                         {(msg.attachments ?? []).length > 0 && (
                           <ul className="mt-2 space-y-1.5" aria-label="Message attachments">
                             {(msg.attachments ?? []).map((attachment) => {
@@ -716,7 +716,7 @@ export function MessagesWorkspace() {
                   className="flex-1 h-9 sm:h-10 text-sm"
                   disabled={sending}
                 />
-                <Button variant="gradient" size="icon" aria-label="Send message" onClick={handleSend} loading={sending} disabled={!newMessage.trim()} className="size-9 sm:size-10 shrink-0 touch-manipulation">
+                <Button variant="gradient" size="icon" aria-label="Send message" onClick={handleSend} loading={sending} disabled={(!newMessage.trim() && messageFiles.length === 0) || sending} className="size-9 sm:size-10 shrink-0 touch-manipulation">
                   <Send className="size-4 sm:size-5" aria-hidden="true" />
                 </Button>
               </div>
@@ -724,20 +724,6 @@ export function MessagesWorkspace() {
           </>
         )}
       </div>
-      <Dialog open={!!deleteConfirmId} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Message</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            Delete this message? This cannot be undone.
-          </p>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setDeleteConfirmId(null)}>Cancel</Button>
-            <Button variant="destructive" onClick={() => { console.log('TODO: delete', deleteConfirmId); setDeleteConfirmId(null); }}>Delete</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
