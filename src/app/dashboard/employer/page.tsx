@@ -104,18 +104,25 @@ export default function EmployerDashboard() {
           .slice(0, 5);
 
         // Cache freelancer profile & reputation lookups to eliminate duplicate requests
-        const profileScoreCache = new Map<string, Promise<{ profile: any; score: any }>>();
-        const getFreelancerData = (id: string) => {
-          if (!profileScoreCache.has(id)) {
-            profileScoreCache.set(
-              id,
-              Promise.all([
-                freelancersApi.getPublicProfile(id).catch(() => null),
-                reputationApi.getScore(id).catch(() => null),
-              ]).then(([profile, score]) => ({ profile, score }))
-            );
-          }
-          return profileScoreCache.get(id)!;
+        type FreelancerProfileResult = Awaited<ReturnType<typeof freelancersApi.getPublicProfile>>;
+        type ReputationScoreResult = Awaited<ReturnType<typeof reputationApi.getScore>>;
+        type FreelancerData = {
+          profile: FreelancerProfileResult | null;
+          score: ReputationScoreResult | null;
+        };
+
+        const profileScoreCache = new Map<string, Promise<FreelancerData>>();
+        const getFreelancerData = (id: string): Promise<FreelancerData> => {
+          const cached = profileScoreCache.get(id);
+          if (cached) return cached;
+
+          const promise = Promise.all([
+            freelancersApi.getPublicProfile(id).catch(() => null),
+            reputationApi.getScore(id).catch(() => null),
+          ]).then(([profile, score]) => ({ profile, score }));
+
+          profileScoreCache.set(id, promise);
+          return promise;
         };
 
         const details = await Promise.all(

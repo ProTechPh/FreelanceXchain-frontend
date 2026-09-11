@@ -10,9 +10,11 @@ export interface MarkdownProps {
   className?: string;
 }
 
+type RemarkPluginItem = NonNullable<ReactMarkdownOptions['remarkPlugins']>[number];
+
 // Module-level cached instances so imports only execute once across the application
 let cachedReactMarkdown: ComponentType<ReactMarkdownOptions> | null = null;
-let cachedRemarkGfm: any = null;
+let cachedRemarkGfm: RemarkPluginItem | null = null;
 
 /**
  * Ensures collapsed single-line lists and tables (often emitted by LLMs) are converted
@@ -59,7 +61,7 @@ function preprocessMarkdown(text: string): string {
 export function Markdown({ content, className }: MarkdownProps) {
   const [modules, setModules] = useState<{
     ReactMarkdownComponent: ComponentType<ReactMarkdownOptions>;
-    gfmPlugin: any;
+    gfmPlugin: RemarkPluginItem;
   } | null>(() => {
     if (cachedReactMarkdown && cachedRemarkGfm) {
       return { ReactMarkdownComponent: cachedReactMarkdown, gfmPlugin: cachedRemarkGfm };
@@ -74,7 +76,7 @@ export function Markdown({ content, className }: MarkdownProps) {
         import('remark-gfm').then((m) => m.default),
       ]).then(([loadedComponent, loadedGfm]) => {
         cachedReactMarkdown = loadedComponent as unknown as ComponentType<ReactMarkdownOptions>;
-        cachedRemarkGfm = loadedGfm;
+        cachedRemarkGfm = loadedGfm as unknown as RemarkPluginItem;
         setModules({
           ReactMarkdownComponent: cachedReactMarkdown,
           gfmPlugin: cachedRemarkGfm,

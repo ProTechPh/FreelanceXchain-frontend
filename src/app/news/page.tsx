@@ -37,21 +37,23 @@ function NewsCardImage({
   sizes: string;
   fallback?: string;
 }) {
-  const [imgSrc, setImgSrc] = useState(src);
+  const [hasError, setHasError] = useState(false);
+  const [prevSrc, setPrevSrc] = useState(src);
 
-  useEffect(() => {
-    setImgSrc(src);
-  }, [src]);
+  if (prevSrc !== src) {
+    setPrevSrc(src);
+    setHasError(false);
+  }
 
   return (
     <Image
-      src={imgSrc}
+      src={hasError ? fallback : src}
       alt={alt}
       fill
       priority={priority}
       sizes={sizes}
       unoptimized
-      onError={() => setImgSrc(fallback)}
+      onError={() => setHasError(true)}
       className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
     />
   );
