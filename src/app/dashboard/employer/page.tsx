@@ -103,14 +103,30 @@ export default function EmployerDashboard() {
           .sort((a, b) => new Date(b.proposal.createdAt).getTime() - new Date(a.proposal.createdAt).getTime())
           .slice(0, 5);
 
+        // Cache freelancer profile & reputation lookups to eliminate duplicate requests
+        type FreelancerProfileResult = Awaited<ReturnType<typeof freelancersApi.getPublicProfile>>;
+        type ReputationScoreResult = Awaited<ReturnType<typeof reputationApi.getScore>>;
+        type FreelancerData = {
+          profile: FreelancerProfileResult | null;
+          score: ReputationScoreResult | null;
+        };
+
+        const profileScoreCache = new Map<string, Promise<FreelancerData>>();
+        const getFreelancerData = (id: string): Promise<FreelancerData> => {
+          const cached = profileScoreCache.get(id);
+          if (cached) return cached;
+
+          const promise = Promise.all([
+            freelancersApi.getPublicProfile(id).catch(() => null),
+            reputationApi.getScore(id).catch(() => null),
+          ]).then(([profile, score]) => ({ profile, score }));
+
+          profileScoreCache.set(id, promise);
+          return promise;
+        };
+
         const details = await Promise.all(
-          recent.map(async ({ proposal }) => {
-            const [profile, score] = await Promise.all([
-              freelancersApi.getPublicProfile(proposal.freelancerId).catch(() => null),
-              reputationApi.getScore(proposal.freelancerId).catch(() => null),
-            ]);
-            return { profile, score };
-          })
+          recent.map(async ({ proposal }) => getFreelancerData(proposal.freelancerId))
         );
 
         setRecentProposals(
@@ -149,13 +165,7 @@ export default function EmployerDashboard() {
               .slice(0, 3);
             if (uniqueRecs.length === 0) return;
             const profiles = await Promise.all(
-              uniqueRecs.map(async (rec) => {
-                const [profile, score] = await Promise.all([
-                  freelancersApi.getPublicProfile(rec.freelancerId).catch(() => null),
-                  reputationApi.getScore(rec.freelancerId).catch(() => null),
-                ]);
-                return { profile, score };
-              })
+              uniqueRecs.map(async (rec) => getFreelancerData(rec.freelancerId))
             );
             setRecommended(
               uniqueRecs.map((rec, i) => ({
