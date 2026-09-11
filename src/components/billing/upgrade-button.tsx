@@ -4,6 +4,7 @@ import { Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useStartCheckout } from '@/hooks/use-plan';
 import type { ProFeature } from '@/lib/plan-features';
+import type { BillingInterval } from '@/types';
 
 interface UpgradeButtonProps {
   /** Where the click came from, for the copy and for future attribution. */
@@ -12,6 +13,8 @@ interface UpgradeButtonProps {
   variant?: 'default' | 'outline' | 'ghost' | 'link' | 'gradient';
   label?: string;
   className?: string;
+  /** Which billing variant to buy. Defaults to monthly. */
+  interval?: BillingInterval;
 }
 
 /**
@@ -26,6 +29,7 @@ export function UpgradeButton({
   variant = 'gradient',
   label = 'Upgrade to Pro',
   className,
+  interval = 'month',
 }: UpgradeButtonProps) {
   const checkout = useStartCheckout();
 
@@ -37,7 +41,7 @@ export function UpgradeButton({
       className={className}
       loading={checkout.isPending}
       loadingText="Opening checkout…"
-      onClick={() => checkout.mutate()}
+      onClick={() => checkout.mutate(interval)}
       data-upgrade-source={source}
     >
       <Sparkles className="size-4" aria-hidden="true" />

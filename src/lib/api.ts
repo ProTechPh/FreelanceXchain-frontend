@@ -80,6 +80,8 @@ import type {
   AdminActivitySummary,
   Subscription,
   BillingRedirect,
+  BillingPlansResponse,
+  BillingInterval,
   CheckoutSessionResponse,
 } from '@/types';
 import type {
@@ -932,14 +934,14 @@ export const billingApi = {
   /** Current entitlement. Free is a valid state, not an error. */
   getSubscription: () => api.get<Subscription>('/billing/subscription'),
 
-  /** Public plan descriptor for the pricing page. */
-  getPlans: () => api.get<{ billingEnabled: boolean; plans: unknown[] }>('/billing/plans'),
+  /** Public plan descriptor, including live prices read from Stripe. */
+  getPlans: () => api.get<BillingPlansResponse>('/billing/plans'),
 
   /**
    * Starts a Stripe-hosted Checkout. The returned URL must be validated with
    * isAllowedBillingRedirect before the browser is sent to it.
    */
-  createCheckoutSession: (params?: { successUrl?: string; cancelUrl?: string }) =>
+  createCheckoutSession: (params?: { interval?: BillingInterval; successUrl?: string; cancelUrl?: string }) =>
     api.post<CheckoutSessionResponse>('/billing/checkout-session', params ?? {}),
 
   /** Stripe Customer Portal: cancel, resume, update card, invoice history. */

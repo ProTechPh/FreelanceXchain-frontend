@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { CreditCard, ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,15 +8,25 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { PlanComparison } from '@/components/billing/plan-comparison';
 import { UpgradeButton } from '@/components/billing/upgrade-button';
-import { usePlan, useSubscription, useOpenBillingPortal } from '@/hooks/use-plan';
+import { IntervalToggle } from '@/components/billing/interval-toggle';
+import { usePlan, usePlans, useSubscription, useOpenBillingPortal } from '@/hooks/use-plan';
 import { useAuthStore } from '@/stores/authStore';
 import { formatDate } from '@/lib/format';
+import { computeAnnualSaving, findPrice, formatPrice, priceLabel } from '@/lib/plan-pricing';
+import type { BillingInterval } from '@/types';
 
 export function BillingSettings() {
   const { isPro, isAdmin, isResolved } = usePlan();
   const refreshPlan = useAuthStore((state) => state.refreshPlan);
   const { data: subscription, isLoading } = useSubscription(isResolved);
+  const { data: plansData } = usePlans();
   const portal = useOpenBillingPortal();
+
+  const [interval, setInterval] = useState<BillingInterval>('month');
+
+  const proPrices = plansData?.plans.find((plan) => plan.id === 'pro')?.prices ?? [];
+  const saving = computeAnnualSaving(proPrices);
+  const showToggle = !isPro && !isAdmin && proPrices.length > 1;
 
   // Returning from the Stripe portal lands back here, so re-read the plan
   // rather than trusting whatever was cached before the user left.
@@ -69,9 +79,28 @@ export function BillingSettings() {
                       <ExternalLink className="size-4" aria-hidden="true" />
                     </Button>
                   )}
-                  {!isPro && <UpgradeButton source="settings" />}
+                  {!isPro && <UpgradeButton source="settings" interval={interval} />}
                 </div>
               )}
+            </div>
+          )}
+
+          {showToggle && (
+            <div className="flex flex-col gap-2 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-medium text-foreground">Billing interval</p>
+                <p className="text-sm text-muted-foreground">
+                  {priceLabel(findPrice(proPrices, interval)) ?? 'Price unavailable'}
+                  {interval === 'year' && saving
+                    ? ` — saves ${formatPrice(saving.amount, saving.currency)} a year`
+                    : ''}
+                </p>
+              </div>
+              <IntervalToggle
+                value={interval}
+                onChange={setInterval}
+                savingLabel={saving ? `Save ${saving.percent}%` : null}
+              />
             </div>
           )}
 

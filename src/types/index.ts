@@ -74,6 +74,28 @@ export interface Subscription {
   manageable: boolean;
 }
 
+export type BillingInterval = 'month' | 'year';
+
+export interface PlanPrice {
+  interval: BillingInterval;
+  priceId: string;
+  /** Minor units (cents). Null when Stripe could not be read. */
+  unitAmount: number | null;
+  currency: string | null;
+}
+
+export interface BillingPlan {
+  id: 'free' | 'pro';
+  name: string;
+  description: string;
+  prices: PlanPrice[];
+}
+
+export interface BillingPlansResponse {
+  billingEnabled: boolean;
+  plans: BillingPlan[];
+}
+
 export interface BillingRedirect {
   url: string;
 }

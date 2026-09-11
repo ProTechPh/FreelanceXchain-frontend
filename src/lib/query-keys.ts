@@ -20,6 +20,7 @@ export const qk = {
    * or from checkout must show the new state immediately, not a cached one.
    */
   subscription: () => ['billing', 'subscription'] as const,
+  plans: () => ['billing', 'plans'] as const,
 };
 
 /**

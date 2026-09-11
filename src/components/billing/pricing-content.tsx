@@ -1,14 +1,23 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { PlanComparison } from '@/components/billing/plan-comparison';
 import { UpgradeButton } from '@/components/billing/upgrade-button';
-import { usePlan } from '@/hooks/use-plan';
+import { IntervalToggle } from '@/components/billing/interval-toggle';
+import { usePlan, usePlans } from '@/hooks/use-plan';
 import { useAuthStore } from '@/stores/authStore';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  computeAnnualSaving,
+  findPrice,
+  formatPrice,
+  monthlyEquivalent,
+} from '@/lib/plan-pricing';
+import type { BillingInterval } from '@/types';
 
 const FREE_HIGHLIGHTS = [
   'Browse, search and post projects',
@@ -29,13 +38,27 @@ export function PricingContent() {
   const { isPro, isResolved } = usePlan();
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const role = useAuthStore((state) => state.user?.role);
+  const { data: plansData, isLoading: pricesLoading } = usePlans();
+
+  const [interval, setInterval] = useState<BillingInterval>('month');
+
+  const proPrices = plansData?.plans.find((plan) => plan.id === 'pro')?.prices ?? [];
+  const saving = computeAnnualSaving(proPrices);
+  const selectedPrice = findPrice(proPrices, interval);
+  const annualPrice = findPrice(proPrices, 'year');
+  const hasAnnual = Boolean(annualPrice);
+  // Only offer the switch when there is genuinely something to switch to.
+  const showToggle = hasAnnual && proPrices.length > 1;
 
   return (
     <div className="space-y-10">
       <div className="grid gap-6 md:grid-cols-2">
         <Card className="flex flex-col">
-          <CardHeader>
+          <CardHeader className="space-y-3">
             <CardTitle className="text-xl">Free</CardTitle>
+            <p className="text-3xl font-extrabold text-foreground">
+              $0<span className="text-base font-medium text-muted-foreground"> / forever</span>
+            </p>
             <CardDescription>Everything you need to work and get paid.</CardDescription>
           </CardHeader>
           <CardContent className="flex grow flex-col gap-4">
@@ -56,11 +79,44 @@ export function PricingContent() {
         </Card>
 
         <Card className="flex flex-col border-primary/30">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <CardTitle className="text-xl">Pro</CardTitle>
-              <Badge>Monthly</Badge>
-            </div>
+          <CardHeader className="space-y-3">
+            {/* The saving is stated once, inside the toggle where the choice is
+                actually made. A second badge up here said the same thing twice. */}
+            <CardTitle className="text-xl">Pro</CardTitle>
+
+            {showToggle && (
+              <IntervalToggle
+                value={interval}
+                onChange={setInterval}
+                savingLabel={saving ? `Save ${saving.percent}%` : null}
+              />
+            )}
+
+            {pricesLoading ? (
+              <Skeleton className="h-9 w-32" />
+            ) : (
+              <div>
+                {/* Amount and interval carry different weight on purpose: set at
+                    one size they competed, and the figure is what people scan. */}
+                <p className="text-foreground">
+                  <span className="text-3xl font-extrabold tracking-tight">
+                    {formatPrice(selectedPrice?.unitAmount ?? null, selectedPrice?.currency ?? null) ?? 'Contact us'}
+                  </span>
+                  {selectedPrice && (
+                    <span className="ml-1 text-base font-medium text-muted-foreground">
+                      / {selectedPrice.interval}
+                    </span>
+                  )}
+                </p>
+                {interval === 'year' && monthlyEquivalent(annualPrice) && (
+                  <p className="text-sm text-muted-foreground">
+                    {monthlyEquivalent(annualPrice)} / month, billed yearly
+                    {saving ? ` — saves ${formatPrice(saving.amount, saving.currency)} a year` : ''}
+                  </p>
+                )}
+              </div>
+            )}
+
             <CardDescription>
               Everything in Free, plus the AI matching and analytics layer.
             </CardDescription>
@@ -86,7 +142,7 @@ export function PricingContent() {
                 <Link href={`/dashboard/${role ?? 'freelancer'}/billing`}>Manage your plan</Link>
               </Button>
             ) : (
-              <UpgradeButton source="pricing" />
+              <UpgradeButton source="pricing" interval={interval} />
             )}
           </CardContent>
         </Card>

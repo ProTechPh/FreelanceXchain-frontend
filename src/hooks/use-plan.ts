@@ -7,7 +7,7 @@ import { qk, STALE_TIME } from '@/lib/query-keys';
 import { hasProAccess, resolvePlan } from '@/lib/plan-access';
 import { isAllowedBillingRedirect } from '@/lib/billing-checkout';
 import { reportFailure } from '@/lib/report-failure';
-import type { PlanTier, Subscription } from '@/types';
+import type { BillingInterval, BillingPlansResponse, PlanTier, Subscription } from '@/types';
 
 export interface PlanState {
   plan: PlanTier;
@@ -59,15 +59,29 @@ export function useSubscription(enabled = true) {
 }
 
 /**
- * Send the user to Stripe-hosted Checkout.
+ * Live Pro prices, read from Stripe via our API.
+ *
+ * Public and cacheable: the pricing page renders these, so an amount changed in
+ * the Stripe Dashboard shows up without a deploy.
+ */
+export function usePlans() {
+  return useQuery<BillingPlansResponse>({
+    queryKey: qk.plans(),
+    queryFn: async () => (await billingApi.getPlans()).data,
+    staleTime: 5 * 60_000,
+  });
+}
+
+/**
+ * Send the user to Stripe-hosted Checkout for the chosen billing interval.
  *
  * The URL comes back from our API, so it is validated before being assigned to
  * location — an unvalidated assignment would be an open redirect.
  */
 export function useStartCheckout() {
   return useMutation({
-    mutationFn: async () => {
-      const { data } = await billingApi.createCheckoutSession();
+    mutationFn: async (interval: BillingInterval = 'month') => {
+      const { data } = await billingApi.createCheckoutSession({ interval });
       return data.url;
     },
     onSuccess: (url) => {
