@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Eye, EyeOff, ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, ArrowRight, Sparkles, Loader2 } from 'lucide-react';
 
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -43,6 +43,7 @@ interface SignInPageProps {
   loading?: boolean;
   onGoogleSignIn?: () => void;
   onGithubSignIn?: () => void;
+  oauthLoading?: 'google' | 'github' | null;
   onResetPassword?: () => void;
   onResendConfirmation?: () => void;
   onCreateAccount?: () => void;
@@ -58,6 +59,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
   loading = false,
   onGoogleSignIn,
   onGithubSignIn,
+  oauthLoading = null,
   onResetPassword,
   onResendConfirmation,
   onCreateAccount,
@@ -65,6 +67,9 @@ export const SignInPage: React.FC<SignInPageProps> = ({
   oauthError,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
+  const isGoogleLoading = oauthLoading === 'google';
+  const isGithubLoading = oauthLoading === 'github';
+  const isAnyLoading = loading || Boolean(oauthLoading);
 
   return (
     <div className="flex flex-col lg:flex-row min-h-dvh w-full bg-background">
@@ -217,7 +222,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                   <input type="checkbox" name="rememberMe" className="rounded border-border accent-primary" />
                   <span className="text-muted-foreground">Keep me signed in</span>
                 </label>
-                <button type="button" onClick={onResetPassword} className="text-primary font-bold hover:underline">
+                <button type="button" onClick={onResetPassword} disabled={isAnyLoading} className="text-primary font-bold hover:underline disabled:pointer-events-none disabled:text-muted-foreground">
                   Forgot password?
                 </button>
               </div>
@@ -226,6 +231,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
               <Button
                 type="submit"
                 loading={loading}
+                disabled={isAnyLoading}
                 loadingText="Signing in…"
                 className="h-12 sm:h-13 w-full rounded-xl sm:rounded-2xl bg-primary-fill text-primary-fill-foreground font-bold text-sm hover:bg-primary-fill-hover shadow-md shadow-primary/20 transition-all duration-200 active:scale-[0.98]"
               >
@@ -245,20 +251,34 @@ export const SignInPage: React.FC<SignInPageProps> = ({
               <button 
                 type="button" 
                 onClick={onGoogleSignIn} 
-                disabled={loading} 
-                className="flex items-center justify-center gap-2.5 border border-border/80 rounded-xl sm:rounded-2xl py-3 sm:py-3.5 transition-all duration-200 hover:bg-muted/50 hover:border-border-strong active:scale-[0.98] disabled:pointer-events-none disabled:bg-muted disabled:text-muted-foreground font-semibold text-sm text-foreground"
+                disabled={isAnyLoading}
+                aria-busy={isGoogleLoading || undefined}
+                aria-label={isGoogleLoading ? 'Connecting to Google…' : undefined}
+                data-loading={isGoogleLoading || undefined}
+                className="flex items-center justify-center gap-2.5 border border-border/80 rounded-xl sm:rounded-2xl py-3 sm:py-3.5 transition-all duration-200 hover:bg-muted/50 hover:border-border-strong active:scale-[0.98] disabled:pointer-events-none not-data-[loading=true]:disabled:bg-muted not-data-[loading=true]:disabled:text-muted-foreground data-[loading=true]:cursor-wait data-[loading=true]:border-primary/50 data-[loading=true]:bg-primary/5 font-semibold text-sm text-foreground"
               >
-                <GoogleIcon />
-                Google
+                {isGoogleLoading ? (
+                  <Loader2 className="h-5 w-5 animate-spin shrink-0 text-foreground" aria-hidden="true" />
+                ) : (
+                  <GoogleIcon />
+                )}
+                <span>{isGoogleLoading ? 'Connecting…' : 'Google'}</span>
               </button>
               <button 
                 type="button" 
                 onClick={onGithubSignIn} 
-                disabled={loading} 
-                className="flex items-center justify-center gap-2.5 border border-border/80 rounded-xl sm:rounded-2xl py-3 sm:py-3.5 transition-all duration-200 hover:bg-muted/50 hover:border-border-strong active:scale-[0.98] disabled:pointer-events-none disabled:bg-muted disabled:text-muted-foreground font-semibold text-sm text-foreground"
+                disabled={isAnyLoading}
+                aria-busy={isGithubLoading || undefined}
+                aria-label={isGithubLoading ? 'Connecting to GitHub…' : undefined}
+                data-loading={isGithubLoading || undefined}
+                className="flex items-center justify-center gap-2.5 border border-border/80 rounded-xl sm:rounded-2xl py-3 sm:py-3.5 transition-all duration-200 hover:bg-muted/50 hover:border-border-strong active:scale-[0.98] disabled:pointer-events-none not-data-[loading=true]:disabled:bg-muted not-data-[loading=true]:disabled:text-muted-foreground data-[loading=true]:cursor-wait data-[loading=true]:border-primary/50 data-[loading=true]:bg-primary/5 font-semibold text-sm text-foreground"
               >
-                <GithubIcon />
-                GitHub
+                {isGithubLoading ? (
+                  <Loader2 className="h-5 w-5 animate-spin shrink-0 text-foreground" aria-hidden="true" />
+                ) : (
+                  <GithubIcon />
+                )}
+                <span>{isGithubLoading ? 'Connecting…' : 'GitHub'}</span>
               </button>
             </div>
 
@@ -266,7 +286,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
             <button 
               type="button" 
               onClick={onPasswordlessSignIn} 
-              disabled={loading} 
+              disabled={isAnyLoading} 
               className="w-full rounded-xl sm:rounded-2xl border border-border/80 py-3 sm:py-3.5 text-sm font-semibold text-muted-foreground transition-all duration-200 hover:bg-muted/50 hover:text-foreground active:scale-[0.98] disabled:pointer-events-none disabled:bg-muted disabled:text-muted-foreground"
             >
               Sign in with email code or magic link
@@ -276,7 +296,8 @@ export const SignInPage: React.FC<SignInPageProps> = ({
             <button 
               type="button" 
               onClick={onResendConfirmation} 
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground hover:underline"
+              disabled={isAnyLoading}
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground hover:underline disabled:pointer-events-none disabled:text-muted-foreground"
             >
               Didn&apos;t receive your account confirmation email?
             </button>
@@ -284,7 +305,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
             {/* Create account link */}
             <p className="text-center text-sm text-muted-foreground">
               New to our platform?{' '}
-              <button type="button" onClick={onCreateAccount} className="text-primary font-bold hover:underline">
+              <button type="button" onClick={onCreateAccount} disabled={isAnyLoading} className="text-primary font-bold hover:underline disabled:pointer-events-none disabled:text-muted-foreground">
                 Create Account
               </button>
             </p>

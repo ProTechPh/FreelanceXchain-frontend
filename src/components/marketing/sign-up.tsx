@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, User, Briefcase, ArrowRight, Sparkles, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, User, Briefcase, ArrowRight, Sparkles, ArrowLeft, Loader2 } from 'lucide-react';
 import type { UserRole } from '@/types';
 import { getRegistrationFormError } from '@/lib/auth-contract';
 import { Alert } from '@/components/ui/alert';
@@ -41,6 +41,7 @@ interface SignUpPageProps {
   onSignIn?: () => void;
   isLoading?: boolean;
   loading?: boolean;
+  oauthLoading?: 'google' | 'github' | null;
   oauthError?: string | null;
 }
 
@@ -51,9 +52,13 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
   onSignIn,
   isLoading = false,
   loading = false,
+  oauthLoading = null,
   oauthError,
 }) => {
   const isButtonLoading = isLoading || loading;
+  const isGoogleLoading = oauthLoading === 'google';
+  const isGithubLoading = oauthLoading === 'github';
+  const isAnyLoading = isButtonLoading || Boolean(oauthLoading);
   const [step, setStep] = useState<'role' | 'details'>('role');
   const [role, setRole] = useState<UserRole>('freelancer');
   const [email, setEmail] = useState('');
@@ -189,8 +194,9 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                 <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   <button
                     type="button"
+                    disabled={isAnyLoading}
                     onClick={() => handleRoleSelect('freelancer')}
-                    className="flex flex-col items-center gap-3 sm:gap-4 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-border/80 bg-card hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 active:scale-[0.98] transition-all duration-200 cursor-pointer group"
+                    className="flex flex-col items-center gap-3 sm:gap-4 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-border/80 bg-card hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 active:scale-[0.98] transition-all duration-200 cursor-pointer group disabled:pointer-events-none disabled:border-border disabled:bg-muted/40"
                   >
                     <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-primary-subtle flex items-center justify-center group-hover:bg-primary/15 transition-colors">
                       <User className="w-6 h-6 sm:w-7 sm:h-7 text-primary" />
@@ -203,8 +209,9 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
 
                   <button
                     type="button"
+                    disabled={isAnyLoading}
                     onClick={() => handleRoleSelect('employer')}
-                    className="flex flex-col items-center gap-3 sm:gap-4 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-border/80 bg-card hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 active:scale-[0.98] transition-all duration-200 cursor-pointer group"
+                    className="flex flex-col items-center gap-3 sm:gap-4 p-4 sm:p-6 rounded-2xl sm:rounded-3xl border border-border/80 bg-card hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 active:scale-[0.98] transition-all duration-200 cursor-pointer group disabled:pointer-events-none disabled:border-border disabled:bg-muted/40"
                   >
                     <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-primary-subtle flex items-center justify-center group-hover:bg-primary/15 transition-colors">
                       <Briefcase className="w-6 h-6 sm:w-7 sm:h-7 text-primary" />
@@ -227,25 +234,41 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                   <button 
                     type="button" 
                     onClick={onGoogleSignIn} 
-                    className="flex items-center justify-center gap-2.5 border border-border/80 rounded-xl sm:rounded-2xl py-3 sm:py-3.5 hover:bg-muted/50 hover:border-border-strong active:scale-[0.98] transition-all duration-200 font-semibold text-sm text-foreground"
+                    disabled={isAnyLoading}
+                    aria-busy={isGoogleLoading || undefined}
+                    aria-label={isGoogleLoading ? 'Connecting to Google…' : undefined}
+                    data-loading={isGoogleLoading || undefined}
+                    className="flex items-center justify-center gap-2.5 border border-border/80 rounded-xl sm:rounded-2xl py-3 sm:py-3.5 transition-all duration-200 hover:bg-muted/50 hover:border-border-strong active:scale-[0.98] disabled:pointer-events-none not-data-[loading=true]:disabled:bg-muted not-data-[loading=true]:disabled:text-muted-foreground data-[loading=true]:cursor-wait data-[loading=true]:border-primary/50 data-[loading=true]:bg-primary/5 font-semibold text-sm text-foreground"
                   >
-                    <GoogleIcon />
-                    Google
+                    {isGoogleLoading ? (
+                      <Loader2 className="h-5 w-5 animate-spin shrink-0 text-foreground" aria-hidden="true" />
+                    ) : (
+                      <GoogleIcon />
+                    )}
+                    <span>{isGoogleLoading ? 'Connecting…' : 'Google'}</span>
                   </button>
                   <button 
                     type="button" 
                     onClick={onGithubSignIn} 
-                    className="flex items-center justify-center gap-2.5 border border-border/80 rounded-xl sm:rounded-2xl py-3 sm:py-3.5 hover:bg-muted/50 hover:border-border-strong active:scale-[0.98] transition-all duration-200 font-semibold text-sm text-foreground"
+                    disabled={isAnyLoading}
+                    aria-busy={isGithubLoading || undefined}
+                    aria-label={isGithubLoading ? 'Connecting to GitHub…' : undefined}
+                    data-loading={isGithubLoading || undefined}
+                    className="flex items-center justify-center gap-2.5 border border-border/80 rounded-xl sm:rounded-2xl py-3 sm:py-3.5 transition-all duration-200 hover:bg-muted/50 hover:border-border-strong active:scale-[0.98] disabled:pointer-events-none not-data-[loading=true]:disabled:bg-muted not-data-[loading=true]:disabled:text-muted-foreground data-[loading=true]:cursor-wait data-[loading=true]:border-primary/50 data-[loading=true]:bg-primary/5 font-semibold text-sm text-foreground"
                   >
-                    <GithubIcon />
-                    GitHub
+                    {isGithubLoading ? (
+                      <Loader2 className="h-5 w-5 animate-spin shrink-0 text-foreground" aria-hidden="true" />
+                    ) : (
+                      <GithubIcon />
+                    )}
+                    <span>{isGithubLoading ? 'Connecting…' : 'GitHub'}</span>
                   </button>
                 </div>
 
                 {/* Sign in link */}
                 <p className="text-center text-sm text-muted-foreground">
                   Already have an account?{' '}
-                  <button type="button" onClick={onSignIn} className="text-primary font-bold hover:underline">Sign in</button>
+                  <button type="button" onClick={onSignIn} disabled={isAnyLoading} className="text-primary font-bold hover:underline disabled:pointer-events-none disabled:text-muted-foreground">Sign in</button>
                 </p>
               </>
             ) : (
@@ -345,7 +368,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                       <p className="text-sm text-destructive mt-1">Passwords don&apos;t match</p>
                     )}
                     {password && confirmPassword && password === confirmPassword && (
-                      <p className="text-sm text-green-600 mt-1">Passwords match ✓</p>
+                      <p className="text-sm text-success mt-1">Passwords match ✓</p>
                     )}
                   </div>
 
