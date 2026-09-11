@@ -5,6 +5,7 @@ import { ThemeProvider, useTheme } from 'next-themes';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
 import { WebVitals } from '@/components/web-vitals';
+import { isPlanUpgradeRequired } from '@/lib/plan-access';
 
 function ThemedToaster() {
   const { resolvedTheme } = useTheme();
@@ -35,7 +36,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
             staleTime: 60_000,
             gcTime: 5 * 60_000,
             refetchOnWindowFocus: false,
-            retry: 1,
+            // A paywall is not transient. Retrying it doubles the 403s and
+            // delays the lock by a full backoff, so it is never retried.
+            retry: (failureCount, error) =>
+              !isPlanUpgradeRequired(error) && failureCount < 1,
           },
         },
       }),

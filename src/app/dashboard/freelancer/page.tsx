@@ -22,6 +22,8 @@ import type { Contract, Proposal, Project } from '@/types';
 import { reportLoadFailure } from '@/lib/report-failure';
 import { DollarSign, FolderOpen, FileText, Star, TrendingUp, Clock, ArrowUpRight, Briefcase, Wallet } from 'lucide-react';
 import { formatAmount, formatNumber, formatRelativeTime, formatDate } from '@/lib/format';
+import { ProGate } from '@/components/billing/pro-gate';
+import { usePlan } from '@/hooks/use-plan';
 import { WalletConnectBanner } from '@/components/wallet/wallet-connect-banner';
 import { TourStepLink } from '@/components/onboarding/tour-step-link';
 import { WalletBalanceCard } from '@/components/wallet/wallet-balance-card';
@@ -90,7 +92,9 @@ export default function FreelancerDashboard() {
   // it for 60s, so a client cache keyed on the range avoids re-requesting a value
   // the server would only serve from its own cache anyway.
   const analyticsRange = useMemo(() => resolveRange(range, new Date()), [range]);
-  const { data: analytics } = useFreelancerAnalytics(analyticsRange, Boolean(currentUser));
+  const { isPro } = usePlan();
+  // Free users never fire this request: the tile below renders a lock instead.
+  const { data: analytics } = useFreelancerAnalytics(analyticsRange, Boolean(currentUser) && isPro);
   const totalEarnings = analytics?.totalEarnings ?? null;
   const projectsCompleted = analytics?.projectsCompleted ?? null;
 
@@ -181,6 +185,11 @@ export default function FreelancerDashboard() {
 
     // 2. Asynchronously / Progressively Load AI Recommendations in Background
     const loadRecommendations = async () => {
+      // Pro-only: the card body below renders a lock instead.
+      if (!isPro) {
+        setRecommendedLoading(false);
+        return;
+      }
       try {
         setRecommendedLoading(true);
         const recommendationsRes = await matchingApi.getProjectRecommendations(3);
@@ -214,7 +223,8 @@ export default function FreelancerDashboard() {
     return () => {
       active = false;
     };
-  }, [currentUser]);
+    // isPro gates loadRecommendations, so an upgrade mid-session re-runs it.
+  }, [currentUser, isPro]);
 
   const hasData = activeContracts.length > 0 || recentProposals.length > 0;
   if (coreLoading && !hasData) {
@@ -232,6 +242,8 @@ export default function FreelancerDashboard() {
       loading: totalEarnings === null && projectsCompleted === null,
       // Named, not positional — see the note on the employer dashboard.
       tour: 'earnings',
+      // Derived from /analytics/freelancer, which is Pro-only.
+      pro: true,
     },
     {
       title: 'Active Contracts',
@@ -272,12 +284,16 @@ export default function FreelancerDashboard() {
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Welcome back{currentUser?.name ? `, ${currentUser.name}` : ''}!</h1>
           <p className="text-muted-foreground">Here&apos;s what&apos;s happening with your work</p>
-          <AnalyticsRangeFilter
-            value={range}
-            onChange={setRange}
-            label="Earnings date range"
-            className="mt-3"
-          />
+          {/* Hidden on Free: a range control that drives a locked endpoint is
+              a dead control. */}
+          {isPro && (
+            <AnalyticsRangeFilter
+              value={range}
+              onChange={setRange}
+              label="Earnings date range"
+              className="mt-3"
+            />
+          )}
         </div>
         <Button asChild variant="gradient" data-tour="primary-cta" className="w-full sm:w-auto shrink-0">
           <Link href="/dashboard/freelancer/projects">
@@ -299,8 +315,15 @@ export default function FreelancerDashboard() {
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div>
+                  {/* Title and the data-tour anchor stay outside the gate so the
+                      onboarding tour and the tile's identity survive on Free. */}
                   <p className="text-sm text-muted-foreground">{stat.title}</p>
-                  {stat.loading ? (
+                  {'pro' in stat && stat.pro ? (
+                    <ProGate feature="freelancer-analytics" variant="inline">
+                      <p className="text-2xl font-bold mt-1">{stat.value}</p>
+                      {stat.change && <p className="text-xs text-muted-foreground mt-1">{stat.change}</p>}
+                    </ProGate>
+                  ) : stat.loading ? (
                     <Skeleton className="h-7 w-20 mt-1.5 rounded-md" />
                   ) : (
                     <>
@@ -459,6 +482,7 @@ export default function FreelancerDashboard() {
           </Button>
         </CardHeader>
         <CardContent>
+          <ProGate feature="project-recommendations" variant="card">
           {recommendedLoading ? (
             <div className="grid md:grid-cols-3 gap-4" role="status" aria-label="Loading AI recommendations">
               <Skeleton className="h-44 rounded-xl" />
@@ -502,6 +526,7 @@ export default function FreelancerDashboard() {
               ))}
             </div>
           )}
+          </ProGate>
         </CardContent>
       </Card>
 

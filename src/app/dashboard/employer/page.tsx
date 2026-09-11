@@ -11,6 +11,8 @@ import { projectsApi, freelancersApi, reputationApi, matchingApi } from '@/lib/a
 import { useAuthStore } from '@/stores/authStore';
 import { useEmployerAnalytics } from '@/hooks/use-analytics';
 import { AnalyticsRangeFilter } from '@/components/analytics/range-filter';
+import { ProGate } from '@/components/billing/pro-gate';
+import { usePlan } from '@/hooks/use-plan';
 import { DEFAULT_RANGE_PRESET, getRangeLabel, resolveRange, type RangePresetId } from '@/lib/analytics-range';
 import type { Project, Proposal } from '@/types';
 import { reportLoadFailure } from '@/lib/report-failure';
@@ -61,7 +63,9 @@ export default function EmployerDashboard() {
   // Only analytics moves to React Query here — it is the one resource the range
   // filter refetches, and the API already caches it for 60s.
   const analyticsRange = useMemo(() => resolveRange(range, new Date()), [range]);
-  const { data: analytics } = useEmployerAnalytics(analyticsRange, Boolean(currentUser));
+  const { isPro } = usePlan();
+  // Free users never fire this request: the tile below renders a lock instead.
+  const { data: analytics } = useEmployerAnalytics(analyticsRange, Boolean(currentUser) && isPro);
   const totalSpent = analytics?.totalSpent ?? null;
   const completedContractCount = analytics?.projectsCompleted ?? null;
 
@@ -141,6 +145,11 @@ export default function EmployerDashboard() {
 
         // Load AI recommended freelancers in background
         const loadRecommendations = async () => {
+          // Pro-only: the card body below renders a lock instead.
+          if (!isPro) {
+            setRecommendedLoading(false);
+            return;
+          }
           try {
             setRecommendedLoading(true);
             const openProjectIds = openOrActive.map((p) => p.id);
@@ -193,7 +202,8 @@ export default function EmployerDashboard() {
     }
 
     void load();
-  }, [currentUser]);
+    // isPro gates loadRecommendations, so an upgrade mid-session re-runs it.
+  }, [currentUser, isPro]);
 
   if (loading) {
     return (
@@ -224,6 +234,8 @@ export default function EmployerDashboard() {
       // second here, and anchoring the tour by index pointed the "what you have
       // spent" step at Active Projects.
       tour: 'earnings',
+      // Derived from /analytics/employer, which is Pro-only.
+      pro: true,
     },
     {
       title: 'Pending Proposals',
@@ -252,12 +264,16 @@ export default function EmployerDashboard() {
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Welcome back{currentUser?.name ? `, ${currentUser.name}` : ''}!</h1>
           <p className="text-muted-foreground">Manage your projects and find talent</p>
-          <AnalyticsRangeFilter
-            value={range}
-            onChange={setRange}
-            label="Spending date range"
-            className="mt-3"
-          />
+          {/* Hidden on Free: a range control that drives a locked endpoint is
+              a dead control. */}
+          {isPro && (
+            <AnalyticsRangeFilter
+              value={range}
+              onChange={setRange}
+              label="Spending date range"
+              className="mt-3"
+            />
+          )}
         </div>
         <Button asChild variant="gradient" data-tour="primary-cta" className="w-full sm:w-auto shrink-0">
           <Link href="/dashboard/employer/projects/new">
@@ -279,8 +295,14 @@ export default function EmployerDashboard() {
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div>
+                  {/* Title and the data-tour anchor stay outside the gate so the
+                      onboarding tour and the tile's identity survive on Free. */}
                   <p className="text-sm text-muted-foreground">{stat.title}</p>
-                  {stat.loading ? (
+                  {'pro' in stat && stat.pro ? (
+                    <ProGate feature="employer-analytics" variant="inline">
+                      <p className="text-2xl font-bold mt-1">{stat.value}</p>
+                    </ProGate>
+                  ) : stat.loading ? (
                     <Skeleton className="h-7 w-20 mt-1.5 rounded-md" />
                   ) : (
                     <p className="text-2xl font-bold mt-1">{stat.value}</p>
@@ -484,6 +506,7 @@ export default function EmployerDashboard() {
           </Button>
         </CardHeader>
         <CardContent>
+          <ProGate feature="freelancer-recommendations" variant="card">
           {recommendedLoading ? (
             <div className="grid md:grid-cols-3 gap-4" role="status" aria-label="Loading AI recommendations">
               <Skeleton className="h-44 rounded-xl" />
@@ -535,6 +558,7 @@ export default function EmployerDashboard() {
               ))}
             </div>
           )}
+          </ProGate>
         </CardContent>
       </Card>
     </div>

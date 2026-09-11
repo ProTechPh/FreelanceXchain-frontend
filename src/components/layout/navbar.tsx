@@ -57,6 +57,7 @@ const Logo = () => (
 export default function Navbar({
   menu = [
     { title: "Features", url: "/#features" },
+    { title: "Pricing", url: "/pricing" },
     { title: "Ecosystem", url: "/#ecosystem" },
     { title: "Compare", url: "/#compare" },
     { title: "Reviews", url: "/#reviews" },

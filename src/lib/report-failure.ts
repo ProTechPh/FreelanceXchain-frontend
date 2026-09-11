@@ -41,6 +41,13 @@ export function reportFailure(
   const { onRetry, retryLabel = 'Retry', id, ...describeOptions } = options;
   const failure = describeFailure(error, action, describeOptions);
 
+  // A paywall is explained by the lock panel that is already on screen, with an
+  // Upgrade button next to it. A toast on top would be noise repeating what the
+  // user can see, so it is suppressed here rather than at every call site.
+  // Invariant: every request that can return PLAN_UPGRADE_REQUIRED is rendered
+  // behind a ProGate, so suppressing this never leaves a failure unexplained.
+  if (failure.kind === 'plan-upgrade') return 'plan-upgrade';
+
   // The user-facing copy is deliberately generic for server faults, so keep the
   // real error where a developer can still find it.
   if (failure.kind === 'server' || failure.kind === 'unknown') {

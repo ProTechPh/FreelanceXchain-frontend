@@ -13,6 +13,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
 import { Field } from '@/components/ui/field';
 import { Markdown } from '@/components/ui/markdown';
+import { ProGate } from '@/components/billing/pro-gate';
+import { usePlan } from '@/hooks/use-plan';
 
 export default function SkillAnalysisPage() {
   const [analysis, setAnalysis] = useState<SkillGapAnalysis | null>(null);
@@ -21,8 +23,15 @@ export default function SkillAnalysisPage() {
   const [loadingAnalysis, setLoadingAnalysis] = useState(true);
   const [extracting, setExtracting] = useState(false);
   const [addedSkills, setAddedSkills] = useState<Set<string>>(new Set());
+  const { isPro, isResolved } = usePlan();
 
   const loadAnalysis = useCallback(async () => {
+    // The gate renders the lock; this keeps the request from being sent at all,
+    // so a Free user never generates a 403 on mount.
+    if (!isPro) {
+      setLoadingAnalysis(false);
+      return;
+    }
     setLoadingAnalysis(true);
     try {
       const { data } = await matchingApi.getSkillGaps();
@@ -35,13 +44,16 @@ export default function SkillAnalysisPage() {
     } finally {
       setLoadingAnalysis(false);
     }
-  }, []);
+  }, [isPro]);
 
   useEffect(() => {
     // The initial analysis is generated from the authenticated freelancer profile.
+    // Wait for the session to be confirmed so a Pro user is not skipped on the
+    // first pass while the plan is still unknown.
+    if (!isResolved) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadAnalysis();
-  }, [loadAnalysis]);
+  }, [loadAnalysis, isResolved]);
 
   const extractSkills = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -72,6 +84,7 @@ export default function SkillAnalysisPage() {
     <div className="mx-auto max-w-5xl space-y-6">
       <div><h1 className="flex items-center gap-2 text-2xl font-bold"><BrainCircuit className="size-6 text-primary" />Skill analysis</h1><p className="text-muted-foreground">Find your skill gaps, and pull recognised skills out of any job description.</p></div>
 
+      <ProGate feature="skill-gaps" variant="page">
       <div className="flex justify-end"><Button type="button" variant="outline" loading={loadingAnalysis} loadingText="Analysing…" onClick={() => void loadAnalysis()}><TrendingUp className="size-4" aria-hidden="true" />Refresh analysis</Button></div>
 
       {loadingAnalysis ? (
@@ -128,6 +141,7 @@ export default function SkillAnalysisPage() {
           </div>}
         </CardContent>
       </Card>
+      </ProGate>
     </div>
   );
 }

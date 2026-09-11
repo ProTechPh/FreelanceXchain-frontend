@@ -24,6 +24,7 @@ const footerLinks: FooterSection[] = [
 			{ title: 'Smart Contract Escrow', href: '/#features' },
 			{ title: 'AI Matching Engine', href: '/#features' },
 			{ title: 'How It Works', href: '/how-it-works' },
+			{ title: 'Pricing', href: '/pricing' },
 		],
 	},
 	{

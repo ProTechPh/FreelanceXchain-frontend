@@ -1,4 +1,4 @@
-import { Activity, AlertTriangle, BarChart3, Bell, BrainCircuit, ClipboardList, FileText, FolderOpen, Image, LayoutDashboard, Mail, MessageSquare, PlusCircle, Search, Shield, Sparkles, Star, Tags, Users, Wallet } from 'lucide-react';
+import { Activity, AlertTriangle, BarChart3, Bell, BrainCircuit, ClipboardList, CreditCard, FileText, FolderOpen, Image, LayoutDashboard, Mail, MessageSquare, PlusCircle, Search, Shield, Sparkles, Star, Tags, Users, Wallet } from 'lucide-react';
 
 import { getDashboardMessageRoute } from '@/lib/dashboard-message-route';
 import { isNavItemActive } from '@/lib/nav-active';
@@ -8,6 +8,11 @@ export interface NavItem {
   label: string;
   href: string;
   icon: React.ElementType;
+  /**
+   * Marks a route whose main content is Pro-only. Rendered as an upsell badge
+   * that disappears once the viewer is entitled — never shown to admins.
+   */
+  pro?: boolean;
 }
 
 export interface NavSection {
@@ -32,7 +37,7 @@ const freelancerNav: NavSection[] = [
     title: 'Find work',
     items: [
       { label: 'Browse projects', href: '/dashboard/freelancer/projects', icon: Search },
-      { label: 'Recommended', href: '/dashboard/freelancer/recommendations', icon: Sparkles },
+      { label: 'Recommended', href: '/dashboard/freelancer/recommendations', icon: Sparkles, pro: true },
       { label: 'My proposals', href: '/dashboard/freelancer/proposals', icon: FileText },
     ],
   },
@@ -49,7 +54,8 @@ const freelancerNav: NavSection[] = [
     items: [
       { label: 'Portfolio', href: '/dashboard/freelancer/portfolio', icon: Image },
       { label: 'Reputation', href: '/dashboard/freelancer/reputation', icon: Star },
-      { label: 'Skill analysis', href: '/dashboard/freelancer/skill-analysis', icon: BrainCircuit },
+      { label: 'Skill analysis', href: '/dashboard/freelancer/skill-analysis', icon: BrainCircuit, pro: true },
+      { label: 'Plan & billing', href: '/dashboard/freelancer/billing', icon: CreditCard },
     ],
   },
 ];
@@ -79,7 +85,10 @@ const employerNav: NavSection[] = [
   },
   {
     title: 'Profile',
-    items: [{ label: 'Reputation', href: '/dashboard/employer/reputation', icon: Star }],
+    items: [
+      { label: 'Reputation', href: '/dashboard/employer/reputation', icon: Star },
+      { label: 'Plan & billing', href: '/dashboard/employer/billing', icon: CreditCard },
+    ],
   },
 ];
 

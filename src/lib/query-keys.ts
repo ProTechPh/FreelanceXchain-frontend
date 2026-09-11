@@ -15,6 +15,11 @@ export const qk = {
   auditSearch: (params: AuditSearchParams) => ['audit-logs', 'search', params] as const,
   adminActivity: (startDate: string, endDate: string) =>
     ['audit-logs', 'admin-activity', startDate, endDate] as const,
+  /**
+   * Billing state. Read with STALE_TIME.none: returning from the Stripe portal
+   * or from checkout must show the new state immediately, not a cached one.
+   */
+  subscription: () => ['billing', 'subscription'] as const,
 };
 
 /**

@@ -23,6 +23,8 @@ import { Field, useField } from '@/components/ui/field';
 import { reportFailure } from '@/lib/report-failure';
 import { formatAmount } from '@/lib/format';
 import { proposalsApi, matchingApi, type AIProposalResult } from '@/lib/api';
+import { UpgradeButton } from '@/components/billing/upgrade-button';
+import { usePlan } from '@/hooks/use-plan';
 import {
   MAX_FILE_COUNT,
   ProposalFormValidationError,
@@ -126,6 +128,14 @@ export function ProposalDialog({
     ? 'Verify your identity first.'
     : null;
 
+  const { isPro } = usePlan();
+  /**
+   * Why the AI draft is unavailable. Separate from blockedReason on purpose:
+   * only the AI draft is Pro-gated. Writing and submitting a proposal by hand
+   * stays free, and the KYC gate on submit is untouched.
+   */
+  const proBlockedReason = !isPro ? 'Drafting with AI is a Pro feature.' : null;
+
   const handleGenerateAI = useCallback(async (notes?: string) => {
     if (!project) return;
     setGeneratingAI(true);
@@ -172,11 +182,11 @@ export function ProposalDialog({
   }, [project]);
 
   useEffect(() => {
-    if (open && initialGenerateAI && project && !aiProposal && !generatingAI) {
+    if (open && initialGenerateAI && isPro && project && !aiProposal && !generatingAI) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       void handleGenerateAI();
     }
-  }, [open, initialGenerateAI, project, aiProposal, generatingAI, handleGenerateAI]);
+  }, [open, initialGenerateAI, isPro, project, aiProposal, generatingAI, handleGenerateAI]);
 
   const [confirmDiscardOpen, setConfirmDiscardOpen] = useState(false);
 
@@ -315,26 +325,40 @@ export function ProposalDialog({
                 Automatically drafts a tailored pitch using your <strong>portfolio projects</strong>, <strong>verified skills</strong>, and <strong>on-chain reputation</strong>.
               </p>
             </div>
-            <Button
-              type="button"
-              variant={aiProposal ? 'outline' : 'gradient'}
-              size="sm"
-              loading={generatingAI}
-              loadingText="Analyzing & Drafting…"
-              disabled={generatingAI || submitting}
-              onClick={() => void handleGenerateAI(customNotes)}
-              className="w-full shrink-0 font-medium sm:w-auto"
-            >
-              {aiProposal ? (
-                <>
-                  <RefreshCw className="size-3.5 mr-1.5" /> Regenerate
-                </>
-              ) : (
-                <>
-                  <Wand2 className="size-3.5 mr-1.5" /> Draft with AI (1-Click)
-                </>
-              )}
-            </Button>
+            {isPro ? (
+              <Button
+                type="button"
+                variant={aiProposal ? 'outline' : 'gradient'}
+                size="sm"
+                loading={generatingAI}
+                loadingText="Analyzing & Drafting…"
+                disabled={generatingAI || submitting}
+                onClick={() => void handleGenerateAI(customNotes)}
+                className="w-full shrink-0 font-medium sm:w-auto"
+              >
+                {aiProposal ? (
+                  <>
+                    <RefreshCw className="size-3.5 mr-1.5" /> Regenerate
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="size-3.5 mr-1.5" /> Draft with AI (1-Click)
+                  </>
+                )}
+              </Button>
+            ) : (
+              <span
+                title={proBlockedReason ?? undefined}
+                className="w-full shrink-0 sm:w-auto"
+              >
+                <UpgradeButton
+                  source="ai-proposal"
+                  size="sm"
+                  label="Upgrade to draft with AI"
+                  className="w-full font-medium"
+                />
+              </span>
+            )}
           </div>
 
           {/* Optional notes for AI customization */}

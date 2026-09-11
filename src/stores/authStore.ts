@@ -13,6 +13,7 @@ import {
   clearAccessToken as clearTokenStorage,
 } from '@/lib/auth-token';
 import { getKycReminderStorageKey } from '@/lib/first-login-kyc';
+import { registerPlanDesyncHandler } from '@/lib/plan-sync';
 
 interface AuthState {
   user: User | null;
@@ -22,6 +23,15 @@ interface AuthState {
   mfaPending: boolean;
   mfaSessionToken: string | null;
   hasHydrated: boolean;
+  /**
+   * True once this page load has confirmed the session against the server.
+   *
+   * Deliberately NOT persisted, so it is false on every page load by
+   * construction — there is no way to persist a "trust me" bit. The plan we
+   * rehydrate from localStorage is a display hint, never an entitlement
+   * decision, and gates render a skeleton until this flips.
+   */
+  sessionVerified: boolean;
   login: (email: string, password: string) => Promise<{ mfaRequired?: boolean }>;
   register: (email: string, password: string, role: UserRole) => Promise<void>;
   logout: () => Promise<void>;
@@ -32,6 +42,8 @@ interface AuthState {
   beginMfa: (mfaSessionToken: string) => void;
   clearMfa: () => void;
   setHasHydrated: (value: boolean) => void;
+  /** Re-read the plan from /auth/me without blanking the UI. */
+  refreshPlan: () => Promise<void>;
 }
 
 function beginKycReminderSession(userId: string) {
@@ -48,6 +60,7 @@ export const useAuthStore = create<AuthState>()(
       mfaPending: false,
       mfaSessionToken: null,
       hasHydrated: false,
+      sessionVerified: false,
 
       login: async (email: string, password: string) => {
         set({ isLoading: true, mfaPending: false, mfaSessionToken: null });
@@ -72,6 +85,7 @@ export const useAuthStore = create<AuthState>()(
             isLoading: false,
             mfaPending: false,
             mfaSessionToken: null,
+            sessionVerified: true,
           });
           return {};
         } catch (error) {
@@ -95,6 +109,7 @@ export const useAuthStore = create<AuthState>()(
             accessToken: data.accessToken,
             isAuthenticated: true,
             isLoading: false,
+            sessionVerified: true,
           });
         } catch (error) {
           set({ isLoading: false });
@@ -117,6 +132,7 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: false,
             mfaPending: false,
             mfaSessionToken: null,
+            sessionVerified: false,
           });
         }
       },
@@ -126,7 +142,7 @@ export const useAuthStore = create<AuthState>()(
         const wasAuthenticated = useAuthStore.getState().isAuthenticated;
 
         if (!hasToken && !wasAuthenticated) {
-          set({ isAuthenticated: false, user: null, accessToken: null, isLoading: false });
+          set({ isAuthenticated: false, user: null, accessToken: null, isLoading: false, sessionVerified: false });
           return;
         }
 
@@ -143,6 +159,7 @@ export const useAuthStore = create<AuthState>()(
             accessToken: token,
             isAuthenticated: true,
             isLoading: false,
+            sessionVerified: true,
           });
         } catch {
           try {
@@ -155,6 +172,7 @@ export const useAuthStore = create<AuthState>()(
                 accessToken: refreshData.accessToken,
                 isAuthenticated: true,
                 isLoading: false,
+                sessionVerified: true,
               });
               return;
             }
@@ -163,7 +181,7 @@ export const useAuthStore = create<AuthState>()(
           }
 
           clearTokenStorage();
-          set({ user: null, accessToken: null, isAuthenticated: false, isLoading: false });
+          set({ user: null, accessToken: null, isAuthenticated: false, isLoading: false, sessionVerified: false });
         }
       },
 
@@ -176,6 +194,7 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: true,
           mfaPending: false,
           mfaSessionToken: null,
+          sessionVerified: true,
         });
       },
 
@@ -196,6 +215,29 @@ export const useAuthStore = create<AuthState>()(
       setAccessToken: (token) => {
         setTokenStorage(token);
         set({ accessToken: token });
+      },
+
+      /**
+       * Re-read the plan after an upgrade, a portal visit, or a 403 desync.
+       *
+       * Deliberately does NOT touch isLoading: DashboardLayout unmounts its
+       * children while loading, so flipping it here would blank the dashboard
+       * every time we resync. A failure is a no-op — the server-side gate is
+       * the real enforcement point, this only keeps the UI honest.
+       */
+      refreshPlan: async () => {
+        if (!getAccessToken() && !useAuthStore.getState().isAuthenticated) return;
+
+        try {
+          const { data } = await authApi.getMe();
+          const fresh = normalizeAuthUser(data.user);
+          set((state) => ({
+            user: state.user ? { ...state.user, plan: fresh.plan, planStatus: fresh.planStatus } : fresh,
+            sessionVerified: true,
+          }));
+        } catch {
+          // Leave the current plan in place; the gate still fails closed server-side.
+        }
       },
 
       setHasHydrated: (value: boolean) => set((state) => ({
@@ -221,3 +263,11 @@ export const useAuthStore = create<AuthState>()(
     }
   )
 );
+
+/**
+ * Let the axios client ask for a plan refresh without importing this store
+ * (which would close an import cycle back through `@/lib/api`).
+ */
+registerPlanDesyncHandler(() => {
+  void useAuthStore.getState().refreshPlan();
+});

@@ -48,6 +48,41 @@ export type NotificationType =
   | 'saved_search_match'
   | 'project_match';
 
+/** Billing tier. Computed server-side; the client never derives it. */
+export type PlanTier = 'free' | 'pro';
+
+/** Mirrors Stripe's subscription status, plus 'none' for "never subscribed". */
+export type SubscriptionStatus =
+  | 'none'
+  | 'incomplete'
+  | 'incomplete_expired'
+  | 'trialing'
+  | 'active'
+  | 'past_due'
+  | 'canceled'
+  | 'unpaid'
+  | 'paused';
+
+export interface Subscription {
+  plan: PlanTier;
+  status: SubscriptionStatus;
+  isPro: boolean;
+  /** ISO-8601, or null when there has never been a subscription. */
+  currentPeriodEnd: string | null;
+  cancelAtPeriodEnd: boolean;
+  /** True once a Stripe customer exists, so the portal can be offered. */
+  manageable: boolean;
+}
+
+export interface BillingRedirect {
+  url: string;
+}
+
+export interface CheckoutSessionResponse {
+  url: string;
+  sessionId: string;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -57,6 +92,13 @@ export interface User {
   kycStatus?: KycStatus;
   emailVerification?: boolean;
   authProvider?: 'email' | 'oauth';
+  /**
+   * Entitlement, computed server-side. Absent on an older API build, which
+   * resolvePlan() reads as 'free'. Gate on this, never on planStatus.
+   */
+  plan?: PlanTier;
+  /** Display nuance only (e.g. a "payment failed" banner). Never gate on it. */
+  planStatus?: SubscriptionStatus;
   createdAt: string;
   updatedAt: string;
 }
@@ -691,6 +733,8 @@ export interface AuthApiUser {
   createdAt: string;
   authProvider?: 'email' | 'oauth';
   emailVerification?: boolean;
+  plan?: PlanTier;
+  planStatus?: SubscriptionStatus;
 }
 
 export interface AuthSuccessResponse {

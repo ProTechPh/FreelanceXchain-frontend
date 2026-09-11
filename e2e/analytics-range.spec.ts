@@ -1,7 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
 
 const createdAt = '2026-08-06T00:00:00.000Z';
-const freelancer = { id: 'freelancer-5', email: 'freelancer@example.com', name: 'Freelancer', role: 'freelancer', walletAddress: '0x1111111111111111111111111111111111111111', kycStatus: 'approved', createdAt, updatedAt: createdAt };
+// plan: 'pro' — /analytics/freelancer is Pro-gated, and on Free the query is
+// never enabled, so no request fires and the assertions below would hang.
+const freelancer = { id: 'freelancer-5', email: 'freelancer@example.com', name: 'Freelancer', role: 'freelancer', plan: 'pro', walletAddress: '0x1111111111111111111111111111111111111111', kycStatus: 'approved', createdAt, updatedAt: createdAt };
 
 async function setup(page: Page, onAnalytics: (url: URL) => void) {
   await page.addInitScript((storedUser) => {

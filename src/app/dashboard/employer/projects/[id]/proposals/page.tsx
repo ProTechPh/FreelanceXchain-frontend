@@ -45,6 +45,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { freelancersApi, matchingApi, projectsApi, proposalsApi, type FreelancerRecommendation } from '@/lib/api';
+import { ProGate } from '@/components/billing/pro-gate';
+import { usePlan } from '@/hooks/use-plan';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { formatFileSize, safeAttachmentUrl } from '@/lib/attachment-presentation';
 import {
@@ -72,6 +74,7 @@ export default function EmployerProjectProposalsPage() {
   const [recommendations, setRecommendations] = useState<FreelancerRecommendation[]>([]);
   const [loading, setLoading] = useState(true);
   const [recommendationsLoading, setRecommendationsLoading] = useState(true);
+  const { isPro } = usePlan();
   const [decision, setDecision] = useState<PendingDecision | null>(null);
   const [updating, setUpdating] = useState(false);
   const [showRecommendations, setShowRecommendations] = useState(true);
@@ -108,7 +111,13 @@ export default function EmployerProjectProposalsPage() {
       setProfiles((prev) => ({ ...prev, ...Object.fromEntries(initialProfileEntries) }));
       setLoading(false);
 
-      // 2. Fetch recommendations progressively in background
+      // 2. Fetch recommendations progressively in background.
+      // Pro-only: the panel below renders a lock instead, so a Free employer
+      // never sends this request. The proposal list itself stays free.
+      if (!isPro) {
+        setRecommendationsLoading(false);
+        return;
+      }
       setRecommendationsLoading(true);
       try {
         const recRes = await matchingApi.getFreelancerRecommendations(projectId, 5);
@@ -143,7 +152,8 @@ export default function EmployerProjectProposalsPage() {
       reportFailure(error, 'load the proposals for this project');
       setLoading(false);
     }
-  }, [projectId]);
+    // isPro gates the recommendations fetch, so an upgrade mid-session re-runs it.
+  }, [projectId, isPro]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -246,7 +256,7 @@ export default function EmployerProjectProposalsPage() {
       </div>
 
       {/* Recommended Talent (AI Matches) */}
-      {(recommendationsLoading || recommendations.length > 0) && (
+      {(!isPro || recommendationsLoading || recommendations.length > 0) && (
         <Card className="overflow-hidden">
           <CardHeader className="pb-3 border-b border-border/80 bg-secondary/15 flex flex-row items-center justify-between gap-2 space-y-0">
             <div className="flex items-center gap-2.5">
@@ -289,6 +299,7 @@ export default function EmployerProjectProposalsPage() {
 
           {showRecommendations && (
             <CardContent className="pt-4">
+              <ProGate feature="freelancer-recommendations" variant="card">
               {recommendationsLoading ? (
                 <div className="grid gap-3 lg:grid-cols-2" role="status" aria-label="Loading talent recommendations">
                   <Skeleton className="h-44 rounded-xl" />
@@ -374,6 +385,7 @@ export default function EmployerProjectProposalsPage() {
                   })}
                 </div>
               )}
+              </ProGate>
             </CardContent>
           )}
         </Card>

@@ -98,6 +98,10 @@ export function normalizeAuthUser(user: AuthApiUser): User {
     ...(user.kycStatus ? { kycStatus: user.kycStatus } : {}),
     ...(typeof user.emailVerification === 'boolean' ? { emailVerification: user.emailVerification } : {}),
     ...(user.authProvider ? { authProvider: user.authProvider } : {}),
+    // Forwarded explicitly: this function rebuilds the user field by field, so
+    // anything not named here is silently dropped and every user reads as Free.
+    ...(user.plan ? { plan: user.plan } : {}),
+    ...(user.planStatus ? { planStatus: user.planStatus } : {}),
     createdAt: user.createdAt,
     updatedAt: user.createdAt,
   };
