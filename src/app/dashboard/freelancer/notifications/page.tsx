@@ -11,7 +11,7 @@ import { useAuthStore } from '@/stores/authStore';
 import type { Notification, NotificationType } from '@/types';
 import { toast } from 'sonner';
 import { reportFailure, reportLoadFailure } from '@/lib/report-failure';
-import { FileText, DollarSign, MessageSquare, CheckCircle, XCircle, AlertTriangle, Clock, Star, RefreshCw, BellOff, type LucideIcon } from 'lucide-react';
+import { FileText, DollarSign, MessageSquare, CheckCircle, XCircle, AlertTriangle, Clock, Star, RefreshCw, BellOff, Sparkles, type LucideIcon } from 'lucide-react';
 import { formatRelativeTime } from '@/lib/format';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
@@ -36,6 +36,8 @@ const ICON_BY_TYPE: Record<NotificationType, { icon: LucideIcon; color: string; 
   rush_upgrade_declined: { icon: XCircle, color: 'text-destructive', bg: 'bg-destructive-subtle' },
   rush_upgrade_counter_offered: { icon: Clock, color: 'text-primary', bg: 'bg-primary/10' },
   message: { icon: MessageSquare, color: 'text-primary', bg: 'bg-primary/10' },
+  saved_search_match: { icon: FileText, color: 'text-primary', bg: 'bg-primary/10' },
+  project_match: { icon: Sparkles, color: 'text-primary', bg: 'bg-primary/10' },
 };
 
 function relativeTime(iso: string | null | undefined): string {
