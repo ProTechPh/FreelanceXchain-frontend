@@ -582,11 +582,7 @@ export function AccountSettings() {
                 />
               </div>
               {files.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  {user?.role === 'employer'
-                    ? 'No project attachments or company documents stored.'
-                    : 'No proposal, contract, or portfolio files stored.'}
-                </p>
+                <p className="text-sm text-muted-foreground">No proposal or portfolio files stored.</p>
               ) : (
                 <ul className="divide-y divide-border rounded-lg border border-border">
                   {files.map((file) => {
@@ -634,7 +630,7 @@ export function AccountSettings() {
       </Card>
 
       {/* Danger Zone: Account Deletion (GDPR / Data Privacy Compliance) */}
-      {(user?.role === 'freelancer' || user?.role === 'employer') && (
+      {user?.role === 'freelancer' && (
         <Card className="border-destructive/40 bg-destructive/5">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-destructive">

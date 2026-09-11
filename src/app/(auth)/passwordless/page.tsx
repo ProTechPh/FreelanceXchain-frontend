@@ -133,7 +133,7 @@ export default function PasswordlessPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-5">
-                <Field label="Email address" htmlFor="passwordless-email">
+                <Field label="Email" htmlFor="passwordless-email">
                   <Input
                     id="passwordless-email"
                     type="email"
@@ -174,7 +174,7 @@ export default function PasswordlessPage() {
                     <div className="rounded-lg bg-primary/5 border border-primary/20 p-3 text-xs text-foreground">
                       Enter the 6-digit verification code sent to <strong>{email}</strong>.
                     </div>
-                    <Field label="One-time verification code" htmlFor="passwordless-code">
+                    <Field label="One-time code" htmlFor="passwordless-code">
                       <Input
                         id="passwordless-code"
                         inputMode="numeric"

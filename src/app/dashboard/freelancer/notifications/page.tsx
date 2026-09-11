@@ -15,7 +15,6 @@ import { FileText, DollarSign, MessageSquare, CheckCircle, XCircle, AlertTriangl
 import { formatRelativeTime } from '@/lib/format';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const ICON_BY_TYPE: Record<NotificationType, { icon: LucideIcon; color: string; bg: string }> = {
   proposal_received: { icon: FileText, color: 'text-info', bg: 'bg-info-subtle' },
@@ -151,13 +150,25 @@ export function NotificationsCenter() {
         </div>
       </div>
 
-      {/* Accessible Design System Tabs */}
-      <Tabs value={tab} onValueChange={(val) => setTab(val as Tab)}>
-        <TabsList>
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="unread">Unread ({unreadCount})</TabsTrigger>
-        </TabsList>
-      </Tabs>
+      {/* Tabs */}
+      <div className="flex gap-4 border-b border-border pb-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          className={tab === 'all' ? 'border-b-2 border-primary rounded-none' : 'text-muted-foreground'}
+          onClick={() => setTab('all')}
+        >
+          All
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className={tab === 'unread' ? 'border-b-2 border-primary rounded-none' : 'text-muted-foreground'}
+          onClick={() => setTab('unread')}
+        >
+          Unread ({unreadCount})
+        </Button>
+      </div>
 
       {/* Notifications List with PullToRefresh */}
       <PullToRefresh onRefresh={loadFirstPage}>

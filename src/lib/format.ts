@@ -19,16 +19,6 @@ function getLocale(userLocale?: string): string {
 
 const currencyFormatters = new Map<string, Intl.NumberFormat>();
 
-const ISO_CURRENCIES = new Set([
-  'USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY', 'INR', 'SGD', 'HKD', 'NZD', 'SEK', 'KRW', 'BRL', 'MXN'
-]);
-
-function isCryptoCurrency(currency: string): boolean {
-  const upper = currency.toUpperCase();
-  if (['ETH', 'BTC', 'USDC', 'USDT', 'SOL', 'MATIC', 'DAI'].includes(upper)) return true;
-  return !ISO_CURRENCIES.has(upper);
-}
-
 function currencyFormatter(currency: string, fractionDigits: number, locale?: string): Intl.NumberFormat {
   const effectiveLocale = getLocale(locale);
   const key = `${effectiveLocale}:${currency}:${fractionDigits}`;
@@ -56,7 +46,7 @@ export interface AmountOptions {
 /**
  * Formats a monetary amount. Whole values render without cents ($1,200) and
  * fractional ones keep them ($1,200.50), so dense tables stay readable without
- * ever truncating a real cent value. Supports both fiat ($1,200) and crypto (0.50 ETH).
+ * ever truncating a real cent value.
  */
 export function formatAmount(value: number | string | null | undefined, options: AmountOptions = {}): string {
   const amount = typeof value === 'string' ? Number(value) : value;
@@ -64,33 +54,21 @@ export function formatAmount(value: number | string | null | undefined, options:
   const { currency = 'USD', locale } = options;
   const fractionDigits = options.fractionDigits ?? (Number.isInteger(amount) ? 0 : 2);
 
-  if (isCryptoCurrency(currency)) {
+  try {
+    return currencyFormatter(currency, fractionDigits, locale).format(amount);
+  } catch {
     const formattedNum = new Intl.NumberFormat(getLocale(locale), {
       minimumFractionDigits: fractionDigits,
       maximumFractionDigits: fractionDigits,
     }).format(amount);
-    return `${formattedNum} ${currency}`;
-  }
-
-  try {
-    return currencyFormatter(currency, fractionDigits, locale).format(amount);
-  } catch {
-    return `${amount.toFixed(fractionDigits)} ${currency}`;
+    return `${currency} ${formattedNum}`;
   }
 }
 
-/** Compact form for KPI tiles and charts: $1.2K, $3.4M, 1.2K ETH. */
+/** Compact form for KPI tiles and charts: $1.2K, $3.4M. */
 export function formatAmountCompact(value: number | null | undefined, currency = 'USD', locale?: string): string {
   if (value == null || !Number.isFinite(value)) return '—';
   if (Math.abs(value) < 1000) return formatAmount(value, { currency, locale });
-
-  if (isCryptoCurrency(currency)) {
-    const compactNum = new Intl.NumberFormat(getLocale(locale), {
-      notation: 'compact',
-      maximumFractionDigits: 1,
-    }).format(value);
-    return `${compactNum} ${currency}`;
-  }
 
   try {
     return new Intl.NumberFormat(getLocale(locale), {
@@ -100,7 +78,11 @@ export function formatAmountCompact(value: number | null | undefined, currency =
       maximumFractionDigits: 1,
     }).format(value);
   } catch {
-    return `${value.toLocaleString(getLocale(locale))} ${currency}`;
+    const compactNum = new Intl.NumberFormat(getLocale(locale), {
+      notation: 'compact',
+      maximumFractionDigits: 1,
+    }).format(value);
+    return `${currency} ${compactNum}`;
   }
 }
 

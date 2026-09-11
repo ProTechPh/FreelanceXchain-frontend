@@ -214,7 +214,7 @@ test('authenticated user sees dashboard navigation instead of sign in or get sta
 
   // Should NOT show Sign in or Get Started in navbar
   await expect(page.getByRole('link', { name: 'Sign in' })).toBeHidden();
-  await expect(page.getByRole('link', { name: 'Get Started' })).toBeHidden();
+  await expect(page.getByRole('link', { name: 'Get Started', exact: true })).toBeHidden();
 
   // Should show Dashboard button linking to role dashboard
   const dashboardLinks = page.getByRole('link', { name: 'Dashboard' });

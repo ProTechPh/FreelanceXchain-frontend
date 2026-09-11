@@ -13,7 +13,6 @@ import { Label } from '@/components/ui/label';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { EmptyState } from '@/components/ui/empty-state';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { formatAuditAction, formatAuditResource, formatDateTime } from '@/lib/format';
 
@@ -83,17 +82,17 @@ export function ActivityLog() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="activity-status">Status</Label>
-            <Select value={status} onValueChange={(val) => { if (val) setStatus(val as typeof status); }}>
-              <SelectTrigger id="activity-status" className="h-9">
-                <SelectValue placeholder="All statuses" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
-                <SelectItem value="success">Success</SelectItem>
-                <SelectItem value="failure">Failure</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-              </SelectContent>
-            </Select>
+            <select
+              id="activity-status"
+              className="h-9 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground transition-[border-color,box-shadow] duration-fast hover:border-foreground/30 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
+              value={status}
+              onChange={(event) => setStatus(event.target.value as typeof status)}
+            >
+              <option value="all">All statuses</option>
+              <option value="success">Success</option>
+              <option value="failure">Failure</option>
+              <option value="pending">Pending</option>
+            </select>
           </div>
         </CardContent>
       </Card>
