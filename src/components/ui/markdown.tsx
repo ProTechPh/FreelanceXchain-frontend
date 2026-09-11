@@ -1,14 +1,18 @@
 'use client';
 
-import React, { useMemo } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import React, { useState, useEffect, useMemo } from 'react';
+import type { ComponentType } from 'react';
+import type { Options as ReactMarkdownOptions } from 'react-markdown';
 import { cn } from '@/lib/utils';
 
-interface MarkdownProps {
+export interface MarkdownProps {
   content: string;
   className?: string;
 }
+
+// Module-level cached instances so imports only execute once across the application
+let cachedReactMarkdown: ComponentType<ReactMarkdownOptions> | null = null;
+let cachedRemarkGfm: any = null;
 
 /**
  * Ensures collapsed single-line lists and tables (often emitted by LLMs) are converted
@@ -53,9 +57,52 @@ function preprocessMarkdown(text: string): string {
 }
 
 export function Markdown({ content, className }: MarkdownProps) {
+  const [modules, setModules] = useState<{
+    ReactMarkdownComponent: ComponentType<ReactMarkdownOptions>;
+    gfmPlugin: any;
+  } | null>(() => {
+    if (cachedReactMarkdown && cachedRemarkGfm) {
+      return { ReactMarkdownComponent: cachedReactMarkdown, gfmPlugin: cachedRemarkGfm };
+    }
+    return null;
+  });
+
+  useEffect(() => {
+    if (!modules) {
+      Promise.all([
+        import('react-markdown').then((m) => m.default),
+        import('remark-gfm').then((m) => m.default),
+      ]).then(([loadedComponent, loadedGfm]) => {
+        cachedReactMarkdown = loadedComponent as unknown as ComponentType<ReactMarkdownOptions>;
+        cachedRemarkGfm = loadedGfm;
+        setModules({
+          ReactMarkdownComponent: cachedReactMarkdown,
+          gfmPlugin: cachedRemarkGfm,
+        });
+      }).catch(() => {
+        // Fallback gracefully if import fails
+      });
+    }
+  }, [modules]);
+
   const processedContent = useMemo(() => preprocessMarkdown(content), [content]);
 
   if (!content) return null;
+
+  if (!modules) {
+    return (
+      <div
+        className={cn(
+          'min-w-0 max-w-full text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap break-words',
+          className
+        )}
+      >
+        {processedContent}
+      </div>
+    );
+  }
+
+  const { ReactMarkdownComponent, gfmPlugin } = modules;
 
   return (
     <div
@@ -64,8 +111,8 @@ export function Markdown({ content, className }: MarkdownProps) {
         className
       )}
     >
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
+      <ReactMarkdownComponent
+        remarkPlugins={[gfmPlugin]}
         components={{
           h1: ({ children }) => (
             <h1 className="text-lg font-bold text-foreground mt-4 mb-2 first:mt-0">
@@ -172,7 +219,7 @@ export function Markdown({ content, className }: MarkdownProps) {
         }}
       >
         {processedContent}
-      </ReactMarkdown>
+      </ReactMarkdownComponent>
     </div>
   );
 }

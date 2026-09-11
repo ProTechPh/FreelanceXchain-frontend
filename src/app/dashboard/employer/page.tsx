@@ -103,14 +103,23 @@ export default function EmployerDashboard() {
           .sort((a, b) => new Date(b.proposal.createdAt).getTime() - new Date(a.proposal.createdAt).getTime())
           .slice(0, 5);
 
+        // Cache freelancer profile & reputation lookups to eliminate duplicate requests
+        const profileScoreCache = new Map<string, Promise<{ profile: any; score: any }>>();
+        const getFreelancerData = (id: string) => {
+          if (!profileScoreCache.has(id)) {
+            profileScoreCache.set(
+              id,
+              Promise.all([
+                freelancersApi.getPublicProfile(id).catch(() => null),
+                reputationApi.getScore(id).catch(() => null),
+              ]).then(([profile, score]) => ({ profile, score }))
+            );
+          }
+          return profileScoreCache.get(id)!;
+        };
+
         const details = await Promise.all(
-          recent.map(async ({ proposal }) => {
-            const [profile, score] = await Promise.all([
-              freelancersApi.getPublicProfile(proposal.freelancerId).catch(() => null),
-              reputationApi.getScore(proposal.freelancerId).catch(() => null),
-            ]);
-            return { profile, score };
-          })
+          recent.map(async ({ proposal }) => getFreelancerData(proposal.freelancerId))
         );
 
         setRecentProposals(
@@ -149,13 +158,7 @@ export default function EmployerDashboard() {
               .slice(0, 3);
             if (uniqueRecs.length === 0) return;
             const profiles = await Promise.all(
-              uniqueRecs.map(async (rec) => {
-                const [profile, score] = await Promise.all([
-                  freelancersApi.getPublicProfile(rec.freelancerId).catch(() => null),
-                  reputationApi.getScore(rec.freelancerId).catch(() => null),
-                ]);
-                return { profile, score };
-              })
+              uniqueRecs.map(async (rec) => getFreelancerData(rec.freelancerId))
             );
             setRecommended(
               uniqueRecs.map((rec, i) => ({

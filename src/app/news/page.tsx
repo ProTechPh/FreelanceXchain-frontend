@@ -1,7 +1,7 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import React, { useState, useEffect, useTransition, useCallback } from "react";
+import Image from "next/image";
 import { motion, useReducedMotion } from "motion/react";
 import Navbar from "@/components/layout/navbar";
 import { FooterSection } from "@/components/layout/footer-section";
@@ -23,6 +23,39 @@ import type {
 type NewsCategory = { label: string; coin?: string; filter?: string };
 
 import { toast } from "sonner";
+
+function NewsCardImage({
+  src,
+  alt,
+  priority = false,
+  sizes,
+  fallback = "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&auto=format&fit=crop&q=80",
+}: {
+  src: string;
+  alt: string;
+  priority?: boolean;
+  sizes: string;
+  fallback?: string;
+}) {
+  const [imgSrc, setImgSrc] = useState(src);
+
+  useEffect(() => {
+    setImgSrc(src);
+  }, [src]);
+
+  return (
+    <Image
+      src={imgSrc}
+      alt={alt}
+      fill
+      priority={priority}
+      sizes={sizes}
+      unoptimized
+      onError={() => setImgSrc(fallback)}
+      className="object-cover object-center group-hover:scale-105 transition-transform duration-500"
+    />
+  );
+}
 
 export default function NewsPage() {
   const reduce = useReducedMotion();
@@ -436,17 +469,12 @@ export default function NewsPage() {
             >
               {/* Image Banner */}
               <div className="lg:col-span-7 relative h-64 sm:h-80 lg:h-auto overflow-hidden bg-muted">
-                <img
+                <NewsCardImage
                   src={extractCryptoArticleImage(featuredArticle, featuredArticle.category)}
                   alt={featuredArticle.title}
-                  referrerPolicy="no-referrer"
-                  decoding="async"
-                  fetchPriority="high"
-                  onError={(e) => {
-                    e.currentTarget.onerror = null;
-                    e.currentTarget.src = "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=1200&auto=format&fit=crop&q=80";
-                  }}
-                  className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                  priority={true}
+                  sizes="(max-width: 1024px) 100vw, 58vw"
+                  fallback="https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=1200&auto=format&fit=crop&q=80"
                 />
                 <div className="absolute top-4 left-4 flex items-center gap-2">
                   <span className="px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-bold shadow-md flex items-center gap-1">
@@ -570,17 +598,11 @@ export default function NewsPage() {
                     <div>
                       {/* Card Thumbnail */}
                       <div className="relative aspect-[16/10] overflow-hidden bg-muted">
-                        <img
+                        <NewsCardImage
                           src={imageUrl}
                           alt={article.title}
-                          referrerPolicy="no-referrer"
-                          loading="lazy"
-                          decoding="async"
-                          onError={(e) => {
-                            e.currentTarget.onerror = null;
-                            e.currentTarget.src = "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&auto=format&fit=crop&q=80";
-                          }}
-                          className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          fallback="https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&auto=format&fit=crop&q=80"
                         />
                         <div className="absolute top-3 left-3 flex items-center gap-1.5">
                           <span className="px-2.5 py-0.5 rounded-full bg-card/95 backdrop-blur-md text-foreground text-2xs font-bold border border-border/60 shadow-xs flex items-center gap-1">
