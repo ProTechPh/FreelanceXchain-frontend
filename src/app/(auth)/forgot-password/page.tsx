@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,20 +9,25 @@ import { toast } from 'sonner';
 import { CheckCircle, Mail } from 'lucide-react';
 import { Field } from '@/components/ui/field';
 import { GuestGuard } from '@/components/auth/guest-guard';
+import { TurnstileWidget, type TurnstileWidgetRef } from '@/components/auth/turnstile-widget';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileWidgetRef>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await authApi.forgotPassword(email);
+      await authApi.forgotPassword(email, turnstileToken || undefined);
       setSent(true);
       toast.success('Reset link sent!');
     } catch {
+      turnstileRef.current?.reset();
+      setTurnstileToken(null);
       toast.error('Failed to send reset link');
     } finally {
       setIsLoading(false);
@@ -90,6 +95,15 @@ export default function ForgotPasswordPage() {
                   required
                 />
               </Field>
+
+              <div className="flex justify-center my-2">
+                <TurnstileWidget
+                  ref={turnstileRef}
+                  action="password_reset"
+                  onVerify={setTurnstileToken}
+                  onExpire={() => setTurnstileToken(null)}
+                />
+              </div>
 
               <Button type="submit" variant="gradient" className="w-full" loading={isLoading} loadingText="Sending...">Send reset link</Button>
 

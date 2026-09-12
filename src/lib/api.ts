@@ -220,8 +220,8 @@ export const authApi = {
     return api.post<AuthSuccessResponse>('/auth/refresh', token ? { refreshToken: token } : {});
   },
   
-  forgotPassword: (email: string) =>
-    api.post('/auth/forgot-password', { email }),
+  forgotPassword: (email: string, turnstileToken?: string) =>
+    api.post('/auth/forgot-password', { email, ...(turnstileToken && { 'cf-turnstile-response': turnstileToken }) }),
   
   resetPassword: (
     payloadOrToken: string | { userId?: string; secret?: string; accessToken?: string; password: string },

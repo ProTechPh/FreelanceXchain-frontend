@@ -32,8 +32,8 @@ interface AuthState {
    * decision, and gates render a skeleton until this flips.
    */
   sessionVerified: boolean;
-  login: (email: string, password: string) => Promise<{ mfaRequired?: boolean }>;
-  register: (email: string, password: string, role: UserRole) => Promise<void>;
+  login: (email: string, password: string, turnstileToken?: string) => Promise<{ mfaRequired?: boolean }>;
+  register: (email: string, password: string, role: UserRole, turnstileToken?: string) => Promise<void>;
   logout: () => Promise<void>;
   loadUser: () => Promise<void>;
   setUser: (user: User | null) => void;
@@ -62,10 +62,14 @@ export const useAuthStore = create<AuthState>()(
       hasHydrated: false,
       sessionVerified: false,
 
-      login: async (email: string, password: string) => {
+      login: async (email: string, password: string, turnstileToken?: string) => {
         set({ isLoading: true, mfaPending: false, mfaSessionToken: null });
         try {
-          const { data } = await authApi.login({ email, password });
+          const { data } = await authApi.login({
+            email,
+            password,
+            ...(turnstileToken && { 'cf-turnstile-response': turnstileToken }),
+          });
 
           if (isMfaRequiredResponse(data)) {
             set({ isLoading: false, mfaPending: true, mfaSessionToken: data.mfaSessionToken });
@@ -94,10 +98,15 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      register: async (email: string, password: string, role: UserRole) => {
+      register: async (email: string, password: string, role: UserRole, turnstileToken?: string) => {
         set({ isLoading: true });
         try {
-          const { data } = await authApi.register({ email, password, role });
+          const { data } = await authApi.register({
+            email,
+            password,
+            role,
+            ...(turnstileToken && { 'cf-turnstile-response': turnstileToken }),
+          });
           if (!isAuthSuccessResponse(data)) {
             throw new Error('The server returned an invalid registration response');
           }
