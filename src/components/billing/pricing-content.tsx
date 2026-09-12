@@ -31,7 +31,7 @@ const PRO_HIGHLIGHTS = [
   'Draft proposals with AI',
   'Skill gap analysis and demand trends',
   'Your earnings and spend analytics',
-  'Priority matching',
+  'Priority matching — matched to new projects first',
 ];
 
 export function PricingContent() {
@@ -43,6 +43,7 @@ export function PricingContent() {
   const [interval, setInterval] = useState<BillingInterval>('month');
 
   const proPrices = plansData?.plans.find((plan) => plan.id === 'pro')?.prices ?? [];
+  const trialDays = plansData?.trialPeriodDays ?? 0;
   const saving = computeAnnualSaving(proPrices);
   const selectedPrice = findPrice(proPrices, interval);
   const annualPrice = findPrice(proPrices, 'year');
@@ -114,6 +115,11 @@ export function PricingContent() {
                     {saving ? ` — saves ${formatPrice(saving.amount, saving.currency)} a year` : ''}
                   </p>
                 )}
+                {trialDays > 0 && (
+                  <p className="text-sm font-medium text-success">
+                    {trialDays} days free, then billed {interval === 'year' ? 'yearly' : 'monthly'}
+                  </p>
+                )}
               </div>
             )}
 
@@ -142,7 +148,11 @@ export function PricingContent() {
                 <Link href={`/dashboard/${role ?? 'freelancer'}/billing`}>Manage your plan</Link>
               </Button>
             ) : (
-              <UpgradeButton source="pricing" interval={interval} />
+              <UpgradeButton
+                source="pricing"
+                interval={interval}
+                {...(trialDays > 0 ? { label: `Start ${trialDays}-day free trial` } : {})}
+              />
             )}
           </CardContent>
         </Card>

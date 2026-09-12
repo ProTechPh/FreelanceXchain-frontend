@@ -63,6 +63,13 @@ export type SubscriptionStatus =
   | 'unpaid'
   | 'paused';
 
+export type VerificationBlockedReason = 'email_unverified' | 'kyc_unverified';
+
+export type TrialIneligibleReason =
+  | 'no_trial_offered'
+  | 'trial_already_used'
+  | VerificationBlockedReason;
+
 export interface Subscription {
   plan: PlanTier;
   status: SubscriptionStatus;
@@ -72,6 +79,14 @@ export interface Subscription {
   cancelAtPeriodEnd: boolean;
   /** True once a Stripe customer exists, so the portal can be offered. */
   manageable: boolean;
+  /** Whether checkout may start at all — verification gates the purchase. */
+  canSubscribe?: boolean;
+  subscribeBlockedReason?: VerificationBlockedReason | null;
+  /** Whether this user may start a free trial right now. */
+  trialEligible?: boolean;
+  trialDays?: number;
+  /** Why not, when trialEligible is false. */
+  trialIneligibleReason?: TrialIneligibleReason | null;
 }
 
 export type BillingInterval = 'month' | 'year';
@@ -93,6 +108,8 @@ export interface BillingPlan {
 
 export interface BillingPlansResponse {
   billingEnabled: boolean;
+  /** Free trial days checkout will actually apply. 0 means no trial. */
+  trialPeriodDays: number;
   plans: BillingPlan[];
 }
 

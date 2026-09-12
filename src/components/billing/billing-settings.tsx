@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { CreditCard, ExternalLink } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,7 @@ import { usePlan, usePlans, useSubscription, useOpenBillingPortal } from '@/hook
 import { useAuthStore } from '@/stores/authStore';
 import { formatDate } from '@/lib/format';
 import { computeAnnualSaving, findPrice, formatPrice, priceLabel } from '@/lib/plan-pricing';
+import { describeTrialIneligibility } from '@/lib/trial-eligibility';
 import type { BillingInterval } from '@/types';
 
 export function BillingSettings() {
@@ -25,6 +27,17 @@ export function BillingSettings() {
   const [interval, setInterval] = useState<BillingInterval>('month');
 
   const proPrices = plansData?.plans.find((plan) => plan.id === 'pro')?.prices ?? [];
+  const trialDays = plansData?.trialPeriodDays ?? 0;
+  const role = useAuthStore((state) => state.user?.role);
+
+  // Verification gates the purchase itself, so a blocked user gets a disabled
+  // button and a route to the fix — not a live button that 403s.
+  const blockedReason = !isPro ? (subscription?.subscribeBlockedReason ?? null) : null;
+  const notice =
+    !isPro && (blockedReason || (trialDays > 0 && subscription?.trialEligible === false))
+      ? describeTrialIneligibility(blockedReason ?? subscription?.trialIneligibleReason, role)
+      : null;
+  const trialOffered = !isPro && trialDays > 0 && subscription?.trialEligible === true;
   const saving = computeAnnualSaving(proPrices);
   const showToggle = !isPro && !isAdmin && proPrices.length > 1;
 
@@ -79,7 +92,20 @@ export function BillingSettings() {
                       <ExternalLink className="size-4" aria-hidden="true" />
                     </Button>
                   )}
-                  {!isPro && <UpgradeButton source="settings" interval={interval} />}
+                  {!isPro && (
+                    <UpgradeButton
+                      source="settings"
+                      interval={interval}
+                      blockedReason={
+                        blockedReason === 'email_unverified'
+                          ? 'Verify your email address first.'
+                          : blockedReason === 'kyc_unverified'
+                            ? 'Complete identity verification first.'
+                            : null
+                      }
+                      {...(trialOffered ? { label: `Start ${trialDays}-day free trial` } : {})}
+                    />
+                  )}
                 </div>
               )}
             </div>
@@ -101,6 +127,17 @@ export function BillingSettings() {
                 onChange={setInterval}
                 savingLabel={saving ? `Save ${saving.percent}%` : null}
               />
+            </div>
+          )}
+
+          {notice && (
+            <div className="flex flex-col gap-2 rounded-lg border border-border bg-muted p-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-muted-foreground">{notice.message}</p>
+              {notice.actionHref && (
+                <Button asChild variant="outline" size="sm" className="shrink-0">
+                  <Link href={notice.actionHref}>{notice.actionLabel}</Link>
+                </Button>
+              )}
             </div>
           )}
 
@@ -126,14 +163,28 @@ export function BillingSettings() {
 }
 
 /** One line describing where the subscription stands right now. */
-function renewalLine(subscription: { cancelAtPeriodEnd: boolean; currentPeriodEnd: string | null; isPro: boolean } | undefined): string {
+function renewalLine(
+  subscription:
+    | { cancelAtPeriodEnd: boolean; currentPeriodEnd: string | null; isPro: boolean; status: string }
+    | undefined,
+): string {
   if (!subscription || !subscription.isPro) {
     return 'Upgrade to unlock AI matching, AI proposals, your analytics and priority matching.';
   }
 
   if (!subscription.currentPeriodEnd) return 'Your Pro subscription is active.';
 
-  return subscription.cancelAtPeriodEnd
-    ? `Cancels on ${formatDate(subscription.currentPeriodEnd)} — you keep Pro until then.`
-    : `Renews on ${formatDate(subscription.currentPeriodEnd)}.`;
+  const date = formatDate(subscription.currentPeriodEnd);
+
+  if (subscription.cancelAtPeriodEnd) {
+    return `Cancels on ${date} — you keep Pro until then.`;
+  }
+
+  // A trial is not a renewal: saying "Renews on" would imply the user has
+  // already paid once, when this is the date of their FIRST charge.
+  if (subscription.status === 'trialing') {
+    return `Free trial — your first payment is on ${date}.`;
+  }
+
+  return `Renews on ${date}.`;
 }

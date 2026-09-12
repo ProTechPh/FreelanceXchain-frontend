@@ -1,6 +1,6 @@
 'use client';
 
-import { Sparkles } from 'lucide-react';
+import { Lock, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useStartCheckout } from '@/hooks/use-plan';
 import type { ProFeature } from '@/lib/plan-features';
@@ -15,6 +15,12 @@ interface UpgradeButtonProps {
   className?: string;
   /** Which billing variant to buy. Defaults to monthly. */
   interval?: BillingInterval;
+  /**
+   * Why the purchase is unavailable. When set the button is disabled and
+   * carries this as its tooltip — the API refuses these anyway, so offering a
+   * live button would just produce a 403 the user cannot act on.
+   */
+  blockedReason?: string | null;
 }
 
 /**
@@ -30,6 +36,7 @@ export function UpgradeButton({
   label = 'Upgrade to Pro',
   className,
   interval = 'month',
+  blockedReason = null,
 }: UpgradeButtonProps) {
   const checkout = useStartCheckout();
 
@@ -41,10 +48,16 @@ export function UpgradeButton({
       className={className}
       loading={checkout.isPending}
       loadingText="Opening checkout…"
+      disabled={Boolean(blockedReason)}
+      title={blockedReason ?? undefined}
       onClick={() => checkout.mutate(interval)}
       data-upgrade-source={source}
     >
-      <Sparkles className="size-4" aria-hidden="true" />
+      {blockedReason ? (
+        <Lock className="size-4" aria-hidden="true" />
+      ) : (
+        <Sparkles className="size-4" aria-hidden="true" />
+      )}
       {label}
     </Button>
   );

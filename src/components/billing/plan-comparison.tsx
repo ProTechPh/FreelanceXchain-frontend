@@ -11,18 +11,21 @@ import { PLAN_COMPARISON, PLAN_FOOTNOTES } from '@/lib/plan-features';
 export function PlanComparison({ className }: { className?: string }) {
   return (
     <div className={cn('space-y-4', className)}>
+      {/* The wrapper stays as a safety net for very narrow screens, but the
+          table is fluid: a 32rem min-width forced a horizontal scroll on every
+          phone for a three-column table that wraps perfectly well. */}
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[32rem] border-collapse text-sm">
+        <table className="w-full border-collapse text-sm">
           <caption className="sr-only">Feature comparison between the Free and Pro plans</caption>
           <thead>
             <tr className="border-b border-border">
               <th scope="col" className="py-3 pr-4 text-left font-semibold text-foreground">
                 Feature
               </th>
-              <th scope="col" className="w-24 py-3 text-center font-semibold text-foreground">
+              <th scope="col" className="w-14 py-3 text-center font-semibold text-foreground sm:w-24">
                 Free
               </th>
-              <th scope="col" className="w-24 py-3 text-center font-semibold text-primary">
+              <th scope="col" className="w-14 py-3 text-center font-semibold text-primary sm:w-24">
                 Pro
               </th>
             </tr>
@@ -30,7 +33,7 @@ export function PlanComparison({ className }: { className?: string }) {
           <tbody>
             {PLAN_COMPARISON.map((row) => (
               <tr key={row.feature} className="border-b border-border last:border-0">
-                <td className="py-3 pr-4 text-muted-foreground">{row.feature}</td>
+                <td className="py-3 pr-3 text-muted-foreground sm:pr-4">{row.feature}</td>
                 <td className="py-3 text-center">
                   <PlanCell included={row.free} plan="Free" feature={row.feature} />
                 </td>
