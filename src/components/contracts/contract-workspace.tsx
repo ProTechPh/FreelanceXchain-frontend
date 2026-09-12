@@ -80,7 +80,6 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
   const [review, setReview] = useState<ReviewDraft>(initialReview);
   const [previewAttachment, setPreviewAttachment] = useState<AttachmentPreviewTarget | null>(null);
   const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
-  const [confirmFundOpen, setConfirmFundOpen] = useState(false);
   const [approvingMilestone, setApprovingMilestone] = useState<Milestone | null>(null);
 
   const loadWorkspace = useCallback(async () => {
@@ -263,9 +262,9 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
         <CardHeader><CardTitle>Overview</CardTitle></CardHeader>
         <CardContent className="space-y-5">
           <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
-            <div><p className="text-muted-foreground">Base amount</p><p className="font-semibold">{formatAmount(contract.baseAmount, { currency: 'ETH' })}</p></div>
-            <div><p className="text-muted-foreground">Rush fee</p><p className="font-semibold">{formatAmount(contract.rushFee, { currency: 'ETH' })}</p></div>
-            <div><p className="text-muted-foreground">Total</p><p className="font-semibold text-primary">{formatAmount(contract.totalAmount, { currency: 'ETH' })}</p></div>
+            <div><p className="text-muted-foreground">Base amount</p><p className="font-semibold">{formatAmount(contract.baseAmount)}</p></div>
+            <div><p className="text-muted-foreground">Rush fee</p><p className="font-semibold">{formatAmount(contract.rushFee)}</p></div>
+            <div><p className="text-muted-foreground">Total</p><p className="font-semibold text-primary">{formatAmount(contract.totalAmount)}</p></div>
             <div><p className="text-muted-foreground">Escrow</p><p className="truncate font-mono text-xs">{contract.escrowAddress || 'Not funded'}</p></div>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -275,7 +274,7 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
             {contractPermissions.canFund && user.walletAddress && (
               <Button
                 disabled={actionId === 'fund'}
-                onClick={() => setConfirmFundOpen(true)}
+                onClick={() => void handleFundContract()}
               >
                 {actionId === 'fund' ? 'Deploying & Funding…' : 'Fund contract securely'}
               </Button>
@@ -300,9 +299,9 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
             {paymentStatus ? (
               <>
                 <div className="grid grid-cols-1 gap-3 text-sm xs:grid-cols-3">
-                  <div><p className="text-muted-foreground">Total</p><p className="font-semibold">{formatAmount(paymentStatus.totalAmount, { currency: 'ETH' })}</p></div>
-                  <div><p className="text-muted-foreground">Released</p><p className="font-semibold text-success">{formatAmount(paymentStatus.releasedAmount, { currency: 'ETH' })}</p></div>
-                  <div><p className="text-muted-foreground">Pending</p><p className="font-semibold text-warning">{formatAmount(paymentStatus.pendingAmount, { currency: 'ETH' })}</p></div>
+                  <div><p className="text-muted-foreground">Total</p><p className="font-semibold">{formatAmount(paymentStatus.totalAmount)}</p></div>
+                  <div><p className="text-muted-foreground">Released</p><p className="font-semibold text-success">{formatAmount(paymentStatus.releasedAmount)}</p></div>
+                  <div><p className="text-muted-foreground">Pending</p><p className="font-semibold text-warning">{formatAmount(paymentStatus.pendingAmount)}</p></div>
                 </div>
                 <div><div className="mb-1 flex justify-between text-xs text-muted-foreground"><span>Release progress</span><span>{paymentStatus.totalAmount > 0 ? Math.round((paymentStatus.releasedAmount / paymentStatus.totalAmount) * 100) : 0}%</span></div><div className="h-2 overflow-hidden rounded-full bg-secondary"><div className="h-full rounded-full bg-success" style={{ width: `${paymentStatus.totalAmount > 0 ? Math.min(100, (paymentStatus.releasedAmount / paymentStatus.totalAmount) * 100) : 0}%` }} /></div></div>
                 <p className="text-xs text-muted-foreground">{paymentStatus.milestones.length} milestone{paymentStatus.milestones.length === 1 ? '' : 's'} tracked by the payment service.</p>
@@ -572,49 +571,6 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
         </DialogContent>
       </Dialog>
 
-      {/* Contract Escrow Funding Confirmation Modal */}
-      <Dialog
-        open={confirmFundOpen}
-        onOpenChange={(open) => {
-          if (!open && actionId !== 'fund') setConfirmFundOpen(false);
-        }}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-foreground">Fund Contract Escrow?</DialogTitle>
-            <DialogDescription className="space-y-2 pt-2">
-              <span className="block text-foreground text-sm">
-                You are about to deposit and lock <strong>{contract?.totalAmount} ETH</strong> into the secure smart contract escrow.
-              </span>
-              <span className="block text-xs text-muted-foreground">
-                Funds will remain securely held in escrow and are only released milestone by milestone after you review and approve the submitted deliverables.
-              </span>
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button
-              variant="outline"
-              onClick={() => setConfirmFundOpen(false)}
-              disabled={actionId === 'fund'}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="gradient"
-              loading={actionId === 'fund'}
-              loadingText="Deploying & Funding…"
-              disabled={actionId === 'fund'}
-              onClick={async () => {
-                await handleFundContract();
-                setConfirmFundOpen(false);
-              }}
-            >
-              Confirm & Fund Escrow
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
       {/* Milestone Approval & Escrow Release Confirmation Modal */}
       <Dialog
         open={approvingMilestone !== null}
@@ -626,7 +582,7 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
           <DialogHeader>
             <DialogTitle className="text-foreground">Approve Milestone & Release Payment?</DialogTitle>
             <DialogDescription>
-              You are about to release payment for <strong>&quot;{approvingMilestone?.title}&quot;</strong> ({formatAmount(approvingMilestone?.amount, { currency: 'ETH' })}).
+              You are about to release payment for <strong>&quot;{approvingMilestone?.title}&quot;</strong> ({formatAmount(approvingMilestone?.amount)}).
               This will transfer funds to the freelancer. This cannot be undone.
             </DialogDescription>
           </DialogHeader>

@@ -59,7 +59,6 @@ function DisputeCenterInner({ role, disputeId }: { role: ParticipantRole; disput
   const [actionId, setActionId] = useState<string | null>(null);
   const [previewAttachment, setPreviewAttachment] = useState<AttachmentPreviewTarget | null>(null);
   const [deletingEvidence, setDeletingEvidence] = useState<{ disputeId: string; evidenceId: string } | null>(null);
-  const [confirmDisputeOpen, setConfirmDisputeOpen] = useState(false);
 
   const verified = canUseDisputeActions(user?.kycStatus);
   const verificationPath = `/dashboard/${role}/verification`;
@@ -162,24 +161,20 @@ function DisputeCenterInner({ role, disputeId }: { role: ParticipantRole; disput
     }
   };
 
-  const handleDisputeFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const createDispute = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const error = validateDisputeDraft(draft);
     if (error) {
       toast.error(error);
       return;
     }
-    setConfirmDisputeOpen(true);
-  };
 
-  const confirmAndCreateDispute = async () => {
     setActionId('create');
     try {
       const { data } = await disputesApi.create({ ...draft, reason: draft.reason.trim() });
       setDisputes((current) => [data, ...current]);
       setDraft(emptyDraft);
       setMilestones([]);
-      setConfirmDisputeOpen(false);
       toast.success('Dispute opened and milestone funds locked.');
     } catch (apiError) {
       toast.error(getApiErrorMessage(apiError, 'Unable to open this dispute.'));
@@ -319,7 +314,7 @@ function DisputeCenterInner({ role, disputeId }: { role: ParticipantRole; disput
           <Card>
             <CardHeader><CardTitle className="flex items-center gap-2"><Plus className="size-5" />Open a dispute</CardTitle></CardHeader>
             <CardContent>
-              <form className="grid gap-4 sm:grid-cols-2" onSubmit={handleDisputeFormSubmit}>
+              <form className="grid gap-4 sm:grid-cols-2" onSubmit={createDispute}>
                 <div className="space-y-2"><Label htmlFor="dispute-contract">Active contract</Label><select id="dispute-contract" className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm" value={draft.contractId} onChange={(event) => void selectContract(event.target.value)}><option value="">Choose a contract</option>{activeContracts.map((contract) => <option key={contract.id} value={contract.id}>{contract.project?.title || contract.title || `Contract ${contract.id.slice(0, 8)}`}</option>)}</select></div>
                 <div className="space-y-2">
                   <Label htmlFor="dispute-milestone">Submitted milestone</Label>
@@ -499,51 +494,6 @@ function DisputeCenterInner({ role, disputeId }: { role: ParticipantRole; disput
               }}
             >
               Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Dispute Opening Confirmation Modal */}
-      <Dialog
-        open={confirmDisputeOpen}
-        onOpenChange={(open) => {
-          if (!open && actionId !== 'create') setConfirmDisputeOpen(false);
-        }}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-destructive flex items-center gap-2">
-              <Scale className="size-5" /> Open Dispute & Freeze Milestone?
-            </DialogTitle>
-            <DialogDescription className="space-y-2 pt-2 text-left">
-              <span className="block text-foreground text-sm">
-                You are about to open a formal dispute for milestone:
-                <strong className="block text-foreground mt-0.5">
-                  &quot;{milestones.find((m) => m.id === draft.milestoneId)?.title || 'Selected milestone'}&quot;
-                </strong>
-              </span>
-              <span className="block text-xs text-muted-foreground">
-                Opening a dispute will freeze milestone funds in the smart contract escrow and pause release until reviewed and resolved by an assigned arbiter.
-              </span>
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button
-              variant="outline"
-              onClick={() => setConfirmDisputeOpen(false)}
-              disabled={actionId === 'create'}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              loading={actionId === 'create'}
-              loadingText="Freezing & Opening…"
-              disabled={actionId === 'create'}
-              onClick={() => void confirmAndCreateDispute()}
-            >
-              Confirm & Freeze Funds
             </Button>
           </DialogFooter>
         </DialogContent>

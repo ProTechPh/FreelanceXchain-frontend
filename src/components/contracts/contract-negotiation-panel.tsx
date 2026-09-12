@@ -22,14 +22,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Field } from '@/components/ui/field';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 
 type ParticipantRole = 'employer' | 'freelancer';
 
@@ -58,7 +50,6 @@ export function ContractNegotiationPanel({
   const [refundReason, setRefundReason] = useState('');
   const [refundAmount, setRefundAmount] = useState('');
   const [rejectionReasons, setRejectionReasons] = useState<Record<string, string>>({});
-  const [approvingRefund, setApprovingRefund] = useState<RefundRequest | null>(null);
 
   const openRushRequest = useMemo(
     () => rushRequests.find((request) => request.status === 'pending' || request.status === 'counter_offered'),
@@ -349,7 +340,7 @@ export function ContractNegotiationPanel({
                         <Button
                           type="button"
                           disabled={actionId === `refund-${refund.id}`}
-                          onClick={() => setApprovingRefund(refund)}
+                          onClick={() => void runAction(`refund-${refund.id}`, () => refundsApi.approve(refund.id), 'Refund approved.')}
                         >
                           Approve refund
                         </Button>
@@ -363,54 +354,6 @@ export function ContractNegotiationPanel({
           </ul>
         </CardContent>
       </Card>
-
-      {/* Escrow Refund Approval Confirmation Modal */}
-      <Dialog
-        open={approvingRefund !== null}
-        onOpenChange={(open) => {
-          if (!open && !actionId) setApprovingRefund(null);
-        }}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-foreground">Approve Escrow Refund?</DialogTitle>
-            <DialogDescription className="space-y-2 pt-2">
-              <span className="block text-foreground text-sm">
-                You are about to approve a refund of <strong>{formatAmount(approvingRefund?.amount)}</strong>.
-              </span>
-              <span className="block text-xs text-muted-foreground">
-                This will release escrowed funds directly to the counterparty. Once approved, this transaction cannot be undone.
-              </span>
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button
-              variant="outline"
-              onClick={() => setApprovingRefund(null)}
-              disabled={Boolean(actionId)}
-            >
-              Keep in Escrow
-            </Button>
-            <Button
-              variant="destructive"
-              loading={Boolean(actionId)}
-              loadingText="Releasing funds…"
-              onClick={async () => {
-                if (!approvingRefund) return;
-                const refundId = approvingRefund.id;
-                await runAction(
-                  `refund-${refundId}`,
-                  () => refundsApi.approve(refundId),
-                  'Refund approved and escrow released.'
-                );
-                setApprovingRefund(null);
-              }}
-            >
-              Confirm Refund
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

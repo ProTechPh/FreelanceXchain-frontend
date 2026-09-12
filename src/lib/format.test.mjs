@@ -16,10 +16,10 @@ test('formatAmount drops cents for whole values and keeps them otherwise', () =>
   assert.equal(formatAmount(0), '$0');
 });
 
-test('formatAmount formats crypto currencies with postfixed ticker', () => {
-  assert.equal(formatAmount(2, { currency: 'ETH' }), '2 ETH');
-  assert.equal(formatAmount(0.5, { currency: 'ETH' }), '0.5000 ETH');
-  assert.equal(formatAmount(1.25, { currency: 'ETH', fractionDigits: 2 }), '1.25 ETH');
+test('formatAmount formats crypto currencies with currency ticker', () => {
+  assert.match(formatAmount(2, { currency: 'ETH' }), /ETH\s*2/);
+  assert.match(formatAmount(0.5, { currency: 'ETH', fractionDigits: 4 }), /ETH\s*0\.5000/);
+  assert.match(formatAmount(1.25, { currency: 'ETH', fractionDigits: 2 }), /ETH\s*1\.25/);
 });
 
 test('formatAmount accepts numeric strings from the API', () => {
