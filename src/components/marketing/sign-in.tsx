@@ -49,6 +49,7 @@ interface SignInPageProps {
   onCreateAccount?: () => void;
   onPasswordlessSignIn?: () => void;
   oauthError?: string | null;
+  turnstileSlot?: React.ReactNode;
 }
 
 export const SignInPage: React.FC<SignInPageProps> = ({
@@ -65,6 +66,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
   onCreateAccount,
   onPasswordlessSignIn,
   oauthError,
+  turnstileSlot,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const isGoogleLoading = oauthLoading === 'google';
@@ -217,6 +219,8 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                   Forgot password?
                 </button>
               </div>
+
+              {turnstileSlot}
 
               {/* Submit button */}
               <Button

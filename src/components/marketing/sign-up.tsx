@@ -43,6 +43,7 @@ interface SignUpPageProps {
   loading?: boolean;
   oauthLoading?: 'google' | 'github' | null;
   oauthError?: string | null;
+  turnstileSlot?: React.ReactNode;
 }
 
 export const SignUpPage: React.FC<SignUpPageProps> = ({
@@ -54,6 +55,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
   loading = false,
   oauthLoading = null,
   oauthError,
+  turnstileSlot,
 }) => {
   const isButtonLoading = isLoading || loading;
   const isGoogleLoading = oauthLoading === 'google';
@@ -426,6 +428,8 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                       {formError}
                     </p>
                   )}
+
+                  {turnstileSlot}
 
                   {/* Submit button */}
                   <Button

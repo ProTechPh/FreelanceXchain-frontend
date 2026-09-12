@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { toast } from 'sonner';
@@ -8,6 +8,7 @@ import { SignInPage } from '@/components/marketing/sign-in';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { authApi } from '@/lib/api';
 import { GuestGuard } from '@/components/auth/guest-guard';
+import { TurnstileWidget, type TurnstileWidgetRef } from '@/components/auth/turnstile-widget';
 
 export default function LoginPage() {
   const { login } = useAuthStore();
@@ -16,6 +17,8 @@ export default function LoginPage() {
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [oauthError, setOauthError] = useState<string | null>(null);
   const [oauthLoading, setOauthLoading] = useState<'google' | 'github' | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileWidgetRef>(null);
 
   // Parse OAuth error from URL query parameters
   useEffect(() => {
@@ -68,7 +71,7 @@ export default function LoginPage() {
     setOauthError(null); // Clear any OAuth error when trying email sign-in
 
     try {
-      const result = await login(email, password);
+      const result = await login(email, password, turnstileToken || undefined);
 
       if (result.mfaRequired) {
         router.push('/mfa/verify');
@@ -79,6 +82,8 @@ export default function LoginPage() {
       const user = useAuthStore.getState().user;
       router.replace(`/dashboard/${user?.role || 'freelancer'}`);
     } catch (error: unknown) {
+      turnstileRef.current?.reset();
+      setTurnstileToken(null);
       const err = error as { response?: { data?: { error?: { code?: string } } }; code?: string } | undefined;
       const errCode = err?.response?.data?.error?.code || err?.code;
       const msg = getApiErrorMessage(error, 'Unable to sign in. Please try again.');
@@ -122,6 +127,14 @@ export default function LoginPage() {
         onCreateAccount={() => router.push('/register')}
         onPasswordlessSignIn={() => router.push('/passwordless')}
         oauthError={oauthError}
+        turnstileSlot={
+          <TurnstileWidget
+            ref={turnstileRef}
+            action="login"
+            onVerify={setTurnstileToken}
+            onExpire={() => setTurnstileToken(null)}
+          />
+        }
       />
     </GuestGuard>
   );

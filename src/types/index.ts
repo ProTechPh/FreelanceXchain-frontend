@@ -693,6 +693,9 @@ export interface AdminAnalytics {
   rushUpgradeAdoptionRate?: number;
   rushFeeRevenue?: number;
   realizedRevenue?: number;
+  projectedBenchmarkRevenue?: number;
+  activeProSubscriptions?: number;
+  proConversionRate?: number;
   timeToFirstProposalHours?: number;
   disputeRate?: number;
 }
@@ -754,12 +757,14 @@ export interface MarketplaceLiquidityReport {
 export interface LoginRequest {
   email: string;
   password: string;
+  'cf-turnstile-response'?: string;
 }
 
 export interface RegisterRequest {
   email: string;
   password: string;
   role: UserRole;
+  'cf-turnstile-response'?: string;
 }
 
 export interface AuthApiUser {

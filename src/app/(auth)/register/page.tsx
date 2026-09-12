@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Mail, CheckCircle2, ArrowRight } from 'lucide-react';
@@ -11,6 +11,7 @@ import type { UserRole } from '@/types';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { authApi } from '@/lib/api';
 import { GuestGuard } from '@/components/auth/guest-guard';
+import { TurnstileWidget, type TurnstileWidgetRef } from '@/components/auth/turnstile-widget';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -20,6 +21,8 @@ export default function RegisterPage() {
   const searchParams = useSearchParams();
   const [oauthError, setOauthError] = useState<string | null>(null);
   const [oauthLoading, setOauthLoading] = useState<'google' | 'github' | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileRef = useRef<TurnstileWidgetRef>(null);
   const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
 
   // Parse OAuth error from URL query parameters
@@ -64,7 +67,7 @@ export default function RegisterPage() {
   const handleSubmit = async (data: { email: string; password: string; role: UserRole }) => {
     if (isLoading || oauthLoading) return;
     try {
-      await register(data.email, data.password, data.role);
+      await register(data.email, data.password, data.role, turnstileToken || undefined);
       try {
         await logout();
       } catch {
@@ -72,6 +75,8 @@ export default function RegisterPage() {
       }
       setRegisteredEmail(data.email);
     } catch (error) {
+      turnstileRef.current?.reset();
+      setTurnstileToken(null);
       toast.error(getApiErrorMessage(error, 'Registration failed. Please try again.'));
     }
   };
@@ -152,6 +157,14 @@ export default function RegisterPage() {
         isLoading={isLoading}
         oauthLoading={oauthLoading}
         oauthError={oauthError}
+        turnstileSlot={
+          <TurnstileWidget
+            ref={turnstileRef}
+            action="signup"
+            onVerify={setTurnstileToken}
+            onExpire={() => setTurnstileToken(null)}
+          />
+        }
       />
     </GuestGuard>
   );

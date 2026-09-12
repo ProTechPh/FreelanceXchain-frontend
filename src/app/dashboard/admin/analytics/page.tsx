@@ -20,6 +20,7 @@ import {
   Filter,
   ArrowDownRight,
   Layers,
+  Crown,
 } from 'lucide-react';
 import { StatsSkeleton } from '@/components/dashboard/skeletons';
 import { formatAmount, formatNumber } from '@/lib/format';
@@ -147,7 +148,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Executive Operational KPIs */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <Card className="bg-card border-border">
           <CardContent className="p-3">
             <div className="flex items-center justify-between">
@@ -194,6 +195,18 @@ export default function AnalyticsPage() {
               {analytics?.rushFeeRevenue !== undefined ? `${analytics.rushFeeRevenue.toFixed(2)} ETH` : '—'}
             </p>
             <p className="text-[11px] text-muted-foreground mt-0.5">10% platform take</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-card border-border">
+          <CardContent className="p-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">Pro Conversion</span>
+              <Crown className="w-4 h-4 text-warning" />
+            </div>
+            <p className="text-xl font-bold mt-1">
+              {analytics?.proConversionRate !== undefined ? `${analytics.proConversionRate}%` : '—'}
+            </p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">{analytics?.activeProSubscriptions ?? 0} Pro members</p>
           </CardContent>
         </Card>
         <Card className="bg-card border-border">
@@ -284,21 +297,25 @@ export default function AnalyticsPage() {
               <Badge className="bg-success/15 text-success border-success/30 text-xs">Anti-Upwork Mode Active</Badge>
             </div>
             <p className="text-xs text-muted-foreground">
-              100% of escrow payments are disbursed directly to freelancers. Protocol monetization is powered by rush upgrade fees and value-added features.
+              100% of escrow payments are disbursed directly to freelancers. Protocol monetization is powered by rush upgrade fees and Pro SaaS subscriptions.
             </p>
           </div>
           <div className="flex items-center gap-6 text-sm">
             <div>
               <span className="text-xs text-muted-foreground block">Realized Rush Fee Cut</span>
-              <span className="font-semibold text-success">{analytics?.realizedRevenue ? formatAmount(analytics.realizedRevenue) : '0.00 ETH'}</span>
+              <span className="font-semibold text-success">{analytics?.rushFeeRevenue !== undefined ? `${analytics.rushFeeRevenue.toFixed(2)} ETH` : '0.00 ETH'}</span>
+            </div>
+            <div className="border-l border-border pl-6">
+              <span className="text-xs text-muted-foreground block">Pro Subscriptions</span>
+              <span className="font-semibold text-foreground">{analytics?.activeProSubscriptions ?? 0} active ({analytics?.proConversionRate ?? 0}%)</span>
             </div>
             <div className="border-l border-border pl-6">
               <span className="text-xs text-muted-foreground block">Projected 5% Benchmark</span>
-              <span className="font-semibold text-foreground">{analytics ? formatAmount(analytics.totalRevenue) : '—'}</span>
+              <span className="font-semibold text-muted-foreground">{analytics?.projectedBenchmarkRevenue !== undefined ? `${analytics.projectedBenchmarkRevenue.toFixed(2)} ETH` : analytics ? formatAmount(analytics.totalRevenue) : '—'}</span>
             </div>
             <div className="border-l border-border pl-6">
               <span className="text-xs text-muted-foreground block">Community Savings vs 20%</span>
-              <span className="font-semibold text-primary">{formatAmount(gmv * 0.20)}</span>
+              <span className="font-semibold text-primary">{`${(gmv * 0.20).toFixed(2)} ETH`}</span>
             </div>
           </div>
         </CardContent>
