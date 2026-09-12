@@ -48,11 +48,24 @@ export interface AmountOptions {
  * fractional ones keep them ($1,200.50), so dense tables stay readable without
  * ever truncating a real cent value.
  */
+const CRYPTO_CURRENCIES = new Set(['ETH', 'BTC', 'SOL', 'POL', 'MATIC', 'USDC', 'USDT']);
+
 export function formatAmount(value: number | string | null | undefined, options: AmountOptions = {}): string {
   const amount = typeof value === 'string' ? Number(value) : value;
   if (amount == null || !Number.isFinite(amount)) return '—';
   const { currency = 'USD', locale } = options;
-  const fractionDigits = options.fractionDigits ?? (Number.isInteger(amount) ? 0 : 2);
+  const isCrypto = CRYPTO_CURRENCIES.has(currency.toUpperCase());
+  const fractionDigits = options.fractionDigits ?? (
+    Number.isInteger(amount) ? 0 : (isCrypto ? 4 : 2)
+  );
+
+  if (isCrypto) {
+    const formattedNum = new Intl.NumberFormat(getLocale(locale), {
+      minimumFractionDigits: fractionDigits,
+      maximumFractionDigits: fractionDigits,
+    }).format(amount);
+    return `${formattedNum} ${currency.toUpperCase()}`;
+  }
 
   try {
     return currencyFormatter(currency, fractionDigits, locale).format(amount);

@@ -15,7 +15,7 @@ import { UpgradeButton } from '@/components/billing/upgrade-button';
 import { usePlan } from '@/hooks/use-plan';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { formatFileSize } from '@/lib/attachment-presentation';
-import { formatAmount } from '@/lib/format';
+import { formatAmount, formatDate } from '@/lib/format';
 import {
   ProjectFormValidationError,
   submitProject,
@@ -714,9 +714,24 @@ export default function CreateProjectPage() {
                     {milestones.map((m, i) => (
                       <div key={i} className="flex items-center justify-between text-sm">
                         <span>{m.title || `Milestone ${i + 1}`}</span>
-                        <span className="font-medium">{formatAmount(Number(m.amount) || 0)}</span>
+                        <span className="font-medium">{formatAmount(Number(m.amount) || 0, { currency: 'ETH' })}</span>
                       </div>
                     ))}
+                  </div>
+                </div>
+                <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 space-y-2">
+                  <h3 className="font-medium text-foreground">Financial & Timeline Summary</h3>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Total Budget</span>
+                      <p className="font-bold text-primary">
+                        {formatAmount(milestones.reduce((sum, m) => sum + (parseFloat(m.amount) || 0), 0), { currency: 'ETH' })}
+                      </p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Deadline</span>
+                      <p className="font-semibold text-foreground">{deadline ? formatDate(deadline) : 'Not specified'}</p>
+                    </div>
                   </div>
                 </div>
               </div>

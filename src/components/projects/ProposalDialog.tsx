@@ -83,7 +83,7 @@ ${highlights.map((h) => `- ${h}`).join('\n')}
 ${coverLetter}
 
 ## Proposed Milestones & Delivery Schedule
-${milestones.map((m, i) => `${i + 1}. **${m.title}** (${formatAmount(m.amount)} - ${m.durationDays} days)\n   ${m.description}`).join('\n\n')}
+${milestones.map((m, i) => `${i + 1}. **${m.title}** (${formatAmount(m.amount, { currency: 'ETH' })} - ${m.durationDays} days)\n   ${m.description}`).join('\n\n')}
 
 ---
 Submitted via FreelanceXchain Decentralized Platform with Smart Contract Escrow Protection.
@@ -487,8 +487,9 @@ export function ProposalDialog({
         <div className="space-y-5">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field
-              label="Proposed rate (USD)"
+              label="Proposed rate (ETH)"
               htmlFor={`${fieldId}-rate`}
+              description={`Project budget: ${project ? formatAmount(project.budget, { currency: 'ETH' }) : '—'}`}
               error={fieldError?.field === 'proposedRate' ? fieldError.message : null}
               required
             >
@@ -497,6 +498,7 @@ export function ProposalDialog({
                 min="0.0001"
                 step="any"
                 inputMode="decimal"
+                placeholder="0.00"
                 value={form.proposedRate}
                 onChange={(event) => {
                   setFieldError(null);

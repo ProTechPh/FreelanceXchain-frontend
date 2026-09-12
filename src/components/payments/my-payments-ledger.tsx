@@ -28,7 +28,7 @@ const PAGE_SIZE = 20;
 export function MyPaymentsLedger({ role }: { role: Extract<UserRole, 'employer' | 'freelancer'> }) {
   const [offset, setOffset] = useState(0);
   const user = useAuthStore((state) => state.user);
-  const { data, isPending, isError, error, isFetching } = useMyPayments(PAGE_SIZE, offset);
+  const { data, isPending, isError, error, isFetching, refetch } = useMyPayments(PAGE_SIZE, offset);
 
   const items = data?.items ?? [];
   const total = data?.total ?? 0;
@@ -57,6 +57,7 @@ export function MyPaymentsLedger({ role }: { role: Extract<UserRole, 'employer' 
             icon={Receipt}
             title="Payments unavailable"
             description={getApiErrorMessage(error, 'Your payment ledger could not be loaded. Try again shortly.')}
+            action={<Button size="sm" variant="outline" onClick={() => void refetch()}>Retry</Button>}
           />
         ) : items.length === 0 ? (
           <EmptyState
@@ -70,6 +71,7 @@ export function MyPaymentsLedger({ role }: { role: Extract<UserRole, 'employer' 
             }
           />
         ) : (
+          <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -83,13 +85,18 @@ export function MyPaymentsLedger({ role }: { role: Extract<UserRole, 'employer' 
               <TableBody>
                 {items.map((record) => {
                   const direction = user ? getPaymentDirection(record, user.id) : 'none';
+                  const isFiat = ['USD', 'EUR', 'GBP'].includes(record.currency?.toUpperCase());
+                  const fractionDigits = isFiat ? 2 : 4;
                   return (
                     <TableRow key={record.id}>
-                      <TableCell className="font-medium">{getPaymentTypeLabel(record.paymentType)}</TableCell>
+                      <TableCell className="capitalize font-medium">
+                        {record.paymentType.replace('_', ' ')}
+                      </TableCell>
                       <TableCell>
                         <Link
-                          href={getContractDetailRoute(role, record.contractId)}
-                          className="rounded-md text-primary outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+                          href={`/dashboard/${role}/contracts/${record.contractId}`}
+                          className="font-mono text-xs hover:underline hover:text-primary transition-colors truncate max-w-[140px] block"
+                          title={record.contractId}
                         >
                           {record.contractId.slice(0, 8)}
                         </Link>
@@ -105,13 +112,14 @@ export function MyPaymentsLedger({ role }: { role: Extract<UserRole, 'employer' 
                         )}
                       >
                         {direction === 'in' ? '+' : direction === 'out' ? '−' : ''}
-                        {Number(record.amount).toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 })} {record.currency}
+                        {Number(record.amount).toLocaleString(undefined, { minimumFractionDigits: fractionDigits, maximumFractionDigits: fractionDigits })} {record.currency}
                       </TableCell>
                     </TableRow>
                   );
                 })}
               </TableBody>
             </Table>
+          </div>
         )}
 
         {(offset > 0 || hasMore) && (

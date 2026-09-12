@@ -652,7 +652,7 @@ export function ProjectDetailView({
                           </div>
                           <div className="flex items-center gap-3 shrink-0">
                             <StatusBadge status={milestone.status} domain="milestone" size="sm" />
-                            <p className="font-bold text-sm text-primary">{formatAmount(milestone.amount)}</p>
+                            <p className="font-bold text-sm text-primary">{formatAmount(milestone.amount, { currency: 'ETH' })}</p>
                           </div>
                         </div>
                       </div>
@@ -694,7 +694,7 @@ export function ProjectDetailView({
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Budget</span>
-                  <span className="font-bold text-primary text-lg">{formatAmount(project.budget)}</span>
+                  <span className="font-bold text-primary text-lg">{formatAmount(project.budget, { currency: 'ETH' })}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Deadline</span>
@@ -856,6 +856,41 @@ export function ProjectDetailView({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Sticky mobile CTA bar for submitting proposals */}
+      {primaryAction === 'submit-proposal' && !myProposal && (
+        <div className="fixed bottom-0 inset-x-0 p-3 bg-background/95 backdrop-blur border-t sm:hidden z-40 flex items-center justify-between gap-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-lg">
+          <div className="min-w-0">
+            <span className="block text-3xs uppercase tracking-wider text-muted-foreground">Budget</span>
+            <span className="font-bold text-primary text-sm truncate">{formatAmount(project.budget, { currency: 'ETH' })}</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="rounded-full border-primary/40 text-primary font-medium min-h-[44px] px-3"
+              onClick={() => {
+                setAutoGenerateAI(true);
+                setProposalOpen(true);
+              }}
+            >
+              <Sparkles className="w-3.5 h-3.5 mr-1 text-primary" />
+              AI
+            </Button>
+            <Button
+              size="sm"
+              className="rounded-full gradient-primary shadow-md min-h-[44px] px-4 font-semibold"
+              onClick={() => {
+                setAutoGenerateAI(false);
+                setProposalOpen(true);
+              }}
+            >
+              <Send className="w-3.5 h-3.5 mr-1.5" /> Submit Proposal
+            </Button>
+          </div>
+        </div>
+      )}
     </>
   );
 
