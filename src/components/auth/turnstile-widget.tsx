@@ -44,6 +44,16 @@ export const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetPro
     const containerRef = useRef<HTMLDivElement>(null);
     const widgetIdRef = useRef<string | null>(null);
 
+    const onVerifyRef = useRef(onVerify);
+    const onExpireRef = useRef(onExpire);
+    const onErrorRef = useRef(onError);
+
+    useEffect(() => {
+      onVerifyRef.current = onVerify;
+      onExpireRef.current = onExpire;
+      onErrorRef.current = onError;
+    });
+
     const reset = useCallback(() => {
       if (widgetIdRef.current && window.turnstile) {
         try {
@@ -65,19 +75,21 @@ export const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetPro
         if (!isMounted || !containerRef.current || !window.turnstile) return;
         if (widgetIdRef.current) return; // already rendered
 
+        containerRef.current.innerHTML = '';
+
         try {
           widgetIdRef.current = window.turnstile.render(containerRef.current, {
             sitekey: DEFAULT_SITE_KEY,
             action,
             theme,
             callback: (token: string) => {
-              if (isMounted) onVerify(token);
+              if (isMounted) onVerifyRef.current(token);
             },
             'expired-callback': () => {
-              if (isMounted) onExpire?.();
+              if (isMounted) onExpireRef.current?.();
             },
             'error-callback': (err?: unknown) => {
-              if (isMounted) onError?.(err);
+              if (isMounted) onErrorRef.current?.(err);
             },
           });
         } catch {
@@ -133,7 +145,7 @@ export const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetPro
           widgetIdRef.current = null;
         }
       };
-    }, [action, onVerify, onExpire, onError, theme]);
+    }, [action, theme]);
 
     return (
       <div className={className}>
