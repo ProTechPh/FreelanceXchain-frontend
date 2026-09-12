@@ -90,11 +90,11 @@ export function MyPaymentsLedger({ role }: { role: Extract<UserRole, 'employer' 
                   return (
                     <TableRow key={record.id}>
                       <TableCell className="capitalize font-medium">
-                        {record.paymentType.replace('_', ' ')}
+                        {getPaymentTypeLabel(record.paymentType)}
                       </TableCell>
                       <TableCell>
                         <Link
-                          href={`/dashboard/${role}/contracts/${record.contractId}`}
+                          href={getContractDetailRoute(role, record.contractId)}
                           className="font-mono text-xs hover:underline hover:text-primary transition-colors truncate max-w-[140px] block"
                           title={record.contractId}
                         >

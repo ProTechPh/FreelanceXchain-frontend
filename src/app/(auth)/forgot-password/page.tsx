@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -13,17 +13,17 @@ import { GuestGuard } from '@/components/auth/guest-guard';
 
 export default function ForgotPasswordPage() {
   const searchParams = useSearchParams();
-  const initialEmail = searchParams?.get('email') || '';
-  const [email, setEmail] = useState(initialEmail);
+  const queryEmail = searchParams?.get('email') || '';
+  const [email, setEmail] = useState(queryEmail);
+  const [prevQueryEmail, setPrevQueryEmail] = useState(queryEmail);
+
+  if (queryEmail && queryEmail !== prevQueryEmail) {
+    setPrevQueryEmail(queryEmail);
+    setEmail(queryEmail);
+  }
+
   const [sent, setSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    const qEmail = searchParams?.get('email');
-    if (qEmail && !email) {
-      setEmail(qEmail);
-    }
-  }, [searchParams, email]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

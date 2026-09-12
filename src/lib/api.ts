@@ -46,7 +46,6 @@ import type {
   PlatformMetrics,
   MarketplaceLiquidityReport,
   FunnelMetricsReport,
-  FunnelStageMetric,
   SkillTaxonomy,
   Skill,
   UserRole,
