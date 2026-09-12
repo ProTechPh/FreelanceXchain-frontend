@@ -54,6 +54,15 @@ const Logo = () => (
   </Link>
 );
 
+/**
+ * Which desktop nav links belong under "Product" in the mobile drawer.
+ *
+ * Everything else in `menu` falls into "Marketplace". Both groups were once
+ * hardcoded allowlists, which meant a new nav item silently disappeared on
+ * mobile — /pricing did exactly that.
+ */
+const PRODUCT_LINKS = ["/#features", "/pricing", "/#ecosystem", "/#compare", "/#reviews", "/#faq"];
+
 export default function Navbar({
   menu = [
     { title: "Features", url: "/#features" },
@@ -246,7 +255,7 @@ export default function Navbar({
                   <div>
                     <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 px-1">Product</p>
                     <div className="flex flex-col">
-                      {menu.filter((item) => ["/#features", "/#ecosystem", "/#compare", "/#reviews", "/#faq"].includes(item.url)).map((item) => (
+                      {menu.filter((item) => PRODUCT_LINKS.includes(item.url)).map((item) => (
                         <Link
                           key={item.title}
                           href={item.url}
@@ -261,7 +270,7 @@ export default function Navbar({
                   <div>
                     <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2 px-1">Marketplace</p>
                     <div className="flex flex-col">
-                      {menu.filter((item) => ["/projects", "/freelancers", "/news"].includes(item.url)).map((item) => (
+                      {menu.filter((item) => !PRODUCT_LINKS.includes(item.url)).map((item) => (
                         <Link
                           key={item.title}
                           href={item.url}

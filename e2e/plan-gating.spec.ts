@@ -205,3 +205,112 @@ test('a stale pro plan self-heals into a lock on a 403', async ({ page }) => {
 
   await expect(page.getByRole('region', { name: 'Pro feature' })).toBeVisible();
 });
+
+test('every desktop nav link is reachable from the mobile menu', async ({ page }) => {
+  // The mobile drawer used to filter the nav through a hardcoded allowlist, so
+  // a newly added link (/pricing) silently vanished on phones. Assert parity
+  // rather than the presence of one link, so the next addition cannot regress.
+  await page.setViewportSize({ width: 393, height: 850 });
+  await page.goto('/');
+
+  const desktopLinks = await page.locator('header nav a').allInnerTexts();
+
+  await page.getByRole('button', { name: /open menu/i }).click();
+  const mobileLinks = (await page.locator('[role="dialog"] a').allInnerTexts()).map((t) => t.trim());
+
+  for (const label of desktopLinks.map((t) => t.trim()).filter(Boolean)) {
+    expect(mobileLinks, `"${label}" is missing from the mobile menu`).toContain(label);
+  }
+
+  await expect(page.getByRole('link', { name: 'Pricing', exact: true })).toBeVisible();
+});
+
+test('pricing page shows real prices and the trial on a phone', async ({ page }) => {
+  await page.route('**/api/billing/plans', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        billingEnabled: true,
+        trialPeriodDays: 7,
+        plans: [
+          { id: 'free', name: 'Free', description: 'x', prices: [] },
+          {
+            id: 'pro', name: 'Pro', description: 'y',
+            prices: [
+              { interval: 'month', priceId: 'price_m', unitAmount: 2000, currency: 'usd' },
+              { interval: 'year', priceId: 'price_y', unitAmount: 20000, currency: 'usd' },
+            ],
+          },
+        ],
+      }),
+    }),
+  );
+
+  await page.setViewportSize({ width: 393, height: 850 });
+  await page.goto('/pricing');
+
+  await expect(page.getByText('$20')).toBeVisible();
+  await expect(page.getByText(/7 days free/i)).toBeVisible();
+  await expect(page.getByRole('radio', { name: /annual/i })).toBeVisible();
+
+  // Prices come from the API, so the page can never quote a figure checkout
+  // will not honour.
+  await page.getByRole('radio', { name: /annual/i }).click();
+  await expect(page.getByText('$200')).toBeVisible();
+  await expect(page.getByText(/saves \$40 a year/i)).toBeVisible();
+});
+
+test('an unverified user cannot start checkout and is sent to verify', async ({ page }) => {
+  // Verification gates the purchase itself: a live button here would only
+  // produce a 403 the user cannot act on.
+  await authenticate(page, 'freelancer', 'free');
+  await page.route('**/api/billing/plans', (r) =>
+    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
+      billingEnabled: true, trialPeriodDays: 7,
+      plans: [{ id: 'free', name: 'Free', description: 'x', prices: [] },
+              { id: 'pro', name: 'Pro', description: 'y', prices: [
+                { interval: 'month', priceId: 'price_m', unitAmount: 2000, currency: 'usd' }] }] }) }));
+  await page.route('**/api/billing/subscription', (r) =>
+    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
+      plan: 'free', status: 'none', isPro: false, currentPeriodEnd: null, cancelAtPeriodEnd: false,
+      manageable: false, canSubscribe: false, subscribeBlockedReason: 'kyc_unverified',
+      trialEligible: false, trialDays: 7, trialIneligibleReason: 'kyc_unverified' }) }));
+
+  const checkoutCalls = countRequests(page, '/api/billing/checkout-session');
+
+  await page.setViewportSize({ width: 393, height: 850 });
+  await page.goto('/dashboard/freelancer/billing');
+
+  const upgrade = page.getByRole('button', { name: /upgrade to pro/i });
+  await expect(upgrade).toBeVisible();
+  await expect(upgrade).toBeDisabled();
+
+  await expect(page.getByText(/complete identity verification to subscribe/i)).toBeVisible();
+  const verify = page.getByRole('link', { name: /verify identity/i });
+  await expect(verify).toBeVisible();
+  await expect(verify).toHaveAttribute('href', '/dashboard/freelancer/verification');
+
+  expect(checkoutCalls.total).toBe(0);
+});
+
+test('a verified first-time user is offered the trial', async ({ page }) => {
+  await authenticate(page, 'freelancer', 'free');
+  await page.route('**/api/billing/plans', (r) =>
+    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
+      billingEnabled: true, trialPeriodDays: 7,
+      plans: [{ id: 'free', name: 'Free', description: 'x', prices: [] },
+              { id: 'pro', name: 'Pro', description: 'y', prices: [
+                { interval: 'month', priceId: 'price_m', unitAmount: 2000, currency: 'usd' }] }] }) }));
+  await page.route('**/api/billing/subscription', (r) =>
+    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
+      plan: 'free', status: 'none', isPro: false, currentPeriodEnd: null, cancelAtPeriodEnd: false,
+      manageable: false, canSubscribe: true, subscribeBlockedReason: null,
+      trialEligible: true, trialDays: 7, trialIneligibleReason: null }) }));
+
+  await page.goto('/dashboard/freelancer/billing');
+
+  const cta = page.getByRole('button', { name: /start 7-day free trial/i });
+  await expect(cta).toBeVisible();
+  await expect(cta).toBeEnabled();
+});

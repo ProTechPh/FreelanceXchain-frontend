@@ -14,6 +14,7 @@ const PUBLIC_ROUTES = [
   '/freelancers',
   '/employers',
   '/how-it-works',
+  '/pricing',
   '/leaderboard',
   '/faqs',
   '/help',
@@ -44,6 +45,7 @@ const DASHBOARD_ROUTES: Record<'freelancer' | 'employer', string[]> = {
     '/verification',
     '/activity',
     '/disputes',
+    '/billing',
   ],
   employer: [
     '',
@@ -59,6 +61,7 @@ const DASHBOARD_ROUTES: Record<'freelancer' | 'employer', string[]> = {
     '/verification',
     '/activity',
     '/disputes',
+    '/billing',
   ],
 };
 

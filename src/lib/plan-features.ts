@@ -117,7 +117,7 @@ export const PLAN_COMPARISON: readonly PlanComparisonRow[] = [
   { feature: 'Extract skills from a résumé or brief', free: false, pro: true, endpoint: '/matching/extract-skills' },
   { feature: 'Your earnings and spend analytics, with date ranges', free: false, pro: true, endpoint: '/analytics/freelancer' },
   { feature: 'Skill demand trends', free: false, pro: true, endpoint: '/analytics/skill-trends' },
-  { feature: 'Priority matching — your profile and projects rank higher', free: false, pro: true },
+  { feature: 'Priority matching — you\'re among the first matched to new projects', free: false, pro: true },
 ];
 
 /**
@@ -125,7 +125,7 @@ export const PLAN_COMPARISON: readonly PlanComparisonRow[] = [
  * what Pro does and does not change.
  */
 export const PLAN_FOOTNOTES: readonly string[] = [
-  'Priority matching affects ranking only. It does not guarantee a match or a hire.',
+  'Priority matching affects how soon you are surfaced, not whether you are chosen. It does not guarantee a match or a hire.',
   'Escrow and platform fees are the same on both plans. Pro does not change what you earn or pay per contract.',
   "Cancel any time. You keep Pro until the end of the period you've paid for.",
 ];

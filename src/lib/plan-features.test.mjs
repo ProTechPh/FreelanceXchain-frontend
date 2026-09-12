@@ -29,7 +29,7 @@ test('every feature we lock is actually gated by the API', () => {
 test('every Pro row on the pricing page maps to a gated endpoint', () => {
   // This is what stops the pricing table over-claiming. A row may omit an
   // endpoint only when it describes ranking rather than an API call.
-  const RANKING_ONLY = 'Priority matching — your profile and projects rank higher';
+  const RANKING_ONLY = "Priority matching — you're among the first matched to new projects";
 
   for (const row of PLAN_COMPARISON) {
     if (row.free || !row.pro) continue;
@@ -70,6 +70,6 @@ test('every Pro row is also a Free row, or Pro would be a downgrade', () => {
 
 test('the honesty footnotes are present', () => {
   assert.ok(PLAN_FOOTNOTES.length >= 3);
-  assert.ok(PLAN_FOOTNOTES.some((note) => note.toLowerCase().includes('ranking only')));
+  assert.ok(PLAN_FOOTNOTES.some((note) => note.toLowerCase().includes('not whether you are chosen')));
   assert.ok(PLAN_FOOTNOTES.some((note) => note.toLowerCase().includes('cancel any time')));
 });
