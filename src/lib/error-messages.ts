@@ -15,6 +15,7 @@
  */
 
 import type { StatusTone } from './status-styles.ts';
+import { isPlanUpgradeRequired } from './plan-access.ts';
 
 export type FailureKind =
   /** The user declined in their wallet. Not an error - nothing was signed. */
@@ -26,6 +27,8 @@ export type FailureKind =
   | 'auth'
   /** 403 - signed in, but not allowed to do this. */
   | 'forbidden'
+  /** 403 + PLAN_UPGRADE_REQUIRED - allowed, but not on the Free plan. */
+  | 'plan-upgrade'
   /** 400/422 - the backend message names the field and is safe to show. */
   | 'validation'
   /** 409 - the record moved before the request landed. */
@@ -243,6 +246,10 @@ export function classifyFailure(error: unknown): FailureKind {
   }
 
   if (status === 401) return 'auth';
+  // Checked before the generic 403: a paywall is not a permission error, and
+  // telling a user they "don't have permission" would be both wrong and
+  // unactionable when the fix is a subscription.
+  if (isPlanUpgradeRequired(error)) return 'plan-upgrade';
   if (status === 403) return 'forbidden';
   if (status === 408) return 'timeout';
   if (status === 409) return 'conflict';
@@ -313,6 +320,18 @@ export function describeFailure(
         tone: 'warning',
         title: "You don't have permission to do that",
         detail: 'If you think this is wrong, contact an administrator.',
+        retryable: false,
+      };
+
+    case 'plan-upgrade':
+      // Informational, not destructive: nothing went wrong and nothing is at
+      // risk. The lock panel carries the call to action, so this copy only has
+      // to reassure that the rest of the account is untouched.
+      return {
+        kind,
+        tone: 'info',
+        title: 'This is a Pro feature',
+        detail: 'Upgrade to Pro to use it. Your contracts, escrow and messages are unaffected.',
         retryable: false,
       };
 

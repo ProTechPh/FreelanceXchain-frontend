@@ -1,4 +1,6 @@
 import axios, { AxiosError, InternalAxiosRequestConfig, type AxiosResponse } from 'axios';
+import { isPlanUpgradeRequired } from '@/lib/plan-access';
+import { notifyPlanDesync } from '@/lib/plan-sync';
 import type {
   AuthSuccessResponse,
   AuthResponse,
@@ -76,6 +78,11 @@ import type {
   PaymentSummary,
   AuditLogSearchResponse,
   AdminActivitySummary,
+  Subscription,
+  BillingRedirect,
+  BillingPlansResponse,
+  BillingInterval,
+  CheckoutSessionResponse,
 } from '@/types';
 import type {
   CreateProjectPayload,
@@ -170,6 +177,15 @@ api.interceptors.response.use(
       const csrfToken = await csrfTokenManager.ensureToken({ forceRefresh: true });
       requestConfig.headers['x-csrf-token'] = csrfToken;
       return api.request(requestConfig);
+    }
+
+    // A 403 PLAN_UPGRADE_REQUIRED means the client thought it had Pro and the
+    // server disagreed — a cancellation elsewhere, or a long-lived tab. Refresh
+    // the plan so the gates re-render into locks without a reload. No toast and
+    // no redirect: the lock panel is the message. Cannot loop, because
+    // /auth/me is not itself gated.
+    if (isPlanUpgradeRequired(error)) {
+      notifyPlanDesync();
     }
 
     if (error.response?.status === 401) {
@@ -912,6 +928,25 @@ export const auditLogsApi = {
 
   getAdminActivitySummary: (startDate: string, endDate: string) =>
     api.get<AdminActivitySummary>('/audit-logs/summary/admin-activity', { params: { startDate, endDate } }),
+};
+
+export const billingApi = {
+  /** Current entitlement. Free is a valid state, not an error. */
+  getSubscription: () => api.get<Subscription>('/billing/subscription'),
+
+  /** Public plan descriptor, including live prices read from Stripe. */
+  getPlans: () => api.get<BillingPlansResponse>('/billing/plans'),
+
+  /**
+   * Starts a Stripe-hosted Checkout. The returned URL must be validated with
+   * isAllowedBillingRedirect before the browser is sent to it.
+   */
+  createCheckoutSession: (params?: { interval?: BillingInterval; successUrl?: string; cancelUrl?: string }) =>
+    api.post<CheckoutSessionResponse>('/billing/checkout-session', params ?? {}),
+
+  /** Stripe Customer Portal: cancel, resume, update card, invoice history. */
+  createPortalSession: (params?: { returnUrl?: string }) =>
+    api.post<BillingRedirect>('/billing/portal-session', params ?? {}),
 };
 
 export const analyticsApi = {

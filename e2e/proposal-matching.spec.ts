@@ -6,7 +6,9 @@ const proposalId = '123e4567-e89b-12d3-a456-426614174061';
 const freelancerId = '123e4567-e89b-12d3-a456-426614174062';
 
 async function authenticate(page: Page, role: 'freelancer' | 'employer') {
-  const user = { id: `${role}-1`, email: `${role}@example.com`, name: role, role, walletAddress: '', kycStatus: 'approved', createdAt, updatedAt: createdAt };
+  // plan: 'pro' — these specs exercise Pro-gated AI features; without it the
+  // user resolves to Free and the gates render locks instead.
+  const user = { id: `${role}-1`, email: `${role}@example.com`, name: role, role, plan: 'pro', walletAddress: '', kycStatus: 'approved', createdAt, updatedAt: createdAt };
   await page.addInitScript((storedUser) => {
     localStorage.setItem('access_token', 'app-access-token');
     localStorage.setItem('refresh_token', 'app-refresh-token');

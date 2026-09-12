@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**.appwrite.io',
+        hostname: '*.appwrite.io',
         pathname: '/v1/storage/buckets/**',
       },
       {
@@ -39,6 +39,14 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'avatars.githubusercontent.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
       },
     ],
   },
@@ -80,7 +88,7 @@ const nextConfig: NextConfig = {
                 ? "script-src 'self' 'unsafe-eval' 'unsafe-inline'"
                 : "script-src 'self' 'unsafe-inline'",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' blob: data: https: http:",
+              "img-src 'self' blob: data: https://*.appwrite.io https://cloud.appwrite.io https://cdn.worldvectorlogo.com https://upload.wikimedia.org https://images.unsplash.com https://avatars.githubusercontent.com https://lh3.googleusercontent.com",
               "font-src 'self' data:",
               "connect-src 'self' https://*.appwrite.io https://cloud.appwrite.io https://api.freelancexchain.works https://stats.uptimerobot.com http://localhost:* http://127.0.0.1:* wss: ws:",
               "frame-src 'self'",

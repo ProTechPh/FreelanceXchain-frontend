@@ -11,6 +11,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { matchingApi, projectsApi, skillsApi } from '@/lib/api';
+import { UpgradeButton } from '@/components/billing/upgrade-button';
+import { usePlan } from '@/hooks/use-plan';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { formatFileSize } from '@/lib/attachment-presentation';
 import { formatAmount } from '@/lib/format';
@@ -50,6 +52,7 @@ export default function CreateProjectPage() {
   ]);
   const [files, setFiles] = useState<File[]>([]);
   const [extractingSkills, setExtractingSkills] = useState(false);
+  const { isPro } = usePlan();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -126,6 +129,10 @@ export default function CreateProjectPage() {
   };
 
   const suggestSkills = async () => {
+    // Pro-only, and guarded here as well as in the UI so a stale plan cannot
+    // fire the request. Manual skill selection below stays free, so posting a
+    // project is never blocked.
+    if (!isPro) return;
     if (!description.trim()) {
       showFormError('Add a project description before suggesting skills.', 'description');
       return;
@@ -362,18 +369,29 @@ export default function CreateProjectPage() {
                       <Label id="required-skills-label">
                         Required Skills <span className="text-destructive" aria-hidden="true">*</span>
                       </Label>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        loading={extractingSkills}
-                        loadingText="Analysing…"
-                        disabled={skillsLoading || !description.trim()}
-                        onClick={() => void suggestSkills()}
-                      >
-                        <Sparkles className="size-4" aria-hidden="true" />
-                        Suggest from description
-                      </Button>
+                      {isPro ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          loading={extractingSkills}
+                          loadingText="Analysing…"
+                          disabled={skillsLoading || !description.trim()}
+                          onClick={() => void suggestSkills()}
+                        >
+                          <Sparkles className="size-4" aria-hidden="true" />
+                          Suggest from description
+                        </Button>
+                      ) : (
+                        // Free employers pick skills manually below; only the AI
+                        // shortcut is gated, so the form stays fully usable.
+                        <UpgradeButton
+                          source="extract-skills"
+                          size="sm"
+                          variant="outline"
+                          label="Suggest from description (Pro)"
+                        />
+                      )}
                     </div>
                     {fieldErrors.skills && (
                       <p role="alert" className="flex items-start gap-1.5 text-xs font-medium text-destructive">

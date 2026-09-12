@@ -1,6 +1,7 @@
 'use client';
 
 import { CircleCheck, ShieldAlert } from 'lucide-react';
+import { PlanBadge } from '@/components/billing/plan-badge';
 import Link from 'next/link';
 
 import { cn } from '@/lib/utils';
@@ -73,6 +74,9 @@ export function SidebarUserCard({ collapsed = false }: { collapsed?: boolean }) 
           ) : (
             <ShieldAlert className="size-3 shrink-0 text-warning" aria-hidden="true" />
           )}
+          {/* Renders nothing for Free users and admins, and nothing until the
+              session resolves — see PlanBadge. */}
+          <PlanBadge className="shrink-0" />
         </div>
         <p className="truncate text-2xs text-muted-foreground">
           {isAdmin ? (

@@ -13,6 +13,8 @@ import type { Project } from '@/types';
 import { CardGridSkeleton } from '@/components/dashboard/skeletons';
 import { Markdown } from '@/components/ui/markdown';
 import { formatAmount, formatDate } from '@/lib/format';
+import { ProGate } from '@/components/billing/pro-gate';
+import { usePlan } from '@/hooks/use-plan';
 
 interface RecommendationView extends ProjectRecommendation {
   project: Project;
@@ -22,10 +24,17 @@ export default function FreelancerRecommendationsPage() {
   const [recommendations, setRecommendations] = useState<RecommendationView[]>([]);
   const [loading, setLoading] = useState(true);
   const [profileNotFound, setProfileNotFound] = useState(false);
+  const { isPro, isResolved } = usePlan();
 
   useEffect(() => {
     let active = true;
     const load = async () => {
+      // The gate below renders the lock; this stops the request ever leaving
+      // the browser, so a Free user never generates a 403 on every mount.
+      if (!isPro) {
+        setLoading(false);
+        return;
+      }
       try {
         const { data } = await matchingApi.getProjectRecommendations(50);
         const projects = await Promise.all(
@@ -54,11 +63,11 @@ export default function FreelancerRecommendationsPage() {
         if (active) setLoading(false);
       }
     };
-    void load();
+    if (isResolved) void load();
     return () => {
       active = false;
     };
-  }, []);
+  }, [isPro, isResolved]);
 
   return (
     <div className="space-y-6">
@@ -72,6 +81,7 @@ export default function FreelancerRecommendationsPage() {
         </p>
       </div>
 
+      <ProGate feature="project-recommendations" variant="page">
       {loading ? (
         <CardGridSkeleton count={6} label="Loading recommendations" />
       ) : recommendations.length === 0 ? (
@@ -160,6 +170,7 @@ export default function FreelancerRecommendationsPage() {
           ))}
         </div>
       )}
+      </ProGate>
     </div>
   );
 }

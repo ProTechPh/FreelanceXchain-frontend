@@ -3,7 +3,8 @@ import { expect, test, type Page } from '@playwright/test';
 const createdAt = '2026-08-06T00:00:00.000Z';
 
 async function authenticate(page: Page, role: 'freelancer' | 'employer' | 'admin') {
-  const user = { id: `${role}-1`, email: `${role}@example.com`, name: role, role, walletAddress: '', kycStatus: 'approved', createdAt, updatedAt: createdAt };
+  // plan: 'pro' — the skill-analysis test below hits Pro-gated endpoints.
+  const user = { id: `${role}-1`, email: `${role}@example.com`, name: role, role, plan: 'pro', walletAddress: '', kycStatus: 'approved', createdAt, updatedAt: createdAt };
   await page.addInitScript((storedUser) => {
     try {
       localStorage.setItem('access_token', 'app-access-token');

@@ -4,7 +4,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 import { Tooltip } from '@/components/ui/tooltip';
+import { usePlan } from '@/hooks/use-plan';
 import { getNavSections, isNavItemActive, type NavItem } from './nav-config';
 import type { UserRole } from '@/types';
 
@@ -19,11 +21,14 @@ function NavLink({
   item,
   active,
   collapsed,
+  showProBadge,
   onNavigate,
 }: {
   item: NavItem;
   active: boolean;
   collapsed: boolean;
+  /** Upsell marker: only for a Pro route the viewer cannot use yet. */
+  showProBadge: boolean;
   onNavigate?: () => void;
 }) {
   const link = (
@@ -48,17 +53,31 @@ function NavLink({
         aria-hidden="true"
       />
       <span className={cn(collapsed && 'sr-only')}>{item.label}</span>
+      {showProBadge && !collapsed && (
+        <Badge variant="secondary" className="ml-auto">
+          Pro
+        </Badge>
+      )}
     </Link>
   );
 
   // Collapsed items keep an accessible name through the label's sr-only span;
-  // the tooltip is the sighted-pointer equivalent.
-  return collapsed ? <Tooltip content={item.label} side="right">{link}</Tooltip> : link;
+  // the tooltip is the sighted-pointer equivalent. The badge has no room when
+  // collapsed, so the tooltip carries the marker instead.
+  return collapsed ? (
+    <Tooltip content={showProBadge ? `${item.label} (Pro)` : item.label} side="right">
+      {link}
+    </Tooltip>
+  ) : (
+    link
+  );
 }
 
 export function SidebarNav({ role, collapsed = false, onNavigate }: SidebarNavProps) {
   const pathname = usePathname();
   const sections = getNavSections(role);
+  // Read once here rather than per item.
+  const { isPro, isResolved } = usePlan();
 
   return (
     <nav aria-label="Dashboard" className="flex flex-1 flex-col gap-5 overflow-y-auto px-3 py-4">
@@ -77,6 +96,9 @@ export function SidebarNav({ role, collapsed = false, onNavigate }: SidebarNavPr
               item={item}
               active={isNavItemActive(pathname, item.href)}
               collapsed={collapsed}
+              // Withheld until the session resolves, so the sidebar does not
+              // flicker Free→Pro on every page load.
+              showProBadge={Boolean(item.pro) && isResolved && !isPro}
               onNavigate={onNavigate}
             />
           ))}

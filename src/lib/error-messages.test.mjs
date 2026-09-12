@@ -158,3 +158,25 @@ test('survives values that are not errors at all', () => {
     assert.ok(['destructive', 'warning', 'info'].includes(described.tone));
   }
 });
+
+test('a 403 PLAN_UPGRADE_REQUIRED reads as an upgrade prompt, not a permission error', () => {
+  const error = httpError(403, { error: { code: 'PLAN_UPGRADE_REQUIRED' } });
+
+  assert.equal(classifyFailure(error), 'plan-upgrade');
+
+  const described = describeFailure(error, 'load recommendations');
+  assert.equal(described.tone, 'info', 'a paywall is not a red error');
+  assert.equal(described.retryable, false, 'retrying will never clear a paywall');
+  assert.match(described.title, /Pro feature/i);
+  // The reassurance matters on a platform holding escrow.
+  assert.match(described.detail, /escrow/i);
+});
+
+test('an ordinary 403 still reads as forbidden', () => {
+  // Guards the branch order in classifyFailure: the upgrade check runs first,
+  // and must not swallow genuine permission errors.
+  const error = httpError(403, { error: { code: 'AUTH_FORBIDDEN' } });
+
+  assert.equal(classifyFailure(error), 'forbidden');
+  assert.match(describeFailure(error, 'do that').title, /permission/i);
+});
