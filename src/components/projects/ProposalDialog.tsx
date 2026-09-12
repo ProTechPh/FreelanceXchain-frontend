@@ -489,6 +489,7 @@ export function ProposalDialog({
             <Field
               label="Proposed rate (USD)"
               htmlFor={`${fieldId}-rate`}
+              description={`Project budget: ${project ? formatAmount(project.budget) : '—'}`}
               error={fieldError?.field === 'proposedRate' ? fieldError.message : null}
               required
             >
@@ -497,6 +498,7 @@ export function ProposalDialog({
                 min="0.0001"
                 step="any"
                 inputMode="decimal"
+                placeholder="0.00"
                 value={form.proposedRate}
                 onChange={(event) => {
                   setFieldError(null);

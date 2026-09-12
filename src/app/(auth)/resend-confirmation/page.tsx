@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { CheckCircle2, Mail, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { authApi } from '@/lib/api';
@@ -13,7 +14,16 @@ import { Field } from '@/components/ui/field';
 import { GuestGuard } from '@/components/auth/guest-guard';
 
 export default function ResendConfirmationPage() {
-  const [email, setEmail] = useState('');
+  const searchParams = useSearchParams();
+  const queryEmail = searchParams?.get('email') || '';
+  const [email, setEmail] = useState(queryEmail);
+  const [prevQueryEmail, setPrevQueryEmail] = useState(queryEmail);
+
+  if (queryEmail && queryEmail !== prevQueryEmail) {
+    setPrevQueryEmail(queryEmail);
+    setEmail(queryEmail);
+  }
+
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [cooldown, setCooldown] = useState(0);

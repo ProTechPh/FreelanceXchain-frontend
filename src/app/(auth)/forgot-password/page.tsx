@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { authApi } from '@/lib/api';
@@ -12,7 +13,16 @@ import { GuestGuard } from '@/components/auth/guest-guard';
 import { TurnstileWidget, type TurnstileWidgetRef } from '@/components/auth/turnstile-widget';
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState('');
+  const searchParams = useSearchParams();
+  const queryEmail = searchParams?.get('email') || '';
+  const [email, setEmail] = useState(queryEmail);
+  const [prevQueryEmail, setPrevQueryEmail] = useState(queryEmail);
+
+  if (queryEmail && queryEmail !== prevQueryEmail) {
+    setPrevQueryEmail(queryEmail);
+    setEmail(queryEmail);
+  }
+
   const [sent, setSent] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
