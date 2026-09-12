@@ -13,7 +13,14 @@ const nunitoSans = Nunito_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'FreelanceXchain - Decentralized Freelance Marketplace & Smart Escrow',
+  metadataBase: new URL('https://www.freelancexchain.works'),
+  alternates: {
+    canonical: './',
+  },
+  title: {
+    default: 'FreelanceXchain - Decentralized Freelance Marketplace & Smart Escrow',
+    template: '%s | FreelanceXchain',
+  },
   description: 'The AI-powered freelance marketplace with Ethereum smart contract escrow. Connect with verified employers, generate tailored milestone proposals, and get paid with zero escrow risk.',
   icons: {
     icon: [
@@ -22,6 +29,14 @@ export const metadata: Metadata = {
     ],
     shortcut: '/favicon.svg',
     apple: '/favicon.svg',
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_US',
+    url: 'https://www.freelancexchain.works',
+    siteName: 'FreelanceXchain',
+    title: 'FreelanceXchain - Decentralized Freelance Marketplace & Smart Escrow',
+    description: 'The AI-powered freelance marketplace with Ethereum smart contract escrow.',
   },
 };
 
