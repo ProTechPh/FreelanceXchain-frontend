@@ -336,7 +336,15 @@ export function ContractNegotiationPanel({
                   )}
                   {canDecide && (
                     <div className="space-y-3">
-                      <div className="flex gap-2"><Button type="button" disabled={actionId === `refund-${refund.id}`} onClick={() => void runAction(`refund-${refund.id}`, () => refundsApi.approve(refund.id), 'Refund approved.')}>Approve refund</Button></div>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          disabled={actionId === `refund-${refund.id}`}
+                          onClick={() => void runAction(`refund-${refund.id}`, () => refundsApi.approve(refund.id), 'Refund approved.')}
+                        >
+                          Approve refund
+                        </Button>
+                      </div>
                       <div className="flex items-end gap-2"><div className="flex-1 space-y-2"><Label htmlFor={`refund-reject-${refund.id}`}>Rejection reason</Label><Input id={`refund-reject-${refund.id}`} value={rejectionReason} onChange={(event) => setRejectionReasons((current) => ({ ...current, [refund.id]: event.target.value }))} /></div><Button type="button" variant="outline" disabled={actionId === `refund-${refund.id}` || !rejectionReason.trim()} onClick={() => void runAction(`refund-${refund.id}`, () => refundsApi.reject(refund.id, rejectionReason.trim()), 'Refund rejected.')}>Reject</Button></div>
                     </div>
                   )}

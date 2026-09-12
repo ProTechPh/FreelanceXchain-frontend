@@ -177,6 +177,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                   id="login-email" 
                   name="email" 
                   type="email" 
+                  autoComplete="email"
                   placeholder="name@example.com" 
                   className="w-full px-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-border/80 bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all placeholder:text-muted-foreground/60" 
                   required 
@@ -190,6 +191,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                     id="login-password" 
                     name="password" 
                     type={showPassword ? 'text' : 'password'} 
+                    autoComplete="current-password"
                     placeholder="Enter your password" 
                     className="w-full px-4 py-3 sm:py-3.5 pr-12 rounded-xl sm:rounded-2xl border border-border/80 bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all placeholder:text-muted-foreground/60" 
                     required 
@@ -198,7 +200,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                     type="button" 
                     onClick={() => setShowPassword(!showPassword)} 
                     aria-label={showPassword ? 'Hide password' : 'Show password'} 
-                    className="absolute inset-y-0 right-3 flex items-center"
+                    className="absolute inset-y-0 right-1 flex items-center justify-center min-w-[44px] min-h-[44px] p-2"
                   >
                     {showPassword ? (
                       <EyeOff className="w-5 h-5 text-muted-foreground hover:text-foreground transition-colors" />
@@ -209,12 +211,8 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                 </div>
               </div>
 
-              {/* Remember me + Reset password */}
-              <div className="flex items-center justify-between text-sm">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" name="rememberMe" className="rounded border-border accent-primary" />
-                  <span className="text-muted-foreground">Keep me signed in</span>
-                </label>
+              {/* Reset password */}
+              <div className="flex items-center justify-end text-sm">
                 <button type="button" onClick={onResetPassword} disabled={isAnyLoading} className="text-primary font-bold hover:underline disabled:pointer-events-none disabled:text-muted-foreground">
                   Forgot password?
                 </button>

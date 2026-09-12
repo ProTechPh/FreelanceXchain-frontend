@@ -73,6 +73,11 @@ export default function MfaSetupPage() {
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!savedCodesConfirmed) {
+      toast.error('Please confirm that you have saved your recovery codes before proceeding.');
+      document.getElementById('confirm-saved-codes')?.focus();
+      return;
+    }
     setIsVerifying(true);
     try {
       await authApi.mfaVerifyEnrollment('totp', code);
@@ -246,7 +251,12 @@ export default function MfaSetupPage() {
               autoFocus
             />
           </Field>
-            <Button type="submit" variant="gradient" className="w-full" disabled={isVerifying || code.length !== 6 || !savedCodesConfirmed}>
+            {code.length === 6 && !savedCodesConfirmed && (
+              <p className="text-xs text-amber-600 dark:text-amber-400 font-medium" role="alert">
+                Please check the box above confirming you saved your recovery codes.
+              </p>
+            )}
+            <Button type="submit" variant="gradient" className="w-full" disabled={isVerifying || code.length !== 6}>
               {isVerifying ? 'Verifying...' : 'Verify & Enable'}
             </Button>
           </form>

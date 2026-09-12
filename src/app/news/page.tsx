@@ -216,7 +216,7 @@ export default function NewsPage() {
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      loadCryptoNews(undefined, searchQuery.trim());
+      loadCryptoNews(undefined, undefined, searchQuery.trim());
     } else {
       loadCryptoNews();
     }
@@ -400,6 +400,7 @@ export default function NewsPage() {
               <MagnifyingGlass className="absolute left-4 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <input
                 type="text"
+                aria-label="Search crypto news by keyword or token"
                 placeholder="Search Bitcoin, Ethereum, DeFi, ETF..."
                 value={searchQuery}
                 onChange={(e) => handleSearchChange(e.target.value)}
@@ -737,6 +738,7 @@ export default function NewsPage() {
                   <input
                     type="email"
                     required
+                    aria-label="Email address for Crypto Wire newsletter"
                     placeholder="Enter your email..."
                     value={emailInput}
                     onChange={(e) => setEmailInput(e.target.value)}

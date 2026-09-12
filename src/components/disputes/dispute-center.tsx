@@ -316,9 +316,20 @@ function DisputeCenterInner({ role, disputeId }: { role: ParticipantRole; disput
             <CardContent>
               <form className="grid gap-4 sm:grid-cols-2" onSubmit={createDispute}>
                 <div className="space-y-2"><Label htmlFor="dispute-contract">Active contract</Label><select id="dispute-contract" className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm" value={draft.contractId} onChange={(event) => void selectContract(event.target.value)}><option value="">Choose a contract</option>{activeContracts.map((contract) => <option key={contract.id} value={contract.id}>{contract.project?.title || contract.title || `Contract ${contract.id.slice(0, 8)}`}</option>)}</select></div>
-                <div className="space-y-2"><Label htmlFor="dispute-milestone">Submitted milestone</Label><select id="dispute-milestone" disabled={!draft.contractId || loadingMilestones} className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm" value={draft.milestoneId} onChange={(event) => setDraft((current) => ({ ...current, milestoneId: event.target.value }))}><option value="">{loadingMilestones ? 'Loading…' : 'Choose a milestone'}</option>{milestones.map((milestone) => <option key={milestone.id} value={milestone.id}>{milestone.title}</option>)}</select></div>
+                <div className="space-y-2">
+                  <Label htmlFor="dispute-milestone">Submitted milestone</Label>
+                  <select id="dispute-milestone" disabled={!draft.contractId || loadingMilestones} className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm" value={draft.milestoneId} onChange={(event) => setDraft((current) => ({ ...current, milestoneId: event.target.value }))}>
+                    <option value="">{loadingMilestones ? 'Loading…' : 'Choose a milestone'}</option>
+                    {milestones.map((milestone) => <option key={milestone.id} value={milestone.id}>{milestone.title}</option>)}
+                  </select>
+                  {draft.contractId && !loadingMilestones && milestones.length === 0 && (
+                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                      No submitted milestones available for dispute. Only milestones currently under review (&apos;submitted&apos;) can be disputed.
+                    </p>
+                  )}
+                </div>
                 <div className="space-y-2 sm:col-span-2"><Label htmlFor="dispute-reason">Reason</Label><Textarea id="dispute-reason" rows={4} value={draft.reason} onChange={(event) => setDraft((current) => ({ ...current, reason: event.target.value }))} placeholder="Describe the problem and the resolution you are seeking." /></div>
-                <Button className="sm:col-span-2 sm:w-fit" type="submit" disabled={actionId === 'create'}><Scale className="mr-2 size-4" />{actionId === 'create' ? 'Opening…' : 'Open dispute'}</Button>
+                <Button className="sm:col-span-2 sm:w-fit" type="submit" disabled={actionId === 'create' || (Boolean(draft.contractId) && !loadingMilestones && milestones.length === 0)}><Scale className="mr-2 size-4" />{actionId === 'create' ? 'Opening…' : 'Open dispute'}</Button>
               </form>
             </CardContent>
           </Card>

@@ -547,14 +547,14 @@ export function MessagesWorkspace() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="md:hidden -ml-1 size-7 sm:size-10 rounded-full touch-manipulation"
+                  className="md:hidden -ml-1 size-10 rounded-full touch-manipulation flex items-center justify-center shrink-0"
                   onClick={() => {
                     setSelectedId(null);
                     setDirectRecipient(null);
                   }}
                   aria-label="Back to conversations"
                 >
-                  <ArrowLeft className="size-3.5 sm:size-5" />
+                  <ArrowLeft className="size-5" />
                 </Button>
                 <Avatar className="size-7 sm:size-10 shrink-0">
                   <AvatarFallback className="gradient-primary text-2xs sm:text-sm">
