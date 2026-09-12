@@ -85,13 +85,13 @@ const nextConfig: NextConfig = {
               "default-src 'self'",
               // 'unsafe-eval' only permitted in development for Next.js Fast Refresh / source maps
               process.env.NODE_ENV === 'development'
-                ? "script-src 'self' 'unsafe-eval' 'unsafe-inline'"
-                : "script-src 'self' 'unsafe-inline'",
+                ? "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://challenges.cloudflare.com"
+                : "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' blob: data: https://*.appwrite.io https://cloud.appwrite.io https://cdn.worldvectorlogo.com https://upload.wikimedia.org https://images.unsplash.com https://avatars.githubusercontent.com https://lh3.googleusercontent.com",
               "font-src 'self' data:",
-              "connect-src 'self' https://*.appwrite.io https://cloud.appwrite.io https://api.freelancexchain.works https://stats.uptimerobot.com http://localhost:* http://127.0.0.1:* wss: ws:",
-              "frame-src 'self'",
+              "connect-src 'self' https://*.appwrite.io https://cloud.appwrite.io https://api.freelancexchain.works https://challenges.cloudflare.com https://stats.uptimerobot.com http://localhost:* http://127.0.0.1:* wss: ws:",
+              "frame-src 'self' https://challenges.cloudflare.com",
               "object-src 'none'",
               "base-uri 'self'",
               "form-action 'self'",
