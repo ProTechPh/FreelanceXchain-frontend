@@ -2,8 +2,6 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import Link from 'next/link';
-import { AlertTriangle, ArrowLeft, Eye, Paperclip, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { reportFailure } from '@/lib/report-failure';
 import {
@@ -17,50 +15,55 @@ import {
 } from '@/lib/api';
 import {
   getContractPermissions,
-  getMilestonePermissions,
   normalizeMilestone,
 } from '@/lib/contract-workflow';
 import { getApiErrorMessage } from '@/lib/auth-contract';
-import { StatusBadge } from '@/components/ui/status-badge';
 import { hasApprovedKyc } from '@/lib/kyc-eligibility';
-import { formatAmount, formatDate, formatDateTime } from '@/lib/format';
-import { formatFileSize, safeAttachmentUrl } from '@/lib/attachment-presentation';
 import { AttachmentPreviewDialog, type AttachmentPreviewTarget } from '@/components/ui/attachment-preview-dialog';
-import { getTransactionDetailRoute } from '@/lib/transaction-view';
 import { validateReviewDraft, type ReviewDraft } from '@/lib/review-form';
 import { useAuthStore } from '@/stores/authStore';
-import type { Contract, ContractFundInfo, ContractPaymentStatus, Dispute, Milestone, RefundRequest, RushUpgradeRequest, Transaction, UserRole } from '@/types';
+import type {
+  Contract,
+  ContractFundInfo,
+  ContractPaymentStatus,
+  Dispute,
+  Milestone,
+  RefundRequest,
+  RushUpgradeRequest,
+  Transaction,
+  UserRole,
+} from '@/types';
 import { ContractNegotiationPanel } from '@/components/contracts/contract-negotiation-panel';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent } from '@/components/ui/card';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
 import { ContractPaymentHistory } from '@/components/contracts/contract-payment-history';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { qk } from '@/lib/query-keys';
+import { ContractWorkspaceHeader } from './workspace/contract-workspace-header';
+import { ContractOverviewCard } from './workspace/contract-overview-card';
+import { ContractFundingCards } from './workspace/contract-funding-cards';
+import { ContractReviewCard } from './workspace/contract-review-card';
+import { MilestoneListCard } from './workspace/milestone-list-card';
+import { ContractHistoryCard } from './workspace/contract-history-card';
+import { ContractWorkspaceDialogs } from './workspace/contract-workspace-dialogs';
 
 type ParticipantRole = Extract<UserRole, 'employer' | 'freelancer'>;
-const initialReview: ReviewDraft = { rating: 5, comment: '', workQuality: 5, communication: 5, professionalism: 5, wouldWorkAgain: true };
 
-export function ContractWorkspace({ contractId, role }: { contractId: string; role: ParticipantRole }) {
+const initialReview: ReviewDraft = {
+  rating: 5,
+  comment: '',
+  workQuality: 5,
+  communication: 5,
+  professionalism: 5,
+  wouldWorkAgain: true,
+};
+
+export function ContractWorkspace({
+  contractId,
+  role,
+}: {
+  contractId: string;
+  role: ParticipantRole;
+}) {
   const user = useAuthStore((state) => state.user);
   const queryClient = useQueryClient();
   const [contract, setContract] = useState<Contract | null>(null);
@@ -88,7 +91,15 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
       const loadedContract = contractResponse.data;
       setContract(loadedContract);
 
-      const [milestoneResult, transactionResult, disputeResult, rushResult, refundResult, paymentResult, fundInfoResult] = await Promise.allSettled([
+      const [
+        milestoneResult,
+        transactionResult,
+        disputeResult,
+        rushResult,
+        refundResult,
+        paymentResult,
+        fundInfoResult,
+      ] = await Promise.allSettled([
         milestonesApi.listForContract(contractId),
         transactionsApi.getForContract(contractId),
         contractsApi.getDisputes(contractId),
@@ -98,9 +109,10 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
         role === 'employer' ? contractsApi.getFundInfo(contractId) : Promise.resolve(null),
       ]);
 
-      const rawMilestones = milestoneResult.status === 'fulfilled'
-        ? milestoneResult.value.data
-        : loadedContract.milestones ?? [];
+      const rawMilestones =
+        milestoneResult.status === 'fulfilled'
+          ? milestoneResult.value.data
+          : loadedContract.milestones ?? [];
       setMilestones(rawMilestones.map(normalizeMilestone));
       setTransactions(transactionResult.status === 'fulfilled' ? transactionResult.value.data : []);
       setDisputes(disputeResult.status === 'fulfilled' ? disputeResult.value.data : []);
@@ -132,8 +144,6 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
   }, [contractId, role]);
 
   useEffect(() => {
-    // The workspace state is populated from authenticated backend resources after mount.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadWorkspace();
   }, [loadWorkspace]);
 
@@ -142,20 +152,23 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
   }
 
   if (!contract || !user) {
-    return <Card><CardContent className="py-12 text-center text-muted-foreground">Contract unavailable.</CardContent></Card>;
+    return (
+      <Card>
+        <CardContent className="py-12 text-center text-muted-foreground">
+          Contract unavailable.
+        </CardContent>
+      </Card>
+    );
   }
 
   const contractPermissions = getContractPermissions(contract.status, role, user.kycStatus);
   const isVerified = hasApprovedKyc(user.kycStatus);
-  const verificationPath = `/dashboard/${role}/verification`;
 
   const runAction = async (id: string, action: () => Promise<unknown>, success: string) => {
     setActionId(id);
     try {
       await action();
       toast.success(success);
-      // The ledger is a React Query resource, so refreshing the useState-backed
-      // workspace is not enough to pick up the new payment row.
       void queryClient.invalidateQueries({ queryKey: qk.contractPayments(contractId) });
       await loadWorkspace();
     } catch (error) {
@@ -196,7 +209,7 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
     );
   };
 
-  const submitReview = async (event: React.FormEvent<HTMLFormElement>) => {
+  const submitReview = async (event: React.FormEvent) => {
     event.preventDefault();
     const validationError = validateReviewDraft(review);
     if (validationError) {
@@ -218,113 +231,26 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
-      <div className="space-y-3">
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink href={`/dashboard/${role}`}>Dashboard</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink href={`/dashboard/${role}/contracts`}>Contracts</BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage>{contract.project?.title || `Contract #${contract.id.slice(0, 8)}`}</BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-        <Button asChild variant="ghost" size="sm" className="-ml-3 text-muted-foreground hover:text-foreground">
-          <Link href={`/dashboard/${role}/contracts`}>
-            <ArrowLeft className="mr-2 size-4" />Back to contracts
-          </Link>
-        </Button>
-      </div>
+      <ContractWorkspaceHeader contract={contract} role={role} />
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">{contract.project?.title || contract.title || 'Contract'}</h1>
-          <p className="mt-1 text-muted-foreground">Contract #{contract.id.slice(0, 8)}</p>
-        </div>
-        <StatusBadge status={contract.status} domain="contract" />
-      </div>
+      <ContractOverviewCard
+        contract={contract}
+        role={role}
+        isVerified={isVerified}
+        hasWallet={Boolean(user.walletAddress)}
+        canFund={contractPermissions.canFund}
+        canCancel={contractPermissions.canCancel}
+        actionId={actionId}
+        onFundContract={() => void handleFundContract()}
+        onOpenCancelModal={() => setConfirmCancelOpen(true)}
+      />
 
-      {!isVerified && ['pending', 'active', 'completed'].includes(contract.status) && (
-        <Card className="border-warning-border bg-warning-subtle">
-          <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="flex items-center gap-2 text-sm"><ShieldCheck className="size-5 text-warning" />Verify your identity before making changes to a contract.</p>
-            <Button asChild size="sm" variant="outline"><Link href={verificationPath}>Complete verification</Link></Button>
-          </CardContent>
-        </Card>
-      )}
-
-      <Card>
-        <CardHeader><CardTitle>Overview</CardTitle></CardHeader>
-        <CardContent className="space-y-5">
-          <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
-            <div><p className="text-muted-foreground">Base amount</p><p className="font-semibold">{formatAmount(contract.baseAmount)}</p></div>
-            <div><p className="text-muted-foreground">Rush fee</p><p className="font-semibold">{formatAmount(contract.rushFee)}</p></div>
-            <div><p className="text-muted-foreground">Total</p><p className="font-semibold text-primary">{formatAmount(contract.totalAmount)}</p></div>
-            <div><p className="text-muted-foreground">Escrow</p><p className="truncate font-mono text-xs">{contract.escrowAddress || 'Not funded'}</p></div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {role === 'employer' && contract.status === 'pending' && !user.walletAddress && (
-              <Button asChild variant="outline"><Link href="/dashboard/employer/settings">Connect wallet before funding</Link></Button>
-            )}
-            {contractPermissions.canFund && user.walletAddress && (
-              <Button
-                disabled={actionId === 'fund'}
-                onClick={() => void handleFundContract()}
-              >
-                {actionId === 'fund' ? 'Deploying & Funding…' : 'Fund contract securely'}
-              </Button>
-            )}
-            {contractPermissions.canCancel && (
-              <Button
-                variant="destructive"
-                disabled={actionId === 'cancel'}
-                onClick={() => setConfirmCancelOpen(true)}
-              >
-                Cancel contract
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader><CardTitle>Payment status</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            {paymentStatus ? (
-              <>
-                <div className="grid grid-cols-1 gap-3 text-sm xs:grid-cols-3">
-                  <div><p className="text-muted-foreground">Total</p><p className="font-semibold">{formatAmount(paymentStatus.totalAmount)}</p></div>
-                  <div><p className="text-muted-foreground">Released</p><p className="font-semibold text-success">{formatAmount(paymentStatus.releasedAmount)}</p></div>
-                  <div><p className="text-muted-foreground">Pending</p><p className="font-semibold text-warning">{formatAmount(paymentStatus.pendingAmount)}</p></div>
-                </div>
-                <div><div className="mb-1 flex justify-between text-xs text-muted-foreground"><span>Release progress</span><span>{paymentStatus.totalAmount > 0 ? Math.round((paymentStatus.releasedAmount / paymentStatus.totalAmount) * 100) : 0}%</span></div><div className="h-2 overflow-hidden rounded-full bg-secondary"><div className="h-full rounded-full bg-success" style={{ width: `${paymentStatus.totalAmount > 0 ? Math.min(100, (paymentStatus.releasedAmount / paymentStatus.totalAmount) * 100) : 0}%` }} /></div></div>
-                <p className="text-xs text-muted-foreground">{paymentStatus.milestones.length} milestone{paymentStatus.milestones.length === 1 ? '' : 's'} tracked by the payment service.</p>
-              </>
-            ) : <p className="text-sm text-muted-foreground">Payment status is temporarily unavailable.</p>}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader><CardTitle>{role === 'employer' ? 'Funding prerequisites' : 'Escrow funding'}</CardTitle></CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            {role === 'employer' && fundInfo ? (
-              <>
-                <div><p className="text-muted-foreground">Freelancer wallet</p><p className="truncate font-mono text-xs">{fundInfo.freelancerWallet}</p></div>
-                <div><p className="text-muted-foreground">Platform arbiter</p><p className="truncate font-mono text-xs">{fundInfo.arbiterWallet || 'Configured'}</p></div>
-                <p className="text-xs text-muted-foreground">Funding will prompt MetaMask to deposit {formatAmount(contract.totalAmount)} directly from your wallet into the secure smart contract escrow on the blockchain.</p>
-              </>
-            ) : (
-              <p className="text-muted-foreground">{contract.escrowAddress ? 'This contract is funded through the secure smart contract escrow shown above.' : role === 'employer' ? 'Funding details are unavailable until both participant wallets are ready.' : 'The employer has not funded this contract yet.'}</p>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      <ContractFundingCards
+        contract={contract}
+        role={role}
+        paymentStatus={paymentStatus}
+        fundInfo={fundInfo}
+      />
 
       <ContractNegotiationPanel
         contract={contract}
@@ -337,202 +263,50 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
       />
 
       {contract.status === 'completed' && reviewEligibility && (
-        <Card>
-          <CardHeader><CardTitle>Contract review</CardTitle></CardHeader>
-          <CardContent>
-            {reviewEligibility.canRate && isVerified ? (
-              <form className="grid gap-4 sm:grid-cols-2" onSubmit={submitReview}>
-                {([
-                  ['rating', 'Overall rating'],
-                  ['workQuality', 'Work quality'],
-                  ['communication', 'Communication'],
-                  ['professionalism', 'Professionalism'],
-                ] as const).map(([field, label]) => (
-                  <div key={field} className="space-y-2"><Label htmlFor={`review-${field}`}>{label}</Label><select id={`review-${field}`} className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm" value={review[field]} onChange={(event) => setReview((current) => ({ ...current, [field]: Number(event.target.value) }))}>{[5, 4, 3, 2, 1].map((value) => <option key={value} value={value}>{value} star{value === 1 ? '' : 's'}</option>)}</select></div>
-                ))}
-                <div className="space-y-2 sm:col-span-2"><Label htmlFor="review-comment">Comment</Label><Textarea id="review-comment" rows={4} value={review.comment} onChange={(event) => setReview((current) => ({ ...current, comment: event.target.value }))} /></div>
-                <label className="flex items-center gap-2 text-sm sm:col-span-2"><input type="checkbox" checked={review.wouldWorkAgain} onChange={(event) => setReview((current) => ({ ...current, wouldWorkAgain: event.target.checked }))} />I would work with this person again</label>
-                <Button className="sm:w-fit" type="submit" disabled={actionId === 'review'}>{actionId === 'review' ? 'Submitting…' : 'Submit review'}</Button>
-              </form>
-            ) : (
-              <p className="text-sm text-muted-foreground">{reviewEligibility.reason || (isVerified ? 'A review is not available for this contract.' : 'Complete identity verification to submit a review.')}</p>
-            )}
-          </CardContent>
-        </Card>
+        <ContractReviewCard
+          reviewEligibility={reviewEligibility}
+          isVerified={isVerified}
+          review={review}
+          actionId={actionId}
+          onReviewChange={setReview}
+          onSubmitReview={submitReview}
+        />
       )}
 
-      <section className="space-y-3" aria-labelledby="milestones-title">
-        <h2 id="milestones-title" className="text-xl font-semibold">Milestones</h2>
-        {milestones.length === 0 && <Card><CardContent className="py-8 text-center text-muted-foreground">No milestones found.</CardContent></Card>}
-        {milestones.map((milestone) => {
-          const permissions = getMilestonePermissions(milestone.status, role, user.kycStatus, contract.status);
-          return (
-            <Card key={milestone.id}>
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div><CardTitle className="text-base">{milestone.title}</CardTitle><p className="mt-1 text-sm text-muted-foreground">{milestone.description}</p></div>
-                  <StatusBadge status={milestone.status} domain="milestone" />
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-                  <span><span className="text-muted-foreground">Amount:</span> {formatAmount(milestone.amount)}</span>
-                  <span><span className="text-muted-foreground">Due:</span> {milestone.dueDate ? formatDate(milestone.dueDate) : 'Not set'}</span>
-                </div>
-                {milestone.rejectionReason && <p className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">Revision requested: {milestone.rejectionReason}</p>}
-                {(milestone.deliverableFiles ?? []).length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-xs font-semibold text-foreground uppercase tracking-wider">
-                      Deliverable Files ({(milestone.deliverableFiles ?? []).length})
-                    </p>
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      {(milestone.deliverableFiles ?? []).map((file) => {
-                        const url = safeAttachmentUrl(file.url);
-                        return (
-                          <div
-                            key={`${file.filename}-${file.url}`}
-                            className="flex items-center justify-between p-3 rounded-xl border border-border bg-background/50 gap-2 text-xs"
-                          >
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              <Paperclip className="size-4 text-primary shrink-0" />
-                              <div className="min-w-0">
-                                <p className="font-medium truncate text-foreground">{file.filename}</p>
-                                {file.size ? (
-                                  <p className="text-3xs text-muted-foreground">{formatFileSize(file.size)}</p>
-                                ) : null}
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-1 shrink-0">
-                              {url ? (
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-7 text-xs px-2 hover:text-primary hover:bg-primary/10"
-                                  onClick={() =>
-                                    setPreviewAttachment({
-                                      filename: file.filename,
-                                      url: file.url,
-                                      size: file.size,
-                                      mimeType: file.mimeType,
-                                    })
-                                  }
-                                >
-                                  <Eye className="size-3 mr-1" /> View
-                                </Button>
-                              ) : (
-                                <span className="text-xs text-muted-foreground">Unavailable</span>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {permissions.canSubmit && (
-                  <div className="space-y-3 rounded-lg border border-border p-4">
-                    <div className="space-y-2">
-                      <Label htmlFor={`files-${milestone.id}`}>Deliverable files</Label>
-                      <Input id={`files-${milestone.id}`} type="file" multiple aria-describedby={`files-hint-${milestone.id}`} onChange={(event) => setFiles((current) => ({ ...current, [milestone.id]: Array.from(event.target.files ?? []) }))} />
-                      <p id={`files-hint-${milestone.id}`} className="text-xs text-muted-foreground">Upload the files that demonstrate this milestone is complete.</p>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor={`notes-${milestone.id}`}>Submission notes</Label>
-                      <textarea id={`notes-${milestone.id}`} aria-describedby={`notes-hint-${milestone.id}`} className="min-h-24 w-full rounded-lg border border-input bg-transparent p-3 text-sm" value={notes[milestone.id] ?? ''} onChange={(event) => setNotes((current) => ({ ...current, [milestone.id]: event.target.value }))} />
-                      <p id={`notes-hint-${milestone.id}`} className="text-xs text-muted-foreground">Describe what you delivered and any relevant context for the employer.</p>
-                    </div>
-                    <Button
-                      disabled={actionId === milestone.id}
-                      onClick={() => submitMilestone(milestone)}
-                      aria-label={`Submit milestone: ${milestone.title}`}
-                    >
-                      Submit milestone
-                    </Button>
-                  </div>
-                )}
-
-                {permissions.canApprove && (
-                  <div className="flex flex-col gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-end">
-                    <Button
-                      className="bg-success text-success-foreground hover:bg-success/90"
-                      disabled={actionId === milestone.id}
-                      onClick={() => setApprovingMilestone(milestone)}
-                      aria-label={`Approve milestone: ${milestone.title}`}
-                    >
-                      Release Payment
-                    </Button>
-                    <div className="flex-1 space-y-2">
-                      <Label htmlFor={`reject-${milestone.id}`}>Revision reason</Label>
-                      <Input
-                        id={`reject-${milestone.id}`}
-                        aria-describedby={`reject-hint-${milestone.id}`}
-                        value={rejectionReasons[milestone.id] ?? ''}
-                        onChange={(event) => setRejectionReasons((current) => ({ ...current, [milestone.id]: event.target.value }))}
-                      />
-                      <p id={`reject-hint-${milestone.id}`} className="text-xs text-muted-foreground">Explain what needs to be changed before you can approve.</p>
-                    </div>
-                    <Button
-                      variant="outline"
-                      disabled={actionId === milestone.id || !(rejectionReasons[milestone.id] ?? '').trim()}
-                      onClick={() => runAction(milestone.id, () => milestonesApi.reject(milestone.id, rejectionReasons[milestone.id]!), 'Revision requested.')}
-                      aria-label={`Request revision for milestone: ${milestone.title}`}
-                    >
-                      Request revision
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+      <MilestoneListCard
+        milestones={milestones}
+        role={role}
+        kycStatus={user.kycStatus}
+        contractStatus={contract.status}
+        actionId={actionId}
+        files={files}
+        notes={notes}
+        rejectionReasons={rejectionReasons}
+        onFilesChange={(id, f) => setFiles((curr) => ({ ...curr, [id]: f }))}
+        onNotesChange={(id, n) => setNotes((curr) => ({ ...curr, [id]: n }))}
+        onRejectionReasonChange={(id, r) => setRejectionReasons((curr) => ({ ...curr, [id]: r }))}
+        onSubmitMilestone={submitMilestone}
+        onApproveMilestone={setApprovingMilestone}
+        onRejectMilestone={(milestoneId) => {
+          const reason = rejectionReasons[milestoneId];
+          if (!reason) return;
+          void runAction(
+            milestoneId,
+            () => milestonesApi.reject(milestoneId, reason),
+            'Revision requested.',
           );
-        })}
-      </section>
+        }}
+        onPreviewAttachment={setPreviewAttachment}
+      />
 
       <ContractPaymentHistory contractId={contractId} userId={user.id} />
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader><CardTitle>Blockchain transactions</CardTitle></CardHeader>
-          <CardContent>
-            {transactions.length === 0 ? <p className="text-sm text-muted-foreground">No transactions recorded.</p> : (
-              <ul className="space-y-3">
-                {transactions.map((transaction) => (
-                  <li key={transaction.id} className="border-b border-border pb-3 text-sm last:border-0">
-                    <Link href={getTransactionDetailRoute(role, transaction.id)} className="flex items-center justify-between rounded-md outline-none hover:text-primary focus-visible:ring-2 focus-visible:ring-ring">
-                      <div>
-                        <p className="font-medium capitalize">{transaction.type.replaceAll('_', ' ')}</p>
-                        <p className="text-xs text-muted-foreground">{formatDateTime(transaction.created_at)}</p>
-                        {transaction.transaction_hash && (
-                          <p className="font-mono text-xs text-primary/80 truncate max-w-[200px]">
-                            {transaction.transaction_hash.slice(0, 10)}…{transaction.transaction_hash.slice(-8)}
-                          </p>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <p>{formatAmount(transaction.amount)}</p>
-                        <Badge variant="secondary" className="capitalize">{transaction.status}</Badge>
-                      </div>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0">
-            <CardTitle>Disputes</CardTitle>
-            <Button variant="destructive" size="sm" asChild>
-              <Link href={`/dashboard/${role}/disputes?contractId=${contract.id}`}>File Dispute</Link>
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {disputes.length === 0 ? <p className="text-sm text-muted-foreground">No disputes for this contract.</p> : disputes.map((dispute) => <Link key={dispute.id} href={`/dashboard/${role}/disputes/${dispute.id}`} className="flex items-start gap-2 rounded-lg border border-border p-3 text-sm transition-colors hover:border-primary/30"><AlertTriangle className="mt-0.5 size-4 text-warning" /><div><p className="font-medium">{dispute.reason}</p><p className="text-muted-foreground">{dispute.status.replace('_', ' ')}</p></div></Link>)}
-          </CardContent>
-        </Card>
-      </div>
+      <ContractHistoryCard
+        contractId={contract.id}
+        role={role}
+        transactions={transactions}
+        disputes={disputes}
+      />
 
       <AttachmentPreviewDialog
         open={Boolean(previewAttachment)}
@@ -542,78 +316,27 @@ export function ContractWorkspace({ contractId, role }: { contractId: string; ro
         attachment={previewAttachment}
       />
 
-      {/* Contract Cancellation Confirmation Modal */}
-      <Dialog open={confirmCancelOpen} onOpenChange={(open) => { if (!actionId) setConfirmCancelOpen(open); }}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-destructive">Cancel this contract?</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to cancel this pending contract? This will release any uncommitted escrow and close the workspace.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setConfirmCancelOpen(false)} disabled={actionId === 'cancel'}>
-              Keep Contract
-            </Button>
-            <Button
-              variant="destructive"
-              loading={actionId === 'cancel'}
-              loadingText="Cancelling…"
-              disabled={actionId === 'cancel'}
-              onClick={async () => {
-                await runAction('cancel', () => contractsApi.cancel(contract.id), 'Contract cancelled.');
-                setConfirmCancelOpen(false);
-              }}
-            >
-              Confirm Cancellation
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Milestone Approval & Escrow Release Confirmation Modal */}
-      <Dialog
-        open={approvingMilestone !== null}
-        onOpenChange={(open) => {
-          if (!open && !actionId) setApprovingMilestone(null);
+      <ContractWorkspaceDialogs
+        cancelModalOpen={confirmCancelOpen}
+        onCancelModalChange={setConfirmCancelOpen}
+        approvingMilestone={approvingMilestone}
+        onApprovingMilestoneChange={setApprovingMilestone}
+        actionId={actionId}
+        onConfirmCancel={async () => {
+          await runAction('cancel', () => contractsApi.cancel(contract.id), 'Contract cancelled.');
+          setConfirmCancelOpen(false);
         }}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-foreground">Approve Milestone & Release Payment?</DialogTitle>
-            <DialogDescription>
-              You are about to release payment for <strong>&quot;{approvingMilestone?.title}&quot;</strong> ({formatAmount(approvingMilestone?.amount)}).
-              This will transfer funds to the freelancer. This cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button
-              variant="outline"
-              onClick={() => setApprovingMilestone(null)}
-              disabled={Boolean(actionId)}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="gradient"
-              loading={Boolean(actionId)}
-              loadingText="Releasing funds…"
-              onClick={async () => {
-                if (!approvingMilestone) return;
-                const id = approvingMilestone.id;
-                await runAction(
-                  id,
-                  () => milestonesApi.approve(id),
-                  'Milestone approved and payment released.',
-                );
-                setApprovingMilestone(null);
-              }}
-            >
-              Confirm & Release Payment
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        onConfirmApproveMilestone={async () => {
+          if (!approvingMilestone) return;
+          const id = approvingMilestone.id;
+          await runAction(
+            id,
+            () => milestonesApi.approve(id),
+            'Milestone approved and payment released.',
+          );
+          setApprovingMilestone(null);
+        }}
+      />
     </div>
   );
 }
