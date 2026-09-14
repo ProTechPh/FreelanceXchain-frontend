@@ -3,9 +3,9 @@
 import { useMemo, useState } from 'react';
 import { BadgeDollarSign, FastForward, HandCoins } from 'lucide-react';
 import { toast } from 'sonner';
-import { contractsApi, refundsApi, rushUpgradesApi } from '@/lib/api';
+import { refundsApi, rushUpgradesApi } from '@/lib/api';
 import { reportFailure } from '@/lib/report-failure';
-import { sendRushFeeFromWallet } from '@/lib/wallet';
+import { executeRushFeePayment, RushFeePaymentError } from '@/lib/rush-fee-payment';
 import {
   canActOnRefund,
   canRequestRefund,
@@ -84,39 +84,16 @@ export function ContractNegotiationPanel({
 
   const handlePayRushFee = async (request: RushUpgradeRequest) => {
     setActionId(`rush-pay-${request.id}`);
-    // One toast id for the whole flow, so each step replaces the last instead of
-    // stacking four notices for a single payment.
     const progress = `rush-pay-${request.id}`;
     let signed = false;
     try {
-      if (typeof window === 'undefined' || !window.ethereum) {
-        toast.warning('No wallet detected', {
-          description: 'Connect MetaMask or another EVM-compatible wallet to pay the rush fee.',
-        });
-        return;
-      }
-
       const percentage = request.counterPercentage ?? request.proposedPercentage;
-      const amount = Math.round(contract.baseAmount * (percentage / 100) * 10000) / 10000;
-
-      toast.loading('Checking the freelancer wallet…', { id: progress });
-      const { data: info } = await contractsApi.getFundInfo(contract.id);
-      if (!info.freelancerWallet) {
-        toast.warning('The freelancer has no wallet connected yet', {
-          id: progress,
-          description: 'They need to connect one before you can pay the rush fee.',
-        });
-        return;
-      }
-
-      toast.loading(`Confirm the ${amount} ETH rush fee in your wallet…`, { id: progress });
-      const paymentResult = await sendRushFeeFromWallet(window.ethereum, {
-        freelancerWallet: info.freelancerWallet,
-        amountEth: amount,
-        chainId: info.chainId,
+      const paymentResult = await executeRushFeePayment({
+        contractId: contract.id,
+        baseAmount: contract.baseAmount,
+        percentage,
+        progressId: progress,
       });
-      // Past this point the transaction is on-chain, so no later failure may
-      // claim the funds are untouched.
       signed = true;
 
       toast.loading('Recording the payment…', { id: progress });
@@ -128,7 +105,13 @@ export function ContractNegotiationPanel({
       await onRefresh();
     } catch (error) {
       toast.dismiss(progress);
-      reportFailure(error, 'pay the rush fee', { fundsUnchanged: !signed });
+      if (error instanceof RushFeePaymentError) {
+        toast.warning(error.type === 'NO_WALLET' ? 'No wallet detected' : 'Freelancer wallet not ready', {
+          description: error.message,
+        });
+      } else {
+        reportFailure(error, 'pay the rush fee', { fundsUnchanged: !signed });
+      }
     } finally {
       setActionId(null);
     }
@@ -139,25 +122,13 @@ export function ContractNegotiationPanel({
     const progress = `rush-accept-${request.id}`;
     let signed = false;
     try {
-      if (contract.status === 'active' && typeof window !== 'undefined' && window.ethereum) {
+      if (contract.status === 'active') {
         const percentage = request.counterPercentage ?? request.proposedPercentage;
-        const amount = Math.round(contract.baseAmount * (percentage / 100) * 10000) / 10000;
-
-        toast.loading('Checking the freelancer wallet…', { id: progress });
-        const { data: info } = await contractsApi.getFundInfo(contract.id);
-        if (!info.freelancerWallet) {
-          toast.warning('The freelancer has no wallet connected yet', {
-            id: progress,
-            description: 'They need to connect one before the counter-offer can be paid.',
-          });
-          return;
-        }
-
-        toast.loading(`Confirm the ${amount} ETH rush fee in your wallet…`, { id: progress });
-        const paymentResult = await sendRushFeeFromWallet(window.ethereum, {
-          freelancerWallet: info.freelancerWallet,
-          amountEth: amount,
-          chainId: info.chainId,
+        const paymentResult = await executeRushFeePayment({
+          contractId: contract.id,
+          baseAmount: contract.baseAmount,
+          percentage,
+          progressId: progress,
         });
         signed = true;
 
@@ -173,7 +144,13 @@ export function ContractNegotiationPanel({
       await onRefresh();
     } catch (error) {
       toast.dismiss(progress);
-      reportFailure(error, 'accept the counter-offer', { fundsUnchanged: !signed });
+      if (error instanceof RushFeePaymentError) {
+        toast.warning(error.type === 'NO_WALLET' ? 'No wallet detected' : 'Freelancer wallet not ready', {
+          description: error.message,
+        });
+      } else {
+        reportFailure(error, 'accept the counter-offer', { fundsUnchanged: !signed });
+      }
     } finally {
       setActionId(null);
     }

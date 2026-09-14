@@ -1,32 +1,20 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StatsSkeleton, ListSkeleton } from '@/components/dashboard/skeletons';
 import Link from 'next/link';
-import {
-  contractsApi,
-  proposalsApi,
-  matchingApi,
-  projectsApi,
-  reputationApi,
-} from '@/lib/api';
-import { useAuthStore } from '@/stores/authStore';
-import { useFreelancerAnalytics } from '@/hooks/use-analytics';
 import { AnalyticsRangeFilter } from '@/components/analytics/range-filter';
-import { DEFAULT_RANGE_PRESET, getRangeLabel, resolveRange, type RangePresetId } from '@/lib/analytics-range';
-import type { Contract, Proposal, Project } from '@/types';
-import { reportLoadFailure } from '@/lib/report-failure';
+import { getRangeLabel } from '@/lib/analytics-range';
 import { DollarSign, FolderOpen, FileText, Star, TrendingUp, Clock, ArrowUpRight, Briefcase, Wallet } from 'lucide-react';
 import { formatAmount, formatNumber, formatRelativeTime, formatDate } from '@/lib/format';
 import { ProGate } from '@/components/billing/pro-gate';
-import { usePlan } from '@/hooks/use-plan';
 import { WalletConnectBanner } from '@/components/wallet/wallet-connect-banner';
 import { TourStepLink } from '@/components/onboarding/tour-step-link';
 import { WalletBalanceCard } from '@/components/wallet/wallet-balance-card';
+import { useFreelancerDashboard } from '@/hooks/use-freelancer-dashboard';
 
 const statusColors: Record<string, string> = {
   pending: 'bg-warning-subtle text-warning',
@@ -40,193 +28,25 @@ function relativeTime(iso: string | null | undefined): string {
   return formatRelativeTime(iso);
 }
 
-interface ActiveContractView {
-  contract: Contract;
-  project: Project | null;
-}
-
-interface RecentProposalView {
-  proposal: Proposal;
-  project: Project | null;
-}
-
-interface RecommendedProjectView {
-  project: Project;
-  matchScore: number;
-  matchedSkills: string[];
-}
-
 export default function FreelancerDashboard() {
-  const currentUser = useAuthStore((state) => state.user);
-  const [coreLoading, setCoreLoading] = useState(true);
-  const [recommendedLoading, setRecommendedLoading] = useState(true);
-  const [range, setRange] = useState<RangePresetId>(DEFAULT_RANGE_PRESET);
-  const [averageRating, setAverageRating] = useState<number | null>(null);
-  const [totalRatings, setTotalRatings] = useState<number>(0);
-  const [activeContracts, setActiveContracts] = useState<ActiveContractView[]>([]);
-  const [pendingProposalCount, setPendingProposalCount] = useState(0);
-  const [recentProposals, setRecentProposals] = useState<RecentProposalView[]>([]);
-  const [recommended, setRecommended] = useState<RecommendedProjectView[]>([]);
+  const {
+    currentUser,
+    coreLoading,
+    recommendedLoading,
+    range,
+    setRange,
+    averageRating,
+    totalRatings,
+    activeContracts,
+    pendingProposalCount,
+    recentProposals,
+    recommended,
+    totalEarnings,
+    projectsCompleted,
+    isPro,
+    hasData,
+  } = useFreelancerDashboard();
 
-  const projectCacheRef = useRef<Map<string, Project | null>>(new Map());
-
-  const fetchProjectDetails = async (projectIds: string[]): Promise<Map<string, Project | null>> => {
-    const missing = projectIds.filter((id) => !projectCacheRef.current.has(id));
-    if (missing.length > 0) {
-      await Promise.all(
-        missing.map(async (id) => {
-          try {
-            const res = await projectsApi.get(id);
-            projectCacheRef.current.set(id, res.data);
-          } catch {
-            projectCacheRef.current.set(id, null);
-          }
-        })
-      );
-    }
-    return projectCacheRef.current;
-  };
-
-  // Analytics is the one resource on this page that moved to React Query: it is the
-  // only one that refetches on a user action (the range filter), and the API caches
-  // it for 60s, so a client cache keyed on the range avoids re-requesting a value
-  // the server would only serve from its own cache anyway.
-  const analyticsRange = useMemo(() => resolveRange(range, new Date()), [range]);
-  const { isPro } = usePlan();
-  // Free users never fire this request: the tile below renders a lock instead.
-  const { data: analytics } = useFreelancerAnalytics(analyticsRange, Boolean(currentUser) && isPro);
-  const totalEarnings = analytics?.totalEarnings ?? null;
-  const projectsCompleted = analytics?.projectsCompleted ?? null;
-
-  useEffect(() => {
-    if (!currentUser) return;
-    let active = true;
-
-    // 1. Fast Load Core Dashboard Data (Contracts, Proposals, Reputation)
-    const loadCore = async () => {
-      try {
-        const [contractsRes, proposalsRes, reputationRes] = await Promise.allSettled([
-          contractsApi.list(),
-          proposalsApi.getMine(),
-          reputationApi.getScore(currentUser.id),
-        ]);
-
-        if (!active) return;
-
-        if (reputationRes.status === 'fulfilled') {
-          setAverageRating(reputationRes.value.data.averageRating);
-          setTotalRatings(reputationRes.value.data.totalRatings);
-        }
-
-        const projectIdsToFetch = new Set<string>();
-
-        let activeContractsList: Contract[] = [];
-        if (contractsRes.status === 'fulfilled') {
-          activeContractsList = contractsRes.value.data.items.filter((c) => c.status === 'active');
-          activeContractsList.forEach((c) => projectIdsToFetch.add(c.projectId));
-        }
-
-        let recentProposalsList: Proposal[] = [];
-        if (proposalsRes.status === 'fulfilled') {
-          const all = proposalsRes.value.data;
-          setPendingProposalCount(all.filter((p) => p.status === 'pending').length);
-
-          recentProposalsList = all
-            .slice()
-            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-            .slice(0, 5); // Increased slice to allow for > 4 check
-          recentProposalsList.forEach((p) => projectIdsToFetch.add(p.projectId));
-        }
-
-        // Set initial views with cached project info and unblock core loading
-        setActiveContracts(
-          activeContractsList.map((contract) => ({
-            contract,
-            project: projectCacheRef.current.get(contract.projectId) ?? null,
-          }))
-        );
-
-        setRecentProposals(
-          recentProposalsList.map((proposal) => ({
-            proposal,
-            project: projectCacheRef.current.get(proposal.projectId) ?? null,
-          }))
-        );
-
-        setCoreLoading(false);
-
-        // Enrich project details (titles, milestones) in background
-        if (projectIdsToFetch.size > 0) {
-          const projectMap = await fetchProjectDetails(Array.from(projectIdsToFetch));
-          if (!active) return;
-
-          setActiveContracts(
-            activeContractsList.map((contract) => ({
-              contract,
-              project: projectMap.get(contract.projectId) ?? null,
-            }))
-          );
-
-          setRecentProposals(
-            recentProposalsList.map((proposal) => ({
-              proposal,
-              project: projectMap.get(proposal.projectId) ?? null,
-            }))
-          );
-        }
-      } catch (error) {
-        if (active) reportLoadFailure(error, 'your dashboard', () => void loadCore());
-      } finally {
-        if (active) {
-          setCoreLoading(false);
-        }
-      }
-    };
-
-    // 2. Asynchronously / Progressively Load AI Recommendations in Background
-    const loadRecommendations = async () => {
-      // Pro-only: the card body below renders a lock instead.
-      if (!isPro) {
-        setRecommendedLoading(false);
-        return;
-      }
-      try {
-        setRecommendedLoading(true);
-        const recommendationsRes = await matchingApi.getProjectRecommendations(3);
-        if (!active) return;
-
-        const recsList = recommendationsRes.data || [];
-        const recProjectIds = recsList.map((r) => r.projectId);
-        const projectMap = await fetchProjectDetails(recProjectIds);
-
-        if (!active) return;
-        setRecommended(
-          recsList
-            .map((r) => ({
-              project: projectMap.get(r.projectId) ?? null,
-              matchScore: r.matchScore,
-              matchedSkills: r.matchedSkills,
-            }))
-            .filter((r): r is RecommendedProjectView => r.project !== null)
-        );
-      } catch {
-        // Recommendations are a background enhancement; degrade gracefully without interrupting dashboard
-        if (active) setRecommended([]);
-      } finally {
-        if (active) setRecommendedLoading(false);
-      }
-    };
-
-    void loadCore();
-    void loadRecommendations();
-
-    return () => {
-      active = false;
-    };
-    // isPro gates loadRecommendations, so an upgrade mid-session re-runs it.
-  }, [currentUser, isPro]);
-
-  const hasData = activeContracts.length > 0 || recentProposals.length > 0;
   if (coreLoading && !hasData) {
     return <StatsSkeleton label="Loading dashboard" />;
   }
@@ -240,9 +60,7 @@ export default function FreelancerDashboard() {
       color: 'text-success',
       bg: 'bg-success-subtle',
       loading: totalEarnings === null && projectsCompleted === null,
-      // Named, not positional — see the note on the employer dashboard.
       tour: 'earnings',
-      // Derived from /analytics/freelancer, which is Pro-only.
       pro: true,
     },
     {
@@ -282,10 +100,10 @@ export default function FreelancerDashboard() {
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Welcome back{currentUser?.name ? `, ${currentUser.name}` : ''}!</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
+            Welcome back{currentUser?.name ? `, ${currentUser.name}` : ''}!
+          </h1>
           <p className="text-muted-foreground">Here&apos;s what&apos;s happening with your work</p>
-          {/* Hidden on Free: a range control that drives a locked endpoint is
-              a dead control. */}
           {isPro && (
             <AnalyticsRangeFilter
               value={range}
@@ -315,8 +133,6 @@ export default function FreelancerDashboard() {
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div>
-                  {/* Title and the data-tour anchor stay outside the gate so the
-                      onboarding tour and the tile's identity survive on Free. */}
                   <p className="text-sm text-muted-foreground">{stat.title}</p>
                   {'pro' in stat && stat.pro ? (
                     <ProGate feature="freelancer-analytics" variant="inline">
@@ -379,18 +195,25 @@ export default function FreelancerDashboard() {
                         <div className="flex items-start justify-between mb-3">
                           <div>
                             <p className="font-medium">{project?.title ?? 'Untitled project'}</p>
-                            <p className="text-sm text-muted-foreground">{project?.employer?.name ?? project?.employer?.companyName ?? ''}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {project?.employer?.name ?? project?.employer?.companyName ?? ''}
+                            </p>
                           </div>
                           <p className="font-semibold text-primary">{formatAmount(contract.totalAmount)}</p>
                         </div>
                         <div className="flex items-center gap-4">
                           <div className="flex-1">
                             <div className="flex items-center justify-between text-xs mb-1">
-                              <span className="text-muted-foreground">{currentMilestone?.title ?? 'All milestones complete'}</span>
+                              <span className="text-muted-foreground">
+                                {currentMilestone?.title ?? 'All milestones complete'}
+                              </span>
                               <span className="text-muted-foreground">{progress}%</span>
                             </div>
                             <div className="h-1.5 bg-background rounded-full overflow-hidden">
-                              <div className="h-full gradient-primary rounded-full transition-all" style={{ width: `${progress}%` }} />
+                              <div
+                                className="h-full gradient-primary rounded-full transition-all"
+                                style={{ width: `${progress}%` }}
+                              />
                             </div>
                           </div>
                           {project?.deadline && (
@@ -483,49 +306,49 @@ export default function FreelancerDashboard() {
         </CardHeader>
         <CardContent>
           <ProGate feature="project-recommendations" variant="card">
-          {recommendedLoading ? (
-            <div className="grid md:grid-cols-3 gap-4" role="status" aria-label="Loading AI recommendations">
-              <Skeleton className="h-44 rounded-xl" />
-              <Skeleton className="h-44 rounded-xl" />
-              <Skeleton className="h-44 rounded-xl" />
-            </div>
-          ) : recommended.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 text-center space-y-3">
-              <p className="text-sm text-muted-foreground">
-                No recommendations yet — add skills to your profile to get AI-matched with projects.
-              </p>
-              <Button asChild size="sm" variant="gradient">
-                <Link href="/dashboard/freelancer/profile">Set up skills →</Link>
-              </Button>
-            </div>
-          ) : (
-            <div className="grid md:grid-cols-3 gap-4">
-              {recommended.map(({ project, matchScore, matchedSkills }) => (
-                <Link
-                  key={project.id}
-                  href={`/dashboard/freelancer/projects/${project.id}`}
-                  className="block rounded-xl border border-border bg-secondary/50 p-4 transition-all hover:border-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <h3 className="font-medium">{project.title}</h3>
-                    <Badge className="bg-success-subtle text-success">{Math.round(matchScore)}% Match</Badge>
-                  </div>
-                  <p className="text-sm text-primary font-medium mb-2">{formatAmount(project.budget)}</p>
-                  <div className="flex flex-wrap gap-1.5 mb-3">
-                    {matchedSkills.map((skill) => (
-                      <Badge key={skill} variant="secondary" className="text-xs">
-                        {skill}
-                      </Badge>
-                    ))}
-                  </div>
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>{relativeTime(project.createdAt)}</span>
-                    <span>{project.proposalCount ?? 0} proposals</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
+            {recommendedLoading ? (
+              <div className="grid md:grid-cols-3 gap-4" role="status" aria-label="Loading AI recommendations">
+                <Skeleton className="h-44 rounded-xl" />
+                <Skeleton className="h-44 rounded-xl" />
+                <Skeleton className="h-44 rounded-xl" />
+              </div>
+            ) : recommended.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 text-center space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  No recommendations yet — add skills to your profile to get AI-matched with projects.
+                </p>
+                <Button asChild size="sm" variant="gradient">
+                  <Link href="/dashboard/freelancer/profile">Set up skills →</Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-3 gap-4">
+                {recommended.map(({ project, matchScore, matchedSkills }) => (
+                  <Link
+                    key={project.id}
+                    href={`/dashboard/freelancer/projects/${project.id}`}
+                    className="block rounded-xl border border-border bg-secondary/50 p-4 transition-all hover:border-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <h3 className="font-medium">{project.title}</h3>
+                      <Badge className="bg-success-subtle text-success">{Math.round(matchScore)}% Match</Badge>
+                    </div>
+                    <p className="text-sm text-primary font-medium mb-2">{formatAmount(project.budget)}</p>
+                    <div className="flex flex-wrap gap-1.5 mb-3">
+                      {matchedSkills.map((skill) => (
+                        <Badge key={skill} variant="secondary" className="text-xs">
+                          {skill}
+                        </Badge>
+                      ))}
+                    </div>
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>{relativeTime(project.createdAt)}</span>
+                      <span>{project.proposalCount ?? 0} proposals</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
           </ProGate>
         </CardContent>
       </Card>
