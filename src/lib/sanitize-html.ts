@@ -123,15 +123,17 @@ function isSafeUrl(url: string, allowImageData = false): boolean {
 function sanitizeStyle(style: string): string {
   if (!style) return '';
 
-  const lowered = style.toLowerCase();
+  const normalized = style.toLowerCase().replace(/\s+/g, ' ');
   if (
-    lowered.includes('expression(') ||
-    lowered.includes('javascript:') ||
-    lowered.includes('behavior:') ||
-    lowered.includes('-moz-binding') ||
-    lowered.includes('url(') ||
-    lowered.includes('position: fixed') ||
-    lowered.includes('position:fixed')
+    normalized.includes('expression(') ||
+    normalized.includes('javascript:') ||
+    normalized.includes('behavior:') ||
+    normalized.includes('-moz-binding') ||
+    normalized.includes('url(') ||
+    normalized.includes('position: fixed') ||
+    normalized.includes('position:fixed') ||
+    normalized.includes('position: absolute') ||
+    normalized.includes('position:absolute')
   ) {
     return '';
   }
