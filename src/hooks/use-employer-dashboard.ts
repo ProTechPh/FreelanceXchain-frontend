@@ -43,6 +43,11 @@ export function useEmployerDashboard() {
   const totalSpent = analytics?.totalSpent ?? null;
   const completedContractCount = analytics?.projectsCompleted ?? null;
 
+  const [reloadKey, setReloadKey] = useState(0);
+  const reload = useCallback(() => {
+    setReloadKey((prev) => prev + 1);
+  }, []);
+
   const load = useCallback(async () => {
     if (!currentUser) return;
 
@@ -162,17 +167,18 @@ export function useEmployerDashboard() {
         setRecommendedLoading(false);
       }
     } catch (error) {
-      reportLoadFailure(error, 'your dashboard', () => void load());
+      reportLoadFailure(error, 'your dashboard', reload);
     } finally {
       setCoreLoading(false);
       setLoading(false);
     }
-  }, [currentUser, isPro]);
+  }, [currentUser, isPro, reload]);
 
   useEffect(() => {
     if (!currentUser) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
-  }, [currentUser, isPro, load]);
+  }, [currentUser, isPro, load, reloadKey]);
 
   const activeProjects = useMemo(
     () => projects.filter((p) => p.status === 'open' || p.status === 'in_progress'),

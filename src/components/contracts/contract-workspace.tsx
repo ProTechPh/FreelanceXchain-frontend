@@ -144,6 +144,8 @@ export function ContractWorkspace({
   }, [contractId, role]);
 
   useEffect(() => {
+    // The workspace state is populated from authenticated backend resources after mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadWorkspace();
   }, [loadWorkspace]);
 
@@ -279,7 +281,6 @@ export function ContractWorkspace({
         kycStatus={user.kycStatus}
         contractStatus={contract.status}
         actionId={actionId}
-        files={files}
         notes={notes}
         rejectionReasons={rejectionReasons}
         onFilesChange={(id, f) => setFiles((curr) => ({ ...curr, [id]: f }))}

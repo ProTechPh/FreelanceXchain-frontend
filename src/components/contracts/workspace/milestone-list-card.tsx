@@ -20,7 +20,6 @@ interface MilestoneListCardProps {
   kycStatus?: KycStatus;
   contractStatus: Contract['status'];
   actionId: string | null;
-  files: Record<string, File[]>;
   notes: Record<string, string>;
   rejectionReasons: Record<string, string>;
   onFilesChange: (milestoneId: string, files: File[]) => void;
@@ -38,7 +37,6 @@ export function MilestoneListCard({
   kycStatus,
   contractStatus,
   actionId,
-  files,
   notes,
   rejectionReasons,
   onFilesChange,

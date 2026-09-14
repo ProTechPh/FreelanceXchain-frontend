@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { BadgeDollarSign, FastForward, HandCoins } from 'lucide-react';
 import { toast } from 'sonner';
-import { contractsApi, refundsApi, rushUpgradesApi } from '@/lib/api';
+import { refundsApi, rushUpgradesApi } from '@/lib/api';
 import { reportFailure } from '@/lib/report-failure';
 import { executeRushFeePayment, RushFeePaymentError } from '@/lib/rush-fee-payment';
 import {

@@ -105,6 +105,7 @@ export function ProjectDetailView({
 
     if (projectId) {
       void fetchProject();
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       void fetchMyProposal();
     }
 

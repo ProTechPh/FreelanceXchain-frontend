@@ -68,6 +68,11 @@ export function useFreelancerDashboard() {
   const totalEarnings = analytics?.totalEarnings ?? null;
   const projectsCompleted = analytics?.projectsCompleted ?? null;
 
+  const [reloadKey, setReloadKey] = useState(0);
+  const reloadCore = useCallback(() => {
+    setReloadKey((prev) => prev + 1);
+  }, []);
+
   const loadCore = useCallback(async () => {
     if (!currentUser) return;
     try {
@@ -136,11 +141,11 @@ export function useFreelancerDashboard() {
         );
       }
     } catch (error) {
-      reportLoadFailure(error, 'your dashboard', () => void loadCore());
+      reportLoadFailure(error, 'your dashboard', reloadCore);
     } finally {
       setCoreLoading(false);
     }
-  }, [currentUser, fetchProjectDetails]);
+  }, [currentUser, fetchProjectDetails, reloadCore]);
 
   const loadRecommendations = useCallback(async () => {
     if (!isPro) {
@@ -173,9 +178,10 @@ export function useFreelancerDashboard() {
 
   useEffect(() => {
     if (!currentUser) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadCore();
     void loadRecommendations();
-  }, [currentUser, isPro, loadCore, loadRecommendations]);
+  }, [currentUser, isPro, loadCore, loadRecommendations, reloadKey]);
 
   const hasData = activeContracts.length > 0 || recentProposals.length > 0;
 
