@@ -58,6 +58,26 @@ export function getAccessToken(): string | null {
   return null;
 }
 
+type TokenChangeListener = (token: string | null) => void;
+const tokenChangeListeners = new Set<TokenChangeListener>();
+
+export function onTokenChange(listener: TokenChangeListener): () => void {
+  tokenChangeListeners.add(listener);
+  return () => {
+    tokenChangeListeners.delete(listener);
+  };
+}
+
+function notifyTokenChange(token: string | null): void {
+  for (const listener of tokenChangeListeners) {
+    try {
+      listener(token);
+    } catch {
+      // Ignore listener errors
+    }
+  }
+}
+
 /**
  * Sets the active access token in memory and persists to storage
  * so the authenticated session survives browser closing/reopening.
@@ -77,6 +97,7 @@ export function setAccessToken(token: string | null): void {
       storage.removeItem('access_token');
     }
   }
+  notifyTokenChange(token);
 }
 
 /**
@@ -90,6 +111,7 @@ export function clearAccessToken(): void {
     storage.removeItem('access_token');
     storage.removeItem('refresh_token');
   }
+  notifyTokenChange(null);
 }
 
 /**
