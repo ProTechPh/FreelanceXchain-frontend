@@ -171,7 +171,7 @@ export function ContractWorkspace({
     try {
       await action();
       toast.success(success);
-      void queryClient.invalidateQueries({ queryKey: qk.contractPayments(contractId) });
+      void queryClient.invalidateQueries({ queryKey: ['payments'] });
       await loadWorkspace();
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'The contract action could not be completed.'));
@@ -185,7 +185,7 @@ export function ContractWorkspace({
     try {
       await contractsApi.fund(contract.id);
       toast.success('Contract funded and activated.');
-      void queryClient.invalidateQueries({ queryKey: qk.contractPayments(contractId) });
+      void queryClient.invalidateQueries({ queryKey: ['payments'] });
       await loadWorkspace();
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Funding transaction failed or was rejected.'));

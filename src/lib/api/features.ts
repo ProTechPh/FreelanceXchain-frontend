@@ -122,8 +122,8 @@ export const matchingApi = {
   extractSkills: (text: string) =>
     api.post<ExtractedSkill[]>('/matching/extract-skills', { text }),
 
-  getSkillGaps: () =>
-    api.get<SkillGapAnalysis>('/matching/skill-gaps'),
+  getSkillGaps: (params?: { refresh?: boolean }) =>
+    api.get<SkillGapAnalysis>('/matching/skill-gaps', { params }),
 
   generateProposal: (projectId: string, customNotes?: string) =>
     api.post<AIProposalResult>(`/matching/generate-proposal/${projectId}`, { customNotes }),

@@ -68,3 +68,19 @@ test('only classifies the API CSRF error as retryable', () => {
   }), false);
   assert.equal(isCsrfValidationFailure({ response: { status: 401 } }), false);
 });
+
+test('resets token state so the next request gets a fresh token', async () => {
+  let callCount = 0;
+  const manager = createCsrfTokenManager({
+    readCookies: () => '',
+    requestToken: async () => {
+      callCount += 1;
+      return { cookieName: 'psifi.x-csrf-token', token: `token-${callCount}` };
+    },
+  });
+
+  assert.equal(await manager.ensureToken(), 'token-1');
+  assert.equal(await manager.ensureToken(), 'token-1');
+  manager.reset();
+  assert.equal(await manager.ensureToken(), 'token-2');
+});

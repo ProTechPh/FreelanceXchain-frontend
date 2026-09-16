@@ -78,9 +78,11 @@ export function createCsrfTokenManager({
 
       if (response.token) {
         memoryToken = response.token;
+      } else {
+        memoryToken = null;
       }
 
-      const token = currentToken() || response.token || '';
+      const token = response.token || (cookieName ? readCsrfCookie(readCookies(), cookieName) : null) || '';
       initialized = true;
       return token;
     } catch {
@@ -100,7 +102,14 @@ export function createCsrfTokenManager({
     return tokenRequest;
   };
 
+  const reset = () => {
+    initialized = false;
+    memoryToken = null;
+    tokenRequest = null;
+  };
+
   return {
     ensureToken,
+    reset,
   };
 }

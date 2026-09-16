@@ -25,7 +25,7 @@ export default function SkillAnalysisPage() {
   const [addedSkills, setAddedSkills] = useState<Set<string>>(new Set());
   const { isPro, isResolved } = usePlan();
 
-  const loadAnalysis = useCallback(async () => {
+  const loadAnalysis = useCallback(async (refresh = false) => {
     // The gate renders the lock; this keeps the request from being sent at all,
     // so a Free user never generates a 403 on mount.
     if (!isPro) {
@@ -34,7 +34,7 @@ export default function SkillAnalysisPage() {
     }
     setLoadingAnalysis(true);
     try {
-      const { data } = await matchingApi.getSkillGaps();
+      const { data } = await matchingApi.getSkillGaps(refresh ? { refresh: true } : undefined);
       setAnalysis(data);
     } catch (error) {
       const msg = getApiErrorMessage(error, '');
@@ -75,6 +75,7 @@ export default function SkillAnalysisPage() {
       await freelancersApi.addSkills([{ name: skillName, yearsOfExperience: 0 }]);
       setAddedSkills((prev) => new Set(prev).add(skillName));
       toast.success(`Added "${skillName}" to your profile`);
+      void loadAnalysis(true);
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Unable to add skill to profile.'));
     }
@@ -85,11 +86,11 @@ export default function SkillAnalysisPage() {
       <div><h1 className="flex items-center gap-2 text-2xl font-bold"><BrainCircuit className="size-6 text-primary" />Skill analysis</h1><p className="text-muted-foreground">Find your skill gaps, and pull recognised skills out of any job description.</p></div>
 
       <ProGate feature="skill-gaps" variant="page">
-      <div className="flex justify-end"><Button type="button" variant="outline" loading={loadingAnalysis} loadingText="Analysing…" onClick={() => void loadAnalysis()}><TrendingUp className="size-4" aria-hidden="true" />Refresh analysis</Button></div>
+      <div className="flex justify-end"><Button type="button" variant="outline" loading={loadingAnalysis} loadingText="Analysing…" onClick={() => void loadAnalysis(true)}><TrendingUp className="size-4" aria-hidden="true" />Refresh analysis</Button></div>
 
       {loadingAnalysis ? (
         <DetailSkeleton label="Analysing skills" />
-      ) : analysis ? (
+      ) : analysis && (analysis.currentSkills.length > 0 || analysis.recommendedSkills.length > 0) ? (
         <div className="grid gap-5 md:grid-cols-2">
           <Card><CardHeader><CardTitle className="flex items-center gap-2"><CheckCircle2 className="size-5 text-success" />Current skills</CardTitle></CardHeader><CardContent className="flex flex-wrap gap-2">{analysis.currentSkills.map((skill) => <Badge key={skill} variant="secondary">{skill}</Badge>)}{analysis.currentSkills.length === 0 && <p className="text-sm text-muted-foreground">No profile skills found.</p>}</CardContent></Card>
           <Card><CardHeader><CardTitle className="flex items-center gap-2"><TrendingUp className="size-5 text-warning" />Recommended skills</CardTitle></CardHeader><CardContent className="flex flex-wrap gap-2">{analysis.recommendedSkills.map((skill) => <Badge key={skill}>{skill}</Badge>)}{analysis.recommendedSkills.length === 0 && <p className="text-sm text-muted-foreground">No immediate gaps identified.</p>}</CardContent></Card>

@@ -8,6 +8,7 @@ import {
 import {
   clearAccessToken,
   getAccessToken,
+  onTokenChange,
 } from '@/lib/auth-token';
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
@@ -23,17 +24,26 @@ export const api = axios.create({
 // Generate once before the first mutation instead of trusting a cookie left by an
 // older API process. The response tells us which environment-specific cookie to
 // echo, and a CSRF rejection triggers one forced refresh below.
-const csrfTokenManager = createCsrfTokenManager({
+export const csrfTokenManager = createCsrfTokenManager({
   readCookies: () => (typeof document === 'undefined' ? '' : document.cookie),
   requestToken: async () => {
     // Use plain axios so the token request cannot recurse through this interceptor.
-    const response = await axios.post<{ cookieName: string }>(
+    const token = getAccessToken();
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+    const response = await axios.post<{ cookieName: string; token?: string }>(
       `${API_URL}/auth/csrf-token`,
       undefined,
-      { withCredentials: true },
+      { withCredentials: true, headers },
     );
     return response.data;
   },
+});
+
+onTokenChange(() => {
+  csrfTokenManager.reset();
 });
 
 type CsrfRetryConfig = InternalAxiosRequestConfig & {
