@@ -78,7 +78,7 @@ const nextConfig: NextConfig = {
           },
           {
             key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=()',
+            value: 'camera=(self "https://verify.didit.me" "https://verification.didit.me"), microphone=(self "https://verify.didit.me" "https://verification.didit.me"), geolocation=()',
           },
           {
             key: 'Content-Security-Policy',
@@ -89,10 +89,10 @@ const nextConfig: NextConfig = {
                 ? "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://challenges.cloudflare.com"
                 : "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' blob: data: https://*.appwrite.io https://cloud.appwrite.io https://cdn.worldvectorlogo.com https://upload.wikimedia.org https://images.unsplash.com https://avatars.githubusercontent.com https://lh3.googleusercontent.com",
+              "img-src 'self' blob: data: https://*.appwrite.io https://cloud.appwrite.io https://cdn.worldvectorlogo.com https://upload.wikimedia.org https://images.unsplash.com https://avatars.githubusercontent.com https://lh3.googleusercontent.com https://*.didit.me",
               "font-src 'self' data:",
-              "connect-src 'self' https://*.appwrite.io https://cloud.appwrite.io https://api.freelancexchain.works https://challenges.cloudflare.com https://stats.uptimerobot.com http://localhost:* http://127.0.0.1:* wss: ws:",
-              "frame-src 'self' https://challenges.cloudflare.com",
+              "connect-src 'self' https://*.appwrite.io https://cloud.appwrite.io https://api.freelancexchain.works https://challenges.cloudflare.com https://stats.uptimerobot.com https://*.didit.me https://verification.didit.me https://verify.didit.me http://localhost:* http://127.0.0.1:* wss: ws:",
+              "frame-src 'self' https://challenges.cloudflare.com https://verify.didit.me https://verification.didit.me https://*.didit.me",
               "object-src 'none'",
               "base-uri 'self'",
               "form-action 'self'",
