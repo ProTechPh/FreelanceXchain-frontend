@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Settings, ShieldCheck, Palette, Zap, HelpCircle } from 'lucide-react';
+import { Settings, ShieldCheck, Palette, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export function CookiePolicyContent() {

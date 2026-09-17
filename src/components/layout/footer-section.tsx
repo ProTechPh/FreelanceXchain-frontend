@@ -1,8 +1,7 @@
 'use client';
 
 import React from 'react';
-import type { ComponentProps, ReactNode } from 'react';
-import { motion, useReducedMotion } from 'motion/react';
+import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { FreelanceXchainLogo } from '@/components/ui/freelancexchain-logo';
 
@@ -134,7 +133,7 @@ export function FooterSection() {
 
 type ViewAnimationProps = {
 	delay?: number;
-	className?: ComponentProps<typeof motion.div>['className'];
+	className?: string;
 	children: ReactNode;
 };
 

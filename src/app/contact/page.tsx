@@ -41,7 +41,6 @@ const SUPPORT_CHANNELS = [
 ];
 
 const SUPPORT_EMAIL = "support@freelancexchain.com";
-const LEGAL_EMAIL = "legal@freelancexchain.com";
 
 export default function ContactPage() {
   const reduce = useReducedMotion();

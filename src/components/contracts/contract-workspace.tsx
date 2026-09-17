@@ -37,7 +37,6 @@ import { ContractNegotiationPanel } from '@/components/contracts/contract-negoti
 import { Card, CardContent } from '@/components/ui/card';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
 import { ContractPaymentHistory } from '@/components/contracts/contract-payment-history';
-import { qk } from '@/lib/query-keys';
 import { ContractWorkspaceHeader } from './workspace/contract-workspace-header';
 import { ContractOverviewCard } from './workspace/contract-overview-card';
 import { ContractFundingCards } from './workspace/contract-funding-cards';

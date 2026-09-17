@@ -25,19 +25,19 @@ export function CookieBanner() {
   });
 
   useEffect(() => {
-    // Check if consent was already recorded
+    let timer: NodeJS.Timeout | undefined;
+    // Check if consent was already recorded asynchronously to avoid cascading renders
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (!stored) {
         // Delay slightly for smooth page entrance
-        const timer = setTimeout(() => setIsOpen(true), 800);
-        return () => clearTimeout(timer);
+        timer = setTimeout(() => setIsOpen(true), 800);
       } else {
         const parsed = JSON.parse(stored) as CookiePreferences;
-        setPreferences(parsed);
+        timer = setTimeout(() => setPreferences(parsed), 0);
       }
     } catch {
-      setIsOpen(true);
+      timer = setTimeout(() => setIsOpen(true), 0);
     }
 
     // Listen for custom event to re-open settings from footer or policy page
@@ -46,7 +46,10 @@ export function CookieBanner() {
       setIsOpen(true);
     };
     window.addEventListener('open-cookie-settings', handleReopen);
-    return () => window.removeEventListener('open-cookie-settings', handleReopen);
+    return () => {
+      if (timer) clearTimeout(timer);
+      window.removeEventListener('open-cookie-settings', handleReopen);
+    };
   }, []);
 
   const saveConsent = (prefs: CookiePreferences) => {
