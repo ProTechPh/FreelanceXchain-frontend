@@ -3,6 +3,7 @@ import { Nunito_Sans } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Providers } from '@/components/providers';
+import { CookieBanner } from '@/components/ui/cookie-banner';
 import './globals.css';
 
 const nunitoSans = Nunito_Sans({
@@ -57,7 +58,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={nunitoSans.variable} data-scroll-behavior="smooth" suppressHydrationWarning>
       <body className="min-h-screen bg-background text-foreground antialiased" suppressHydrationWarning>
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <CookieBanner />
+        </Providers>
         <Analytics />
         <SpeedInsights />
       </body>

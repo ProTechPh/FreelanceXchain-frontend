@@ -63,14 +63,14 @@ export function DangerZoneCard({ user, onLogout }: DangerZoneCardProps) {
             <AlertTriangle className="size-5" /> Danger Zone: Delete Account
           </CardTitle>
           <CardDescription>
-            Permanently delete your account, profiles, and associated personal records in compliance with data privacy regulations (GDPR Right to Erasure).
+            Permanently delete your profile, work history, and personal account data.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
             <p className="text-sm font-medium text-foreground">Irreversible Account Removal</p>
             <p className="text-xs text-muted-foreground">
-              Once deleted, all your active sessions, profile details, and portfolio attachments will be permanently removed.
+              Once deleted, your profile, portfolio items, and login access will be erased forever.
             </p>
           </div>
           <Button variant="destructive" onClick={() => setShowDeleteModal(true)}>
@@ -90,9 +90,11 @@ export function DangerZoneCard({ user, onLogout }: DangerZoneCardProps) {
               <p>
                 Are you sure you want to delete your FreelanceXchain account? This action is <strong className="text-foreground">permanent and cannot be undone</strong>.
               </p>
-              <p className="text-xs text-muted-foreground">
-                All profile information, preferences, and authentication sessions will be immediately erased. Note that accounts with active smart contract escrows cannot be deleted until contracts are closed.
-              </p>
+              <div className="rounded-xl bg-muted/40 p-3 text-xs text-muted-foreground space-y-1.5">
+                <p><strong>Please keep in mind:</strong></p>
+                <p>• If you have an active contract with funds locked in escrow, please complete or cancel the project first.</p>
+                <p>• Past payments on the blockchain cannot be deleted because blockchain records are permanent.</p>
+              </div>
             </DialogDescription>
           </DialogHeader>
 

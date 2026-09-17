@@ -19,6 +19,15 @@ const TOUR_ALREADY_SEEN = {
             version: 1,
           }),
         },
+        {
+          name: 'flx_cookie_consent',
+          value: JSON.stringify({
+            essential: true,
+            functional: true,
+            analytics: false,
+            timestamp: '2026-09-17T00:00:00.000Z',
+          }),
+        },
       ],
     },
   ],
