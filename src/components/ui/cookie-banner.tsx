@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Cookie, ShieldCheck, Settings, X, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -15,6 +16,7 @@ export interface CookiePreferences {
 const STORAGE_KEY = 'flx_cookie_consent';
 
 export function CookieBanner() {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [showPreferences, setShowPreferences] = useState(false);
   const [preferences, setPreferences] = useState<CookiePreferences>({
@@ -23,6 +25,9 @@ export function CookieBanner() {
     analytics: true,
     timestamp: '',
   });
+
+  // Don't show cookie consent banner inside dashboard pages (user is already authenticated)
+  const isDashboard = pathname?.startsWith('/dashboard');
 
   useEffect(() => {
     let timer: NodeJS.Timeout | undefined;
@@ -90,7 +95,7 @@ export function CookieBanner() {
     saveConsent(preferences);
   };
 
-  if (!isOpen) return null;
+  if (isDashboard || !isOpen) return null;
 
   return (
     <aside

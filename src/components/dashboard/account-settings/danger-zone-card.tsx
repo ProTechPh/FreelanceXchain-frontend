@@ -51,8 +51,7 @@ export function DangerZoneCard({ user, onLogout }: DangerZoneCardProps) {
     }
   };
 
-  // Available to all authenticated users (freelancers, employers) for GDPR/CCPA compliance
-  if (!user) {
+  if (user?.role !== 'freelancer') {
     return null;
   }
 
