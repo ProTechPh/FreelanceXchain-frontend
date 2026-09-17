@@ -121,6 +121,7 @@ export function getRegistrationFormError(
   password: string,
   confirmPassword: string,
   agreedToTerms: boolean,
+  agreedToAge?: boolean,
 ): string | null {
   const meetsPasswordRequirements = password.length >= 8
     && password.length <= 72
@@ -139,6 +140,10 @@ export function getRegistrationFormError(
 
   if (!agreedToTerms) {
     return 'You must agree to the Terms of Service and Privacy Policy.';
+  }
+
+  if (agreedToAge === false) {
+    return 'You must be at least 18 years old to sign up.';
   }
 
   return null;

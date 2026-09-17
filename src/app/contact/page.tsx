@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 import Navbar from "@/components/layout/navbar";
 import { FooterSection } from "@/components/layout/footer-section";
-import { Sparkles as Sparkle, ShieldCheck, CircleQuestionMark as Question, Lock as LockKey, Mail, Copy } from 'lucide-react';
+import { Sparkles as Sparkle, ShieldCheck, CircleQuestionMark as Question, Lock as LockKey, Mail, Copy, Building2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -31,9 +31,17 @@ const SUPPORT_CHANNELS = [
     action: "Browse Tutorials",
     href: "/tutorials",
   },
+  {
+    icon: <Building2 className="size-5 text-primary" strokeWidth={2.5} />,
+    title: "Legal & Business Inquiries",
+    description: "Legal questions, copyright inquiries, privacy requests, or company partnerships.",
+    action: "Email Legal Team",
+    href: "mailto:legal@freelancexchain.com",
+  },
 ];
 
 const SUPPORT_EMAIL = "support@freelancexchain.com";
+const LEGAL_EMAIL = "legal@freelancexchain.com";
 
 export default function ContactPage() {
   const reduce = useReducedMotion();
@@ -298,6 +306,13 @@ export default function ContactPage() {
 
                 {errors.submit && <p className="text-xs text-destructive" role="alert">{errors.submit}</p>}
 
+                <p className="text-xs text-muted-foreground text-center leading-relaxed">
+                  By submitting an inquiry, you acknowledge that your contact details will be processed in accordance with our{" "}
+                  <Link href="/privacy" className="text-primary font-medium hover:underline">Privacy Policy</Link>{" "}
+                  and{" "}
+                  <Link href="/terms" className="text-primary font-medium hover:underline">Terms of Service</Link>.
+                </p>
+
                 <Button
                   type="submit"
                   disabled={submitting}
@@ -313,6 +328,20 @@ export default function ContactPage() {
                 </p>
               </form>
             )}
+          </div>
+
+          {/* Operations & Legal Desk Card */}
+          <div className="mt-8 rounded-3xl bg-muted/40 border border-border/80 p-6 sm:p-8 text-xs sm:text-sm space-y-2 text-foreground">
+            <div className="flex items-center gap-2 mb-2 font-bold text-base text-foreground">
+              <Building2 className="size-5 text-primary" />
+              <span>Operations & Legal Desk</span>
+            </div>
+            <p className="font-semibold text-foreground">FreelanceXchain Protocol</p>
+            <p className="text-muted-foreground">Operating globally as a remote-first, decentralized freelance and smart contract escrow protocol.</p>
+            <div className="pt-2 flex flex-wrap gap-4 text-xs font-medium">
+              <span>Legal & Compliance: <a href="mailto:legal@freelancexchain.com" className="text-primary hover:underline">legal@freelancexchain.com</a></span>
+              <span>Data Protection & Privacy: <a href="mailto:privacy@freelancexchain.com" className="text-primary hover:underline">privacy@freelancexchain.com</a></span>
+            </div>
           </div>
         </section>
       </main>

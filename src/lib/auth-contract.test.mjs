@@ -124,6 +124,10 @@ test('requires matching passwords and acceptance of the terms', () => {
     getRegistrationFormError('StrongPass1!', 'StrongPass1!', false),
     'You must agree to the Terms of Service and Privacy Policy.',
   );
+  assert.equal(
+    getRegistrationFormError('StrongPass1!', 'StrongPass1!', true, false),
+    'You must be at least 18 years old to sign up.',
+  );
 });
 
 test('reads the Appwrite recovery secret as the backend reset access token', () => {

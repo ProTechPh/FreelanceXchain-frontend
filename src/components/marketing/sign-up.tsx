@@ -69,6 +69,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  const [agreedAge, setAgreedAge] = useState(false);
   const [confirmTouched, setConfirmTouched] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -80,7 +81,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const error = getRegistrationFormError(password, confirmPassword, agreed);
+    const error = getRegistrationFormError(password, confirmPassword, agreed, agreedAge);
     if (error) {
       setFormError(error);
       return;
@@ -412,13 +413,27 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                       id="terms" 
                       checked={agreed} 
                       onChange={(e) => { setAgreed(e.target.checked); setFormError(null); }} 
-                      className="mt-1 rounded border-border accent-primary" 
+                      className="mt-1 rounded border-border accent-primary cursor-pointer" 
                     />
-                    <label htmlFor="terms" className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                    <label htmlFor="terms" className="text-xs sm:text-sm text-muted-foreground leading-relaxed cursor-pointer">
                       I agree to the{' '}
                       <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-primary font-bold hover:underline">Terms of Service</a>
                       {' '}and{' '}
                       <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-primary font-bold hover:underline">Privacy Policy</a>
+                    </label>
+                  </div>
+
+                  {/* Age consent checkbox */}
+                  <div className="flex items-start gap-3">
+                    <input 
+                      type="checkbox" 
+                      id="age-consent" 
+                      checked={agreedAge} 
+                      onChange={(e) => { setAgreedAge(e.target.checked); setFormError(null); }} 
+                      className="mt-1 rounded border-border accent-primary cursor-pointer" 
+                    />
+                    <label htmlFor="age-consent" className="text-xs sm:text-sm text-muted-foreground leading-relaxed cursor-pointer">
+                      I am at least 18 years old.
                     </label>
                   </div>
 

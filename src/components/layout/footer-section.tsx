@@ -52,6 +52,8 @@ const footerLinks: FooterSection[] = [
 		links: [
 			{ title: 'Terms of Service', href: '/terms' },
 			{ title: 'Privacy Policy', href: '/privacy' },
+			{ title: 'Refund Policy', href: '/refund-policy' },
+			{ title: 'Cookie Policy', href: '/cookies' },
 			{ title: 'Security & Trust', href: '/status' },
 		],
 	},
@@ -90,8 +92,13 @@ export function FooterSection() {
 						<p className="text-muted-foreground text-xs sm:text-sm leading-relaxed max-w-sm">
 							Helping candidates and freelancers land dream roles and high-value contracts faster with AI-native tailoring and instant smart escrow.
 						</p>
-						<div className="pt-4 text-xs text-muted-foreground">
-							© {new Date().getFullYear()} FreelanceXchain, Inc. All rights reserved.
+						<div className="pt-2 text-xs text-muted-foreground space-y-1">
+							<p className="font-semibold text-foreground">FreelanceXchain Protocol</p>
+							<p>Decentralized Freelance Marketplace & Smart Escrow</p>
+							<p>Legal & Inquiries: <a href="mailto:legal@freelancexchain.com" className="text-primary hover:underline">legal@freelancexchain.com</a></p>
+							<p className="text-[11px] pt-1 text-muted-foreground/80">
+								© {new Date().getFullYear()} FreelanceXchain. All rights reserved.
+							</p>
 						</div>
 					</AnimatedContainer>
 
@@ -131,23 +138,7 @@ type ViewAnimationProps = {
 	children: ReactNode;
 };
 
-function AnimatedContainer({ className, delay = 0.1, children }: ViewAnimationProps) {
-	const shouldReduceMotion = useReducedMotion();
-
-	if (shouldReduceMotion) {
-		return <div className={className}>{children}</div>;
-	}
-
-	return (
-		<motion.div
-			initial={{ opacity: 0, y: 8 }}
-			whileInView={{ opacity: 1, y: 0 }}
-			viewport={{ once: true }}
-			transition={{ delay, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-			className={className}
-		>
-			{children}
-		</motion.div>
-	);
+function AnimatedContainer({ className, children }: ViewAnimationProps) {
+	return <div className={className}>{children}</div>;
 }
 

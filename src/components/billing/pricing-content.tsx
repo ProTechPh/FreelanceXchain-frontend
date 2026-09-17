@@ -162,6 +162,38 @@ export function PricingContent() {
         <h2 className="mb-4 text-xl font-bold text-foreground">Compare plans</h2>
         <PlanComparison />
       </div>
+
+      {/* Item 10: Zero Hidden Fees Disclosure */}
+      <div className="rounded-2xl border border-border/80 bg-muted/30 p-6 sm:p-8 space-y-4">
+        <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+          <Check className="size-5 text-primary" />
+          100% Transparent Fee Guarantee — No Hidden Fees
+        </h3>
+        <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+          Unlike legacy freelance platforms that take up to 20% from freelancer paychecks or add surprise currency conversion markups, FreelanceXchain operates with complete on-chain transparency:
+        </p>
+
+        <div className="grid gap-4 sm:grid-cols-3 pt-2 text-xs">
+          <div className="p-4 rounded-xl bg-card border border-border/60 space-y-1.5">
+            <p className="font-bold text-foreground">0% Freelancer Fees</p>
+            <p className="text-muted-foreground">
+              Freelancers keep 100% of their earnings. We never take a cut from your milestones.
+            </p>
+          </div>
+          <div className="p-4 rounded-xl bg-card border border-border/60 space-y-1.5">
+            <p className="font-bold text-foreground">Clear Client Pricing</p>
+            <p className="text-muted-foreground">
+              Employers see all project fees upfront before funding escrow. No surprise charges.
+            </p>
+          </div>
+          <div className="p-4 rounded-xl bg-card border border-border/60 space-y-1.5">
+            <p className="font-bold text-foreground">Network Fees Only</p>
+            <p className="text-muted-foreground">
+              Standard crypto network fees go straight to the blockchain network. We add zero markup.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

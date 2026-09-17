@@ -202,9 +202,9 @@ export function TestimonialsMarquee() {
           </p>
         </div>
         <div className="p-4 rounded-2xl bg-card border border-border/80 shadow-xs">
-          <p className="text-2xl sm:text-3xl font-extrabold text-primary">0% Risk</p>
+          <p className="text-2xl sm:text-3xl font-extrabold text-primary">100% Escrow-Backed</p>
           <p className="text-xs text-muted-foreground mt-1">
-            Zero Unpaid Milestones on Approved Work
+            Funds Locked On-Chain Prior to Work
           </p>
         </div>
         <div className="p-4 rounded-2xl bg-card border border-border/80 shadow-xs">
@@ -214,6 +214,11 @@ export function TestimonialsMarquee() {
           </p>
         </div>
       </motion.div>
+
+      {/* FTC Endorsement & Review Disclosure (Item 11 & 12) */}
+      <p className="mt-6 text-center text-[11px] text-muted-foreground/70 max-w-xl mx-auto px-4 leading-relaxed">
+        * Testimonials reflect verified pilot community feedback and representative experiences. Individual earnings and project timelines vary based on skills and market demand. Smart contracts operate autonomously on public blockchains.
+      </p>
     </section>
   );
 }
