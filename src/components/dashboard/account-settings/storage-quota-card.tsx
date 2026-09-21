@@ -198,7 +198,7 @@ export function StorageQuotaCard() {
               Are you sure you want to delete <strong className="text-foreground">&quot;{fileToDelete?.name}&quot;</strong> from your storage? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setFileToDelete(null)}

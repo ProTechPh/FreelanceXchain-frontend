@@ -34,8 +34,8 @@ test('each participant role gets its own step list', () => {
   const freelancer = getTourSteps('freelancer');
   const employer = getTourSteps('employer');
 
-  assert.equal(freelancer.length, 9);
-  assert.equal(employer.length, 9);
+  assert.equal(freelancer.length, 10);
+  assert.equal(employer.length, 10);
   assert.notDeepEqual(freelancer, employer);
 });
 

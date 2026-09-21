@@ -12,8 +12,12 @@ interface StatusBadgeProps extends Omit<React.ComponentProps<'span'>, 'children'
   status: string;
   /** Refines statuses whose meaning is context-dependent, e.g. a dispute's "open". */
   domain?: StatusDomain;
-  /** Override the derived label. The tone still comes from the status. */
-  label?: string;
+  /**
+   * Override the derived label. The tone still comes from the status. Accepts
+   * nodes so a badge can lead with an icon, but must always contain the text —
+   * the state may never be carried by colour alone (WCAG 1.4.1).
+   */
+  label?: React.ReactNode;
   /** Show a solid tone dot before the label. Useful in dense lists. */
   showDot?: boolean;
   size?: 'sm' | 'default';

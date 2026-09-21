@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Bell, MessageSquare, LogOut, User, Settings, ChevronDown, Compass, Search, Shield, Bookmark, History } from 'lucide-react';
+import { Bell, MessageSquare, LogOut, User, Settings, ChevronDown, Compass, Search, Shield, Bookmark, History, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Tooltip } from '@/components/ui/tooltip';
@@ -22,6 +22,7 @@ import { notificationsApi } from '@/lib/api';
 import { subscribeToNotificationStream } from '@/lib/sse';
 import { WalletHeaderButton } from '@/components/wallet/wallet-header-button';
 import { useStartTour } from '@/components/onboarding/tour-launcher';
+import { useRateApp } from '@/components/feedback/rate-app-provider';
 
 const participantAccountItems = [
   { label: 'Profile', path: 'profile', icon: User },
@@ -36,6 +37,7 @@ export function TopBar() {
   const { user, logout } = useAuthStore();
   const router = useRouter();
   const { startTour, canStartTour } = useStartTour();
+  const { openRatingDialog } = useRateApp();
   const [mounted, setMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [unreadNotifications, setUnreadNotifications] = useState(0);
@@ -238,6 +240,16 @@ export function TopBar() {
                       <Compass className="size-4" aria-hidden="true" /> Product tour
                     </DropdownMenuItem>
                   )}
+                  {/* Feedback about the platform itself. Admins never see it —
+                      this whole block is participant-only, and they read the
+                      submissions rather than making them. */}
+                  <DropdownMenuItem
+                    data-tour="rate-app"
+                    onClick={() => openRatingDialog('manual')}
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <Star className="size-4" aria-hidden="true" /> Rate the app
+                  </DropdownMenuItem>
                 </>
               )}
               <DropdownMenuSeparator />

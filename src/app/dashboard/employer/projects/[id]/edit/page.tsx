@@ -506,7 +506,7 @@ function EditProjectContent() {
               Marking this project as cancelled will close open bidding and notify applicants. This action cannot be reversed.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmCancelOpen(false)} disabled={saving}>
               Keep Project Active
             </Button>

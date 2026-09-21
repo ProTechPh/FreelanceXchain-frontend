@@ -25,6 +25,7 @@ import { formatAmount } from '@/lib/format';
 import { proposalsApi, matchingApi, type AIProposalResult } from '@/lib/api';
 import { UpgradeButton } from '@/components/billing/upgrade-button';
 import { usePlan } from '@/hooks/use-plan';
+import { useRateApp } from '@/components/feedback/rate-app-provider';
 import {
   MAX_FILE_COUNT,
   ProposalFormValidationError,
@@ -142,6 +143,8 @@ export function ProposalDialog({
    */
   const proBlockedReason = !isPro ? 'Drafting with AI is a Pro feature.' : null;
 
+  const { requestRatingPrompt } = useRateApp();
+
   const handleGenerateAI = useCallback(async (notes?: string) => {
     if (!project) return;
     setGeneratingAI(true);
@@ -178,6 +181,7 @@ export function ProposalDialog({
       });
 
       toast.success('AI Proposal drafted based on your portfolio & reputation!');
+      requestRatingPrompt('ai_proposal_draft', project.id);
     } catch (error) {
       // No Retry action here: the Regenerate button beside this banner is the
       // retry, and a second one in the toast would just duplicate it.
@@ -185,7 +189,7 @@ export function ProposalDialog({
     } finally {
       setGeneratingAI(false);
     }
-  }, [project]);
+  }, [project, requestRatingPrompt]);
 
   useEffect(() => {
     if (open && initialGenerateAI && isPro && project && !aiProposal && !generatingAI) {
@@ -270,6 +274,9 @@ export function ProposalDialog({
       toast.success('Proposal submitted.');
       onSubmitted?.();
       resetAndClose();
+      // After the close, never before — two stacked dialogs is nobody's idea
+      // of a reward for finishing a proposal.
+      requestRatingPrompt('proposal_submitted', project.id);
     } catch (error) {
       // A rule the backend enforces but the client does not know about still
       // belongs on the form, not in a toast.
@@ -668,7 +675,7 @@ export function ProposalDialog({
             You have unsaved changes in your proposal pitch. If you exit now, your draft will be discarded.
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter>
           <Button variant="outline" onClick={() => setConfirmDiscardOpen(false)}>
             Keep Editing
           </Button>

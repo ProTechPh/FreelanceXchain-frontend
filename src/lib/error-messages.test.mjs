@@ -180,3 +180,131 @@ test('an ordinary 403 still reads as forbidden', () => {
   assert.equal(classifyFailure(error), 'forbidden');
   assert.match(describeFailure(error, 'do that').title, /permission/i);
 });
+
+test('a 403 shows the rule the backend named, not a generic denial', () => {
+  const error = httpError(403, { error: { code: 'UNAUTHORIZED', message: 'Only the contract employer can approve milestones' } });
+
+  const message = describeFailure(error, 'approve this milestone');
+  assert.equal(message.title, 'Only the contract employer can approve milestones');
+  assert.equal(message.detail, undefined);
+  assert.equal(message.retryable, false);
+});
+
+test('a 403 with nothing specific does not send the user to an administrator', () => {
+  const message = describeFailure(httpError(403), 'approve this milestone');
+
+  assert.match(message.title, /permission/i);
+  assert.doesNotMatch(message.detail, /administrator/i);
+});
+
+test('a 404 is not reported as a validation error', () => {
+  assert.equal(classifyFailure(httpError(404)), 'not-found');
+
+  const message = describeFailure(httpError(404), 'open this contract');
+  assert.doesNotMatch(message.detail ?? '', /details you entered/i);
+  assert.equal(message.retryable, false);
+});
+
+test('a 404 leads with the backend message when there is one', () => {
+  const message = describeFailure(httpError(404, { error: 'Contract not found' }), 'open this contract');
+  assert.equal(message.title, 'Contract not found');
+});
+
+test('a 409 duplicate is not described as a concurrent edit', () => {
+  const error = httpError(409, { error: { code: 'DUPLICATE_RATING', message: 'You have already rated this contract' } });
+
+  const message = describeFailure(error, 'submit your review');
+  assert.equal(message.title, 'You have already rated this contract');
+  assert.doesNotMatch(message.detail ?? '', /someone updated it/i);
+});
+
+test('a 409 with no backend message still explains a race', () => {
+  const message = describeFailure(httpError(409), 'submit your review');
+  assert.equal(message.title, 'This has already changed');
+  assert.match(message.detail, /Someone updated it/);
+});
+
+test('a 429 leads with the real limit, not "too many attempts"', () => {
+  const error = httpError(429, { error: { code: 'RATE_LIMITED', message: 'You have already rated the app recently.' } });
+  assert.equal(describeFailure(error, 'send your rating').title, 'You have already rated the app recently.');
+
+  const generic = describeFailure(httpError(429), 'send your rating');
+  assert.equal(generic.title, 'Too many attempts');
+  assert.equal(generic.detail, 'Wait a moment, then try again.');
+});
+
+test('backend strings that explain nothing fall back to plain copy', () => {
+  for (const message of ['Insufficient permissions', 'Unauthorized', 'An unexpected error occurred.']) {
+    const shown = describeFailure(httpError(403, { error: { code: 'AUTH_FORBIDDEN', message } }), 'open this page');
+    assert.match(shown.title, /permission/i, message);
+    assert.match(shown.detail, /right account/i, message);
+  }
+});
+
+test('getApiErrorMessage still returns raw backend text for its own callers', () => {
+  // Unlike describeFailure, this one is used where the caller supplies its own
+  // fallback, so it must not start filtering strings out from under them.
+  assert.equal(
+    getApiErrorMessage(httpError(403, { error: { message: 'Insufficient permissions' } }), 'fb'),
+    'Insufficient permissions',
+  );
+});
+
+test('not-found gets a tone like the other recoverable states', () => {
+  assert.equal(describeFailure(httpError(404), 'do the thing').tone, 'warning');
+});
+
+test('a write failure sent as 400 reads as our fault, not the user\'s input', () => {
+  const error = httpError(400, { error: { code: 'UPDATE_FAILED', message: 'Failed to retrieve updated dispute' } });
+
+  assert.equal(classifyFailure(error), 'server');
+  const message = describeFailure(error, 'update this dispute');
+  assert.equal(message.title, "We couldn't update this dispute");
+  assert.match(message.detail, /problem on our side/i);
+  // The backend wording is written for developers; it must not reach the user.
+  assert.doesNotMatch(`${message.title} ${message.detail}`, /Failed to retrieve/i);
+});
+
+test('database and upstream faults are treated the same way', () => {
+  for (const code of ['DATABASE_ERROR', 'INTERNAL_ERROR', 'UPSTREAM_ERROR', 'FETCH_FAILED', 'CREATE_FAILED', 'DELETE_FAILED']) {
+    assert.equal(classifyFailure(httpError(400, { error: { code } })), 'server', code);
+  }
+});
+
+test('a typed not-found sent as 400 is still a not-found', () => {
+  for (const code of ['PROFILE_NOT_FOUND', 'USER_NOT_FOUND', 'DISPUTE_NOT_FOUND', 'ESCROW_NOT_FOUND']) {
+    assert.equal(classifyFailure(httpError(400, { error: { code } })), 'not-found', code);
+  }
+});
+
+test('a genuine validation error is still a validation error', () => {
+  const error = httpError(400, { error: { code: 'VALIDATION_ERROR', message: 'Proposed rate must be a number.' } });
+
+  assert.equal(classifyFailure(error), 'validation');
+  assert.equal(describeFailure(error, 'submit your proposal').title, 'Proposed rate must be a number.');
+});
+
+test('permission and session errors outrank the code-based rules', () => {
+  assert.equal(classifyFailure(httpError(403, { error: { code: 'UPDATE_FAILED' } })), 'forbidden');
+  assert.equal(classifyFailure(httpError(401, { error: { code: 'DATABASE_ERROR' } })), 'auth');
+});
+
+test('a duplicate offers no Retry, but a genuine race does', () => {
+  const duplicate = httpError(409, { error: { code: 'DUPLICATE_PROPOSAL', message: 'You have already submitted a proposal' } });
+  assert.equal(describeFailure(duplicate, 'submit your proposal').retryable, false);
+
+  assert.equal(describeFailure(httpError(409), 'submit your proposal').retryable, true);
+});
+
+test('destructive is reserved for faults, not for user wallet states', () => {
+  const walletStates = [
+    { code: -32002 },
+    { code: 'INSUFFICIENT_FUNDS' },
+    { code: 4902 },
+    new Error('No wallet account was selected.'),
+  ];
+
+  for (const error of walletStates) {
+    assert.equal(describeFailure(error, 'fund the escrow').tone, 'warning');
+  }
+});

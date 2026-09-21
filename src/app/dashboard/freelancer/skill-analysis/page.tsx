@@ -15,6 +15,7 @@ import { Field } from '@/components/ui/field';
 import { Markdown } from '@/components/ui/markdown';
 import { ProGate } from '@/components/billing/pro-gate';
 import { usePlan } from '@/hooks/use-plan';
+import { useRateApp } from '@/components/feedback/rate-app-provider';
 
 export default function SkillAnalysisPage() {
   const [analysis, setAnalysis] = useState<SkillGapAnalysis | null>(null);
@@ -24,6 +25,7 @@ export default function SkillAnalysisPage() {
   const [extracting, setExtracting] = useState(false);
   const [addedSkills, setAddedSkills] = useState<Set<string>>(new Set());
   const { isPro, isResolved } = usePlan();
+  const { requestRatingPrompt } = useRateApp();
 
   const loadAnalysis = useCallback(async (refresh = false) => {
     // The gate renders the lock; this keeps the request from being sent at all,
@@ -63,6 +65,8 @@ export default function SkillAnalysisPage() {
       const { data } = await matchingApi.extractSkills(text.trim());
       setExtracted(data);
       if (data.length === 0) toast.info('No recognised skills found in that text.');
+      // Only worth asking when the AI actually produced something to judge.
+      else requestRatingPrompt('ai_skill_extraction');
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Unable to extract skills from this text.'));
     } finally {

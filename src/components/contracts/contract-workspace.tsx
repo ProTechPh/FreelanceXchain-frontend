@@ -18,6 +18,7 @@ import {
   normalizeMilestone,
 } from '@/lib/contract-workflow';
 import { getApiErrorMessage } from '@/lib/auth-contract';
+import { useRateApp } from '@/components/feedback/rate-app-provider';
 import { hasApprovedKyc } from '@/lib/kyc-eligibility';
 import { AttachmentPreviewDialog, type AttachmentPreviewTarget } from '@/components/ui/attachment-preview-dialog';
 import { validateReviewDraft, type ReviewDraft } from '@/lib/review-form';
@@ -84,6 +85,7 @@ export function ContractWorkspace({
   const [previewAttachment, setPreviewAttachment] = useState<AttachmentPreviewTarget | null>(null);
   const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
   const [approvingMilestone, setApprovingMilestone] = useState<Milestone | null>(null);
+  const { requestRatingPrompt } = useRateApp();
 
   const loadWorkspace = useCallback(async () => {
     try {
@@ -126,6 +128,12 @@ export function ContractWorkspace({
       );
 
       if (loadedContract.status === 'completed') {
+        // The contract is completed inside the *employer's* approval request,
+        // so the freelancer has no client event to hang a prompt on. Asking on
+        // arrival covers them; the once-per-event rule makes it safe to call
+        // on every load.
+        requestRatingPrompt('contract_completed', loadedContract.id);
+
         const rateeId = role === 'employer' ? loadedContract.freelancerId : loadedContract.employerId;
         try {
           const { data } = await reviewsApi.canReview(loadedContract.id, rateeId);
@@ -141,7 +149,7 @@ export function ContractWorkspace({
     } finally {
       setLoading(false);
     }
-  }, [contractId, role]);
+  }, [contractId, role, requestRatingPrompt]);
 
   useEffect(() => {
     // The workspace state is populated from authenticated backend resources after mount.
@@ -166,15 +174,20 @@ export function ContractWorkspace({
   const contractPermissions = getContractPermissions(contract.status, role, user.kycStatus);
   const isVerified = hasApprovedKyc(user.kycStatus);
 
-  const runAction = async (id: string, action: () => Promise<unknown>, success: string) => {
+  // Returns what the action resolved to (undefined when it failed), so a
+  // caller can react to the outcome — milestone approval needs to know whether
+  // that approval also finished the contract.
+  const runAction = async <T,>(id: string, action: () => Promise<T>, success: string): Promise<T | undefined> => {
     setActionId(id);
     try {
-      await action();
+      const result = await action();
       toast.success(success);
       void queryClient.invalidateQueries({ queryKey: ['payments'] });
       await loadWorkspace();
+      return result;
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'The contract action could not be completed.'));
+      return undefined;
     } finally {
       setActionId(null);
     }
@@ -335,12 +348,23 @@ export function ContractWorkspace({
         onConfirmApproveMilestone={async () => {
           if (!approvingMilestone) return;
           const id = approvingMilestone.id;
-          await runAction(
+          const result = await runAction(
             id,
             () => milestonesApi.approve(id),
             'Milestone approved and payment released.',
           );
           setApprovingMilestone(null);
+
+          // The last approval releases the final payment and closes the
+          // contract in the same request, so the response decides which of the
+          // two moments this actually was.
+          if (result) {
+            const completed = result.data.contractCompleted;
+            requestRatingPrompt(
+              completed ? 'contract_completed' : 'milestone_released',
+              completed ? contract.id : id,
+            );
+          }
         }}
       />
     </div>

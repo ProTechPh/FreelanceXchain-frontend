@@ -19,7 +19,7 @@ export const TOUR_STORAGE_KEY = 'onboarding-tour';
  * predates the current version is offered the tour again rather than silently
  * missing whatever was added.
  */
-export const TOUR_VERSION = 1;
+export const TOUR_VERSION = 2;
 
 export interface TourStep {
   id: string;
@@ -129,6 +129,14 @@ const freelancerSteps: TourStep[] = [
     side: 'bottom',
     items: ['Portfolio — show the work itself', 'Identity verification — earn the verified badge', 'Skill analysis — see the gaps worth closing'],
   },
+  {
+    id: 'rate-app',
+    title: 'Tell us how it is going',
+    body: 'After a contract wraps or a payment lands, we will ask how FreelanceXchain itself is doing. Answering is always optional, and it is about the platform — not the person you worked with.',
+    target: '[data-tour="account"]',
+    side: 'bottom',
+    items: ['One to five stars, comment optional', 'Skip it and we stop asking', 'Rate the app any time from this menu'],
+  },
 ];
 
 const employerSteps: TourStep[] = [
@@ -203,6 +211,14 @@ const employerSteps: TourStep[] = [
     target: '[data-tour="account"]',
     side: 'bottom',
     items: ['Reputation — built from completed contracts', 'Identity verification — earn the verified badge', 'Saved — freelancers worth coming back to'],
+  },
+  {
+    id: 'rate-app',
+    title: 'Tell us how it is going',
+    body: 'After a contract wraps or a payment lands, we will ask how FreelanceXchain itself is doing. Answering is always optional, and it is about the platform — not the person you worked with.',
+    target: '[data-tour="account"]',
+    side: 'bottom',
+    items: ['One to five stars, comment optional', 'Skip it and we stop asking', 'Rate the app any time from this menu'],
   },
 ];
 

@@ -5,6 +5,7 @@ import { TopBar } from './TopBar';
 import { BottomNav } from './BottomNav';
 import { EmailVerificationGate } from './EmailVerificationGate';
 import { OnboardingTour } from '@/components/onboarding/onboarding-tour';
+import { useSuppressRatingPrompt } from '@/components/feedback/rate-app-provider';
 import { FirstLoginKycReminder } from '@/components/kyc/first-login-kyc-reminder';
 import { isTourRole } from '@/lib/onboarding-tour';
 import { cn } from '@/lib/utils';
@@ -34,6 +35,11 @@ export function DashboardLayout({ children, allowedRoles }: DashboardLayoutProps
     handleKycLater,
     handleKycVerify,
   } = useDashboardAuthGuard({ allowedRoles });
+
+  // The provider lives at the app root (it also covers the public project
+  // pages). Only the dashboard knows about these gates, so it reports them:
+  // a prompt must never appear behind the email-verification blur.
+  useSuppressRatingPrompt(isEmailUnverified || isKycExperienceBlocking);
 
   if (!hasHydrated || isLoading) {
     return <DashboardLayoutSkeleton />;

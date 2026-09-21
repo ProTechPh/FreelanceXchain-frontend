@@ -1,3 +1,10 @@
+// The source union lives with the prompt rules in `@/lib/app-rating-prompt`,
+// which is dependency-free so it can run under `node --test`. Re-exported here
+// so consumers can keep importing rating types from one place.
+import type { AppRatingSource } from '@/lib/app-rating-prompt';
+
+export type { AppRatingSource };
+
 export type UserRole = 'freelancer' | 'employer' | 'admin';
 
 export type ProjectStatus = 'draft' | 'open' | 'in_progress' | 'completed' | 'cancelled' | 'disputed';
@@ -394,6 +401,67 @@ export interface RefundRequest {
   transaction_hash?: string;
   created_at: string;
   updated_at: string;
+}
+
+/**
+ * A "rate the app" submission: feedback about the platform itself.
+ *
+ * Distinct from `Review` below, which is one party rating the other on a
+ * completed contract. Nothing here affects anybody's reputation score.
+ */
+export interface AppRating {
+  id: string;
+  userId: string;
+  userRole: string;
+  rating: number;
+  comment?: string;
+  source: AppRatingSource;
+  contextId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** A submission as the admin table shows it — attributed by design. */
+export interface AdminAppRating extends AppRating {
+  userName: string;
+  userEmail: string;
+}
+
+export interface AppRatingSourceStat {
+  source: AppRatingSource;
+  total: number;
+  average: number;
+}
+
+export interface AppRatingSummary {
+  total: number;
+  average: number;
+  /** Count per star value, keyed '1'..'5'. */
+  histogram: Record<string, number>;
+  bySource: AppRatingSourceStat[];
+  recentTotal: number;
+  positivePercentage: number;
+}
+
+/**
+ * What `POST /api/milestones/:id/approve` actually returns.
+ *
+ * The endpoint delegates to payment-service.approveMilestone, which releases
+ * escrow and may finish the contract outright — so the response reports both.
+ */
+export interface MilestoneApprovalResult {
+  milestoneId: string;
+  status: MilestoneStatus;
+  paymentReleased: boolean;
+  transactionHash?: string;
+  /** True when this approval was the last one and the contract is now done. */
+  contractCompleted: boolean;
+}
+
+export interface AppRatingEligibility {
+  shouldPrompt: boolean;
+  reason?: string;
+  nextEligibleAt?: string;
 }
 
 export interface Review {

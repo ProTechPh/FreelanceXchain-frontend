@@ -47,7 +47,7 @@ export function ContractWorkspaceDialogs({
               Are you sure you want to cancel this pending contract? This will release any uncommitted escrow and close the workspace.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter>
             <Button
               variant="outline"
               onClick={() => onCancelModalChange(false)}
@@ -84,7 +84,7 @@ export function ContractWorkspaceDialogs({
               {formatAmount(approvingMilestone?.amount)}). This will transfer funds to the freelancer. This cannot be undone.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter>
             <Button
               variant="outline"
               onClick={() => onApprovingMilestoneChange(null)}

@@ -517,7 +517,7 @@ export default function PortfolioPage() {
               Are you sure you want to delete <strong className="text-foreground">&quot;{itemToDelete?.title}&quot;</strong>? This cannot be undone.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setItemToDelete(null)}

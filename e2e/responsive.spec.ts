@@ -71,6 +71,7 @@ const ADMIN_ROUTES = [
   '/audit-logs',
   '/disputes',
   '/email',
+  '/feedback',
   '/kyc',
   '/notifications',
   '/skills',

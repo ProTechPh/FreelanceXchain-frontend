@@ -416,7 +416,7 @@ export default function UsersPage() {
               disabled={Boolean(pendingActionId)}
             />
           </div>
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setUserToSuspend(null)}
@@ -467,7 +467,7 @@ export default function UsersPage() {
               disabled={Boolean(pendingActionId)}
             />
           </div>
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setUserToVerify(null)}
@@ -502,7 +502,7 @@ export default function UsersPage() {
               Are you sure you want to unsuspend <strong className="text-foreground">{userToUnsuspend?.name || userToUnsuspend?.email}</strong>? They will immediately regain full access to their account.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setUserToUnsuspend(null)}

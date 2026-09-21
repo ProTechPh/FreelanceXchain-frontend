@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -43,14 +43,16 @@ function relativeTime(iso: string | null | undefined): string {
 }
 
 export function MessagesWorkspace() {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const requestedRecipientId = searchParams?.get('recipientId')?.trim() || null;
-  const requestedProjectId = searchParams?.get('projectId')?.trim() || null;
+  const rawRequestedProjectId = searchParams?.get('projectId')?.trim() || null;
   const currentUser = useAuthStore((state) => state.user);
   const [conversations, setConversations] = useState<ConversationWithDetails[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [newMessage, setNewMessage] = useState('');
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [messageFiles, setMessageFiles] = useState<File[]>([]);
   const [search, setSearch] = useState('');
   const [messageSearch, setMessageSearch] = useState('');
@@ -60,11 +62,17 @@ export function MessagesWorkspace() {
   const [directRecipient, setDirectRecipient] = useState<ConversationWithDetails['otherUser'] | null>(null);
   const [acceptedContacts, setAcceptedContacts] = useState<ConversationWithDetails['otherUser'][]>([]);
   const [inquiredProject, setInquiredProject] = useState<Project | null>(null);
+  const [inquiryEnded, setInquiryEnded] = useState(false);
+  const requestedProjectId = inquiryEnded ? null : rawRequestedProjectId;
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const selectedIdRef = useRef<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const prevMessagesLengthRef = useRef(0);
+
+  const selectedConversation = conversations.find((c) => c.id === selectedId) ?? null;
+  const chatRecipient = selectedConversation?.otherUser ?? directRecipient;
+  const chatRecipientId = chatRecipient?.id ?? null;
 
   const handleCopyMessage = (msgId: string, text: string) => {
     navigator.clipboard.writeText(text);
@@ -109,12 +117,7 @@ export function MessagesWorkspace() {
       projectsApi
         .get(requestedProjectId)
         .then((res) => {
-          if (active && res.data) {
-            setInquiredProject(res.data);
-            setNewMessage((prev) =>
-              prev ? prev : `Hi! I am reaching out regarding your project "${res.data.title}".`
-            );
-          }
+          if (active && res.data) setInquiredProject(res.data);
         })
         .catch(() => {
           // Ignore if not found
@@ -131,6 +134,9 @@ export function MessagesWorkspace() {
     }
 
     // Inspect messages for project references
+    const belongsToConversation = (project: Project) =>
+      project.employerId === currentUser?.id || project.employerId === chatRecipientId;
+
     const inspectMessages = async () => {
       for (const msg of messages) {
         // 1. Direct project link in message
@@ -138,7 +144,7 @@ export function MessagesWorkspace() {
         if (idMatch && idMatch[1]) {
           try {
             const { data } = await projectsApi.get(idMatch[1]);
-            if (active && data) {
+            if (active && data && belongsToConversation(data)) {
               setInquiredProject(data);
               return;
             }
@@ -152,14 +158,13 @@ export function MessagesWorkspace() {
           msg.content.match(/regarding (?:your )?project ["“](.+?)["”]/i) ||
           msg.content.match(/project ["“](.+?)["”]/i);
         if (titleMatch && titleMatch[1]) {
-          const titleQuery = titleMatch[1].trim();
+          const titleQuery = titleMatch[1].trim().toLowerCase();
           try {
             const { data } = await projectsApi.list({ limit: 50 });
             if (active && data.items.length > 0) {
-              const matched =
-                data.items.find(
-                  (p) => p.title.toLowerCase() === titleQuery.toLowerCase()
-                ) || data.items.find((p) => p.title.toLowerCase().includes(titleQuery.toLowerCase()));
+              const matched = data.items.find(
+                (p) => p.title.trim().toLowerCase() === titleQuery && belongsToConversation(p)
+              );
               if (matched) {
                 setInquiredProject(matched);
                 return;
@@ -177,7 +182,7 @@ export function MessagesWorkspace() {
     return () => {
       active = false;
     };
-  }, [requestedProjectId, messages]);
+  }, [requestedProjectId, messages, currentUser?.id, chatRecipientId]);
 
   const loadAcceptedContacts = useCallback(async () => {
     if (currentUser?.role !== 'employer') {
@@ -334,8 +339,20 @@ export function MessagesWorkspace() {
     return unsubscribe;
   }, [loadConversations, loadMessages]);
 
-  const selectedConversation = conversations.find((c) => c.id === selectedId) ?? null;
-  const chatRecipient = selectedConversation?.otherUser ?? directRecipient;
+  const chatKey = selectedId ?? (directRecipient ? `direct:${directRecipient.id}` : null);
+  const newMessage = chatKey ? drafts[chatKey] ?? '' : '';
+  const setNewMessage = useCallback(
+    (value: string | ((prev: string) => string)) => {
+      if (!chatKey) return;
+      setDrafts((prev) => {
+        const current = prev[chatKey] ?? '';
+        const next = typeof value === 'function' ? value(current) : value;
+        if (next === current) return prev;
+        return { ...prev, [chatKey]: next };
+      });
+    },
+    [chatKey],
+  );
   const conversationlessContacts = getConversationlessContacts(conversations, acceptedContacts);
 
   const filteredConversations = conversations.filter((c) => {
@@ -372,6 +389,34 @@ export function MessagesWorkspace() {
     const term = search.toLowerCase();
     return contact.name.toLowerCase().includes(term) || contact.email.toLowerCase().includes(term);
   });
+
+  const isInquiryChat =
+    !!requestedRecipientId && !!chatRecipient && chatRecipient.id === requestedRecipientId;
+
+  const prefilledForRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!requestedProjectId || !inquiredProject || !chatKey || !isInquiryChat) return;
+    const token = `${requestedProjectId}:${chatKey}`;
+    if (prefilledForRef.current === token) return;
+    prefilledForRef.current = token;
+    setNewMessage((prev) =>
+      prev ? prev : `Hi! I am reaching out regarding your project "${inquiredProject.title}".`
+    );
+  }, [requestedProjectId, inquiredProject, chatKey, isInquiryChat, setNewMessage]);
+
+  const enteredInquiryRef = useRef(false);
+  useEffect(() => {
+    if (isInquiryChat) enteredInquiryRef.current = true;
+  }, [isInquiryChat]);
+
+  useEffect(() => {
+    if (inquiryEnded || isInquiryChat) return;
+    if (!rawRequestedProjectId && !requestedRecipientId) return;
+    if (!enteredInquiryRef.current || !chatKey) return;
+    setInquiryEnded(true);
+    setInquiredProject(null);
+    router.replace(pathname, { scroll: false });
+  }, [chatKey, isInquiryChat, inquiryEnded, rawRequestedProjectId, requestedRecipientId, router, pathname]);
 
   const handleSend = async () => {
     const rawContent = newMessage.trim();
@@ -449,7 +494,11 @@ export function MessagesWorkspace() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-2 mt-4">
                   <Button asChild variant="default">
-                    <Link href="/projects">Browse Projects</Link>
+                    {currentUser?.role === 'employer' ? (
+                      <Link href="/dashboard/employer/projects">My projects</Link>
+                    ) : (
+                      <Link href="/dashboard/freelancer/projects">Browse projects</Link>
+                    )}
                   </Button>
                 </div>
               </div>
@@ -616,9 +665,8 @@ export function MessagesWorkspace() {
                           ? `/dashboard/employer/projects/${inquiredProject.id}`
                           : `/dashboard/freelancer/projects/${inquiredProject.id}`
                       }
-                      target="_blank"
                     >
-                      View Project <ExternalLink className="size-3 ml-1" />
+                      View Project
                     </Link>
                   </Button>
                 </div>

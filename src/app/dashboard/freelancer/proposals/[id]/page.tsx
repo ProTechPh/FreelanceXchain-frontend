@@ -201,7 +201,7 @@ export default function FreelancerProposalDetailPage() {
               You will be removed from consideration and cannot un-withdraw.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setConfirmWithdraw(false)}

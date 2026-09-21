@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
 import { WebVitals } from '@/components/web-vitals';
 import { isPlanUpgradeRequired } from '@/lib/plan-access';
+import { RateAppProvider } from '@/components/feedback/rate-app-provider';
 
 function ThemedToaster() {
   const { resolvedTheme } = useTheme();
@@ -54,7 +55,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
         disableTransitionOnChange
       >
         <WebVitals />
-        {children}
+        {/* App-wide, not dashboard-only: a freelancer can submit a proposal
+            from the public /projects/[id] page, which never renders
+            DashboardLayout. The dashboard reports the email/KYC gate via
+            useSuppressRatingPrompt. */}
+        <RateAppProvider>{children}</RateAppProvider>
         <ThemedToaster />
       </ThemeProvider>
     </QueryClientProvider>

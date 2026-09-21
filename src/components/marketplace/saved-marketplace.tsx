@@ -204,7 +204,7 @@ export function SavedMarketplace() {
               Are you sure you want to delete <strong className="text-foreground">&quot;{searchToDelete?.name}&quot;</strong>? You will no longer receive match alerts for this search.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setSearchToDelete(null)}
