@@ -90,9 +90,12 @@ type PromptState = {
 };
 
 export function RateAppProvider({ children }: { children: React.ReactNode }) {
-  const userId = useAuthStore((state) => state.user?.id);
   const [prompt, setPrompt] = useState<PromptState>({ open: false, source: 'manual' });
-  const [suppressed, setSuppressed] = useState(false);
+
+  const suppressedRef = useRef(false);
+  const setSuppressed = useCallback((next: boolean) => {
+    suppressedRef.current = next;
+  }, []);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Guards against two triggers firing in the same tick (a milestone approval
@@ -105,7 +108,8 @@ export function RateAppProvider({ children }: { children: React.ReactNode }) {
 
   const requestRatingPrompt = useCallback(
     (source: AppRatingSource, contextId?: string) => {
-      if (!userId || suppressed || pendingRef.current) return;
+      const userId = useAuthStore.getState().user?.id;
+      if (!userId || suppressedRef.current || pendingRef.current) return;
       if (!shouldPromptFor(source, contextId, readDismissals())) return;
 
       pendingRef.current = true;
@@ -127,7 +131,7 @@ export function RateAppProvider({ children }: { children: React.ReactNode }) {
           pendingRef.current = false;
         });
     },
-    [userId, suppressed],
+    [],
   );
 
   const openRatingDialog = useCallback((source: AppRatingSource = 'manual') => {
@@ -137,7 +141,7 @@ export function RateAppProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo(
     () => ({ requestRatingPrompt, openRatingDialog, setSuppressed }),
-    [requestRatingPrompt, openRatingDialog],
+    [requestRatingPrompt, openRatingDialog, setSuppressed],
   );
 
   return (
