@@ -27,6 +27,8 @@ export type FailureKind =
   | 'auth'
   /** 403 - signed in, but not allowed to do this. */
   | 'forbidden'
+  /** 404 - the thing asked for is not there. Not the user's input to fix. */
+  | 'not-found'
   /** 403 + PLAN_UPGRADE_REQUIRED - allowed, but not on the Free plan. */
   | 'plan-upgrade'
   /** 400/422 - the backend message names the field and is safe to show. */
@@ -146,7 +148,7 @@ function walletProblem(error: unknown): FailureMessage | null {
   if (codes.includes('INSUFFICIENT_FUNDS') || text.includes('insufficient funds')) {
     return {
       kind: 'wallet',
-      tone: 'destructive',
+      tone: 'warning',
       title: 'Not enough funds in your wallet',
       detail: 'Top up the connected account to cover the amount plus gas, then try again.',
       retryable: false,
@@ -205,7 +207,31 @@ export function getApiErrorMessage(error: unknown, fallback: string): string {
  * Reads the same shapes as `getApiErrorMessage` but reports absence directly,
  * rather than round-tripping a sentinel string through the fallback.
  */
+/**
+ * Backend strings that say nothing a user can act on.
+ *
+ * These come from shared middleware rather than a specific rule, so surfacing
+ * them verbatim ("Insufficient permissions") is worse than the plain fallback
+ * copy below, which at least suggests what to do.
+ */
+const UNHELPFUL_BACKEND_MESSAGES = new Set([
+  'insufficient permissions',
+  'authentication required',
+  'user not authenticated',
+  'unauthorized',
+  'forbidden',
+  'bad request',
+  'an unexpected error occurred',
+  'internal server error',
+]);
+
 function backendMessage(error: unknown): string | null {
+  const raw = rawBackendMessage(error);
+  if (!raw) return null;
+  return UNHELPFUL_BACKEND_MESSAGES.has(raw.trim().toLowerCase().replace(/\.$/, '')) ? null : raw;
+}
+
+function rawBackendMessage(error: unknown): string | null {
   if (!isRecord(error) || !isRecord(error.response)) return null;
 
   const data = error.response.data;
@@ -219,6 +245,32 @@ function backendMessage(error: unknown): string | null {
     ? data.error.message
     : null;
 }
+
+/** The backend's machine-readable code, when the body carries one. */
+function backendCode(error: unknown): string | null {
+  if (!isRecord(error) || !isRecord(error.response)) return null;
+  const data = error.response.data;
+  if (!isRecord(data) || !isRecord(data.error)) return null;
+  return typeof data.error.code === 'string' ? data.error.code : null;
+}
+
+/**
+ * Codes that mean "we broke", whatever status they arrive with.
+ *
+ * The API returns most of these as 400, which would otherwise read as a
+ * validation error and tell the user to check their input. Their messages are
+ * also written for developers - "Failed to retrieve updated dispute" - so the
+ * text is deliberately dropped in favour of plain copy.
+ */
+const SERVER_FAULT_CODES = new Set([
+  'INTERNAL_ERROR',
+  'DATABASE_ERROR',
+  'UPSTREAM_ERROR',
+  'FETCH_FAILED',
+  'CREATE_FAILED',
+  'UPDATE_FAILED',
+  'DELETE_FAILED',
+]);
 
 export function classifyFailure(error: unknown): FailureKind {
   if (isUserRejection(error)) return 'cancelled';
@@ -252,8 +304,15 @@ export function classifyFailure(error: unknown): FailureKind {
   if (isPlanUpgradeRequired(error)) return 'plan-upgrade';
   if (status === 403) return 'forbidden';
   if (status === 408) return 'timeout';
-  if (status === 409) return 'conflict';
   if (status === 429) return 'rate-limit';
+  if (status === 409) return 'conflict';
+
+  // The code is more reliable than the status here: the API sends most of its
+  // faults and missing-record errors as a plain 400.
+  const code = backendCode(error);
+  if (code && SERVER_FAULT_CODES.has(code)) return 'server';
+  if (status === 404 || (code && code.endsWith('NOT_FOUND'))) return 'not-found';
+
   if (status >= 500) return 'server';
   if (status >= 400) return 'validation';
 
@@ -314,14 +373,33 @@ export function describeFailure(
         retryable: false,
       };
 
-    case 'forbidden':
+    case 'forbidden': {
+      // The backend names the actual rule - "Only the contract employer can
+      // approve milestones" - which tells the user who *can* do it. The old
+      // generic line sent people to an administrator who cannot grant access
+      // to someone else's contract anyway.
+      const specific = backendMessage(error);
       return {
         kind,
         tone: 'warning',
-        title: "You don't have permission to do that",
-        detail: 'If you think this is wrong, contact an administrator.',
+        title: specific ?? "You don't have permission to do that",
+        detail: specific ? undefined : 'Check you are signed in to the right account.',
         retryable: false,
       };
+    }
+
+    case 'not-found': {
+      // A 404 is not a validation error: there is nothing in the form to
+      // correct, so "check the details you entered" is misleading.
+      const specific = backendMessage(error);
+      return {
+        kind,
+        tone: 'warning',
+        title: specific ?? `We couldn't find what you asked for`,
+        detail: specific ? undefined : 'It may have been removed, or the link may be out of date.',
+        retryable: false,
+      };
+    }
 
     case 'plan-upgrade':
       // Informational, not destructive: nothing went wrong and nothing is at
@@ -347,24 +425,36 @@ export function describeFailure(
       };
     }
 
-    case 'conflict':
+    case 'conflict': {
+      // 409 covers duplicates as well as races. "This has already changed" is
+      // wrong for "You have already rated this contract", so the backend's own
+      // wording leads when it has one. A duplicate also gets no Retry: the
+      // second attempt fails for the same reason as the first.
+      const specific = backendMessage(error);
+      const duplicate = backendCode(error)?.startsWith('DUPLICATE') ?? false;
       return {
         kind,
         tone: 'warning',
-        title: 'This has already changed',
-        detail: backendMessage(error)
-          ?? `Someone updated it before we could ${action}. Refresh to see the latest.`,
-        retryable: true,
+        title: specific ?? 'This has already changed',
+        detail: specific
+          ? undefined
+          : `Someone updated it before we could ${action}. Refresh to see the latest.`,
+        retryable: !duplicate,
       };
+    }
 
-    case 'rate-limit':
+    case 'rate-limit': {
+      // A cooldown is not "too many attempts", so when the backend explains
+      // the actual limit its wording leads.
+      const specific = backendMessage(error);
       return {
         kind,
         tone: 'warning',
-        title: 'Too many attempts',
-        detail: 'Wait a moment, then try again.',
+        title: specific ?? 'Too many attempts',
+        detail: specific ? undefined : 'Wait a moment, then try again.',
         retryable: true,
       };
+    }
 
     case 'server':
       // No backend text here on purpose - it is a stack trace - and no claim
@@ -394,7 +484,7 @@ export function describeFailure(
         kind: 'unknown',
         tone: 'destructive',
         title: `We couldn't ${action}`,
-        detail: `Something went wrong. Try again - if it keeps happening, contact support.${safe}`,
+        detail: `Something went wrong. Try again, and contact support if it keeps happening.${safe}`,
         retryable: true,
       };
   }
