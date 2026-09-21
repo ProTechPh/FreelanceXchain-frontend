@@ -13,9 +13,6 @@ const EcosystemShowcase = dynamic(
 const ComparisonTable = dynamic(
   () => import("@/components/marketing/comparison-table").then((mod) => mod.ComparisonTable)
 );
-const TestimonialsMarquee = dynamic(
-  () => import("@/components/marketing/testimonials-marquee").then((mod) => mod.TestimonialsMarquee)
-);
 const FaqSection = dynamic(
   () => import("@/components/marketing/faq-section").then((mod) => mod.FaqSection)
 );
@@ -32,7 +29,6 @@ export default function Home() {
         <FeaturesGrid />
         <EcosystemShowcase />
         <ComparisonTable />
-        <TestimonialsMarquee />
         <FaqSection />
         <CallToAction />
       </main>
