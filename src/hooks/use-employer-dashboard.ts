@@ -39,7 +39,7 @@ export function useEmployerDashboard() {
 
   const analyticsRange = useMemo(() => resolveRange(range, new Date()), [range]);
   const { isPro } = usePlan();
-  const { data: analytics } = useEmployerAnalytics(analyticsRange, Boolean(currentUser) && isPro);
+  const { data: analytics } = useEmployerAnalytics(analyticsRange, Boolean(currentUser));
   const totalSpent = analytics?.totalSpent ?? null;
   const completedContractCount = analytics?.projectsCompleted ?? null;
 

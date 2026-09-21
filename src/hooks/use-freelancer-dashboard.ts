@@ -64,7 +64,7 @@ export function useFreelancerDashboard() {
 
   const analyticsRange = useMemo(() => resolveRange(range, new Date()), [range]);
   const { isPro } = usePlan();
-  const { data: analytics } = useFreelancerAnalytics(analyticsRange, Boolean(currentUser) && isPro);
+  const { data: analytics } = useFreelancerAnalytics(analyticsRange, Boolean(currentUser));
   const totalEarnings = analytics?.totalEarnings ?? null;
   const projectsCompleted = analytics?.projectsCompleted ?? null;
 

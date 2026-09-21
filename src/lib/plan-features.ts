@@ -16,8 +16,6 @@ export type ProFeature =
   | 'skill-gaps'
   | 'extract-skills'
   | 'ai-proposal'
-  | 'freelancer-analytics'
-  | 'employer-analytics'
   | 'skill-trends';
 
 export interface ProFeatureCopy {
@@ -53,16 +51,6 @@ export const PRO_FEATURE_COPY: Record<ProFeature, ProFeatureCopy> = {
     description: 'Generate a tailored first draft from your profile and the project brief, then edit it yourself.',
     endpoint: '/matching/generate-proposal',
   },
-  'freelancer-analytics': {
-    title: 'Your earnings analytics are a Pro feature',
-    description: 'Track earnings, completion rate and trends over any date range.',
-    endpoint: '/analytics/freelancer',
-  },
-  'employer-analytics': {
-    title: 'Your hiring analytics are a Pro feature',
-    description: 'Track spend, hiring velocity and project outcomes over any date range.',
-    endpoint: '/analytics/employer',
-  },
   'skill-trends': {
     title: 'Skill demand trends are a Pro feature',
     description: 'See which skills are rising and falling in demand across the marketplace.',
@@ -77,8 +65,6 @@ export const PRO_ONLY_ENDPOINTS: readonly string[] = [
   '/matching/extract-skills',
   '/matching/skill-gaps',
   '/matching/generate-proposal',
-  '/analytics/freelancer',
-  '/analytics/employer',
   '/analytics/skill-trends',
 ];
 
@@ -87,6 +73,8 @@ export const PRO_ONLY_ENDPOINTS: readonly string[] = [
  * page never sells something that is not actually gated.
  */
 export const FREE_ENDPOINTS: readonly string[] = [
+  '/analytics/freelancer',
+  '/analytics/employer',
   '/analytics/platform',
   '/analytics/liquidity',
   '/analytics/funnel',
@@ -110,12 +98,12 @@ export const PLAN_COMPARISON: readonly PlanComparisonRow[] = [
   { feature: 'Reputation, reviews and your public profile', free: true, pro: true },
   { feature: 'Identity verification (KYC)', free: true, pro: true },
   { feature: 'Marketplace stats — platform activity, liquidity, funnel', free: true, pro: true },
+  { feature: 'Your earnings and spend analytics, with date ranges', free: true, pro: true },
   { feature: 'AI project recommendations', free: false, pro: true, endpoint: '/matching/projects' },
   { feature: 'AI candidate recommendations', free: false, pro: true, endpoint: '/matching/freelancers' },
   { feature: 'Draft a proposal with AI', free: false, pro: true, endpoint: '/matching/generate-proposal' },
   { feature: 'Skill gap analysis', free: false, pro: true, endpoint: '/matching/skill-gaps' },
   { feature: 'Extract skills from a résumé or brief', free: false, pro: true, endpoint: '/matching/extract-skills' },
-  { feature: 'Your earnings and spend analytics, with date ranges', free: false, pro: true, endpoint: '/analytics/freelancer' },
   { feature: 'Skill demand trends', free: false, pro: true, endpoint: '/analytics/skill-trends' },
   { feature: 'Priority matching — you\'re among the first matched to new projects', free: false, pro: true },
 ];
