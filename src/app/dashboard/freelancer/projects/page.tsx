@@ -10,6 +10,7 @@ import { ProjectListItem } from '@/components/marketplace/project-list-item';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { Button } from '@/components/ui/button';
 import { matchingApi } from '@/lib/api';
+import { useMyProposalStatusByProject } from '@/hooks/use-my-proposals';
 import { marketplaceFiltersFromSearchParams } from '@/lib/marketplace-search';
 import type { Project } from '@/types';
 
@@ -52,6 +53,10 @@ function useProjectMatches() {
 
 function FreelancerProjectBrowser() {
   const matches = useProjectMatches();
+  // Marks the rows this freelancer has already bid on, so they are not re-read
+  // as fresh opportunities. The API rejects a duplicate proposal anyway; this
+  // shows it before the click rather than after.
+  const proposalStatusByProject = useMyProposalStatusByProject();
   const searchParams = useSearchParams();
   const serializedFilters = searchParams?.toString() ?? '';
   const initialFilters = marketplaceFiltersFromSearchParams(new URLSearchParams(serializedFilters));
@@ -92,6 +97,7 @@ function FreelancerProjectBrowser() {
             returnTo={`/dashboard/freelancer/projects${listingQuery ? `?${listingQuery}` : ''}`}
             matchScore={matches[project.id]?.matchScore}
             matchedSkills={matches[project.id]?.matchedSkills}
+            proposalStatus={proposalStatusByProject.get(project.id)}
           />
         )}
       />

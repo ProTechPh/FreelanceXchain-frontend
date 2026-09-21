@@ -15,6 +15,8 @@ import { WalletConnectBanner } from '@/components/wallet/wallet-connect-banner';
 import { TourStepLink } from '@/components/onboarding/tour-step-link';
 import { WalletBalanceCard } from '@/components/wallet/wallet-balance-card';
 import { useFreelancerDashboard } from '@/hooks/use-freelancer-dashboard';
+import { useMyProposalStatusByProject } from '@/hooks/use-my-proposals';
+import { ProposalSubmittedBadge } from '@/components/proposals/proposal-submitted-badge';
 
 const statusColors: Record<string, string> = {
   pending: 'bg-warning-subtle text-warning',
@@ -46,6 +48,7 @@ export default function FreelancerDashboard() {
     isPro,
     hasData,
   } = useFreelancerDashboard();
+  const proposalStatusByProject = useMyProposalStatusByProject();
 
   if (coreLoading && !hasData) {
     return <StatsSkeleton label="Loading dashboard" />;
@@ -315,30 +318,38 @@ export default function FreelancerDashboard() {
               </div>
             ) : (
               <div className="grid md:grid-cols-3 gap-4">
-                {recommended.map(({ project, matchScore, matchedSkills }) => (
-                  <Link
-                    key={project.id}
-                    href={`/dashboard/freelancer/projects/${project.id}`}
-                    className="block rounded-xl border border-border bg-secondary/50 p-4 transition-all hover:border-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <h3 className="font-medium">{project.title}</h3>
-                      <Badge className="bg-success-subtle text-success">{Math.round(matchScore)}% Match</Badge>
-                    </div>
-                    <p className="text-sm text-primary font-medium mb-2">{formatAmount(project.budget)}</p>
-                    <div className="flex flex-wrap gap-1.5 mb-3">
-                      {matchedSkills.map((skill) => (
-                        <Badge key={skill} variant="secondary" className="text-xs">
-                          {skill}
-                        </Badge>
-                      ))}
-                    </div>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>{relativeTime(project.createdAt)}</span>
-                      <span>{project.proposalCount ?? 0} proposals</span>
-                    </div>
-                  </Link>
-                ))}
+                {recommended.map(({ project, matchScore, matchedSkills }) => {
+                  const proposalStatus = proposalStatusByProject.get(project.id);
+                  return (
+                    <Link
+                      key={project.id}
+                      href={`/dashboard/freelancer/projects/${project.id}`}
+                      className="block rounded-xl border border-border bg-secondary/50 p-4 transition-all hover:border-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <h3 className="font-medium">{project.title}</h3>
+                        <Badge className="bg-success-subtle text-success">{Math.round(matchScore)}% Match</Badge>
+                      </div>
+                      {proposalStatus && (
+                        <div className="mb-2">
+                          <ProposalSubmittedBadge status={proposalStatus} />
+                        </div>
+                      )}
+                      <p className="text-sm text-primary font-medium mb-2">{formatAmount(project.budget)}</p>
+                      <div className="flex flex-wrap gap-1.5 mb-3">
+                        {matchedSkills.map((skill) => (
+                          <Badge key={skill} variant="secondary" className="text-xs">
+                            {skill}
+                          </Badge>
+                        ))}
+                      </div>
+                      <div className="flex items-center justify-between text-xs text-muted-foreground">
+                        <span>{relativeTime(project.createdAt)}</span>
+                        <span>{project.proposalCount ?? 0} proposals</span>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </ProGate>

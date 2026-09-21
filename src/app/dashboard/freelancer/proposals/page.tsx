@@ -22,6 +22,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { useInvalidateMyProposals } from '@/hooks/use-my-proposals';
 
 const statusConfig: Record<ProposalStatus, { icon: typeof Clock; color: string; bg: string; label: string }> = {
   pending: { icon: Clock, color: 'text-warning', bg: 'bg-warning-subtle', label: 'Pending' },
@@ -41,6 +42,7 @@ export default function ProposalsPage() {
   const [activeTab, setActiveTab] = useState<ProposalStatus>('pending');
   const [withdrawingId, setWithdrawingId] = useState<string | null>(null);
   const [confirmWithdrawProposal, setConfirmWithdrawProposal] = useState<ProposalView | null>(null);
+  const invalidateMyProposals = useInvalidateMyProposals();
 
   const load = useCallback(async () => {
     const { data: all } = await proposalsApi.getMine();
@@ -253,6 +255,9 @@ export default function ProposalsPage() {
                   const { data: updated } = await proposalsApi.withdraw(id);
                   setProposals((prev) => prev.map((p) => (p.proposal.id === id ? { ...p, proposal: updated } : p)));
                   setConfirmWithdrawProposal(null);
+                  // A withdrawn proposal frees the project to be bid on again,
+                  // so the browse list must drop its marker.
+                  invalidateMyProposals();
                   toast.success('Proposal withdrawn');
                 } catch {
                   toast.error('Failed to withdraw proposal');

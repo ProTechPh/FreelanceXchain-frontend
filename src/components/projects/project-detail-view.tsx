@@ -14,6 +14,7 @@ import type { Project, Proposal } from '@/types';
 import { getProjectPrimaryAction } from '@/lib/project-actions';
 import { formatAmount } from '@/lib/format';
 import { useAuthStore } from '@/stores/authStore';
+import { useInvalidateMyProposals } from '@/hooks/use-my-proposals';
 import { getMarketplaceReturnPath } from '@/lib/marketplace-return';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
 import { AttachmentPreviewDialog, type AttachmentPreviewTarget } from '@/components/ui/attachment-preview-dialog';
@@ -59,6 +60,7 @@ export function ProjectDetailView({
   const [confirmWithdrawOpen, setConfirmWithdrawOpen] = useState(false);
   const [previewAttachment, setPreviewAttachment] = useState<AttachmentPreviewTarget | null>(null);
   const user = useAuthStore((state) => state.user);
+  const invalidateMyProposals = useInvalidateMyProposals();
 
   const fallbackBackPath = defaultBackHref || (mode === 'public' ? '/projects' : `/dashboard/${user?.role || 'employer'}/projects`);
   const backPath = getMarketplaceReturnPath(searchParams?.get('from'), fallbackBackPath);
@@ -292,6 +294,9 @@ export function ProjectDetailView({
                 : current,
             );
             void fetchMyProposal();
+            // Keeps the "already applied" marker on the browse and
+            // recommendation lists in step with what just happened here.
+            invalidateMyProposals();
           }}
           project={project}
         />

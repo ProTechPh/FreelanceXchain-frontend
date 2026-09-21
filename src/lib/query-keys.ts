@@ -12,6 +12,8 @@ export const qk = {
   paymentSummary: () => ['payments', 'summary'] as const,
   analytics: (role: 'freelancer' | 'employer', range: AnalyticsDateRange) =>
     ['analytics', role, range.startDate ?? null, range.endDate ?? null] as const,
+  /** The signed-in freelancer's own proposals, used to mark projects already bid on. */
+  myProposals: () => ['proposals', 'me'] as const,
   auditSearch: (params: AuditSearchParams) => ['audit-logs', 'search', params] as const,
   adminActivity: (startDate: string, endDate: string) =>
     ['audit-logs', 'admin-activity', startDate, endDate] as const,

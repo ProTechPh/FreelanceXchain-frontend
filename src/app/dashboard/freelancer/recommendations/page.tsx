@@ -15,6 +15,8 @@ import { Markdown } from '@/components/ui/markdown';
 import { formatAmount, formatDate } from '@/lib/format';
 import { ProGate } from '@/components/billing/pro-gate';
 import { usePlan } from '@/hooks/use-plan';
+import { useMyProposalStatusByProject } from '@/hooks/use-my-proposals';
+import { ProposalSubmittedBadge } from '@/components/proposals/proposal-submitted-badge';
 
 interface RecommendationView extends ProjectRecommendation {
   project: Project;
@@ -25,6 +27,9 @@ export default function FreelancerRecommendationsPage() {
   const [loading, setLoading] = useState(true);
   const [profileNotFound, setProfileNotFound] = useState(false);
   const { isPro, isResolved } = usePlan();
+  // A recommendation the freelancer has already bid on is still a good match,
+  // so it stays in the list — it is marked rather than hidden.
+  const proposalStatusByProject = useMyProposalStatusByProject();
 
   useEffect(() => {
     let active = true;
@@ -118,56 +123,62 @@ export default function FreelancerRecommendationsPage() {
         </Card>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
-          {recommendations.map((item) => (
-            <Card key={item.projectId} className="rounded-2xl border-border bg-card">
-              <CardHeader>
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <CardTitle className="text-base font-bold text-foreground">
-                      {item.project.title}
-                    </CardTitle>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {formatAmount(item.project.budget)} · due {formatDate(item.project.deadline)}
-                    </p>
-                  </div>
-                  <Badge className="bg-success-subtle text-success shrink-0">
-                    {Math.round(item.matchScore)}% match
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="line-clamp-2 text-sm text-muted-foreground">
-                  {item.project.description}
-                </p>
-                <div>
-                  <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Matched skills
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {item.matchedSkills.map((skill) => (
-                      <Badge key={skill} variant="secondary">
-                        {skill}
+          {recommendations.map((item) => {
+            const proposalStatus = proposalStatusByProject.get(item.project.id);
+            return (
+              <Card key={item.projectId} className="rounded-2xl border-border bg-card">
+                <CardHeader>
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <CardTitle className="text-base font-bold text-foreground">
+                        {item.project.title}
+                      </CardTitle>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {formatAmount(item.project.budget)} · due {formatDate(item.project.deadline)}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+                      {proposalStatus && <ProposalSubmittedBadge status={proposalStatus} size="default" />}
+                      <Badge className="bg-success-subtle text-success shrink-0">
+                        {Math.round(item.matchScore)}% match
                       </Badge>
-                    ))}
+                    </div>
                   </div>
-                </div>
-                {item.missingSkills.length > 0 && (
-                  <p className="text-xs text-muted-foreground">
-                    Potential gaps: {item.missingSkills.join(', ')}
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="line-clamp-2 text-sm text-muted-foreground">
+                    {item.project.description}
                   </p>
-                )}
-                <div className="rounded-lg bg-secondary/40 p-3 text-sm text-muted-foreground">
-                  <Markdown content={item.reasoning} />
-                </div>
-                <Button asChild>
-                  <Link href={`/dashboard/freelancer/projects/${item.project.id}`}>
-                    View project
-                    <ArrowUpRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
+                  <div>
+                    <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      Matched skills
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {item.matchedSkills.map((skill) => (
+                        <Badge key={skill} variant="secondary">
+                          {skill}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                  {item.missingSkills.length > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Potential gaps: {item.missingSkills.join(', ')}
+                    </p>
+                  )}
+                  <div className="rounded-lg bg-secondary/40 p-3 text-sm text-muted-foreground">
+                    <Markdown content={item.reasoning} />
+                  </div>
+                  <Button asChild variant={proposalStatus ? 'outline' : 'default'}>
+                    <Link href={`/dashboard/freelancer/projects/${item.project.id}`}>
+                      {proposalStatus ? 'View your proposal' : 'View project'}
+                      <ArrowUpRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
       </ProGate>

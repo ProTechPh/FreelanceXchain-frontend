@@ -4,7 +4,8 @@ import { Clock, ShieldCheck, Users, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatAmount, formatDate } from '@/lib/format';
 import { StatusBadge } from '@/components/ui/status-badge';
-import type { Project } from '@/types';
+import { ProposalSubmittedBadge } from '@/components/proposals/proposal-submitted-badge';
+import type { Project, ProposalStatus } from '@/types';
 
 interface ProjectListItemProps {
   project: Project;
@@ -15,6 +16,11 @@ interface ProjectListItemProps {
   matchedSkills?: string[];
   /** Optional custom detail href. Defaults to dashboard freelancer project detail. */
   href?: string;
+  /**
+   * Status of the viewer's own proposal on this project, when they have one.
+   * Undefined means they have not bid, or the lookup is unavailable.
+   */
+  proposalStatus?: ProposalStatus;
 }
 
 /**
@@ -25,7 +31,14 @@ interface ProjectListItemProps {
  * freelancer actually decides on — budget, deadline, competition. The public
  * listing card stays roomier; this one is built for scanning twenty in a row.
  */
-export function ProjectListItem({ project, returnTo, matchScore, matchedSkills, href }: ProjectListItemProps) {
+export function ProjectListItem({
+  project,
+  returnTo,
+  matchScore,
+  matchedSkills,
+  href,
+  proposalStatus,
+}: ProjectListItemProps) {
   const client = project.employer?.name || 'Verified employer';
   const initial = client.trim().charAt(0).toUpperCase() || '?';
   const skills = project.requiredSkills ?? [];
@@ -117,6 +130,14 @@ export function ProjectListItem({ project, returnTo, matchScore, matchedSkills, 
             {/* Signals sit at the end of the meta line rather than in a right-hand
                 column, which the favourite button occupies. */}
             <div className="ml-auto flex items-center gap-1.5">
+              {proposalStatus && (
+                <>
+                  <dt className="sr-only">Your proposal</dt>
+                  <dd>
+                    <ProposalSubmittedBadge status={proposalStatus} />
+                  </dd>
+                </>
+              )}
               {typeof matchScore === 'number' && (
                 <>
                   <dt className="sr-only">Skill match</dt>
