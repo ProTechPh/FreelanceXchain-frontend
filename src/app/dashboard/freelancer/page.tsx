@@ -61,7 +61,6 @@ export default function FreelancerDashboard() {
       bg: 'bg-success-subtle',
       loading: totalEarnings === null && projectsCompleted === null,
       tour: 'earnings',
-      pro: true,
     },
     {
       title: 'Active Contracts',
@@ -104,14 +103,12 @@ export default function FreelancerDashboard() {
             Welcome back{currentUser?.name ? `, ${currentUser.name}` : ''}!
           </h1>
           <p className="text-muted-foreground">Here&apos;s what&apos;s happening with your work</p>
-          {isPro && (
-            <AnalyticsRangeFilter
-              value={range}
-              onChange={setRange}
-              label="Earnings date range"
-              className="mt-3"
-            />
-          )}
+          <AnalyticsRangeFilter
+            value={range}
+            onChange={setRange}
+            label="Earnings date range"
+            className="mt-3"
+          />
         </div>
         <Button asChild variant="gradient" data-tour="primary-cta" className="w-full sm:w-auto shrink-0">
           <Link href="/dashboard/freelancer/projects">
@@ -134,12 +131,7 @@ export default function FreelancerDashboard() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{stat.title}</p>
-                  {'pro' in stat && stat.pro ? (
-                    <ProGate feature="freelancer-analytics" variant="inline">
-                      <p className="text-2xl font-bold mt-1">{stat.value}</p>
-                      {stat.change && <p className="text-xs text-muted-foreground mt-1">{stat.change}</p>}
-                    </ProGate>
-                  ) : stat.loading ? (
+                  {stat.loading ? (
                     <Skeleton className="h-7 w-20 mt-1.5 rounded-md" />
                   ) : (
                     <>

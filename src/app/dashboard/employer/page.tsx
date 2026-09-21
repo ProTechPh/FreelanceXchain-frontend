@@ -65,7 +65,6 @@ export default function EmployerDashboard() {
       bg: 'bg-success-subtle',
       loading: totalSpent === null && completedContractCount === null,
       tour: 'earnings',
-      pro: true,
     },
     {
       title: 'Pending Proposals',
@@ -96,14 +95,12 @@ export default function EmployerDashboard() {
             Welcome back{currentUser?.name ? `, ${currentUser.name}` : ''}!
           </h1>
           <p className="text-muted-foreground">Manage your projects and find talent</p>
-          {isPro && (
-            <AnalyticsRangeFilter
-              value={range}
-              onChange={setRange}
-              label="Spending date range"
-              className="mt-3"
-            />
-          )}
+          <AnalyticsRangeFilter
+            value={range}
+            onChange={setRange}
+            label="Spending date range"
+            className="mt-3"
+          />
         </div>
         <Button asChild variant="gradient" data-tour="primary-cta" className="w-full sm:w-auto shrink-0">
           <Link href="/dashboard/employer/projects/new">
@@ -126,11 +123,7 @@ export default function EmployerDashboard() {
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">{stat.title}</p>
-                  {'pro' in stat && stat.pro ? (
-                    <ProGate feature="employer-analytics" variant="inline">
-                      <p className="text-2xl font-bold mt-1">{stat.value}</p>
-                    </ProGate>
-                  ) : stat.loading ? (
+                  {stat.loading ? (
                     <Skeleton className="h-7 w-20 mt-1.5 rounded-md" />
                   ) : (
                     <p className="text-2xl font-bold mt-1">{stat.value}</p>
