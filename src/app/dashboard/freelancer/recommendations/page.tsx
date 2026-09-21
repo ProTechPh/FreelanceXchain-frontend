@@ -15,6 +15,7 @@ import { Markdown } from '@/components/ui/markdown';
 import { formatAmount, formatDate } from '@/lib/format';
 import { ProGate } from '@/components/billing/pro-gate';
 import { usePlan } from '@/hooks/use-plan';
+import { useRateApp } from '@/components/feedback/rate-app-provider';
 import { useMyProposalStatusByProject } from '@/hooks/use-my-proposals';
 import { ProposalSubmittedBadge } from '@/components/proposals/proposal-submitted-badge';
 
@@ -27,6 +28,7 @@ export default function FreelancerRecommendationsPage() {
   const [loading, setLoading] = useState(true);
   const [profileNotFound, setProfileNotFound] = useState(false);
   const { isPro, isResolved } = usePlan();
+  const { requestRatingPrompt } = useRateApp();
   // A recommendation the freelancer has already bid on is still a good match,
   // so it stays in the list — it is marked rather than hidden.
   const proposalStatusByProject = useMyProposalStatusByProject();
@@ -51,11 +53,12 @@ export default function FreelancerRecommendationsPage() {
           ),
         );
         if (active) {
-          setRecommendations(
-            data
-              .map((item, index) => ({ ...item, project: projects[index] }))
-              .filter((item): item is RecommendationView => item.project !== null),
-          );
+          const views = data
+            .map((item, index) => ({ ...item, project: projects[index] }))
+            .filter((item): item is RecommendationView => item.project !== null);
+          setRecommendations(views);
+          // Only worth asking when the AI actually produced something to judge.
+          if (views.length > 0) requestRatingPrompt('ai_recommendations');
         }
       } catch (error: unknown) {
         const errorMessage = getApiErrorMessage(error, '');
@@ -72,7 +75,7 @@ export default function FreelancerRecommendationsPage() {
     return () => {
       active = false;
     };
-  }, [isPro, isResolved]);
+  }, [isPro, isResolved, requestRatingPrompt]);
 
   return (
     <div className="space-y-6">

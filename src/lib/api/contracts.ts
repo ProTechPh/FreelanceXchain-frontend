@@ -2,6 +2,7 @@ import api from '@/lib/api-client';
 import type {
   Contract,
   Milestone,
+  MilestoneApprovalResult,
   Dispute,
   PaginatedResponse,
   RushUpgradeRequest,
@@ -86,8 +87,11 @@ export const milestonesApi = {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
 
+  // Returns the approval outcome, not the milestone: the endpoint delegates to
+  // payment-service.approveMilestone, which releases escrow and reports whether
+  // that was the last milestone (`contractCompleted`).
   approve: (milestoneId: string, feedback?: string) =>
-    api.post<Milestone>(`/milestones/${milestoneId}/approve`, { feedback }),
+    api.post<MilestoneApprovalResult>(`/milestones/${milestoneId}/approve`, { feedback }),
 
   reject: (milestoneId: string, reason: string, requestRevision = true) =>
     api.post<Milestone>(`/milestones/${milestoneId}/reject`, { reason, requestRevision }),

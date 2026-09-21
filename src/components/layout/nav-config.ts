@@ -99,6 +99,7 @@ const adminNav: NavSection[] = [
       { label: 'Dashboard', href: '/dashboard/admin', icon: LayoutDashboard },
       { label: 'Notifications', href: '/dashboard/admin/notifications', icon: Bell },
       { label: 'Analytics', href: '/dashboard/admin/analytics', icon: BarChart3 },
+      { label: 'App feedback', href: '/dashboard/admin/feedback', icon: Star },
     ],
   },
   {

@@ -210,7 +210,7 @@ test('a second account with the same role receives its own onboarding tour', asy
       },
       version: 1,
     }));
-  }, { storedUser: user, version: 1 });
+  }, { storedUser: user, version: 2 });
   await mockAuthenticatedShell(page, user);
 
   await page.goto('/dashboard/freelancer');
@@ -265,7 +265,7 @@ test('restores the session before syncing tour preferences on reload', async ({ 
       body: JSON.stringify({
         id: `preferences-${user.id}`,
         userId: user.id,
-        tourProgress: { freelancer: { completedVersion: 1 } },
+        tourProgress: { freelancer: { completedVersion: 2 } },
         createdAt,
         updatedAt: createdAt,
       }),
@@ -286,7 +286,7 @@ test('switching accounts loads the next user\'s saved tour completion', async ({
   const firstUser = { ...buildUser('freelancer-1'), kycStatus: 'approved' as const };
   const secondUser = { ...buildUser('freelancer-2'), kycStatus: 'approved' as const };
   const session = await mockAuthenticatedShell(page, firstUser);
-  session.setTourProgress(secondUser.id, { freelancer: { completedVersion: 1 } });
+  session.setTourProgress(secondUser.id, { freelancer: { completedVersion: 2 } });
 
   await signInWithEmail(page, firstUser);
   await expect(tourDialog(page)).toBeVisible();

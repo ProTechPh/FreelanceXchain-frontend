@@ -47,6 +47,7 @@ import {
 import { freelancersApi, matchingApi, projectsApi, proposalsApi, type FreelancerRecommendation } from '@/lib/api';
 import { ProGate } from '@/components/billing/pro-gate';
 import { usePlan } from '@/hooks/use-plan';
+import { useRateApp } from '@/components/feedback/rate-app-provider';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { formatFileSize, safeAttachmentUrl } from '@/lib/attachment-presentation';
 import {
@@ -75,6 +76,7 @@ export default function EmployerProjectProposalsPage() {
   const [loading, setLoading] = useState(true);
   const [recommendationsLoading, setRecommendationsLoading] = useState(true);
   const { isPro } = usePlan();
+  const { requestRatingPrompt } = useRateApp();
   const [decision, setDecision] = useState<PendingDecision | null>(null);
   const [updating, setUpdating] = useState(false);
   const [showRecommendations, setShowRecommendations] = useState(true);
@@ -125,6 +127,8 @@ export default function EmployerProjectProposalsPage() {
           (rec, index, self) => index === self.findIndex((r) => r.freelancerId === rec.freelancerId),
         );
         setRecommendations(uniqueRecs);
+        // Only worth asking when the AI actually produced something to judge.
+        if (uniqueRecs.length > 0) requestRatingPrompt('ai_recommendations', projectId);
 
         const missingRecIds = uniqueRecs
           .map((r) => r.freelancerId)
@@ -153,7 +157,7 @@ export default function EmployerProjectProposalsPage() {
       setLoading(false);
     }
     // isPro gates the recommendations fetch, so an upgrade mid-session re-runs it.
-  }, [projectId, isPro]);
+  }, [projectId, isPro, requestRatingPrompt]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -179,6 +183,9 @@ export default function EmployerProjectProposalsPage() {
           : 'Proposal rejected',
       );
       setDecision(null);
+      if (decision.action === 'accept') {
+        requestRatingPrompt('proposal_accepted', decision.proposal.id);
+      }
     } catch (error) {
       toast.error(getApiErrorMessage(error, `Failed to ${decision.action} proposal`));
     } finally {

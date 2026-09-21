@@ -125,15 +125,15 @@ test.describe('first run', () => {
 
     const dialog = tourDialog(page);
     await expect(dialog).toBeVisible();
-    await expect(dialog.getByText('Step 1 of 9')).toBeVisible();
+    await expect(dialog.getByText('Step 1 of 10')).toBeVisible();
     await expect(dialog.getByRole('heading', { name: 'Welcome to FreelanceXchain' })).toBeVisible();
 
     // Back is unavailable on the first step, and says so rather than vanishing.
     await expect(dialog.getByRole('button', { name: 'Back' })).toBeDisabled();
 
-    for (let step = 2; step <= 9; step += 1) {
+    for (let step = 2; step <= 10; step += 1) {
       await dialog.getByRole('button', { name: 'Next' }).click();
-      await expect(dialog.getByText(`Step ${step} of 9`)).toBeVisible();
+      await expect(dialog.getByText(`Step ${step} of 10`)).toBeVisible();
     }
 
     await expect(dialog.getByRole('button', { name: 'Finish' })).toBeVisible();
@@ -141,7 +141,7 @@ test.describe('first run', () => {
     await expect(dialog).toHaveCount(0);
 
     expect((await readTourState(page)).progressByUser).toEqual({
-      'freelancer-1': { freelancer: { completedVersion: 1 } },
+      'freelancer-1': { freelancer: { completedVersion: 2 } },
     });
   });
 
@@ -166,7 +166,7 @@ test.describe('first run', () => {
     await expect(tourDialog(page)).toBeVisible();
     await tourDialog(page).getByRole('button', { name: 'Skip tour' }).click();
 
-    await expect.poll(() => preferences.getTourProgress().freelancer?.completedVersion).toBe(1);
+    await expect.poll(() => preferences.getTourProgress().freelancer?.completedVersion).toBe(2);
 
     await page.evaluate(() => localStorage.removeItem('onboarding-tour'));
     await page.reload();
@@ -187,12 +187,12 @@ test.describe('first run', () => {
         },
         version: 1,
       }));
-    }, { userId: user.id, version: 1 });
+    }, { userId: user.id, version: 2 });
     const preferences = await authenticate(page, user);
 
     await page.goto('/dashboard/freelancer');
     await expect(tourDialog(page)).toHaveCount(0);
-    await expect.poll(() => preferences.getTourProgress().freelancer?.completedVersion).toBe(1);
+    await expect.poll(() => preferences.getTourProgress().freelancer?.completedVersion).toBe(2);
   });
 
   test('Escape ends the tour and hands focus back to the dashboard', async ({ page }) => {
@@ -212,9 +212,9 @@ test.describe('first run', () => {
     await expect(dialog).toBeVisible();
 
     await page.keyboard.press('ArrowRight');
-    await expect(dialog.getByText('Step 2 of 9')).toBeVisible();
+    await expect(dialog.getByText('Step 2 of 10')).toBeVisible();
     await page.keyboard.press('ArrowLeft');
-    await expect(dialog.getByText('Step 1 of 9')).toBeVisible();
+    await expect(dialog.getByText('Step 1 of 10')).toBeVisible();
   });
 
   test('Tab is contained inside the step card', async ({ page }) => {
@@ -322,15 +322,15 @@ test.describe('feature coverage', () => {
     await expect(dialog.getByRole('listitem')).toHaveCount(0);
 
     await dialog.getByRole('button', { name: 'Next' }).click();
-    await expect(dialog.getByText('Step 2 of 9')).toBeVisible();
+    await expect(dialog.getByText('Step 2 of 10')).toBeVisible();
     // The navigation step spotlights the navigation itself, so it lists nothing
     // -- repeating the group names would crowd out what it is pointing at.
     await expect(dialog.getByRole('listitem')).toHaveCount(0);
 
     // Every remaining step must actually cover something.
-    for (let step = 3; step <= 9; step += 1) {
+    for (let step = 3; step <= 10; step += 1) {
       await dialog.getByRole('button', { name: 'Next' }).click();
-      await expect(dialog.getByText(`Step ${step} of 9`)).toBeVisible();
+      await expect(dialog.getByText(`Step ${step} of 10`)).toBeVisible();
       expect(await dialog.getByRole('listitem').count(), `step ${step} lists nothing`).toBeGreaterThanOrEqual(2);
     }
   });
@@ -343,12 +343,12 @@ test.describe('feature coverage', () => {
     await expect(dialog).toBeVisible();
 
     const seen: string[] = [];
-    for (let step = 1; step <= 9; step += 1) {
+    for (let step = 1; step <= 10; step += 1) {
       seen.push((await dialog.getByRole('heading').first().textContent()) ?? '');
       const body = await dialog.textContent();
       seen.push(body ?? '');
-      if (step < 9) await dialog.getByRole('button', { name: 'Next' }).click();
-      await expect(dialog.getByText(`Step ${Math.min(step + 1, 9)} of 9`)).toBeVisible();
+      if (step < 10) await dialog.getByRole('button', { name: 'Next' }).click();
+      await expect(dialog.getByText(`Step ${Math.min(step + 1, 10)} of 10`)).toBeVisible();
     }
 
     const transcript = seen.join(' ').toLowerCase();
@@ -384,9 +384,9 @@ test.describe('the right thing is spotlit', () => {
       const dialog = tourDialog(page);
       await expect(dialog).toBeVisible();
 
-      for (let step = 2; step <= 9; step += 1) {
+      for (let step = 2; step <= 10; step += 1) {
         await dialog.getByRole('button', { name: 'Next' }).click();
-        await expect(dialog.getByText(`Step ${step} of 9`)).toBeVisible();
+        await expect(dialog.getByText(`Step ${step} of 10`)).toBeVisible();
 
         const expected = expectations[role].find((item) => item.step === step);
         if (!expected) continue;
@@ -427,7 +427,7 @@ test.describe('contextual help', () => {
     // The hand-off lands on the step that covers it, not back at step 1.
     await page.getByRole('button', { name: 'Show me in the tour' }).click();
     await expect(tourDialog(page)).toBeVisible();
-    await expect(tourDialog(page).getByText('Step 5 of 9')).toBeVisible();
+    await expect(tourDialog(page).getByText('Step 5 of 10')).toBeVisible();
   });
 
   test('identity verification explains why it is worth doing', async ({ page }) => {
@@ -449,7 +449,7 @@ test.describe('contextual help', () => {
 
     await page.getByRole('button', { name: /How contracts and milestones work/ }).click();
     await expect(tourDialog(page)).toBeVisible();
-    await expect(tourDialog(page).getByText('Step 6 of 9')).toBeVisible();
+    await expect(tourDialog(page).getByText('Step 6 of 10')).toBeVisible();
     await expect(tourDialog(page).getByRole('heading', { name: 'Deliver in the contract workspace' })).toBeVisible();
   });
 
@@ -477,7 +477,7 @@ test.describe('the spotlight itself', () => {
     expect(await readHoleRect(page)).toBeNull();
 
     await dialog.getByRole('button', { name: 'Next' }).click();
-    await expect(dialog.getByText('Step 2 of 9')).toBeVisible();
+    await expect(dialog.getByText('Step 2 of 10')).toBeVisible();
 
     const target = await page.locator('[data-tour="nav"]').boundingBox();
     expect(target).not.toBeNull();
@@ -531,14 +531,14 @@ test.describe('on a phone in landscape', () => {
     const dialog = tourDialog(page);
     await expect(dialog).toBeVisible();
 
-    for (let step = 1; step <= 9; step += 1) {
-      await expect(dialog.getByText(`Step ${step} of 9`)).toBeVisible();
+    for (let step = 1; step <= 10; step += 1) {
+      await expect(dialog.getByText(`Step ${step} of 10`)).toBeVisible();
       await expectNoHorizontalScroll(page, `landscape step ${step}`);
 
       // `toBeVisible` only means "rendered". On a short screen what actually
       // goes wrong is the control sitting below the card's own internal fold,
       // so assert the geometry rather than the rendering.
-      for (const name of ['Skip tour', step === 9 ? 'Finish' : 'Next']) {
+      for (const name of ['Skip tour', step === 10 ? 'Finish' : 'Next']) {
         const box = await dialog.getByRole('button', { name }).boundingBox();
         expect(box, `${name} is not rendered on step ${step}`).not.toBeNull();
         expect(box!.y, `${name} is above the viewport on step ${step}`).toBeGreaterThanOrEqual(-1);
@@ -553,7 +553,7 @@ test.describe('on a phone in landscape', () => {
 
       const card = await dialog.boundingBox();
       expect(card!.y + card!.height).toBeLessThanOrEqual(376);
-      if (step < 9) await dialog.getByRole('button', { name: 'Next' }).click();
+      if (step < 10) await dialog.getByRole('button', { name: 'Next' }).click();
     }
   });
 });
@@ -569,7 +569,7 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 393, height: 852 }
       const dialog = tourDialog(page);
       await expect(dialog).toBeVisible();
       await dialog.getByRole('button', { name: 'Next' }).click();
-      await expect(dialog.getByText('Step 2 of 9')).toBeVisible();
+      await expect(dialog.getByText('Step 2 of 10')).toBeVisible();
 
       // A closed hamburger tells nobody what is behind it. On a phone the drawer
       // holds the only copy of the navigation, so the step that talks about
@@ -649,7 +649,7 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 393, height: 852 }
       await expect(page.getByRole('dialog', { name: 'Dashboard navigation' })).toBeVisible();
 
       await dialog.getByRole('button', { name: 'Next' }).click();
-      await expect(dialog.getByText('Step 3 of 9')).toBeVisible();
+      await expect(dialog.getByText('Step 3 of 10')).toBeVisible();
       await expect(page.getByRole('dialog', { name: 'Dashboard navigation' })).toHaveCount(0);
 
       // And it must not be left open once the tour is over.
@@ -664,8 +664,8 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 393, height: 852 }
       const dialog = tourDialog(page);
       await expect(dialog).toBeVisible();
 
-      for (let step = 1; step <= 9; step += 1) {
-        await expect(dialog.getByText(`Step ${step} of 9`)).toBeVisible();
+      for (let step = 1; step <= 10; step += 1) {
+        await expect(dialog.getByText(`Step ${step} of 10`)).toBeVisible();
         await expectNoHorizontalScroll(page, `tour step ${step} at ${viewport.width}px`);
 
         // A step that opens already scrolled past its own title is unreadable.
@@ -676,7 +676,7 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 393, height: 852 }
         expect(card!.x + card!.width, `card overhangs the right edge on step ${step}`).toBeLessThanOrEqual(viewport.width + 1);
         expect(card!.y + card!.height, `card hangs below the fold on step ${step}`).toBeLessThanOrEqual(viewport.height + 1);
 
-        if (step < 9) await dialog.getByRole('button', { name: 'Next' }).click();
+        if (step < 10) await dialog.getByRole('button', { name: 'Next' }).click();
       }
     });
 
@@ -687,9 +687,9 @@ for (const viewport of [{ width: 320, height: 568 }, { width: 393, height: 852 }
       const dialog = tourDialog(page);
       await expect(dialog).toBeVisible();
 
-      for (let step = 2; step <= 9; step += 1) {
+      for (let step = 2; step <= 10; step += 1) {
         await dialog.getByRole('button', { name: 'Next' }).click();
-        await expect(dialog.getByText(`Step ${step} of 9`)).toBeVisible();
+        await expect(dialog.getByText(`Step ${step} of 10`)).toBeVisible();
 
         if ((await readHoleRect(page)) === null) continue;
 
