@@ -57,9 +57,22 @@ export class ProjectFormValidationError extends Error {
   }
 }
 
+import {
+  ALLOWED_DOCUMENT_EXTENSIONS,
+  ALLOWED_FORMATS_DESCRIPTION,
+  isAllowedDocumentFile,
+} from './file-validation.ts';
+
+export const ALLOWED_PROJECT_EXTENSIONS = ALLOWED_DOCUMENT_EXTENSIONS;
+
 export function validateProjectFiles(files: File[]): string | null {
   if (files.length > 10) {
     return 'You can attach up to 10 project files.';
+  }
+  for (const file of files) {
+    if (!isAllowedDocumentFile(file)) {
+      return `File type not allowed for "${file.name}". ${ALLOWED_FORMATS_DESCRIPTION}`;
+    }
   }
   if (files.some((file) => file.size > 10 * 1024 * 1024)) {
     return 'Each project attachment must be 10 MB or smaller.';

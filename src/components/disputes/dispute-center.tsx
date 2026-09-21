@@ -23,6 +23,12 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { EmptyState } from '@/components/ui/empty-state';
+import {
+  ALLOWED_FORMATS_DESCRIPTION,
+  DOCUMENT_ACCEPT_STRING,
+  isAllowedDocumentFile,
+  MAX_FILE_SIZE,
+} from '@/lib/file-validation';
 import { formatDateTime } from '@/lib/format';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import {
@@ -228,6 +234,14 @@ function DisputeCenterInner({ role, disputeId }: { role: ParticipantRole; disput
     const file = evidenceFiles[disputeId];
     if (!file) {
       toast.error('Choose an evidence file first.');
+      return;
+    }
+    if (!isAllowedDocumentFile(file)) {
+      toast.error(`File type not allowed for "${file.name}". ${ALLOWED_FORMATS_DESCRIPTION}`);
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error(`File "${file.name}" exceeds the 10 MB limit.`);
       return;
     }
     const formData = new FormData();
@@ -446,7 +460,33 @@ function DisputeCenterInner({ role, disputeId }: { role: ParticipantRole; disput
                   verified ? (
                     <div className="grid gap-4 rounded-lg border border-border p-4 lg:grid-cols-3">
                       <div className="space-y-2"><Label htmlFor={`evidence-text-${dispute.id}`}>Evidence notes</Label><Textarea id={`evidence-text-${dispute.id}`} value={evidenceText[dispute.id] ?? ''} onChange={(event) => setEvidenceText((current) => ({ ...current, [dispute.id]: event.target.value }))} /><Button type="button" size="sm" disabled={actionId === `evidence:${dispute.id}`} onClick={() => void submitTextEvidence(dispute.id)}>Submit notes</Button></div>
-                      <div className="space-y-2"><Label htmlFor={`evidence-file-${dispute.id}`}>Evidence file</Label><Input id={`evidence-file-${dispute.id}`} type="file" onChange={(event) => setEvidenceFiles((current) => ({ ...current, [dispute.id]: event.target.files?.[0] ?? null }))} /><Button type="button" size="sm" variant="outline" disabled={actionId === `file:${dispute.id}`} onClick={() => void submitFileEvidence(dispute.id)}><Upload className="mr-2 size-4" />Upload file</Button></div>
+                      <div className="space-y-2">
+                        <Label htmlFor={`evidence-file-${dispute.id}`}>Evidence file</Label>
+                        <Input
+                          id={`evidence-file-${dispute.id}`}
+                          type="file"
+                          accept={DOCUMENT_ACCEPT_STRING}
+                          onChange={(event) => {
+                            const picked = event.target.files?.[0] ?? null;
+                            if (picked) {
+                              if (!isAllowedDocumentFile(picked)) {
+                                toast.error(`File type not allowed for "${picked.name}". ${ALLOWED_FORMATS_DESCRIPTION}`);
+                                event.target.value = '';
+                                return;
+                              }
+                              if (picked.size > MAX_FILE_SIZE) {
+                                toast.error(`File "${picked.name}" exceeds the 10 MB limit.`);
+                                event.target.value = '';
+                                return;
+                              }
+                            }
+                            setEvidenceFiles((current) => ({ ...current, [dispute.id]: picked }));
+                          }}
+                        />
+                        <Button type="button" size="sm" variant="outline" disabled={actionId === `file:${dispute.id}`} onClick={() => void submitFileEvidence(dispute.id)}>
+                          <Upload className="mr-2 size-4" />Upload file
+                        </Button>
+                      </div>
                       <div className="space-y-2"><Label htmlFor={`evidence-link-${dispute.id}`}>Evidence link</Label><Input id={`evidence-link-${dispute.id}`} type="url" placeholder="https://…" value={evidenceLinks[dispute.id] ?? ''} onChange={(event) => setEvidenceLinks((current) => ({ ...current, [dispute.id]: event.target.value }))} /><Button type="button" size="sm" variant="outline" disabled={actionId === `link:${dispute.id}`} onClick={() => void submitLinkEvidence(dispute.id)}><Link2 className="mr-2 size-4" />Submit link</Button></div>
                     </div>
                   ) : (

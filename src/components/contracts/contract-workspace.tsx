@@ -21,6 +21,7 @@ import { getApiErrorMessage } from '@/lib/auth-contract';
 import { hasApprovedKyc } from '@/lib/kyc-eligibility';
 import { AttachmentPreviewDialog, type AttachmentPreviewTarget } from '@/components/ui/attachment-preview-dialog';
 import { validateReviewDraft, type ReviewDraft } from '@/lib/review-form';
+import { validateDocumentFiles } from '@/lib/file-validation';
 import { useAuthStore } from '@/stores/authStore';
 import type {
   Contract,
@@ -197,6 +198,11 @@ export function ContractWorkspace({
     const selectedFiles = files[milestone.id] ?? [];
     if (selectedFiles.length === 0) {
       toast.error('Select at least one deliverable file.');
+      return;
+    }
+    const fileError = validateDocumentFiles(selectedFiles);
+    if (fileError) {
+      toast.error(fileError);
       return;
     }
 

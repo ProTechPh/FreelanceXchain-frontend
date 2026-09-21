@@ -21,6 +21,7 @@ import { getApiErrorMessage } from '@/lib/auth-contract';
 import { reportLoadFailure } from '@/lib/report-failure';
 import { getWebsitePreviewUrl, isValidHttpUrl } from '@/lib/portfolio-utils';
 import { useAuthStore } from '@/stores/authStore';
+import { IMAGE_ACCEPT_STRING, validateImageFiles } from '@/lib/file-validation';
 import type { PortfolioItem } from '@/types';
 import { toast } from 'sonner';
 import {
@@ -142,6 +143,13 @@ export default function PortfolioPage() {
         setItems((prev) => prev.map((i) => (i.id === editingId ? updated : i)));
         toast.success('Portfolio item updated');
       } else {
+        if (files && files.length > 0) {
+          const imageError = validateImageFiles(files, { maxCount: 10, maxFileSize: 5 * 1024 * 1024 });
+          if (imageError) {
+            toast.error(imageError);
+            return;
+          }
+        }
         const formData = new FormData();
         formData.append('title', form.title);
         formData.append('description', form.description);
@@ -465,9 +473,20 @@ export default function PortfolioPage() {
                 <Input
                   id="portfolio-images"
                   type="file"
-                  accept="image/*"
+                  accept={IMAGE_ACCEPT_STRING}
                   multiple
-                  onChange={(e) => setFiles(Array.from(e.target.files ?? []))}
+                  onChange={(e) => {
+                    const selected = Array.from(e.target.files ?? []);
+                    if (selected.length > 0) {
+                      const imageError = validateImageFiles(selected, { maxCount: 10, maxFileSize: 5 * 1024 * 1024 });
+                      if (imageError) {
+                        toast.error(imageError);
+                        e.target.value = '';
+                        return;
+                      }
+                    }
+                    setFiles(selected);
+                  }}
                 />
               </div>
             )}

@@ -37,9 +37,15 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 
+import {
+  ALLOWED_FORMATS_DESCRIPTION,
+  DOCUMENT_ACCEPT_STRING,
+  isAllowedDocumentFile,
+  MAX_FILE_SIZE,
+  MAX_TOTAL_SIZE,
+} from '@/lib/file-validation';
+
 const MAX_FILES = 10;
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const MAX_TOTAL_SIZE = 25 * 1024 * 1024; // 25MB
 
 function EditProjectContent() {
   const params = useParams<{ id: string }>();
@@ -96,6 +102,10 @@ function EditProjectContent() {
     }
 
     for (const file of files) {
+      if (!isAllowedDocumentFile(file)) {
+        toast.error(`File type not allowed for "${file.name}". ${ALLOWED_FORMATS_DESCRIPTION}`);
+        return;
+      }
       if (file.size > MAX_FILE_SIZE) {
         toast.error(`File "${file.name}" exceeds the 10MB limit.`);
         return;
@@ -455,7 +465,7 @@ function EditProjectContent() {
                       ref={fileInputRef}
                       type="file"
                       multiple
-                      accept=".pdf,.doc,.docx,.xlsx,.pptx,.txt,.md,.csv,.png,.jpg,.jpeg,.gif,.webp,.zip,.rar,.7z,.mp4,.webm,.mov,image/*"
+                      accept={DOCUMENT_ACCEPT_STRING}
                       className="hidden"
                       onChange={handleFileSelect}
                     />

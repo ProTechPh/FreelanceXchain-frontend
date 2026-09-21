@@ -28,6 +28,7 @@ import { toast } from 'sonner';
 import { reportFailure } from '@/lib/report-failure';
 import { ChevronRight, ChevronLeft, Plus, X, Upload, FileText, DollarSign, Clock, Target, Sparkles, AlertCircle } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { DOCUMENT_ACCEPT_STRING } from '@/lib/file-validation';
 import { Field } from '@/components/ui/field';
 
 const steps = [
@@ -460,7 +461,7 @@ export default function CreateProjectPage() {
                         type="file"
                         multiple
                         className="sr-only"
-                        accept=".pdf,.doc,.docx,.xlsx,.pptx,.txt,.csv,.png,.jpg,.jpeg,.gif,.webp,.zip,.rar,.7z,.mp4,.webm,.mov"
+                        accept={DOCUMENT_ACCEPT_STRING}
                         onChange={(event) => {
                           addFiles(Array.from(event.target.files ?? []));
                           event.target.value = '';

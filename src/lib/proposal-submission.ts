@@ -20,6 +20,14 @@ export class ProposalFormValidationError extends Error {
   }
 }
 
+import {
+  ALLOWED_DOCUMENT_EXTENSIONS,
+  ALLOWED_FORMATS_DESCRIPTION,
+  isAllowedDocumentFile,
+} from './file-validation.ts';
+
+export const ALLOWED_PROPOSAL_EXTENSIONS = ALLOWED_DOCUMENT_EXTENSIONS;
+
 /** Exported so the dialog can warn when it has to drop files, rather than
  * silently truncating the selection. */
 export const MAX_FILE_COUNT = 5;
@@ -58,8 +66,16 @@ export function findProposalFormError(form: ProposalSubmissionForm): ProposalFie
   if (form.files.length > MAX_FILE_COUNT) {
     return { field: 'files', message: `You can attach up to ${MAX_FILE_COUNT} files.` };
   }
-  if (form.files.some((file) => file.size > MAX_FILE_SIZE)) {
-    return { field: 'files', message: 'Each attachment must be 10 MB or smaller.' };
+  for (const file of form.files) {
+    if (!isAllowedDocumentFile(file)) {
+      return {
+        field: 'files',
+        message: `File type not allowed for "${file.name}". ${ALLOWED_FORMATS_DESCRIPTION}`,
+      };
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      return { field: 'files', message: 'Each attachment must be 10 MB or smaller.' };
+    }
   }
 
   const totalSize = form.files.reduce((total, file) => total + file.size, 0);

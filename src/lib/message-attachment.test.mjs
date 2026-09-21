@@ -12,6 +12,7 @@ test('validates message attachment count and backend upload limits', () => {
   assert.equal(validateMessageAttachments([makeFile('large.pdf', 10 * 1024 * 1024 + 1)]), 'Each message attachment must be 10 MB or smaller.');
   assert.equal(validateMessageAttachments([makeFile('one.pdf', 9 * 1024 * 1024), makeFile('two.pdf', 9 * 1024 * 1024), makeFile('three.pdf', 8 * 1024 * 1024)]), 'Message attachments must total 25 MB or less.');
   assert.equal(validateMessageAttachments([makeFile('brief.pdf')]), null);
+  assert.match(validateMessageAttachments([makeFile('danger.bat', 1024, 'application/x-bat')]) || '', /File type not allowed/);
 });
 
 test('uploads selected files before sending their attachment metadata', async () => {

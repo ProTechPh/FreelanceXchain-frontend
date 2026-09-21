@@ -80,6 +80,13 @@ test('validates optional project attachment limits before submission', () => {
     }),
     'Project attachments must total 25 MB or less.',
   );
+  assert.match(
+    validateProjectStep(1, {
+      ...validForm,
+      files: [makeFile('script.sh', 1024, 'text/x-shellscript')],
+    }) || '',
+    /File type not allowed/,
+  );
 });
 
 test('creates the project and then saves its milestones using the created project id', async () => {

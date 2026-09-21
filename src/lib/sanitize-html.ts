@@ -28,6 +28,14 @@ const DANGEROUS_TAGS = new Set([
   'slot',
   'canvas',
   'dialog',
+  'portal',
+  'marquee',
+  'audio',
+  'video',
+  'source',
+  'track',
+  'keygen',
+  'isindex',
 ]);
 
 const ALLOWED_TAGS = new Set([
