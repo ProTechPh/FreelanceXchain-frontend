@@ -151,3 +151,30 @@ test('a scraped project reference is ignored unless it belongs to the conversati
   await expect(bannerOf(page)).toHaveCount(0);
   await expect(page.getByText('$5,500')).toHaveCount(0);
 });
+
+test('the empty-inbox button goes to the dashboard project list, per role', async ({ page }) => {
+  const freelancer = { id: 'freelancer-9', email: 'f9@example.com', name: 'Ana Reyes', role: 'freelancer',
+    walletAddress: '', kycStatus: 'approved', createdAt, updatedAt: createdAt };
+
+  await page.addInitScript((u) => {
+    localStorage.setItem('access_token', 'app-access-token');
+    localStorage.setItem('auth-storage', JSON.stringify({ state: { user: u, isAuthenticated: true }, version: 0 }));
+  }, freelancer);
+  await page.route('**/api/**', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: '{}' }));
+  await page.route('**/api/notifications/stream', (r) => r.fulfill({ status: 200, contentType: 'text/event-stream', body: '' }));
+  await page.route('**/api/notifications/unread-count', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ count: 0 }) }));
+  await page.route('**/api/contracts?**', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ items: [], hasMore: false, total: 0 }) }));
+  await page.route('**/api/messages/conversations', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ items: [], total: 0, hasMore: false }) }));
+  await page.route('**/api/search/projects**', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ items: [], total: 0, hasMore: false }) }));
+  await page.route('**/api/auth/me', (r) => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ user: freelancer }) }));
+  await page.setViewportSize({ width: 1400, height: 900 });
+
+  await page.goto('/dashboard/freelancer/messages');
+  await expect(page.getByText('No conversations yet')).toBeVisible();
+
+  const browse = page.locator('#dashboard-content').getByRole('link', { name: /Browse projects/i });
+  await expect(browse).toHaveAttribute('href', '/dashboard/freelancer/projects');
+
+  await browse.click();
+  await expect(page).toHaveURL(/\/dashboard\/freelancer\/projects$/);
+});

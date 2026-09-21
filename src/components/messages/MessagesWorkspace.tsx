@@ -494,7 +494,11 @@ export function MessagesWorkspace() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-2 mt-4">
                   <Button asChild variant="default">
-                    <Link href="/projects">Browse Projects</Link>
+                    {currentUser?.role === 'employer' ? (
+                      <Link href="/dashboard/employer/projects">My projects</Link>
+                    ) : (
+                      <Link href="/dashboard/freelancer/projects">Browse projects</Link>
+                    )}
                   </Button>
                 </div>
               </div>
