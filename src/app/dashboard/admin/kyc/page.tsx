@@ -639,7 +639,7 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
                 : `This will reject ${fullName}'s verification. They will need to resubmit their documents.`}
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setConfirmDecision(null)}

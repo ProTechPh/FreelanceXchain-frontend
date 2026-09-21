@@ -522,7 +522,7 @@ function DisputeCenterInner({ role, disputeId }: { role: ParticipantRole; disput
               Are you sure you want to delete this unverified evidence? This cannot be undone.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter>
             <Button variant="outline" onClick={() => setDeletingEvidence(null)}>Cancel</Button>
             <Button
               variant="destructive"

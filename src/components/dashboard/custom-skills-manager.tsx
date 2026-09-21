@@ -154,7 +154,7 @@ export function CustomSkillsManager() {
               Are you sure you want to delete <strong className="text-foreground">&quot;{skillToDelete?.name}&quot;</strong>? This cannot be undone.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setSkillToDelete(null)}

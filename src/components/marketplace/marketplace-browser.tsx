@@ -948,7 +948,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
               Are you sure you want to delete <strong className="text-foreground">&quot;{searchToDelete?.name}&quot;</strong>? This saved filter preset will be permanently removed.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-0">
+          <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setSearchToDelete(null)}

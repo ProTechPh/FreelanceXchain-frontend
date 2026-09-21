@@ -132,7 +132,7 @@ export function RateAppDialog({
           </div>
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter>
           <Button variant="ghost" onClick={() => close(false)} disabled={submitting}>
             Not now
           </Button>

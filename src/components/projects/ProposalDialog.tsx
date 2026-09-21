@@ -675,7 +675,7 @@ export function ProposalDialog({
             You have unsaved changes in your proposal pitch. If you exit now, your draft will be discarded.
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter>
           <Button variant="outline" onClick={() => setConfirmDiscardOpen(false)}>
             Keep Editing
           </Button>
