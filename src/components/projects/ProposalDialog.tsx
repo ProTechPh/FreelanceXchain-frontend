@@ -33,6 +33,12 @@ import {
   type ProposalField,
   type ProposalSubmissionForm,
 } from '@/lib/proposal-submission';
+import {
+  ALLOWED_FORMATS_DESCRIPTION,
+  DOCUMENT_ACCEPT_STRING,
+  isAllowedDocumentFile,
+  MAX_FILE_SIZE,
+} from '@/lib/file-validation';
 import { useAuthStore } from '@/stores/authStore';
 
 interface ProposalDialogProps {
@@ -540,15 +546,29 @@ export function ProposalDialog({
               id={`${fieldId}-files`}
               type="file"
               multiple
-              accept=".pdf,.doc,.docx,.xlsx,.pptx,.png,.jpg,.jpeg,.zip,.rar,.7z,.json,.xml,.mp4,.webm,.mov,.md,.txt"
+              accept={DOCUMENT_ACCEPT_STRING}
               className="text-xs file:text-xs"
               aria-describedby={`${fieldId}-files-hint`}
               onChange={(event) => {
-                const newFiles = Array.from(event.target.files ?? []);
+                const incomingFiles = Array.from(event.target.files ?? []);
                 setFieldError(null);
+
+                const validFiles: File[] = [];
+                for (const file of incomingFiles) {
+                  if (!isAllowedDocumentFile(file)) {
+                    toast.error(`File type not allowed for "${file.name}". ${ALLOWED_FORMATS_DESCRIPTION}`);
+                    continue;
+                  }
+                  if (file.size > MAX_FILE_SIZE) {
+                    toast.error(`File "${file.name}" exceeds the 10 MB limit.`);
+                    continue;
+                  }
+                  validFiles.push(file);
+                }
+
                 setForm((current) => {
                   const autoBrief = current.files.filter((f) => f.name.startsWith('Proposal_'));
-                  const combined = [...autoBrief, ...newFiles];
+                  const combined = [...autoBrief, ...validFiles];
                   // This list used to be sliced silently, so files the user
                   // picked just never appeared. Say what was dropped.
                   const dropped = combined.length - MAX_FILE_COUNT;

@@ -15,8 +15,21 @@ export class MessageAttachmentValidationError extends Error {
   }
 }
 
+import {
+  ALLOWED_DOCUMENT_EXTENSIONS,
+  ALLOWED_FORMATS_DESCRIPTION,
+  isAllowedDocumentFile,
+} from './file-validation.ts';
+
+export const ALLOWED_ATTACHMENT_EXTENSIONS = ALLOWED_DOCUMENT_EXTENSIONS;
+
 export function validateMessageAttachments(files: File[]): string | null {
   if (files.length > 5) return 'Attach up to 5 files per message.';
+  for (const file of files) {
+    if (!isAllowedDocumentFile(file)) {
+      return `File type not allowed for "${file.name}". ${ALLOWED_FORMATS_DESCRIPTION}`;
+    }
+  }
   if (files.some((file) => file.size > 10 * 1024 * 1024)) return 'Each message attachment must be 10 MB or smaller.';
   if (files.reduce((total, file) => total + file.size, 0) > 25 * 1024 * 1024) return 'Message attachments must total 25 MB or less.';
   return null;

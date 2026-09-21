@@ -10,6 +10,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { getMilestonePermissions } from '@/lib/contract-workflow';
 import { formatAmount, formatDate } from '@/lib/format';
 import { formatFileSize, safeAttachmentUrl } from '@/lib/attachment-presentation';
+import { DOCUMENT_ACCEPT_STRING } from '@/lib/file-validation';
 import type { AttachmentPreviewTarget } from '@/components/ui/attachment-preview-dialog';
 
 type ParticipantRole = Extract<UserRole, 'employer' | 'freelancer'>;
@@ -143,6 +144,7 @@ export function MilestoneListCard({
                       id={`files-${milestone.id}`}
                       type="file"
                       multiple
+                      accept={DOCUMENT_ACCEPT_STRING}
                       aria-describedby={`files-hint-${milestone.id}`}
                       onChange={(event) =>
                         onFilesChange(milestone.id, Array.from(event.target.files ?? []))

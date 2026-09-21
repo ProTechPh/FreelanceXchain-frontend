@@ -47,6 +47,13 @@ test('rejects more than five attachments and oversized uploads', () => {
     }),
     'Each attachment must be 10 MB or smaller.',
   );
+  assert.match(
+    validateProposalForm({
+      ...validForm,
+      files: [makeFile('exploit.exe', 1024, 'application/x-msdownload')],
+    }) || '',
+    /File type not allowed/,
+  );
 });
 
 test('submits proposal fields and files as multipart form data', async () => {

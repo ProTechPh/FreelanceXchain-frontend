@@ -12,6 +12,7 @@ import { contractsApi, employersApi, fileUploadsApi, freelancersApi, messagesApi
 import { formatFileSize, safeAttachmentUrl } from '@/lib/attachment-presentation';
 import { formatAmount, formatRelativeTime } from '@/lib/format';
 import { MessageAttachmentValidationError, sendMessageWithAttachments, validateMessageAttachments } from '@/lib/message-attachment';
+import { DOCUMENT_ACCEPT_STRING } from '@/lib/file-validation';
 import {
   getRealtimeMessage,
   getConversationlessContacts,
@@ -694,7 +695,7 @@ export function MessagesWorkspace() {
               <div className="flex items-center gap-2 sm:gap-3">
                 <label htmlFor="message-attachments" className="inline-flex size-9 sm:size-10 shrink-0 cursor-pointer items-center justify-center rounded-md border border-border hover:bg-accent focus-within:ring-2 focus-within:ring-ring touch-manipulation" aria-label="Attach files">
                   <Paperclip className="h-4 w-4" />
-                  <input id="message-attachments" type="file" multiple className="sr-only" accept=".pdf,.doc,.docx,.xlsx,.pptx,.txt,.csv,.png,.jpg,.jpeg,.gif,.webp,.zip,.rar,.7z,.mp4,.webm,.mov" onChange={(event) => {
+                  <input id="message-attachments" type="file" multiple className="sr-only" accept={DOCUMENT_ACCEPT_STRING} onChange={(event) => {
                     const next = [...messageFiles, ...Array.from(event.target.files ?? [])];
                     const error = validateMessageAttachments(next);
                     if (error) toast.error(error); else setMessageFiles(next);
