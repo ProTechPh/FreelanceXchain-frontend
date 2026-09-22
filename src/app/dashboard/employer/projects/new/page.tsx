@@ -31,6 +31,7 @@ import { ChevronRight, ChevronLeft, Plus, X, Upload, FileText, DollarSign, Clock
 import { Skeleton } from '@/components/ui/skeleton';
 import { DOCUMENT_ACCEPT_STRING } from '@/lib/file-validation';
 import { Field } from '@/components/ui/field';
+import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes';
 
 const steps = [
   { id: 1, title: 'Project Details', icon: FileText },
@@ -63,7 +64,7 @@ export default function CreateProjectPage() {
   // Warn if user tries to leave with unsaved changes
   const isDirty = title !== '' || description !== '' || skills.length > 0 || budget !== '' || deadline !== '' ||
     milestones.some(m => m.title !== '' || m.description !== '' || m.amount !== '') || files.length > 0;
-  useUnsavedChangesWarning(isDirty && !isSubmitting);
+  const unsavedChanges = useUnsavedChangesWarning(isDirty && !isSubmitting);
 
   useEffect(() => {
     let active = true;
@@ -782,6 +783,12 @@ export default function CreateProjectPage() {
           </Button>
         )}
       </div>
+
+      <UnsavedChangesDialog
+        guard={unsavedChanges}
+        title="Leave this draft?"
+        description="This project has not been posted yet. Leaving this page discards the draft."
+      />
     </div>
   );
 }

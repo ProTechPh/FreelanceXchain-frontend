@@ -25,6 +25,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
 import { Field } from '@/components/ui/field';
+import { UnsavedChangesBar, UnsavedChangesDialog } from '@/components/ui/unsaved-changes';
 import { formatDate, formatDateTime } from '@/lib/format';
 
 type ProfileRole = Extract<UserRole, 'employer' | 'freelancer'>;
@@ -47,6 +48,10 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
   const [employerProfile, setEmployerProfile] = useState<EmployerProfile | null>(null);
   const [freelancerForm, setFreelancerForm] = useState<FreelancerProfileForm>(emptyFreelancerForm);
   const [employerForm, setEmployerForm] = useState<EmployerProfileForm>(emptyEmployerForm);
+  // Last persisted values. Dirty state is the diff against these, so a freshly
+  // loaded profile is never reported as unsaved.
+  const [savedFreelancerForm, setSavedFreelancerForm] = useState<FreelancerProfileForm>(emptyFreelancerForm);
+  const [savedEmployerForm, setSavedEmployerForm] = useState<EmployerProfileForm>(emptyEmployerForm);
   const [skills, setSkills] = useState<Skill[]>([]);
   const [selectedSkillId, setSelectedSkillId] = useState('');
   const [skillYears, setSkillYears] = useState(1);
@@ -58,19 +63,11 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
   const [actionId, setActionId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  // Track dirty state for unsaved changes warning
-  const isFreelancerDirty = JSON.stringify(freelancerForm) !== JSON.stringify(emptyFreelancerForm) ||
-    (freelancerProfile?.bio !== freelancerForm.bio) ||
-    (freelancerProfile?.hourlyRate !== freelancerForm.hourlyRate) ||
-    (freelancerProfile?.availability !== freelancerForm.availability);
-
-  const isEmployerDirty = JSON.stringify(employerForm) !== JSON.stringify(emptyEmployerForm) ||
-    (employerProfile?.companyName !== employerForm.companyName) ||
-    (employerProfile?.description !== employerForm.description) ||
-    (employerProfile?.industry !== employerForm.industry);
-
-  const isDirty = role === 'freelancer' ? isFreelancerDirty : isEmployerDirty;
-  useUnsavedChangesWarning(isDirty && !saving);
+  // Skills and experience persist through their own endpoints the moment they
+  // change, so only the editable profile fields can be dirty.
+  const isDirty = role === 'freelancer'
+    ? JSON.stringify(freelancerForm) !== JSON.stringify(savedFreelancerForm)
+    : JSON.stringify(employerForm) !== JSON.stringify(savedEmployerForm);
 
   const loadProfile = useCallback(async () => {
     setLoading(true);
@@ -79,24 +76,27 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
       if (role === 'freelancer') {
         const { data } = await freelancersApi.getProfile();
         setFreelancerProfile(data);
-        setFreelancerForm({ bio: data.bio, hourlyRate: data.hourlyRate, availability: data.availability });
+        const loaded = { bio: data.bio, hourlyRate: data.hourlyRate, availability: data.availability };
+        setFreelancerForm(loaded);
+        setSavedFreelancerForm(loaded);
       } else {
         const { data } = await employersApi.getProfile();
         setEmployerProfile(data);
-        setEmployerForm({ companyName: data.companyName, description: data.description, industry: data.industry });
+        const loaded = { companyName: data.companyName, description: data.description, industry: data.industry };
+        setEmployerForm(loaded);
+        setSavedEmployerForm(loaded);
       }
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 404) {
         if (role === 'freelancer') {
           setFreelancerProfile(null);
           setFreelancerForm(emptyFreelancerForm);
+          setSavedFreelancerForm(emptyFreelancerForm);
         } else {
+          const blank = { companyName: user?.name || '', description: '', industry: 'Technology' };
           setEmployerProfile(null);
-          setEmployerForm({
-            companyName: user?.name || '',
-            description: '',
-            industry: 'Technology',
-          });
+          setEmployerForm(blank);
+          setSavedEmployerForm(blank);
         }
       } else {
         setLoadError(getApiErrorMessage(error, 'Unable to load your profile.'));
@@ -126,13 +126,13 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
   const availableSkills = skills.filter((skill) => !claimedSkillNames.has(skill.name.toLowerCase()));
   const identityProfile = role === 'freelancer' ? freelancerProfile : employerProfile;
 
-  const saveProfile = async () => {
+  const saveProfile = useCallback(async () => {
     const validationError = role === 'freelancer'
       ? validateFreelancerProfile(freelancerForm)
       : validateEmployerProfile(employerForm);
     if (validationError) {
       toast.error(validationError);
-      return;
+      return false;
     }
 
     setSaving(true);
@@ -142,17 +142,31 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
           ? await freelancersApi.updateProfile(freelancerForm)
           : await freelancersApi.createProfile(freelancerForm);
         setFreelancerProfile(response.data);
+        setSavedFreelancerForm(freelancerForm);
       } else {
         const { data } = await employersApi.updateProfile(employerForm);
         setEmployerProfile(data);
+        setSavedEmployerForm(employerForm);
       }
       toast.success('Profile saved.');
+      return true;
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Unable to save your profile.'));
+      return false;
     } finally {
       setSaving(false);
     }
-  };
+  }, [employerForm, freelancerForm, freelancerProfile, role]);
+
+  const discardChanges = useCallback(() => {
+    if (role === 'freelancer') {
+      setFreelancerForm(savedFreelancerForm);
+    } else {
+      setEmployerForm(savedEmployerForm);
+    }
+  }, [role, savedEmployerForm, savedFreelancerForm]);
+
+  const unsavedChanges = useUnsavedChangesWarning(isDirty && !saving, { onSave: saveProfile });
 
   const addSkill = async () => {
     const skill = skills.find((candidate) => candidate.id === selectedSkillId);
@@ -256,7 +270,7 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
     <div className="mx-auto max-w-5xl space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div><h1 className="text-2xl font-extrabold tracking-tight text-foreground">Profile</h1><p className="text-muted-foreground">Keep the information shown to marketplace participants up to date.</p></div>
-        <Button type="button" onClick={() => void saveProfile()} loading={saving} loadingText="Saving…"><Save className="size-4" aria-hidden="true" />Save profile</Button>
+        <Button type="button" onClick={() => void saveProfile()} loading={saving} loadingText="Saving…" disabled={!isDirty}><Save className="size-4" aria-hidden="true" />Save profile</Button>
       </div>
 
       <Card>
@@ -289,7 +303,7 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
 
           {freelancerProfile && (
             <Card>
-              <CardHeader><CardTitle>Skills</CardTitle></CardHeader>
+              <CardHeader className="space-y-1"><CardTitle>Skills</CardTitle><p className="text-sm text-muted-foreground">Saved as soon as you add or remove a skill.</p></CardHeader>
               <CardContent className="space-y-5">
                 <div className="flex flex-wrap gap-2">
                   {(freelancerProfile.skills ?? []).map((skill) => (
@@ -313,7 +327,7 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
 
           {freelancerProfile && (
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between"><CardTitle className="flex items-center gap-2"><Briefcase className="size-5" />Experience</CardTitle><Button type="button" variant="outline" size="sm" onClick={() => { resetExperienceForm(); setShowExperienceForm(true); }}><Plus className="mr-2 size-4" />Add experience</Button></CardHeader>
+              <CardHeader className="flex flex-row items-start justify-between gap-3"><div className="space-y-1"><CardTitle className="flex items-center gap-2"><Briefcase className="size-5" />Experience</CardTitle><p className="text-sm text-muted-foreground">Saved as soon as you add, update or remove an entry.</p></div><Button type="button" variant="outline" size="sm" className="shrink-0" onClick={() => { resetExperienceForm(); setShowExperienceForm(true); }}><Plus className="mr-2 size-4" />Add experience</Button></CardHeader>
               <CardContent className="space-y-4">
                 {(freelancerProfile.experience ?? []).map((experience) => (
                   <div key={experience.id} className="flex flex-col gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-start sm:justify-between">
@@ -360,6 +374,14 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
           </CardContent>
         </Card>
       )}
+
+      <UnsavedChangesBar
+        visible={isDirty}
+        saving={saving}
+        onCancel={discardChanges}
+        onSave={() => void saveProfile()}
+      />
+      <UnsavedChangesDialog guard={unsavedChanges} saving={saving} />
     </div>
   );
 }
