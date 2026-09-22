@@ -33,7 +33,7 @@ export function DangerZoneCard({ user, onLogout }: DangerZoneCardProps) {
 
   const handleDeleteAccount = async () => {
     if (deleteConfirmationText.trim().toUpperCase() !== 'DELETE') {
-      toast.error('Please type DELETE to confirm account deletion.');
+      toast.warning('Type DELETE (in capitals) in the confirmation field to proceed.');
       return;
     }
 
@@ -45,7 +45,7 @@ export function DangerZoneCard({ user, onLogout }: DangerZoneCardProps) {
       await onLogout();
       router.push('/');
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Unable to delete account.'));
+      toast.error(getApiErrorMessage(error, 'Couldn\'t delete your account. Contact support if this keeps happening.'));
     } finally {
       setIsDeletingAccount(false);
     }

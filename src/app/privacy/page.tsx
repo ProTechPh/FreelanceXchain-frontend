@@ -99,7 +99,7 @@ export default function PrivacyPage() {
 
       <section id="section-5" className="scroll-mt-32 space-y-3">
         <h2 className="text-xl font-bold text-foreground">5. Public Blockchain Records & Immutability Notice</h2>
-        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-foreground space-y-2">
+        <div className="p-4 rounded-2xl bg-warning-subtle border border-warning-border text-foreground space-y-2">
           <p className="text-sm font-semibold">Important Web3 Disclosure:</p>
           <p className="text-xs text-muted-foreground leading-relaxed">
             By interacting with FreelanceXchain smart contracts, you acknowledge that transactions committed to public distributed ledgers (including Ethereum, Polygon, Arbitrum, Base, and Optimism) are permanent, irreversible, and publicly inspectable by anyone. Your public wallet address, deposited escrow amounts, milestone timestamps, and on-chain arbitration verdicts cannot be modified, deleted, or erased by FreelanceXchain or any third party.

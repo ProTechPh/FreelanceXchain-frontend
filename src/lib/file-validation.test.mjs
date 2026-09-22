@@ -2,10 +2,6 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
-  ALLOWED_DOCUMENT_EXTENSIONS,
-  ALLOWED_IMAGE_EXTENSIONS,
-  DOCUMENT_ACCEPT_STRING,
-  IMAGE_ACCEPT_STRING,
   getFileExtension,
   isAllowedDocumentFile,
   isAllowedImageFile,

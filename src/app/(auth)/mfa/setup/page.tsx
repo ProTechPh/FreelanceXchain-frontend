@@ -41,7 +41,7 @@ export default function MfaSetupPage() {
       });
       setQrCodeDataUrl(dataUrl);
     } catch {
-      toast.error('Failed to generate QR code');
+      toast.error('Couldn\'t generate the QR code. You can enter the setup key manually below.');
     }
   }, []);
 
@@ -65,7 +65,7 @@ export default function MfaSetupPage() {
         }
       }
     } catch {
-      toast.error('Failed to start MFA setup');
+      toast.error('Couldn\'t start 2FA setup. Try again.');
     } finally {
       setIsEnrolling(false);
     }
@@ -74,7 +74,7 @@ export default function MfaSetupPage() {
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!savedCodesConfirmed) {
-      toast.error('Please confirm that you have saved your recovery codes before proceeding.');
+      toast.warning('Confirm you\'ve saved your recovery codes before continuing.');
       document.getElementById('confirm-saved-codes')?.focus();
       return;
     }
@@ -84,7 +84,7 @@ export default function MfaSetupPage() {
       setStep('complete');
       toast.success('Two-factor authentication enabled!');
     } catch {
-      toast.error('Invalid verification code', { duration: 5000 });
+      toast.error('Incorrect code. Open your authenticator app for the latest 6-digit code and try again.', { duration: 5000 });
     } finally {
       setIsVerifying(false);
     }
@@ -252,7 +252,7 @@ export default function MfaSetupPage() {
             />
           </Field>
             {code.length === 6 && !savedCodesConfirmed && (
-              <p className="text-xs text-amber-600 dark:text-amber-400 font-medium" role="alert">
+              <p className="text-xs text-warning font-medium" role="alert">
                 Please check the box above confirming you saved your recovery codes.
               </p>
             )}

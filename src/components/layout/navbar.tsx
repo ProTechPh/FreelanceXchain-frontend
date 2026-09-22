@@ -101,21 +101,17 @@ export default function Navbar({
   const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, url: string) => {
     if (url.startsWith("/#") || url.startsWith("#")) {
       const hash = url.replace("/#", "").replace("#", "");
-      const target = document.getElementById(hash);
-      if (target) {
-        e.preventDefault();
-        const headerOffset = 80;
-        const bodyRect = document.body.getBoundingClientRect().top;
-        const elementRect = target.getBoundingClientRect().top;
-        const elementPosition = elementRect - bodyRect;
-        const offsetPosition = elementPosition - headerOffset;
-
-        window.scrollTo({
-          top: offsetPosition,
-          behavior: "smooth",
-        });
-        window.history.pushState(null, "", `#${hash}`);
-        setMobileMenuOpen(false);
+      // If we're already on the homepage, scroll smoothly to the anchor.
+      // Otherwise (cross-page link), let Next.js navigate — the browser will
+      // jump to the anchor after the page loads instead of silently failing.
+      if (pathname === '/') {
+        const target = document.getElementById(hash);
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: "smooth", block: "start" });
+          window.history.pushState(null, "", `#${hash}`);
+          setMobileMenuOpen(false);
+        }
       }
     }
   };
@@ -126,7 +122,16 @@ export default function Navbar({
   };
 
   return (
-    <nav className="fixed top-4 left-0 right-0 z-50 px-3 sm:px-6 pointer-events-none flex justify-center">
+    <>
+      {/* Skip link: keyboard users jump straight to page content without tabbing
+          through all nav items. sr-only until focused, then it pops into view. */}
+      <a
+        href="#main-content"
+        className="sr-only z-[60] focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-primary-foreground focus:outline-none"
+      >
+        Skip to main content
+      </a>
+      <nav className="fixed top-4 left-0 right-0 z-50 px-3 sm:px-6 pointer-events-none flex justify-center">
       <div className="pointer-events-auto max-w-7xl w-full mx-auto px-4 sm:px-5 h-14 rounded-full bg-card/90 backdrop-blur-md border border-border/80 shadow-md shadow-black/5 flex items-center justify-between gap-2 lg:gap-4">
 
         {/* Logo — always visible */}
@@ -333,5 +338,6 @@ export default function Navbar({
       {/* Search dialog - loaded dynamically on demand to optimize initial bundle */}
       {openSearch && <NavSearchDialog open={openSearch} onOpenChange={setOpenSearch} />}
     </nav>
+    </>
   );
 }

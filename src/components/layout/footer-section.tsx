@@ -95,7 +95,7 @@ export function FooterSection() {
 							<p className="font-semibold text-foreground">FreelanceXchain Protocol</p>
 							<p>Decentralized Freelance Marketplace & Smart Escrow</p>
 							<p>Legal & Inquiries: <a href="mailto:legal@freelancexchain.com" className="text-primary hover:underline">legal@freelancexchain.com</a></p>
-							<p className="text-[11px] pt-1 text-muted-foreground/80">
+							<p className="text-2xs pt-1 text-muted-foreground/80">
 								© {new Date().getFullYear()} FreelanceXchain. All rights reserved.
 							</p>
 						</div>

@@ -36,7 +36,7 @@ const TextareaWithCount = React.forwardRef<HTMLTextAreaElement, TextareaWithCoun
       ? length >= maxLength
         ? 'text-destructive'
         : length >= maxLength * 0.9
-        ? 'text-amber-500'
+        ? 'text-warning'
         : 'text-muted-foreground'
       : 'text-muted-foreground'
     return (

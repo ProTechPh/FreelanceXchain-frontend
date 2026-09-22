@@ -132,7 +132,7 @@ export function ProposalDialog({
 
   /** Why submitting is unavailable, for the button's tooltip. */
   const blockedReason = !isKycApproved
-    ? 'Verify your identity first.'
+    ? 'Complete identity verification first — go to Verification in your dashboard.'
     : null;
 
   const { isPro } = usePlan();
@@ -316,11 +316,11 @@ export function ProposalDialog({
             // Always present when unverified, so it should not interrupt a
             // screen reader the way a new error would.
             live={false}
-            title="Verify your identity to submit a proposal"
-            description="Escrow protection and milestone payments need a verified identity first."
+            title="Your identity isn't verified yet"
+            description="You need a verified identity to submit proposals and receive escrow payments. It takes about 2 minutes."
             action={(
               <Button asChild size="sm" variant="outline" className="h-8 text-xs">
-                <Link href="/dashboard/freelancer/verification">Verify now</Link>
+                <Link href="/dashboard/freelancer/verification">Verify now — takes ~2 min</Link>
               </Button>
             )}
           />
@@ -660,7 +660,7 @@ export function ProposalDialog({
             title={blockedReason ?? undefined}
           >
             <Send className="size-4" aria-hidden="true" />
-            {isKycApproved ? 'Submit proposal' : 'Verification required'}
+            {isKycApproved ? 'Submit proposal' : 'Identity verification required'}
           </Button>
         </DialogFooter>
         </form>

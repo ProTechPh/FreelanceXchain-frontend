@@ -51,7 +51,7 @@ export default function MfaVerifyPage() {
       toast.success('MFA verified!');
       router.push(`/dashboard/${data.user.role}`);
     } catch (error) {
-      toast.error(getApiErrorMessage(error, useRecoveryCode ? 'Invalid recovery code' : 'Invalid verification code'), { duration: 5000 });
+      toast.error(getApiErrorMessage(error, useRecoveryCode ? 'That recovery code isn\'t valid. Check it and try again.' : 'Incorrect code. Open your authenticator app for the latest 6-digit code.'), { duration: 5000 });
     } finally {
       setIsVerifying(false);
     }

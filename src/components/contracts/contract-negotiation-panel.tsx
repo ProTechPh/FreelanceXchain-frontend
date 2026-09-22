@@ -159,7 +159,7 @@ export function ContractNegotiationPanel({
   const requestRush = () => {
     const percentage = Number(rushPercentage);
     if (!Number.isFinite(percentage) || percentage <= 0 || percentage > 100) {
-      toast.warning('Enter a rush fee percentage between 0.01 and 100.');
+      toast.warning('Enter a rush fee percentage between 0.01% and 100%.');
       return;
     }
     void runAction('rush-request', () => rushUpgradesApi.request(contract.id, percentage), 'Rush upgrade requested.');
@@ -168,7 +168,7 @@ export function ContractNegotiationPanel({
   const counterRush = (requestId: string) => {
     const percentage = Number(counterPercentage);
     if (!Number.isFinite(percentage) || percentage <= 0 || percentage > 100) {
-      toast.warning('Enter a counter percentage between 0.01 and 100.');
+      toast.warning('Enter a counter percentage between 0.01% and 100%.');
       return;
     }
     void runAction(`rush-${requestId}`, () => rushUpgradesApi.respond(requestId, 'counter_offer', percentage), 'Counter-offer sent.');
@@ -177,12 +177,12 @@ export function ContractNegotiationPanel({
   const requestRefund = () => {
     const reason = refundReason.trim();
     if (!reason) {
-      toast.warning('Explain why you are requesting a refund.');
+      toast.warning('Describe why you\'re requesting a refund before submitting.');
       return;
     }
     const amount = refundAmount.trim() ? Number(refundAmount) : undefined;
     if (amount !== undefined && (!Number.isFinite(amount) || amount <= 0)) {
-      toast.warning('Refund amount must be a positive number.');
+      toast.warning('Refund amount must be a positive number, or leave it blank to request the full remaining escrow.');
       return;
     }
     void runAction(

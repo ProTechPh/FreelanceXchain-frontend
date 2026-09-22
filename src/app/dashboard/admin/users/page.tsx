@@ -78,7 +78,7 @@ export default function UsersPage() {
     if (!userToSuspend) return;
     const reason = suspendReason.trim();
     if (!reason) {
-      toast.error('Suspension reason is required');
+      toast.warning('A suspension reason is required — it will be recorded with the action.');
       return;
     }
     setPendingActionId(userToSuspend.id);
@@ -89,7 +89,7 @@ export default function UsersPage() {
       setUserToSuspend(null);
       setSuspendReason('');
     } catch {
-      toast.error('Failed to suspend user');
+      toast.error('Couldn\'t suspend this user. Try again.');
     } finally {
       setPendingActionId(null);
     }
@@ -103,7 +103,7 @@ export default function UsersPage() {
       toast.success('User unsuspended');
       setUserToUnsuspend(null);
     } catch {
-      toast.error('Failed to unsuspend user');
+      toast.error('Couldn\'t unsuspend this user. Try again.');
     } finally {
       setPendingActionId(null);
     }
@@ -114,11 +114,11 @@ export default function UsersPage() {
     const trimmedReason = verifyReason.trim();
 
     if (!trimmedReason) {
-      toast.error('Verification reason is required');
+      toast.warning('A verification reason is required — it will be stored with the manual approval.');
       return;
     }
     if (trimmedReason.length < 10) {
-      toast.error('Verification reason must be at least 10 characters');
+      toast.warning('Verification reason must be at least 10 characters so there\'s a meaningful audit trail.');
       return;
     }
 
@@ -130,7 +130,7 @@ export default function UsersPage() {
       setUserToVerify(null);
       setVerifyReason('');
     } catch {
-      toast.error('Failed to verify user');
+      toast.error('Couldn\'t verify this user. Try again.');
     } finally {
       setPendingActionId(null);
     }

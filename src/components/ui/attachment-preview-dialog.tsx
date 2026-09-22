@@ -126,7 +126,7 @@ export function AttachmentPreviewDialog({
       toast.success('Document text copied to clipboard');
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast.error('Failed to copy');
+      toast.error('Couldn\'t copy to clipboard. Try selecting the text and copying manually.');
     }
   };
 
@@ -215,7 +215,7 @@ export function AttachmentPreviewDialog({
 
           {error && (
             <div className="p-6 rounded-2xl border border-destructive/20 bg-destructive/5 text-center space-y-3">
-              <p className="text-sm text-destructive font-medium">Failed to load live preview: {error}</p>
+                            <p className="text-sm text-destructive font-medium">Couldn&apos;t load the preview: {error}</p>
               {url && (
                 <Button asChild size="sm" variant="outline">
                   <a href={url} target="_blank" rel="noopener noreferrer">

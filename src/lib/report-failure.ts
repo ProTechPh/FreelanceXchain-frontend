@@ -2,6 +2,7 @@ import { toast } from 'sonner';
 
 import {
   describeFailure,
+  getApiRequestId,
   type DescribeFailureOptions,
   type FailureMessage,
 } from './error-messages.ts';
@@ -48,15 +49,36 @@ export function reportFailure(
   // behind a ProGate, so suppressing this never leaves a failure unexplained.
   if (failure.kind === 'plan-upgrade') return 'plan-upgrade';
 
-  // The user-facing copy is deliberately generic for server faults, so keep the
-  // real error where a developer can still find it.
+  // For server faults and unknowns: use the API's own requestId as the
+  // reference code — it is what the server logged, so support can grep for it.
+  // Falls back to a browser-generated short code when no server ID is present
+  // (network errors, wallet faults, etc. that never reached the server).
+  let ref: string | undefined;
   if (failure.kind === 'server' || failure.kind === 'unknown') {
-    console.error(`[failure] could not ${action}`, error);
+    const serverRequestId = getApiRequestId(error);
+    if (serverRequestId) {
+      // Use the last 8 chars of the UUID — enough to be unique, short enough to quote
+      ref = serverRequestId.replace(/-/g, '').slice(-8).toUpperCase();
+      console.error(`[failure:${serverRequestId}] could not ${action}`, error);
+    } else {
+      // No server response (network error, wallet error) — generate a client ref
+      ref = Math.abs(Date.now() ^ (Math.random() * 0xffffff | 0))
+        .toString(36)
+        .slice(-6)
+        .toUpperCase();
+      console.error(`[failure:client:${ref}] could not ${action}`, error);
+    }
   }
+
+  // Append the reference to the detail so users can quote it to support.
+  // The server ref matches server logs exactly; the client ref is a triage hint.
+  const detail = ref
+    ? `${failure.detail ?? 'This is a problem on our side, not yours.'} (Ref: ${ref})`
+    : failure.detail;
 
   const config = {
     id,
-    description: failure.detail,
+    description: detail,
     duration: DURATION[failure.tone],
     action: failure.retryable && onRetry
       ? { label: retryLabel, onClick: onRetry }

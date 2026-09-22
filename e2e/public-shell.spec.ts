@@ -47,8 +47,10 @@ test('public navbar icon actions keep a visible keyboard focus indicator', async
   await page.goto('/');
   await expect(page.getByRole('button', { name: /Theme:/ })).toBeVisible();
 
-  await page.keyboard.press('Tab');
-  await page.keyboard.press('Tab');
+  // Tab order: skip link -> logo -> theme toggle -> search
+  await page.keyboard.press('Tab'); // skip link
+  await page.keyboard.press('Tab'); // logo
+  await page.keyboard.press('Tab'); // theme toggle
   await expect(page.getByRole('button', { name: /Theme:/ })).toBeFocused();
 
   const themeOutline = await page.getByRole('button', { name: /Theme:/ }).evaluate(

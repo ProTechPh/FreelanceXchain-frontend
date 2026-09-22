@@ -183,7 +183,7 @@ export function CookieBanner() {
                 <div className="space-y-0.5">
                   <div className="font-semibold text-foreground flex items-center gap-1.5">
                     <span>Necessary for Login & Safety</span>
-                    <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded font-bold">Always On</span>
+                    <span className="text-2xs bg-primary/10 text-primary px-1.5 py-0.5 rounded font-bold">Always On</span>
                   </div>
                   <p className="text-muted-foreground leading-relaxed">
                     Keeps you signed in safely and blocks spam and bots. The site cannot work without these.

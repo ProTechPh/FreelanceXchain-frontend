@@ -36,7 +36,7 @@ export function describeTrialIneligibility(
 
     case 'kyc_unverified':
       return {
-        message: 'Complete identity verification to subscribe to Pro. It takes a few minutes.',
+        message: 'Complete identity verification to subscribe to Pro. It takes about 2 minutes.',
         actionHref: `${dashboard}/verification`,
         actionLabel: 'Verify identity',
       };

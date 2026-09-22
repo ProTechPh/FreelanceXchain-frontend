@@ -57,7 +57,7 @@ export default function AdminSkillsPage() {
 
   const createCategory = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!categoryName.trim() || !categoryDescription.trim()) return toast.error('Category name and description are required.');
+    if (!categoryName.trim() || !categoryDescription.trim()) return toast.error('Enter both a category name and a description before creating.');
     setAction('category');
     try {
       await skillsApi.createCategory(categoryName.trim(), categoryDescription.trim());
@@ -70,7 +70,7 @@ export default function AdminSkillsPage() {
 
   const createSkill = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!skillCategoryId || !skillName.trim() || !skillDescription.trim()) return toast.error('Category, name, and description are required.');
+    if (!skillCategoryId || !skillName.trim() || !skillDescription.trim()) return toast.error('Select a category and enter both a name and description before creating the skill.');
     setAction('skill');
     try {
       await skillsApi.createSkill(skillCategoryId, skillName.trim(), skillDescription.trim());

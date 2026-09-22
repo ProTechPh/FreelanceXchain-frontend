@@ -87,9 +87,8 @@ export function PasswordSecurityCard({ user, onLogout }: PasswordSecurityCardPro
       await onLogout();
       router.push('/login');
     } catch (error) {
-      const msg = getApiErrorMessage(error, 'Failed to change password. Please verify your current password.');
+      const msg = getApiErrorMessage(error, 'Couldn\'t update your password. Double-check your current password and try again.');
       setPasswordError(msg);
-      toast.error(msg);
     } finally {
       setIsChangingPassword(false);
     }

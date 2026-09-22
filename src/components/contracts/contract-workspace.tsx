@@ -186,7 +186,7 @@ export function ContractWorkspace({
       await loadWorkspace();
       return result;
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'The contract action could not be completed.'));
+      toast.error(getApiErrorMessage(error, 'Couldn\'t complete this action. Try again.'));
       return undefined;
     } finally {
       setActionId(null);
@@ -201,7 +201,7 @@ export function ContractWorkspace({
       void queryClient.invalidateQueries({ queryKey: ['payments'] });
       await loadWorkspace();
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Funding transaction failed or was rejected.'));
+      toast.error(getApiErrorMessage(error, 'Couldn\'t complete the transaction. Your wallet balance is unchanged — try again.'));
     } finally {
       setActionId(null);
     }
@@ -210,7 +210,7 @@ export function ContractWorkspace({
   const submitMilestone = (milestone: Milestone) => {
     const selectedFiles = files[milestone.id] ?? [];
     if (selectedFiles.length === 0) {
-      toast.error('Select at least one deliverable file.');
+      toast.error('Add at least one deliverable file before submitting this milestone.');
       return;
     }
     const fileError = validateDocumentFiles(selectedFiles);
@@ -243,7 +243,7 @@ export function ContractWorkspace({
       setReview(initialReview);
       toast.success('Review submitted.');
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Unable to submit this review.'));
+      toast.error(getApiErrorMessage(error, 'Couldn\'t submit your review. Try again.'));
     } finally {
       setActionId(null);
     }

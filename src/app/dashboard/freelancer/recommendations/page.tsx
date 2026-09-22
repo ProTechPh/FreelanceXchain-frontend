@@ -65,7 +65,7 @@ export default function FreelancerRecommendationsPage() {
         if (errorMessage.toLowerCase().includes('profile not found') || errorMessage.toLowerCase().includes('not found')) {
           if (active) setProfileNotFound(true);
         } else {
-          if (active) toast.error(errorMessage || 'Unable to load project recommendations.');
+          if (active) toast.error(errorMessage || 'Couldn\'t load project recommendations. Try again.');
         }
       } finally {
         if (active) setLoading(false);

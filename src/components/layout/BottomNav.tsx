@@ -99,7 +99,7 @@ export function BottomNav({ role }: { role: UserRole | undefined }) {
                   aria-hidden="true"
                 />
               </div>
-              <span className="text-[10px] leading-tight mt-0.5">{item.label}</span>
+              <span className="text-xs leading-tight mt-0.5">{item.label}</span>
             </Link>
           );
         })}

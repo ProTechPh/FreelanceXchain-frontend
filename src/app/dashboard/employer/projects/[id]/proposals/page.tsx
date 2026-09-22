@@ -187,7 +187,7 @@ export default function EmployerProjectProposalsPage() {
         requestRatingPrompt('proposal_accepted', decision.proposal.id);
       }
     } catch (error) {
-      toast.error(getApiErrorMessage(error, `Failed to ${decision.action} proposal`));
+      toast.error(getApiErrorMessage(error, `Couldn't ${decision.action} this proposal. Try again.`));
     } finally {
       setUpdating(false);
     }

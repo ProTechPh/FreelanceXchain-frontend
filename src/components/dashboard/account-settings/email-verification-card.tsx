@@ -22,9 +22,9 @@ export function EmailVerificationCard({ user }: EmailVerificationCardProps) {
     setIsResending(true);
     try {
       await authApi.resendConfirmation(user.email);
-      toast.success('Verification email sent! Please check your inbox.');
+      toast.success('Verification email sent! Check your inbox (and spam folder) for the link.');
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Unable to send verification email.'));
+      toast.error(getApiErrorMessage(error, 'Couldn\'t send the verification email. Try again in a moment.'));
     } finally {
       setIsResending(false);
     }
@@ -53,8 +53,8 @@ export function EmailVerificationCard({ user }: EmailVerificationCardProps) {
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
             {user?.emailVerification
-              ? 'Your email address is verified with Appwrite.'
-              : 'Your email address is unverified. Click the button to send a verification link to your inbox.'}
+              ? 'Your email address is verified.'
+              : 'Your email is not yet verified. Click the button to resend a verification link to your inbox.'}
           </p>
         </div>
         {!user?.emailVerification && (

@@ -202,6 +202,23 @@ export function getApiErrorMessage(error: unknown, fallback: string): string {
 }
 
 /**
+ * The server's own request ID from the response body.
+ *
+ * Every API error response includes `{ ..., requestId: "uuid" }` at the
+ * top level. This is the value logged by the server as `[failure:uuid]`, so
+ * a user quoting this ID gives support a direct grep target — unlike a
+ * browser-generated code that has no server-side counterpart.
+ */
+export function getApiRequestId(error: unknown): string | null {
+  if (!isRecord(error) || !isRecord(error.response)) return null;
+  const data = error.response.data;
+  if (!isRecord(data)) return null;
+  return typeof data.requestId === 'string' && data.requestId.trim()
+    ? data.requestId.trim()
+    : null;
+}
+
+/**
  * The backend message, or null when it has nothing specific to say.
  *
  * Reads the same shapes as `getApiErrorMessage` but reports absence directly,
@@ -270,6 +287,24 @@ const SERVER_FAULT_CODES = new Set([
   'CREATE_FAILED',
   'UPDATE_FAILED',
   'DELETE_FAILED',
+  // API route catch-block fallbacks — developer-facing, not user-actionable
+  'ACTIVATION_FAILED',
+  'WITHDRAW_FAILED',
+  'UPLOAD_FAILED',
+  'REJECT_FAILED',
+  'VERIFICATION_ERROR',
+  'PAYMENT_FAILED',
+  'BLOCKCHAIN_ERROR',
+  'GEMINI_UNAVAILABLE',
+  'STRIPE_UNAVAILABLE',
+  'SUBSCRIPTION_CHECK_FAILED',
+  'ESCROW_STATE_MISMATCH',
+  'MISSING_WALLET',
+  'RECEIVER_NOT_FOUND',
+  'PENDING_BLOCKCHAIN',
+  'LIST_FAILED',
+  'SUMMARY_FAILED',
+  'SUBMIT_FAILED',
 ]);
 
 export function classifyFailure(error: unknown): FailureKind {

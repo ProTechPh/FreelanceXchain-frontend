@@ -38,7 +38,6 @@ export default function EmployerDashboard() {
     recentProposals,
     recommended,
     recommendedLoading,
-    isPro,
     totalSpent,
     completedContractCount,
   } = useEmployerDashboard();

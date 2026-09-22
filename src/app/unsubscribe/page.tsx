@@ -98,7 +98,7 @@ function UnsubscribeContent() {
           </form>
         ) : (
           <div className="space-y-6">
-            <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-500">
+            <div className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-success-subtle text-success">
               <CheckCircle2 className="size-7" />
             </div>
 

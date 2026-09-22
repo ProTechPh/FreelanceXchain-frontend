@@ -435,7 +435,7 @@ export function MessagesWorkspace() {
       }
       loadConversations(false);
     } catch (error) {
-      toast.error(error instanceof MessageAttachmentValidationError ? error.message : 'Failed to send message');
+      toast.error(error instanceof MessageAttachmentValidationError ? error.message : 'Couldn\'t send your message. Check your connection and try again.');
     } finally {
       setSending(false);
     }
@@ -614,7 +614,7 @@ export function MessagesWorkspace() {
                 <div className="min-w-0">
                   <p className="truncate text-xs sm:text-base font-semibold leading-tight" title={chatRecipient.name}>{chatRecipient.name}</p>
                   {chatRecipient.email && (
-                    <p className="truncate text-[10px] sm:text-xs text-muted-foreground leading-tight mt-0.5" title={chatRecipient.email}>{chatRecipient.email}</p>
+                    <p className="truncate text-2xs sm:text-xs text-muted-foreground leading-tight mt-0.5" title={chatRecipient.email}>{chatRecipient.email}</p>
                   )}
                 </div>
               </div>

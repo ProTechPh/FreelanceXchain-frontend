@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { Globe } from 'lucide-react';
 
@@ -97,17 +97,25 @@ function AnimatedColumn({
   className?: string;
 }) {
   const reduce = useReducedMotion();
-  // Triple the items to ensure seamless infinite looping
+  const [paused, setPaused] = useState(false);
+  // Quadruple the items to ensure seamless infinite looping
   const duplicated = [...items, ...items, ...items, ...items];
 
   const itemHeight = 84; // icon height + gap
   const totalShift = items.length * itemHeight;
 
   return (
-    <div className={`relative overflow-hidden h-[300px] sm:h-[400px] md:h-[460px] w-12 sm:w-16 md:w-20 shrink-0 ${className}`}>
+    <div
+      className={`relative overflow-hidden h-[300px] sm:h-[400px] md:h-[460px] w-12 sm:w-16 md:w-20 shrink-0 ${className}`}
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
+    >
       <motion.div
+        aria-hidden="true"
         animate={
-          reduce
+          reduce || paused
             ? undefined
             : direction === "up"
             ? { y: [0, -totalShift] }
@@ -126,12 +134,10 @@ function AnimatedColumn({
         {duplicated.map((item, idx) => (
           <motion.div
             key={`${item.name}-${idx}`}
-            whileHover={{ scale: 1.15 }}
+            whileHover={{ scale: reduce ? 1 : 1.15 }}
             transition={{ type: "spring", stiffness: 400, damping: 15 }}
-            aria-label={item.name}
             title={item.name}
-            role="img"
-            className="group relative w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-2xl sm:rounded-3xl bg-card border border-border/80 shadow-md shadow-black/5 hover:border-primary/60 hover:shadow-xl flex items-center justify-center p-2.5 sm:p-3.5 transition-all duration-200 cursor-pointer shrink-0"
+            className="group relative w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-2xl sm:rounded-3xl bg-card border border-border/80 shadow-md shadow-black/5 hover:border-primary/60 hover:shadow-xl flex items-center justify-center p-2.5 sm:p-3.5 transition-all duration-200 shrink-0"
           >
             <div className="w-full h-full flex items-center justify-center pointer-events-none">
               {item.icon}
@@ -160,7 +166,7 @@ export function EcosystemShowcase() {
   return (
     <section
       id="ecosystem"
-      className="py-20 sm:py-28 bg-background overflow-hidden border-b border-border/40 relative scroll-mt-20"
+      className="py-20 sm:py-28 bg-background overflow-hidden border-b border-border/40 relative scroll-mt-[5.5rem]"
     >
       {/* Background Soft Glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[450px] bg-primary/5 rounded-full blur-3xl pointer-events-none -z-10" />
@@ -195,15 +201,25 @@ export function EcosystemShowcase() {
       {/* Infinite Scrolling Honeycomb / Diamond Icon Cloud (Zero Scrollbar with Gradient Fade Masks) */}
       <div className="mx-auto max-w-5xl px-3 sm:px-6 relative">
         {/* Top and Bottom Gradient Fade Masks for seamless cycling */}
-        <div className="absolute top-0 left-0 right-0 h-14 sm:h-16 bg-gradient-to-b from-background to-transparent z-20 pointer-events-none" />
-        <div className="absolute bottom-0 left-0 right-0 h-14 sm:h-16 bg-gradient-to-t from-background to-transparent z-20 pointer-events-none" />
+        <div aria-hidden="true" className="absolute top-0 left-0 right-0 h-14 sm:h-16 bg-gradient-to-b from-background to-transparent z-20 pointer-events-none" />
+        <div aria-hidden="true" className="absolute bottom-0 left-0 right-0 h-14 sm:h-16 bg-gradient-to-t from-background to-transparent z-20 pointer-events-none" />
 
         {/* Outer Left & Right Fade Masks */}
-        <div className="absolute top-0 bottom-0 left-0 w-8 sm:w-12 bg-gradient-to-r from-background to-transparent z-20 pointer-events-none" />
-        <div className="absolute top-0 bottom-0 right-0 w-8 sm:w-12 bg-gradient-to-l from-background to-transparent z-20 pointer-events-none" />
+        <div aria-hidden="true" className="absolute top-0 bottom-0 left-0 w-8 sm:w-12 bg-gradient-to-r from-background to-transparent z-20 pointer-events-none" />
+        <div aria-hidden="true" className="absolute top-0 bottom-0 right-0 w-8 sm:w-12 bg-gradient-to-l from-background to-transparent z-20 pointer-events-none" />
 
-        {/* Multi-Column Animated Container - Completely hidden scrollbar */}
+        {/* Screen-reader-only static list — a single clean pass of every unique item. */}
+        <ul className="sr-only" aria-label="Ecosystem integrations">
+          {Array.from(new Map(baseColumns.flat().map((item) => [item.name, item])).values()).map((item) => (
+            <li key={item.name}>
+              {item.name} — {item.category}
+            </li>
+          ))}
+        </ul>
+
+        {/* Multi-Column Animated Container - aria-hidden so AT uses the static list above */}
         <div
+          aria-hidden="true"
           className="flex items-center justify-center gap-2 sm:gap-4 md:gap-5 overflow-hidden py-2"
           style={{
             maskImage:

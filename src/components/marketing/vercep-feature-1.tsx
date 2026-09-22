@@ -7,7 +7,7 @@ export function WhySection() {
   const reduce = useReducedMotion();
 
   return (
-    <section id="features" className="py-20 sm:py-28 bg-background border-b border-border/40 scroll-mt-20">
+    <section id="features" className="py-20 sm:py-28 bg-background border-b border-border/40 scroll-mt-[5.5rem]">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <motion.div
@@ -45,7 +45,7 @@ export function WhySection() {
             <div>
               <div className="flex items-center gap-3 mb-4">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <Brain className="size-5" fill="currentColor" />
+                  <Brain className="size-5" />
                 </div>
                 <div>
                   <span className="text-xs font-bold text-primary uppercase tracking-wider">

@@ -46,7 +46,7 @@ export function WalletBalanceCard({ role = 'employer', className = '' }: WalletB
       toast.success('Address copied to clipboard!');
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast.error('Failed to copy address');
+      toast.error('Couldn\'t copy your address. Try selecting and copying it manually.');
     }
   };
 

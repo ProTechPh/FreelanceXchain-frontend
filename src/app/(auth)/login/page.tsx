@@ -53,7 +53,7 @@ export default function LoginPage() {
       window.location.href = `${apiUrl}/auth/oauth/${provider}`;
     } catch (error) {
       setOauthLoading(null);
-      const msg = getApiErrorMessage(error, 'Too many sign-in attempts. Please try again later.');
+      const msg = getApiErrorMessage(error, 'Couldn\'t connect with that provider. Try again or sign in with email.');
       setOauthError(msg);
       toast.error(msg);
     }
@@ -86,7 +86,7 @@ export default function LoginPage() {
       setTurnstileToken(null);
       const err = error as { response?: { data?: { error?: { code?: string } } }; code?: string } | undefined;
       const errCode = err?.response?.data?.error?.code || err?.code;
-      const msg = getApiErrorMessage(error, 'Unable to sign in. Please try again.');
+      const msg = getApiErrorMessage(error, 'Couldn\'t sign in. Check your email and password, then try again.');
 
       if (errCode === 'EMAIL_NOT_VERIFIED' || msg.toLowerCase().includes('verify your email')) {
         toast.error('Email Verification Required', {
@@ -101,7 +101,7 @@ export default function LoginPage() {
                   description: 'Please check your email inbox.',
                 });
               } catch {
-                toast.error('Failed to resend verification email.');
+                toast.error('Couldn\'t resend the verification email. Try again in a moment.');
               }
             },
           },

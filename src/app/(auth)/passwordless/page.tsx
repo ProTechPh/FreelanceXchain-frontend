@@ -31,7 +31,7 @@ export default function PasswordlessPage() {
       setMagicLinkSent(false);
       toast.success('A one-time code was sent to your email.');
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Unable to send an email code.'));
+      toast.error(getApiErrorMessage(error, 'Couldn\'t send the email code. Check your email address and try again.'));
     } finally {
       setActiveAction(null);
     }
@@ -44,7 +44,7 @@ export default function PasswordlessPage() {
       setMagicLinkSent(true);
       toast.success('Magic sign-in link sent. Check your email.');
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Unable to send a magic link.'));
+      toast.error(getApiErrorMessage(error, 'Couldn\'t send the magic link. Check your email address and try again.'));
     } finally {
       setActiveAction(null);
     }
@@ -67,7 +67,7 @@ export default function PasswordlessPage() {
       }
       throw new Error('Invalid passwordless response');
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'The code is invalid or expired.'));
+      toast.error(getApiErrorMessage(error, 'That code is incorrect or has expired. Request a new one.'));
     } finally {
       setActiveAction(null);
     }

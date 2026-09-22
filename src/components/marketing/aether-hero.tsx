@@ -339,10 +339,12 @@ export default function AetherHero() {
                 {/* Contracts list */}
                 <div className="mt-4 space-y-2.5">
                   {filteredContracts.map((c) => (
-                    <div
+                    <button
                       key={c.id}
+                      type="button"
                       onClick={() => setSelectedContract(c)}
-                      className={`p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 ${
+                      aria-pressed={selectedContract.id === c.id}
+                      className={`w-full text-left p-3.5 rounded-xl border transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                         selectedContract.id === c.id
                           ? "bg-primary/5 border-primary/40 shadow-xs"
                           : "bg-card border-border/70 hover:border-border hover:bg-muted/30"
@@ -373,7 +375,7 @@ export default function AetherHero() {
                           {c.stage}
                         </span>
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>

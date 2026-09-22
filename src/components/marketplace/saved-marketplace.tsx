@@ -144,7 +144,7 @@ export function SavedMarketplace() {
       setFavorites((current) => current.filter((item) => item.id !== favorite.id));
       toast.success('Favorite removed.');
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Unable to remove this favorite.'));
+      toast.error(getApiErrorMessage(error, 'Couldn\'t remove this from your saved items. Try again.'));
     } finally {
       setActionId(null);
     }

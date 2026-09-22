@@ -41,10 +41,10 @@ export function ContractOverviewCard({
           <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="flex items-center gap-2 text-sm">
               <ShieldCheck className="size-5 text-warning" />
-              Verify your identity before making changes to a contract.
+              Your identity isn&apos;t verified yet. Verification is required to fund, cancel, or modify contracts.
             </p>
             <Button asChild size="sm" variant="outline">
-              <Link href={verificationPath}>Complete verification</Link>
+              <Link href={verificationPath}>Verify identity — takes ~2 min</Link>
             </Button>
           </CardContent>
         </Card>

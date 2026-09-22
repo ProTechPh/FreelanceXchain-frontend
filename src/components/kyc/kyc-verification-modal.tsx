@@ -184,9 +184,9 @@ export function KycVerificationModal({
                 <AlertCircle className="size-6" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-foreground">Unable to load verification session</p>
+                                <p className="text-sm font-semibold text-foreground">Couldn&apos;t load the verification session</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  The verification session URL is missing or invalid. Please try restarting verification.
+                  Something went wrong starting the verification window. Try again, or open it in a separate tab.
                 </p>
               </div>
               <Button variant="outline" size="sm" onClick={() => onOpenChange(false)} className="mt-2">
