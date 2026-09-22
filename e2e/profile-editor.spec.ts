@@ -198,3 +198,101 @@ test('freelancer creates a custom skill and suggests it globally', async ({ page
   await expect(page.getByText('Prompt engineering', { exact: true })).toBeVisible();
   expect(createBody).toEqual({ name: 'Prompt engineering', description: 'Designs and evaluates reliable language-model prompts.', yearsOfExperience: 2, suggestForGlobal: true });
 });
+
+test('employer sees an in-app unsaved-changes bar and can revert it', async ({ page }) => {
+  const user = { id: 'employer-1', email: 'owner@example.com', name: 'Owner', role: 'employer', walletAddress: '', kycStatus: 'approved', ...timestamps };
+  const profile = { id: 'profile-1', userId: user.id, name: 'Owner', nationality: 'PH', companyName: 'Acme Labs', description: 'We build reliable digital products.', industry: 'Technology', ...timestamps };
+  await authenticate(page, user);
+  await page.route('**/api/employers/profile', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(profile) }));
+
+  await page.goto('/dashboard/employer/profile');
+
+  // A freshly loaded profile is not dirty, so nothing is pending yet.
+  await expect(page.getByLabel('Company name')).toHaveValue('Acme Labs');
+  await expect(page.getByText('You have unsaved changes')).not.toBeVisible();
+  await expect(page.getByRole('button', { name: 'Save profile' })).toBeDisabled();
+
+  await page.getByLabel('Company name').fill('Acme Studio');
+  await expect(page.getByText('You have unsaved changes')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Save profile' })).toBeEnabled();
+
+  await page.getByRole('button', { name: 'Cancel' }).click();
+  await expect(page.getByLabel('Company name')).toHaveValue('Acme Labs');
+  await expect(page.getByText('You have unsaved changes')).not.toBeVisible();
+});
+
+test('leaving the profile with pending edits opens the app dialog, not a browser prompt', async ({ page }) => {
+  const user = { id: 'employer-1', email: 'owner@example.com', name: 'Owner', role: 'employer', walletAddress: '', kycStatus: 'approved', ...timestamps };
+  const profile = { id: 'profile-1', userId: user.id, name: 'Owner', nationality: 'PH', companyName: 'Acme Labs', description: 'We build reliable digital products.', industry: 'Technology', ...timestamps };
+  const nativeDialogs: string[] = [];
+  let updateBody: unknown;
+  page.on('dialog', (dialog) => {
+    nativeDialogs.push(dialog.message());
+    return dialog.dismiss();
+  });
+  await authenticate(page, user);
+  await page.route('**/api/employers/profile', async (route) => {
+    if (route.request().method() === 'PATCH') {
+      updateBody = route.request().postDataJSON();
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ...profile, ...(updateBody as object) }) });
+      return;
+    }
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(profile) });
+  });
+
+  await page.goto('/dashboard/employer/profile');
+  await page.getByLabel('Company name').fill('Acme Studio');
+
+  await page.getByRole('link', { name: 'My projects' }).first().click();
+  await expect(page.getByRole('dialog')).toContainText('Leave without saving?');
+  expect(nativeDialogs).toEqual([]);
+  expect(page.url()).toContain('/dashboard/employer/profile');
+
+  // Keeping the edits leaves the person exactly where they were.
+  await page.getByRole('button', { name: 'Keep editing' }).click();
+  await expect(page.getByRole('dialog')).toBeHidden();
+  await expect(page.getByLabel('Company name')).toHaveValue('Acme Studio');
+
+  await page.getByRole('link', { name: 'My projects' }).first().click();
+  await page.getByRole('button', { name: 'Save and leave' }).click();
+  await expect(page).toHaveURL(/\/dashboard\/employer\/projects$/);
+  expect(updateBody).toEqual({ companyName: 'Acme Studio', description: profile.description, industry: profile.industry });
+});
+
+test('adding an experience saves immediately and leaves nothing pending', async ({ page }) => {
+  const user = { id: 'freelancer-1', email: 'dev@example.com', name: 'Developer', role: 'freelancer', walletAddress: '', kycStatus: 'approved', ...timestamps };
+  const profile = { id: 'profile-2', userId: user.id, name: 'Developer', nationality: 'PH', bio: 'I build accessible web applications.', hourlyRate: 30, skills: [], experience: [], availability: 'available', ...timestamps };
+  const addedExperience = { id: 'experience-1', title: 'Engineer', company: 'Acme Labs', description: 'Built the payments service.', startDate: '2023-01-01', endDate: null };
+  const nativeDialogs: string[] = [];
+  let experienceBody: unknown;
+  page.on('dialog', (dialog) => {
+    nativeDialogs.push(dialog.message());
+    return dialog.dismiss();
+  });
+  await authenticate(page, user);
+  await page.route('**/api/freelancers/profile', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(profile) }));
+  await page.route('**/api/freelancers/profile/experience', async (route) => {
+    experienceBody = route.request().postDataJSON();
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ...profile, experience: [addedExperience] }) });
+  });
+  await page.route('**/api/skills', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ categories: [] }) }));
+  await page.route('**/api/skills/custom', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }));
+
+  await page.goto('/dashboard/freelancer/profile');
+  await page.getByRole('button', { name: 'Add experience' }).click();
+  await page.getByLabel('Job title').fill(addedExperience.title);
+  await page.getByLabel('Company').fill(addedExperience.company);
+  await page.locator('#experience-start').fill(addedExperience.startDate);
+  await page.locator('#experience-description').fill(addedExperience.description);
+  await page.getByRole('button', { name: 'Add experience', exact: true }).last().click();
+
+  await expect(page.getByText('Experience added.')).toBeVisible();
+  expect(experienceBody).toEqual({ title: addedExperience.title, company: addedExperience.company, description: addedExperience.description, startDate: addedExperience.startDate, endDate: null });
+
+  // The profile fields were untouched, so no save is outstanding and nothing
+  // blocks navigation.
+  await expect(page.getByText('You have unsaved changes')).not.toBeVisible();
+  await page.getByRole('link', { name: 'My proposals' }).first().click();
+  await expect(page).toHaveURL(/\/dashboard\/freelancer\/proposals$/);
+  expect(nativeDialogs).toEqual([]);
+});

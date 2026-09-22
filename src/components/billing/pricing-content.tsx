@@ -24,13 +24,14 @@ const FREE_HIGHLIGHTS = [
   'Proposals, contracts and messaging',
   'Smart-contract escrow and milestones',
   'Your earnings and spend analytics',
+  'Marketplace stats and skill demand trends',
   'Reputation, reviews and KYC',
 ];
 
 const PRO_HIGHLIGHTS = [
   'AI project and candidate recommendations',
   'Draft proposals with AI',
-  'Skill gap analysis and demand trends',
+  'Skill gap analysis',
   'Priority matching — matched to new projects first',
 ];
 
@@ -124,7 +125,7 @@ export function PricingContent() {
             )}
 
             <CardDescription>
-              Everything in Free, plus the AI matching and analytics layer.
+              Everything in Free, plus the AI matching layer.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex grow flex-col gap-4">

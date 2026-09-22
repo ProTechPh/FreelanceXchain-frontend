@@ -53,7 +53,8 @@ export type NotificationType =
   | 'rush_upgrade_counter_offered'
   | 'message'
   | 'saved_search_match'
-  | 'project_match';
+  | 'project_match'
+  | 'support_ticket_resolved';
 
 /** Billing tier. Computed server-side; the client never derives it. */
 export type PlanTier = 'free' | 'pro';
@@ -442,6 +443,56 @@ export interface AppRatingSummary {
   recentTotal: number;
   positivePercentage: number;
 }
+
+/**
+ * A customer support ticket: a user asking the platform for help.
+ *
+ * Distinct from `AppRating` above, which is one-way feedback nobody replies to,
+ * and from `Dispute`, which is two users disagreeing over escrowed money. A
+ * ticket has one submitter and one responder — an admin.
+ *
+ * Freelancers and employers use the identical flow; `userRole` is recorded so
+ * the admin queue can show who filed it, never to gate behaviour.
+ */
+export type SupportTicketCategory =
+  | 'account'
+  | 'verification'
+  | 'payments'
+  | 'contracts'
+  | 'disputes'
+  | 'technical'
+  | 'other';
+
+/**
+ * `resolved` means an admin answered it and there is a note to read; `closed`
+ * means it ended without one. Both are terminal — a new problem is a new ticket.
+ */
+export type SupportTicketStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
+
+export interface SupportTicket {
+  id: string;
+  userId: string;
+  userRole: string;
+  subject: string;
+  description: string;
+  category: SupportTicketCategory;
+  status: SupportTicketStatus;
+  /** The admin's answer. Present once resolved. */
+  resolutionNote?: string;
+  resolvedBy?: string;
+  resolvedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** A ticket as the admin queue shows it — attributed to its submitter. */
+export interface AdminSupportTicket extends SupportTicket {
+  userName: string;
+  userEmail: string;
+}
+
+/** Counts per status, driving the admin queue's filter cards. */
+export type SupportTicketStats = Record<SupportTicketStatus, number>;
 
 /**
  * What `POST /api/milestones/:id/approve` actually returns.

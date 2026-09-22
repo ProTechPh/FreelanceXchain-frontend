@@ -11,7 +11,7 @@ export default function PricingPage() {
   return (
     <InfoPage
       title="One plan. Same price whether you hire or get hired."
-      intro="Free covers the whole marketplace — projects, proposals, escrow, messaging and your analytics. Pro adds the AI matching and intelligence layer on top."
+      intro="Free covers the whole marketplace — projects, proposals, escrow, messaging and the entire analytics layer, including skill demand trends. Pro adds the AI matching and intelligence layer on top."
       badge="Pricing"
     >
       <PricingContent />

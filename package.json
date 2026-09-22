@@ -21,6 +21,7 @@
     "test:onboarding-tour": "node --test --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON src/lib/onboarding-tour.test.mjs",
     "test:app-rating-prompt": "node --test --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON src/lib/app-rating-prompt.test.mjs",
     "test:help-topics": "node --test --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON src/lib/help-topics.test.mjs",
+    "test:support-faq": "node --test --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON src/lib/support-faq.test.mjs",
     "typecheck": "tsc --noEmit",
     "verify:contrast": "node scripts/verify-contrast.mjs",
     "verify:tokens": "node scripts/verify-tokens.mjs",

@@ -39,6 +39,8 @@ export { disputesApi } from './api/disputes';
 
 export { appRatingsApi } from './api/app-ratings';
 
+export { supportTicketsApi } from './api/support-tickets';
+
 export {
   messagesApi,
   notificationsApi,

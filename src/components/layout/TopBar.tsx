@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Bell, MessageSquare, LogOut, User, Settings, ChevronDown, Compass, Search, Shield, Bookmark, History, Star } from 'lucide-react';
+import { Bell, MessageSquare, LogOut, User, Settings, ChevronDown, Compass, Search, Shield, Bookmark, History, Star, LifeBuoy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Tooltip } from '@/components/ui/tooltip';
@@ -31,6 +31,7 @@ const participantAccountItems = [
   { label: 'Saved', path: 'saved', icon: Bookmark },
   { label: 'Activity', path: 'activity', icon: History },
   { label: 'Settings', path: 'settings', icon: Settings },
+  { label: 'Help & Support', path: 'support', icon: LifeBuoy },
 ] as const;
 
 export function TopBar() {

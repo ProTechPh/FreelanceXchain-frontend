@@ -1,78 +1,115 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+
+const UNLOAD_MESSAGE = 'You have unsaved changes.';
+
+type UnsavedChangesOptions = {
+  /**
+   * Wired to the dialog's "Save and leave" action. Resolve `true` when the save
+   * succeeded so navigation may continue, `false` to stay on the page.
+   * Omitting it hides that action.
+   */
+  onSave?: () => Promise<boolean>;
+};
+
+export type UnsavedChangesGuard = {
+  /** True while the confirmation dialog should be open. */
+  isPrompting: boolean;
+  /** Where the person was heading, for display in the dialog. */
+  pendingUrl: string | null;
+  /** Dismiss the dialog and stay put. */
+  keepEditing: () => void;
+  /** Continue to the pending route and drop the edits. */
+  discardAndLeave: () => void;
+  /** Persist first, then continue. `null` when no `onSave` was supplied. */
+  saveAndLeave: (() => Promise<void>) | null;
+};
 
 /**
- * Warns users before they leave a page with unsaved form changes.
+ * Guards a page that holds unsaved form changes.
  *
- * @param isDirty - Whether the form has unsaved changes
- * @param message - The warning message to display
+ * In-app navigation is intercepted at the click, before the router runs, so the
+ * app can show its own dialog. A real reload or tab close still goes through the
+ * browser's native prompt — that wording and styling belong to the browser and
+ * cannot be replaced.
+ *
+ * @param isDirty - Whether the form has unsaved changes.
+ * @param options - Optional save handler for the dialog's "Save and leave".
  */
 export function useUnsavedChangesWarning(
   isDirty: boolean,
-  message = 'You have unsaved changes. Are you sure you want to leave?',
-) {
-  const shouldWarn = useRef(false);
-
-  // Warn on browser navigation (refresh, close tab)
-  useEffect(() => {
-    if (!isDirty) return;
-
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      e.returnValue = message;
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [isDirty, message]);
+  options: UnsavedChangesOptions = {},
+): UnsavedChangesGuard {
+  const router = useRouter();
+  const { onSave } = options;
+  const [pendingUrl, setPendingUrl] = useState<string | null>(null);
+  const navigationAllowed = useRef(false);
 
   useEffect(() => {
     if (!isDirty) return;
 
-    // Use a ref to track if we should block navigation
-    shouldWarn.current = true;
-
-    // Intercept pushState/replaceState for programmatic navigation
-    const originalPushState = window.history.pushState;
-    const originalReplaceState = window.history.replaceState;
-
-    window.history.pushState = function (...args) {
-      if (shouldWarn.current && !window.confirm(message)) {
-        return;
-      }
-      return originalPushState.apply(this, args);
+    const warnOnUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = UNLOAD_MESSAGE;
     };
 
-    window.history.replaceState = function (...args) {
-      return originalReplaceState.apply(this, args);
+    window.addEventListener('beforeunload', warnOnUnload);
+    return () => window.removeEventListener('beforeunload', warnOnUnload);
+  }, [isDirty]);
+
+  useEffect(() => {
+    if (!isDirty) return;
+
+    // Capture phase: this has to win over the router's own click handler, which
+    // is why the event is also stopped from propagating.
+    const interceptNavigation = (event: MouseEvent) => {
+      if (navigationAllowed.current || event.defaultPrevented) return;
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+      const anchor = (event.target as Element | null)?.closest?.('a[href]') as HTMLAnchorElement | null;
+      if (!anchor || anchor.target === '_blank' || anchor.hasAttribute('download')) return;
+
+      const destination = new URL(anchor.href, window.location.href);
+      if (destination.origin !== window.location.origin) return;
+      if (destination.pathname === window.location.pathname) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      setPendingUrl(`${destination.pathname}${destination.search}`);
     };
 
-    return () => {
-      shouldWarn.current = false;
-      window.history.pushState = originalPushState;
-      window.history.replaceState = originalReplaceState;
-    };
-  }, [isDirty, message]);
-}
+    document.addEventListener('click', interceptNavigation, true);
+    return () => document.removeEventListener('click', interceptNavigation, true);
+  }, [isDirty]);
 
-/**
- * Convenience hook: returns a `markSaved` function to call after successful save,
- * plus the current dirty state.
- */
-export function useDirtyFormTracker(initialValues: Record<string, unknown>) {
-  const [savedValues, setSavedValues] = useState(initialValues);
-  const [trackedValues, setTrackedValues] = useState(initialValues);
+  const leave = useCallback(
+    (url: string) => {
+      navigationAllowed.current = true;
+      setPendingUrl(null);
+      router.push(url);
+    },
+    [router],
+  );
 
-  const isDirty = JSON.stringify(savedValues) !== JSON.stringify(trackedValues);
+  const keepEditing = useCallback(() => setPendingUrl(null), []);
 
-  const markSaved = useCallback(() => {
-    setSavedValues({ ...trackedValues });
-  }, [trackedValues]);
+  const discardAndLeave = useCallback(() => {
+    if (pendingUrl) leave(pendingUrl);
+  }, [leave, pendingUrl]);
 
-  const updateValues = useCallback((newValues: Record<string, unknown>) => {
-    setTrackedValues((prev) => ({ ...prev, ...newValues }));
-  }, []);
+  const saveAndLeave = useCallback(async () => {
+    if (!onSave || !pendingUrl) return;
+    const destination = pendingUrl;
+    if (await onSave()) leave(destination);
+  }, [leave, onSave, pendingUrl]);
 
-  return { isDirty, markSaved, updateValues };
+  return {
+    isPrompting: pendingUrl !== null,
+    pendingUrl,
+    keepEditing,
+    discardAndLeave,
+    saveAndLeave: onSave ? saveAndLeave : null,
+  };
 }

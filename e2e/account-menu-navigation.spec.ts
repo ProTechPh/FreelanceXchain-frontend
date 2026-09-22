@@ -7,6 +7,7 @@ const utilityDestinations = [
   'Saved',
   'Activity',
   'Settings',
+  'Help & Support',
 ];
 
 async function authenticateParticipant(
@@ -48,6 +49,11 @@ async function authenticateParticipant(
     contentType: 'application/json',
     body: JSON.stringify({ logs: [] }),
   }));
+  await page.route('**/api/support-tickets/me', (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify([]),
+  }));
 }
 
 for (const role of ['freelancer', 'employer'] as const) {
@@ -67,6 +73,21 @@ for (const role of ['freelancer', 'employer'] as const) {
 
     await page.getByRole('menuitem', { name: 'Saved', exact: true }).click();
     await expect(page).toHaveURL(`/dashboard/${role}/saved`);
+  });
+
+  // Support is reachable from the same menu for both roles, and each lands on
+  // its own dashboard route rather than a shared one.
+  test(`${role} reaches Help & Support from the avatar menu`, async ({ page }) => {
+    await authenticateParticipant(page, role);
+    await page.goto(`/dashboard/${role}/activity`);
+
+    await page.getByRole('button', { name: 'Open account menu' }).click();
+    await page.getByRole('menuitem', { name: 'Help & Support', exact: true }).click();
+
+    await expect(page).toHaveURL(`/dashboard/${role}/support`);
+    await expect(page.getByRole('heading', { name: 'Help & Support', level: 1 })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Submit a ticket' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Frequently asked questions' })).toBeVisible();
   });
 }
 
