@@ -184,7 +184,7 @@ export function KycVerificationModal({
                 <AlertCircle className="size-6" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-foreground">Couldn't load the verification session</p>
+                                <p className="text-sm font-semibold text-foreground">Couldn&apos;t load the verification session</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Something went wrong starting the verification window. Try again, or open it in a separate tab.
                 </p>

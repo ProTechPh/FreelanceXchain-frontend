@@ -5,6 +5,26 @@ import { RefreshCw, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
+function formatRelativeTimeStatic(d: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - d.getTime();
+  const diffSeconds = Math.floor(diffMs / 1000);
+  const diffMinutes = Math.floor(diffSeconds / 60);
+  const diffHours = Math.floor(diffMinutes / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffSeconds < 30) return 'just now';
+  if (diffSeconds < 60) return `${diffSeconds}s ago`;
+  if (diffMinutes < 60) return `${diffMinutes}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+
+  return d.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  });
+}
+
 interface DataFreshnessProps {
   /** When the data was last fetched (Date object or ISO string) */
   lastUpdated: Date | string;
@@ -47,39 +67,24 @@ export function DataFreshness({
   size = 'default',
   className,
 }: DataFreshnessProps) {
-  const [relativeTime, setRelativeTime] = React.useState('');
-  const date = typeof lastUpdated === 'string' ? new Date(lastUpdated) : lastUpdated;
-
-  const formatRelativeTime = React.useCallback((d: Date): string => {
-    const now = new Date();
-    const diffMs = now.getTime() - d.getTime();
-    const diffSeconds = Math.floor(diffMs / 1000);
-    const diffMinutes = Math.floor(diffSeconds / 60);
-    const diffHours = Math.floor(diffMinutes / 60);
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffSeconds < 30) return 'just now';
-    if (diffSeconds < 60) return `${diffSeconds}s ago`;
-    if (diffMinutes < 60) return `${diffMinutes}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    if (diffDays < 7) return `${diffDays}d ago`;
-
-    return d.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-    });
-  }, []);
+  const [relativeTime, setRelativeTime] = React.useState(() => {
+    const date = typeof lastUpdated === 'string' ? new Date(lastUpdated) : lastUpdated;
+    return formatRelativeTimeStatic(date);
+  });
 
   React.useEffect(() => {
-    setRelativeTime(formatRelativeTime(date));
-
+    const date = typeof lastUpdated === 'string' ? new Date(lastUpdated) : lastUpdated;
+    
     // Update relative time every 30 seconds
-    const interval = setInterval(() => {
-      setRelativeTime(formatRelativeTime(date));
-    }, 30000);
+    const updateRelativeTime = () => {
+      setRelativeTime(formatRelativeTimeStatic(date));
+    };
+    
+    updateRelativeTime();
+    const interval = setInterval(updateRelativeTime, 30000);
 
     return () => clearInterval(interval);
-  }, [date, formatRelativeTime]);
+  }, [lastUpdated]);
 
   const handleRefresh = async () => {
     if (onRefresh && !isRefreshing) {

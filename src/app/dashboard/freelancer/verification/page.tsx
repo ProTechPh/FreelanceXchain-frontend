@@ -170,7 +170,7 @@ export function VerificationCenter({ role }: { role: ParticipantRole }) {
                 <AlertTriangle className="w-8 h-8 text-destructive" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold">Couldn't load your verification status</h3>
+                <h3 className="text-lg font-semibold">Couldn&apos;t load your verification status</h3>
                 <p className="text-sm text-muted-foreground max-w-md mx-auto">{statusError}</p>
               </div>
               <Button onClick={fetchStatus} variant="outline">

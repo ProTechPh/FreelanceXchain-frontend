@@ -37,6 +37,7 @@ function MagicUrlCallbackContent() {
         setError(message);
         toast.error(getApiErrorMessage(error, 'This sign-in link has expired or already been used. Request a new one.'));
       });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [completeAuth, router, secret, userId]);
 
   if (!userId || !secret) {

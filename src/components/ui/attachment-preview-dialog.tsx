@@ -215,7 +215,7 @@ export function AttachmentPreviewDialog({
 
           {error && (
             <div className="p-6 rounded-2xl border border-destructive/20 bg-destructive/5 text-center space-y-3">
-              <p className="text-sm text-destructive font-medium">Couldn't load the preview: {error}</p>
+                            <p className="text-sm text-destructive font-medium">Couldn&apos;t load the preview: {error}</p>
               {url && (
                 <Button asChild size="sm" variant="outline">
                   <a href={url} target="_blank" rel="noopener noreferrer">

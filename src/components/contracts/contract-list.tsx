@@ -23,7 +23,7 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const fetchRef = useRef<() => void>(() => {});
-  const { lastUpdated, isRefreshing, touch, refresh } = useDataFreshness();
+  const { lastUpdated, isRefreshing, touch } = useDataFreshness();
 
   const fetchContracts = useCallback(() => {
     let active = true;

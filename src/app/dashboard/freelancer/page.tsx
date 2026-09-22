@@ -42,10 +42,8 @@ export default function FreelancerDashboard() {
     activeContracts,
     pendingProposalCount,
     recentProposals,
-    recommended,
     totalEarnings,
     projectsCompleted,
-    isPro,
     hasData,
   } = useFreelancerDashboard();
   const proposalStatusByProject = useMyProposalStatusByProject();
