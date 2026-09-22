@@ -1,4 +1,4 @@
-import { Activity, AlertTriangle, BarChart3, Bell, BrainCircuit, ClipboardList, CreditCard, FileText, FolderOpen, Image, LayoutDashboard, Mail, MessageSquare, PlusCircle, Search, Shield, Sparkles, Star, Tags, Users, Wallet } from 'lucide-react';
+import { Activity, AlertTriangle, BarChart3, Bell, BrainCircuit, ClipboardList, CreditCard, FileText, FolderOpen, Image, LayoutDashboard, LifeBuoy, Mail, MessageSquare, PlusCircle, Search, Shield, Sparkles, Star, Tags, Users, Wallet } from 'lucide-react';
 
 import { getDashboardMessageRoute } from '@/lib/dashboard-message-route';
 import { isNavItemActive } from '@/lib/nav-active';
@@ -109,6 +109,7 @@ const adminNav: NavSection[] = [
       { label: 'KYC review', href: '/dashboard/admin/kyc', icon: Shield },
       { label: 'Disputes', href: '/dashboard/admin/disputes', icon: AlertTriangle },
       { label: 'Skills', href: '/dashboard/admin/skills', icon: Tags },
+      { label: 'Support tickets', href: '/dashboard/admin/support-tickets', icon: LifeBuoy },
     ],
   },
   {

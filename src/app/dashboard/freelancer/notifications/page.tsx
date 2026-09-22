@@ -11,7 +11,7 @@ import { useAuthStore } from '@/stores/authStore';
 import type { Notification, NotificationType } from '@/types';
 import { toast } from 'sonner';
 import { reportFailure, reportLoadFailure } from '@/lib/report-failure';
-import { FileText, DollarSign, MessageSquare, CheckCircle, XCircle, AlertTriangle, Clock, Star, RefreshCw, BellOff, Sparkles, type LucideIcon } from 'lucide-react';
+import { FileText, DollarSign, MessageSquare, CheckCircle, XCircle, AlertTriangle, Clock, Star, RefreshCw, BellOff, Sparkles, LifeBuoy, type LucideIcon } from 'lucide-react';
 import { formatRelativeTime } from '@/lib/format';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
@@ -26,6 +26,7 @@ const ICON_BY_TYPE: Record<NotificationType, { icon: LucideIcon; color: string; 
   payment_released: { icon: DollarSign, color: 'text-success', bg: 'bg-success-subtle' },
   dispute_created: { icon: AlertTriangle, color: 'text-warning', bg: 'bg-warning-subtle' },
   dispute_resolved: { icon: AlertTriangle, color: 'text-warning', bg: 'bg-warning-subtle' },
+  support_ticket_resolved: { icon: LifeBuoy, color: 'text-success', bg: 'bg-success-subtle' },
   dispute_evidence_submitted: { icon: AlertTriangle, color: 'text-warning', bg: 'bg-warning-subtle' },
   refund_requested: { icon: DollarSign, color: 'text-warning', bg: 'bg-warning-subtle' },
   refund_approved: { icon: DollarSign, color: 'text-success', bg: 'bg-success-subtle' },

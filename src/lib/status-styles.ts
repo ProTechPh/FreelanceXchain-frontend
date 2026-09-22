@@ -23,7 +23,8 @@ export type StatusDomain =
   | 'rush'
   | 'kyc'
   | 'transaction'
-  | 'availability';
+  | 'availability'
+  | 'support';
 
 export interface StatusDescriptor {
   /** Semantic meaning, independent of theme. */
@@ -101,6 +102,7 @@ const STATUS_TONE: Record<string, StatusTone> = {
 
   // Terminal, neither good nor bad
   refunded: 'neutral',
+  closed: 'neutral',
   draft: 'neutral',
   unavailable: 'neutral',
   archived: 'neutral',
@@ -125,6 +127,13 @@ const DOMAIN_OVERRIDES: Partial<Record<StatusDomain, Record<string, StatusTone>>
   // user, so it warrants attention rather than plain information.
   kyc: {
     in_progress: 'warning',
+  },
+  // An open support ticket is a question nobody has answered yet. Same reasoning
+  // as the dispute override above: the shared default (`open` = success, correct
+  // for a project accepting proposals) would read as reassuring on the one screen
+  // whose whole job is to show what still needs attention.
+  support: {
+    open: 'warning',
   },
 };
 
