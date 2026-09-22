@@ -169,7 +169,7 @@ function renewalLine(
     | undefined,
 ): string {
   if (!subscription || !subscription.isPro) {
-    return 'Upgrade to unlock AI matching, AI proposals, your analytics and priority matching.';
+    return 'Upgrade to unlock AI matching, AI proposals and priority matching.';
   }
 
   if (!subscription.currentPeriodEnd) return 'Your Pro subscription is active.';

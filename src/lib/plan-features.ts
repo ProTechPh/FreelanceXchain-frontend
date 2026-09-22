@@ -15,8 +15,7 @@ export type ProFeature =
   | 'freelancer-recommendations'
   | 'skill-gaps'
   | 'extract-skills'
-  | 'ai-proposal'
-  | 'skill-trends';
+  | 'ai-proposal';
 
 export interface ProFeatureCopy {
   title: string;
@@ -51,11 +50,6 @@ export const PRO_FEATURE_COPY: Record<ProFeature, ProFeatureCopy> = {
     description: 'Generate a tailored first draft from your profile and the project brief, then edit it yourself.',
     endpoint: '/matching/generate-proposal',
   },
-  'skill-trends': {
-    title: 'Skill demand trends are a Pro feature',
-    description: 'See which skills are rising and falling in demand across the marketplace.',
-    endpoint: '/analytics/skill-trends',
-  },
 };
 
 /** Endpoints the API gates behind Pro. Mirrors the server middleware. */
@@ -65,7 +59,6 @@ export const PRO_ONLY_ENDPOINTS: readonly string[] = [
   '/matching/extract-skills',
   '/matching/skill-gaps',
   '/matching/generate-proposal',
-  '/analytics/skill-trends',
 ];
 
 /**
@@ -78,6 +71,7 @@ export const FREE_ENDPOINTS: readonly string[] = [
   '/analytics/platform',
   '/analytics/liquidity',
   '/analytics/funnel',
+  '/analytics/skill-trends',
   '/dashboard',
 ];
 
@@ -99,12 +93,12 @@ export const PLAN_COMPARISON: readonly PlanComparisonRow[] = [
   { feature: 'Identity verification (KYC)', free: true, pro: true },
   { feature: 'Marketplace stats — platform activity, liquidity, funnel', free: true, pro: true },
   { feature: 'Your earnings and spend analytics, with date ranges', free: true, pro: true },
+  { feature: 'Skill demand trends across the marketplace', free: true, pro: true },
   { feature: 'AI project recommendations', free: false, pro: true, endpoint: '/matching/projects' },
   { feature: 'AI candidate recommendations', free: false, pro: true, endpoint: '/matching/freelancers' },
   { feature: 'Draft a proposal with AI', free: false, pro: true, endpoint: '/matching/generate-proposal' },
   { feature: 'Skill gap analysis', free: false, pro: true, endpoint: '/matching/skill-gaps' },
   { feature: 'Extract skills from a résumé or brief', free: false, pro: true, endpoint: '/matching/extract-skills' },
-  { feature: 'Skill demand trends', free: false, pro: true, endpoint: '/analytics/skill-trends' },
   { feature: 'Priority matching — you\'re among the first matched to new projects', free: false, pro: true },
 ];
 
@@ -115,5 +109,6 @@ export const PLAN_COMPARISON: readonly PlanComparisonRow[] = [
 export const PLAN_FOOTNOTES: readonly string[] = [
   'Priority matching affects how soon you are surfaced, not whether you are chosen. It does not guarantee a match or a hire.',
   'Escrow and platform fees are the same on both plans. Pro does not change what you earn or pay per contract.',
+  'The whole analytics layer — your earnings and spend, marketplace stats and skill demand trends — is free. Pro adds AI matching on top of it, not access to your own numbers.',
   "Cancel any time. You keep Pro until the end of the period you've paid for.",
 ];

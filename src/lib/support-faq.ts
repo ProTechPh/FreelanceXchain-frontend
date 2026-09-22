@@ -189,7 +189,7 @@ export const SUPPORT_FAQ: FaqSection[] = [
         id: 'pro-plan',
         question: 'What does the Pro plan add?',
         answer:
-          'Pro unlocks the AI-assisted features: recommended projects matched to your profile, and skill analysis. Everything to do with posting work, proposals, contracts and escrow is on the free plan.',
+          'Pro unlocks the AI-assisted features: recommended projects matched to your profile, AI proposal drafting, and skill gap analysis. Everything to do with posting work, proposals, contracts, escrow and analytics — including your earnings reports and skill demand trends — is on the free plan.',
       },
       {
         id: 'manage-billing',
