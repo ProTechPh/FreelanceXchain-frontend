@@ -87,7 +87,7 @@ export function FeaturesGrid() {
                 className="rounded-2xl border border-border/80 bg-card p-5 transition-all duration-150 hover:border-primary/40 hover:bg-muted/40 shadow-xs"
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary mb-4">
-                  <Icon className="size-5" fill="currentColor" />
+                  <Icon className="size-5" />
                 </div>
                 <h3 className="text-sm font-bold tracking-tight text-foreground mb-1.5">
                   {feature.title}

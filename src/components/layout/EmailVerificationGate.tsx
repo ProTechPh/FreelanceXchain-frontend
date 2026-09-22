@@ -6,6 +6,7 @@ import { Mail, RefreshCw, LogOut, AlertCircle, Compass } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { authApi } from '@/lib/api';
+import { getApiErrorMessage } from '@/lib/auth-contract';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,8 +35,8 @@ export function EmailVerificationGate() {
         description: `We've sent a new confirmation link to ${user.email}. Check your spam or inbox.`,
       });
       setCooldown(60);
-    } catch {
-      toast.error('Failed to resend email. Please try again in a few moments.');
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Couldn\'t resend the verification email. Try again in a moment.'));
     } finally {
       setIsResending(false);
     }
@@ -50,11 +51,11 @@ export function EmailVerificationGate() {
         toast.success('Email verified successfully! Welcome to FreelanceXchain.');
       } else {
         toast.info('Email not yet verified', {
-          description: 'Please click the link sent to your email address before continuing.',
+          description: 'Click the verification link we sent to your email address, then check your status again.',
         });
       }
     } catch {
-      toast.error('Unable to verify status. Please try again.');
+      toast.error('Couldn\'t check your status. Try again.');
     } finally {
       setIsChecking(false);
     }

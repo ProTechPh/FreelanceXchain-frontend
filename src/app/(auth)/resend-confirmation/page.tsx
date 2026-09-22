@@ -44,7 +44,7 @@ export default function ResendConfirmationPage() {
       setCooldown(60);
       toast.success('Confirmation email sent.');
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Unable to resend the confirmation email.'));
+      toast.error(getApiErrorMessage(error, 'Couldn\'t resend the confirmation email. Try again in a moment.'));
     } finally {
       setLoading(false);
     }

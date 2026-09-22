@@ -38,7 +38,7 @@ export default function ForgotPasswordPage() {
     } catch {
       turnstileRef.current?.reset();
       setTurnstileToken(null);
-      toast.error('Failed to send reset link');
+      toast.error('Couldn\'t send a reset link. Check your email address and try again.');
     } finally {
       setIsLoading(false);
     }

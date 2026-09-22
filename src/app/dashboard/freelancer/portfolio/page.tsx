@@ -110,11 +110,11 @@ export default function PortfolioPage() {
 
   const handleSubmit = async () => {
     if (!form.title.trim() || !form.description.trim()) {
-      toast.error('Title and description are required');
+      toast.error('A title and description are both required to save a portfolio item.');
       return;
     }
     if (!editingId && files.length === 0 && !form.projectUrl.trim()) {
-      toast.error('Please upload at least one image or provide a project URL.');
+      toast.error('Add at least one image or enter a project URL so others can see your work.');
       return;
     }
 
@@ -141,7 +141,7 @@ export default function PortfolioPage() {
 
         const { data: updated } = await portfolioApi.update(editingId, updatePayload);
         setItems((prev) => prev.map((i) => (i.id === editingId ? updated : i)));
-        toast.success('Portfolio item updated');
+        toast.success('Portfolio item updated successfully.');
       } else {
         if (files && files.length > 0) {
           const imageError = validateImageFiles(files, { maxCount: 10, maxFileSize: 5 * 1024 * 1024 });
@@ -160,11 +160,11 @@ export default function PortfolioPage() {
 
         const { data: created } = await portfolioApi.create(formData);
         setItems((prev) => [created, ...prev]);
-        toast.success('Portfolio item added');
+        toast.success('Portfolio item added to your profile.');
       }
       setDialogOpen(false);
     } catch (error) {
-      toast.error(getApiErrorMessage(error, editingId ? 'Failed to update portfolio item' : 'Failed to add portfolio item'));
+      toast.error(getApiErrorMessage(error, editingId ? 'Couldn\'t save the changes. Try again.' : 'Couldn\'t add the portfolio item. Try again.'));
     } finally {
       setSubmitting(false);
     }
@@ -175,9 +175,9 @@ export default function PortfolioPage() {
     try {
       await portfolioApi.delete(id);
       setItems((prev) => prev.filter((i) => i.id !== id));
-      toast.success('Portfolio item deleted');
+      toast.success('Portfolio item removed.');
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Failed to delete portfolio item'));
+      toast.error(getApiErrorMessage(error, 'Couldn\'t remove this portfolio item. Try again.'));
     } finally {
       setDeletingId(null);
     }

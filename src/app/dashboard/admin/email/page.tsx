@@ -137,7 +137,7 @@ export default function AdminEmailPage() {
         )
       );
     } catch {
-      toast.error('Failed to update email');
+      toast.error('Couldn\'t update this email. Try again.');
     }
   };
 
@@ -150,13 +150,13 @@ export default function AdminEmailPage() {
         email.folder === 'trash' ? 'Email permanently deleted' : 'Moved to trash'
       );
     } catch {
-      toast.error('Failed to delete email');
+      toast.error('Couldn\'t delete this email. Try again.');
     }
   };
 
   const handleSend = async () => {
     if (!composeTo || !composeSubject) {
-      toast.error('To and Subject are required');
+      toast.error('Enter a recipient (To) and a subject before sending.');
       return;
     }
     setSending(true);
@@ -176,7 +176,7 @@ export default function AdminEmailPage() {
       setSenderName('');
       if (currentFolder === 'sent') fetchEmails();
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Failed to send email'));
+      toast.error(getApiErrorMessage(error, 'Couldn\'t send the email. Try again.'));
     } finally {
       setSending(false);
     }
@@ -184,7 +184,7 @@ export default function AdminEmailPage() {
 
   const handleReply = async () => {
     if (!selectedEmail || !composeBody) {
-      toast.error('Reply body is required');
+      toast.error('Enter a reply message before sending.');
       return;
     }
     setSending(true);
@@ -199,7 +199,7 @@ export default function AdminEmailPage() {
       setComposeBody('');
       setSenderName('');
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Failed to send reply'));
+      toast.error(getApiErrorMessage(error, 'Couldn\'t send the reply. Try again.'));
     } finally {
       setSending(false);
     }

@@ -31,9 +31,9 @@ function CallToAction() {
           className="relative isolate overflow-hidden rounded-3xl border border-gradient-foreground/10 bg-gradient-to-br from-primary-active via-primary to-primary-hover dark:from-gradient-from dark:via-gradient-via dark:to-gradient-to p-8 text-center text-gradient-foreground shadow-2xl sm:p-14"
         >
           {/* Controlled highlights keep the gradient dimensional without washing out its content. */}
-          <div className="pointer-events-none absolute -right-28 -top-32 size-80 rounded-full bg-gradient-foreground/10 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-36 -left-24 size-72 rounded-full bg-gradient-foreground/10 blur-3xl" />
-          <div className="pointer-events-none absolute inset-x-12 top-0 h-px bg-gradient-to-r from-transparent via-gradient-foreground/40 to-transparent" />
+          <div aria-hidden="true" className="pointer-events-none absolute -right-28 -top-32 size-80 rounded-full bg-gradient-foreground/10 blur-3xl" />
+          <div aria-hidden="true" className="pointer-events-none absolute -bottom-36 -left-24 size-72 rounded-full bg-gradient-foreground/10 blur-3xl" />
+          <div aria-hidden="true" className="pointer-events-none absolute inset-x-12 top-0 h-px bg-gradient-to-r from-transparent via-gradient-foreground/40 to-transparent" />
 
           {/* Badge */}
           <div className="mb-6 inline-flex items-center gap-1.5 rounded-full border border-gradient-foreground/30 bg-gradient-foreground/5 px-3.5 py-1.5 text-xs font-bold text-gradient-foreground backdrop-blur-xs">

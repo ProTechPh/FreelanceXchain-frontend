@@ -258,9 +258,9 @@ export default function ProposalsPage() {
                   // A withdrawn proposal frees the project to be bid on again,
                   // so the browse list must drop its marker.
                   invalidateMyProposals();
-                  toast.success('Proposal withdrawn');
+                toast.success('Proposal withdrawn successfully.');
                 } catch {
-                  toast.error('Failed to withdraw proposal');
+                  toast.error('Couldn\'t withdraw your proposal. Try again.');
                 } finally {
                   setWithdrawingId(null);
                 }

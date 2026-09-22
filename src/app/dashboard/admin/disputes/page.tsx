@@ -107,7 +107,7 @@ export default function DisputesPage() {
   const handleResolve = async (disputeId: string, decision: 'freelancer_favor' | 'employer_favor') => {
     const reason = reasoning[disputeId]?.trim();
     if (!reason) {
-      toast.warning('Add resolution notes before resolving');
+      toast.warning('Add resolution notes before resolving — the parties will see your reasoning.');
       return;
     }
     setResolvingId(disputeId);
@@ -134,7 +134,7 @@ export default function DisputesPage() {
       setVerifiedEvidenceIds((current) => new Set(current).add(evidenceId));
       toast.success('Evidence verified.');
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Unable to verify this evidence.'));
+      toast.error(getApiErrorMessage(error, 'Couldn\'t verify this evidence. Try again.'));
     } finally {
       setVerifyingEvidenceId(null);
     }

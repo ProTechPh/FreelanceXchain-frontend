@@ -45,11 +45,11 @@ export function SidebarUserCard({ collapsed = false }: { collapsed?: boolean }) 
       <div className="flex justify-center px-2 py-3">
         <span
           className="flex size-8 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground"
-          title={isAdmin ? `${user.name ?? 'Admin'} · Administrator` : `${user.name ?? 'Account'}${verified ? ' · KYC verified' : ' · Verification pending'}`}
+          title={isAdmin ? `${user.name ?? 'Admin'} · Administrator` : `${user.name ?? 'Account'}${verified ? ' · Identity verified' : ' · Identity not verified'}`}
         >
           {initials(user.name)}
           <span className="sr-only">
-            {user.name} — {isAdmin ? 'Administrator' : (verified ? 'KYC verified' : 'verification pending')}
+            {user.name} — {isAdmin ? 'Administrator' : (verified ? 'Identity verified' : 'Identity not verified — complete verification to unlock all features')}
           </span>
         </span>
       </div>
@@ -93,9 +93,18 @@ export function SidebarUserCard({ collapsed = false }: { collapsed?: boolean }) 
                   No wallet ·{' '}
                 </Link>
               )}
-              <span className={cn('font-sans', verified ? 'text-success' : 'text-warning')}>
-                {verified ? 'KYC verified' : 'Verification pending'}
-              </span>
+              {verified ? (
+                <span className={cn('font-sans text-success')}>
+                  Identity verified
+                </span>
+              ) : (
+                <Link
+                  href={`/dashboard/${user.role || 'freelancer'}/verification`}
+                  className="font-sans text-warning hover:underline"
+                >
+                  Verify identity
+                </Link>
+              )}
             </>
           )}
         </p>

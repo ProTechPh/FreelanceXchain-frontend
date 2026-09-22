@@ -158,7 +158,7 @@ export default function AnalyticsPage() {
             <p className="text-xl font-bold mt-1">
               {analytics?.escrowFundingRate !== undefined ? `${analytics.escrowFundingRate}%` : '—'}
             </p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Contracts funded</p>
+            <p className="text-2xs text-muted-foreground mt-0.5">Contracts funded</p>
           </CardContent>
         </Card>
         <Card className="bg-card border-border">
@@ -170,7 +170,7 @@ export default function AnalyticsPage() {
             <p className="text-xl font-bold mt-1">
               {analytics?.repeatEmployerRate !== undefined ? `${analytics.repeatEmployerRate}%` : '—'}
             </p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">&ge; 2 completed hires</p>
+            <p className="text-2xs text-muted-foreground mt-0.5">&ge; 2 completed hires</p>
           </CardContent>
         </Card>
         <Card className="bg-card border-border">
@@ -182,7 +182,7 @@ export default function AnalyticsPage() {
             <p className="text-xl font-bold mt-1">
               {analytics?.rushUpgradeAdoptionRate !== undefined ? `${analytics.rushUpgradeAdoptionRate}%` : '—'}
             </p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Expedited contracts</p>
+            <p className="text-2xs text-muted-foreground mt-0.5">Expedited contracts</p>
           </CardContent>
         </Card>
         <Card className="bg-card border-border">
@@ -194,7 +194,7 @@ export default function AnalyticsPage() {
             <p className="text-xl font-bold mt-1">
               {analytics?.rushFeeRevenue !== undefined ? `${analytics.rushFeeRevenue.toFixed(2)} ETH` : '—'}
             </p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">10% platform take</p>
+            <p className="text-2xs text-muted-foreground mt-0.5">10% platform take</p>
           </CardContent>
         </Card>
         <Card className="bg-card border-border">
@@ -206,7 +206,7 @@ export default function AnalyticsPage() {
             <p className="text-xl font-bold mt-1">
               {analytics?.proConversionRate !== undefined ? `${analytics.proConversionRate}%` : '—'}
             </p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">{analytics?.activeProSubscriptions ?? 0} Pro members</p>
+            <p className="text-2xs text-muted-foreground mt-0.5">{analytics?.activeProSubscriptions ?? 0} Pro members</p>
           </CardContent>
         </Card>
         <Card className="bg-card border-border">
@@ -218,7 +218,7 @@ export default function AnalyticsPage() {
             <p className="text-xl font-bold mt-1">
               {funnel ? `${funnel.overallConversionRate}%` : '—'}
             </p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Register to complete</p>
+            <p className="text-2xs text-muted-foreground mt-0.5">Register to complete</p>
           </CardContent>
         </Card>
       </div>
@@ -251,7 +251,7 @@ export default function AnalyticsPage() {
                   <div key={st.stage} className="p-3 rounded-lg border border-border bg-muted/20 space-y-2">
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-semibold text-foreground flex items-center gap-1.5">
-                        <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold flex items-center justify-center">
+                        <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-2xs font-bold flex items-center justify-center">
                           {idx + 1}
                         </span>
                         {st.label}
@@ -260,7 +260,7 @@ export default function AnalyticsPage() {
                     </div>
 
                     <div className="space-y-1">
-                      <div className="flex justify-between text-[11px] text-muted-foreground">
+                      <div className="flex justify-between text-2xs text-muted-foreground">
                         <span>Overall: {st.overallRate}%</span>
                         {idx > 0 && <span>Step Conv: {st.conversionRate}%</span>}
                       </div>
@@ -273,7 +273,7 @@ export default function AnalyticsPage() {
                     </div>
 
                     {idx > 0 && st.dropoffCount > 0 && (
-                      <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-1 border-t border-border/50">
+                      <div className="flex items-center justify-between text-2xs text-muted-foreground pt-1 border-t border-border/50">
                         <span className="flex items-center gap-1 text-destructive/80">
                           <ArrowDownRight className="w-3 h-3" /> Drop-off
                         </span>

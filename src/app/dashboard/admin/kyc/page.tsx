@@ -109,7 +109,7 @@ export default function KycReviewPage() {
       fetchVerifications(filter);
       fetchStats();
     } catch {
-      toast.error(`Failed to ${decision === 'approved' ? 'approve' : 'reject'} user. Please try again.`);
+      toast.error(`Couldn't ${decision === 'approved' ? 'approve' : 'reject'} this verification. Try again.`);
     } finally {
       setReviewing(null);
     }

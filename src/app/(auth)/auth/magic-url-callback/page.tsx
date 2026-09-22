@@ -26,7 +26,7 @@ function MagicUrlCallbackContent() {
           completeAuth(data);
           router.replace(`/dashboard/${data.user.role}`);
         } else if (isRegistrationRequiredResponse(data)) {
-          toast.error('Create a platform account before using passwordless sign in.');
+          toast.error('No account was found for this email. Create a free account to get started.');
           router.replace('/register');
         } else {
           throw new Error('Invalid passwordless response');
@@ -35,7 +35,7 @@ function MagicUrlCallbackContent() {
       .catch((err) => {
         const message = getApiErrorMessage(err, 'This magic link is invalid or expired.');
         setError(message);
-        toast.error(message);
+        toast.error(getApiErrorMessage(error, 'This sign-in link has expired or already been used. Request a new one.'));
       });
   }, [completeAuth, router, secret, userId]);
 

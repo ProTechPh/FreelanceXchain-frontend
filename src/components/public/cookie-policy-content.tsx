@@ -56,7 +56,7 @@ export function CookiePolicyContent() {
               <ShieldCheck className="size-4 text-primary" />
               <span>Login & Safety</span>
             </div>
-            <span className="inline-block text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+            <span className="inline-block text-2xs font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full">
               Always Active
             </span>
             <p className="text-xs text-muted-foreground leading-relaxed">
@@ -70,7 +70,7 @@ export function CookiePolicyContent() {
               <Palette className="size-4 text-primary" />
               <span>Your Settings</span>
             </div>
-            <span className="inline-block text-[10px] font-bold bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
+            <span className="inline-block text-2xs font-bold bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
               Optional
             </span>
             <p className="text-xs text-muted-foreground leading-relaxed">
@@ -84,7 +84,7 @@ export function CookiePolicyContent() {
               <Zap className="size-4 text-primary" />
               <span>Site Speed & Health</span>
             </div>
-            <span className="inline-block text-[10px] font-bold bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
+            <span className="inline-block text-2xs font-bold bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
               Optional
             </span>
             <p className="text-xs text-muted-foreground leading-relaxed">

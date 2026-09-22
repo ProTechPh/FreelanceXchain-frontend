@@ -82,7 +82,7 @@ export default function RefundPolicyPage() {
 
       <section id="section-5" className="scroll-mt-32 space-y-3">
         <h2 className="text-xl font-bold text-foreground">5. Non-Refundable Blockchain Gas Fees</h2>
-        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-foreground space-y-2">
+        <div className="p-4 rounded-2xl bg-warning-subtle border border-warning-border text-foreground space-y-2">
           <p className="text-sm font-semibold">Important Gas Fee Disclosure:</p>
           <p className="text-xs text-muted-foreground leading-relaxed">
             Network transaction fees (&quot;gas&quot;) paid to miners or validators on the Ethereum, Polygon, Arbitrum, Base, or Optimism networks are required by the underlying blockchain protocol to compute state changes. FreelanceXchain does not receive or control these network fees. Consequently, gas fees paid during deposit, approval, dispute submission, or refund claims are strictly non-refundable.

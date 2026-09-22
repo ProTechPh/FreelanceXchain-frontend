@@ -15,12 +15,15 @@ import { PageHeader } from '@/components/dashboard/page-header';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Progress } from '@/components/ui/progress';
 import { formatAmount, formatDate } from '@/lib/format';
+import { PullToRefresh } from '@/components/ui/pull-to-refresh';
+import { DataFreshness, useDataFreshness } from '@/components/ui/data-freshness';
 
 export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'freelancer'> }) {
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const fetchRef = useRef<() => void>(() => {});
+  const { lastUpdated, isRefreshing, touch, refresh } = useDataFreshness();
 
   const fetchContracts = useCallback(() => {
     let active = true;
@@ -28,7 +31,10 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
     setError(false);
     contractsApi.list({ limit: 50 })
       .then(({ data }) => {
-        if (active) setContracts(data.items);
+        if (active) {
+          setContracts(data.items);
+          touch();
+        }
       })
       .catch((err) => {
         if (active) {
@@ -42,7 +48,7 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
     return () => {
       active = false;
     };
-  }, []);
+  }, [touch]);
 
   useEffect(() => {
     fetchRef.current = () => void fetchContracts();
@@ -57,12 +63,35 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
   const totalValue = contracts.reduce((total, contract) => total + contract.totalAmount, 0);
   const completed = contracts.filter((contract) => contract.status === 'completed').length;
 
+  const handleRefresh = useCallback(async () => {
+    let active = true;
+    try {
+      const { data } = await contractsApi.list({ limit: 50 });
+      if (active) {
+        setContracts(data.items);
+        touch();
+      }
+    } finally {
+      active = false;
+    }
+  }, [touch]);
+
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title="Contracts"
-        description="Track funding, deliverables, approvals, and payment activity."
-      />
+    <PullToRefresh onRefresh={handleRefresh} className="min-h-0">
+      <div className="space-y-6">
+        <PageHeader
+          title="Contracts"
+          description="Track funding, deliverables, approvals, and payment activity."
+          actions={!loading && !error && contracts.length > 0 ? (
+            <DataFreshness
+              lastUpdated={lastUpdated}
+              isRefreshing={isRefreshing}
+              onRefresh={handleRefresh}
+              label="contracts"
+              size="sm"
+            />
+          ) : undefined}
+        />
 
       {loading ? (
         <div className="space-y-4">
@@ -147,12 +176,13 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
                   </Button>
                 </CardContent>
               </Card>
-            );
+                        );
           })}
         </div>
       )}
         </>
       )}
-    </div>
+      </div>
+    </PullToRefresh>
   );
 }

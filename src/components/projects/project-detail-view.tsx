@@ -144,7 +144,7 @@ export function ProjectDetailView({
         await navigator.clipboard.writeText(url);
         toast.success('Project link copied to clipboard!');
       } catch {
-        toast.error('Failed to copy link');
+        toast.error('Couldn\'t copy to clipboard. Try selecting and copying the link manually.');
       }
     }
   };

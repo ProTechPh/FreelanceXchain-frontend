@@ -36,7 +36,7 @@ export function MfaCard({ factors, onFactorsChange }: MfaCardProps) {
       setOtpCode('');
       toast.success('Two-factor authentication disabled.');
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Unable to disable two-factor authentication.'));
+      toast.error(getApiErrorMessage(error, 'Couldn\'t disable two-factor authentication. Check your code and try again.'));
     } finally {
       setIsDisablingMfa(false);
     }

@@ -337,7 +337,7 @@ function DisputeCenterInner({ role, disputeId }: { role: ParticipantRole; disput
                     {milestones.map((milestone) => <option key={milestone.id} value={milestone.id}>{milestone.title}</option>)}
                   </select>
                   {draft.contractId && !loadingMilestones && milestones.length === 0 && (
-                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                    <p className="text-xs text-warning">
                       No submitted milestones available for dispute. Only milestones currently under review (&apos;submitted&apos;) can be disputed.
                     </p>
                   )}

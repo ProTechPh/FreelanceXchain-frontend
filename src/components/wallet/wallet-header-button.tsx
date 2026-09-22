@@ -41,10 +41,10 @@ export function WalletHeaderButton({ compact }: { compact?: boolean } = {}) {
     try {
       await navigator.clipboard.writeText(walletAddress);
       setCopied(true);
-      toast.success('Wallet address copied to clipboard');
+      toast.success('Wallet address copied to clipboard.');
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast.error('Failed to copy address');
+      toast.error('Couldn\'t copy your address. Try selecting and copying it manually.');
     }
   };
 

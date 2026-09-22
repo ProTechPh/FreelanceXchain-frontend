@@ -99,7 +99,7 @@ export function VerificationCenter({ role }: { role: ParticipantRole }) {
         handleOpenModal(data.didit_session_url);
       }
     } catch (err: unknown) {
-      setError(getApiErrorMessage(err, 'Failed to start verification'));
+      setError(getApiErrorMessage(err, 'Couldn\'t start the verification session. Try again.'));
     } finally {
       setInitiating(false);
     }
@@ -113,7 +113,7 @@ export function VerificationCenter({ role }: { role: ParticipantRole }) {
       setVerification(res.data);
       setHistory((current) => current.map((item) => item.id === res.data.id ? res.data : item));
     } catch (refreshError) {
-      setError(getApiErrorMessage(refreshError, 'Unable to refresh verification status.'));
+      setError(getApiErrorMessage(refreshError, 'Couldn\'t refresh your verification status. Try again.'));
     } finally {
       setRefreshing(false);
     }
@@ -129,11 +129,11 @@ export function VerificationCenter({ role }: { role: ParticipantRole }) {
   const StatusIcon = config?.icon ?? Shield;
   const retryAvailability = verification ? getKycRetryAvailability(verification) : null;
   const roleDescription = role === 'employer'
-    ? 'Complete KYC verification to hire freelancers and post projects'
-    : 'Complete KYC verification to access all platform features';
+    ? 'Verify your identity to post projects, hire freelancers, and fund contracts'
+    : 'Verify your identity to submit proposals, work on contracts, and receive payments';
   const unlockDescription = role === 'employer'
-    ? 'Complete identity verification to hire freelancers and manage contracts.'
-    : 'Complete identity verification to unlock project proposals, contracts, and payments.';
+    ? 'Identity verification lets you post projects, accept proposals, and fund milestone escrow. '
+    : 'Identity verification lets you submit proposals, complete milestones, and receive escrow payments. ';
 
   return (
     <div className="space-y-6">
@@ -170,7 +170,7 @@ export function VerificationCenter({ role }: { role: ParticipantRole }) {
                 <AlertTriangle className="w-8 h-8 text-destructive" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold">Unable to Load Verification Status</h3>
+                <h3 className="text-lg font-semibold">Couldn't load your verification status</h3>
                 <p className="text-sm text-muted-foreground max-w-md mx-auto">{statusError}</p>
               </div>
               <Button onClick={fetchStatus} variant="outline">
@@ -183,7 +183,7 @@ export function VerificationCenter({ role }: { role: ParticipantRole }) {
                 <Shield className="w-8 h-8 text-muted-foreground" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold">Not Verified Yet</h3>
+                <h3 className="text-lg font-semibold">Identity not verified yet</h3>
                 <p className="text-sm text-muted-foreground max-w-md mx-auto">
                   {unlockDescription}
                   The process takes about 2 minutes.

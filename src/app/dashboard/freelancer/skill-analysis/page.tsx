@@ -41,7 +41,7 @@ export default function SkillAnalysisPage() {
     } catch (error) {
       const msg = getApiErrorMessage(error, '');
       if (!msg.toLowerCase().includes('profile not found') && !msg.toLowerCase().includes('not found')) {
-        toast.error(msg || 'Unable to analyze your skill gaps.');
+        toast.error(msg || 'Couldn\'t analyse your skill gaps. Try again.');
       }
     } finally {
       setLoadingAnalysis(false);
@@ -68,7 +68,7 @@ export default function SkillAnalysisPage() {
       // Only worth asking when the AI actually produced something to judge.
       else requestRatingPrompt('ai_skill_extraction');
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Unable to extract skills from this text.'));
+      toast.error(getApiErrorMessage(error, 'Couldn\'t extract skills from that text. Try again.'));
     } finally {
       setExtracting(false);
     }
@@ -81,7 +81,7 @@ export default function SkillAnalysisPage() {
       toast.success(`Added "${skillName}" to your profile`);
       void loadAnalysis(true);
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Unable to add skill to profile.'));
+      toast.error(getApiErrorMessage(error, 'Couldn\'t add that skill to your profile. Try again.'));
     }
   };
 

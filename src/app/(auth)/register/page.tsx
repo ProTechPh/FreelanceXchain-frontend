@@ -58,7 +58,7 @@ export default function RegisterPage() {
       window.location.href = `${apiUrl}/auth/oauth/${provider}`;
     } catch (error) {
       setOauthLoading(null);
-      const msg = getApiErrorMessage(error, 'Too many attempts. Please try again later.');
+      const msg = getApiErrorMessage(error, 'Couldn\'t connect with that provider. Try again or register with your email.');
       setOauthError(msg);
       toast.error(msg);
     }
@@ -77,7 +77,7 @@ export default function RegisterPage() {
     } catch (error) {
       turnstileRef.current?.reset();
       setTurnstileToken(null);
-      toast.error(getApiErrorMessage(error, 'Registration failed. Please try again.'));
+      toast.error(getApiErrorMessage(error, 'Couldn\'t create your account. Try again.'));
     }
   };
 

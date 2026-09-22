@@ -125,7 +125,7 @@ export function NotificationsCenter() {
     } catch {
       setNotifications(previous);
       window.dispatchEvent(new CustomEvent('notification-count-change', { detail: { delta: previousUnreadCount } }));
-      toast.error('Failed to mark all as read');
+      toast.error('Couldn\'t mark your notifications as read. Try again.');
     }
   };
 

@@ -98,9 +98,9 @@ export function BillingSettings() {
                       interval={interval}
                       blockedReason={
                         blockedReason === 'email_unverified'
-                          ? 'Verify your email address first.'
+                          ? 'Verify your email address first — check your inbox for the link.'
                           : blockedReason === 'kyc_unverified'
-                            ? 'Complete identity verification first.'
+                            ? 'Complete identity verification first — it takes about 2 minutes.'
                             : null
                       }
                       {...(trialOffered ? { label: `Start ${trialDays}-day free trial` } : {})}

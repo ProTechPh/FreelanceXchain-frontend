@@ -213,10 +213,10 @@ function EditProjectContent() {
 
   const save = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (title.trim().length < 5) return toast.error('Project title must be at least 5 characters.');
-    if (description.trim().length < 20) return toast.error('Project description must be at least 20 characters.');
-    if (!Number.isFinite(Number(budget)) || Number(budget) <= 0) return toast.error('Budget must be greater than 0.');
-    if (!deadline) return toast.error('Choose a deadline.');
+    if (title.trim().length < 5) return toast.error('Project title must be at least 5 characters. Make it descriptive so freelancers know what to expect.');
+    if (description.trim().length < 20) return toast.error('Project description must be at least 20 characters. Include requirements and expected outcomes.');
+    if (!Number.isFinite(Number(budget)) || Number(budget) <= 0) return toast.error('Enter a budget greater than $0.');
+    if (!deadline) return toast.error('Choose a project deadline.');
 
     if (status === 'cancelled' && project?.status !== 'cancelled') {
       setConfirmCancelOpen(true);

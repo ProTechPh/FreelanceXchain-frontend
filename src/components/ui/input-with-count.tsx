@@ -46,7 +46,7 @@ export const InputWithCount = React.forwardRef<HTMLInputElement, InputWithCountP
       if (!maxLength) return 'text-muted-foreground';
       const ratio = length / maxLength;
       if (ratio >= 1) return 'text-destructive';
-      if (ratio >= 0.9) return 'text-amber-500';
+      if (ratio >= 0.9) return 'text-warning';
       return 'text-muted-foreground';
     };
 
