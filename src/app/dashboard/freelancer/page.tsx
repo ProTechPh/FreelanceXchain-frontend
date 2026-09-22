@@ -42,6 +42,7 @@ export default function FreelancerDashboard() {
     activeContracts,
     pendingProposalCount,
     recentProposals,
+    recommended,
     totalEarnings,
     projectsCompleted,
     hasData,
