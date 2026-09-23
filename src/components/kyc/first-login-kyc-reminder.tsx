@@ -1,5 +1,6 @@
-'use client';
+﻿'use client';
 
+import { useRef } from 'react';
 import { CircleCheck, ShieldCheck } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -39,8 +40,22 @@ export function FirstLoginKycReminder({
   onLater,
   onVerify,
 }: FirstLoginKycReminderProps) {
+  const isNavigatingRef = useRef(false);
+
+  const handleVerify = () => {
+    isNavigatingRef.current = true;
+    onVerify();
+  };
+
   return (
-    <Dialog open={open} onOpenChange={(nextOpen) => { if (!nextOpen) onLater(); }}>
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen && !isNavigatingRef.current) {
+          onLater();
+        }
+      }}
+    >
       <DialogContent className="sm:max-w-md">
         <DialogHeader className="pr-8">
           <div className="mb-2 flex size-11 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -71,7 +86,7 @@ export function FirstLoginKycReminder({
           <Button type="button" variant="outline" onClick={onLater}>
             Do it later
           </Button>
-          <Button type="button" variant="gradient" onClick={onVerify}>
+          <Button type="button" variant="gradient" onClick={handleVerify}>
             <ShieldCheck className="size-4" aria-hidden="true" />
             Verify identity
           </Button>
