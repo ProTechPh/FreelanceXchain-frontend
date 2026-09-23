@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { ArrowLeft, ExternalLink, Eye, FileText, Link2, Plus, Scale, ShieldCheck, Trash2, Upload } from 'lucide-react';
@@ -43,7 +43,7 @@ import {
 type ParticipantRole = Extract<UserRole, 'employer' | 'freelancer'>;
 const emptyDraft: DisputeDraft = { contractId: '', milestoneId: '', reason: '' };
 
-function DisputeCenterInner({ role, disputeId }: { role: ParticipantRole; disputeId?: string }) {
+const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disputeId }: { role: ParticipantRole; disputeId?: string }) {
   const user = useAuthStore((state) => state.user);
   const searchParams = useSearchParams();
   const contractIdParam = searchParams?.get('contractId') || '';
@@ -333,7 +333,7 @@ function DisputeCenterInner({ role, disputeId }: { role: ParticipantRole; disput
                 <div className="space-y-2">
                   <Label htmlFor="dispute-milestone">Submitted milestone</Label>
                   <select id="dispute-milestone" disabled={!draft.contractId || loadingMilestones} className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm" value={draft.milestoneId} onChange={(event) => setDraft((current) => ({ ...current, milestoneId: event.target.value }))}>
-                    <option value="">{loadingMilestones ? 'Loading…' : 'Choose a milestone'}</option>
+                    <option value="">{loadingMilestones ? 'Loadingâ€¦' : 'Choose a milestone'}</option>
                     {milestones.map((milestone) => <option key={milestone.id} value={milestone.id}>{milestone.title}</option>)}
                   </select>
                   {draft.contractId && !loadingMilestones && milestones.length === 0 && (
@@ -343,7 +343,7 @@ function DisputeCenterInner({ role, disputeId }: { role: ParticipantRole; disput
                   )}
                 </div>
                 <div className="space-y-2 sm:col-span-2"><Label htmlFor="dispute-reason">Reason</Label><Textarea id="dispute-reason" rows={4} value={draft.reason} onChange={(event) => setDraft((current) => ({ ...current, reason: event.target.value }))} placeholder="Describe the problem and the resolution you are seeking." /></div>
-                <Button className="sm:col-span-2 sm:w-fit" type="submit" disabled={actionId === 'create' || (Boolean(draft.contractId) && !loadingMilestones && milestones.length === 0)}><Scale className="mr-2 size-4" />{actionId === 'create' ? 'Opening…' : 'Open dispute'}</Button>
+                <Button className="sm:col-span-2 sm:w-fit" type="submit" disabled={actionId === 'create' || (Boolean(draft.contractId) && !loadingMilestones && milestones.length === 0)}><Scale className="mr-2 size-4" />{actionId === 'create' ? 'Openingâ€¦' : 'Open dispute'}</Button>
               </form>
             </CardContent>
           </Card>
@@ -487,7 +487,7 @@ function DisputeCenterInner({ role, disputeId }: { role: ParticipantRole; disput
                           <Upload className="mr-2 size-4" />Upload file
                         </Button>
                       </div>
-                      <div className="space-y-2"><Label htmlFor={`evidence-link-${dispute.id}`}>Evidence link</Label><Input id={`evidence-link-${dispute.id}`} type="url" placeholder="https://…" value={evidenceLinks[dispute.id] ?? ''} onChange={(event) => setEvidenceLinks((current) => ({ ...current, [dispute.id]: event.target.value }))} /><Button type="button" size="sm" variant="outline" disabled={actionId === `link:${dispute.id}`} onClick={() => void submitLinkEvidence(dispute.id)}><Link2 className="mr-2 size-4" />Submit link</Button></div>
+                      <div className="space-y-2"><Label htmlFor={`evidence-link-${dispute.id}`}>Evidence link</Label><Input id={`evidence-link-${dispute.id}`} type="url" placeholder="https://â€¦" value={evidenceLinks[dispute.id] ?? ''} onChange={(event) => setEvidenceLinks((current) => ({ ...current, [dispute.id]: event.target.value }))} /><Button type="button" size="sm" variant="outline" disabled={actionId === `link:${dispute.id}`} onClick={() => void submitLinkEvidence(dispute.id)}><Link2 className="mr-2 size-4" />Submit link</Button></div>
                     </div>
                   ) : (
                     <div className="rounded-lg border border-dashed border-border p-4 text-xs text-muted-foreground flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
@@ -540,7 +540,7 @@ function DisputeCenterInner({ role, disputeId }: { role: ParticipantRole; disput
       </Dialog>
     </div>
   );
-}
+});
 
 export function DisputeCenter(props: { role: ParticipantRole; disputeId?: string }) {
   return (

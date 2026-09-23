@@ -266,3 +266,20 @@ export const useTourStore = create<TourState>()(
     }
   )
 );
+
+// Granular selectors to prevent unnecessary re-renders
+export const useTourStepIndex = () => useTourStore((state) => state.stepIndex);
+export const useTourIsRunning = () => useTourStore((state) => state.isRunning);
+export const useTourActiveRole = () => useTourStore((state) => state.activeRole);
+export const useTourActiveUserId = () => useTourStore((state) => state.activeUserId);
+export const useTourProgressByUser = () => useTourStore((state) => state.progressByUser);
+export const useTourActions = () => useTourStore((state) => ({
+  start: state.start,
+  next: state.next,
+  back: state.back,
+  goTo: state.goTo,
+  skip: state.skip,
+  finish: state.finish,
+  setAutoStart: state.setAutoStart,
+}));
+

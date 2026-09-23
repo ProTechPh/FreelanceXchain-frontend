@@ -8,7 +8,7 @@ import {
   projectsApi,
   reputationApi,
 } from '@/lib/api';
-import { useAuthStore } from '@/stores/authStore';
+import { useUser } from '@/stores/authStore';
 import { useFreelancerAnalytics } from '@/hooks/use-analytics';
 import { DEFAULT_RANGE_PRESET, resolveRange, type RangePresetId } from '@/lib/analytics-range';
 import type { Contract, Proposal, Project } from '@/types';
@@ -32,7 +32,7 @@ export interface RecommendedProjectView {
 }
 
 export function useFreelancerDashboard() {
-  const currentUser = useAuthStore((state) => state.user);
+  const currentUser = useUser();
   const [coreLoading, setCoreLoading] = useState(true);
   const [recommendedLoading, setRecommendedLoading] = useState(true);
   const [range, setRange] = useState<RangePresetId>(DEFAULT_RANGE_PRESET);

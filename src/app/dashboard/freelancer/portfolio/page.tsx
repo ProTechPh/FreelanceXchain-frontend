@@ -437,7 +437,7 @@ export default function PortfolioPage() {
                 <div className="aspect-[16/9] bg-muted/20 relative overflow-hidden flex items-center justify-center">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={livePreviewUrl}
+                    src={livePreviewUrl!}
                     alt="Preview"
                     loading="lazy"
                     decoding="async"

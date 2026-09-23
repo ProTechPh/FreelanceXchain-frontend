@@ -24,6 +24,7 @@ import {
   File,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import Image from 'next/image';
 
 export interface AttachmentPreviewTarget {
   filename: string;
@@ -245,12 +246,14 @@ export function AttachmentPreviewDialog({
               {/* Image Display */}
               {shouldTryImage && url && (
                 <div className="flex items-center justify-center p-4 rounded-2xl bg-black/5 dark:bg-background border border-border min-h-[300px]">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <Image
                     src={url}
                     alt={displayFilename}
-                    decoding="async"
+                    width={800}
+                    height={600}
                     className="max-h-[65dvh] max-w-full rounded-xl object-contain shadow-md"
+                    unoptimized={url?.startsWith('http')}
+                    loading="lazy"
                     onError={() => setImageFailed(true)}
                   />
                 </div>
@@ -291,3 +294,4 @@ export function AttachmentPreviewDialog({
     </Dialog>
   );
 }
+

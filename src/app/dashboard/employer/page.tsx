@@ -1,29 +1,70 @@
-'use client';
+﻿/**
+ * EMPLOYER DASHBOARD - CLIENT COMPONENT
+ * 
+ * This page MUST remain a Client Component ("use client") because:
+ * 
+ * 1. AUTHENTICATION REQUIREMENTS:
+ *    - Uses useEmployerDashboard() hook which internally uses auth context
+ *    - Requires authenticated user data from AuthContext
+ *    - Accesses user session for API calls
+ * 
+ * 2. REAL-TIME DATA HOOKS:
+ *    - Custom hook fetches live dashboard data on mount
+ *    - Data changes based on user interactions (range filter, etc.)
+ *    - Dynamic stats recalculation on data changes
+ * 
+ * 3. STATE MANAGEMENT:
+ *    - Analytics range filter state (range, setRange)
+ *    - Loading states for async operations
+ *    - Dynamic stats calculations
+ * 
+ * 4. INTERACTIVE COMPONENTS:
+ *    - AnalyticsRangeFilter with onChange handlers
+ *    - WalletConnectBanner (wallet connection UI)
+ *    - WalletBalanceCard (displays connected wallet)
+ *    - ProGate (billing feature gating)
+ *    - TourStepLink (onboarding tour integration)
+ * 
+ * 5. DASHBOARD-SPECIFIC FEATURES:
+ *    - Active projects listing
+ *    - Recent proposals display
+ *    - AI freelancer recommendations
+ *    - Spending analytics
+ * 
+ * CONVERSION NOTES:
+ *    - Static layout structure could be extracted to Server Component
+ *    - Header section and stats cards layout could be server-rendered
+ *    - Quick actions grid is static and could be server-rendered
+ *    - However, the tight integration with real-time data and auth
+ *      makes full conversion impractical without significant refactoring
+ */
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { StatusBadge } from '@/components/ui/status-badge';
-import Link from 'next/link';
-import { AnalyticsRangeFilter } from '@/components/analytics/range-filter';
-import { ProGate } from '@/components/billing/pro-gate';
-import { getRangeLabel } from '@/lib/analytics-range';
-import { DollarSign, FolderOpen, FileText, Users, Clock, ArrowUpRight, PlusCircle, Briefcase } from 'lucide-react';
-import { formatAmount, formatRelativeTime, formatDate } from '@/lib/format';
-import { StatsSkeleton, ListSkeleton } from '@/components/dashboard/skeletons';
-import { WalletConnectBanner } from '@/components/wallet/wallet-connect-banner';
-import { TourStepLink } from '@/components/onboarding/tour-step-link';
-import { WalletBalanceCard } from '@/components/wallet/wallet-balance-card';
-import { useEmployerDashboard } from '@/hooks/use-employer-dashboard';
+"use client";
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { StatusBadge } from "@/components/ui/status-badge";
+import Link from "next/link";
+import { AnalyticsRangeFilter } from "@/components/analytics/range-filter";
+import { ProGate } from "@/components/billing/pro-gate";
+import { getRangeLabel } from "@/lib/analytics-range";
+import { DollarSign, FolderOpen, FileText, Users, Clock, ArrowUpRight, PlusCircle, Briefcase } from "lucide-react";
+import { formatAmount, formatRelativeTime, formatDate } from "@/lib/format";
+import { StatsSkeleton, ListSkeleton } from "@/components/dashboard/skeletons";
+import { WalletConnectBanner } from "@/components/wallet/wallet-connect-banner";
+import { TourStepLink } from "@/components/onboarding/tour-step-link";
+import { WalletBalanceCard } from "@/components/wallet/wallet-balance-card";
+import { useEmployerDashboard } from "@/hooks/use-employer-dashboard";
 
 function relativeTime(iso: string | null | undefined): string {
-  if (!iso) return 'recently';
+  if (!iso) return "recently";
   return formatRelativeTime(iso);
 }
 
 function initials(name: string): string {
-  return name.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join('') || '?';
+  return name.split(" ").filter(Boolean).slice(0, 2).map((p) => p[0]?.toUpperCase()).join("") || "?";
 }
 
 export default function EmployerDashboard() {
@@ -48,38 +89,38 @@ export default function EmployerDashboard() {
 
   const stats = [
     {
-      title: 'Active Projects',
+      title: "Active Projects",
       value: String(activeProjects.length),
       icon: FolderOpen,
-      color: 'text-primary',
-      bg: 'bg-primary/10',
+      color: "text-primary",
+      bg: "bg-primary/10",
       loading: coreLoading,
       tour: undefined,
     },
     {
-      title: range === 'all' ? 'Total Spent' : `Spent · ${getRangeLabel(range)}`,
+      title: range === "all" ? "Total Spent" : `Spent · ${getRangeLabel(range)}`,
       value: formatAmount(totalSpent),
       icon: DollarSign,
-      color: 'text-success',
-      bg: 'bg-success-subtle',
+      color: "text-success",
+      bg: "bg-success-subtle",
       loading: totalSpent === null && completedContractCount === null,
-      tour: 'earnings',
+      tour: "earnings",
     },
     {
-      title: 'Pending Proposals',
+      title: "Pending Proposals",
       value: String(pendingProposalCount),
       icon: FileText,
-      color: 'text-cyan',
-      bg: 'bg-cyan/10',
+      color: "text-cyan",
+      bg: "bg-cyan/10",
       loading: coreLoading,
       tour: undefined,
     },
     {
-      title: 'Completed Contracts',
-      value: completedContractCount !== null ? String(completedContractCount) : '—',
+      title: "Completed Contracts",
+      value: completedContractCount !== null ? String(completedContractCount) : "—",
       icon: Briefcase,
-      color: 'text-warning',
-      bg: 'bg-warning-subtle',
+      color: "text-warning",
+      bg: "bg-warning-subtle",
       loading: completedContractCount === null,
       tour: undefined,
     },
@@ -91,7 +132,7 @@ export default function EmployerDashboard() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
-            Welcome back{currentUser?.name ? `, ${currentUser.name}` : ''}!
+            Welcome back{currentUser?.name ? `, ${currentUser.name}` : ""}!
           </h1>
           <p className="text-muted-foreground">Manage your projects and find talent</p>
           <AnalyticsRangeFilter
@@ -163,7 +204,7 @@ export default function EmployerDashboard() {
                 <>
                   {activeProjects.slice(0, 4).map((project) => {
                     const milestones = project.milestones ?? [];
-                    const completedCount = milestones.filter((m) => m.status === 'completed').length;
+                    const completedCount = milestones.filter((m) => m.status === "completed").length;
                     const progress = milestones.length > 0 ? Math.round((completedCount / milestones.length) * 100) : 0;
                     return (
                       <Link
@@ -186,7 +227,7 @@ export default function EmployerDashboard() {
                             <StatusBadge status={project.status} domain="project" />
                           </div>
                         </div>
-                        {project.status === 'in_progress' && milestones.length > 0 && (
+                        {project.status === "in_progress" && milestones.length > 0 && (
                           <div>
                             <div className="flex items-center justify-between text-xs mb-1">
                               <span className="text-muted-foreground">Progress</span>
@@ -227,10 +268,10 @@ export default function EmployerDashboard() {
                 href={
                   recentProposals.length === 1
                     ? `/dashboard/employer/projects/${recentProposals[0].projectId}/proposals`
-                    : '/dashboard/employer/projects'
+                    : "/dashboard/employer/projects"
                 }
               >
-                {recentProposals.length === 1 ? 'View Proposals' : 'View in Projects'}{' '}
+                {recentProposals.length === 1 ? "View Proposals" : "View in Projects"}{" "}
                 <ArrowUpRight className="w-4 h-4 ml-1" />
               </Link>
             </Button>

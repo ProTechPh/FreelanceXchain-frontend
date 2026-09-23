@@ -1,3 +1,35 @@
+﻿/**
+ * CONTACT PAGE - CLIENT COMPONENT
+ * 
+ * This page MUST remain a Client Component ("use client") because:
+ * 
+ * 1. FORM STATE MANAGEMENT:
+ *    - Uses React useState for form data (formData, errors, submitted, submitting)
+ *    - Uses useCallback for validation function
+ * 
+ * 2. BROWSER APIs:
+ *    - Uses window.open() to trigger mailto: links
+ *    - Uses navigator.clipboard.writeText() for copy functionality
+ *    - Accesses window.location for redirects
+ * 
+ * 3. EVENT HANDLERS:
+ *    - Form submission handler (handleSubmit)
+ *    - Input change handlers (updateField)
+ *    - Button click handlers (copy email, reset form)
+ * 
+ * 4. FORM INTERACTIVITY:
+ *    - Real-time validation
+ *    - Dynamic form state (submitted vs form view)
+ *    - Controlled inputs with onChange handlers
+ * 
+ * CONVERSION NOTES:
+ *    - Static parts (header, support channels grid) could theoretically be extracted
+ *      to a Server Component, but the benefit is minimal since the form is the
+ *      primary content of this page.
+ *    - The newsletter section at bottom uses localStorage and would also require
+ *      client-side handling.
+ */
+
 "use client";
 
 import React, { useState, useCallback } from "react";
@@ -5,7 +37,7 @@ import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 import Navbar from "@/components/layout/navbar";
 import { FooterSection } from "@/components/layout/footer-section";
-import { Sparkles as Sparkle, ShieldCheck, CircleQuestionMark as Question, Lock as LockKey, Mail, Copy, Building2 } from 'lucide-react';
+import { Sparkles as Sparkle, ShieldCheck, CircleQuestionMark as Question, Lock as LockKey, Mail, Copy, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -46,8 +78,8 @@ export default function ContactPage() {
   const reduce = useReducedMotion();
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [lastMailtoUrl, setLastMailtoUrl] = useState('');
-  const [formattedMessage, setFormattedMessage] = useState('');
+  const [lastMailtoUrl, setLastMailtoUrl] = useState("");
+  const [formattedMessage, setFormattedMessage] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
     name: "",
@@ -87,7 +119,7 @@ export default function ContactPage() {
       setLastMailtoUrl(mailtoUrl);
       setFormattedMessage(`Subject: [${formData.category}] ${formData.subject}\n\n${mailtoBody}`);
 
-      window.open(mailtoUrl, '_self');
+      window.open(mailtoUrl, "_self");
 
       setSubmitted(true);
       setSubmitting(false);
@@ -189,7 +221,7 @@ export default function ContactPage() {
                     className="w-full"
                     onClick={() => {
                       navigator.clipboard.writeText(formattedMessage);
-                      toast.success('Inquiry details copied to clipboard');
+                      toast.success("Inquiry details copied to clipboard");
                     }}
                   >
                     <Copy className="size-4 mr-2" />
@@ -201,7 +233,7 @@ export default function ContactPage() {
                     className="text-xs"
                     onClick={() => {
                       navigator.clipboard.writeText(SUPPORT_EMAIL);
-                      toast.success('Support email copied to clipboard');
+                      toast.success("Support email copied to clipboard");
                     }}
                   >
                     Copy Support Email ({SUPPORT_EMAIL})

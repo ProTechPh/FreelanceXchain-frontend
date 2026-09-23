@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { reportFailure } from '@/lib/report-failure';
@@ -58,7 +58,7 @@ const initialReview: ReviewDraft = {
   wouldWorkAgain: true,
 };
 
-export function ContractWorkspace({
+export const ContractWorkspace = React.memo(function ContractWorkspace({
   contractId,
   role,
 }: {
@@ -153,7 +153,7 @@ export function ContractWorkspace({
 
   useEffect(() => {
     // The workspace state is populated from authenticated backend resources after mount.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+
     void loadWorkspace();
   }, [loadWorkspace]);
 
@@ -369,4 +369,4 @@ export function ContractWorkspace({
       />
     </div>
   );
-}
+});

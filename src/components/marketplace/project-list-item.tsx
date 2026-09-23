@@ -1,3 +1,4 @@
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { Clock, ShieldCheck, Users, Zap } from 'lucide-react';
 
@@ -11,7 +12,7 @@ interface ProjectListItemProps {
   project: Project;
   /** Path to return to after viewing the project. */
   returnTo: string;
-  /** 0–100 skill match from the recommendations endpoint. Omitted when unknown. */
+  /** 0100 skill match from the recommendations endpoint. Omitted when unknown. */
   matchScore?: number;
   matchedSkills?: string[];
   /** Optional custom detail href. Defaults to dashboard freelancer project detail. */
@@ -28,10 +29,10 @@ interface ProjectListItemProps {
  *
  * Follows the workspace mock on the landing page: an initial tile, the title and
  * client on one line, and a single dense meta line carrying the facts a
- * freelancer actually decides on — budget, deadline, competition. The public
+ * freelancer actually decides on  budget, deadline, competition. The public
  * listing card stays roomier; this one is built for scanning twenty in a row.
  */
-export function ProjectListItem({
+export const ProjectListItem = React.memo(function ProjectListItem({
   project,
   returnTo,
   matchScore,
@@ -39,11 +40,14 @@ export function ProjectListItem({
   href,
   proposalStatus,
 }: ProjectListItemProps) {
-  const client = project.employer?.name || 'Verified employer';
-  const initial = client.trim().charAt(0).toUpperCase() || '?';
+  const client = useMemo(() => project.employer?.name || 'Verified employer', [project.employer?.name]);
+  const initial = useMemo(() => client.trim().charAt(0).toUpperCase() || '?', [client]);
   const skills = project.requiredSkills ?? [];
-  const matched = new Set(matchedSkills ?? []);
-  const projectLink = href || `/dashboard/freelancer/projects/${project.id}?returnTo=${encodeURIComponent(returnTo)}`;
+  const matched = useMemo(() => new Set(matchedSkills ?? []), [matchedSkills]);
+  const projectLink = useMemo(
+    () => href || `/dashboard/freelancer/projects/${project.id}?returnTo=${encodeURIComponent(returnTo)}`,
+    [href, project.id, returnTo]
+  );
 
   return (
     <article
@@ -71,7 +75,7 @@ export function ProjectListItem({
                 {project.title}
               </Link>
             </h3>
-            <span className="truncate text-xs text-muted-foreground">• {client}</span>
+            <span className="truncate text-xs text-muted-foreground"> {client}</span>
           </div>
 
           <p className="mt-1 line-clamp-2 pr-10 text-xs leading-relaxed text-muted-foreground">
@@ -108,19 +112,19 @@ export function ProjectListItem({
               <dt className="sr-only">Budget</dt>
               <dd className="text-xs font-bold text-foreground tabular-nums">{formatAmount(project.budget)}</dd>
             </div>
-            <span aria-hidden="true">•</span>
+            <span aria-hidden="true"></span>
             <div className="flex items-center gap-1">
               <Clock className="size-3" aria-hidden="true" />
               <dt className="sr-only">Deadline</dt>
               <dd>Due {formatDate(project.deadline)}</dd>
             </div>
-            <span aria-hidden="true">•</span>
+            <span aria-hidden="true"></span>
             <div className="flex items-center gap-1">
               <Users className="size-3" aria-hidden="true" />
               <dt className="sr-only">Proposals received</dt>
               <dd>{project.proposalCount || 0} proposal{project.proposalCount === 1 ? '' : 's'}</dd>
             </div>
-            <span aria-hidden="true">•</span>
+            <span aria-hidden="true"></span>
             <div className="flex items-center gap-1 text-success">
               <ShieldCheck className="size-3" aria-hidden="true" />
               <dt className="sr-only">Payment protection</dt>
@@ -165,4 +169,4 @@ export function ProjectListItem({
       </div>
     </article>
   );
-}
+});
