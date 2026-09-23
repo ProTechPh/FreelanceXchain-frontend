@@ -10,7 +10,6 @@ const nunitoSans = Nunito_Sans({
   subsets: ['latin'],
   variable: '--font-nunito',
   display: 'swap',
-  weight: ['300', '400', '500', '600', '700', '800'],
 });
 
 export const metadata: Metadata = {
