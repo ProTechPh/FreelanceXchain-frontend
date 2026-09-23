@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { projectsApi, freelancersApi, reputationApi } from '@/lib/api';
@@ -46,10 +46,16 @@ export function useEmployerProposals(
     };
 
     const loadProposals = async () => {
-      if (!currentUser || activeProjectsLoading || activeProjects.length === 0) {
-        setPendingProposalCount(0);
-        setRecentProposals([]);
-        setProposalsLoading(false);
+      if (!currentUser || activeProjectsLoading) {
+        return;
+      }
+
+      if (activeProjects.length === 0) {
+        if (!cancelled) {
+          setPendingProposalCount((prev) => (prev === 0 ? prev : 0));
+          setRecentProposals((prev) => (prev.length === 0 ? prev : []));
+          setProposalsLoading((prev) => (!prev ? prev : false));
+        }
         return;
       }
 
@@ -63,9 +69,9 @@ export function useEmployerProposals(
 
         if (openOrActive.length === 0) {
           if (!cancelled) {
-            setPendingProposalCount(0);
-            setRecentProposals([]);
-            setProposalsLoading(false);
+            setPendingProposalCount((prev) => (prev === 0 ? prev : 0));
+            setRecentProposals((prev) => (prev.length === 0 ? prev : []));
+            setProposalsLoading((prev) => (!prev ? prev : false));
           }
           return;
         }

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { matchingApi, freelancersApi, reputationApi, type FreelancerRecommendation } from '@/lib/api';
@@ -46,9 +46,15 @@ export function useEmployerContracts(
     };
 
     const loadRecommendations = async () => {
-      if (!currentUser || activeProjectsLoading || !isPro || activeProjects.length === 0) {
-        setRecommended([]);
-        setRecommendedLoading(false);
+      if (!currentUser || activeProjectsLoading) {
+        return;
+      }
+
+      if (!isPro || activeProjects.length === 0) {
+        if (!cancelled) {
+          setRecommended((prev) => (prev.length === 0 ? prev : []));
+          setRecommendedLoading((prev) => (!prev ? prev : false));
+        }
         return;
       }
 
@@ -64,7 +70,7 @@ export function useEmployerContracts(
 
         if (openProjectIds.length === 0) {
           if (!cancelled) {
-            setRecommended([]);
+            setRecommended((prev) => (prev.length === 0 ? prev : []));
           }
           return;
         }

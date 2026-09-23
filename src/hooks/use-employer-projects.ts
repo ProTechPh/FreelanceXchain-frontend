@@ -1,6 +1,6 @@
-﻿'use client';
+'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { projectsApi } from '@/lib/api';
 import { useUser } from '@/stores/authStore';
 import { reportLoadFailure } from '@/lib/report-failure';
@@ -57,8 +57,9 @@ export function useEmployerProjects(): EmployerProjectsData {
     };
   }, [currentUser, reloadKey, reload]);
 
-  const activeProjects = projects.filter(
-    (p) => p.status === 'open' || p.status === 'in_progress'
+  const activeProjects = useMemo(
+    () => projects.filter((p) => p.status === 'open' || p.status === 'in_progress'),
+    [projects]
   );
 
   return {

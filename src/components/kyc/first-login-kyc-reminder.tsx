@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useRef } from 'react';
 import { CircleCheck, ShieldCheck } from 'lucide-react';
