@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { MobileNav } from './MobileNav';
-import { useAuthStore } from '@/stores/authStore';
+import { useUser, useLogout } from '@/stores/authStore';
 import { useState, useEffect } from 'react';
 import { notificationsApi } from '@/lib/api';
 import { subscribeToNotificationStream } from '@/lib/sse';
@@ -35,7 +35,8 @@ const participantAccountItems = [
 ] as const;
 
 export function TopBar() {
-  const { user, logout } = useAuthStore();
+  const user = useUser();
+  const logout = useLogout();
   const router = useRouter();
   const { startTour, canStartTour } = useStartTour();
   const { openRatingDialog } = useRateApp();

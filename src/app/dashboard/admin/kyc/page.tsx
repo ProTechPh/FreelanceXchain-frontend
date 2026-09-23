@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { kycApi } from '@/lib/api';
 import type { KycVerification, KycDecisionDetails, KycImages, KycWarning } from '@/types';
+import Image from 'next/image';
 import {
   Shield,
   CheckCircle,
@@ -378,13 +379,14 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
                       <div
                         className="relative group overflow-hidden rounded-lg bg-black/60 h-44 flex items-center justify-center cursor-pointer border border-border"
                         onClick={() => setSelectedImage({ url: frontDoc, title: 'Document Front' })}
-                      >
-                        <img
+                      ><Image
                           src={frontDoc}
                           alt="Document Front"
-                          loading="lazy"
-                          decoding="async"
+                          width={800}
+                          height={600}
                           className="w-full h-full object-contain group-hover:scale-105 transition duration-200"
+                          unoptimized={frontDoc?.startsWith('http')}
+                          loading="lazy"
                         />
                         <div className="absolute inset-0 bg-black/40 sm:opacity-0 sm:group-hover:opacity-100 transition flex items-center justify-center text-primary-foreground text-xs font-medium gap-1">
                           <Maximize2 className="w-4 h-4" /> Enlarge
@@ -403,13 +405,14 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
                       <div
                         className="relative group overflow-hidden rounded-lg bg-black/60 h-44 flex items-center justify-center cursor-pointer border border-border"
                         onClick={() => setSelectedImage({ url: backDoc, title: 'Document Back' })}
-                      >
-                        <img
+                      ><Image
                           src={backDoc}
                           alt="Document Back"
-                          loading="lazy"
-                          decoding="async"
+                          width={800}
+                          height={600}
                           className="w-full h-full object-contain group-hover:scale-105 transition duration-200"
+                          unoptimized={backDoc?.startsWith('http')}
+                          loading="lazy"
                         />
                         <div className="absolute inset-0 bg-black/40 sm:opacity-0 sm:group-hover:opacity-100 transition flex items-center justify-center text-primary-foreground text-xs font-medium gap-1">
                           <Maximize2 className="w-4 h-4" /> Enlarge
@@ -430,13 +433,14 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
                       <div
                         className="relative group overflow-hidden rounded-lg bg-black/60 h-44 flex items-center justify-center cursor-pointer border border-border"
                         onClick={() => setSelectedImage({ url: selfie, title: 'Live Selfie (Liveness)' })}
-                      >
-                        <img
+                      ><Image
                           src={selfie}
                           alt="Live Selfie"
-                          loading="lazy"
-                          decoding="async"
+                          width={800}
+                          height={600}
                           className="w-full h-full object-contain group-hover:scale-105 transition duration-200"
+                          unoptimized={selfie?.startsWith('http')}
+                          loading="lazy"
                         />
                         <div className="absolute inset-0 bg-black/40 sm:opacity-0 sm:group-hover:opacity-100 transition flex items-center justify-center text-primary-foreground text-xs font-medium gap-1">
                           <Maximize2 className="w-4 h-4" /> Enlarge
@@ -455,13 +459,14 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
                       <div
                         className="relative group overflow-hidden rounded-lg bg-black/60 h-44 flex items-center justify-center cursor-pointer border border-border"
                         onClick={() => setSelectedImage({ url: portrait, title: 'ID Portrait Crop' })}
-                      >
-                        <img
+                      ><Image
                           src={portrait}
                           alt="ID Portrait Crop"
-                          loading="lazy"
-                          decoding="async"
+                          width={800}
+                          height={600}
                           className="w-full h-full object-contain group-hover:scale-105 transition duration-200"
+                          unoptimized={portrait?.startsWith('http')}
+                          loading="lazy"
                         />
                         <div className="absolute inset-0 bg-black/40 sm:opacity-0 sm:group-hover:opacity-100 transition flex items-center justify-center text-primary-foreground text-xs font-medium gap-1">
                           <Maximize2 className="w-4 h-4" /> Enlarge
@@ -609,13 +614,15 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
                 <ExternalLink className="size-3.5" /> Open original
               </Button>
             </DialogHeader>
-            <div className="p-4 flex items-center justify-center bg-black/80 max-h-[78dvh] overflow-auto">
-              <img
-                src={selectedImage.url}
-                alt={selectedImage.title}
-                decoding="async"
-                className="max-w-full max-h-[75dvh] object-contain rounded shadow-lg"
-              />
+            <div className="p-4 flex items-center justify-center bg-black/80 max-h-[78dvh] overflow-auto"><Image
+              src={selectedImage.url}
+              alt={selectedImage.title}
+              width={800}
+              height={600}
+              className="max-w-full max-h-[75dvh] object-contain rounded shadow-lg"
+              unoptimized={selectedImage.url?.startsWith('http')}
+              loading="lazy"
+            />
             </div>
           </DialogContent>
         </Dialog>
@@ -722,3 +729,4 @@ function CheckDot({ passed, label }: { passed: boolean | null; label: string }) 
     </div>
   );
 }
+

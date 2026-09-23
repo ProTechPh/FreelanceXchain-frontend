@@ -280,3 +280,14 @@ export const useAuthStore = create<AuthState>()(
 registerPlanDesyncHandler(() => {
   void useAuthStore.getState().refreshPlan();
 });
+
+// Granular selectors to prevent unnecessary re-renders
+export const useUser = () => useAuthStore((state) => state.user);
+export const useIsAuthenticated = () => useAuthStore((state) => state.isAuthenticated);
+export const useIsLoading = () => useAuthStore((state) => state.isLoading);
+export const useAccessToken = () => useAuthStore((state) => state.accessToken);
+export const useSessionVerified = () => useAuthStore((state) => state.sessionVerified);
+export const useLogout = () => useAuthStore((state) => state.logout);
+export const useLogin = () => useAuthStore((state) => state.login);
+export const useSetUser = () => useAuthStore((state) => state.setUser);
+

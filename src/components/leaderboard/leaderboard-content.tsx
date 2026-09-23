@@ -1,0 +1,203 @@
+"use client";
+
+import { useState, useMemo } from "react";
+import Link from "next/link";
+import { motion, useReducedMotion } from "motion/react";
+import type { ReputationLeaderboardEntry } from "@/types";
+import { Trophy, Star, ShieldCheck, Crown, ArrowUpDown } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
+
+interface LeaderboardContentProps {
+  leaderboard: ReputationLeaderboardEntry[];
+}
+
+type SortKey = "rating" | "reviews";
+
+
+export function LeaderboardContent({ leaderboard }: LeaderboardContentProps) {
+  const reduce = useReducedMotion();
+  const [sortBy, setSortBy] = useState<SortKey>("rating");
+
+  const leaderboardData: Array<ReputationLeaderboardEntry & { userName: string }> = leaderboard.map((entry) => ({
+    ...entry,
+    userName: entry.userName || `Freelancer ${entry.userId.slice(0, 8)}`,
+  }));
+
+  const sortedLeaderboard = useMemo(() => {
+    return [...leaderboardData].sort((a, b) =>
+      sortBy === "rating"
+        ? b.averageRating - a.averageRating
+        : b.totalRatings - a.totalRatings
+    );
+  }, [leaderboardData, sortBy]);
+
+  return (
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-10">
+      {/* Sort Controls */}
+      <div className="flex items-center justify-center gap-2">
+        <ArrowUpDown className="size-4 text-muted-foreground" />
+        <span className="text-xs font-semibold text-muted-foreground">Sort by:</span>
+        {([["rating", "Highest Rating"], ["reviews", "Most Reviews"]] as const).map(
+          ([key, label]) => (
+            <button
+              key={key}
+              onClick={() => setSortBy(key)}
+              className={`px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+                sortBy === key
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "bg-card border border-border/80 text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {label}
+            </button>
+          )
+        )}
+      </div>
+
+      {/* Top 3 Podium Cards */}
+      {sortedLeaderboard.length >= 3 && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* 2nd Place */}
+          <div className="order-2 md:order-1 rounded-3xl bg-card border border-border/80 p-6 shadow-md text-center flex flex-col justify-between hover:border-primary/50 transition-all">
+            <div>
+              <div className="w-10 h-10 rounded-full bg-neutral-subtle text-neutral font-extrabold text-sm flex items-center justify-center mx-auto mb-3">
+                #2
+              </div>
+              <h3 className="font-bold text-foreground text-base truncate px-2">
+                {sortedLeaderboard[1].userName}
+              </h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {sortedLeaderboard[1].totalRatings} completed milestones
+              </p>
+            </div>
+            <div className="mt-4 pt-4 border-t border-border/50 flex items-center justify-center gap-1 text-sm font-bold text-foreground">
+              <Star className="size-4 text-warning fill-warning" />
+              <span>{sortedLeaderboard[1].averageRating.toFixed(2)} Rating</span>
+            </div>
+          </div>
+
+          {/* 1st Place - Gold Champion */}
+          <div className="order-1 md:order-2 rounded-3xl bg-card border-2 border-primary/40 p-8 shadow-xl text-center flex flex-col justify-between sm:scale-105 relative">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-warning text-warning-foreground text-2xs font-bold shadow-md flex items-center gap-1">
+              <Crown className="size-3" /> Champion
+            </div>
+            <div>
+              <div className="w-12 h-12 rounded-full bg-warning-subtle text-warning font-black text-lg flex items-center justify-center mx-auto mb-3">
+                #1
+              </div>
+              <h3 className="font-extrabold text-foreground text-lg truncate px-2">
+                {sortedLeaderboard[0].userName}
+              </h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {sortedLeaderboard[0].totalRatings} completed milestones
+              </p>
+            </div>
+            <div className="mt-4 pt-4 border-t border-border/50 flex items-center justify-center gap-1.5 text-base font-extrabold text-primary">
+              <Star className="size-4 text-warning fill-warning" />
+              <span>{sortedLeaderboard[0].averageRating.toFixed(2)} Rating</span>
+            </div>
+          </div>
+
+          {/* 3rd Place */}
+          <div className="order-3 rounded-3xl bg-card border border-border/80 p-6 shadow-md text-center flex flex-col justify-between hover:border-primary/50 transition-all">
+            <div>
+              <div className="w-10 h-10 rounded-full bg-warning-subtle text-warning font-extrabold text-sm flex items-center justify-center mx-auto mb-3">
+                #3
+              </div>
+              <h3 className="font-bold text-foreground text-base truncate px-2">
+                {sortedLeaderboard[2].userName}
+              </h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {sortedLeaderboard[2].totalRatings} completed milestones
+              </p>
+            </div>
+            <div className="mt-4 pt-4 border-t border-border/50 flex items-center justify-center gap-1 text-sm font-bold text-foreground">
+              <Star className="size-4 text-warning fill-warning" />
+              <span>{sortedLeaderboard[2].averageRating.toFixed(2)} Rating</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Rankings & Reputation Tiers Grid */}
+      <div className="grid lg:grid-cols-3 gap-8">
+        {/* Leaderboard Table Card */}
+        <div className="lg:col-span-2 rounded-3xl bg-card border border-border/80 p-6 sm:p-8 shadow-md shadow-black/5">
+          <h2 className="text-lg font-bold text-foreground mb-4">Complete Rankings</h2>
+          {sortedLeaderboard.length === 0 ? (
+            <EmptyState
+              icon={Trophy}
+              title="No rankings available yet"
+              description="Rankings will appear here as freelancers complete milestone contracts and receive on-chain reputation scores."
+            />
+          ) : (
+            <div className="space-y-2.5">
+              {sortedLeaderboard.map((entry, index) => (
+                <Link key={entry.userId} href={`/freelancers/${entry.userId}`}>
+                  <div className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-background border border-border/60 hover:border-primary/40 transition-all cursor-pointer">
+                    <div className="flex items-center gap-3.5">
+                      <span className="w-7 text-center font-bold text-xs text-muted-foreground">
+                        #{index + 1}
+                      </span>
+                      <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary font-bold text-xs flex items-center justify-center">
+                        {index + 1}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <p className="font-bold text-foreground text-sm">{entry.userName}</p>
+                          <ShieldCheck className="size-3.5 text-success" />
+                        </div>
+                        <p className="text-2xs text-muted-foreground">{entry.totalRatings} reviews</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1 font-bold text-foreground text-sm">
+                      <Star className="size-3.5 text-warning fill-warning" />
+                      <span>{entry.averageRating.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Sidebar Cards */}
+        <div className="space-y-6">
+          {/* Reputation Tiers */}
+          <div className="rounded-3xl bg-card border border-border/80 p-6 shadow-sm">
+            <h3 className="font-bold text-foreground text-sm mb-3">Reputation Tiers</h3>
+            <div className="space-y-2">
+              {[
+                { tier: "Platinum", min: "4.9+", color: "bg-info", perks: "Top 1% Performers" },
+                { tier: "Gold", min: "4.7+", color: "bg-warning", perks: "Top 5% Performers" },
+                { tier: "Silver", min: "4.5+", color: "bg-neutral", perks: "Top 15% Performers" },
+                { tier: "Bronze", min: "4.0+", color: "bg-warning", perks: "Top 30% Performers" },
+              ].map((tier) => (
+                <div
+                  key={tier.tier}
+                  className="flex items-center justify-between p-2.5 rounded-xl bg-background border border-border/60 text-xs"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2.5 h-2.5 rounded-full ${tier.color}`} />
+                    <span className="font-bold text-foreground">{tier.tier}</span>
+                  </div>
+                  <span className="font-semibold text-muted-foreground">{tier.min}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Proof of Reputation */}
+          <div className="rounded-3xl bg-card border border-border/80 p-6 shadow-sm">
+            <h3 className="font-bold text-foreground text-sm mb-2">On-Chain Reputation Proof</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Ratings and completed milestone deliveries are permanently anchored to Ethereum smart
+              contracts, creating an un-forgeable work history.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

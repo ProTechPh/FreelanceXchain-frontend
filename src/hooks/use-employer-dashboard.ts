@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { projectsApi, freelancersApi, reputationApi, matchingApi, type FreelancerRecommendation } from '@/lib/api';
-import { useAuthStore } from '@/stores/authStore';
+import { useUser } from '@/stores/authStore';
 import { useEmployerAnalytics } from '@/hooks/use-analytics';
 import { usePlan } from '@/hooks/use-plan';
 import { DEFAULT_RANGE_PRESET, resolveRange, type RangePresetId } from '@/lib/analytics-range';
@@ -27,7 +27,7 @@ export interface RecommendedFreelancerView {
 }
 
 export function useEmployerDashboard() {
-  const currentUser = useAuthStore((state) => state.user);
+  const currentUser = useUser();
   const [loading, setLoading] = useState(true);
   const [coreLoading, setCoreLoading] = useState(true);
   const [range, setRange] = useState<RangePresetId>(DEFAULT_RANGE_PRESET);

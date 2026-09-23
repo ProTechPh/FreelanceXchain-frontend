@@ -1,32 +1,71 @@
-'use client';
+﻿/**
+ * FREELANCER DASHBOARD - CLIENT COMPONENT
+ * 
+ * This page MUST remain a Client Component ("use client") because:
+ * 
+ * 1. AUTHENTICATION REQUIREMENTS:
+ *    - Uses useFreelancerDashboard() hook which internally uses auth context
+ *    - Uses useMyProposalStatusByProject() hook for proposal status
+ *    - Requires authenticated user data from AuthContext
+ * 
+ * 2. REAL-TIME DATA HOOKS:
+ *    - Custom hooks fetch live dashboard data on mount
+ *    - Data changes based on user interactions (range filter, etc.)
+ *    - WebSocket or polling for real-time updates
+ * 
+ * 3. STATE MANAGEMENT:
+ *    - Analytics range filter state (range, setRange)
+ *    - Loading states for async operations
+ *    - Dynamic stats calculations
+ * 
+ * 4. INTERACTIVE COMPONENTS:
+ *    - AnalyticsRangeFilter with onChange handlers
+ *    - WalletConnectBanner (wallet connection UI)
+ *    - WalletBalanceCard (displays connected wallet)
+ *    - ProGate (billing feature gating)
+ *    - TourStepLink (onboarding tour integration)
+ * 
+ * 5. DASHBOARD-SPECIFIC FEATURES:
+ *    - Proposal status mapping
+ *    - Contract progress calculations
+ *    - AI recommendation display
+ * 
+ * CONVERSION NOTES:
+ *    - The static layout structure could be extracted to a Server Component
+ *    - Stats cards and section headers could be server-rendered
+ *    - However, the tight integration with real-time data makes full conversion
+ *      impractical without significant architectural changes
+ */
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { StatsSkeleton, ListSkeleton } from '@/components/dashboard/skeletons';
-import Link from 'next/link';
-import { AnalyticsRangeFilter } from '@/components/analytics/range-filter';
-import { getRangeLabel } from '@/lib/analytics-range';
-import { DollarSign, FolderOpen, FileText, Star, TrendingUp, Clock, ArrowUpRight, Briefcase, Wallet } from 'lucide-react';
-import { formatAmount, formatNumber, formatRelativeTime, formatDate } from '@/lib/format';
-import { ProGate } from '@/components/billing/pro-gate';
-import { WalletConnectBanner } from '@/components/wallet/wallet-connect-banner';
-import { TourStepLink } from '@/components/onboarding/tour-step-link';
-import { WalletBalanceCard } from '@/components/wallet/wallet-balance-card';
-import { useFreelancerDashboard } from '@/hooks/use-freelancer-dashboard';
-import { useMyProposalStatusByProject } from '@/hooks/use-my-proposals';
-import { ProposalSubmittedBadge } from '@/components/proposals/proposal-submitted-badge';
+"use client";
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { StatsSkeleton, ListSkeleton } from "@/components/dashboard/skeletons";
+import Link from "next/link";
+import { AnalyticsRangeFilter } from "@/components/analytics/range-filter";
+import { getRangeLabel } from "@/lib/analytics-range";
+import { DollarSign, FolderOpen, FileText, Star, TrendingUp, Clock, ArrowUpRight, Briefcase, Wallet } from "lucide-react";
+import { formatAmount, formatNumber, formatRelativeTime, formatDate } from "@/lib/format";
+import { ProGate } from "@/components/billing/pro-gate";
+import { WalletConnectBanner } from "@/components/wallet/wallet-connect-banner";
+import { TourStepLink } from "@/components/onboarding/tour-step-link";
+import { WalletBalanceCard } from "@/components/wallet/wallet-balance-card";
+import { useFreelancerDashboard } from "@/hooks/use-freelancer-dashboard";
+import { useMyProposalStatusByProject } from "@/hooks/use-my-proposals";
+import { ProposalSubmittedBadge } from "@/components/proposals/proposal-submitted-badge";
 
 const statusColors: Record<string, string> = {
-  pending: 'bg-warning-subtle text-warning',
-  accepted: 'bg-success-subtle text-success',
-  rejected: 'bg-destructive-subtle text-destructive',
-  withdrawn: 'bg-muted text-muted-foreground',
+  pending: "bg-warning-subtle text-warning",
+  accepted: "bg-success-subtle text-success",
+  rejected: "bg-destructive-subtle text-destructive",
+  withdrawn: "bg-muted text-muted-foreground",
 };
 
 function relativeTime(iso: string | null | undefined): string {
-  if (!iso) return 'recently';
+  if (!iso) return "recently";
   return formatRelativeTime(iso);
 }
 
@@ -55,42 +94,42 @@ export default function FreelancerDashboard() {
 
   const stats = [
     {
-      title: range === 'all' ? 'Total Earned' : `Earned · ${getRangeLabel(range)}`,
+      title: range === "all" ? "Total Earned" : `Earned · ${getRangeLabel(range)}`,
       value: formatAmount(totalEarnings),
       change: projectsCompleted != null ? `${formatNumber(projectsCompleted)} completed contracts` : undefined,
       icon: DollarSign,
-      color: 'text-success',
-      bg: 'bg-success-subtle',
+      color: "text-success",
+      bg: "bg-success-subtle",
       loading: totalEarnings === null && projectsCompleted === null,
-      tour: 'earnings',
+      tour: "earnings",
     },
     {
-      title: 'Active Contracts',
+      title: "Active Contracts",
       value: String(activeContracts.length),
       change: undefined,
       icon: FolderOpen,
-      color: 'text-primary',
-      bg: 'bg-primary/10',
+      color: "text-primary",
+      bg: "bg-primary/10",
       loading: coreLoading,
       tour: undefined,
     },
     {
-      title: 'Pending Proposals',
+      title: "Pending Proposals",
       value: String(pendingProposalCount),
       change: undefined,
       icon: FileText,
-      color: 'text-cyan',
-      bg: 'bg-cyan/10',
+      color: "text-cyan",
+      bg: "bg-cyan/10",
       loading: coreLoading,
       tour: undefined,
     },
     {
-      title: 'Reputation Score',
-      value: averageRating !== null && totalRatings > 0 ? averageRating.toFixed(1) : 'Not yet rated',
+      title: "Reputation Score",
+      value: averageRating !== null && totalRatings > 0 ? averageRating.toFixed(1) : "Not yet rated",
       change: totalRatings > 0 ? `${totalRatings} ratings` : undefined,
       icon: Star,
-      color: 'text-warning',
-      bg: 'bg-warning-subtle',
+      color: "text-warning",
+      bg: "bg-warning-subtle",
       loading: coreLoading,
       tour: undefined,
     },
@@ -102,7 +141,7 @@ export default function FreelancerDashboard() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground">
-            Welcome back{currentUser?.name ? `, ${currentUser.name}` : ''}!
+            Welcome back{currentUser?.name ? `, ${currentUser.name}` : ""}!
           </h1>
           <p className="text-muted-foreground">Here&apos;s what&apos;s happening with your work</p>
           <AnalyticsRangeFilter
@@ -177,9 +216,9 @@ export default function FreelancerDashboard() {
                 <>
                   {activeContracts.slice(0, 4).map(({ contract, project }) => {
                     const milestones = project?.milestones ?? [];
-                    const completedCount = milestones.filter((m) => m.status === 'completed').length;
+                    const completedCount = milestones.filter((m) => m.status === "completed").length;
                     const progress = milestones.length > 0 ? Math.round((completedCount / milestones.length) * 100) : 0;
-                    const currentMilestone = milestones.find((m) => m.status !== 'completed');
+                    const currentMilestone = milestones.find((m) => m.status !== "completed");
                     return (
                       <Link
                         key={contract.id}
@@ -188,9 +227,9 @@ export default function FreelancerDashboard() {
                       >
                         <div className="flex items-start justify-between mb-3">
                           <div>
-                            <p className="font-medium">{project?.title ?? 'Untitled project'}</p>
+                            <p className="font-medium">{project?.title ?? "Untitled project"}</p>
                             <p className="text-sm text-muted-foreground">
-                              {project?.employer?.name ?? project?.employer?.companyName ?? ''}
+                              {project?.employer?.name ?? project?.employer?.companyName ?? ""}
                             </p>
                           </div>
                           <p className="font-semibold text-primary">{formatAmount(contract.totalAmount)}</p>
@@ -199,7 +238,7 @@ export default function FreelancerDashboard() {
                           <div className="flex-1">
                             <div className="flex items-center justify-between text-xs mb-1">
                               <span className="text-muted-foreground">
-                                {currentMilestone?.title ?? 'All milestones complete'}
+                                {currentMilestone?.title ?? "All milestones complete"}
                               </span>
                               <span className="text-muted-foreground">{progress}%</span>
                             </div>
@@ -263,7 +302,7 @@ export default function FreelancerDashboard() {
                   >
                     <div className="flex items-start justify-between mb-2">
                       <p className="font-medium text-sm text-foreground hover:text-primary transition-colors">
-                        {project?.title ?? 'Untitled project'}
+                        {project?.title ?? "Untitled project"}
                       </p>
                       <Badge className={statusColors[proposal.status]}>{proposal.status}</Badge>
                     </div>

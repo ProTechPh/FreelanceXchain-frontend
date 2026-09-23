@@ -188,7 +188,7 @@ export function ProjectDetailView({
   if (!project) {
     const notFoundCard = (
       <div className="text-center rounded-3xl bg-card border border-border/80 p-12 shadow-md shadow-black/5 max-w-md mx-auto">
-        <p className="text-3xl mb-4">🔍</p>
+        <p className="text-3xl mb-4">ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ‚Â</p>
         <h2 className="text-2xl font-bold text-foreground mb-2">Project not found</h2>
         <p className="text-muted-foreground mb-6">This project doesn&apos;t exist or has been removed.</p>
         <Button asChild className="rounded-full gradient-primary shadow-md">
@@ -214,7 +214,7 @@ export function ProjectDetailView({
   const primaryAction = getProjectPrimaryAction(user, project);
   const isOwner = user?.role === 'employer' && user?.id === project.employerId;
 
-  const renderContent = () => (
+  const renderContent = useCallback(() => (
     <>
       <ProjectDetailHeader
         project={project}
@@ -331,7 +331,7 @@ export function ProjectDetailView({
             <Button
               variant="destructive"
               loading={withdrawingProposal}
-              loadingText="Withdrawing…"
+              loadingText="WithdrawingÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦"
               onClick={async () => {
                 if (!myProposal) return;
                 await handleWithdrawProposal(myProposal.id);
@@ -379,7 +379,7 @@ export function ProjectDetailView({
         </div>
       )}
     </>
-  );
+  ), [project, user, mode, backPath, defaultBackLabel, primaryAction, isOwner, myProposal, withdrawingProposal, proposalOpen, autoGenerateAI, employerDialogOpen, previewAttachment, confirmWithdrawOpen, handleWithdrawProposal, shareProject, fetchMyProposal, invalidateMyProposals]);
 
   if (mode === 'public') {
     return (

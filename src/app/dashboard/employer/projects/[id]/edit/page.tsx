@@ -9,6 +9,7 @@ import { reportFailure } from '@/lib/report-failure';
 import { projectsApi, fileUploadsApi } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { useAuthStore } from '@/stores/authStore';
+import Image from 'next/image';
 import { hasApprovedKyc } from '@/lib/kyc-eligibility';
 import { formatFileSize, safeAttachmentUrl } from '@/lib/attachment-presentation';
 import type { Project, ProjectStatus, Attachment } from '@/types';
@@ -361,15 +362,16 @@ function EditProjectContent() {
                           >
                             <div className="flex items-center gap-2.5 min-w-0">
                               {isImage && safeUrl ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
+                                <Image
                                   src={safeUrl}
                                   alt={att.filename}
-                                  loading="lazy"
-                                  decoding="async"
+                                  width={40}
+                                  height={40}
                                   className="size-10 rounded-lg object-cover border border-border shrink-0"
+                                  unoptimized={safeUrl?.startsWith("http")}
+                                  loading="lazy"
                                 />
-                              ) : (
+                                ) : (
                                 <div className="size-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
                                   {isImage ? <ImageIcon className="size-5" /> : <FileText className="size-5" />}
                                 </div>
@@ -422,15 +424,16 @@ function EditProjectContent() {
                           >
                             <div className="flex items-center gap-2.5 min-w-0">
                               {isImage && previewUrl && previewUrl.startsWith('blob:') ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
+                                <Image
                                   src={previewUrl}
                                   alt={file.name}
-                                  loading="lazy"
-                                  decoding="async"
+                                  width={40}
+                                  height={40}
                                   className="size-10 rounded-lg object-cover border border-primary/20 shrink-0"
+                                  unoptimized={previewUrl?.startsWith("http")}
+                                  loading="lazy"
                                 />
-                              ) : (
+                                ) : (
                                 <div className="size-10 rounded-lg bg-primary/15 text-primary flex items-center justify-center shrink-0">
                                   {isImage ? <ImageIcon className="size-5" /> : <FileText className="size-5" />}
                                 </div>
