@@ -116,7 +116,7 @@ export function ProjectDetailView({
     };
   }, [projectId, retryCount, fetchMyProposal]);
 
-  const handleWithdrawProposal = async (proposalId: string) => {
+  const handleWithdrawProposal = useCallback(async (proposalId: string) => {
     setWithdrawingProposal(true);
     try {
       await proposalsApi.withdraw(proposalId);
@@ -128,9 +128,9 @@ export function ProjectDetailView({
     } finally {
       setWithdrawingProposal(false);
     }
-  };
+  }, []);
 
-  const shareProject = async () => {
+  const shareProject = useCallback(async () => {
     if (!project) return;
     const url = typeof window !== 'undefined' ? `${window.location.origin}/projects/${project.id}` : '';
     if (navigator.share) {
@@ -147,90 +147,32 @@ export function ProjectDetailView({
         toast.error('Couldn\'t copy to clipboard. Try selecting and copying the link manually.');
       }
     }
-  };
+  }, [project]);
 
-  if (loading) {
-    if (mode === 'public') {
-      return (
-        <div className="flex min-h-screen flex-col bg-background">
-          <Navbar />
-          <main className="flex-1 pt-28 pb-20">
-            <DetailSkeleton label="Loading project" />
-          </main>
-          <FooterSection />
-        </div>
-      );
-    }
-    return <DetailSkeleton label="Loading project" />;
-  }
+  // Compute derived values early for useCallback below
+  const primaryAction = project ? getProjectPrimaryAction(user, project) : '';
+  const isOwner = Boolean(project && user?.role === 'employer' && user?.id === project.employerId);
 
-  if (fetchError && !project) {
-    const errorCard = (
-      <div className="flex flex-col items-center justify-center p-8 text-center bg-card rounded-3xl border border-border/80 shadow-md max-w-md mx-auto">
-        <p className="text-lg font-medium">Failed to load project</p>
-        <p className="text-muted-foreground mt-1">Check your connection and try again.</p>
-        <Button className="mt-4 rounded-full gradient-primary" onClick={() => setRetryCount(c => c + 1)}>Try Again</Button>
-      </div>
-    );
-
-    if (mode === 'public') {
-      return (
-        <div className="flex min-h-screen flex-col bg-background">
-          <Navbar />
-          <main className="flex-1 pt-28 pb-20 flex items-center justify-center">{errorCard}</main>
-          <FooterSection />
-        </div>
-      );
-    }
-    return errorCard;
-  }
-
-  if (!project) {
-    const notFoundCard = (
-      <div className="text-center rounded-3xl bg-card border border-border/80 p-12 shadow-md shadow-black/5 max-w-md mx-auto">
-        <p className="text-3xl mb-4">ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ‚Â</p>
-        <h2 className="text-2xl font-bold text-foreground mb-2">Project not found</h2>
-        <p className="text-muted-foreground mb-6">This project doesn&apos;t exist or has been removed.</p>
-        <Button asChild className="rounded-full gradient-primary shadow-md">
-          <Link href={mode === 'public' ? '/projects' : fallbackBackPath}>
-            {mode === 'public' ? 'Browse Projects' : defaultBackLabel}
-          </Link>
-        </Button>
-      </div>
-    );
-
-    if (mode === 'public') {
-      return (
-        <div className="flex min-h-screen flex-col bg-background">
-          <Navbar />
-          <main className="flex-1 pt-28 pb-20 flex items-center justify-center">{notFoundCard}</main>
-          <FooterSection />
-        </div>
-      );
-    }
-    return <div className="py-20 text-center">{notFoundCard}</div>;
-  }
-
-  const primaryAction = getProjectPrimaryAction(user, project);
-  const isOwner = user?.role === 'employer' && user?.id === project.employerId;
-
+  // Define useCallback before any early returns
   const renderContent = useCallback(() => (
     <>
-      <ProjectDetailHeader
-        project={project}
-        user={user}
-        mode={mode}
-        backPath={backPath}
-        defaultBackLabel={defaultBackLabel}
-        primaryAction={primaryAction}
-        isOwner={isOwner}
-        myProposal={myProposal}
-        onShare={() => void shareProject()}
-        onOpenProposal={(autoAI) => {
-          setAutoGenerateAI(autoAI);
-          setProposalOpen(true);
-        }}
-      />
+      {project && (
+        <ProjectDetailHeader
+          project={project}
+          user={user}
+          mode={mode}
+          backPath={backPath}
+          defaultBackLabel={defaultBackLabel}
+          primaryAction={primaryAction}
+          isOwner={isOwner}
+          myProposal={myProposal}
+          onShare={() => void shareProject()}
+          onOpenProposal={(autoAI) => {
+            setAutoGenerateAI(autoAI);
+            setProposalOpen(true);
+          }}
+        />
+      )}
 
       <div className={mode === 'public' ? 'max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-12' : ''}>
         <div className="grid gap-6 lg:grid-cols-3">
@@ -244,21 +186,25 @@ export function ProjectDetailView({
               />
             )}
 
-            <ProjectDescriptionCard
-              project={project}
-              onPreviewAttachment={setPreviewAttachment}
-            />
+            {project && (
+              <ProjectDescriptionCard
+                project={project}
+                onPreviewAttachment={setPreviewAttachment}
+              />
+            )}
 
-            {project.milestones && (
+            {project?.milestones && (
               <ProjectMilestonesCard milestones={project.milestones} />
             )}
           </div>
 
           <div className="space-y-6">
-            <ProjectEmployerSidebar
-              project={project}
-              onOpenEmployerDialog={() => setEmployerDialogOpen(true)}
-            />
+            {project && (
+              <ProjectEmployerSidebar
+                project={project}
+                onOpenEmployerDialog={() => setEmployerDialogOpen(true)}
+              />
+            )}
           </div>
         </div>
       </div>
@@ -271,15 +217,17 @@ export function ProjectDetailView({
         attachment={previewAttachment}
       />
 
-      <EmployerProfileDialog
-        open={employerDialogOpen}
-        onOpenChange={setEmployerDialogOpen}
-        employerId={project.employerId || project.employer?.userId || project.employer?.id}
-        projectId={project.id}
-        initialProfile={project.employer}
-      />
+      {project && (
+        <EmployerProfileDialog
+          open={employerDialogOpen}
+          onOpenChange={setEmployerDialogOpen}
+          employerId={project.employerId || project.employer?.userId || project.employer?.id}
+          projectId={project.id}
+          initialProfile={project.employer}
+        />
+      )}
 
-      {primaryAction === 'submit-proposal' && (
+      {project && primaryAction === 'submit-proposal' && (
         <ProposalDialog
           open={proposalOpen}
           onOpenChange={(next) => {
@@ -331,7 +279,7 @@ export function ProjectDetailView({
             <Button
               variant="destructive"
               loading={withdrawingProposal}
-              loadingText="WithdrawingÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦"
+              loadingText="Withdrawingâ€¦"
               onClick={async () => {
                 if (!myProposal) return;
                 await handleWithdrawProposal(myProposal.id);
@@ -345,7 +293,7 @@ export function ProjectDetailView({
       </Dialog>
 
       {/* Sticky mobile CTA bar */}
-      {primaryAction === 'submit-proposal' && !myProposal && (
+      {project && primaryAction === 'submit-proposal' && !myProposal && (
         <div className="fixed bottom-0 inset-x-0 p-3 bg-background/95 backdrop-blur border-t sm:hidden z-40 flex items-center justify-between gap-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-lg">
           <div className="min-w-0">
             <span className="block text-3xs uppercase tracking-wider text-muted-foreground">Budget</span>
@@ -380,6 +328,68 @@ export function ProjectDetailView({
       )}
     </>
   ), [project, user, mode, backPath, defaultBackLabel, primaryAction, isOwner, myProposal, withdrawingProposal, proposalOpen, autoGenerateAI, employerDialogOpen, previewAttachment, confirmWithdrawOpen, handleWithdrawProposal, shareProject, fetchMyProposal, invalidateMyProposals]);
+
+  if (loading) {
+    if (mode === 'public') {
+      return (
+        <div className="flex min-h-screen flex-col bg-background">
+          <Navbar />
+          <main className="flex-1 pt-28 pb-20">
+            <DetailSkeleton label="Loading project" />
+          </main>
+          <FooterSection />
+        </div>
+      );
+    }
+    return <DetailSkeleton label="Loading project" />;
+  }
+
+  if (fetchError && !project) {
+    const errorCard = (
+      <div className="flex flex-col items-center justify-center p-8 text-center bg-card rounded-3xl border border-border/80 shadow-md max-w-md mx-auto">
+        <p className="text-lg font-medium">Failed to load project</p>
+        <p className="text-muted-foreground mt-1">Check your connection and try again.</p>
+        <Button className="mt-4 rounded-full gradient-primary" onClick={() => setRetryCount(c => c + 1)}>Try Again</Button>
+      </div>
+    );
+
+    if (mode === 'public') {
+      return (
+        <div className="flex min-h-screen flex-col bg-background">
+          <Navbar />
+          <main className="flex-1 pt-28 pb-20 flex items-center justify-center">{errorCard}</main>
+          <FooterSection />
+        </div>
+      );
+    }
+    return errorCard;
+  }
+
+  if (!project) {
+    const notFoundCard = (
+      <div className="text-center rounded-3xl bg-card border border-border/80 p-12 shadow-md shadow-black/5 max-w-md mx-auto">
+        <p className="text-3xl mb-4">Ã°Å¸â€Â</p>
+        <h2 className="text-2xl font-bold text-foreground mb-2">Project not found</h2>
+        <p className="text-muted-foreground mb-6">This project doesn&apos;t exist or has been removed.</p>
+        <Button asChild className="rounded-full gradient-primary shadow-md">
+          <Link href={mode === 'public' ? '/projects' : fallbackBackPath}>
+            {mode === 'public' ? 'Browse Projects' : defaultBackLabel}
+          </Link>
+        </Button>
+      </div>
+    );
+
+    if (mode === 'public') {
+      return (
+        <div className="flex min-h-screen flex-col bg-background">
+          <Navbar />
+          <main className="flex-1 pt-28 pb-20 flex items-center justify-center">{notFoundCard}</main>
+          <FooterSection />
+        </div>
+      );
+    }
+    return <div className="py-20 text-center">{notFoundCard}</div>;
+  }
 
   if (mode === 'public') {
     return (

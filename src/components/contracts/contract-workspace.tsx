@@ -153,7 +153,7 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
 
   useEffect(() => {
     // The workspace state is populated from authenticated backend resources after mount.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+
     void loadWorkspace();
   }, [loadWorkspace]);
 

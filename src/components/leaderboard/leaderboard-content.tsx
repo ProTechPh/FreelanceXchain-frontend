@@ -1,8 +1,7 @@
-"use client";
+﻿"use client";
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { motion, useReducedMotion } from "motion/react";
 import type { ReputationLeaderboardEntry } from "@/types";
 import { Trophy, Star, ShieldCheck, Crown, ArrowUpDown } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -15,7 +14,6 @@ type SortKey = "rating" | "reviews";
 
 
 export function LeaderboardContent({ leaderboard }: LeaderboardContentProps) {
-  const reduce = useReducedMotion();
   const [sortBy, setSortBy] = useState<SortKey>("rating");
 
   const leaderboardData: Array<ReputationLeaderboardEntry & { userName: string }> = leaderboard.map((entry) => ({

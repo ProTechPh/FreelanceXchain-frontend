@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { CircleCheck as CheckCircle, ArrowRight, Search, User, Briefcase, ShieldCheck } from "lucide-react";
+import { CircleCheck as CheckCircle, ArrowRight, Search } from "lucide-react";
 
 interface TutorialStep {
   step: string;
