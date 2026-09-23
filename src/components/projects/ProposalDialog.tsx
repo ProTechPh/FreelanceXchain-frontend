@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useId, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
@@ -22,25 +22,18 @@ import { Alert } from '@/components/ui/alert';
 import { Field, useField } from '@/components/ui/field';
 import { reportFailure } from '@/lib/report-failure';
 import { formatAmount } from '@/lib/format';
-import { proposalsApi, matchingApi, type AIProposalResult } from '@/lib/api';
+import { matchingApi, type AIProposalResult } from '@/lib/api';
 import { UpgradeButton } from '@/components/billing/upgrade-button';
 import { usePlan } from '@/hooks/use-plan';
 import { useRateApp } from '@/components/feedback/rate-app-provider';
 import {
   MAX_FILE_COUNT,
-  ProposalFormValidationError,
-  findProposalFormError,
-  submitProposal,
-  type ProposalField,
-  type ProposalSubmissionForm,
 } from '@/lib/proposal-submission';
 import {
-  ALLOWED_FORMATS_DESCRIPTION,
   DOCUMENT_ACCEPT_STRING,
-  isAllowedDocumentFile,
-  MAX_FILE_SIZE,
 } from '@/lib/file-validation';
 import { useAuthStore } from '@/stores/authStore';
+import { useProposalForm } from '@/hooks/use-proposal-form';
 
 interface ProposalDialogProps {
   open: boolean;
@@ -54,23 +47,17 @@ interface ProposalDialogProps {
   initialGenerateAI?: boolean;
 }
 
-const EMPTY_FORM: ProposalSubmissionForm = {
-  proposedRate: '',
-  estimatedDuration: '',
-  files: [],
-};
-
 export function sanitizeMarkdownText(text: string): string {
   if (!text) return '';
   return text
-    .replace(/[\u2018\u2019\u201A\u201B]/g, "'") // Single quotes / apostrophes
-    .replace(/[\u201C\u201D\u201E\u201F]/g, '"') // Double quotes
-    .replace(/[\u2010\u2011\u2012\u2013\u2014\u2015]/g, '-') // Hyphens & dashes
-    .replace(/[\u2022\u2023\u25E6\u2043]/g, '-') // Bullet characters
-    .replace(/[\u2026]/g, '...')                 // Ellipsis
-    .replace(/[\u00A0\u2000-\u200B]/g, ' ')      // Non-breaking / special spaces
-    .replace(/([1-9])\uFE0F?\u20E3/g, '$1.')     // Keycap emoji numbers like 1️⃣ -> 1.
-    .replace(/[\uFE00-\uFE0F]/g, '');            // Variation selectors
+    .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
+    .replace(/[\u201C\u201D\u201E\u201F]/g, '"')
+    .replace(/[\u2010\u2011\u2012\u2013\u2014\u2015]/g, '-')
+    .replace(/[\u2022\u2023\u25E6\u2043]/g, '-')
+    .replace(/[\u2026]/g, '...')
+    .replace(/[\u00A0\u2000-\u200B]/g, ' ')
+    .replace(/([1-9])\uFE0F?\u20E3/g, '$1.')
+    .replace(/[\uFE00-\uFE0F]/g, '');
 }
 
 function createProposalDocumentFile(
@@ -103,7 +90,6 @@ Submitted via FreelanceXchain Decentralized Platform with Smart Contract Escrow 
   return new File([blob], `Proposal_${safeTitle || 'Brief'}.md`, { type: 'text/markdown; charset=utf-8' });
 }
 
-/** `Input` wired to its surrounding `Field`: id, aria-describedby, aria-invalid. */
 function FieldInput(props: React.ComponentProps<typeof Input>) {
   return <Input {...useField()} {...props} />;
 }
@@ -119,28 +105,38 @@ export function ProposalDialog({
   const isKycApproved = user?.kycStatus === 'approved';
   const fieldId = useId();
 
-  const [form, setForm] = useState<ProposalSubmissionForm>(EMPTY_FORM);
-  const [submitting, setSubmitting] = useState(false);
+  const {
+    form,
+    setForm,
+    fieldError,
+    submitting,
+    handleSubmit: submitForm,
+    handleRateChange,
+    handleDurationChange,
+    handleFilesChange,
+    handleRemoveFile,
+    updateFormWithAI,
+    resetForm,
+  } = useProposalForm({
+    projectId: project?.id ?? '',
+    projectTitle: project?.title ?? '',
+    projectBudget: project?.budget ?? 0,
+    onSubmitted,
+  });
+
   const [generatingAI, setGeneratingAI] = useState(false);
   const [aiProposal, setAiProposal] = useState<AIProposalResult | null>(null);
   const [customNotes, setCustomNotes] = useState('');
   const [showCustomNotes, setShowCustomNotes] = useState(false);
   const [viewMode, setViewMode] = useState<'preview' | 'edit'>('preview');
   const [editableCoverLetter, setEditableCoverLetter] = useState('');
-  /** Set on submit, so errors land under the control they describe. */
-  const [fieldError, setFieldError] = useState<{ field: ProposalField; message: string } | null>(null);
+  const [confirmDiscardOpen, setConfirmDiscardOpen] = useState(false);
 
-  /** Why submitting is unavailable, for the button's tooltip. */
   const blockedReason = !isKycApproved
     ? 'Complete identity verification first — go to Verification in your dashboard.'
     : null;
 
   const { isPro } = usePlan();
-  /**
-   * Why the AI draft is unavailable. Separate from blockedReason on purpose:
-   * only the AI draft is Pro-gated. Writing and submitting a proposal by hand
-   * stays free, and the KYC gate on submit is untouched.
-   */
   const proBlockedReason = !isPro ? 'Drafting with AI is a Pro feature.' : null;
 
   const { requestRatingPrompt } = useRateApp();
@@ -159,46 +155,44 @@ export function ProposalDialog({
       });
       setEditableCoverLetter(cleanCoverLetter);
 
-      // Auto-fill proposed rate & estimated duration
-      setForm((current) => {
-        const autoFile = createProposalDocumentFile(
-          project.title,
-          cleanCoverLetter,
-          (data.highlights || []).map(sanitizeMarkdownText),
-          data.proposedMilestones || []
-        );
+      const autoFile = createProposalDocumentFile(
+        project.title,
+        cleanCoverLetter,
+        (data.highlights || []).map(sanitizeMarkdownText),
+        data.proposedMilestones || []
+      );
 
-        // Keep any user-uploaded files, replace or prepend the auto-generated brief
-        const otherFiles = current.files.filter((f) => !f.name.startsWith('Proposal_'));
-        const updatedFiles = [autoFile, ...otherFiles].slice(0, MAX_FILE_COUNT);
-
-        return {
-          ...current,
-          proposedRate: String(data.proposedRate || project.budget || ''),
-          estimatedDuration: String(data.estimatedDuration || 14),
-          files: updatedFiles,
-        };
+      updateFormWithAI({
+        proposedRate: data.proposedRate || project.budget || 0,
+        estimatedDuration: data.estimatedDuration || 14,
+        files: [autoFile],
       });
 
       toast.success('AI Proposal drafted based on your portfolio & reputation!');
       requestRatingPrompt('ai_proposal_draft', project.id);
     } catch (error) {
-      // No Retry action here: the Regenerate button beside this banner is the
-      // retry, and a second one in the toast would just duplicate it.
       reportFailure(error, 'draft your proposal with AI');
     } finally {
       setGeneratingAI(false);
     }
-  }, [project, requestRatingPrompt]);
+  }, [project, requestRatingPrompt, updateFormWithAI]);
 
   useEffect(() => {
     if (open && initialGenerateAI && isPro && project && !aiProposal && !generatingAI) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      void handleGenerateAI();
+      let mounted = true;
+
+      async function run() {
+        if (!mounted) return;
+        await handleGenerateAI();
+      }
+
+      run().catch(console.error);
+
+      return () => {
+        mounted = false;
+      };
     }
   }, [open, initialGenerateAI, isPro, project, aiProposal, generatingAI, handleGenerateAI]);
-
-  const [confirmDiscardOpen, setConfirmDiscardOpen] = useState(false);
 
   const isDirty = Boolean(
     editableCoverLetter.trim() ||
@@ -210,12 +204,11 @@ export function ProposalDialog({
   );
 
   const resetAndClose = () => {
-    setForm(EMPTY_FORM);
+    resetForm();
     setAiProposal(null);
     setCustomNotes('');
     setShowCustomNotes(false);
     setEditableCoverLetter('');
-    setFieldError(null);
     setConfirmDiscardOpen(false);
     onOpenChange(false);
   };
@@ -256,37 +249,9 @@ export function ProposalDialog({
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!project) return;
-
-    const submissionForm: ProposalSubmissionForm = {
-      ...form,
-      coverLetter: editableCoverLetter ? sanitizeMarkdownText(editableCoverLetter) : undefined,
-    };
-
-    // Validate before the request so the message can point at the offending
-    // control instead of arriving as a toast in the corner.
-    const invalid = findProposalFormError(submissionForm);
-    setFieldError(invalid);
-    if (invalid) return;
-
-    setSubmitting(true);
-    try {
-      await submitProposal(proposalsApi, project.id, submissionForm);
-      toast.success('Proposal submitted.');
-      onSubmitted?.();
-      resetAndClose();
-      // After the close, never before — two stacked dialogs is nobody's idea
-      // of a reward for finishing a proposal.
+    const success = await submitForm(editableCoverLetter ? sanitizeMarkdownText(editableCoverLetter) : undefined);
+    if (success) {
       requestRatingPrompt('proposal_submitted', project.id);
-    } catch (error) {
-      // A rule the backend enforces but the client does not know about still
-      // belongs on the form, not in a toast.
-      if (error instanceof ProposalFormValidationError) {
-        setFieldError({ field: 'proposedRate', message: error.message });
-        return;
-      }
-      reportFailure(error, 'submit your proposal', { fundsUnchanged: true });
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -304,7 +269,7 @@ export function ProposalDialog({
             )}
           </div>
           <DialogDescription className="text-xs break-words sm:text-sm">
-            {project ? `Send your proposal for “${project.title}”.` : 'Send your offer for this project.'}
+            {project ? `Send your proposal for "${project.title}".` : 'Send your offer for this project.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -313,8 +278,6 @@ export function ProposalDialog({
         {!isKycApproved && (
           <Alert
             tone="warning"
-            // Always present when unverified, so it should not interrupt a
-            // screen reader the way a new error would.
             live={false}
             title="Your identity isn't verified yet"
             description="You need a verified identity to submit proposals and receive escrow payments. It takes about 2 minutes."
@@ -326,7 +289,6 @@ export function ProposalDialog({
           />
         )}
 
-        {/* AI Proposal Generator Banner */}
         <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-3 space-y-3 sm:p-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="min-w-0 space-y-1">
@@ -374,7 +336,6 @@ export function ProposalDialog({
             )}
           </div>
 
-          {/* Optional notes for AI customization */}
           <div>
             {!showCustomNotes ? (
               <button
@@ -407,10 +368,8 @@ export function ProposalDialog({
           </div>
         </div>
 
-        {/* AI Proposal Preview & Highlights if generated */}
         {aiProposal && (
           <div className="space-y-4 rounded-xl border border-border bg-card/60 p-3 sm:p-4">
-            {/* Highlights pills */}
             {aiProposal.highlights && aiProposal.highlights.length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {aiProposal.highlights.map((highlight, idx) => (
@@ -426,7 +385,6 @@ export function ProposalDialog({
               </div>
             )}
 
-            {/* Proposal Pitch Tabs & Editor */}
             <div className="space-y-2">
               <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5 border-b border-border/80 pb-2">
                 <span className="text-2xs font-semibold text-foreground uppercase tracking-wider sm:text-xs">
@@ -473,7 +431,6 @@ export function ProposalDialog({
               )}
             </div>
 
-            {/* Proposed Milestones plan */}
             {aiProposal.proposedMilestones && aiProposal.proposedMilestones.length > 0 && (
               <div className="space-y-2 pt-2 border-t border-border/80">
                 <div className="flex items-center gap-1.5 text-2xs font-semibold text-muted-foreground uppercase tracking-wider sm:text-xs">
@@ -513,10 +470,7 @@ export function ProposalDialog({
                 inputMode="decimal"
                 placeholder="0.00"
                 value={form.proposedRate}
-                onChange={(event) => {
-                  setFieldError(null);
-                  setForm((current) => ({ ...current, proposedRate: event.target.value }));
-                }}
+                onChange={(event) => handleRateChange(event.target.value)}
               />
             </Field>
 
@@ -532,10 +486,7 @@ export function ProposalDialog({
                 step="1"
                 inputMode="numeric"
                 value={form.estimatedDuration}
-                onChange={(event) => {
-                  setFieldError(null);
-                  setForm((current) => ({ ...current, estimatedDuration: event.target.value }));
-                }}
+                onChange={(event) => handleDurationChange(event.target.value)}
               />
             </Field>
           </div>
@@ -556,42 +507,7 @@ export function ProposalDialog({
               accept={DOCUMENT_ACCEPT_STRING}
               className="text-xs file:text-xs"
               aria-describedby={`${fieldId}-files-hint`}
-              onChange={(event) => {
-                const incomingFiles = Array.from(event.target.files ?? []);
-                setFieldError(null);
-
-                const validFiles: File[] = [];
-                for (const file of incomingFiles) {
-                  if (!isAllowedDocumentFile(file)) {
-                    toast.error(`File type not allowed for "${file.name}". ${ALLOWED_FORMATS_DESCRIPTION}`);
-                    continue;
-                  }
-                  if (file.size > MAX_FILE_SIZE) {
-                    toast.error(`File "${file.name}" exceeds the 10 MB limit.`);
-                    continue;
-                  }
-                  validFiles.push(file);
-                }
-
-                setForm((current) => {
-                  const autoBrief = current.files.filter((f) => f.name.startsWith('Proposal_'));
-                  const combined = [...autoBrief, ...validFiles];
-                  // This list used to be sliced silently, so files the user
-                  // picked just never appeared. Say what was dropped.
-                  const dropped = combined.length - MAX_FILE_COUNT;
-                  if (dropped > 0) {
-                    toast.warning(
-                      `Only ${MAX_FILE_COUNT} attachments allowed`,
-                      {
-                        description: dropped === 1
-                          ? 'The last file you picked was not added.'
-                          : `The last ${dropped} files you picked were not added.`,
-                      },
-                    );
-                  }
-                  return { ...current, files: combined.slice(0, MAX_FILE_COUNT) };
-                });
-              }}
+              onChange={(event) => handleFilesChange(event.target.files)}
             />
             <p id={`${fieldId}-files-hint`} className="text-xs text-muted-foreground">
               Attach 1–{MAX_FILE_COUNT} files (up to 10 MB each, 25 MB total).
@@ -624,7 +540,7 @@ export function ProposalDialog({
                     <button
                       type="button"
                       className="ml-2 shrink-0 p-2 text-muted-foreground hover:text-destructive touch-manipulation"
-                      onClick={() => setForm((c) => ({ ...c, files: c.files.filter((_, i) => i !== idx) }))}
+                      onClick={() => handleRemoveFile(idx)}
                     >
                       <X className="size-3.5" />
                     </button>
@@ -653,9 +569,6 @@ export function ProposalDialog({
             className="w-full sm:w-auto"
             loading={submitting}
             loadingText="Submitting proposal…"
-            // Attachments are no longer part of this condition: the button stays
-            // live so submitting explains what is missing, instead of going dead
-            // with no reason given.
             disabled={!isKycApproved || submitting || generatingAI}
             title={blockedReason ?? undefined}
           >

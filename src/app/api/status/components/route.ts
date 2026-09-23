@@ -14,7 +14,9 @@ export interface ServiceComponentHealth {
 }
 
 export async function GET() {
-  const backendApiUrl = process.env['NEXT_PUBLIC_API_URL'] || 'http://localhost:3001/api';
+  const rawApiUrl = process.env['NEXT_PUBLIC_API_URL'] || 'http://localhost:3001/api';
+  const backendBase = (process.env.BACKEND_API_URL || 'https://api.freelancexchain.works').replace(/\/+$/, '');
+  const backendApiUrl = rawApiUrl.startsWith('http') ? rawApiUrl : `${backendBase}/api`;
   const cleanApiUrl = backendApiUrl.replace(/\/+$/, '');
 
   const probes = [

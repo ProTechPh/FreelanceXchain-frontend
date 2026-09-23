@@ -1,4 +1,4 @@
-
+﻿
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -91,13 +91,23 @@ export default function KycReviewPage() {
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchStats();
+    let mounted = true;
+    async function run() {
+      if (!mounted) return;
+      await fetchStats();
+    }
+    run().catch(console.error);
+    return () => { mounted = false; };
   }, [fetchStats]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchVerifications(filter);
+    let mounted = true;
+    async function run() {
+      if (!mounted) return;
+      await fetchVerifications(filter);
+    }
+    run().catch(console.error);
+    return () => { mounted = false; };
   }, [filter, fetchVerifications]);
 
   const handleReview = async (id: string, decision: 'approved' | 'rejected') => {
@@ -363,7 +373,7 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
                   </h4>
                   {loadingDecision && (
                     <span className="text-xs text-muted-foreground flex items-center gap-1.5">
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> Fetching latest images…
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> Fetching latest imagesâ€¦
                     </span>
                   )}
                 </div>
@@ -540,7 +550,7 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
                     <DetailCell label="VPN Detected" value={isVpn ? 'Yes (Detected)' : 'No'} />
                     <DetailCell label="Proxy / Datacenter" value={isProxy ? 'Yes (Detected)' : 'No'} />
                     {(deviceBrand || deviceModel || browserFamily || osFamily) && (
-                      <DetailCell label="Device & Browser" value={[deviceBrand || deviceModel, browserFamily, osFamily].filter(Boolean).join(' • ')} />
+                      <DetailCell label="Device & Browser" value={[deviceBrand || deviceModel, browserFamily, osFamily].filter(Boolean).join(' â€¢ ')} />
                     )}
                   </div>
                 </div>
@@ -562,7 +572,7 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
                       size="sm"
                       className="bg-success hover:bg-success/90 text-success-foreground"
                       loading={reviewing}
-                      loadingText="Approving…"
+                      loadingText="Approvingâ€¦"
                       onClick={() => setConfirmDecision('approved')}
                     >
                       <CheckCircle className="size-4" aria-hidden="true" />
@@ -573,7 +583,7 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
                       variant="outline"
                       className="text-destructive border-destructive-border hover:bg-destructive-subtle"
                       loading={reviewing}
-                      loadingText="Rejecting…"
+                      loadingText="Rejectingâ€¦"
                       onClick={() => setConfirmDecision('rejected')}
                     >
                       <XCircle className="size-4" aria-hidden="true" />
@@ -658,7 +668,7 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
               variant={confirmDecision === 'approved' ? 'default' : 'destructive'}
               className={confirmDecision === 'approved' ? 'bg-success hover:bg-success/90 text-success-foreground' : ''}
               loading={Boolean(reviewing)}
-              loadingText={confirmDecision === 'approved' ? 'Approving…' : 'Rejecting…'}
+              loadingText={confirmDecision === 'approved' ? 'Approvingâ€¦' : 'Rejectingâ€¦'}
               onClick={() => {
                 if (confirmDecision) {
                   onReview(v.id, confirmDecision);
@@ -729,4 +739,6 @@ function CheckDot({ passed, label }: { passed: boolean | null; label: string }) 
     </div>
   );
 }
+
+
 
