@@ -1,4 +1,4 @@
-﻿import { Suspense } from "react";
+import { Suspense } from "react";
 import Navbar from "@/components/layout/navbar";
 import { FooterSection } from "@/components/layout/footer-section";
 import { LeaderboardContent } from "@/components/leaderboard/leaderboard-content";
@@ -15,8 +15,17 @@ export const metadata = {
 // Server-side data fetching
 async function fetchLeaderboard(): Promise<ReputationLeaderboardEntry[]> {
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api";
+    const backendBase = (process.env.BACKEND_API_URL || 'https://api.freelancexchain.works').replace(/\/+$/, '');
+    const rawApiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = rawApiUrl && rawApiUrl.startsWith('http') ? rawApiUrl : `${backendBase}/api`;
+
+    const headers: Record<string, string> = {};
+    if (process.env.INTERNAL_API_SECRET) {
+      headers['x-internal-secret'] = process.env.INTERNAL_API_SECRET;
+    }
+
     const res = await fetch(`${apiUrl}/reputation/leaderboard`, {
+      headers,
       // Revalidate every 5 minutes since leaderboard data changes
       next: { revalidate: 300 },
     });

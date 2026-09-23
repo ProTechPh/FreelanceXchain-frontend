@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { SignInPage } from '@/components/marketing/sign-in';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { authApi } from '@/lib/api';
+import { API_URL } from '@/lib/api-client';
 import { GuestGuard } from '@/components/auth/guest-guard';
 import { TurnstileWidget, type TurnstileWidgetRef } from '@/components/auth/turnstile-widget';
 
@@ -48,7 +49,7 @@ export default function LoginPage() {
         window.location.href = data.url;
         return;
       }
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+      const apiUrl = API_URL;
       // eslint-disable-next-line @next/next/no-location-assign-relative-destination
       window.location.href = `${apiUrl}/auth/oauth/${provider}`;
     } catch (error) {
