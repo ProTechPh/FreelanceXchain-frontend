@@ -1,4 +1,4 @@
-'use client';
+ï»¿'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Briefcase, Pencil, Plus, Save, Trash2, UserRound } from 'lucide-react';
@@ -184,7 +184,7 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Profile</h1>
           <p className="text-muted-foreground">Keep the information shown to marketplace participants up to date.</p>
         </div>
-        <Button type="button" onClick={() => void saveProfile()} loading={saving} loadingText="Saving…" disabled={!isDirty}>
+        <Button type="button" onClick={() => void saveProfile()} loading={saving} loadingText="Savingâ€¦" disabled={!isDirty}>
           <Save className="size-4" aria-hidden="true" />
           Save profile
         </Button>
@@ -263,7 +263,7 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
                 <div className="flex flex-wrap gap-2">
                   {(freelancerProfile.skills ?? []).map((skill) => (
                     <Badge key={skill.name} variant="secondary" className="gap-2 py-1.5 pl-3 pr-1">
-                      {skill.name} · {skill.yearsOfExperience}y
+                      {skill.name} Â· {skill.yearsOfExperience}y
                       <Button
                         type="button"
                         size="icon"
@@ -350,7 +350,7 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
                     <div>
                       <p className="font-semibold">{experience.title}</p>
                       <p className="text-sm text-muted-foreground">
-                        {experience.company} · {formatDate(experience.startDate)} – {experience.endDate ? formatDate(experience.endDate) : 'Present'}
+                        {experience.company} Â· {formatDate(experience.startDate)} â€“ {experience.endDate ? formatDate(experience.endDate) : 'Present'}
                       </p>
                       <p className="mt-2 text-sm">{experience.description}</p>
                     </div>
@@ -478,4 +478,3 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
     </div>
   );
 }
-
