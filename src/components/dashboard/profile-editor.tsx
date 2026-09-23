@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Briefcase, Pencil, Plus, Save, Trash2, UserRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { skillsApi, freelancersApi } from '@/lib/api';

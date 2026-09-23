@@ -121,7 +121,18 @@ export function useProfileEditor(role: ProfileRole): UseProfileEditorResult {
   }, [role, user?.name]);
 
   useEffect(() => {
-    void loadProfile();
+    let mounted = true;
+
+    async function run() {
+      if (!mounted) return;
+      await loadProfile();
+    }
+
+    run().catch(console.error);
+
+    return () => {
+      mounted = false;
+    };
   }, [loadProfile]);
 
   const updateFreelancerField = useCallback(

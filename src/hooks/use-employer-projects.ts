@@ -24,14 +24,15 @@ export function useEmployerProjects(): EmployerProjectsData {
   }, []);
 
   useEffect(() => {
-    if (!currentUser) {
-      setProjectsLoading(false);
-      return;
-    }
-
     let cancelled = false;
 
     const loadProjects = async () => {
+      if (!currentUser) {
+        setProjects([]);
+        setProjectsLoading(false);
+        return;
+      }
+
       try {
         setProjectsLoading(true);
         const res = await projectsApi.getMyProjects();

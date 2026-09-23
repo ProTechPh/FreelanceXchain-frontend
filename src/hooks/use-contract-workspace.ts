@@ -127,7 +127,18 @@ export function useContractWorkspace(
   }, [contractId, role, requestRatingPrompt]);
 
   useEffect(() => {
-    void loadWorkspace();
+    let mounted = true;
+
+    async function run() {
+      if (!mounted) return;
+      await loadWorkspace();
+    }
+
+    run().catch(console.error);
+
+    return () => {
+      mounted = false;
+    };
   }, [loadWorkspace]);
 
   return {

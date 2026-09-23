@@ -46,13 +46,25 @@ export function useFreelancerDashboard() {
 
   useEffect(() => {
     if (!currentUser) return;
-    void loadReputation();
+
+    let mounted = true;
+
+    async function run() {
+      if (!mounted) return;
+      await loadReputation();
+    }
+
+    run().catch(console.error);
+
+    return () => {
+      mounted = false;
+    };
   }, [currentUser, loadReputation, reloadKey]);
 
   useEffect(() => {
-    if (!contracts.loading && !proposals.loading) {
-      setCoreLoading(false);
-    }
+    if (contracts.loading || proposals.loading) return;
+    const timer = requestAnimationFrame(() => setCoreLoading(false));
+    return () => cancelAnimationFrame(timer);
   }, [contracts.loading, proposals.loading]);
 
   const reloadCore = useCallback(() => {

@@ -179,7 +179,18 @@ export function ProposalDialog({
 
   useEffect(() => {
     if (open && initialGenerateAI && isPro && project && !aiProposal && !generatingAI) {
-      void handleGenerateAI();
+      let mounted = true;
+
+      async function run() {
+        if (!mounted) return;
+        await handleGenerateAI();
+      }
+
+      run().catch(console.error);
+
+      return () => {
+        mounted = false;
+      };
     }
   }, [open, initialGenerateAI, isPro, project, aiProposal, generatingAI, handleGenerateAI]);
 

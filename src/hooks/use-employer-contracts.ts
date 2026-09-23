@@ -36,12 +36,6 @@ export function useEmployerContracts(
   }, []);
 
   useEffect(() => {
-    if (!currentUser || activeProjectsLoading || !isPro || activeProjects.length === 0) {
-      setRecommendedLoading(false);
-      setRecommended([]);
-      return;
-    }
-
     let cancelled = false;
 
     type FreelancerProfileResult = Awaited<ReturnType<typeof freelancersApi.getPublicProfile>>;
@@ -52,6 +46,12 @@ export function useEmployerContracts(
     };
 
     const loadRecommendations = async () => {
+      if (!currentUser || activeProjectsLoading || !isPro || activeProjects.length === 0) {
+        setRecommended([]);
+        setRecommendedLoading(false);
+        return;
+      }
+
       try {
         setRecommendedLoading(true);
 

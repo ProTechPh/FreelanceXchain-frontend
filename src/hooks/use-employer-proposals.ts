@@ -36,11 +36,6 @@ export function useEmployerProposals(
   }, []);
 
   useEffect(() => {
-    if (!currentUser || activeProjectsLoading || activeProjects.length === 0) {
-      setProposalsLoading(false);
-      return;
-    }
-
     let cancelled = false;
 
     type FreelancerProfileResult = Awaited<ReturnType<typeof freelancersApi.getPublicProfile>>;
@@ -51,6 +46,13 @@ export function useEmployerProposals(
     };
 
     const loadProposals = async () => {
+      if (!currentUser || activeProjectsLoading || activeProjects.length === 0) {
+        setPendingProposalCount(0);
+        setRecentProposals([]);
+        setProposalsLoading(false);
+        return;
+      }
+
       try {
         setProposalsLoading(true);
 

@@ -87,7 +87,18 @@ export function useFreelancerContracts(freelancerId: string): FreelancerContract
   }, [load]);
 
   useEffect(() => {
-    void load();
+    let mounted = true;
+
+    async function run() {
+      if (!mounted) return;
+      await load();
+    }
+
+    run().catch(console.error);
+
+    return () => {
+      mounted = false;
+    };
   }, [load]);
 
   return {

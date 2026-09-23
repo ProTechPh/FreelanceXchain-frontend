@@ -12,7 +12,7 @@ import { AttachmentPreviewDialog, type AttachmentPreviewTarget } from '@/compone
 import { validateReviewDraft, type ReviewDraft } from '@/lib/review-form';
 import { validateDocumentFiles } from '@/lib/file-validation';
 import { useAuthStore } from '@/stores/authStore';
-import type { Contract, Milestone, UserRole } from '@/types';
+import type { Milestone, UserRole } from '@/types';
 import { useContractWorkspace } from '@/hooks/use-contract-workspace';
 import { ContractNegotiationPanel } from '@/components/contracts/contract-negotiation-panel';
 import { Card, CardContent } from '@/components/ui/card';

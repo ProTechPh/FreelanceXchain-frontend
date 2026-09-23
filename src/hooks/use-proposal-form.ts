@@ -52,7 +52,6 @@ interface UseProposalFormResult {
 
 export function useProposalForm({
   projectId,
-  projectTitle,
   projectBudget,
   onSubmitted,
 }: UseProposalFormOptions): UseProposalFormResult {
