@@ -1,22 +1,10 @@
-'use client';
+﻿'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { reportFailure } from '@/lib/report-failure';
-import {
-  contractsApi,
-  milestonesApi,
-  paymentsApi,
-  refundsApi,
-  reviewsApi,
-  rushUpgradesApi,
-  transactionsApi,
-} from '@/lib/api';
-import {
-  getContractPermissions,
-  normalizeMilestone,
-} from '@/lib/contract-workflow';
+import { contractsApi, milestonesApi, reviewsApi } from '@/lib/api';
+import { getContractPermissions } from '@/lib/contract-workflow';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { useRateApp } from '@/components/feedback/rate-app-provider';
 import { hasApprovedKyc } from '@/lib/kyc-eligibility';
@@ -24,17 +12,8 @@ import { AttachmentPreviewDialog, type AttachmentPreviewTarget } from '@/compone
 import { validateReviewDraft, type ReviewDraft } from '@/lib/review-form';
 import { validateDocumentFiles } from '@/lib/file-validation';
 import { useAuthStore } from '@/stores/authStore';
-import type {
-  Contract,
-  ContractFundInfo,
-  ContractPaymentStatus,
-  Dispute,
-  Milestone,
-  RefundRequest,
-  RushUpgradeRequest,
-  Transaction,
-  UserRole,
-} from '@/types';
+import type { Contract, Milestone, UserRole } from '@/types';
+import { useContractWorkspace } from '@/hooks/use-contract-workspace';
 import { ContractNegotiationPanel } from '@/components/contracts/contract-negotiation-panel';
 import { Card, CardContent } from '@/components/ui/card';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
@@ -67,95 +46,35 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
 }) {
   const user = useAuthStore((state) => state.user);
   const queryClient = useQueryClient();
-  const [contract, setContract] = useState<Contract | null>(null);
-  const [milestones, setMilestones] = useState<Milestone[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [disputes, setDisputes] = useState<Dispute[]>([]);
-  const [rushRequests, setRushRequests] = useState<RushUpgradeRequest[]>([]);
-  const [refunds, setRefunds] = useState<RefundRequest[]>([]);
-  const [fundInfo, setFundInfo] = useState<ContractFundInfo | null>(null);
-  const [paymentStatus, setPaymentStatus] = useState<ContractPaymentStatus | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { requestRatingPrompt } = useRateApp();
+
+  const {
+    contract,
+    milestones,
+    transactions,
+    disputes,
+    rushRequests,
+    refunds,
+    fundInfo,
+    paymentStatus,
+    loading,
+    reviewEligibility,
+    refresh: loadWorkspace,
+  } = useContractWorkspace(contractId, role, requestRatingPrompt);
+
   const [actionId, setActionId] = useState<string | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [rejectionReasons, setRejectionReasons] = useState<Record<string, string>>({});
   const [files, setFiles] = useState<Record<string, File[]>>({});
-  const [reviewEligibility, setReviewEligibility] = useState<{ canRate: boolean; reason?: string } | null>(null);
   const [review, setReview] = useState<ReviewDraft>(initialReview);
   const [previewAttachment, setPreviewAttachment] = useState<AttachmentPreviewTarget | null>(null);
   const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
   const [approvingMilestone, setApprovingMilestone] = useState<Milestone | null>(null);
-  const { requestRatingPrompt } = useRateApp();
+  const [localReviewEligibility, setLocalReviewEligibility] = useState(reviewEligibility);
 
-  const loadWorkspace = useCallback(async () => {
-    try {
-      const contractResponse = await contractsApi.get(contractId);
-      const loadedContract = contractResponse.data;
-      setContract(loadedContract);
-
-      const [
-        milestoneResult,
-        transactionResult,
-        disputeResult,
-        rushResult,
-        refundResult,
-        paymentResult,
-        fundInfoResult,
-      ] = await Promise.allSettled([
-        milestonesApi.listForContract(contractId),
-        transactionsApi.getForContract(contractId),
-        contractsApi.getDisputes(contractId),
-        rushUpgradesApi.list(contractId),
-        refundsApi.list(contractId),
-        paymentsApi.getStatus(contractId),
-        role === 'employer' ? contractsApi.getFundInfo(contractId) : Promise.resolve(null),
-      ]);
-
-      const rawMilestones =
-        milestoneResult.status === 'fulfilled'
-          ? milestoneResult.value.data
-          : loadedContract.milestones ?? [];
-      setMilestones(rawMilestones.map(normalizeMilestone));
-      setTransactions(transactionResult.status === 'fulfilled' ? transactionResult.value.data : []);
-      setDisputes(disputeResult.status === 'fulfilled' ? disputeResult.value.data : []);
-      setRushRequests(rushResult.status === 'fulfilled' ? rushResult.value.data : []);
-      setRefunds(refundResult.status === 'fulfilled' ? refundResult.value.data : []);
-      setPaymentStatus(paymentResult.status === 'fulfilled' ? paymentResult.value.data : null);
-      setFundInfo(
-        fundInfoResult.status === 'fulfilled' && fundInfoResult.value
-          ? fundInfoResult.value.data
-          : null,
-      );
-
-      if (loadedContract.status === 'completed') {
-        // The contract is completed inside the *employer's* approval request,
-        // so the freelancer has no client event to hang a prompt on. Asking on
-        // arrival covers them; the once-per-event rule makes it safe to call
-        // on every load.
-        requestRatingPrompt('contract_completed', loadedContract.id);
-
-        const rateeId = role === 'employer' ? loadedContract.freelancerId : loadedContract.employerId;
-        try {
-          const { data } = await reviewsApi.canReview(loadedContract.id, rateeId);
-          setReviewEligibility(data);
-        } catch {
-          setReviewEligibility(null);
-        }
-      } else {
-        setReviewEligibility(null);
-      }
-    } catch (error) {
-      reportFailure(error, 'load this contract');
-    } finally {
-      setLoading(false);
-    }
-  }, [contractId, role, requestRatingPrompt]);
-
-  useEffect(() => {
-    // The workspace state is populated from authenticated backend resources after mount.
-
-    void loadWorkspace();
-  }, [loadWorkspace]);
+  React.useEffect(() => {
+    setLocalReviewEligibility(reviewEligibility);
+  }, [reviewEligibility]);
 
   if (loading) {
     return <DetailSkeleton label="Loading contract" />;
@@ -174,9 +93,6 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
   const contractPermissions = getContractPermissions(contract.status, role, user.kycStatus);
   const isVerified = hasApprovedKyc(user.kycStatus);
 
-  // Returns what the action resolved to (undefined when it failed), so a
-  // caller can react to the outcome — milestone approval needs to know whether
-  // that approval also finished the contract.
   const runAction = async <T,>(id: string, action: () => Promise<T>, success: string): Promise<T | undefined> => {
     setActionId(id);
     try {
@@ -239,7 +155,7 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
     setActionId('review');
     try {
       await reviewsApi.submit({ ...review, contractId: contract.id, comment: review.comment.trim() });
-      setReviewEligibility({ canRate: false, reason: 'You have reviewed this contract.' });
+      setLocalReviewEligibility({ canRate: false, reason: 'You have reviewed this contract.' });
       setReview(initialReview);
       toast.success('Review submitted.');
     } catch (error) {
@@ -282,9 +198,9 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
         onRefresh={loadWorkspace}
       />
 
-      {contract.status === 'completed' && reviewEligibility && (
+      {contract.status === 'completed' && localReviewEligibility && (
         <ContractReviewCard
-          reviewEligibility={reviewEligibility}
+          reviewEligibility={localReviewEligibility}
           isVerified={isVerified}
           review={review}
           actionId={actionId}
@@ -355,9 +271,6 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
           );
           setApprovingMilestone(null);
 
-          // The last approval releases the final payment and closes the
-          // contract in the same request, so the response decides which of the
-          // two moments this actually was.
           if (result) {
             const completed = result.data.contractCompleted;
             requestRatingPrompt(
