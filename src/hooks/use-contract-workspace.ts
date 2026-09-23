@@ -1,4 +1,5 @@
-﻿'use client';
+﻿
+'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import {
@@ -22,6 +23,7 @@ import type {
   RushUpgradeRequest,
   RefundRequest,
   UserRole,
+  AppRatingSource,
 } from '@/types';
 
 type ParticipantRole = Extract<UserRole, 'employer' | 'freelancer'>;
@@ -41,7 +43,7 @@ interface ContractWorkspaceState {
 
 interface ContractWorkspaceActions {
   refresh: () => Promise<void>;
-  requestRatingPrompt: (source: string, contextId: string) => void;
+  requestRatingPrompt: (source: AppRatingSource, contextId?: string) => void;
 }
 
 interface UseContractWorkspaceResult extends ContractWorkspaceState, ContractWorkspaceActions {}
@@ -49,7 +51,7 @@ interface UseContractWorkspaceResult extends ContractWorkspaceState, ContractWor
 export function useContractWorkspace(
   contractId: string,
   role: ParticipantRole,
-  requestRatingPrompt: (source: string, contextId: string) => void,
+  requestRatingPrompt: (source: AppRatingSource, contextId?: string) => void,
 ): UseContractWorkspaceResult {
   const [state, setState] = useState<ContractWorkspaceState>({
     contract: null,
@@ -147,3 +149,4 @@ export function useContractWorkspace(
     requestRatingPrompt,
   };
 }
+

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -279,7 +279,7 @@ export function ProjectDetailView({
             <Button
               variant="destructive"
               loading={withdrawingProposal}
-              loadingText="Withdrawingâ€¦"
+              loadingText="Withdrawing…"
               onClick={async () => {
                 if (!myProposal) return;
                 await handleWithdrawProposal(myProposal.id);
@@ -368,7 +368,7 @@ export function ProjectDetailView({
   if (!project) {
     const notFoundCard = (
       <div className="text-center rounded-3xl bg-card border border-border/80 p-12 shadow-md shadow-black/5 max-w-md mx-auto">
-        <p className="text-3xl mb-4">Ã°Å¸â€Â</p>
+        <p className="text-3xl mb-4">🔍</p>
         <h2 className="text-2xl font-bold text-foreground mb-2">Project not found</h2>
         <p className="text-muted-foreground mb-6">This project doesn&apos;t exist or has been removed.</p>
         <Button asChild className="rounded-full gradient-primary shadow-md">
@@ -403,3 +403,4 @@ export function ProjectDetailView({
 
   return <div className="space-y-6">{renderContent()}</div>;
 }
+
