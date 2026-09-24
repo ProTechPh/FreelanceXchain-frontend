@@ -1,157 +1,168 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useAccount, useConnect, useDisconnect, useBalance, useChainId, useSwitchChain } from 'wagmi';
+import { injected, walletConnect } from 'wagmi/connectors';
 import { toast } from 'sonner';
 import { authApi } from '@/lib/api';
-import {
-  connectWallet,
-  formatWalletAddress,
-  getWalletBalance,
-  getNetworkSymbol,
-  switchToGanache,
-  type WalletConnection,
-} from '@/lib/wallet';
-import { reportFailure } from '@/lib/report-failure';
 import { useAuthStore } from '@/stores/authStore';
+import { reportFailure } from '@/lib/report-failure';
+import { formatWalletAddress, getNetworkSymbol, chainNames } from '@/lib/wagmi-config';
+
+export interface WalletConnection {
+  address: string;
+  chainId: number;
+  networkName: string;
+  balance: string;
+}
+
+// Detect if user is on mobile
+function isMobile(): boolean {
+  if (typeof window === 'undefined') return false;
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+// Detect if MetaMask is installed
+function isMetaMaskInstalled(): boolean {
+  if (typeof window === 'undefined') return false;
+  return typeof window.ethereum !== 'undefined' && (window.ethereum as { isMetaMask?: boolean }).isMetaMask === true;
+}
 
 export function useWalletConnection() {
   const user = useAuthStore((state) => state.user);
   const setUser = useAuthStore((state) => state.setUser);
 
-  const [wallet, setWallet] = useState<WalletConnection | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
-  const [isLoadingBalance, setIsLoadingBalance] = useState(false);
 
-  const walletAddress = user?.walletAddress || wallet?.address || null;
-  const isConnected = Boolean(walletAddress);
-  const formattedAddress = walletAddress ? formatWalletAddress(walletAddress) : null;
-  const balance = wallet?.balance ?? null;
-  const networkName = wallet?.networkName ?? null;
-  const symbol = getNetworkSymbol(wallet?.chainId);
+  // wagmi hooks
+  const { address, isConnected, connector } = useAccount();
+  const chainId = useChainId();
+  const { connectAsync } = useConnect();
+  const { disconnectAsync } = useDisconnect();
+  const { data: balanceData, refetch: refetchBalance } = useBalance({
+    address,
+    query: { enabled: !!address },
+  });
+  const { switchChain } = useSwitchChain();
 
-  const refreshBalance = useCallback(async () => {
-    if (typeof window === 'undefined' || !window.ethereum || !walletAddress) return;
+  // Format balance
+  const balance = balanceData ? `${(Number(balanceData.value) / 10 ** balanceData.decimals).toFixed(4)}` : null;
+  const networkName = chainId ? (chainNames[chainId] ?? `Chain ${chainId}`) : null;
+  const symbol = getNetworkSymbol(chainId);
+  const formattedAddress = address ? formatWalletAddress(address) : null;
 
-    setIsLoadingBalance(true);
-    try {
-      const data = await getWalletBalance(window.ethereum, walletAddress);
-      setWallet(data);
-    } catch {
-      // Non-blocking background balance update
-    } finally {
-      setIsLoadingBalance(false);
-    }
-  }, [walletAddress]);
-
-  // Initial balance load and account change listener
+  // Auto-sync wallet with backend when account changes
   useEffect(() => {
-    if (typeof window === 'undefined' || !window.ethereum || !wallet?.address) return;
+    if (!isConnected || !address || !user) return;
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void refreshBalance();
-
-    const handleAccountsChanged = (value: string | string[]) => {
-      const accounts = Array.isArray(value) ? value : [value];
-      const activeAccount = accounts[0];
-      if (!activeAccount) {
-        setWallet(null);
-        if (user) setUser({ ...user, walletAddress: '' });
-      } else if (!walletAddress || activeAccount.toLowerCase() !== walletAddress.toLowerCase()) {
-        void authApi.updateWallet(activeAccount).then(({ data }) => {
-          if (user) setUser({ ...user, walletAddress: data.walletAddress });
-          void refreshBalance();
-        }).catch(() => {
-          // Ignore
-        });
-      }
-    };
-
-    const handleChainChanged = () => {
-      void refreshBalance();
-    };
-
-    const handleFocus = () => {
-      void refreshBalance();
-    };
-
-    window.addEventListener('focus', handleFocus);
-    window.ethereum.on?.('accountsChanged', handleAccountsChanged);
-    window.ethereum.on?.('chainChanged', handleChainChanged);
-
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-      window.ethereum?.removeListener?.('accountsChanged', handleAccountsChanged);
-      window.ethereum?.removeListener?.('chainChanged', handleChainChanged);
-    };
-  }, [wallet?.address, walletAddress, refreshBalance, user, setUser]);
+    // Only update if the wallet address is different
+    if (user.walletAddress?.toLowerCase() !== address.toLowerCase()) {
+      authApi.updateWallet(address).then(({ data }) => {
+        setUser({ ...user, walletAddress: data.walletAddress });
+      }).catch(() => {
+        // Ignore errors, wallet connection still works
+      });
+    }
+  }, [isConnected, address, user, setUser]);
 
   const connect = useCallback(async () => {
     if (typeof window === 'undefined') return null;
 
-    if (!window.ethereum) {
-      toast.warning('No wallet detected', {
-        description: 'Install MetaMask or another EVM-compatible wallet, then reload this page.',
-      });
-      return null;
-    }
-
     setIsConnecting(true);
     try {
-      const connection = await connectWallet(window.ethereum);
-      const { data } = await authApi.updateWallet(connection.address);
-      setWallet(connection);
+      // Determine which connector to use
+      let result;
+
+      if (isMobile()) {
+        // On mobile, prefer WalletConnect for deep linking to wallet apps
+        // If MetaMask app browser is being used, injected should work
+        if (isMetaMaskInstalled()) {
+          // User is in MetaMask mobile browser
+          result = await connectAsync({ connector: injected() });
+        } else {
+          // Use WalletConnect for mobile wallet apps
+          result = await connectAsync({ connector: walletConnect({ showQrModal: true }) });
+        }
+      } else {
+        // On desktop, try injected first (MetaMask extension)
+        if (isMetaMaskInstalled()) {
+          result = await connectAsync({ connector: injected() });
+        } else {
+          // Fall back to WalletConnect
+          result = await connectAsync({ connector: walletConnect({ showQrModal: true }) });
+        }
+      }
+
+      if (!result?.accounts[0]) {
+        throw new Error('No wallet account was selected');
+      }
+
+      const walletAddress = result.accounts[0];
+      const connection: WalletConnection = {
+        address: walletAddress,
+        chainId: result.chainId,
+        networkName: chainNames[result.chainId] ?? `Chain ${result.chainId}`,
+        balance: '0', // Will be updated by useBalance hook
+      };
+
+      // Sync with backend
+      const { data } = await authApi.updateWallet(walletAddress);
       if (user) {
         setUser({ ...user, walletAddress: data.walletAddress });
       }
-      toast.success(`Wallet connected: ${formatWalletAddress(connection.address)} (${connection.balance} ${getNetworkSymbol(connection.chainId)})`);
+
+      toast.success(`Wallet connected: ${formatWalletAddress(walletAddress)}`);
       return connection;
     } catch (error) {
-      // Connecting signs nothing, so a failure here can promise funds are safe.
       reportFailure(error, 'connect your wallet', { fundsUnchanged: true });
       return null;
     } finally {
       setIsConnecting(false);
     }
-  }, [user, setUser]);
+  }, [connectAsync, user, setUser]);
 
   const disconnect = useCallback(async () => {
     setIsDisconnecting(true);
     try {
+      await disconnectAsync();
       await authApi.disconnectWallet();
-      setWallet(null);
       if (user) {
         setUser({ ...user, walletAddress: '' });
       }
-      toast.success('Wallet disconnected successfully.');
+      toast.success('Wallet disconnected successfully');
     } catch (error) {
       reportFailure(error, 'disconnect your wallet', { fundsUnchanged: true });
     } finally {
       setIsDisconnecting(false);
     }
-  }, [user, setUser]);
+  }, [disconnectAsync, user, setUser]);
+
+  const refreshBalance = useCallback(async () => {
+    await refetchBalance();
+  }, [refetchBalance]);
 
   const switchToGanacheNetwork = useCallback(async () => {
-    if (typeof window === 'undefined' || !window.ethereum) return;
-    try {
-      await switchToGanache(window.ethereum);
-      toast.success('Switched to Ganache Localhost 7545');
-      await refreshBalance();
-    } catch (error) {
-      reportFailure(error, 'switch networks', { fundsUnchanged: true });
-    }
-  }, [refreshBalance]);
+    // Ganache is not a standard chain, so we can't use switchChain
+    // For now, show a message that Ganache requires manual configuration
+    toast.info('Ganache network switching requires manual configuration');
+  }, []);
 
   return {
     user,
-    wallet,
-    walletAddress,
-    isConnected,
+    wallet: isConnected && address ? {
+      address,
+      chainId: chainId ?? 0,
+      networkName: networkName ?? '',
+      balance: balance ?? '0',
+    } : null,
+    walletAddress: address ?? user?.walletAddress ?? null,
+    isConnected: isConnected || !!user?.walletAddress,
     formattedAddress,
     balance,
     networkName,
     symbol,
-    isLoadingBalance,
+    isLoadingBalance: false,
     isConnecting,
     isDisconnecting,
     connect,
@@ -160,3 +171,4 @@ export function useWalletConnection() {
     switchToGanacheNetwork,
   };
 }
+
