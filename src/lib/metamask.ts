@@ -9,7 +9,10 @@ export const DEFAULT_CHAIN_ID = (process.env.NEXT_PUBLIC_CHAIN_ID ?? '0x539') as
 // Read-only RPC endpoints MetaMask Connect may call. Only chains listed here can be used
 // through the SDK provider. On a phone, 127.0.0.1 points at the phone itself, so set
 // NEXT_PUBLIC_RPC_URL to a reachable address (LAN IP or testnet RPC) for mobile testing.
+// Mainnet must stay listed: the SDK always adds it to the session and falls back to it.
 const SUPPORTED_NETWORKS: Record<Hex, string> = {
+  '0x1': 'https://ethereum-rpc.publicnode.com',
+  '0xaa36a7': 'https://ethereum-sepolia-rpc.publicnode.com',
   '0x539': process.env.NEXT_PUBLIC_RPC_URL ?? 'http://127.0.0.1:7545',
   '0x13882': 'https://rpc-amoy.polygon.technology',
   '0x89': 'https://polygon-rpc.com',
