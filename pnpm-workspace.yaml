@@ -1,5 +1,6 @@
 allowBuilds:
   '@reown/appkit': true
+  protobufjs: false
   sharp: true
   unrs-resolver: true
 

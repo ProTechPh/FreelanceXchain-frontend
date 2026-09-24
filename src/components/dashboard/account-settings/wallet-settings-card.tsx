@@ -5,6 +5,7 @@ import { Unlink, Wallet } from 'lucide-react';
 import { toast } from 'sonner';
 import { authApi } from '@/lib/api';
 import { connectWallet, formatWalletAddress, type WalletConnection } from '@/lib/wallet';
+import { disconnectMetaMaskSession, requestWalletProvider } from '@/lib/metamask';
 import { reportFailure } from '@/lib/report-failure';
 import type { User } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -21,16 +22,10 @@ export function WalletSettingsCard({ user, onUserUpdate }: WalletSettingsCardPro
   const [isDisconnectingWallet, setIsDisconnectingWallet] = useState(false);
 
   const connect = async () => {
-    if (!window.ethereum) {
-      toast.warning('No wallet detected', {
-        description: 'Install MetaMask or another EVM-compatible wallet, then reload this page.',
-      });
-      return;
-    }
-
     setIsConnectingWallet(true);
     try {
-      const connection = await connectWallet(window.ethereum);
+      const provider = await requestWalletProvider();
+      const connection = await connectWallet(provider);
       const { data } = await authApi.updateWallet(connection.address);
       setWallet(connection);
       if (user) onUserUpdate({ ...user, walletAddress: data.walletAddress });
@@ -46,6 +41,7 @@ export function WalletSettingsCard({ user, onUserUpdate }: WalletSettingsCardPro
     setIsDisconnectingWallet(true);
     try {
       await authApi.disconnectWallet();
+      await disconnectMetaMaskSession();
       setWallet(null);
       if (user) onUserUpdate({ ...user, walletAddress: '' });
       toast.success('Wallet disconnected successfully.');
