@@ -1,7 +1,7 @@
-import { API_URL } from '../api-client.js';
+import { API_URL } from '@/lib/api-client';
 
 async function getApi() {
-  const mod = await import('../api-client.ts');
+  const mod = await import('@/lib/api-client');
   return mod.default || mod.api;
 }
 
