@@ -177,40 +177,40 @@ export default function UsersPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 min-w-0">
         <Card className="bg-card border-border">
           <CardContent className="p-4">
-            <p className="text-2xl font-bold">{users.length}</p>
+            <p className="text-lg sm:text-2xl font-bold truncate">{users.length}</p>
             <p className="text-xs text-muted-foreground">Total Users</p>
           </CardContent>
         </Card>
         <Card className="bg-card border-border">
           <CardContent className="p-4">
-            <p className="text-2xl font-bold text-success">{activeCount}</p>
+            <p className="text-lg sm:text-2xl font-bold text-success truncate">{activeCount}</p>
             <p className="text-xs text-muted-foreground">Active</p>
           </CardContent>
         </Card>
         <Card className="bg-card border-border">
           <CardContent className="p-4">
-            <p className="text-2xl font-bold text-emerald-500">{kycApprovedCount}</p>
+            <p className="text-lg sm:text-2xl font-bold text-emerald-500 truncate">{kycApprovedCount}</p>
             <p className="text-xs text-muted-foreground">KYC Approved</p>
           </CardContent>
         </Card>
         <Card className="bg-card border-border">
           <CardContent className="p-4">
-            <p className="text-2xl font-bold text-cyan">{emailVerifiedCount}</p>
+            <p className="text-lg sm:text-2xl font-bold text-cyan truncate">{emailVerifiedCount}</p>
             <p className="text-xs text-muted-foreground">Email Verified</p>
           </CardContent>
         </Card>
         <Card className="bg-card border-border">
           <CardContent className="p-4">
-            <p className="text-2xl font-bold">{freelancerCount}</p>
+            <p className="text-lg sm:text-2xl font-bold truncate">{freelancerCount}</p>
             <p className="text-xs text-muted-foreground">Freelancers</p>
           </CardContent>
         </Card>
         <Card className="bg-card border-border">
           <CardContent className="p-4">
-            <p className="text-2xl font-bold text-destructive">{suspendedCount}</p>
+            <p className="text-lg sm:text-2xl font-bold text-destructive truncate">{suspendedCount}</p>
             <p className="text-xs text-muted-foreground">Suspended</p>
           </CardContent>
         </Card>
