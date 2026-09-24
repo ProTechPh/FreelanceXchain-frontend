@@ -13,6 +13,17 @@ export function getWebsitePreviewUrl(url?: string | null): string {
   return `https://api.microlink.io/?url=${encodeURIComponent(normalized)}&screenshot=true&meta=false&embed=screenshot.url`;
 }
 
+/** True for a screenshot URL built by getWebsitePreviewUrl rather than an uploaded image. */
+export function isWebsitePreviewUrl(url?: string | null): boolean {
+  if (!url) return false;
+  try {
+    const { hostname } = new URL(url);
+    return hostname === 'api.microlink.io' || hostname.endsWith('.microlink.io');
+  } catch {
+    return false;
+  }
+}
+
 export function isValidHttpUrl(string?: string | null): boolean {
   if (!string) return false;
   try {
