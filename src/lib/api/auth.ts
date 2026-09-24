@@ -97,8 +97,11 @@ export const authApi = {
   disconnectWallet: () =>
     api.delete<{ message: string; walletAddress: string }>('/auth/wallet'),
 
-  deleteAccount: () =>
-    api.delete<{ message: string }>('/auth/account'),
+  requestAccountDeletion: () =>
+    api.post<{ success: boolean; message: string; email?: string }>('/auth/account/delete-request'),
+
+  deleteAccount: (data: { confirmation: string; code: string }) =>
+    api.delete<{ message: string }>('/auth/account', { data }),
 };
 
 export const emailPreferencesApi = {
