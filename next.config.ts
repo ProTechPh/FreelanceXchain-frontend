@@ -6,6 +6,8 @@ import withBundleAnalyzer from "@next/bundle-analyzer";
 const metaMaskConnectSrc = [
   "wss://mm-sdk-relay.api.cx.metamask.io",
   "https://mm-sdk-analytics.api.cx.metamask.io",
+  "https://ethereum-rpc.publicnode.com",
+  "https://ethereum-sepolia-rpc.publicnode.com",
   "https://rpc-amoy.polygon.technology",
   "https://polygon-rpc.com",
   process.env.NEXT_PUBLIC_RPC_URL ? new URL(process.env.NEXT_PUBLIC_RPC_URL).origin : "",
