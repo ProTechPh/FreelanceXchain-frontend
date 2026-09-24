@@ -146,18 +146,9 @@ export function useWalletConnection() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     
-    // Clear any stale wallet state to prevent issues
+    // Clear any stale wallet state to prevent issues. The provider object can't be
+    // serialized, so a saved state is never restored.
     localStorage.removeItem('walletState');
-    
-    const saved = localStorage.getItem('walletState');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setWalletState(parsed);
-      } catch {
-        localStorage.removeItem('walletState');
-      }
-    }
   }, []);
 
   // Save wallet state to localStorage
@@ -222,10 +213,8 @@ export function useWalletConnection() {
 
   // Fetch balance when connected
   useEffect(() => {
-    if (!walletState.isConnected || !walletState.address || !walletState.provider) {
-      setBalance(null);
-      return;
-    }
+    // Disconnect paths (accountsChanged, disconnect) already reset the balance.
+    if (!walletState.isConnected || !walletState.address || !walletState.provider) return;
 
     const fetchBalance = async () => {
       setIsLoadingBalance(true);
