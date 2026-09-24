@@ -1,8 +1,4 @@
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  (process.env.NODE_ENV === 'production'
-    ? 'https://api.freelancexchain.works/api'
-    : 'http://localhost:3000/api');
+import { API_URL } from '../api-client.js';
 
 async function getApi() {
   const mod = await import('../api-client.ts');
