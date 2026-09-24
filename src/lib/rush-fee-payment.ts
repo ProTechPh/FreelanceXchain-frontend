@@ -1,5 +1,6 @@
 import { toast } from 'sonner';
 import { contractsApi } from '@/lib/api';
+import { getEthereumProvider } from '@/lib/metamask';
 import { sendRushFeeFromWallet } from '@/lib/wallet';
 
 export interface PayRushFeeInput {
@@ -26,7 +27,8 @@ export class RushFeePaymentError extends Error {
 export async function executeRushFeePayment(
   input: PayRushFeeInput
 ): Promise<{ transactionHash: string }> {
-  if (typeof window === 'undefined' || !window.ethereum) {
+  const provider = await getEthereumProvider();
+  if (!provider) {
     throw new RushFeePaymentError(
       'NO_WALLET',
       'Connect MetaMask or another EVM-compatible wallet to pay the rush fee.'
@@ -46,7 +48,7 @@ export async function executeRushFeePayment(
   }
 
   toast.loading(`Confirm the ${amount} ETH rush fee in your wallet…`, { id: progressId });
-  return sendRushFeeFromWallet(window.ethereum, {
+  return sendRushFeeFromWallet(provider, {
     freelancerWallet: info.freelancerWallet,
     amountEth: amount,
     chainId: info.chainId,

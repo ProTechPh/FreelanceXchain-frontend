@@ -5,6 +5,12 @@ import { toast } from 'sonner';
 import { authApi } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
 import { formatWalletAddress, getNetworkSymbol, chainNames } from '@/lib/wallet-utils';
+import {
+  disconnectMetaMaskSession,
+  getMetaMaskClient,
+  hasInjectedProvider,
+  requestWalletProvider,
+} from '@/lib/metamask';
 
 // Simple wallet state - no wagmi required
 type WalletState = {
@@ -126,6 +132,15 @@ export function useWalletConnection() {
   const networkName = walletState.chainId ? (chainNames[walletState.chainId] ?? `Chain ${walletState.chainId}`) : null;
   const symbol = getNetworkSymbol(walletState.chainId);
   const formattedAddress = walletState.address ? formatWalletAddress(walletState.address) : null;
+
+  // Start MetaMask Connect early on devices without an injected wallet (mobile browsers),
+  // so tapping "Connect" can open the MetaMask app right away.
+  useEffect(() => {
+    if (typeof window === 'undefined' || hasInjectedProvider()) return;
+    void getMetaMaskClient().catch(() => {
+      // Surfaced when the user tries to connect
+    });
+  }, []);
 
   // Load wallet state from localStorage on mount - clear stale state first
   useEffect(() => {
@@ -278,11 +293,9 @@ export function useWalletConnection() {
     setIsConnecting(true);
     
     try {
-      const ethereum = (window as unknown as { ethereum?: EthereumProvider }).ethereum;
-      
-      if (!ethereum) {
-        throw new Error('MetaMask not found');
-      }
+      // Injected wallet on desktop / MetaMask in-app browser; MetaMask Connect
+      // (deeplink into the mobile app, or QR code) everywhere else.
+      const ethereum = (await requestWalletProvider()) as unknown as EthereumProvider;
 
       // Request account access
       const accounts = await ethereum.request({ method: 'eth_requestAccounts' }) as string[];
@@ -346,6 +359,7 @@ export function useWalletConnection() {
         await provider.disconnect();
       }
       
+      await disconnectMetaMaskSession();
       await authApi.disconnectWallet();
       if (user) {
         setUser({ ...user, walletAddress: '' });

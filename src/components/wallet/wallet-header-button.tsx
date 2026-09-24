@@ -15,13 +15,6 @@ import {
 import { useWalletConnection } from '@/hooks/use-wallet-connection';
 import { cn } from '@/lib/utils';
 
-// Detect if user is on a mobile device
-function isMobileDevice(): boolean {
-  if (typeof window === 'undefined') return false;
-  const userAgent = navigator.userAgent || navigator.vendor || (window as unknown as { opera?: string }).opera || '';
-  return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
-}
-
 export function WalletHeaderButton({ compact }: { compact?: boolean } = {}) {
   const router = useRouter();
   const {
@@ -61,21 +54,9 @@ export function WalletHeaderButton({ compact }: { compact?: boolean } = {}) {
     toast.success('Wallet balance refreshed');
   };
 
+  // With no injected wallet, connectMetaMask falls back to MetaMask Connect,
+  // which opens the MetaMask mobile app or shows a QR code on desktop.
   const handleConnect = async () => {
-    const mobile = isMobileDevice();
-    
-    // Check if MetaMask is installed
-    const ethereum = (window as unknown as { ethereum?: { request?: (args: { method: string }) => Promise<unknown> } }).ethereum;
-    
-    if (!ethereum) {
-      if (mobile) {
-        toast.error("Please use MetaMask mobile app");
-      } else {
-        toast.error("MetaMask not detected. Please install MetaMask extension.");
-      }
-      return;
-    }
-
     await connectMetaMask();
   };
 
