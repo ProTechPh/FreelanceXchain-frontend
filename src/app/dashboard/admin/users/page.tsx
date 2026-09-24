@@ -19,7 +19,7 @@ import { adminApi } from '@/lib/api';
 import type { AdminUser, UserRole } from '@/types';
 import { toast } from 'sonner';
 import { reportLoadFailure } from '@/lib/report-failure';
-import { Users, Search, Ban, UserCheck, ShieldCheck } from 'lucide-react';
+import { Users, Search, Ban, UserCheck, ShieldCheck, CheckCircle2, XCircle, ShieldAlert, Clock, AlertTriangle } from 'lucide-react';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -41,6 +41,8 @@ export default function UsersPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<'all' | UserRole>('all');
+  const [kycFilter, setKycFilter] = useState<'all' | 'approved' | 'pending' | 'unverified'>('all');
+  const [emailFilter, setEmailFilter] = useState<'all' | 'verified' | 'unverified'>('all');
   const [pendingActionId, setPendingActionId] = useState<string | null>(null);
 
   // Dialog states replacing window.prompt
@@ -138,9 +140,20 @@ export default function UsersPage() {
 
   const filteredUsers = users.filter((user) => {
     const term = search.toLowerCase();
-    const matchesSearch = !term || user.name.toLowerCase().includes(term) || user.email.toLowerCase().includes(term);
+    const matchesSearch = !term || (user.name && user.name.toLowerCase().includes(term)) || (user.email && user.email.toLowerCase().includes(term));
     const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-    return matchesSearch && matchesRole;
+    const isKycApproved = user.kycVerified || user.kycStatus === 'approved';
+    const isKycPending = user.kycStatus === 'pending' || user.kycStatus === 'in_progress';
+    const matchesKyc =
+      kycFilter === 'all' ||
+      (kycFilter === 'approved' && isKycApproved) ||
+      (kycFilter === 'pending' && isKycPending) ||
+      (kycFilter === 'unverified' && !isKycApproved && !isKycPending);
+    const matchesEmail =
+      emailFilter === 'all' ||
+      (emailFilter === 'verified' && Boolean(user.emailVerified)) ||
+      (emailFilter === 'unverified' && !user.emailVerified);
+    return matchesSearch && matchesRole && matchesKyc && matchesEmail;
   });
 
   if (loading) {
@@ -152,9 +165,11 @@ export default function UsersPage() {
   const activeCount = users.filter((u) => u.isActive).length;
   const suspendedCount = users.filter((u) => !u.isActive).length;
   const freelancerCount = users.filter((u) => u.role === 'freelancer').length;
+  const kycApprovedCount = users.filter((u) => u.kycVerified || u.kycStatus === 'approved').length;
+  const emailVerifiedCount = users.filter((u) => u.emailVerified).length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-w-0 overflow-x-hidden">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight text-foreground">User management</h1>
@@ -162,55 +177,112 @@ export default function UsersPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 min-w-0">
         <Card className="bg-card border-border">
           <CardContent className="p-4">
-            <p className="text-2xl font-bold">{users.length}</p>
+            <p className="text-lg sm:text-2xl font-bold truncate">{users.length}</p>
             <p className="text-xs text-muted-foreground">Total Users</p>
           </CardContent>
         </Card>
         <Card className="bg-card border-border">
           <CardContent className="p-4">
-            <p className="text-2xl font-bold text-success">{activeCount}</p>
+            <p className="text-lg sm:text-2xl font-bold text-success truncate">{activeCount}</p>
             <p className="text-xs text-muted-foreground">Active</p>
           </CardContent>
         </Card>
         <Card className="bg-card border-border">
           <CardContent className="p-4">
-            <p className="text-2xl font-bold">{freelancerCount}</p>
+            <p className="text-lg sm:text-2xl font-bold text-emerald-500 truncate">{kycApprovedCount}</p>
+            <p className="text-xs text-muted-foreground">KYC Approved</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-card border-border">
+          <CardContent className="p-4">
+            <p className="text-lg sm:text-2xl font-bold text-cyan truncate">{emailVerifiedCount}</p>
+            <p className="text-xs text-muted-foreground">Email Verified</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-card border-border">
+          <CardContent className="p-4">
+            <p className="text-lg sm:text-2xl font-bold truncate">{freelancerCount}</p>
             <p className="text-xs text-muted-foreground">Freelancers</p>
           </CardContent>
         </Card>
         <Card className="bg-card border-border">
           <CardContent className="p-4">
-            <p className="text-2xl font-bold text-destructive">{suspendedCount}</p>
+            <p className="text-lg sm:text-2xl font-bold text-destructive truncate">{suspendedCount}</p>
             <p className="text-xs text-muted-foreground">Suspended</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search users..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
-          />
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search users by name or email..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {(['all', 'freelancer', 'employer'] as const).map((role) => (
+              <Button
+                key={role}
+                variant={roleFilter === role ? 'gradient' : 'outline'}
+                size="sm"
+                onClick={() => setRoleFilter(role)}
+              >
+                {role === 'all' ? 'All' : role.charAt(0).toUpperCase() + role.slice(1)}
+              </Button>
+            ))}
+          </div>
         </div>
-        <div className="flex gap-2">
-          {(['all', 'freelancer', 'employer'] as const).map((role) => (
-            <Button
-              key={role}
-              variant={roleFilter === role ? 'gradient' : 'outline'}
-              size="sm"
-              onClick={() => setRoleFilter(role)}
-            >
-              {role === 'all' ? 'All' : role.charAt(0).toUpperCase() + role.slice(1)}
-            </Button>
-          ))}
+
+        <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1.5">
+            <span className="font-medium text-foreground">KYC:</span>
+            {([
+              { key: 'all', label: 'All' },
+              { key: 'approved', label: 'Approved' },
+              { key: 'pending', label: 'Pending' },
+              { key: 'unverified', label: 'Pending' },
+            ] as const).map(({ key, label }) => (
+              <Button
+                key={key}
+                variant={kycFilter === key ? 'secondary' : 'ghost'}
+                size="sm"
+                className="h-7 text-xs px-2.5"
+                onClick={() => setKycFilter(key)}
+              >
+                {label}
+              </Button>
+            ))}
+          </div>
+
+          <div className="h-4 w-px bg-border hidden sm:block" />
+
+          <div className="flex items-center gap-1.5">
+            <span className="font-medium text-foreground">Email:</span>
+            {([
+              { key: 'all', label: 'All' },
+              { key: 'verified', label: 'Verified' },
+              { key: 'unverified', label: 'Unverified' },
+            ] as const).map(({ key, label }) => (
+              <Button
+                key={key}
+                variant={emailFilter === key ? 'secondary' : 'ghost'}
+                size="sm"
+                className="h-7 text-xs px-2.5"
+                onClick={() => setEmailFilter(key)}
+              >
+                {label}
+              </Button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -224,12 +296,19 @@ export default function UsersPage() {
                     <TableHead>User</TableHead>
                     <TableHead>Role</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="hidden sm:table-cell">Joined</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>KYC Status</TableHead>
+                    <TableHead className="hidden lg:table-cell">Joined</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredUsers.map((user) => (
+                  {filteredUsers.map((user) => {
+                    const isKycApproved = user.kycVerified || user.kycStatus === 'approved';
+                    const isKycPending = user.kycStatus === 'pending' || user.kycStatus === 'in_progress';
+                    const isKycRejected = user.kycStatus === 'rejected';
+
+                    return (
                     <TableRow key={user.id}>
                       <TableCell>
                         <div className="min-w-0 max-w-[12rem] sm:max-w-none">
@@ -245,16 +324,52 @@ export default function UsersPage() {
                           {user.isActive ? 'active' : 'suspended'}
                         </Badge>
                       </TableCell>
-                      <TableCell className="hidden sm:table-cell p-4 text-muted-foreground">{formatDate(user.createdAt)}</TableCell>
+                      <TableCell>
+                        {user.emailVerified ? (
+                          <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-xs inline-flex items-center gap-1 font-medium">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                            Verified
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-xs inline-flex items-center gap-1 font-medium">
+                            <XCircle className="w-3.5 h-3.5 text-amber-500" />
+                            Unverified
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {isKycApproved ? (
+                          <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-xs inline-flex items-center gap-1 font-medium">
+                            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                            Approved
+                          </Badge>
+                        ) : isKycPending ? (
+                          <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-xs inline-flex items-center gap-1 font-medium">
+                            <Clock className="w-3.5 h-3.5 text-amber-500" />
+                            Pending
+                          </Badge>
+                        ) : isKycRejected ? (
+                          <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20 text-xs inline-flex items-center gap-1 font-medium">
+                            <AlertTriangle className="w-3.5 h-3.5 text-destructive" />
+                            Rejected
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-muted text-muted-foreground border-border text-xs inline-flex items-center gap-1 font-medium">
+                            <ShieldAlert className="w-3.5 h-3.5 text-muted-foreground" />
+                            Not Approved
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell p-4 text-muted-foreground">{formatDate(user.createdAt)}</TableCell>
                       <TableCell>
                         <div className="flex items-center justify-end gap-2">
                           <Button
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-primary touch-manipulation"
-                            title={user.kycVerified ? 'KYC verified' : 'Manually verify KYC'}
-                            aria-label={user.kycVerified ? 'KYC verified' : `Manually verify KYC for ${user.name || user.email}`}
-                            disabled={pendingActionId === user.id || user.kycVerified}
+                            title={isKycApproved ? 'KYC verified' : 'Manually verify KYC'}
+                            aria-label={isKycApproved ? 'KYC verified' : `Manually verify KYC for ${user.name || user.email}`}
+                            disabled={pendingActionId === user.id || isKycApproved}
                             onClick={() => {
                               setUserToVerify(user);
                               setVerifyReason('');
@@ -293,15 +408,16 @@ export default function UsersPage() {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                    );
+                  })}
                   {filteredUsers.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={5} className="py-10">
+                      <TableCell colSpan={7} className="py-10">
                         <EmptyState
                           size="sm"
                           icon={Users}
                           title="No users match your filters"
-                          description="Try clearing the search or selecting a different role."
+                          description="Try clearing the search or selecting a different role or verification filter."
                         />
                       </TableCell>
                     </TableRow>
@@ -321,12 +437,17 @@ export default function UsersPage() {
                 size="sm"
                 icon={Users}
                 title="No users match your filters"
-                description="Try clearing the search or selecting a different role."
+                description="Try clearing the search or selecting a different role or verification filter."
               />
             </CardContent>
           </Card>
         ) : (
-          filteredUsers.map((user) => (
+          filteredUsers.map((user) => {
+            const isKycApproved = user.kycVerified || user.kycStatus === 'approved';
+            const isKycPending = user.kycStatus === 'pending' || user.kycStatus === 'in_progress';
+            const isKycRejected = user.kycStatus === 'rejected';
+
+            return (
             <Card key={user.id} className="bg-card border-border">
               <CardContent className="p-4 space-y-3">
                 <div className="flex items-start justify-between gap-2">
@@ -338,7 +459,50 @@ export default function UsersPage() {
                     {user.isActive ? 'active' : 'suspended'}
                   </Badge>
                 </div>
-                <div className="flex items-center justify-between">
+
+                {/* Email and KYC status tags */}
+                <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-border/50 text-xs">
+                  <div className="flex items-center gap-1">
+                    <span className="text-muted-foreground">Email:</span>
+                    {user.emailVerified ? (
+                      <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[11px] py-0 px-1.5 flex items-center gap-1 font-medium">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                        Verified
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[11px] py-0 px-1.5 flex items-center gap-1 font-medium">
+                        <XCircle className="w-3 h-3 text-amber-500" />
+                        Unverified
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-muted-foreground">KYC:</span>
+                    {isKycApproved ? (
+                      <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[11px] py-0 px-1.5 flex items-center gap-1 font-medium">
+                        <ShieldCheck className="w-3 h-3 text-emerald-500" />
+                        Approved
+                      </Badge>
+                    ) : isKycPending ? (
+                      <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[11px] py-0 px-1.5 flex items-center gap-1 font-medium">
+                        <Clock className="w-3 h-3 text-amber-500" />
+                        Pending
+                      </Badge>
+                    ) : isKycRejected ? (
+                      <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20 text-[11px] py-0 px-1.5 flex items-center gap-1 font-medium">
+                        <AlertTriangle className="w-3 h-3 text-destructive" />
+                        Rejected
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="bg-muted text-muted-foreground border-border text-[11px] py-0 px-1.5 flex items-center gap-1 font-medium">
+                        <ShieldAlert className="w-3 h-3 text-muted-foreground" />
+                        Not Approved
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-1">
                   <div className="flex items-center gap-2">
                     <Badge className={roleColors[user.role]}>{user.role}</Badge>
                     <span className="text-xs text-muted-foreground">{formatDate(user.createdAt)}</span>
@@ -348,8 +512,8 @@ export default function UsersPage() {
                       variant="ghost"
                       size="icon"
                       className="h-9 w-9 text-primary touch-manipulation"
-                      aria-label={user.kycVerified ? 'KYC verified' : `Manually verify KYC for ${user.name || user.email}`}
-                      disabled={pendingActionId === user.id || user.kycVerified}
+                      aria-label={isKycApproved ? 'KYC verified' : `Manually verify KYC for ${user.name || user.email}`}
+                      disabled={pendingActionId === user.id || isKycApproved}
                       onClick={() => {
                         setUserToVerify(user);
                         setVerifyReason('');
@@ -387,7 +551,8 @@ export default function UsersPage() {
                 </div>
               </CardContent>
             </Card>
-          ))
+            );
+          })
         )}
       </div>
 
