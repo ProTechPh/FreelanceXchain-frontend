@@ -82,6 +82,43 @@ export async function requestWalletProvider(): Promise<EthereumProvider> {
   return client.getProvider() as unknown as EthereumProvider;
 }
 
+export interface RestoredWalletSession {
+  address: string;
+  chainId: number;
+  provider: EthereumProvider;
+}
+
+/**
+ * Finds a wallet that is still connected after a page reload, without prompting the user.
+ * Injected wallets report permitted accounts via eth_accounts; MetaMask Connect restores
+ * its saved session while the client is created.
+ */
+export async function restoreWalletSession(): Promise<RestoredWalletSession | null> {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    if (window.ethereum) {
+      const provider = window.ethereum;
+      const accounts = await provider.request<string[]>({ method: 'eth_accounts' });
+      if (!accounts?.[0]) return null;
+      const chainIdHex = await provider.request<string>({ method: 'eth_chainId' });
+      return { address: accounts[0], chainId: Number.parseInt(chainIdHex, 16), provider };
+    }
+
+    const client = await getMetaMaskClient();
+    const address = client.getAccount();
+    const chainIdHex = client.getChainId();
+    if (client.status !== 'connected' || !address || !chainIdHex) return null;
+    return {
+      address,
+      chainId: Number.parseInt(chainIdHex, 16),
+      provider: client.getProvider() as unknown as EthereumProvider,
+    };
+  } catch {
+    return null;
+  }
+}
+
 /** Ends the MetaMask Connect session, if one was created. Injected wallets are left alone. */
 export async function disconnectMetaMaskSession(): Promise<void> {
   if (!clientPromise) return;

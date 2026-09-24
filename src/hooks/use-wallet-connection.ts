@@ -10,6 +10,7 @@ import {
   getMetaMaskClient,
   hasInjectedProvider,
   requestWalletProvider,
+  restoreWalletSession,
 } from '@/lib/metamask';
 
 // Simple wallet state - no wagmi required
@@ -142,25 +143,31 @@ export function useWalletConnection() {
     });
   }, []);
 
-  // Load wallet state from localStorage on mount - clear stale state first
+  // Restore the wallet session after a page reload. Only reconnect when the wallet's account
+  // matches the one saved on the user's profile, so a wallet disconnected in the app stays
+  // disconnected even if MetaMask still permits the site.
+  const savedWalletAddress = user?.walletAddress?.toLowerCase() || null;
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    
-    // Clear any stale wallet state to prevent issues. The provider object can't be
-    // serialized, so a saved state is never restored.
-    localStorage.removeItem('walletState');
-  }, []);
+    if (typeof window === 'undefined' || !savedWalletAddress || walletState.isConnected) return;
 
-  // Save wallet state to localStorage
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    
-    if (walletState.isConnected) {
-      localStorage.setItem('walletState', JSON.stringify(walletState));
-    } else {
-      localStorage.removeItem('walletState');
-    }
-  }, [walletState]);
+    // Remove the old serialized state; the provider object can't be stored.
+    localStorage.removeItem('walletState');
+
+    let cancelled = false;
+    void restoreWalletSession().then((session) => {
+      if (cancelled || !session || session.address.toLowerCase() !== savedWalletAddress) return;
+      setWalletState({
+        address: session.address,
+        chainId: session.chainId,
+        isConnected: true,
+        provider: session.provider,
+      });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [savedWalletAddress, walletState.isConnected]);
 
   // Listen for account/chain changes from the provider
   useEffect(() => {
