@@ -1,7 +1,11 @@
-import { API_URL } from '@/lib/api-client';
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (process.env.NODE_ENV === 'production'
+    ? '/api/proxy'
+    : 'http://localhost:3000/api');
 
 async function getApi() {
-  const mod = await import('@/lib/api-client');
+  const mod = await import('../api-client.ts');
   return mod.default || mod.api;
 }
 
