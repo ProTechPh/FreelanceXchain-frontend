@@ -19,7 +19,7 @@ import { portfolioApi } from '@/lib/api';
 import { safeAttachmentUrl } from '@/lib/attachment-presentation';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { reportLoadFailure } from '@/lib/report-failure';
-import { getWebsitePreviewUrl, isValidHttpUrl } from '@/lib/portfolio-utils';
+import { getWebsitePreviewUrl, isValidHttpUrl, isWebsitePreviewUrl } from '@/lib/portfolio-utils';
 import { useAuthStore } from '@/stores/authStore';
 import { IMAGE_ACCEPT_STRING, validateImageFiles } from '@/lib/file-validation';
 import type { PortfolioItem } from '@/types';
@@ -34,17 +34,19 @@ import {
   Tag,
 } from 'lucide-react';
 import { CardGridSkeleton } from '@/components/dashboard/skeletons';
+import { Skeleton } from '@/components/ui/skeleton';
+import { SkillPicker } from '@/components/dashboard/skill-picker';
 import { EmptyState } from '@/components/ui/empty-state';
 
 interface FormState {
   title: string;
   description: string;
   projectUrl: string;
-  skills: string;
+  skills: string[];
   completedAt: string;
 }
 
-const EMPTY_FORM: FormState = { title: '', description: '', projectUrl: '', skills: '', completedAt: '' };
+const EMPTY_FORM: FormState = { title: '', description: '', projectUrl: '', skills: [], completedAt: '' };
 
 export default function PortfolioPage() {
   const currentUser = useAuthStore((state) => state.user);
@@ -96,7 +98,7 @@ export default function PortfolioPage() {
       title: item.title,
       description: item.description,
       projectUrl: item.projectUrl ?? '',
-      skills: (item.skills || []).join(', '),
+      skills: item.skills ?? [],
       completedAt: item.completedAt ? item.completedAt.slice(0, 10) : '',
     });
     setFiles([]);
@@ -120,7 +122,7 @@ export default function PortfolioPage() {
 
     setSubmitting(true);
     try {
-      const skills = form.skills.split(',').map((s) => s.trim()).filter(Boolean);
+      const skills = form.skills;
 
       if (editingId) {
         const updatePayload: Record<string, unknown> = {
@@ -264,7 +266,12 @@ export default function PortfolioPage() {
       ) : (
         <div className="grid md:grid-cols-2 gap-6">
           {items.map((item) => {
-            const previewImage = (item.projectUrl ? getWebsitePreviewUrl(item.projectUrl) : null) || item.images?.[0]?.url;
+            // Uploaded images first: the live screenshot comes from a rate-limited
+            // third-party service and is the source most likely to fail.
+            const previewSources = [
+              ...(item.images ?? []).map((image) => image.url).filter((url) => !isWebsitePreviewUrl(url)),
+              item.projectUrl ? getWebsitePreviewUrl(item.projectUrl) : '',
+            ];
 
             return (
               <Card key={item.id} className="group bg-card border-border overflow-hidden flex flex-col transition-all hover:border-primary/40">
@@ -282,35 +289,12 @@ export default function PortfolioPage() {
 
                 {/* Preview Image Container */}
                 <div className="aspect-video bg-muted/40 relative overflow-hidden group">
-                  {previewImage ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={previewImage}
-                      alt={item.title}
-                      className="w-full h-full object-cover object-top transition-transform duration-300 group-hover:scale-[1.01]"
-                      loading="lazy"
-                      decoding="async"
-                      onError={(e) => {
-                        const target = e.currentTarget;
-                        try {
-                          const parsed = new URL(target.src);
-                          const isMicrolink = parsed.hostname === 'api.microlink.io' || parsed.hostname.endsWith('.microlink.io');
-                          if (item.projectUrl && !isMicrolink) {
-                            target.src = getWebsitePreviewUrl(item.projectUrl);
-                          }
-                        } catch {
-                          if (item.projectUrl) {
-                            target.src = getWebsitePreviewUrl(item.projectUrl);
-                          }
-                        }
-                      }}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground/50">
-                      <Globe className="w-12 h-12 mb-2" />
-                      <span className="text-xs">No preview available</span>
-                    </div>
-                  )}
+                  <PortfolioPreviewImage
+                    key={previewSources.join('|')}
+                    sources={previewSources}
+                    alt={item.title}
+                    className="transition-transform duration-300 group-hover:scale-[1.01]"
+                  />
 
                   {/* Actions Overlay */}
                   <div className="absolute bottom-3 left-3 flex gap-2 z-10">
@@ -435,25 +419,18 @@ export default function PortfolioPage() {
                   </div>
                 </div>
                 <div className="aspect-[16/9] bg-muted/20 relative overflow-hidden flex items-center justify-center">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={livePreviewUrl!}
-                    alt="Preview"
-                    loading="lazy"
-                    decoding="async"
-                    className="w-full h-full object-cover object-top"
-                  />
+                  <PortfolioPreviewImage key={livePreviewUrl} sources={[livePreviewUrl]} alt="Website preview" />
                 </div>
               </div>
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="portfolio-skills">Skills (comma separated)</Label>
-              <Input
+              <Label htmlFor="portfolio-skills">Skills</Label>
+              <SkillPicker
                 id="portfolio-skills"
-                placeholder="Solidity, React, TypeScript"
                 value={form.skills}
-                onChange={(e) => setForm((f) => ({ ...f, skills: e.target.value }))}
+                onChange={(skills) => setForm((f) => ({ ...f, skills }))}
+                placeholder="Search skills, e.g. Solidity or React"
               />
             </div>
 
@@ -542,5 +519,46 @@ export default function PortfolioPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+/**
+ * Shows the first source that loads, falling through the rest on error, and a
+ * placeholder once every source has failed — never the browser's broken-image
+ * icon. A pulse holds the frame while the current source is loading.
+ */
+function PortfolioPreviewImage({ sources, alt, className }: { sources: string[]; alt: string; className?: string }) {
+  const candidates = useMemo(() => Array.from(new Set(sources.filter(Boolean))), [sources]);
+  const [index, setIndex] = useState(0);
+  const [loaded, setLoaded] = useState(false);
+  const src = candidates[index];
+
+  if (!src) {
+    return (
+      <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground/60">
+        <Globe className="w-12 h-12 mb-2" aria-hidden="true" />
+        <span className="text-xs">No preview available</span>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      {!loaded && <Skeleton className="absolute inset-0 rounded-none" />}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        key={src}
+        src={src}
+        alt={alt}
+        loading="lazy"
+        decoding="async"
+        className={`w-full h-full object-cover object-top ${loaded ? 'opacity-100' : 'opacity-0'} ${className ?? ''}`}
+        onLoad={() => setLoaded(true)}
+        onError={() => {
+          setLoaded(false);
+          setIndex((current) => current + 1);
+        }}
+      />
+    </>
   );
 }

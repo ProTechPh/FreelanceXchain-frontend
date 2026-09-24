@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import Link from 'next/link';
-import { Clock, ShieldCheck, Users, Zap } from 'lucide-react';
+import { BadgeCheck, Clock, ShieldCheck, Users, Zap } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { formatAmount, formatDate } from '@/lib/format';
@@ -12,7 +12,7 @@ interface ProjectListItemProps {
   project: Project;
   /** Path to return to after viewing the project. */
   returnTo: string;
-  /** 0100 skill match from the recommendations endpoint. Omitted when unknown. */
+  /** 0–100 skill match from the recommendations endpoint. Omitted when unknown. */
   matchScore?: number;
   matchedSkills?: string[];
   /** Optional custom detail href. Defaults to dashboard freelancer project detail. */
@@ -29,7 +29,7 @@ interface ProjectListItemProps {
  *
  * Follows the workspace mock on the landing page: an initial tile, the title and
  * client on one line, and a single dense meta line carrying the facts a
- * freelancer actually decides on  budget, deadline, competition. The public
+ * freelancer actually decides on — budget, deadline, competition. The public
  * listing card stays roomier; this one is built for scanning twenty in a row.
  */
 export const ProjectListItem = React.memo(function ProjectListItem({
@@ -75,7 +75,12 @@ export const ProjectListItem = React.memo(function ProjectListItem({
                 {project.title}
               </Link>
             </h3>
-            <span className="truncate text-xs text-muted-foreground"> {client}</span>
+            {/* Posting requires approved KYC (requireVerifiedKyc on POST /projects), so every listed employer is verified. */}
+            <span className="inline-flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
+              <span aria-hidden="true">•</span>
+              <span className="truncate">{client}</span>
+              <BadgeCheck className="size-3.5 shrink-0 text-primary" aria-label="Verified employer" role="img" />
+            </span>
           </div>
 
           <p className="mt-1 line-clamp-2 pr-10 text-xs leading-relaxed text-muted-foreground">
@@ -112,19 +117,19 @@ export const ProjectListItem = React.memo(function ProjectListItem({
               <dt className="sr-only">Budget</dt>
               <dd className="text-xs font-bold text-foreground tabular-nums">{formatAmount(project.budget)}</dd>
             </div>
-            <span aria-hidden="true"></span>
+            <span aria-hidden="true">•</span>
             <div className="flex items-center gap-1">
               <Clock className="size-3" aria-hidden="true" />
               <dt className="sr-only">Deadline</dt>
               <dd>Due {formatDate(project.deadline)}</dd>
             </div>
-            <span aria-hidden="true"></span>
+            <span aria-hidden="true">•</span>
             <div className="flex items-center gap-1">
               <Users className="size-3" aria-hidden="true" />
               <dt className="sr-only">Proposals received</dt>
               <dd>{project.proposalCount || 0} proposal{project.proposalCount === 1 ? '' : 's'}</dd>
             </div>
-            <span aria-hidden="true"></span>
+            <span aria-hidden="true">•</span>
             <div className="flex items-center gap-1 text-success">
               <ShieldCheck className="size-3" aria-hidden="true" />
               <dt className="sr-only">Payment protection</dt>
