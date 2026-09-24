@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import axios from 'axios';
 
 import {
   TOUR_STORAGE_KEY,
@@ -222,7 +223,9 @@ export const useTourStore = create<TourState>()(
           await Promise.all(rolesToBackfill.map((role) => get().syncToBackend(userId, role)));
         } catch (error) {
           // Silently fail - will use localStorage as fallback
-          console.error('Failed to sync tour preferences from backend:', error);
+          if (!axios.isAxiosError(error) || error.response?.status !== 404) {
+            console.error('Failed to sync tour preferences from backend:', error);
+          }
           set({ syncedUserId: userId });
         } finally {
           tourSyncsInFlight.delete(userId);
@@ -243,7 +246,9 @@ export const useTourStore = create<TourState>()(
           });
         } catch (error) {
           // Silently fail - localStorage is the fallback
-          console.error('Failed to sync tour preferences to backend:', error);
+          if (!axios.isAxiosError(error) || error.response?.status !== 404) {
+            console.error('Failed to sync tour preferences to backend:', error);
+          }
         }
       },
     }),
