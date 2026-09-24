@@ -762,6 +762,8 @@ export interface AdminUser {
   createdAt: string;
   name: string;
   kycVerified: boolean;
+  kycStatus?: KycStatus | 'not_started';
+  emailVerified?: boolean;
   isActive: boolean;
 }
 

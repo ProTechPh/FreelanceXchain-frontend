@@ -18,12 +18,13 @@ import type {
   FileQuota,
 } from '@/types';
 import type { AuditSearchParams } from '@/lib/audit-log-search';
+import { convertToSecureUrl } from '@/lib/api/files';
 
 export const adminApi = {
   getStats: () =>
     api.get<PlatformStats>('/admin/stats'),
 
-  getUsers: (params?: { status?: string; role?: string }) =>
+  getUsers: (params?: { status?: string; role?: string; kycStatus?: string; emailVerified?: boolean | string }) =>
     api.get<{ users: AdminUser[]; total: number }>('/admin/users', { params }),
 
   updateUser: (userId: string, data: { name?: string; role?: string; isActive?: boolean }) =>
@@ -115,7 +116,56 @@ export const fileManagementApi = {
 };
 
 export const fileUploadsApi = {
-  upload: (data: FormData) => api.post<{ success: boolean; url: string; path: string }>('/files/upload', data, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  }),
+  upload: async (data: FormData) => {
+    const response = await api.post<{ success: boolean; url: string; path: string }>('/files/upload', data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    
+    // Convert the returned Appwrite URL to a secure proxy URL
+    if (response.data && response.data.url) {
+      response.data.url = convertToSecureUrl(response.data.url);
+    }
+    
+    return response;
+  },
+  
+  /**
+   * Get a signed URL for a file.
+   * Returns a secure proxy URL that verifies ownership.
+   * 
+   * @param bucket - The storage bucket name
+   * @param fileId - The file ID or path
+   * @returns Promise resolving to the signed URL response
+   */
+  getSignedUrl: (bucket: string, fileId: string) =>
+    api.get<{ success: boolean; url: string }>(`/files/signed-url/${encodeURIComponent(bucket)}/${encodeURIComponent(fileId)}`),
+  
+  /**
+   * Delete a file from storage.
+   * Ownership is verified server-side before deletion.
+   * 
+   * @param bucket - The storage bucket name
+   * @param fileId - The file ID or path
+   * @returns Promise resolving to the deletion response
+   */
+  delete: (bucket: string, fileId: string) =>
+    api.delete(`/files/${encodeURIComponent(bucket)}/${encodeURIComponent(fileId)}`),
+    
+  /**
+   * List files in a bucket.
+   * Only returns files owned by the authenticated user.
+   * 
+   * @param bucket - The storage bucket name
+   * @returns Promise resolving to the list of files
+   */
+  list: (bucket: string) =>
+    api.get<{ success: boolean; files: unknown[] }>(`/files/list/${encodeURIComponent(bucket)}`),
+    
+  /**
+   * Get storage quota for the authenticated user.
+   * 
+   * @returns Promise resolving to quota information
+   */
+  getQuota: () =>
+    api.get<{ success: boolean; used: number; limit: number; percentage: number; files: number }>('/files/quota'),
 };

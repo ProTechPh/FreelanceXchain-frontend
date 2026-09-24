@@ -57,6 +57,20 @@ export {
 } from './api/admin';
 
 export {
+  filesApi,
+  getSecureFileUrl,
+  downloadFile,
+  downloadFileWithProgress,
+  getSignedFileUrl,
+  deleteSecureFile,
+  listSecureFiles,
+  getStorageQuota,
+  isAppwriteStorageUrl,
+  extractAppwriteFileInfo,
+  convertToSecureUrl,
+} from './api/files';
+
+export {
   reputationApi,
   reviewsApi,
   matchingApi,

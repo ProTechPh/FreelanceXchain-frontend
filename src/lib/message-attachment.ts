@@ -1,4 +1,5 @@
 import type { Attachment, Message } from '@/types';
+import { getSecureFileUrl } from './api/files.ts';
 
 interface UploadApi {
   upload(data: FormData): Promise<{ data: { success: boolean; url: string; path: string } }>;
@@ -35,6 +36,49 @@ export function validateMessageAttachments(files: File[]): string | null {
   return null;
 }
 
+/**
+ * Extracts the file ID from a URL.
+ * Handles both direct Appwrite URLs and proxy URLs.
+ * 
+ * @param url - The URL to extract from
+ * @returns The file ID or null if not found
+ */
+function extractFileIdFromUrl(url: string): string | null {
+  try {
+    const urlObj = new URL(url);
+    // Try to match /files/{fileId} pattern (from proxy URLs)
+    const proxyMatch = urlObj.pathname.match(/\/files\/signed-url\/[^/]+\/([^/]+)/);
+    if (proxyMatch) return proxyMatch[1];
+    
+    // Try to match Appwrite pattern /storage/buckets/{bucket}/files/{fileId}
+    const appwriteMatch = urlObj.pathname.match(/\/storage\/buckets\/[^/]+\/files\/([^/]+)/);
+    if (appwriteMatch) return appwriteMatch[1];
+    
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Converts a URL to use the secure proxy endpoint.
+ * If the URL is already a proxy URL or cannot be parsed, returns the original URL.
+ * 
+ * @param url - The original URL (can be Appwrite or proxy URL)
+ * @returns The secure proxy URL
+ */
+export function convertToSecureProxyUrl(url: string): string {
+  const fileId = extractFileIdFromUrl(url);
+  if (!fileId) return url;
+  
+  // Use the contract-documents bucket for message attachments
+  try {
+    return getSecureFileUrl('contract-documents', fileId);
+  } catch {
+    return url;
+  }
+}
+
 export async function sendMessageWithAttachments(
   uploadApi: UploadApi,
   messageApi: MessageApi,
@@ -51,8 +95,12 @@ export async function sendMessageWithAttachments(
     formData.set('folder', 'messages');
     formData.set('files', file);
     const { data } = await uploadApi.upload(formData);
+    
+    // Convert the returned URL to a secure proxy URL
+    const secureUrl = convertToSecureProxyUrl(data.url);
+    
     return {
-      url: data.url,
+      url: secureUrl,
       filename: file.name,
       size: file.size,
       mimeType: file.type || 'application/octet-stream',

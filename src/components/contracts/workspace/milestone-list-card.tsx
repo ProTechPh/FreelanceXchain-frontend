@@ -91,6 +91,7 @@ export function MilestoneListCard({
                   </p>
                   <div className="grid gap-2 sm:grid-cols-2">
                     {(milestone.deliverableFiles ?? []).map((file) => {
+                      // Use safeAttachmentUrl to get the secure proxy URL
                       const url = safeAttachmentUrl(file.url);
                       return (
                         <div
