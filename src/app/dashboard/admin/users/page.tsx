@@ -169,7 +169,7 @@ export default function UsersPage() {
   const emailVerifiedCount = users.filter((u) => u.emailVerified).length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 min-w-0 overflow-x-hidden">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight text-foreground">User management</h1>
@@ -236,7 +236,7 @@ export default function UsersPage() {
                 size="sm"
                 onClick={() => setRoleFilter(role)}
               >
-                {role === 'all' ? 'All Roles' : role.charAt(0).toUpperCase() + role.slice(1)}
+                {role === 'all' ? 'All' : role.charAt(0).toUpperCase() + role.slice(1)}
               </Button>
             ))}
           </div>
@@ -249,7 +249,7 @@ export default function UsersPage() {
               { key: 'all', label: 'All' },
               { key: 'approved', label: 'Approved' },
               { key: 'pending', label: 'Pending' },
-              { key: 'unverified', label: 'Not Approved' },
+              { key: 'unverified', label: 'Pending' },
             ] as const).map(({ key, label }) => (
               <Button
                 key={key}
