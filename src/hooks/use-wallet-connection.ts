@@ -1,13 +1,18 @@
-'use client';
+﻿'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { useAccount, useConnect, useDisconnect, useBalance, useChainId, useSwitchChain } from 'wagmi';
-import { injected, walletConnect } from 'wagmi/connectors';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { authApi } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
-import { reportFailure } from '@/lib/report-failure';
-import { formatWalletAddress, getNetworkSymbol, chainNames } from '@/lib/wagmi-config';
+import { formatWalletAddress, getNetworkSymbol, chainNames } from '@/lib/wallet-utils';
+
+// Simple wallet state - no wagmi required
+type WalletState = {
+  address: string | null;
+  chainId: number | null;
+  isConnected: boolean;
+  provider: unknown | null;
+};
 
 export interface WalletConnection {
   address: string;
@@ -16,16 +21,87 @@ export interface WalletConnection {
   balance: string;
 }
 
-// Detect if user is on mobile
-function isMobile(): boolean {
-  if (typeof window === 'undefined') return false;
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-}
+// Ethereum provider type
+type EthereumProvider = {
+  request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+  on?: (event: string, callback: (data: unknown) => void) => void;
+  removeListener?: (event: string, callback: (data: unknown) => void) => void;
+  disconnect?: () => Promise<void>;
+};
 
-// Detect if MetaMask is installed
-function isMetaMaskInstalled(): boolean {
-  if (typeof window === 'undefined') return false;
-  return typeof window.ethereum !== 'undefined' && (window.ethereum as { isMetaMask?: boolean }).isMetaMask === true;
+// Helper function to get user-friendly error message
+function getWalletErrorMessage(error: unknown): { message: string; isUserRejected: boolean } {
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  const errorCode = (error as { code?: number }).code;
+  
+  // MetaMask not installed
+  if (errorMessage.includes('MetaMask not found') || 
+      errorMessage.includes('No Ethereum provider')) {
+    return {
+      message: 'MetaMask is not installed. Please install MetaMask from metamask.io and refresh the page.',
+      isUserRejected: false,
+    };
+  }
+  
+  // User rejected connection
+  if (errorCode === 4001 || 
+      errorMessage.includes('User rejected') || 
+      errorMessage.includes('user rejected') ||
+      errorMessage.includes('User denied') ||
+      errorMessage.includes('user denied')) {
+    return {
+      message: 'You rejected the connection request. Please try again and approve the connection in MetaMask.',
+      isUserRejected: true,
+    };
+  }
+  
+  // Already pending request
+  if (errorCode === -32002 || 
+      errorMessage.includes('already pending') || 
+      errorMessage.includes('already processing') ||
+      errorMessage.includes('Request of type wallet_requestPermissions')) {
+    return {
+      message: 'A connection request is already pending. Please check your MetaMask extension and approve or reject the existing request.',
+      isUserRejected: false,
+    };
+  }
+  
+  // Network issues
+  if (errorMessage.includes('network') || 
+      errorMessage.includes('Network') ||
+      errorMessage.includes('chain') ||
+      errorMessage.includes('disconnected') ||
+      errorMessage.includes('timeout') ||
+      errorMessage.includes('Failed to fetch')) {
+    return {
+      message: 'Network connection issue. Please check your internet connection and try again.',
+      isUserRejected: false,
+    };
+  }
+  
+  // No accounts
+  if (errorMessage.includes('No accounts') || 
+      errorMessage.includes('account not found')) {
+    return {
+      message: 'No wallet accounts found. Please create an account in MetaMask or unlock your wallet.',
+      isUserRejected: false,
+    };
+  }
+  
+  // Wallet locked
+  if (errorMessage.includes('wallet locked') || 
+      errorMessage.includes('Wallet locked')) {
+    return {
+      message: 'Your wallet is locked. Please unlock MetaMask and try again.',
+      isUserRejected: false,
+    };
+  }
+  
+  // Default error
+  return {
+    message: `Failed to connect: ${errorMessage}`,
+    isUserRejected: false,
+  };
 }
 
 export function useWalletConnection() {
@@ -34,141 +110,311 @@ export function useWalletConnection() {
 
   const [isConnecting, setIsConnecting] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
-
-  // wagmi hooks
-  const { address, isConnected, connector } = useAccount();
-  const chainId = useChainId();
-  const { connectAsync } = useConnect();
-  const { disconnectAsync } = useDisconnect();
-  const { data: balanceData, refetch: refetchBalance } = useBalance({
-    address,
-    query: { enabled: !!address },
+  const [showConnectModal, setShowConnectModal] = useState(false);
+  const [walletState, setWalletState] = useState<WalletState>({
+    address: null,
+    chainId: null,
+    isConnected: false,
+    provider: null,
   });
-  const { switchChain } = useSwitchChain();
+  const [balance, setBalance] = useState<string | null>(null);
+  const [isLoadingBalance, setIsLoadingBalance] = useState(false);
 
-  // Format balance
-  const balance = balanceData ? `${(Number(balanceData.value) / 10 ** balanceData.decimals).toFixed(4)}` : null;
-  const networkName = chainId ? (chainNames[chainId] ?? `Chain ${chainId}`) : null;
-  const symbol = getNetworkSymbol(chainId);
-  const formattedAddress = address ? formatWalletAddress(address) : null;
+  // Ref to track if a connection request is already in progress
+  const isConnectingRef = useRef(false);
+
+  const networkName = walletState.chainId ? (chainNames[walletState.chainId] ?? `Chain ${walletState.chainId}`) : null;
+  const symbol = getNetworkSymbol(walletState.chainId);
+  const formattedAddress = walletState.address ? formatWalletAddress(walletState.address) : null;
+
+  // Load wallet state from localStorage on mount - clear stale state first
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    // Clear any stale wallet state to prevent issues
+    localStorage.removeItem('walletState');
+    
+    const saved = localStorage.getItem('walletState');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setWalletState(parsed);
+      } catch {
+        localStorage.removeItem('walletState');
+      }
+    }
+  }, []);
+
+  // Save wallet state to localStorage
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    if (walletState.isConnected) {
+      localStorage.setItem('walletState', JSON.stringify(walletState));
+    } else {
+      localStorage.removeItem('walletState');
+    }
+  }, [walletState]);
+
+  // Listen for account/chain changes from the provider
+  useEffect(() => {
+    if (!walletState.provider || typeof window === 'undefined') return;
+
+    const provider = walletState.provider as {
+      on?: (event: string, callback: (data: unknown) => void) => void;
+      removeListener?: (event: string, callback: (data: unknown) => void) => void;
+    };
+
+    const handleAccountsChanged = (accounts: unknown) => {
+      const accountList = Array.isArray(accounts) ? accounts : [];
+      if (accountList.length === 0) {
+        // User disconnected
+        setWalletState({
+          address: null,
+          chainId: null,
+          isConnected: false,
+          provider: null,
+        });
+        setBalance(null);
+      } else {
+        setWalletState(prev => ({
+          ...prev,
+          address: accountList[0] as string,
+        }));
+      }
+    };
+
+    const handleChainChanged = (chainId: unknown) => {
+      const newChainId = typeof chainId === 'string' ? parseInt(chainId, 16) : (chainId as number);
+      setWalletState(prev => ({
+        ...prev,
+        chainId: newChainId,
+      }));
+    };
+
+    if (provider.on) {
+      provider.on('accountsChanged', handleAccountsChanged);
+      provider.on('chainChanged', handleChainChanged);
+    }
+
+    return () => {
+      if (provider.removeListener) {
+        provider.removeListener('accountsChanged', handleAccountsChanged);
+        provider.removeListener('chainChanged', handleChainChanged);
+      }
+    };
+  }, [walletState.provider]);
+
+  // Fetch balance when connected
+  useEffect(() => {
+    if (!walletState.isConnected || !walletState.address || !walletState.provider) {
+      setBalance(null);
+      return;
+    }
+
+    const fetchBalance = async () => {
+      setIsLoadingBalance(true);
+      try {
+        const provider = walletState.provider as {
+          request?: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+        };
+        
+        if (provider.request) {
+          const balanceHex = await provider.request({
+            method: 'eth_getBalance',
+            params: [walletState.address, 'latest'],
+          }) as string;
+          
+          const balanceWei = BigInt(balanceHex);
+          const balanceEth = Number(balanceWei) / 1e18;
+          setBalance(`${balanceEth.toFixed(4)} ${symbol || 'ETH'}`);
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        toast.error(`Failed to fetch balance: ${message}`);
+        setBalance(null);
+      } finally {
+        setIsLoadingBalance(false);
+      }
+    };
+
+    fetchBalance();
+    
+    // Refresh balance every 30 seconds
+    const interval = setInterval(fetchBalance, 30000);
+    return () => clearInterval(interval);
+  }, [walletState.isConnected, walletState.address, walletState.provider, symbol]);
 
   // Auto-sync wallet with backend when account changes
   useEffect(() => {
-    if (!isConnected || !address || !user) return;
+    if (!walletState.isConnected || !walletState.address || !user) return;
 
     // Only update if the wallet address is different
-    if (user.walletAddress?.toLowerCase() !== address.toLowerCase()) {
-      authApi.updateWallet(address).then(({ data }) => {
+    if (user.walletAddress?.toLowerCase() !== walletState.address.toLowerCase()) {
+      authApi.updateWallet(walletState.address).then(({ data }) => {
         setUser({ ...user, walletAddress: data.walletAddress });
-      }).catch(() => {
-        // Ignore errors, wallet connection still works
+      }).catch((error) => {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        toast.error(`Failed to sync wallet with server: ${message}`);
       });
     }
-  }, [isConnected, address, user, setUser]);
+  }, [walletState.isConnected, walletState.address, user, setUser]);
 
-  const connect = useCallback(async () => {
-    if (typeof window === 'undefined') return null;
+  // Connect directly to MetaMask
+  const connectMetaMask = useCallback(async () => {
+    // Check if already connecting
+    if (isConnectingRef.current) {
+      toast.info('A connection request is already in progress. Please wait.');
+      return;
+    }
 
+    // Check if already connected
+    if (walletState.isConnected) {
+      toast.info('Your wallet is already connected.');
+      return;
+    }
+
+    isConnectingRef.current = true;
     setIsConnecting(true);
+    
     try {
-      // Determine which connector to use
-      let result;
-
-      if (isMobile()) {
-        // On mobile, prefer WalletConnect for deep linking to wallet apps
-        // If MetaMask app browser is being used, injected should work
-        if (isMetaMaskInstalled()) {
-          // User is in MetaMask mobile browser
-          result = await connectAsync({ connector: injected() });
-        } else {
-          // Use WalletConnect for mobile wallet apps
-          result = await connectAsync({ connector: walletConnect({ showQrModal: true }) });
-        }
-      } else {
-        // On desktop, try injected first (MetaMask extension)
-        if (isMetaMaskInstalled()) {
-          result = await connectAsync({ connector: injected() });
-        } else {
-          // Fall back to WalletConnect
-          result = await connectAsync({ connector: walletConnect({ showQrModal: true }) });
-        }
+      const ethereum = (window as unknown as { ethereum?: EthereumProvider }).ethereum;
+      
+      if (!ethereum) {
+        throw new Error('MetaMask not found');
       }
 
-      if (!result?.accounts[0]) {
-        throw new Error('No wallet account was selected');
+      // Request account access
+      const accounts = await ethereum.request({ method: 'eth_requestAccounts' }) as string[];
+      
+      if (!accounts || accounts.length === 0) {
+        throw new Error('No accounts returned from MetaMask');
       }
 
-      const walletAddress = result.accounts[0];
-      const connection: WalletConnection = {
-        address: walletAddress,
-        chainId: result.chainId,
-        networkName: chainNames[result.chainId] ?? `Chain ${result.chainId}`,
-        balance: '0', // Will be updated by useBalance hook
-      };
+      // Get the current chain ID
+      const chainIdHex = await ethereum.request({ method: 'eth_chainId' }) as string;
+      const chainId = parseInt(chainIdHex, 16);
+
+      const address = accounts[0];
+      
+      setWalletState({
+        address,
+        chainId,
+        isConnected: true,
+        provider: ethereum,
+      });
 
       // Sync with backend
-      const { data } = await authApi.updateWallet(walletAddress);
-      if (user) {
-        setUser({ ...user, walletAddress: data.walletAddress });
+      try {
+        const { data } = await authApi.updateWallet(address);
+        if (user) {
+          setUser({ ...user, walletAddress: data.walletAddress });
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        toast.warning(`Wallet connected locally, but failed to sync with server: ${message}`);
       }
 
-      toast.success(`Wallet connected: ${formatWalletAddress(walletAddress)}`);
-      return connection;
+      toast.success('Wallet connected successfully');
     } catch (error) {
-      reportFailure(error, 'connect your wallet', { fundsUnchanged: true });
-      return null;
+      const { message, isUserRejected } = getWalletErrorMessage(error);
+      
+      if (isUserRejected) {
+        toast.error(message);
+      } else {
+        toast.error(message, {
+          duration: 6000,
+        });
+      }
     } finally {
+      isConnectingRef.current = false;
       setIsConnecting(false);
     }
-  }, [connectAsync, user, setUser]);
+  }, [user, setUser, walletState.isConnected]);
+
+  const connect = useCallback(async () => {
+    // Direct MetaMask connection - no modal needed
+    await connectMetaMask();
+  }, [connectMetaMask]);
 
   const disconnect = useCallback(async () => {
     setIsDisconnecting(true);
     try {
-      await disconnectAsync();
+      // Disconnect from provider if it has disconnect method
+      const provider = walletState.provider as { disconnect?: () => Promise<void> } | null;
+      if (provider?.disconnect) {
+        await provider.disconnect();
+      }
+      
       await authApi.disconnectWallet();
       if (user) {
         setUser({ ...user, walletAddress: '' });
       }
+      
+      setWalletState({
+        address: null,
+        chainId: null,
+        isConnected: false,
+        provider: null,
+      });
+      setBalance(null);
+      
       toast.success('Wallet disconnected successfully');
     } catch (error) {
-      reportFailure(error, 'disconnect your wallet', { fundsUnchanged: true });
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Failed to disconnect wallet: ${message}`);
     } finally {
       setIsDisconnecting(false);
     }
-  }, [disconnectAsync, user, setUser]);
+  }, [walletState.provider, user, setUser]);
+
+  // Function to set wallet connection from external source
+  const setWalletConnection = useCallback((address: string, chainId: number, provider: unknown) => {
+    setWalletState({
+      address,
+      chainId,
+      isConnected: true,
+      provider,
+    });
+  }, []);
 
   const refreshBalance = useCallback(async () => {
-    await refetchBalance();
-  }, [refetchBalance]);
+    // Balance is automatically refreshed by the effect
+    toast.info('Balance will refresh automatically');
+  }, []);
 
   const switchToGanacheNetwork = useCallback(async () => {
-    // Ganache is not a standard chain, so we can't use switchChain
-    // For now, show a message that Ganache requires manual configuration
     toast.info('Ganache network switching requires manual configuration');
+  }, []);
+
+  const closeConnectModal = useCallback(() => {
+    setShowConnectModal(false);
   }, []);
 
   return {
     user,
-    wallet: isConnected && address ? {
-      address,
-      chainId: chainId ?? 0,
+    wallet: walletState.isConnected && walletState.address ? {
+      address: walletState.address,
+      chainId: walletState.chainId ?? 0,
       networkName: networkName ?? '',
       balance: balance ?? '0',
     } : null,
-    walletAddress: address ?? user?.walletAddress ?? null,
-    isConnected: isConnected || !!user?.walletAddress,
+    walletAddress: walletState.address ?? user?.walletAddress ?? null,
+    isConnected: walletState.isConnected,
     formattedAddress,
     balance,
     networkName,
     symbol,
-    isLoadingBalance: false,
+    isLoadingBalance,
     isConnecting,
     isDisconnecting,
+    showConnectModal,
     connect,
+    connectMetaMask,
     disconnect,
+    setWalletConnection,
     refreshBalance,
     switchToGanacheNetwork,
+    closeConnectModal,
   };
 }
-

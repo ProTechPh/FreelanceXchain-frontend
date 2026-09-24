@@ -1,12 +1,7 @@
-'use client';
-
-import { WagmiProvider } from 'wagmi';
-import { config } from '@/lib/wagmi-config';
+﻿'use client';
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
-  return (
-    <WagmiProvider config={config}>
-      {children}
-    </WagmiProvider>
-  );
+  // Wallet connection is now handled directly via MetaMask browser extension
+  // Mobile users should use MetaMask mobile app's built-in browser
+  return <>{children}</>;
 }

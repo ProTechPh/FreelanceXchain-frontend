@@ -13,8 +13,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useWalletConnection } from '@/hooks/use-wallet-connection';
-import { WalletConnectModal } from './wallet-connect-modal';
 import { cn } from '@/lib/utils';
+
+// Detect if user is on a mobile device
+function isMobileDevice(): boolean {
+  if (typeof window === 'undefined') return false;
+  const userAgent = navigator.userAgent || navigator.vendor || (window as unknown as { opera?: string }).opera || '';
+  return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase());
+}
 
 export function WalletHeaderButton({ compact }: { compact?: boolean } = {}) {
   const router = useRouter();
@@ -32,9 +38,9 @@ export function WalletHeaderButton({ compact }: { compact?: boolean } = {}) {
     disconnect,
     refreshBalance,
     switchToGanacheNetwork,
+    connectMetaMask,
   } = useWalletConnection();
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -45,7 +51,7 @@ export function WalletHeaderButton({ compact }: { compact?: boolean } = {}) {
       toast.success('Wallet address copied to clipboard.');
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast.error('Couldn\'t copy your address. Try selecting and copying it manually.');
+      toast.error("Could not copy your address. Try selecting and copying it manually.");
     }
   };
 
@@ -55,39 +61,54 @@ export function WalletHeaderButton({ compact }: { compact?: boolean } = {}) {
     toast.success('Wallet balance refreshed');
   };
 
+  const handleConnect = async () => {
+    const mobile = isMobileDevice();
+    
+    // Check if MetaMask is installed
+    const ethereum = (window as unknown as { ethereum?: { request?: (args: { method: string }) => Promise<unknown> } }).ethereum;
+    
+    if (!ethereum) {
+      if (mobile) {
+        toast.error("Please use MetaMask mobile app");
+      } else {
+        toast.error("MetaMask not detected. Please install MetaMask extension.");
+      }
+      return;
+    }
+
+    await connectMetaMask();
+  };
+
   const settingsRoute = user?.role ? `/dashboard/${user.role}/settings` : '/dashboard/freelancer/settings';
   const isMainnet = networkName === 'Ethereum Mainnet';
 
   if (!isConnected) {
     return (
-      <>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          onClick={() => setIsModalOpen(true)}
-          disabled={isConnecting}
-          aria-label="Connect Wallet"
-          data-tour="wallet"
-          className={cn(
-            "relative flex shrink-0 items-center gap-1.5 sm:gap-2 border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary font-medium shadow-xs transition-colors",
-            compact ? "h-8 px-2 text-xs sm:h-9 sm:px-3 sm:text-sm" : ""
-          )}
-        >
-          {isConnecting ? (
-            <>
-              <Loader2 className="size-4 animate-spin text-primary" aria-hidden="true" />
-              <span className="hidden sm:inline">Connecting...</span>
-            </>
-          ) : (
-            <>
-              <Wallet className="size-3.5 sm:size-4 text-primary" aria-hidden="true" />
-              <span className="hidden sm:inline">Connect Wallet</span>
-            </>
-          )}
-        </Button>
-        <WalletConnectModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
-      </>
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        onClick={handleConnect}
+        disabled={isConnecting}
+        aria-label="Connect Wallet"
+        data-tour="wallet"
+        className={cn(
+          "relative flex shrink-0 items-center gap-1.5 sm:gap-2 border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary font-medium shadow-xs transition-colors",
+          compact ? "h-8 px-2 text-xs sm:h-9 sm:px-3 sm:text-sm" : ""
+        )}
+      >
+        {isConnecting ? (
+          <>
+            <Loader2 className="size-4 animate-spin text-primary" aria-hidden="true" />
+            <span className="hidden sm:inline">Connecting...</span>
+          </>
+        ) : (
+          <>
+            <Wallet className="size-3.5 sm:size-4 text-primary" aria-hidden="true" />
+            <span className="hidden sm:inline">Connect Wallet</span>
+          </>
+        )}
+      </Button>
     );
   }
 
