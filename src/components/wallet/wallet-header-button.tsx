@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -13,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useWalletConnection } from '@/hooks/use-wallet-connection';
+import { WalletConnectModal } from './wallet-connect-modal';
 import { cn } from '@/lib/utils';
 
 export function WalletHeaderButton({ compact }: { compact?: boolean } = {}) {
@@ -28,12 +29,12 @@ export function WalletHeaderButton({ compact }: { compact?: boolean } = {}) {
     isLoadingBalance,
     isConnecting,
     isDisconnecting,
-    connect,
     disconnect,
     refreshBalance,
     switchToGanacheNetwork,
   } = useWalletConnection();
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -59,31 +60,34 @@ export function WalletHeaderButton({ compact }: { compact?: boolean } = {}) {
 
   if (!isConnected) {
     return (
-      <Button
-        type="button"
-        size="sm"
-        variant="outline"
-        onClick={() => void connect()}
-        disabled={isConnecting}
-        aria-label="Connect Wallet"
-        data-tour="wallet"
-        className={cn(
-          "relative flex shrink-0 items-center gap-1.5 sm:gap-2 border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary font-medium shadow-xs transition-colors",
-          compact ? "h-8 px-2 text-xs sm:h-9 sm:px-3 sm:text-sm" : ""
-        )}
-      >
-        {isConnecting ? (
-          <>
-            <Loader2 className="size-4 animate-spin text-primary" aria-hidden="true" />
-            <span className="hidden sm:inline">Connecting…</span>
-          </>
-        ) : (
-          <>
-            <Wallet className="size-3.5 sm:size-4 text-primary" aria-hidden="true" />
-            <span className="hidden sm:inline">Connect Wallet</span>
-          </>
-        )}
-      </Button>
+      <>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() => setIsModalOpen(true)}
+          disabled={isConnecting}
+          aria-label="Connect Wallet"
+          data-tour="wallet"
+          className={cn(
+            "relative flex shrink-0 items-center gap-1.5 sm:gap-2 border-primary/40 bg-primary/5 hover:bg-primary/10 text-primary font-medium shadow-xs transition-colors",
+            compact ? "h-8 px-2 text-xs sm:h-9 sm:px-3 sm:text-sm" : ""
+          )}
+        >
+          {isConnecting ? (
+            <>
+              <Loader2 className="size-4 animate-spin text-primary" aria-hidden="true" />
+              <span className="hidden sm:inline">Connecting...</span>
+            </>
+          ) : (
+            <>
+              <Wallet className="size-3.5 sm:size-4 text-primary" aria-hidden="true" />
+              <span className="hidden sm:inline">Connect Wallet</span>
+            </>
+          )}
+        </Button>
+        <WalletConnectModal open={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      </>
     );
   }
 
@@ -124,7 +128,7 @@ export function WalletHeaderButton({ compact }: { compact?: boolean } = {}) {
             <div>
               <p className="text-2xs uppercase tracking-wider text-muted-foreground">On-chain Balance</p>
               <p className="text-sm font-bold text-foreground">
-                {balance !== null ? `${balance} ${symbol}` : '—'}
+                {balance !== null ? `${balance} ${symbol}` : '-'}
               </p>
               {networkName && (
                 <p className="text-2xs text-muted-foreground">{networkName}</p>
@@ -182,7 +186,7 @@ export function WalletHeaderButton({ compact }: { compact?: boolean } = {}) {
           className="cursor-pointer text-destructive focus:text-destructive"
         >
           <Unlink className="size-4 mr-2" />
-          {isDisconnecting ? 'Disconnecting…' : 'Disconnect Wallet'}
+          {isDisconnecting ? 'Disconnecting...' : 'Disconnect Wallet'}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

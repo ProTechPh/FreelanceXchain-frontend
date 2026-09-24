@@ -7,13 +7,10 @@ import { Toaster } from '@/components/ui/sonner';
 import { WebVitals } from '@/components/web-vitals';
 import { isPlanUpgradeRequired } from '@/lib/plan-access';
 import { RateAppProvider } from '@/components/feedback/rate-app-provider';
+import { WalletProvider } from '@/components/wallet/wallet-provider';
 
 function ThemedToaster() {
   const { resolvedTheme } = useTheme();
-  // The styled wrapper in components/ui/sonner supplies the per-severity icons,
-  // so a warning toast is distinguishable from an error without relying on
-  // colour. closeButton matters because error copy now carries a next step and
-  // is worth more than the default 4s.
   return (
     <Toaster
       theme={resolvedTheme === 'light' ? 'light' : 'dark'}
@@ -25,10 +22,6 @@ function ThemedToaster() {
 }
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  // The API sends `Cache-Control: no-store` on every /api/* response and exposes no
-  // ETag, so the browser cache is off and this client cache is the only one we get.
-  // staleTime mirrors the backend's 60s in-memory LRU (see FreelanceXchain-api
-  // src/utils/cache.ts) — refetching sooner just re-reads the same cached value.
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -37,8 +30,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
             staleTime: 60_000,
             gcTime: 5 * 60_000,
             refetchOnWindowFocus: false,
-            // A paywall is not transient. Retrying it doubles the 403s and
-            // delays the lock by a full backoff, so it is never retried.
             retry: (failureCount, error) =>
               !isPlanUpgradeRequired(error) && failureCount < 1,
           },
@@ -47,21 +38,19 @@ export function Providers({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="system"
-        enableSystem
-        disableTransitionOnChange
-      >
-        <WebVitals />
-        {/* App-wide, not dashboard-only: a freelancer can submit a proposal
-            from the public /projects/[id] page, which never renders
-            DashboardLayout. The dashboard reports the email/KYC gate via
-            useSuppressRatingPrompt. */}
-        <RateAppProvider>{children}</RateAppProvider>
-        <ThemedToaster />
-      </ThemeProvider>
-    </QueryClientProvider>
+    <WalletProvider>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <WebVitals />
+          <RateAppProvider>{children}</RateAppProvider>
+          <ThemedToaster />
+        </ThemeProvider>
+      </QueryClientProvider>
+    </WalletProvider>
   );
 }
