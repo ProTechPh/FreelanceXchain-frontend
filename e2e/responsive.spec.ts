@@ -70,7 +70,6 @@ const ADMIN_ROUTES = [
   '/analytics',
   '/audit-logs',
   '/disputes',
-  '/email',
   '/feedback',
   '/kyc',
   '/notifications',
@@ -154,14 +153,6 @@ test.describe('dashboard surfaces', () => {
       await expectNoHorizontalScroll(page, route);
     });
   }
-
-  // Folder switching used to be impossible on a phone: the rail was `hidden sm:block`
-  // with nothing in its place.
-  test('admin mail folders are reachable on a phone', async ({ page }) => {
-    await authenticateParticipant(page, 'admin');
-    await page.goto('/dashboard/admin/email');
-    await expect(page.getByRole('button', { name: /Inbox/ })).toBeVisible();
-  });
 
   // The regression this suite exists for: the header's controls used to overlap,
   // so the point at the centre of the menu button belonged to the search button

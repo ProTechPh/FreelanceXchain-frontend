@@ -1,4 +1,4 @@
-import { Activity, AlertTriangle, BarChart3, Bell, BrainCircuit, ClipboardList, CreditCard, FileText, FolderOpen, Image, LayoutDashboard, LifeBuoy, Mail, MessageSquare, PlusCircle, Search, Shield, Sparkles, Star, Tags, Users, Wallet } from 'lucide-react';
+import { Activity, AlertTriangle, BarChart3, Bell, BrainCircuit, ClipboardList, CreditCard, FileText, FolderOpen, Image, LayoutDashboard, LifeBuoy, MessageSquare, PlusCircle, Search, Shield, Sparkles, Star, Tags, Users, Wallet } from 'lucide-react';
 
 import { getDashboardMessageRoute } from '@/lib/dashboard-message-route';
 import { isNavItemActive } from '@/lib/nav-active';
@@ -115,7 +115,6 @@ const adminNav: NavSection[] = [
   {
     title: 'Operations',
     items: [
-      { label: 'Email', href: '/dashboard/admin/email', icon: Mail },
       { label: 'System health', href: '/dashboard/admin/system', icon: Activity },
       { label: 'Audit logs', href: '/dashboard/admin/audit-logs', icon: ClipboardList },
     ],
