@@ -1,8 +1,8 @@
 import { Activity, AlertTriangle, BarChart3, Bell, BrainCircuit, ClipboardList, CreditCard, FileText, FolderOpen, Image, LayoutDashboard, LifeBuoy, MessageSquare, PlusCircle, Search, Shield, Sparkles, Star, Tags, Users, Wallet } from 'lucide-react';
 
-import { getDashboardMessageRoute } from '@/lib/dashboard-message-route';
-import { isNavItemActive } from '@/lib/nav-active';
-import type { AdminPermission, UserRole } from '@/types';
+import { getDashboardMessageRoute } from '../../lib/dashboard-message-route.ts';
+import { isNavItemActive } from '../../lib/nav-active.ts';
+import type { AdminPermission, UserRole } from '../../types/index.ts';
 
 export interface NavItem {
   label: string;

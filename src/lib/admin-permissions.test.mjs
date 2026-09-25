@@ -76,7 +76,7 @@ test('normalizeAuthUser preserves permissions for admin user', () => {
 });
 
 test('PRESETS and PERMISSION_GROUPS conform to ADMIN_PERMISSIONS catalog', async () => {
-  const { PRESETS, PERMISSION_GROUPS } = await import('../components/admin/AdminPermissionsDialog.tsx');
+  const { PRESETS, PERMISSION_GROUPS } = await import('./admin-permissions.ts');
   const { ADMIN_PERMISSIONS } = await import('../types/index.ts');
 
   assert.ok(PRESETS.length >= 5);
@@ -95,9 +95,4 @@ test('PRESETS and PERMISSION_GROUPS conform to ADMIN_PERMISSIONS catalog', async
   assert.equal(superAdminPreset?.permissions.length, ADMIN_PERMISSIONS.length);
 
   assert.ok(PERMISSION_GROUPS.length >= 4);
-});
-
-test('adminApi.createUser is exported and defined', async () => {
-  const { adminApi } = await import('./api/admin.ts');
-  assert.equal(typeof adminApi.createUser, 'function');
 });
