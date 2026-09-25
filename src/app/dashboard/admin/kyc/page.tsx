@@ -1,4 +1,4 @@
-﻿
+
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -34,6 +34,8 @@ import {
 import { toast } from 'sonner';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { formatDate, formatDateTime } from '@/lib/format';
+import { AdminPermissionGate } from '@/components/admin/AdminPermissionGate';
+import { useAdminPermissions } from '@/hooks/use-admin-permissions';
 
 const statusColors: Record<string, string> = {
   pending: 'bg-warning-subtle text-warning',
@@ -61,6 +63,9 @@ export default function KycReviewPage() {
   const [reviewing, setReviewing] = useState<string | null>(null);
   const [reviewNotes, setReviewNotes] = useState('');
   const [stats, setStats] = useState({ completed: 0, approved: 0, rejected: 0, pending: 0 });
+
+  const { hasPermission } = useAdminPermissions();
+  const canManageKyc = hasPermission('kyc:manage');
 
   const fetchVerifications = useCallback(async (status: typeof filter) => {
     setLoading(true);
@@ -127,51 +132,54 @@ export default function KycReviewPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">KYC review</h1>
-          <p className="text-muted-foreground">Review identity verification requests</p>
+    <AdminPermissionGate permission="kyc:view" title="KYC Review">
+      <div className="space-y-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-tight text-foreground">KYC review</h1>
+            <p className="text-muted-foreground">Review identity verification requests</p>
+          </div>
         </div>
-      </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard icon={AlertTriangle} label="Under Review" count={stats.completed} color="blue" active={filter === 'completed'} onClick={() => setFilter('completed')} />
-        <StatCard icon={CheckCircle} label="Approved" count={stats.approved} color="green" active={filter === 'approved'} onClick={() => setFilter('approved')} />
-        <StatCard icon={XCircle} label="Rejected" count={stats.rejected} color="red" active={filter === 'rejected'} onClick={() => setFilter('rejected')} />
-        <StatCard icon={Clock} label="Pending Submission" count={stats.pending} color="yellow" active={filter === 'pending'} onClick={() => setFilter('pending')} />
-      </div>
-
-      {/* Verification List */}
-      {loading ? (
-        <ListSkeleton rows={4} label="Loading KYC queue" />
-      ) : verifications.length === 0 ? (
-        <Card className="bg-card border-border">
-          <CardContent className="p-8 text-center">
-            <Shield className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-            <p className="text-muted-foreground">
-              No {filter === 'completed' ? 'under review' : filter === 'pending' ? 'pending submission' : filter} verifications found
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-4">
-          {verifications.map((v) => (
-            <VerificationCard
-              key={v.id}
-              verification={v}
-              expanded={expandedId === v.id}
-              onToggle={() => setExpandedId(expandedId === v.id ? null : v.id)}
-              onReview={handleReview}
-              reviewing={reviewing === v.id}
-              reviewNotes={reviewNotes}
-              setReviewNotes={setReviewNotes}
-            />
-          ))}
+        {/* Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <StatCard icon={AlertTriangle} label="Under Review" count={stats.completed} color="blue" active={filter === 'completed'} onClick={() => setFilter('completed')} />
+          <StatCard icon={CheckCircle} label="Approved" count={stats.approved} color="green" active={filter === 'approved'} onClick={() => setFilter('approved')} />
+          <StatCard icon={XCircle} label="Rejected" count={stats.rejected} color="red" active={filter === 'rejected'} onClick={() => setFilter('rejected')} />
+          <StatCard icon={Clock} label="Pending Submission" count={stats.pending} color="yellow" active={filter === 'pending'} onClick={() => setFilter('pending')} />
         </div>
-      )}
-    </div>
+
+        {/* Verification List */}
+        {loading ? (
+          <ListSkeleton rows={4} label="Loading KYC queue" />
+        ) : verifications.length === 0 ? (
+          <Card className="bg-card border-border">
+            <CardContent className="p-8 text-center">
+              <Shield className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+              <p className="text-muted-foreground">
+                No {filter === 'completed' ? 'under review' : filter === 'pending' ? 'pending submission' : filter} verifications found
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {verifications.map((v) => (
+              <VerificationCard
+                key={v.id}
+                verification={v}
+                expanded={expandedId === v.id}
+                onToggle={() => setExpandedId(expandedId === v.id ? null : v.id)}
+                onReview={handleReview}
+                reviewing={reviewing === v.id}
+                reviewNotes={reviewNotes}
+                setReviewNotes={setReviewNotes}
+                canManageKyc={canManageKyc}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </AdminPermissionGate>
   );
 }
 
@@ -216,7 +224,7 @@ function StatCard({ icon: Icon, label, count, color, active, onClick }: {
   );
 }
 
-function VerificationCard({ verification: v, expanded, onToggle, onReview, reviewing, reviewNotes, setReviewNotes }: {
+function VerificationCard({ verification: v, expanded, onToggle, onReview, reviewing, reviewNotes, setReviewNotes, canManageKyc = true }: {
   verification: KycVerification;
   expanded: boolean;
   onToggle: () => void;
@@ -224,6 +232,7 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
   reviewing: boolean;
   reviewNotes: string;
   setReviewNotes: (n: string) => void;
+  canManageKyc?: boolean;
 }) {
   const [decisionDetails, setDecisionDetails] = useState<KycDecisionDetails | null>(null);
   const [loadingDecision, setLoadingDecision] = useState(false);
@@ -560,36 +569,44 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
               {v.status === 'completed' && (
                 <div className="pt-3 border-t border-border">
                   <h4 className="text-sm font-medium text-muted-foreground mb-2">Admin Review</h4>
-                  <textarea
-                    className="w-full p-3 rounded-lg bg-secondary border border-border text-sm resize-none"
-                    rows={3}
-                    placeholder="Add review notes (optional)..."
-                    value={reviewNotes}
-                    onChange={(e) => setReviewNotes(e.target.value)}
-                  />
-                  <div className="flex flex-wrap gap-3 mt-3">
-                    <Button
-                      size="sm"
-                      className="bg-success hover:bg-success/90 text-success-foreground"
-                      loading={reviewing}
-                      loadingText="Approvingâ€¦"
-                      onClick={() => setConfirmDecision('approved')}
-                    >
-                      <CheckCircle className="size-4" aria-hidden="true" />
-                      Approve
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-destructive border-destructive-border hover:bg-destructive-subtle"
-                      loading={reviewing}
-                      loadingText="Rejectingâ€¦"
-                      onClick={() => setConfirmDecision('rejected')}
-                    >
-                      <XCircle className="size-4" aria-hidden="true" />
-                      Reject
-                    </Button>
-                  </div>
+                  {canManageKyc ? (
+                    <>
+                      <textarea
+                        className="w-full p-3 rounded-lg bg-secondary border border-border text-sm resize-none"
+                        rows={3}
+                        placeholder="Add review notes (optional)..."
+                        value={reviewNotes}
+                        onChange={(e) => setReviewNotes(e.target.value)}
+                      />
+                      <div className="flex flex-wrap gap-3 mt-3">
+                        <Button
+                          size="sm"
+                          className="bg-success hover:bg-success/90 text-success-foreground"
+                          loading={reviewing}
+                          loadingText="Approving…"
+                          onClick={() => setConfirmDecision('approved')}
+                        >
+                          <CheckCircle className="size-4" aria-hidden="true" />
+                          Approve
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-destructive border-destructive-border hover:bg-destructive-subtle"
+                          loading={reviewing}
+                          loadingText="Rejecting…"
+                          onClick={() => setConfirmDecision('rejected')}
+                        >
+                          <XCircle className="size-4" aria-hidden="true" />
+                          Reject
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-xs text-muted-foreground italic">
+                      You have view-only access to KYC submissions. The <code className="font-mono bg-muted px-1 py-0.5 rounded text-foreground">kyc:manage</code> permission is required to approve or reject.
+                    </p>
+                  )}
                 </div>
               )}
 

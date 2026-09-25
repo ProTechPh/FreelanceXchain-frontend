@@ -11,6 +11,7 @@ import { StarRating } from '@/components/ui/star-rating';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
+import { AdminPermissionGate } from '@/components/admin/AdminPermissionGate';
 import { appRatingsApi } from '@/lib/api';
 import { reportLoadFailure } from '@/lib/report-failure';
 import { formatDate } from '@/lib/format';
@@ -93,7 +94,8 @@ export default function AppFeedbackPage() {
   const histogramMax = Math.max(1, ...STAR_FILTERS.map((star) => summary.histogram[String(star)] ?? 0));
 
   return (
-    <div className="space-y-6">
+    <AdminPermissionGate permission="analytics:view" title="App Feedback">
+      <div className="space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight text-foreground">App feedback</h1>
@@ -312,5 +314,6 @@ export default function AppFeedbackPage() {
         )}
       </div>
     </div>
+    </AdminPermissionGate>
   );
 }

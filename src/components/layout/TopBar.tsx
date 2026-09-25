@@ -128,7 +128,7 @@ export function TopBar() {
     <header className="sticky top-0 z-40 shrink-0 border-b border-border bg-card/80 backdrop-blur-xl">
       <div className="flex h-14 sm:h-16 items-center justify-between gap-2 px-3 sm:gap-3 sm:px-6">
         <div className="flex min-w-0 flex-1 items-center gap-1 sm:gap-2">
-          <MobileNav role={user?.role} />
+          <MobileNav role={user?.role} permissions={user?.permissions} />
           {hasParticipantDashboard && (
             <>
               {/* On a phone the field cannot sit beside the menu button: the two

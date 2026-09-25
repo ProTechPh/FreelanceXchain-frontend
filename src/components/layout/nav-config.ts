@@ -1,8 +1,8 @@
 import { Activity, AlertTriangle, BarChart3, Bell, BrainCircuit, ClipboardList, CreditCard, FileText, FolderOpen, Image, LayoutDashboard, LifeBuoy, MessageSquare, PlusCircle, Search, Shield, Sparkles, Star, Tags, Users, Wallet } from 'lucide-react';
 
-import { getDashboardMessageRoute } from '@/lib/dashboard-message-route';
-import { isNavItemActive } from '@/lib/nav-active';
-import type { UserRole } from '@/types';
+import { getDashboardMessageRoute } from '../../lib/dashboard-message-route.ts';
+import { isNavItemActive } from '../../lib/nav-active.ts';
+import type { AdminPermission, UserRole } from '../../types/index.ts';
 
 export interface NavItem {
   label: string;
@@ -13,6 +13,11 @@ export interface NavItem {
    * that disappears once the viewer is entitled — never shown to admins.
    */
   pro?: boolean;
+  /**
+   * Granular permission required for an admin to view this nav item.
+   * If omitted or undefined, accessible to all admins.
+   */
+  permission?: AdminPermission;
 }
 
 export interface NavSection {
@@ -98,31 +103,48 @@ const adminNav: NavSection[] = [
     items: [
       { label: 'Dashboard', href: '/dashboard/admin', icon: LayoutDashboard },
       { label: 'Notifications', href: '/dashboard/admin/notifications', icon: Bell },
-      { label: 'Analytics', href: '/dashboard/admin/analytics', icon: BarChart3 },
-      { label: 'App feedback', href: '/dashboard/admin/feedback', icon: Star },
+      { label: 'Analytics', href: '/dashboard/admin/analytics', icon: BarChart3, permission: 'analytics:view' },
+      { label: 'App feedback', href: '/dashboard/admin/feedback', icon: Star, permission: 'analytics:view' },
     ],
   },
   {
     title: 'Moderation',
     items: [
-      { label: 'Users', href: '/dashboard/admin/users', icon: Users },
-      { label: 'KYC review', href: '/dashboard/admin/kyc', icon: Shield },
-      { label: 'Disputes', href: '/dashboard/admin/disputes', icon: AlertTriangle },
-      { label: 'Skills', href: '/dashboard/admin/skills', icon: Tags },
-      { label: 'Support tickets', href: '/dashboard/admin/support-tickets', icon: LifeBuoy },
+      { label: 'Users', href: '/dashboard/admin/users', icon: Users, permission: 'users:view' },
+      { label: 'KYC review', href: '/dashboard/admin/kyc', icon: Shield, permission: 'kyc:view' },
+      { label: 'Disputes', href: '/dashboard/admin/disputes', icon: AlertTriangle, permission: 'disputes:view' },
+      { label: 'Skills', href: '/dashboard/admin/skills', icon: Tags, permission: 'skills:manage' },
+      { label: 'Support tickets', href: '/dashboard/admin/support-tickets', icon: LifeBuoy, permission: 'support:manage' },
     ],
   },
   {
     title: 'Operations',
     items: [
-      { label: 'System health', href: '/dashboard/admin/system', icon: Activity },
-      { label: 'Audit logs', href: '/dashboard/admin/audit-logs', icon: ClipboardList },
+      { label: 'System health', href: '/dashboard/admin/system', icon: Activity, permission: 'system:view' },
+      { label: 'Audit logs', href: '/dashboard/admin/audit-logs', icon: ClipboardList, permission: 'audit:view' },
     ],
   },
 ];
 
-export function getNavSections(role: UserRole | undefined): NavSection[] {
-  if (role === 'admin') return adminNav;
+export function getNavSections(role: UserRole | undefined, permissions?: AdminPermission[]): NavSection[] {
+  if (role === 'admin') {
+    const isSuperAdmin =
+      !permissions ||
+      permissions.length === 0 ||
+      (permissions as string[]).includes('*') ||
+      permissions.includes('admin:manage');
+
+    if (isSuperAdmin) {
+      return adminNav;
+    }
+
+    return adminNav
+      .map((section) => ({
+        ...section,
+        items: section.items.filter((item) => !item.permission || permissions.includes(item.permission)),
+      }))
+      .filter((section) => section.items.length > 0);
+  }
   if (role === 'employer') return employerNav;
   return freelancerNav;
 }

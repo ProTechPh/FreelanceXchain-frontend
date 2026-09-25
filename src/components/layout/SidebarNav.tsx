@@ -8,10 +8,12 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip } from '@/components/ui/tooltip';
 import { usePlan } from '@/hooks/use-plan';
 import { getNavSections, isNavItemActive, type NavItem } from './nav-config';
-import type { UserRole } from '@/types';
+import type { AdminPermission, UserRole } from '@/types';
+import { useAuthStore } from '@/stores/authStore';
 
 interface SidebarNavProps {
   role: UserRole | undefined;
+  permissions?: AdminPermission[];
   collapsed?: boolean;
   /** Called after a link is followed — used to close the mobile drawer. */
   onNavigate?: () => void;
@@ -73,9 +75,11 @@ function NavLink({
   );
 }
 
-export function SidebarNav({ role, collapsed = false, onNavigate }: SidebarNavProps) {
+export function SidebarNav({ role, permissions, collapsed = false, onNavigate }: SidebarNavProps) {
   const pathname = usePathname();
-  const sections = getNavSections(role);
+  const userPermissions = useAuthStore((s) => s.user?.permissions);
+  const effectivePermissions = permissions ?? userPermissions;
+  const sections = getNavSections(role, effectivePermissions);
   // Read once here rather than per item.
   const { isPro, isResolved } = usePlan();
 

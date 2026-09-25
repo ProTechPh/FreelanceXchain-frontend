@@ -102,6 +102,7 @@ export function normalizeAuthUser(user: AuthApiUser): User {
     // anything not named here is silently dropped and every user reads as Free.
     ...(user.plan ? { plan: user.plan } : {}),
     ...(user.planStatus ? { planStatus: user.planStatus } : {}),
+    ...(Array.isArray(user.permissions) ? { permissions: user.permissions } : {}),
     createdAt: user.createdAt,
     updatedAt: user.createdAt,
   };

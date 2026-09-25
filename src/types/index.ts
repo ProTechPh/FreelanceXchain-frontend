@@ -7,6 +7,23 @@ export type { AppRatingSource };
 
 export type UserRole = 'freelancer' | 'employer' | 'admin';
 
+export const ADMIN_PERMISSIONS = [
+  'kyc:view',
+  'kyc:manage',
+  'users:view',
+  'users:manage',
+  'disputes:view',
+  'disputes:manage',
+  'support:manage',
+  'skills:manage',
+  'analytics:view',
+  'system:view',
+  'audit:view',
+  'admin:manage',
+] as const;
+
+export type AdminPermission = typeof ADMIN_PERMISSIONS[number];
+
 export type ProjectStatus = 'draft' | 'open' | 'in_progress' | 'completed' | 'cancelled' | 'disputed';
 
 export type ProposalStatus = 'pending' | 'accepted' | 'rejected' | 'withdrawn';
@@ -148,6 +165,7 @@ export interface User {
   planStatus?: SubscriptionStatus;
   createdAt: string;
   updatedAt: string;
+  permissions?: AdminPermission[];
 }
 
 export interface WorkExperience {
@@ -765,6 +783,7 @@ export interface AdminUser {
   kycStatus?: KycStatus | 'not_started';
   emailVerified?: boolean;
   isActive: boolean;
+  permissions?: AdminPermission[];
 }
 
 export interface DisputeManagementData {
@@ -900,6 +919,7 @@ export interface AuthApiUser {
   emailVerification?: boolean;
   plan?: PlanTier;
   planStatus?: SubscriptionStatus;
+  permissions?: AdminPermission[];
 }
 
 export interface AuthSuccessResponse {

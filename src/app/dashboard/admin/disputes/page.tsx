@@ -24,6 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { AdminPermissionGate } from '@/components/admin/AdminPermissionGate';
 
 const statusColors: Record<DisputeStatus, string> = {
   open: 'bg-destructive-subtle text-destructive',
@@ -157,7 +158,8 @@ export default function DisputesPage() {
   const statuses: DisputeStatus[] = ['open', 'under_review', 'resolved'];
 
   return (
-    <div className="space-y-6">
+    <AdminPermissionGate permission="disputes:view" title="Disputes">
+      <div className="space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Dispute management</h1>
@@ -375,5 +377,6 @@ export default function DisputesPage() {
         </DialogContent>
       </Dialog>
     </div>
+    </AdminPermissionGate>
   );
 }

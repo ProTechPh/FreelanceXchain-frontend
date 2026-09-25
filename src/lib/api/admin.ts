@@ -2,6 +2,8 @@ import api from '@/lib/api-client';
 import type {
   PlatformStats,
   AdminUser,
+  UserRole,
+  AdminPermission,
   AdminAnalytics,
   DisputeManagementData,
   SystemHealth,
@@ -27,8 +29,20 @@ export const adminApi = {
   getUsers: (params?: { status?: string; role?: string; kycStatus?: string; emailVerified?: boolean | string }) =>
     api.get<{ users: AdminUser[]; total: number }>('/admin/users', { params }),
 
+  createUser: (data: {
+    name: string;
+    email: string;
+    role: UserRole;
+    password?: string;
+    permissions?: AdminPermission[];
+    autoVerifyEmail?: boolean;
+  }) => api.post<{ user: AdminUser; temporaryPassword?: string }>('/admin/users', data),
+
   updateUser: (userId: string, data: { name?: string; role?: string; isActive?: boolean }) =>
     api.patch<AdminUser>(`/admin/users/${userId}`, data),
+
+  updateUserPermissions: (userId: string, permissions: AdminPermission[]) =>
+    api.patch<AdminUser>(`/admin/users/${userId}/permissions`, { permissions }),
 
   suspendUser: (id: string, reason: string) =>
     api.post(`/admin/users/${id}/suspend`, { reason }),

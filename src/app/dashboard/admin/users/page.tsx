@@ -19,11 +19,15 @@ import { adminApi } from '@/lib/api';
 import type { AdminUser, UserRole } from '@/types';
 import { toast } from 'sonner';
 import { reportLoadFailure } from '@/lib/report-failure';
-import { Users, Search, Ban, UserCheck, ShieldCheck, CheckCircle2, XCircle, ShieldAlert, Clock, AlertTriangle } from 'lucide-react';
+import { Users, Search, Ban, UserCheck, ShieldCheck, CheckCircle2, XCircle, ShieldAlert, Clock, AlertTriangle, Key, UserPlus } from 'lucide-react';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { EmptyState } from '@/components/ui/empty-state';
 import { formatDate } from '@/lib/format';
+import { AdminPermissionGate } from '@/components/admin/AdminPermissionGate';
+import { AdminPermissionsDialog } from '@/components/admin/AdminPermissionsDialog';
+import { AddUserDialog } from '@/components/admin/AddUserDialog';
+import { useAdminPermissions } from '@/hooks/use-admin-permissions';
 
 const statusColors: Record<string, string> = {
   active: 'bg-success-subtle text-success',
@@ -51,6 +55,12 @@ export default function UsersPage() {
   const [userToVerify, setUserToVerify] = useState<AdminUser | null>(null);
   const [verifyReason, setVerifyReason] = useState('');
   const [userToUnsuspend, setUserToUnsuspend] = useState<AdminUser | null>(null);
+  const [userForPermissions, setUserForPermissions] = useState<AdminUser | null>(null);
+  const [addUserOpen, setAddUserOpen] = useState(false);
+
+  const { hasPermission } = useAdminPermissions();
+  const canManageAdmins = hasPermission('admin:manage');
+  const canManageUsers = hasPermission('users:manage');
 
   const load = useCallback(async () => {
     const { data } = await adminApi.getUsers();
@@ -169,11 +179,20 @@ export default function UsersPage() {
   const emailVerifiedCount = users.filter((u) => u.emailVerified).length;
 
   return (
-    <div className="space-y-6 min-w-0 overflow-x-hidden">
+    <AdminPermissionGate permission="users:view" title="User Management">
+      <div className="space-y-6 min-w-0 overflow-x-hidden">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-extrabold tracking-tight text-foreground">User management</h1>
-        <p className="text-muted-foreground">Manage platform users and accounts</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">User management</h1>
+          <p className="text-muted-foreground">Manage platform users and accounts</p>
+        </div>
+        {canManageUsers && (
+          <Button onClick={() => setAddUserOpen(true)} className="w-full sm:w-auto">
+            <UserPlus className="size-4 mr-2" />
+            Add / Invite User
+          </Button>
+        )}
       </div>
 
       {/* Stats */}
@@ -317,7 +336,19 @@ export default function UsersPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge className={roleColors[user.role]}>{user.role}</Badge>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <Badge className={roleColors[user.role]}>{user.role}</Badge>
+                          {user.role === 'admin' && (
+                            !user.permissions ||
+                            user.permissions.length === 0 ||
+                            (user.permissions as string[]).includes('*') ||
+                            user.permissions.includes('admin:manage') ? (
+                              <Badge variant="outline" className="text-2xs bg-primary/10 text-primary border-primary/20">Super Admin</Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-2xs bg-muted text-muted-foreground border-border">{user.permissions.length} perms</Badge>
+                            )
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <Badge className={statusColors[user.isActive ? 'active' : 'suspended']}>
@@ -363,6 +394,18 @@ export default function UsersPage() {
                       <TableCell className="hidden lg:table-cell p-4 text-muted-foreground">{formatDate(user.createdAt)}</TableCell>
                       <TableCell>
                         <div className="flex items-center justify-end gap-2">
+                          {user.role === 'admin' && canManageAdmins && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-primary touch-manipulation"
+                              title="Manage admin permissions"
+                              aria-label={`Manage permissions for ${user.name || user.email}`}
+                              onClick={() => setUserForPermissions(user)}
+                            >
+                              <Key className="w-4 h-4" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="icon"
@@ -503,11 +546,32 @@ export default function UsersPage() {
                 </div>
 
                 <div className="flex items-center justify-between pt-1">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 flex-wrap">
                     <Badge className={roleColors[user.role]}>{user.role}</Badge>
+                    {user.role === 'admin' && (
+                      !user.permissions ||
+                      user.permissions.length === 0 ||
+                      (user.permissions as string[]).includes('*') ||
+                      user.permissions.includes('admin:manage') ? (
+                        <Badge variant="outline" className="text-[11px] bg-primary/10 text-primary border-primary/20">Super Admin</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[11px] bg-muted text-muted-foreground border-border">{user.permissions.length} perms</Badge>
+                      )
+                    )}
                     <span className="text-xs text-muted-foreground">{formatDate(user.createdAt)}</span>
                   </div>
                   <div className="flex items-center gap-1">
+                    {user.role === 'admin' && canManageAdmins && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 text-primary touch-manipulation"
+                        aria-label={`Manage permissions for ${user.name || user.email}`}
+                        onClick={() => setUserForPermissions(user)}
+                      >
+                        <Key className="w-4 h-4" />
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="icon"
@@ -688,7 +752,30 @@ export default function UsersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Admin Permissions Modal */}
+      <AdminPermissionsDialog
+        open={userForPermissions !== null}
+        onOpenChange={(open) => {
+          if (!open) setUserForPermissions(null);
+        }}
+        user={userForPermissions}
+        onPermissionsSaved={(updatedUser) => {
+          setUsers((prev) => prev.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
+        }}
+      />
+
+      {/* Add / Invite User Modal */}
+      <AddUserDialog
+        open={addUserOpen}
+        onOpenChange={setAddUserOpen}
+        onUserAdded={(newUser) => {
+          setUsers((prev) => [newUser, ...prev]);
+        }}
+        canManageAdmins={canManageAdmins}
+      />
     </div>
+  </AdminPermissionGate>
   );
 }
 

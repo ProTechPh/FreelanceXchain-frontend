@@ -28,6 +28,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { Textarea } from '@/components/ui/textarea';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { PageHeader } from '@/components/dashboard/page-header';
+import { AdminPermissionGate } from '@/components/admin/AdminPermissionGate';
 import { supportTicketsApi } from '@/lib/api';
 import { reportFailure, reportLoadFailure } from '@/lib/report-failure';
 import { formatDateTime } from '@/lib/format';
@@ -151,7 +152,8 @@ export default function AdminSupportTicketsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <AdminPermissionGate permission="support:manage" title="Support Tickets">
+      <div className="space-y-6">
       <PageHeader
         title="Support tickets"
         description="Questions freelancers and employers have sent from Help & Support. Resolving one notifies the submitter and shows them your reply."
@@ -274,6 +276,7 @@ export default function AdminSupportTicketsPage() {
         </DialogContent>
       </Dialog>
     </div>
+    </AdminPermissionGate>
   );
 }
 

@@ -93,7 +93,7 @@ export function DashboardLayout({ children, allowedRoles }: DashboardLayoutProps
         >
           {children}
         </main>
-        <BottomNav role={user?.role} />
+        <BottomNav role={user?.role} permissions={user?.permissions} />
       </div>
     </div>
   );

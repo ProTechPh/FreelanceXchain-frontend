@@ -21,6 +21,7 @@ import { ClipboardList, Search, User } from 'lucide-react';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { EmptyState } from '@/components/ui/empty-state';
+import { AdminPermissionGate } from '@/components/admin/AdminPermissionGate';
 
 const statusColors: Record<AuditLogEntry['status'], string> = {
   success: 'bg-success-subtle text-success',
@@ -93,7 +94,8 @@ export default function AuditLogsPage() {
   const activity = useAdminActivitySummary(range.startDate ?? '', range.endDate ?? '');
 
   return (
-    <div className="space-y-6">
+    <AdminPermissionGate permission="audit:view" title="Audit Logs">
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
@@ -344,5 +346,6 @@ export default function AuditLogsPage() {
         </div>
       )}
     </div>
+    </AdminPermissionGate>
   );
 }

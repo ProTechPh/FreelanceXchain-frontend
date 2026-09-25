@@ -16,15 +16,17 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { isNavItemActive } from '@/lib/nav-active';
-import type { UserRole } from '@/types';
+import type { AdminPermission, UserRole } from '@/types';
+import { useAuthStore } from '@/stores/authStore';
 
 interface BottomNavItem {
   label: string;
   href: string;
   icon: React.ElementType;
+  permission?: AdminPermission;
 }
 
-function getBottomNavItems(role: UserRole | undefined): BottomNavItem[] {
+function getBottomNavItems(role: UserRole | undefined, permissions?: AdminPermission[]): BottomNavItem[] {
   if (role === 'freelancer') {
     return [
       { label: 'Home', href: '/dashboard/freelancer', icon: LayoutDashboard },
@@ -46,21 +48,35 @@ function getBottomNavItems(role: UserRole | undefined): BottomNavItem[] {
   }
 
   if (role === 'admin') {
-    return [
+    const isSuperAdmin =
+      !permissions ||
+      permissions.length === 0 ||
+      (permissions as string[]).includes('*') ||
+      permissions.includes('admin:manage');
+
+    const adminItems: BottomNavItem[] = [
       { label: 'Home', href: '/dashboard/admin', icon: LayoutDashboard },
-      { label: 'KYC', href: '/dashboard/admin/kyc', icon: Shield },
-      { label: 'Disputes', href: '/dashboard/admin/disputes', icon: AlertTriangle },
-      { label: 'Users', href: '/dashboard/admin/users', icon: Users },
-      { label: 'Analytics', href: '/dashboard/admin/analytics', icon: BarChart3 },
+      { label: 'KYC', href: '/dashboard/admin/kyc', icon: Shield, permission: 'kyc:view' },
+      { label: 'Disputes', href: '/dashboard/admin/disputes', icon: AlertTriangle, permission: 'disputes:view' },
+      { label: 'Users', href: '/dashboard/admin/users', icon: Users, permission: 'users:view' },
+      { label: 'Analytics', href: '/dashboard/admin/analytics', icon: BarChart3, permission: 'analytics:view' },
     ];
+
+    if (isSuperAdmin) {
+      return adminItems;
+    }
+
+    return adminItems.filter((item) => !item.permission || permissions.includes(item.permission));
   }
 
   return [];
 }
 
-export function BottomNav({ role }: { role: UserRole | undefined }) {
+export function BottomNav({ role, permissions }: { role: UserRole | undefined; permissions?: AdminPermission[] }) {
   const pathname = usePathname();
-  const items = getBottomNavItems(role);
+  const userPermissions = useAuthStore((s) => s.user?.permissions);
+  const effectivePermissions = permissions ?? userPermissions;
+  const items = getBottomNavItems(role, effectivePermissions);
 
   if (items.length === 0) return null;
 

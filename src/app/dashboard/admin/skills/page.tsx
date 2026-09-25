@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { Field } from '@/components/ui/field';
+import { AdminPermissionGate } from '@/components/admin/AdminPermissionGate';
 
 export default function AdminSkillsPage() {
   const [taxonomy, setTaxonomy] = useState<SkillTaxonomy>({ categories: [] });
@@ -100,7 +101,8 @@ export default function AdminSkillsPage() {
 
   if (loading) return <ListSkeleton rows={6} label="Loading skills" />;
   return (
-    <div className="space-y-6">
+    <AdminPermissionGate permission="skills:manage" title="Skills Taxonomy">
+      <div className="space-y-6">
       <div><h1 className="flex items-center gap-2 text-2xl font-bold"><Tags className="size-6" />Skill taxonomy</h1><p className="text-muted-foreground">Create categories and skills, and deprecate entries that should no longer be selected.</p></div>
       <div className="grid gap-5 lg:grid-cols-2">
         <Card><CardHeader><CardTitle>New category</CardTitle></CardHeader><CardContent><form className="space-y-3" onSubmit={createCategory}><Field label="Name" htmlFor="category-name">
@@ -119,5 +121,6 @@ export default function AdminSkillsPage() {
       <Card><CardHeader><CardTitle>Custom-skill suggestions</CardTitle><p className="text-sm text-muted-foreground">Review freelancer requests for additions to the global taxonomy.</p></CardHeader><CardContent>{suggestions.length === 0 ? <p className="text-sm text-muted-foreground">No pending suggestions.</p> : <ul className="space-y-3">{suggestions.map((suggestion) => <li key={suggestion.id} className="flex flex-col gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-start sm:justify-between"><div><p className="font-semibold">{suggestion.skillName}</p><p className="mt-1 text-sm text-muted-foreground">{suggestion.skillDescription}</p><p className="mt-2 text-xs text-muted-foreground">Suggested by {suggestion.suggestedBy} · {suggestion.timesRequested} request{suggestion.timesRequested === 1 ? '' : 's'}{suggestion.categoryName ? ` · ${suggestion.categoryName}` : ''}</p></div><div className="flex gap-2"><Button type="button" size="sm" disabled={action === suggestion.id} onClick={() => void moderateSuggestion(suggestion.id, 'approved')}>Approve</Button><Button type="button" size="sm" variant="outline" disabled={action === suggestion.id} onClick={() => void moderateSuggestion(suggestion.id, 'rejected')}>Reject</Button></div></li>)}</ul>}</CardContent></Card>
       <div className="grid gap-5 md:grid-cols-2">{taxonomy.categories.map((category) => <Card key={category.id}><CardHeader><CardTitle>{category.name}</CardTitle><p className="text-sm text-muted-foreground">{category.description}</p></CardHeader><CardContent><ul className="space-y-2">{category.skills.map((skill) => <li key={skill.id} className="flex items-center justify-between gap-3 rounded-lg border border-border p-3"><div><p className="font-medium">{skill.name}</p><p className="text-sm text-muted-foreground">{skill.description}</p></div><div className="flex items-center gap-2"><Badge variant="secondary">{skill.isActive ? 'Active' : 'Deprecated'}</Badge>{skill.isActive && <Button type="button" size="icon" variant="ghost" className="size-9 sm:size-8 touch-manipulation" aria-label={`Deprecate ${skill.name}`} disabled={action === skill.id} onClick={() => void deprecate(skill.id)}><Trash2 className="size-4 text-destructive" /></Button>}</div></li>)}</ul></CardContent></Card>)}</div>
     </div>
+    </AdminPermissionGate>
   );
 }

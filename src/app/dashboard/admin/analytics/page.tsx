@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { StatsSkeleton } from '@/components/dashboard/skeletons';
 import { formatAmount, formatNumber } from '@/lib/format';
+import { AdminPermissionGate } from '@/components/admin/AdminPermissionGate';
 
 interface LeaderboardEntry {
   userId: string;
@@ -120,7 +121,8 @@ export default function AnalyticsPage() {
   const maxGrowth = Math.max(1, ...growthData.map((d) => d.count));
 
   return (
-    <div className="space-y-6">
+    <AdminPermissionGate permission="analytics:view" title="Analytics">
+      <div className="space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Analytics</h1>
@@ -500,5 +502,6 @@ export default function AnalyticsPage() {
         </CardContent>
       </Card>
     </div>
+    </AdminPermissionGate>
   );
 }
