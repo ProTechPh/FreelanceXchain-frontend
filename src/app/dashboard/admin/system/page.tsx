@@ -10,6 +10,7 @@ import { reportLoadFailure } from '@/lib/report-failure';
 import { Database, HardDrive, Clock, CheckCircle, AlertTriangle, RefreshCw } from 'lucide-react';
 import { StatsSkeleton } from '@/components/dashboard/skeletons';
 import { formatDateTime } from '@/lib/format';
+import { AdminPermissionGate } from '@/components/admin/AdminPermissionGate';
 
 function formatUptime(seconds: number): string {
   const days = Math.floor(seconds / 86400);
@@ -81,7 +82,8 @@ export default function SystemHealthPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <AdminPermissionGate permission="system:view" title="System Health">
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
@@ -155,5 +157,6 @@ export default function SystemHealthPage() {
         </Card>
       </div>
     </div>
+    </AdminPermissionGate>
   );
 }

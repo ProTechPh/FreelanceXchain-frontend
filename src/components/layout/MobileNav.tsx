@@ -20,7 +20,7 @@ import { SidebarNav } from './SidebarNav';
 import { TOUR_COMPACT_CARD_MAX_HEIGHT, stepOpensNav } from '@/lib/onboarding-tour';
 import { useIsBelowLarge } from '@/hooks/use-media-query';
 import { useTourStore } from '@/stores/tourStore';
-import type { UserRole } from '@/types';
+import type { AdminPermission, UserRole } from '@/types';
 
 /**
  * Dashboard navigation below `lg`.
@@ -30,7 +30,15 @@ import type { UserRole } from '@/types';
  * This renders the same `SidebarNav` inside a drawer, and closes on navigation
  * so the user is never left staring at the menu they just used.
  */
-export function MobileNav({ role, className }: { role: UserRole | undefined; className?: string }) {
+export function MobileNav({
+  role,
+  permissions,
+  className,
+}: {
+  role: UserRole | undefined;
+  permissions?: AdminPermission[];
+  className?: string;
+}) {
   const [open, setOpen] = useState(false);
   const isBelowLarge = useIsBelowLarge();
   const tourWantsNav = useTourStore((state) => state.isRunning && stepOpensNav(state.activeRole, state.stepIndex));
@@ -112,7 +120,7 @@ export function MobileNav({ role, className }: { role: UserRole | undefined; cla
             </span>
           </Link>
         </SheetHeader>
-        <SidebarNav role={role} onNavigate={() => setOpen(false)} />
+        <SidebarNav role={role} permissions={permissions} onNavigate={() => setOpen(false)} />
       </SheetContent>
     </Sheet>
   );

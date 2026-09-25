@@ -65,7 +65,7 @@ export function Sidebar() {
         </Link>
       </div>
 
-      <SidebarNav role={user?.role} collapsed={collapsed} />
+      <SidebarNav role={user?.role} permissions={user?.permissions} collapsed={collapsed} />
 
       <div className="shrink-0 border-t border-sidebar-border p-2">
         <SidebarUserCard collapsed={collapsed} />
