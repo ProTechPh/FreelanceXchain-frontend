@@ -14,6 +14,7 @@ const user = {
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript((storedUser) => {
+    localStorage.removeItem('walletState');
     localStorage.setItem('access_token', 'app-access-token');
     localStorage.setItem('refresh_token', 'app-refresh-token');
     localStorage.setItem('auth-storage', JSON.stringify({
@@ -122,6 +123,7 @@ test('employer funds a pending contract through the backend escrow endpoint', as
   await expect(page.getByText('$250')).toBeVisible();
   await expect(page.getByText('25%')).toBeVisible();
   await expect(page.getByText('0x3333333333333333333333333333333333333333')).toBeVisible();
+  await page.evaluate(() => { (window as Window & { __ethereumCalls?: number }).__ethereumCalls = 0; });
   await page.getByRole('button', { name: 'Fund contract securely' }).click();
 
   await expect(page.getByText('Contract funded and activated.')).toBeVisible();

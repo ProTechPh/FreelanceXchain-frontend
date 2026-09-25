@@ -242,7 +242,7 @@ export default function AnalyticsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {!funnel || funnel.stages.length === 0 ? (
+          {!funnel?.stages || funnel.stages.length === 0 ? (
             <p className="text-sm text-muted-foreground py-6 text-center">No funnel data available yet</p>
           ) : (
             <div className="space-y-3">
