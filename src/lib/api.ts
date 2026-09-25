@@ -44,8 +44,6 @@ export { supportTicketsApi } from './api/support-tickets';
 export {
   messagesApi,
   notificationsApi,
-  emailApi,
-  type SenderProfile,
 } from './api/communications';
 
 export {
