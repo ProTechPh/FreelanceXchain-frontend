@@ -16,7 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 import { adminApi } from '@/lib/api';
-import { ADMIN_PERMISSIONS, type AdminPermission, type AdminUser, type UserRole } from '@/types';
+import type { AdminPermission, AdminUser, UserRole } from '@/types';
 import {
   UserPlus,
   Shield,
@@ -28,7 +28,6 @@ import {
   Briefcase,
   Lock,
   CheckCircle2,
-  AlertTriangle,
   ShieldCheck,
   Mail,
   Key,
@@ -149,11 +148,16 @@ export function AddUserDialog({
         toast.success(`Account created for ${user.email}`);
         handleOpenChange(false);
       }
-    } catch (error: any) {
-      const errorMsg =
-        error?.response?.data?.error?.message ||
-        error?.message ||
-        'Failed to create user account. Please try again.';
+    } catch (error: unknown) {
+      let errorMsg = 'Failed to create user account. Please try again.';
+      if (typeof error === 'object' && error !== null) {
+        const errObj = error as { response?: { data?: { error?: { message?: string } } }; message?: string };
+        if (errObj.response?.data?.error?.message) {
+          errorMsg = errObj.response.data.error.message;
+        } else if (errObj.message) {
+          errorMsg = errObj.message;
+        }
+      }
       toast.error(errorMsg);
     } finally {
       setSubmitting(false);
