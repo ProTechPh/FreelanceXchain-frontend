@@ -181,4 +181,37 @@ test.describe('End-to-End User Journey - Admin Role & Governance Lifecycle', () 
     await expect(page.getByText('Free account created for free@example.com')).toBeVisible();
     expect(created[1]?.grantPro).toBe(false);
   });
+
+  test('admin edits another admin\'s permissions from the key button', async ({ page }) => {
+    const kycOfficer = { id: 'admin-kyc-1', email: 'kyc@email.com', name: 'kyc officer', role: 'admin', walletAddress: '', createdAt: '2026-09-27T00:00:00.000Z', kycVerified: false, kycStatus: 'not_started', emailVerified: false, isActive: true, permissions: ['kyc:view', 'kyc:manage'] };
+    let saved: unknown = null;
+    await page.route('**/api/admin/users**', async (route) => {
+      const request = route.request();
+      if (request.method() === 'PATCH' || request.method() === 'PUT') {
+        saved = request.postDataJSON();
+        await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ...kycOfficer, permissions: (saved as { permissions: string[] }).permissions }) });
+        return;
+      }
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ users: [kycOfficer], total: 1 }) });
+    });
+
+    await page.goto('/dashboard/admin/users');
+    await page.getByRole('button', { name: 'Manage permissions for kyc officer' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Admin Permissions' });
+    await expect(dialog.getByText('2 of 12 permissions active')).toBeVisible();
+
+    // The dialog uses its full width and the footer stays inside it.
+    const box = await dialog.boundingBox();
+    expect(box?.width ?? 0).toBeGreaterThan(600);
+    const footerBox = await dialog.getByRole('button', { name: 'Save permissions' }).boundingBox();
+    expect((footerBox?.x ?? 0) + (footerBox?.width ?? 0)).toBeLessThanOrEqual((box?.x ?? 0) + (box?.width ?? 0));
+
+    // Clicking anywhere on a permission card toggles it.
+    await dialog.getByText('Inspect user submissions', { exact: false }).click();
+    await expect(dialog.getByText('1 of 12 permissions active')).toBeVisible();
+    await dialog.getByRole('button', { name: 'Save permissions' }).click();
+    await expect(page.getByText('Updated permissions for kyc officer')).toBeVisible();
+    expect(JSON.stringify(saved)).toContain('kyc:manage');
+    expect(JSON.stringify(saved)).not.toContain('kyc:view');
+  });
 });

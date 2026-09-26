@@ -327,7 +327,7 @@ export function AddUserDialog({
               </div>
             )}
 
-            <DialogFooter className="gap-2 sm:gap-0">
+            <DialogFooter>
               <Button
                 type="button"
                 variant="outline"
@@ -661,7 +661,7 @@ export function AddUserDialog({
               </div>
             </div>
 
-            <DialogFooter className="gap-2 sm:gap-0 pt-2">
+            <DialogFooter className="mt-2">
               <Button
                 type="button"
                 variant="outline"
@@ -673,9 +673,10 @@ export function AddUserDialog({
               <Button
                 type="submit"
                 variant="gradient"
-                disabled={submitting}
+                loading={submitting}
+                loadingText="Creating account…"
               >
-                {submitting ? 'Creating User...' : 'Create Account'}
+                Create Account
               </Button>
             </DialogFooter>
           </form>
