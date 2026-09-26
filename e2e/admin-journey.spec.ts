@@ -134,4 +134,51 @@ test.describe('End-to-End User Journey - Admin Role & Governance Lifecycle', () 
     await page.goto('/dashboard/admin/audit-logs');
     await expect(page.locator('#dashboard-content').first()).toBeVisible();
   });
+
+  test('admin creates a user with the Pro plan switched on or off', async ({ page }) => {
+    const created: Array<Record<string, unknown>> = [];
+    await page.route('**/api/admin/users**', async (route) => {
+      if (route.request().method() === 'POST') {
+        const body = route.request().postDataJSON() as Record<string, unknown>;
+        created.push(body);
+        await route.fulfill({
+          status: 201,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            user: { id: `u-${created.length}`, email: body.email, name: body.name, role: body.role, walletAddress: '', createdAt: '2026-09-01T00:00:00.000Z', kycVerified: false, kycStatus: 'not_started', emailVerified: true, isActive: true, permissions: [] },
+            plan: body.grantPro === false ? 'free' : 'pro',
+          }),
+        });
+        return;
+      }
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ users: [], total: 0 }) });
+    });
+
+    await page.goto('/dashboard/admin/users');
+    const openDialog = async () => {
+      await page.getByRole('button', { name: 'Add / Invite User' }).click();
+      const dialog = page.getByRole('dialog');
+      await expect(dialog.getByRole('switch', { name: 'Pro plan' })).toBeChecked();
+      return dialog;
+    };
+
+    // Default: on.
+    let dialog = await openDialog();
+    await dialog.getByLabel(/Full Name/).fill('Pro Person');
+    await dialog.getByLabel(/Email Address/).fill('pro@example.com');
+    await dialog.getByRole('button', { name: 'Create Account' }).click();
+    await expect(page.getByText('Pro account created for pro@example.com')).toBeVisible();
+    expect(created[0]?.grantPro).toBe(true);
+
+    // Switched off: the account starts on Free.
+    await page.keyboard.press('Escape');
+    dialog = await openDialog();
+    await dialog.getByLabel(/Full Name/).fill('Free Person');
+    await dialog.getByLabel(/Email Address/).fill('free@example.com');
+    await dialog.getByRole('switch', { name: 'Pro plan' }).click();
+    await expect(dialog.getByText('Starts on the Free plan. The user can upgrade later.')).toBeVisible();
+    await dialog.getByRole('button', { name: 'Create Account' }).click();
+    await expect(page.getByText('Free account created for free@example.com')).toBeVisible();
+    expect(created[1]?.grantPro).toBe(false);
+  });
 });

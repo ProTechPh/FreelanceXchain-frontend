@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { adminApi } from '@/lib/api';
 import type { AdminPermission, AdminUser, UserRole } from '@/types';
@@ -31,6 +32,7 @@ import {
   ShieldCheck,
   Mail,
   Key,
+  Sparkles,
 } from 'lucide-react';
 import { PERMISSION_GROUPS, PRESETS } from './AdminPermissionsDialog';
 
@@ -54,6 +56,7 @@ export function AddUserDialog({
   const [customPassword, setCustomPassword] = useState('');
   const [showCustomPassword, setShowCustomPassword] = useState(false);
   const [autoVerifyEmail, setAutoVerifyEmail] = useState(true);
+  const [grantPro, setGrantPro] = useState(true);
   const [selectedPermissions, setSelectedPermissions] = useState<Set<AdminPermission>>(
     new Set(['users:view', 'disputes:view', 'kyc:view', 'analytics:view'])
   );
@@ -62,6 +65,7 @@ export function AddUserDialog({
   // Success view state
   const [createdSuccess, setCreatedSuccess] = useState<{
     user: AdminUser;
+    plan?: 'free' | 'pro';
     temporaryPassword?: string;
   } | null>(null);
   const [showTempPassword, setShowTempPassword] = useState(true);
@@ -75,6 +79,7 @@ export function AddUserDialog({
     setCustomPassword('');
     setShowCustomPassword(false);
     setAutoVerifyEmail(true);
+    setGrantPro(true);
     setSelectedPermissions(new Set(['users:view', 'disputes:view', 'kyc:view', 'analytics:view']));
     setCreatedSuccess(null);
     setCopied(false);
@@ -136,16 +141,25 @@ export function AddUserDialog({
         password: passwordMode === 'custom' ? customPassword : undefined,
         permissions: role === 'admin' ? Array.from(selectedPermissions) : undefined,
         autoVerifyEmail,
+        // Admins are always Pro; the switch only applies to marketplace roles.
+        grantPro: role === 'admin' ? undefined : grantPro,
       });
 
-      const { user, temporaryPassword } = response.data;
+      const { user, plan, temporaryPassword } = response.data;
       onUserAdded(user);
 
-      if (temporaryPassword) {
-        setCreatedSuccess({ user, temporaryPassword });
-        toast.success(`Account created for ${user.email}`);
+      const wantedPro = role === 'admin' || grantPro;
+      if (wantedPro && plan === 'free') {
+        // The account exists; only the Pro grant failed. Say so rather than
+        // let the admin assume the user has Pro.
+        toast.warning(`Account created for ${user.email}, but Pro could not be applied. It is on the Free plan.`);
       } else {
-        toast.success(`Account created for ${user.email}`);
+        toast.success(`${plan === 'pro' ? 'Pro' : 'Free'} account created for ${user.email}`);
+      }
+
+      if (temporaryPassword) {
+        setCreatedSuccess({ user, plan, temporaryPassword });
+      } else {
         handleOpenChange(false);
       }
     } catch (error: unknown) {
@@ -234,6 +248,14 @@ export function AddUserDialog({
                   <p className="text-xs text-muted-foreground">Email Address</p>
                   <p className="font-semibold text-foreground truncate">{createdSuccess.user.email}</p>
                 </div>
+                {createdSuccess.plan && (
+                  <div>
+                    <p className="text-xs text-muted-foreground">Plan</p>
+                    <p className="font-semibold text-foreground">
+                      {createdSuccess.plan === 'pro' ? 'Pro (complimentary)' : 'Free'}
+                    </p>
+                  </div>
+                )}
               </div>
 
               {createdSuccess.user.role === 'admin' && createdSuccess.user.permissions && (
@@ -597,6 +619,33 @@ export function AddUserDialog({
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* Complimentary Pro plan. Always shown so it never silently
+                  disappears; locked on for admins, who are always Pro. */}
+              <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-3">
+                <div className="flex items-start gap-2.5">
+                  <Sparkles className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
+                  <div className="space-y-0.5">
+                    <Label htmlFor="grant-pro" className="cursor-pointer text-sm font-medium">
+                      Pro plan
+                    </Label>
+                    <p id="grant-pro-hint" className="text-xs text-muted-foreground">
+                      {role === 'admin'
+                        ? 'Always included for administrators.'
+                        : grantPro
+                          ? 'Starts on Pro at no charge. No payment details needed.'
+                          : 'Starts on the Free plan. The user can upgrade later.'}
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  id="grant-pro"
+                  checked={role === 'admin' || grantPro}
+                  disabled={role === 'admin'}
+                  onCheckedChange={(checked) => setGrantPro(Boolean(checked))}
+                  aria-describedby="grant-pro-hint"
+                />
               </div>
 
               {/* Auto Verify Checkbox */}
