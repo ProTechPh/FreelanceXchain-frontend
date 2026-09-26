@@ -60,6 +60,7 @@ export function ContractReviewCard({
               <Textarea
                 id="review-comment"
                 rows={4}
+                maxLength={2000}
                 value={review.comment}
                 onChange={(event) => onReviewChange({ ...review, comment: event.target.value })}
               />

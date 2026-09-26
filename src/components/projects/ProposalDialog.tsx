@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useId, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
@@ -368,91 +368,89 @@ export function ProposalDialog({
           </div>
         </div>
 
-        {aiProposal && (
-          <div className="space-y-4 rounded-xl border border-border bg-card/60 p-3 sm:p-4">
-            {aiProposal.highlights && aiProposal.highlights.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {aiProposal.highlights.map((highlight, idx) => (
-                  <Badge
-                    key={idx}
-                    variant="secondary"
-                    className="h-auto max-w-full shrink items-start gap-1.5 overflow-visible rounded-lg px-2.5 py-1 text-2xs leading-snug font-medium break-words whitespace-normal sm:text-xs"
-                  >
-                    <Check className="mt-0.5 size-3 shrink-0 text-success" />
-                    <span className="min-w-0">{highlight}</span>
-                  </Badge>
-                ))}
-              </div>
-            )}
+        <div className="space-y-4 rounded-xl border border-border bg-card/60 p-3 sm:p-4">
+          {aiProposal && aiProposal.highlights && aiProposal.highlights.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {aiProposal.highlights.map((highlight, idx) => (
+                <Badge
+                  key={idx}
+                  variant="secondary"
+                  className="h-auto max-w-full shrink items-start gap-1.5 overflow-visible rounded-lg px-2.5 py-1 text-2xs leading-snug font-medium break-words whitespace-normal sm:text-xs"
+                >
+                  <Check className="mt-0.5 size-3 shrink-0 text-success" />
+                  <span className="min-w-0">{highlight}</span>
+                </Badge>
+              ))}
+            </div>
+          )}
 
-            <div className="space-y-2">
-              <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5 border-b border-border/80 pb-2">
-                <span className="text-2xs font-semibold text-foreground uppercase tracking-wider sm:text-xs">
-                  Generated Proposal Pitch
-                </span>
-                <div className="flex shrink-0 items-center gap-1">
-                  <Button
-                    type="button"
-                    variant={viewMode === 'preview' ? 'secondary' : 'ghost'}
-                    size="sm"
-                    className="h-7 text-xs px-2.5"
-                    onClick={() => setViewMode('preview')}
-                  >
-                    <Eye className="size-3 mr-1" /> Preview
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={viewMode === 'edit' ? 'secondary' : 'ghost'}
-                    size="sm"
-                    className="h-7 text-xs px-2.5"
-                    onClick={() => setViewMode('edit')}
-                  >
-                    <Edit3 className="size-3 mr-1" /> Edit Pitch
-                  </Button>
-                </div>
+          <div className="space-y-2">
+            <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5 border-b border-border/80 pb-2">
+              <span className="text-2xs font-semibold text-foreground uppercase tracking-wider sm:text-xs">
+                {aiProposal ? 'Generated Proposal Pitch' : 'Proposal Cover Letter / Pitch'}
+              </span>
+              <div className="flex shrink-0 items-center gap-1">
+                <Button
+                  type="button"
+                  variant={viewMode === 'preview' ? 'secondary' : 'ghost'}
+                  size="sm"
+                  className="h-7 text-xs px-2.5"
+                  onClick={() => setViewMode('preview')}
+                >
+                  <Eye className="size-3 mr-1" /> Preview
+                </Button>
+                <Button
+                  type="button"
+                  variant={viewMode === 'edit' ? 'secondary' : 'ghost'}
+                  size="sm"
+                  className="h-7 text-xs px-2.5"
+                  onClick={() => setViewMode('edit')}
+                >
+                  <Edit3 className="size-3 mr-1" /> Edit Pitch
+                </Button>
               </div>
-
-              {viewMode === 'preview' ? (
-                <div className="max-h-52 overflow-y-auto overscroll-contain rounded-lg border border-border/50 bg-background/50 p-3 text-sm sm:max-h-60">
-                  <Markdown content={editableCoverLetter} className="text-xs sm:text-sm" />
-                </div>
-              ) : (
-                <div>
-                  <Textarea
-                    value={editableCoverLetter}
-                    onChange={(e) => handleCoverLetterChange(e.target.value)}
-                    rows={8}
-                    className="max-h-52 min-h-40 font-mono text-2xs leading-relaxed sm:max-h-none sm:text-xs"
-                    placeholder="Customize your proposal pitch here..."
-                    maxLength={2000}
-                  />
-                  <p className="text-xs text-muted-foreground text-right mt-1">{editableCoverLetter.length} / 2000</p>
-                </div>
-              )}
             </div>
 
-            {aiProposal.proposedMilestones && aiProposal.proposedMilestones.length > 0 && (
-              <div className="space-y-2 pt-2 border-t border-border/80">
-                <div className="flex items-center gap-1.5 text-2xs font-semibold text-muted-foreground uppercase tracking-wider sm:text-xs">
-                  <Layers className="size-3.5 shrink-0" />
-                  <span>Proposed Milestone Execution Plan</span>
-                </div>
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                  {aiProposal.proposedMilestones.map((m, idx) => (
-                    <div key={idx} className="rounded-lg border border-border/60 bg-background/40 p-2.5 space-y-1">
-                      <div className="flex items-center justify-between gap-2 text-xs">
-                        <span className="min-w-0 flex-1 truncate font-semibold text-foreground">{m.title}</span>
-                        <Badge variant="outline" className="shrink-0 px-1.5 py-0 text-2xs">{m.durationDays}d</Badge>
-                      </div>
-                      <p className="line-clamp-2 text-2xs text-muted-foreground break-words">{m.description}</p>
-                      <p className="text-xs font-medium text-primary">{formatAmount(m.amount)}</p>
-                    </div>
-                  ))}
-                </div>
+            {viewMode === 'preview' ? (
+              <div className="max-h-52 overflow-y-auto overscroll-contain rounded-lg border border-border/50 bg-background/50 p-3 text-sm sm:max-h-60">
+                <Markdown content={editableCoverLetter || '_No cover letter written yet._'} className="text-xs sm:text-sm" />
+              </div>
+            ) : (
+              <div>
+                <Textarea
+                  value={editableCoverLetter}
+                  onChange={(e) => handleCoverLetterChange(e.target.value)}
+                  rows={8}
+                  className="max-h-52 min-h-40 font-mono text-2xs leading-relaxed sm:max-h-none sm:text-xs"
+                  placeholder="Introduce yourself, your experience, and outline your approach for this project..."
+                  maxLength={2000}
+                />
+                <p className="text-xs text-muted-foreground text-right mt-1">{editableCoverLetter.length} / 2000</p>
               </div>
             )}
           </div>
-        )}
+
+          {aiProposal?.proposedMilestones && aiProposal.proposedMilestones.length > 0 && (
+            <div className="space-y-2 pt-2 border-t border-border/80">
+              <div className="flex items-center gap-1.5 text-2xs font-semibold text-muted-foreground uppercase tracking-wider sm:text-xs">
+                <Layers className="size-3.5 shrink-0" />
+                <span>Proposed Milestone Execution Plan</span>
+              </div>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                {aiProposal.proposedMilestones.map((m, idx) => (
+                  <div key={idx} className="rounded-lg border border-border/60 bg-background/40 p-2.5 space-y-1">
+                    <div className="flex items-center justify-between gap-2 text-xs">
+                      <span className="min-w-0 flex-1 truncate font-semibold text-foreground">{m.title}</span>
+                      <Badge variant="outline" className="shrink-0 px-1.5 py-0 text-2xs">{m.durationDays}d</Badge>
+                    </div>
+                    <p className="line-clamp-2 text-2xs text-muted-foreground break-words">{m.description}</p>
+                    <p className="text-xs font-medium text-primary">{formatAmount(m.amount)}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
 
         <div className="space-y-5">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

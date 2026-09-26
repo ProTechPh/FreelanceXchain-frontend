@@ -21,7 +21,7 @@ const defaultFaqs: FaqItem[] = [
   {
     question: "What fees does FreelanceXchain charge?",
     answer:
-      "FreelanceXchain charges a minimal platform fee of 5% per transaction — significantly lower than traditional freelance platforms. Because we use decentralized infrastructure, we keep our overhead low and pass the savings to you.",
+      "FreelanceXchain operates on a 0% platform escrow fee model — 100% of approved milestone funds go directly to freelancers, with zero hidden commission cuts. Platform monetization is powered by optional rush delivery upgrades and Pro AI subscriptions.",
   },
   {
     question: "How is my reputation calculated on-chain?",

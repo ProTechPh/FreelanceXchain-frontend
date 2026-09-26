@@ -36,7 +36,7 @@ export function getSecureFileUrl(bucket: string, fileId: string): string {
   const sanitizedBucket = encodeURIComponent(bucket);
   const sanitizedFileId = encodeURIComponent(fileId);
   
-  return `${API_URL}/files/signed-url/${sanitizedBucket}/${sanitizedFileId}`;
+  return `${API_URL}/files/access/${sanitizedBucket}/${sanitizedFileId}`;
 }
 
 /**

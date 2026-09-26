@@ -81,7 +81,7 @@ export function ContractOverviewCard({
             )}
             {canFund && hasWallet && (
               <Button
-                disabled={actionId === 'fund'}
+                disabled={Boolean(actionId)}
                 onClick={onFundContract}
               >
                 {actionId === 'fund' ? 'Deploying & Funding…' : 'Fund contract securely'}
@@ -90,7 +90,7 @@ export function ContractOverviewCard({
             {canCancel && (
               <Button
                 variant="destructive"
-                disabled={actionId === 'cancel'}
+                disabled={Boolean(actionId)}
                 onClick={onOpenCancelModal}
               >
                 Cancel contract

@@ -342,7 +342,7 @@ const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disput
                     </p>
                   )}
                 </div>
-                <div className="space-y-2 sm:col-span-2"><Label htmlFor="dispute-reason">Reason</Label><Textarea id="dispute-reason" rows={4} value={draft.reason} onChange={(event) => setDraft((current) => ({ ...current, reason: event.target.value }))} placeholder="Describe the problem and the resolution you are seeking." /></div>
+                <div className="space-y-2 sm:col-span-2"><Label htmlFor="dispute-reason">Reason</Label><Textarea id="dispute-reason" rows={4} maxLength={2000} value={draft.reason} onChange={(event) => setDraft((current) => ({ ...current, reason: event.target.value }))} placeholder="Describe the problem and the resolution you are seeking." /></div>
                 <Button className="sm:col-span-2 sm:w-fit" type="submit" disabled={actionId === 'create' || (Boolean(draft.contractId) && !loadingMilestones && milestones.length === 0)}><Scale className="mr-2 size-4" />{actionId === 'create' ? 'Openingâ€¦' : 'Open dispute'}</Button>
               </form>
             </CardContent>
@@ -459,7 +459,7 @@ const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disput
                 {dispute.status !== 'resolved' && (
                   verified ? (
                     <div className="grid gap-4 rounded-lg border border-border p-4 lg:grid-cols-3">
-                      <div className="space-y-2"><Label htmlFor={`evidence-text-${dispute.id}`}>Evidence notes</Label><Textarea id={`evidence-text-${dispute.id}`} value={evidenceText[dispute.id] ?? ''} onChange={(event) => setEvidenceText((current) => ({ ...current, [dispute.id]: event.target.value }))} /><Button type="button" size="sm" disabled={actionId === `evidence:${dispute.id}`} onClick={() => void submitTextEvidence(dispute.id)}>Submit notes</Button></div>
+                      <div className="space-y-2"><Label htmlFor={`evidence-text-${dispute.id}`}>Evidence notes</Label><Textarea id={`evidence-text-${dispute.id}`} maxLength={2000} value={evidenceText[dispute.id] ?? ''} onChange={(event) => setEvidenceText((current) => ({ ...current, [dispute.id]: event.target.value }))} /><Button type="button" size="sm" disabled={actionId === `evidence:${dispute.id}`} onClick={() => void submitTextEvidence(dispute.id)}>Submit notes</Button></div>
                       <div className="space-y-2">
                         <Label htmlFor={`evidence-file-${dispute.id}`}>Evidence file</Label>
                         <Input

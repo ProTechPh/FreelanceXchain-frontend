@@ -352,6 +352,7 @@ export default function CreateProjectPage() {
                       id="title"
                       placeholder="e.g., E-commerce Platform Development"
                       value={title}
+                      maxLength={120}
                       onChange={(e) => {
                         setTitle(e.target.value);
                         clearFieldError('title');
@@ -364,6 +365,7 @@ export default function CreateProjectPage() {
                       placeholder="Describe your project in detail..."
                       rows={6}
                       value={description}
+                      maxLength={4000}
                       onChange={(e) => {
                         setDescription(e.target.value);
                         clearFieldError('description');
@@ -673,14 +675,17 @@ export default function CreateProjectPage() {
                           <span>{milestonesTotal.toLocaleString('en-US', { maximumFractionDigits: 6 })} ETH</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-muted-foreground">Platform Fee (5%)</span>
-                          <span>{(milestonesTotal * 0.05).toLocaleString('en-US', { maximumFractionDigits: 6 })} ETH</span>
+                          <span className="text-muted-foreground">Platform Fee (0%)</span>
+                          <span className="text-success font-medium">0.00 ETH</span>
                         </div>
                         <div className="border-t border-border pt-2 flex justify-between font-medium">
-                          <span>Total</span>
-                          <span className="text-primary">{(milestonesTotal * 1.05).toLocaleString('en-US', { maximumFractionDigits: 6 })} ETH</span>
+                          <span>Total to Fund</span>
+                          <span className="text-primary">{milestonesTotal.toLocaleString('en-US', { maximumFractionDigits: 6 })} ETH</span>
                         </div>
                       </div>
+                      <p className="mt-3 text-xs text-muted-foreground">
+                        Decentralized 0% escrow fee. 100% of your deposited milestone funds are released directly to your freelancer upon approval.
+                      </p>
                     </div>
                   </div>
                 </div>
