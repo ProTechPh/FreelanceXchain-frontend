@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+﻿import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { AuthSuccessResponse, User, UserRole } from '@/types';
 import { authApi } from '@/lib/api';
@@ -170,7 +170,16 @@ export const useAuthStore = create<AuthState>()(
             isLoading: false,
             sessionVerified: true,
           });
-        } catch {
+        } catch (meError) {
+          // If rate-limited (429), preserve existing auth state — this is a transient
+          // server-side throttle, NOT an indication the session has expired.
+          // Logging the user out here would silently destroy a valid session.
+          const meStatus = (meError as { response?: { status?: number } })?.response?.status;
+          if (meStatus === 429) {
+            set({ isLoading: false });
+            return;
+          }
+
           try {
             const currentToken = getAccessToken();
             const { data: refreshData } = await authApi.refreshToken(currentToken ?? undefined);
@@ -185,8 +194,13 @@ export const useAuthStore = create<AuthState>()(
               });
               return;
             }
-          } catch {
-            // Refresh also failed
+          } catch (refreshError) {
+            // If refresh is also rate-limited, preserve auth state as well
+            const refreshStatus = (refreshError as { response?: { status?: number } })?.response?.status;
+            if (refreshStatus === 429) {
+              set({ isLoading: false });
+              return;
+            }
           }
 
           clearTokenStorage();
