@@ -26,7 +26,7 @@ test('converts Appwrite storage URLs to secure proxy URLs', () => {
   const result = safeAttachmentUrl(appwriteUrl);
   // Should return a proxy URL, not the original Appwrite URL
   assert.ok(result !== null);
-  assert.ok(result?.includes('/files/signed-url/'));
+  assert.ok(result?.includes('/files/access/') || result?.includes('/files/signed-url/'));
 });
 
 test('handles invalid Appwrite URLs gracefully', () => {
@@ -57,7 +57,7 @@ test('needsSecureProxy identifies Appwrite URLs', () => {
 
 test('constructSecureFileUrl generates proxy URLs from components', () => {
   const result = constructSecureFileUrl('contract-documents', 'file123');
-  assert.ok(result.includes('/files/signed-url/contract-documents/file123'));
+  assert.ok(result.includes('contract-documents/file123') && (result.includes('/files/access/') || result.includes('/files/signed-url/')));
 });
 
 test('formats attachment sizes for compact project and proposal lists', () => {

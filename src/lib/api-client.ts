@@ -119,7 +119,8 @@ api.interceptors.response.use(
         const currentPath = window.location.pathname;
         if (currentPath !== '/login' && currentPath !== '/register') {
           // eslint-disable-next-line @next/next/no-location-assign-relative-destination
-          window.location.href = '/login';
+          const returnUrl = encodeURIComponent(currentPath + window.location.search);
+          window.location.href = `/login?redirect=${returnUrl}`;
         }
       }
     }

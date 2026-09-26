@@ -14,6 +14,7 @@ function validRating(value: number) {
 export function validateReviewDraft(draft: ReviewDraft): string | null {
   if (!validRating(draft.rating)) return 'Overall rating must be between 1 and 5.';
   if (!draft.comment.trim()) return 'Add a comment about the completed contract.';
+  if (draft.comment.length > 2000) return 'Review comment cannot exceed 2000 characters.';
   if (![draft.workQuality, draft.communication, draft.professionalism].every(validRating)) {
     return 'Category ratings must be between 1 and 5.';
   }

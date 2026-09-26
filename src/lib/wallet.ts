@@ -135,6 +135,8 @@ export async function deployEscrowFromWallet(
     } catch (switchError: unknown) {
       if ((switchError as { code?: number })?.code === 4902 && params.chainId === '0x539') {
         await switchToGanache(ethereum);
+      } else {
+        throw switchError;
       }
     }
   }
@@ -191,6 +193,8 @@ export async function sendRushFeeFromWallet(
     } catch (switchError: unknown) {
       if ((switchError as { code?: number })?.code === 4902 && params.chainId === '0x539') {
         await switchToGanache(ethereum);
+      } else {
+        throw switchError;
       }
     }
   }

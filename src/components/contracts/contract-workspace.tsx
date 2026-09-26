@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -16,6 +16,7 @@ import type { Milestone, UserRole } from '@/types';
 import { useContractWorkspace } from '@/hooks/use-contract-workspace';
 import { ContractNegotiationPanel } from '@/components/contracts/contract-negotiation-panel';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
 import { ContractPaymentHistory } from '@/components/contracts/contract-payment-history';
 import { ContractWorkspaceHeader } from './workspace/contract-workspace-header';
@@ -83,8 +84,11 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
   if (!contract || !user) {
     return (
       <Card>
-        <CardContent className="py-12 text-center text-muted-foreground">
-          Contract unavailable.
+        <CardContent className="flex flex-col items-center justify-center gap-3 py-12 text-center text-muted-foreground">
+          <p>Contract unavailable or failed to load.</p>
+          <Button variant="outline" size="sm" onClick={() => void loadWorkspace()}>
+            Retry
+          </Button>
         </CardContent>
       </Card>
     );

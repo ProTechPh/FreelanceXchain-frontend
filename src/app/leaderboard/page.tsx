@@ -35,7 +35,7 @@ async function fetchLeaderboard(): Promise<ReputationLeaderboardEntry[]> {
     }
 
     const data = await res.json();
-    return data.data || [];
+    return Array.isArray(data) ? data : (data.data || []);
   } catch (error) {
     console.error("Error fetching leaderboard:", error);
     return [];

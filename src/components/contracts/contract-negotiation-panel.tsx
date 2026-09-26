@@ -185,6 +185,10 @@ export function ContractNegotiationPanel({
       toast.warning('Refund amount must be a positive number, or leave it blank to request the full remaining escrow.');
       return;
     }
+    if (amount !== undefined && amount > contract.totalAmount) {
+      toast.warning('Refund amount cannot exceed the total contract amount.');
+      return;
+    }
     void runAction(
       'refund-request',
       () => refundsApi.request(contract.id, { reason, ...(amount === undefined ? {} : { amount }) }),
@@ -287,7 +291,7 @@ export function ContractNegotiationPanel({
           {canCreateRefund && (
             <div className="space-y-3 rounded-lg border border-border p-4">
               <Field label="Reason" htmlFor="refund-reason">
-<Textarea id="refund-reason" rows={3} value={refundReason} onChange={(event) => setRefundReason(event.target.value)} placeholder="Explain why the remaining escrow should be refunded" />
+<Textarea id="refund-reason" rows={3} value={refundReason} maxLength={1000} onChange={(event) => setRefundReason(event.target.value)} placeholder="Explain why the remaining escrow should be refunded" />
 </Field>
               <Field label="Amount (optional)" htmlFor="refund-amount">
 <Input id="refund-amount" type="number" min="0.01" step="0.01" max={contract.totalAmount} value={refundAmount} onChange={(event) => setRefundAmount(event.target.value)} placeholder={`Full remaining escrow (up to ${formatAmount(contract.totalAmount)})`} />
