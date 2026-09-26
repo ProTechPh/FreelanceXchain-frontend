@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { BookmarkPlus, Briefcase, ChevronDown, Heart, ListFilter, Search, Trash2, X } from 'lucide-react';
 import { toast } from "sonner";
 import { favoritesApi, freelancersApi, projectsApi, savedSearchesApi, skillsApi } from "@/lib/api";
@@ -113,6 +113,8 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
     kind === "project" && filters.maxBudget !== undefined,
   ].filter(Boolean).length, [filters.keyword, filters.skillIds.length, filters.minBudget, filters.maxBudget, kind]);
 
+  const searchRequestIdRef = useRef(0);
+
   const loadResults = useCallback(async (
     nextFilters: MarketplaceFilters,
     offset = 0,
@@ -127,20 +129,27 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
       return;
     }
 
+    const currentReqId = ++searchRequestIdRef.current;
     setLoading(true);
     try {
       const params = buildMarketplaceSearchParams(nextFilters, offset);
       const response = kind === "project"
         ? await projectsApi.search(params)
         : await freelancersApi.search(params);
+
+      // Discard stale out-of-order responses if user searched again
+      if (currentReqId !== searchRequestIdRef.current) return;
+
       const nextItems = response.data.items as T[];
       setItems((current) => append ? [...current, ...nextItems] : nextItems);
-      setAppliedFilters(nextFilters);
       setHasMore(response.data.metadata.hasMore);
     } catch (error) {
+      if (currentReqId !== searchRequestIdRef.current) return;
       toast.error(getApiErrorMessage(error, `Unable to search ${kind}s.`));
     } finally {
-      setLoading(false);
+      if (currentReqId === searchRequestIdRef.current) {
+        setLoading(false);
+      }
     }
   }, [kind]);
 
@@ -162,54 +171,70 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
 
   useEffect(() => {
     async function loadAuxiliaryData() {
-      // None of this blocks browsing — it fills in filters, saved searches and
-      // favourites. Four independent failures used to mean four red toasts at
-      // once, so they are collected and reported as one warning instead.
+      // Parallelize auxiliary data requests to eliminate sequential network waterfalls
       const unavailable: string[] = [];
 
-      try {
-        const skillsResponse = await skillsApi.getTaxonomy();
-        const allSkills = skillsResponse.data.categories.flatMap((category) => category.skills ?? []);
-        setSkills(allSkills);
-      } catch {
+      const [skillsSettled, categoriesSettled, searchesSettled, favoritesSettled] = await Promise.allSettled([
+        skillsApi.getTaxonomy(),
+        kind === "project" ? projectsApi.getCategoryStats() : Promise.resolve(null),
+        user ? savedSearchesApi.list(kind) : Promise.resolve(null),
+        user ? favoritesApi.list(kind) : Promise.resolve(null),
+      ]);
+
+      if (skillsSettled.status === 'fulfilled' && skillsSettled.value) {
+        try {
+          const allSkills = skillsSettled.value.data.categories.flatMap((category) => category.skills ?? []);
+          setSkills(allSkills);
+        } catch {
+          unavailable.push('skill filters');
+        }
+      } else {
         unavailable.push('skill filters');
       }
 
       if (kind === "project") {
-        try {
-          const categoriesResponse = await projectsApi.getCategoryStats();
-          setCategoryStats(categoriesResponse.data.categories ?? []);
-        } catch {
+        if (categoriesSettled.status === 'fulfilled' && categoriesSettled.value) {
+          try {
+            setCategoryStats(categoriesSettled.value.data.categories ?? []);
+          } catch {
+            unavailable.push('categories');
+          }
+        } else {
           unavailable.push('categories');
-        } finally {
-          setCategoriesLoading(false);
         }
+        setCategoriesLoading(false);
       }
 
       if (user) {
-        try {
-          const searchesResponse = await savedSearchesApi.list(kind);
-          const rawSearches: unknown = searchesResponse.data;
-          const searchData = Array.isArray(rawSearches)
-            ? rawSearches
-            : rawSearches && typeof rawSearches === 'object' && 'data' in rawSearches && Array.isArray((rawSearches as { data: unknown[] }).data)
-              ? (rawSearches as { data: SavedSearch[] }).data
-              : [];
-          setSavedSearches(searchData);
-        } catch {
+        if (searchesSettled.status === 'fulfilled' && searchesSettled.value) {
+          try {
+            const rawSearches: unknown = searchesSettled.value.data;
+            const searchData = Array.isArray(rawSearches)
+              ? rawSearches
+              : rawSearches && typeof rawSearches === 'object' && 'data' in rawSearches && Array.isArray((rawSearches as { data: unknown[] }).data)
+                ? (rawSearches as { data: SavedSearch[] }).data
+                : [];
+            setSavedSearches(searchData);
+          } catch {
+            unavailable.push('saved searches');
+          }
+        } else {
           unavailable.push('saved searches');
         }
 
-        try {
-          const favoritesResponse = await favoritesApi.list(kind);
-          const rawFavorites: unknown = favoritesResponse.data;
-          const favData = Array.isArray(rawFavorites)
-            ? rawFavorites
-            : rawFavorites && typeof rawFavorites === 'object' && 'data' in rawFavorites && Array.isArray((rawFavorites as { data: unknown[] }).data)
-              ? (rawFavorites as { data: Favorite[] }).data
-              : [];
-          setFavoriteIds(new Set(favData.map((fav) => fav.targetId)));
-        } catch {
+        if (favoritesSettled.status === 'fulfilled' && favoritesSettled.value) {
+          try {
+            const rawFavorites: unknown = favoritesSettled.value.data;
+            const favData = Array.isArray(rawFavorites)
+              ? rawFavorites
+              : rawFavorites && typeof rawFavorites === 'object' && 'data' in rawFavorites && Array.isArray((rawFavorites as { data: unknown[] }).data)
+                ? (rawFavorites as { data: Favorite[] }).data
+                : [];
+            setFavoriteIds(new Set(favData.map((fav) => fav.targetId)));
+          } catch {
+            unavailable.push('favourites');
+          }
+        } else {
           unavailable.push('favourites');
         }
       }
@@ -236,15 +261,15 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
     const searchParams = marketplaceFiltersToSearchParams(filters);
     const query = searchParams.toString();
     window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
-    void loadResults(filters);
-  }, [filters, loadResults]);
+    setAppliedFilters({ ...filters });
+  }, [filters]);
 
   const resetFilters = useCallback(() => {
     const nextFilters: MarketplaceFilters = { keyword: "", skillIds: [] };
     setFilters(nextFilters);
     window.history.replaceState(null, "", window.location.pathname);
-    void loadResults(nextFilters);
-  }, [loadResults]);
+    setAppliedFilters(nextFilters);
+  }, []);
 
   const toggleFavorite = useCallback(async (targetId: string) => {
     const isFavorited = favoriteIds.has(targetId);
@@ -376,8 +401,9 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
                       isDashboard ? "rounded-lg" : "rounded-2xl",
                     )}
                     onClick={() => {
-                      setFilters((prev) => ({ ...prev, keyword: category.categoryName }));
-                      void loadResults({ ...filters, keyword: category.categoryName });
+                      const next = { ...filters, keyword: category.categoryName };
+                      setFilters(next);
+                      setAppliedFilters(next);
                     }}
                   >
                     <p className="text-sm font-bold text-foreground">{category.categoryName}</p>
