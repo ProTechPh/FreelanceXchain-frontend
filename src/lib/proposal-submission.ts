@@ -34,8 +34,15 @@ export const MAX_FILE_COUNT = 5;
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const MAX_TOTAL_SIZE = 25 * 1024 * 1024;
 
+// Mirrors submitProposalMultipartSchema on the API, so anything the form
+// accepts the server accepts too.
+export const MIN_PROPOSED_RATE = 1;
+export const MAX_PROPOSED_RATE = 1_000_000;
+export const MAX_DURATION_DAYS = 3650;
+export const MAX_COVER_LETTER_LENGTH = 10_000;
+
 /** Which control a validation message belongs to. */
-export type ProposalField = 'proposedRate' | 'estimatedDuration' | 'files';
+export type ProposalField = 'proposedRate' | 'estimatedDuration' | 'files' | 'coverLetter';
 
 export interface ProposalFieldError {
   field: ProposalField;
@@ -51,13 +58,32 @@ export interface ProposalFieldError {
  */
 export function findProposalFormError(form: ProposalSubmissionForm): ProposalFieldError | null {
   const proposedRate = Number(form.proposedRate);
-  if (!Number.isFinite(proposedRate) || proposedRate <= 0) {
+  if (form.proposedRate.trim() === '' || !Number.isFinite(proposedRate) || proposedRate <= 0) {
     return { field: 'proposedRate', message: 'Proposed rate must be greater than 0.' };
+  }
+  if (proposedRate < MIN_PROPOSED_RATE) {
+    return { field: 'proposedRate', message: `Proposed rate must be at least $${MIN_PROPOSED_RATE}.` };
+  }
+  if (proposedRate > MAX_PROPOSED_RATE) {
+    return { field: 'proposedRate', message: 'Proposed rate cannot exceed $1,000,000.' };
   }
 
   const estimatedDuration = Number(form.estimatedDuration);
-  if (!Number.isInteger(estimatedDuration) || estimatedDuration < 1) {
+  if (form.estimatedDuration.trim() === '' || !Number.isFinite(estimatedDuration) || estimatedDuration < 1) {
     return { field: 'estimatedDuration', message: 'Estimated duration must be at least 1 day.' };
+  }
+  if (!Number.isInteger(estimatedDuration)) {
+    return { field: 'estimatedDuration', message: 'Estimated duration must be a whole number of days.' };
+  }
+  if (estimatedDuration > MAX_DURATION_DAYS) {
+    return { field: 'estimatedDuration', message: `Estimated duration cannot exceed ${MAX_DURATION_DAYS} days.` };
+  }
+
+  if (form.coverLetter && form.coverLetter.length > MAX_COVER_LETTER_LENGTH) {
+    return {
+      field: 'coverLetter',
+      message: `Cover letter must be ${MAX_COVER_LETTER_LENGTH.toLocaleString('en-US')} characters or fewer.`,
+    };
   }
 
   if (form.files.length === 0) {

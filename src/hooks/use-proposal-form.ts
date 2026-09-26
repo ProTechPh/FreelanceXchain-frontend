@@ -3,7 +3,10 @@
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import {
+  MAX_DURATION_DAYS,
   MAX_FILE_COUNT,
+  MAX_PROPOSED_RATE,
+  MIN_PROPOSED_RATE,
   ProposalFormValidationError,
   findProposalFormError,
   submitProposal,
@@ -17,6 +20,18 @@ import {
   isAllowedDocumentFile,
   MAX_FILE_SIZE,
 } from '@/lib/file-validation';
+
+// AI drafts can come back as 10.5 days or a rate below $1; round them into
+// values the form (and the API) accept, so an AI draft never blocks submission.
+function toSubmittableRate(value: number): string {
+  if (!Number.isFinite(value) || value <= 0) return '';
+  return String(Math.min(MAX_PROPOSED_RATE, Math.max(MIN_PROPOSED_RATE, Math.round(value * 100) / 100)));
+}
+
+function toSubmittableDuration(value: number): string {
+  if (!Number.isFinite(value) || value <= 0) return '14';
+  return String(Math.min(MAX_DURATION_DAYS, Math.max(1, Math.round(value))));
+}
 
 export const EMPTY_FORM: ProposalSubmissionForm = {
   proposedRate: '',
@@ -151,8 +166,8 @@ export function useProposalForm({
       const updatedFiles = [...aiData.files, ...otherFiles].slice(0, MAX_FILE_COUNT);
       return {
         ...current,
-        proposedRate: String(aiData.proposedRate || projectBudget || ''),
-        estimatedDuration: String(aiData.estimatedDuration || 14),
+        proposedRate: toSubmittableRate(aiData.proposedRate || projectBudget),
+        estimatedDuration: toSubmittableDuration(aiData.estimatedDuration || 14),
         files: updatedFiles,
       };
     });
