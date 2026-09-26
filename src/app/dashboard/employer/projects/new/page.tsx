@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge, badgeVariants } from '@/components/ui/badge';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { HelpHint } from '@/components/onboarding/help-hint';
 import { Input } from '@/components/ui/input';
@@ -28,7 +28,7 @@ import {
 import { toast } from 'sonner';
 import { reportFailure } from '@/lib/report-failure';
 import { ChevronRight, ChevronLeft, Plus, X, Upload, FileText, DollarSign, Clock, Target, Sparkles, AlertCircle } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { ProjectSkillSelector, type ProjectSkillCategory } from '@/components/dashboard/project-skill-selector';
 import { DOCUMENT_ACCEPT_STRING } from '@/lib/file-validation';
 import { Field } from '@/components/ui/field';
 import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes';
@@ -47,7 +47,7 @@ export default function CreateProjectPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [skills, setSkills] = useState<ProjectSubmissionSkill[]>([]);
-  const [skillOptions, setSkillOptions] = useState<ProjectSubmissionSkill[]>([]);
+  const [skillCategories, setSkillCategories] = useState<ProjectSkillCategory[]>([]);
   const [skillsLoading, setSkillsLoading] = useState(true);
   const [budget, setBudget] = useState('');
   const [deadline, setDeadline] = useState('');
@@ -73,10 +73,17 @@ export default function CreateProjectPage() {
       try {
         const { data } = await skillsApi.getTaxonomy();
         if (active) {
-          setSkillOptions(
-            data.categories.flatMap((category) =>
-              category.skills.map((skill) => ({ id: skill.id, name: skill.name })),
-            ),
+          setSkillCategories(
+            (data.categories ?? [])
+              .filter((category) => category.isActive !== false)
+              .map((category) => ({
+                id: category.id,
+                name: category.name,
+                skills: (category.skills ?? [])
+                  .filter((skill) => skill.isActive !== false)
+                  .map((skill) => ({ id: skill.id, name: skill.name })),
+              }))
+              .filter((category) => category.skills.length > 0),
           );
         }
       } catch (error) {
@@ -147,7 +154,7 @@ export default function CreateProjectPage() {
     try {
       const { data } = await matchingApi.extractSkills(description);
       const extractedIds = new Set(data.map((skill) => skill.skillId));
-      const suggestions = skillOptions.filter((skill) => extractedIds.has(skill.id));
+      const suggestions = skillCategories.flatMap((category) => category.skills).filter((skill) => extractedIds.has(skill.id));
       setSkills((current) => {
         const selectedIds = new Set(current.map((skill) => skill.id));
         return [...current, ...suggestions.filter((skill) => !selectedIds.has(skill.id))];
@@ -401,53 +408,27 @@ export default function CreateProjectPage() {
                         />
                       )}
                     </div>
+                    <p id="required-skills-hint" className="text-sm text-muted-foreground">
+                      Pick the skills a freelancer needs for this project. Search by name or filter by category,
+                      and click a skill again to remove it.
+                    </p>
                     {fieldErrors.skills && (
                       <p role="alert" className="flex items-start gap-1.5 text-xs font-medium text-destructive">
                         <AlertCircle className="mt-px size-3.5 shrink-0" aria-hidden="true" />
                         {fieldErrors.skills}
                       </p>
                     )}
-                    <div className="flex flex-wrap gap-2 mb-3">
-                      {skills.map((skill) => (
-                        <Badge key={skill.id} variant="secondary" className="text-sm py-1.5 px-3">
-                          {skill.name}
-                          <button
-                            type="button"
-                            aria-label={`Remove ${skill.name}`}
-                            className="ml-1 rounded-sm hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                            onClick={() => removeSkill(skill.id)}
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </Badge>
-                      ))}
-                    </div>
-                    <div className="flex flex-wrap gap-2" aria-labelledby="required-skills-label">
-                      {skillsLoading && (
-                        <span role="status" className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-                          <Skeleton className="h-6 w-20 rounded-full" />
-                          <Skeleton className="h-6 w-24 rounded-full" />
-                          <Skeleton className="h-6 w-16 rounded-full" />
-                          <span className="sr-only">Loading skills</span>
-                        </span>
-                      )}
-                      {!skillsLoading && skillOptions
-                        .filter((option) => !skills.some((skill) => skill.id === option.id))
-                        .slice(0, 8)
-                        .map((skill) => (
-                          <button
-                            key={skill.id}
-                            type="button"
-                            className={badgeVariants({
-                              variant: 'outline',
-                              className: 'h-auto cursor-pointer hover:bg-primary/10',
-                            })}
-                            onClick={() => addSkill(skill)}
-                          >
-                            + {skill.name}
-                          </button>
-                        ))}
-                    </div>
+                    <ProjectSkillSelector
+                      categories={skillCategories}
+                      selected={skills}
+                      loading={skillsLoading}
+                      onAdd={addSkill}
+                      onRemove={removeSkill}
+                      onClear={() => setSkills([])}
+                      invalid={Boolean(fieldErrors.skills)}
+                      labelledBy="required-skills-label"
+                      describedBy="required-skills-hint"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="project-files">Reference attachments (optional)</Label>

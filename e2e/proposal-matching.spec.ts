@@ -66,6 +66,46 @@ test('project form adds AI-suggested taxonomy skills and real reference files', 
   await expect(page.getByRole('list', { name: 'Selected project attachments' })).toContainText('requirements.pdf');
 });
 
+test('project form lets employers browse every skill by category', async ({ page }) => {
+  await authenticate(page, 'employer');
+  const development = Array.from({ length: 10 }, (_, index) => ({ id: `dev-${index}`, categoryId: 'category-1', name: `Dev Skill ${index}`, description: '', isActive: true }));
+  const design = [{ id: 'design-figma', categoryId: 'category-2', name: 'Figma', description: '', isActive: true }];
+  await page.route('**/api/skills', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ categories: [
+    { id: 'category-1', name: 'Development', description: '', isActive: true, skills: development },
+    { id: 'category-2', name: 'Design', description: '', isActive: true, skills: design },
+  ] }) }));
+
+  await page.goto('/dashboard/employer/projects/new');
+  await expect(page.getByText('No skills selected yet')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Dev Skill 9', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Figma', exact: true })).toBeVisible();
+
+  const categories = page.getByRole('group', { name: 'Skill categories' });
+  await categories.getByRole('button', { name: 'Design' }).click();
+  await expect(page.getByRole('button', { name: 'Dev Skill 0', exact: true })).toBeHidden();
+  const figma = page.getByRole('button', { name: 'Figma', exact: true });
+  await figma.click();
+  await expect(figma).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByLabel('Remove Figma')).toBeVisible();
+  await expect(categories.getByRole('button', { name: /^Design\s+1 selected$/ })).toBeVisible();
+
+  // Clicking a selected skill again removes it.
+  await figma.click();
+  await expect(page.getByLabel('Remove Figma')).toBeHidden();
+
+  await categories.getByRole('button', { name: 'All categories' }).click();
+  await page.getByLabel('Search skills').fill('skill 7');
+  await expect(page.getByRole('button', { name: /^Dev Skill/ })).toHaveCount(1);
+  await page.getByRole('button', { name: 'Dev Skill 7', exact: true }).click();
+  await expect(page.getByLabel('Remove Dev Skill 7')).toBeVisible();
+
+  await page.getByLabel('Search skills').fill('zzz');
+  await expect(page.getByText('No skills match')).toBeVisible();
+  await page.getByRole('button', { name: 'Clear search' }).first().click();
+  await page.getByRole('button', { name: 'Clear all' }).click();
+  await expect(page.getByText('No skills selected yet')).toBeVisible();
+});
+
 test('freelancer can open the full recommendation list', async ({ page }) => {
   await authenticate(page, 'freelancer');
   const project = makeProject();
