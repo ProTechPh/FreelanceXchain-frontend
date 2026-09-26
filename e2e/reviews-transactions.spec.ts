@@ -86,8 +86,9 @@ test('employer opens an authorized transaction detail from payment history', asy
   await page.route(`**/api/transactions/${transactionId}`, (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(transaction) }));
 
   await page.goto('/dashboard/employer/transactions');
-  await page.getByRole('link', { name: /Milestone release/ }).click();
-  await expect(page.getByRole('heading', { name: 'Transaction detail' })).toBeVisible();
+await page.getByRole('link', { name: /Milestone release/ }).click();
+await page.waitForLoadState('networkidle');
+await expect(page.getByRole('heading', { name: 'Transaction detail' })).toBeVisible();
   await expect(page.getByText('0xabcdef1234567890')).toBeVisible();
   await expect(page.getByText('sepolia')).toBeVisible();
 });

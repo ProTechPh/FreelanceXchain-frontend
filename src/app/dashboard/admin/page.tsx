@@ -11,6 +11,7 @@ import { reportLoadFailure } from '@/lib/report-failure';
 import { Users, FolderOpen, DollarSign, AlertTriangle, Activity, ArrowUpRight, Shield, BarChart3, CheckCircle, Clock } from 'lucide-react';
 import { StatsSkeleton } from '@/components/dashboard/skeletons';
 import { formatAmount, formatAuditAction, formatAuditResource, formatNumber, formatRelativeTime } from '@/lib/format';
+import { useAdminPermissions } from '@/hooks/use-admin-permissions';
 
 function formatUptime(seconds: number): string {
   const days = Math.floor(seconds / 86400);
@@ -22,6 +23,14 @@ function formatUptime(seconds: number): string {
 }
 
 export default function AdminDashboard() {
+  const { hasPermission, isSuperAdmin } = useAdminPermissions();
+  const canViewDisputes = isSuperAdmin || hasPermission('disputes:view') || hasPermission('disputes:manage');
+  const canViewKyc = isSuperAdmin || hasPermission('kyc:view') || hasPermission('kyc:manage');
+  const canViewAudit = isSuperAdmin || hasPermission('audit:view');
+  const canViewHealth = isSuperAdmin || hasPermission('system:view');
+  const canViewAnalytics = isSuperAdmin || hasPermission('analytics:view');
+  const canManageUsers = isSuperAdmin || hasPermission('users:view') || hasPermission('users:manage');
+
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<{
     totalUsers: number;
@@ -39,24 +48,24 @@ export default function AdminDashboard() {
 
     const [statsRes, disputesRes, kycRes, activityRes, healthRes] = await Promise.allSettled([
       adminApi.getStats(),
-      adminApi.getDisputeManagement('open'),
-      kycApi.adminGetPending(),
-      auditLogsApi.getByDateRange(yesterday.toISOString(), now.toISOString()),
-      adminApi.getSystemHealth(),
+      canViewDisputes ? adminApi.getDisputeManagement('open') : Promise.resolve({ data: { disputes: [] as Dispute[], total: 0 } }),
+      canViewKyc ? kycApi.adminGetPending() : Promise.resolve({ data: [] as unknown[] }),
+      canViewAudit ? auditLogsApi.getByDateRange(yesterday.toISOString(), now.toISOString()) : Promise.resolve({ data: { logs: [] as AuditLogEntry[] } }),
+      canViewHealth ? adminApi.getSystemHealth() : Promise.resolve({ data: null as SystemHealth | null }),
     ]);
 
     if (statsRes.status === 'fulfilled') setStats(statsRes.value.data);
     if (disputesRes.status === 'fulfilled') setOpenDisputes(disputesRes.value.data.disputes);
     if (kycRes.status === 'fulfilled') setPendingKycCount(kycRes.value.data.length);
     if (activityRes.status === 'fulfilled') {
-      const sorted = activityRes.value.data.logs
+      const sorted = (activityRes.value.data.logs || [])
         .slice()
-        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .sort((a: AuditLogEntry, b: AuditLogEntry) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         .slice(0, 5);
       setRecentActivity(sorted);
     }
     if (healthRes.status === 'fulfilled') setHealth(healthRes.value.data);
-  }, []);
+  }, [canViewDisputes, canViewKyc, canViewAudit, canViewHealth]);
 
   // Reported here rather than inside the loader so the toast's Retry can
   // call it again; a self-reference inside the callback is not allowed.
@@ -90,6 +99,7 @@ export default function AdminDashboard() {
       icon: Users,
       color: 'text-primary',
       bg: 'bg-primary/10',
+      show: true,
     },
     {
       title: 'Active Projects',
@@ -97,6 +107,7 @@ export default function AdminDashboard() {
       icon: FolderOpen,
       color: 'text-cyan',
       bg: 'bg-cyan/10',
+      show: true,
     },
     {
       title: 'Total Transaction Volume',
@@ -104,6 +115,7 @@ export default function AdminDashboard() {
       icon: DollarSign,
       color: 'text-success',
       bg: 'bg-success-subtle',
+      show: true,
     },
     {
       title: 'Open Disputes',
@@ -111,24 +123,25 @@ export default function AdminDashboard() {
       icon: AlertTriangle,
       color: 'text-warning',
       bg: 'bg-warning-subtle',
+      show: canViewDisputes,
     },
-  ];
+  ].filter((s) => s.show);
 
   const pendingActions = [
-    {
+    ...(canViewDisputes ? [{
       id: 'disputes',
       title: 'Dispute Resolution',
       description: `${openDisputes.length} disputes awaiting admin review`,
       count: openDisputes.length,
       link: '/dashboard/admin/disputes',
-    },
-    {
+    }] : []),
+    ...(canViewKyc ? [{
       id: 'kyc',
       title: 'KYC Verifications',
       description: `${pendingKycCount} pending identity verifications`,
       count: pendingKycCount,
       link: '/dashboard/admin/kyc',
-    },
+    }] : []),
   ].filter((action) => action.count > 0);
 
   return (
@@ -140,16 +153,20 @@ export default function AdminDashboard() {
           <p className="text-muted-foreground">Platform overview and management</p>
         </div>
         <div className="flex flex-wrap gap-2 shrink-0">
-          <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
-            <Link href="/dashboard/admin/analytics">
-              <BarChart3 className="w-4 h-4 mr-2" /> Analytics
-            </Link>
-          </Button>
-          <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
-            <Link href="/dashboard/admin/system">
-              <Activity className="w-4 h-4 mr-2" /> System Health
-            </Link>
-          </Button>
+          {canViewAnalytics && (
+            <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
+              <Link href="/dashboard/admin/analytics">
+                <BarChart3 className="w-4 h-4 mr-2" /> Analytics
+              </Link>
+            </Button>
+          )}
+          {canViewHealth && (
+            <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
+              <Link href="/dashboard/admin/system">
+                <Activity className="w-4 h-4 mr-2" /> System Health
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
 
@@ -172,9 +189,9 @@ export default function AdminDashboard() {
         ))}
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-6">
+      <div className={`grid ${canViewAudit ? 'lg:grid-cols-3' : 'grid-cols-1'} gap-6`}>
         {/* Pending Actions */}
-        <Card className="bg-card border-border">
+        <Card className={`bg-card border-border ${canViewAudit ? '' : 'max-w-2xl'}`}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-lg">Pending Actions</CardTitle>
           </CardHeader>
@@ -197,129 +214,141 @@ export default function AdminDashboard() {
         </Card>
 
         {/* Recent Activity */}
-        <Card className="bg-card border-border lg:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-lg">Recent Activity</CardTitle>
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/dashboard/admin/audit-logs">
-                View All <ArrowUpRight className="w-4 h-4 ml-1" />
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {recentActivity.length === 0 && (
-              <p className="text-sm text-muted-foreground py-8 text-center">No activity in the last 24 hours</p>
-            )}
-            {recentActivity.map((log) => {
-              const Icon = log.status === 'failure' ? AlertTriangle : log.status === 'pending' ? Clock : CheckCircle;
-              const color = log.status === 'failure' ? 'text-destructive' : log.status === 'pending' ? 'text-warning' : 'text-success';
-              return (
-                <div key={log.id} className="flex items-center gap-3 p-3 rounded-xl bg-secondary/50 border border-border">
-                  <div className={`w-8 h-8 rounded-lg bg-background flex items-center justify-center ${color}`}>
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-semibold text-foreground truncate">{formatAuditAction(log.action)}</p>
-                      <span className="text-xs text-muted-foreground">•</span>
-                      <span className="text-xs text-muted-foreground font-medium">{formatAuditResource(log.resource_type)}</span>
+        {canViewAudit && (
+          <Card className="bg-card border-border lg:col-span-2">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-lg">Recent Activity</CardTitle>
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/dashboard/admin/audit-logs">
+                  View All <ArrowUpRight className="w-4 h-4 ml-1" />
+                </Link>
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {recentActivity.length === 0 && (
+                <p className="text-sm text-muted-foreground py-8 text-center">No activity in the last 24 hours</p>
+              )}
+              {recentActivity.map((log) => {
+                const Icon = log.status === 'failure' ? AlertTriangle : log.status === 'pending' ? Clock : CheckCircle;
+                const color = log.status === 'failure' ? 'text-destructive' : log.status === 'pending' ? 'text-warning' : 'text-success';
+                return (
+                  <div key={log.id} className="flex items-center gap-3 p-3 rounded-xl bg-secondary/50 border border-border">
+                    <div className={`w-8 h-8 rounded-lg bg-background flex items-center justify-center ${color}`}>
+                      <Icon className="w-4 h-4" />
                     </div>
-                    <p className="text-xs text-muted-foreground">{formatRelativeTime(log.created_at)}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-semibold text-foreground truncate">{formatAuditAction(log.action)}</p>
+                        <span className="text-xs text-muted-foreground">•</span>
+                        <span className="text-xs text-muted-foreground font-medium">{formatAuditResource(log.resource_type)}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">{formatRelativeTime(log.created_at)}</p>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
+                );
+              })}
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Platform Health */}
-      <Card className="bg-card border-border">
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Activity className="w-5 h-5" /> Platform Health
-          </CardTitle>
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/dashboard/admin/system">
-              Details <ArrowUpRight className="w-4 h-4 ml-1" />
-            </Link>
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[
-              { name: 'Database (Appwrite)', status: health?.database },
-              { name: 'Storage (Appwrite)', status: health?.storage },
-              { name: 'Process Uptime', value: health ? formatUptime(health.uptime) : undefined },
-            ].map((item) => (
-              <div key={item.name} className="p-4 rounded-xl bg-secondary/50 border border-border">
-                <div className="flex items-center gap-2 mb-2">
-                  {item.status && (
-                    <div className={`w-2 h-2 rounded-full ${item.status === 'healthy' ? 'bg-success' : 'bg-destructive'}`} />
-                  )}
-                  <p className="text-sm text-muted-foreground">{item.name}</p>
+      {canViewHealth && (
+        <Card className="bg-card border-border">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Activity className="w-5 h-5" /> Platform Health
+            </CardTitle>
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/dashboard/admin/system">
+                Details <ArrowUpRight className="w-4 h-4 ml-1" />
+              </Link>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {[
+                { name: 'Database (Appwrite)', status: health?.database },
+                { name: 'Storage (Appwrite)', status: health?.storage },
+                { name: 'Process Uptime', value: health ? formatUptime(health.uptime) : undefined },
+              ].map((item) => (
+                <div key={item.name} className="p-4 rounded-xl bg-secondary/50 border border-border">
+                  <div className="flex items-center gap-2 mb-2">
+                    {item.status && (
+                      <div className={`w-2 h-2 rounded-full ${item.status === 'healthy' ? 'bg-success' : 'bg-destructive'}`} />
+                    )}
+                    <p className="text-sm text-muted-foreground">{item.name}</p>
+                  </div>
+                  <p className="font-semibold capitalize">{item.value ?? item.status ?? '—'}</p>
                 </div>
-                <p className="font-semibold capitalize">{item.value ?? item.status ?? '—'}</p>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Quick Links */}
       <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-4 gap-4">
-        <Link href="/dashboard/admin/users">
-          <Card className="bg-card border-border hover:border-primary/20 transition-all cursor-pointer">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="w-10 h-10 shrink-0 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Users className="w-5 h-5 text-primary" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-medium">Manage Users</p>
-                <p className="text-xs text-muted-foreground">View & moderate users</p>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-        <Link href="/dashboard/admin/disputes">
-          <Card className="bg-card border-border hover:border-primary/20 transition-all cursor-pointer">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="w-10 h-10 shrink-0 rounded-lg bg-warning-subtle flex items-center justify-center">
-                <AlertTriangle className="w-5 h-5 text-warning" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-medium">Disputes</p>
-                <p className="text-xs text-muted-foreground">Resolve conflicts</p>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-        <Link href="/dashboard/admin/analytics">
-          <Card className="bg-card border-border hover:border-primary/20 transition-all cursor-pointer">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="w-10 h-10 shrink-0 rounded-lg bg-cyan/10 flex items-center justify-center">
-                <BarChart3 className="w-5 h-5 text-cyan" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-medium">Analytics</p>
-                <p className="text-xs text-muted-foreground">Platform insights</p>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-        <Link href="/dashboard/admin/kyc">
-          <Card className="bg-card border-border hover:border-primary/20 transition-all cursor-pointer">
-            <CardContent className="p-4 flex items-center gap-4">
-              <div className="w-10 h-10 shrink-0 rounded-lg bg-success-subtle flex items-center justify-center">
-                <Shield className="w-5 h-5 text-success" />
-              </div>
-              <div className="min-w-0">
-                <p className="font-medium">KYC review</p>
-                <p className="text-xs text-muted-foreground">Verify identities</p>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
+        {canManageUsers && (
+          <Link href="/dashboard/admin/users">
+            <Card className="bg-card border-border hover:border-primary/20 transition-all cursor-pointer">
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className="w-10 h-10 shrink-0 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Users className="w-5 h-5 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-medium">Manage Users</p>
+                  <p className="text-xs text-muted-foreground">View & moderate users</p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+        )}
+        {canViewDisputes && (
+          <Link href="/dashboard/admin/disputes">
+            <Card className="bg-card border-border hover:border-primary/20 transition-all cursor-pointer">
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className="w-10 h-10 shrink-0 rounded-lg bg-warning-subtle flex items-center justify-center">
+                  <AlertTriangle className="w-5 h-5 text-warning" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-medium">Disputes</p>
+                  <p className="text-xs text-muted-foreground">Resolve conflicts</p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+        )}
+        {canViewAnalytics && (
+          <Link href="/dashboard/admin/analytics">
+            <Card className="bg-card border-border hover:border-primary/20 transition-all cursor-pointer">
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className="w-10 h-10 shrink-0 rounded-lg bg-cyan/10 flex items-center justify-center">
+                  <BarChart3 className="w-5 h-5 text-cyan" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-medium">Analytics</p>
+                  <p className="text-xs text-muted-foreground">Platform insights</p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+        )}
+        {canViewKyc && (
+          <Link href="/dashboard/admin/kyc">
+            <Card className="bg-card border-border hover:border-primary/20 transition-all cursor-pointer">
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className="w-10 h-10 shrink-0 rounded-lg bg-success-subtle flex items-center justify-center">
+                  <Shield className="w-5 h-5 text-success" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-medium">KYC review</p>
+                  <p className="text-xs text-muted-foreground">Verify identities</p>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+        )}
       </div>
     </div>
   );

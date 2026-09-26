@@ -276,7 +276,8 @@ test.describe('replaying it', () => {
     await tourDialog(page).getByRole('button', { name: 'Skip tour' }).click();
     await expect(tourDialog(page)).toHaveCount(0);
 
-    await page.goto('/dashboard/freelancer/settings');
+    await page.goto('/dashboard/freelancer/settings', { timeout: 30000 });
+await page.waitForLoadState('networkidle');
     await expect(page.getByRole('heading', { name: 'Account settings' })).toBeVisible();
 
     await page.getByRole('button', { name: 'Open account menu' }).click();
@@ -289,7 +290,8 @@ test.describe('replaying it', () => {
 
   test('Settings restarts the tour and remembers the auto-start preference', async ({ page }) => {
     await authenticate(page, buildUser('freelancer'));
-    await page.goto('/dashboard/freelancer/settings');
+    await page.goto('/dashboard/freelancer/settings', { timeout: 30000 });
+await page.waitForLoadState('networkidle');
 
     const toggle = page.getByRole('switch', { name: 'Show the tour on my next visit' });
     await expect(toggle).toHaveAttribute('aria-checked', 'true');
@@ -304,7 +306,8 @@ test.describe('replaying it', () => {
     await page.waitForLoadState('networkidle');
     await expect(tourDialog(page)).toHaveCount(0);
 
-    await page.goto('/dashboard/freelancer/settings');
+    await page.goto('/dashboard/freelancer/settings', { timeout: 30000 });
+await page.waitForLoadState('networkidle');
     await page.getByRole('button', { name: 'Restart tour' }).click();
     await expect(page).toHaveURL(/\/dashboard\/freelancer$/);
     await expect(tourDialog(page)).toBeVisible();

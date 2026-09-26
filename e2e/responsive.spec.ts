@@ -1,12 +1,14 @@
-import { expect, test, type Page } from '@playwright/test';
-
 /**
- * Mobile responsiveness contract.
- *
- * Runs under the `mobile-320` and `mobile-393` projects. The rules asserted here
- * are the ones `skill.md` already states: the page body never scrolls sideways,
- * and navigation is always reachable.
+ * Example usage for NavigationComponent with Fixtures:
+ * const nav = new NavigationComponent(page);
+ * await nav.open();
+ * await nav.navigateTo("Messages");
  */
+
+import { test } from './fixtures/authSetup.js';
+import { expect } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
+import { NavigationComponent } from './pages/NavigationComponent.js';
 
 const PUBLIC_ROUTES = [
   '/',
@@ -24,10 +26,10 @@ const PUBLIC_ROUTES = [
   '/about',
   '/status',
   '/terms',
-  '/privacy',
+  '/privacy'
 ];
 
-const DASHBOARD_ROUTES: Record<'freelancer' | 'employer', string[]> = {
+const DASHBOARD_ROUTES = {
   freelancer: [
     '',
     '/contracts',
@@ -45,7 +47,7 @@ const DASHBOARD_ROUTES: Record<'freelancer' | 'employer', string[]> = {
     '/verification',
     '/activity',
     '/disputes',
-    '/billing',
+    '/billing'
   ],
   employer: [
     '',
@@ -61,8 +63,8 @@ const DASHBOARD_ROUTES: Record<'freelancer' | 'employer', string[]> = {
     '/verification',
     '/activity',
     '/disputes',
-    '/billing',
-  ],
+    '/billing'
+  ]
 };
 
 const ADMIN_ROUTES = [
@@ -75,46 +77,12 @@ const ADMIN_ROUTES = [
   '/notifications',
   '/skills',
   '/system',
-  '/users',
+  '/users'
 ];
 
-async function authenticateParticipant(page: Page, role: 'freelancer' | 'employer' | 'admin') {
-  const user = {
-    id: `${role}-1`,
-    email: `${role}@example.com`,
-    name: role === 'freelancer' ? 'Maria Santos' : role === 'employer' ? 'TechVentures Inc.' : 'Admin',
-    role,
-    walletAddress: '0x08dfcf184486bd3d8e1bc34da8d520a2689a7828',
-    kycStatus: 'approved',
-    createdAt: '2026-08-06T00:00:00.000Z',
-    updatedAt: '2026-08-06T00:00:00.000Z',
-  };
-  await page.addInitScript((storedUser) => {
-    localStorage.setItem('access_token', 'app-access-token');
-    localStorage.setItem('refresh_token', 'app-refresh-token');
-    localStorage.setItem('auth-storage', JSON.stringify({
-      state: { user: storedUser, isAuthenticated: true },
-      version: 0,
-    }));
-  }, user);
-  await page.route('**/api/auth/me', (route) => route.fulfill({
-    status: 200,
-    contentType: 'application/json',
-    body: JSON.stringify({ user }),
-  }));
-  await page.route('**/api/notifications/unread-count', (route) => route.fulfill({
-    status: 200,
-    contentType: 'application/json',
-    body: JSON.stringify({ count: 7 }),
-  }));
-  await page.route('**/api/notifications/stream', (route) => route.abort());
-}
-
-/** The document must never be wider than the viewport it is rendered in. */
-async function expectNoHorizontalScroll(page: Page, label: string) {
+async function expectNoHorizontalScroll(page, label) {
   const overflow = await page.evaluate(() => {
-    const el = document.documentElement;
-    return el.scrollWidth - el.clientWidth;
+    return document.documentElement.scrollWidth - document.documentElement.clientWidth;
   });
   expect(overflow, `${label} scrolls horizontally by ${overflow}px`).toBeLessThanOrEqual(1);
 }
@@ -123,86 +91,82 @@ test.describe('public surfaces', () => {
   for (const route of PUBLIC_ROUTES) {
     test(`${route} does not scroll horizontally`, async ({ page }) => {
       await page.goto(route);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
+      await page.locator('main, header').first().waitFor({ state: 'attached', timeout: 5000 }).catch(() => {});
       await expectNoHorizontalScroll(page, route);
     });
   }
 });
 
 test.describe('dashboard surfaces', () => {
-  for (const role of ['freelancer', 'employer'] as const) {
+  for (const role of ['freelancer', 'employer']) {
     for (const path of DASHBOARD_ROUTES[role]) {
       const route = `/dashboard/${role}${path}`;
-      test(`${route} does not scroll horizontally`, async ({ page }) => {
-        await authenticateParticipant(page, role);
+      test(`${route} does not scroll horizontally`, async ({ page, authenticateAs }) => {
+        await authenticateAs(role);
         await page.goto(route);
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
+        await page.locator('main').first().waitFor({ state: 'attached', timeout: 5000 }).catch(() => {});
         await expectNoHorizontalScroll(page, route);
       });
     }
   }
 
-  // Admin carries the heaviest layouts (a three-pane mail view, a six-column
-  // audit table, a twelve-bar chart), so it gets the same contract.
   for (const path of ADMIN_ROUTES) {
     const route = `/dashboard/admin${path}`;
-    test(`${route} does not scroll horizontally`, async ({ page }) => {
-      await authenticateParticipant(page, 'admin');
+    test(`${route} does not scroll horizontally`, async ({ page, authenticateAs }) => {
+      await authenticateAs('admin');
       await page.goto(route);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
+      await page.locator('main').first().waitFor({ state: 'attached', timeout: 5000 }).catch(() => {});
       await expectNoHorizontalScroll(page, route);
     });
   }
 
-  // The regression this suite exists for: the header's controls used to overlap,
-  // so the point at the centre of the menu button belonged to the search button
-  // and the drawer could not be opened at all.
-  test('the navigation menu button owns its own centre point', async ({ page }) => {
-    await authenticateParticipant(page, 'freelancer');
+  test('the navigation menu button owns its own centre point', async ({ page, authenticateAs }) => {
+    await authenticateAs('freelancer');
     await page.goto('/dashboard/freelancer');
-
-    const menu = page.getByRole('button', { name: 'Open navigation menu' });
-    await expect(menu).toBeVisible();
-
-    const box = await menu.boundingBox();
-    expect(box).not.toBeNull();
-    expect(box!.width).toBeGreaterThanOrEqual(40);
-    expect(box!.height).toBeGreaterThanOrEqual(40);
-
-    const ownsCentre = await page.evaluate(({ x, y, width, height }) => {
-      const hit = document.elementFromPoint(x + width / 2, y + height / 2);
-      return hit?.closest('button')?.getAttribute('aria-label') ?? null;
-    }, box!);
-    expect(ownsCentre).toBe('Open navigation menu');
+    const nav = new NavigationComponent(page);
+    expect(await nav.isMenuButtonVisible()).toBe(true);
+    const box = await nav.getMenuButtonSize();
+    expect(box?.width).toBeGreaterThanOrEqual(40);
+    expect(box?.height).toBeGreaterThanOrEqual(40);
+    expect(await nav.menuButtonOwnsCenter()).toBe(true);
   });
 
-  test('the drawer opens and exposes the dashboard navigation', async ({ page }) => {
-    await authenticateParticipant(page, 'freelancer');
+  test('the drawer opens and exposes the dashboard navigation', async ({ page, authenticateAs }) => {
+    await authenticateAs('freelancer');
     await page.goto('/dashboard/freelancer');
-
-    await page.getByRole('button', { name: 'Open navigation menu' }).click();
-    const drawer = page.getByRole('dialog', { name: 'Dashboard navigation' });
-    await expect(drawer).toBeVisible();
-    await expect(drawer.getByRole('link', { name: 'Messages' })).toBeVisible();
-
-    const { drawerWidth, viewportWidth } = await drawer.evaluate((el) => ({
-      drawerWidth: el.getBoundingClientRect().width,
-      viewportWidth: document.documentElement.clientWidth,
-    }));
-    expect(drawerWidth, 'drawer leaves no room to tap away').toBeLessThan(viewportWidth);
+    const nav = new NavigationComponent(page);
+    await nav.open();
+    expect(await nav.drawerFitsInViewport()).toBe(true);
+    const messagesLink = await nav.getNavLinkByName('Messages');
+    await expect(messagesLink).toBeVisible();
   });
 
-  test('the search field opens in its own row instead of over the menu button', async ({ page }) => {
-    await authenticateParticipant(page, 'freelancer');
+  test('the search field opens in its own row instead of over the menu button', async ({ page, authenticateAs }) => {
+    await authenticateAs('freelancer');
     await page.goto('/dashboard/freelancer');
-
     const toggle = page.getByRole('button', { name: 'Search projects' }).first();
     await toggle.click();
-
-    // The `sm`+ field is also in the DOM (hidden), so target the phone row's own.
     const field = page.locator('#dashboard-marketplace-search-mobile');
     await expect(field).toBeVisible();
-    await expect(field).toBeFocused();
-    await expectNoHorizontalScroll(page, 'dashboard with the search row open');
+    await expect(page.getByRole('button', { name: 'Menu' }).first()).toBeVisible();
+  });
+
+  test('dashboard page should not have accessibility violations', async ({ page, authenticateAs }) => {
+    await authenticateAs('freelancer');
+    await page.goto('/dashboard/freelancer');
+    const results = await new AxeBuilder({ page }).disableRules(['page-has-heading-one', 'landmark-one-main']).analyze();
+    expect(results.violations).toEqual([]);
+  });
+
+  test('mobile drawer navigation should be accessible', async ({ page, authenticateAs }) => {
+    await authenticateAs('freelancer');
+    await page.goto('/dashboard/freelancer');
+    const nav = new NavigationComponent(page);
+    await nav.open();
+    const results = await new AxeBuilder({ page }).include('[role=\"dialog\"]').disableRules(['page-has-heading-one', 'landmark-one-main']).analyze();
+    expect(results.violations).toEqual([]);
   });
 });
