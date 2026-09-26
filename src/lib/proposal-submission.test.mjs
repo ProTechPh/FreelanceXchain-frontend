@@ -89,3 +89,27 @@ test('does not call the API when proposal input is invalid', async () => {
   );
   assert.equal(apiCalled, false);
 });
+
+test('holds rate, duration, and cover letter to the same bounds as the API', () => {
+  assert.equal(
+    validateProposalForm({ ...validForm, proposedRate: '0.5' }),
+    'Proposed rate must be at least $1.',
+  );
+  assert.equal(
+    validateProposalForm({ ...validForm, proposedRate: '1000001' }),
+    'Proposed rate cannot exceed $1,000,000.',
+  );
+  assert.equal(
+    validateProposalForm({ ...validForm, estimatedDuration: '10.5' }),
+    'Estimated duration must be a whole number of days.',
+  );
+  assert.equal(
+    validateProposalForm({ ...validForm, estimatedDuration: '3651' }),
+    'Estimated duration cannot exceed 3650 days.',
+  );
+  assert.equal(
+    validateProposalForm({ ...validForm, coverLetter: 'a'.repeat(10_001) }),
+    'Cover letter must be 10,000 characters or fewer.',
+  );
+  assert.equal(validateProposalForm({ ...validForm, proposedRate: '1', estimatedDuration: '3650' }), null);
+});

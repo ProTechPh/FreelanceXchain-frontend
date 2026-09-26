@@ -92,7 +92,7 @@ function AdminPermissionsForm({
 
   return (
     <>
-      <DialogHeader className="p-6 pb-2 border-b border-border">
+      <DialogHeader className="shrink-0 border-b border-border px-5 pt-5 pr-12 pb-4 text-left">
         <div className="flex items-center gap-2">
           <Key className="size-5 text-primary" />
           <DialogTitle>Admin Permissions</DialogTitle>
@@ -104,7 +104,7 @@ function AdminPermissionsForm({
         </DialogDescription>
       </DialogHeader>
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-6">
+      <div className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-5 py-5">
         {/* Quick Presets */}
         <div className="space-y-2">
           <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
@@ -175,19 +175,20 @@ function AdminPermissionsForm({
                 key={group.name}
                 className="rounded-lg border border-border bg-card p-4 space-y-3"
               >
-                <div className="flex items-center justify-between pb-2 border-b border-border/60">
-                  <div>
+                <div className="flex items-start justify-between gap-3 border-b border-border/60 pb-3">
+                  <div className="min-w-0">
                     <h4 className="text-sm font-semibold text-foreground">{group.name}</h4>
-                    <p className="text-2xs text-muted-foreground">{group.description}</p>
+                    <p className="text-xs text-muted-foreground">{group.description}</p>
                   </div>
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    className="h-7 text-xs text-muted-foreground hover:text-foreground"
+                    className="h-7 shrink-0 text-xs"
+                    aria-label={`${allGroupChecked ? 'Clear' : 'Select all'} ${group.name} permissions`}
                     onClick={toggleAllGroup}
                   >
-                    {allGroupChecked ? 'Deselect Group' : 'Select Group'}
+                    {allGroupChecked ? 'Clear all' : 'Select all'}
                   </Button>
                 </div>
 
@@ -196,12 +197,13 @@ function AdminPermissionsForm({
                     const checked = selectedPermissions.has(item.key);
                     const isSuperManage = item.key === 'admin:manage';
                     return (
-                      <div
+                      <label
                         key={item.key}
-                        className={`flex items-start gap-3 p-3 rounded-md border transition-colors ${
+                        htmlFor={`perm-${item.key}`}
+                        className={`flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors focus-within:ring-2 focus-within:ring-ring/50 ${
                           checked
                             ? 'border-primary/50 bg-primary/5'
-                            : 'border-border/60 hover:border-border'
+                            : 'border-border/60 hover:border-border hover:bg-muted/40'
                         } ${isSuperManage ? 'sm:col-span-2 bg-gradient-to-r from-info/5 to-transparent border-info/30' : ''}`}
                       >
                         <Checkbox
@@ -210,18 +212,15 @@ function AdminPermissionsForm({
                           onCheckedChange={() => togglePermission(item.key)}
                           className="mt-0.5"
                         />
-                        <div className="space-y-0.5 flex-1 min-w-0">
-                          <Label
-                            htmlFor={`perm-${item.key}`}
-                            className="text-xs font-semibold cursor-pointer block text-foreground leading-tight"
-                          >
+                        <span className="min-w-0 flex-1 space-y-0.5">
+                          <span className="block text-sm font-medium leading-snug text-foreground">
                             {item.label}
-                          </Label>
-                          <p className="text-2xs text-muted-foreground leading-normal">
+                          </span>
+                          <span className="block text-xs leading-normal text-muted-foreground">
                             {item.description}
-                          </p>
-                        </div>
-                      </div>
+                          </span>
+                        </span>
+                      </label>
                     );
                   })}
                 </div>
@@ -231,16 +230,17 @@ function AdminPermissionsForm({
         </div>
       </div>
 
-      <DialogFooter className="p-4 border-t border-border flex items-center justify-between sm:justify-between bg-muted/20">
-        <div className="text-xs text-muted-foreground">
-          <span className="font-medium text-foreground">{selectedPermissions.size}</span>{' '}
+      {/* The shared footer uses negative margins to line up with the dialog's
+          default padding; this dialog is p-0, so they are reset here. */}
+      <DialogFooter className="mx-0 mb-0 shrink-0 flex-col items-stretch gap-3 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-xs text-muted-foreground" aria-live="polite">
+          <span className="font-medium text-foreground tabular-nums">{selectedPermissions.size}</span>{' '}
           of {ADMIN_PERMISSIONS.length} permissions active
-        </div>
-        <div className="flex gap-2">
+        </p>
+        <div className="flex flex-col-reverse gap-2 sm:flex-row">
           <Button
             type="button"
             variant="outline"
-            size="sm"
             onClick={onCancel}
             disabled={saving}
           >
@@ -248,12 +248,11 @@ function AdminPermissionsForm({
           </Button>
           <Button
             type="button"
-            size="sm"
             loading={saving}
-            loadingText="Saving..."
+            loadingText="Saving…"
             onClick={handleSave}
           >
-            Save Permissions
+            Save permissions
           </Button>
         </div>
       </DialogFooter>
@@ -271,7 +270,7 @@ export function AdminPermissionsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0">
+      <DialogContent className="flex max-h-[calc(100dvh-1rem)] w-[calc(100%-1rem)] max-w-[calc(100%-1rem)] flex-col gap-0 overflow-hidden p-0 sm:max-h-[90dvh] sm:w-full sm:max-w-2xl">
         <AdminPermissionsForm
           key={`${user.id}-${open}`}
           user={user}
