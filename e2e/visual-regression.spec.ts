@@ -31,22 +31,28 @@ test.describe('Visual & Layout Regression Suite', () => {
     const themeButton = page.getByRole('button', { name: /Theme:/i });
     await expect(themeButton).toBeVisible();
 
-    const initialThemeClass = await page.evaluate(() => {
-      return document.documentElement.className;
-    });
+    const initialLabel = await themeButton.getAttribute('aria-label');
 
+    // First click transitions from default system to light
     await themeButton.click();
-
-    // Give next-themes a moment to update document attributes
     await page.waitForTimeout(300);
 
-    const updatedThemeClass = await page.evaluate(() => {
-      return document.documentElement.className;
-    });
+    const updatedLabel = await themeButton.getAttribute('aria-label');
+    expect(updatedLabel).not.toBe(initialLabel);
 
-    // Theme class on root element should reflect the toggle change
-    expect(typeof updatedThemeClass).toBe('string');
-    expect(updatedThemeClass).not.toBe(initialThemeClass);
+    // Second click transitions to dark theme
+    await themeButton.click();
+    await page.waitForTimeout(300);
+
+    const isDark = await page.evaluate(() => {
+      return document.documentElement.classList.contains('dark');
+    });
+    expect(isDark).toBe(true);
+
+    const hasHorizontalOverflow = await page.evaluate(() => {
+      return document.documentElement.scrollWidth > window.innerWidth;
+    });
+    expect(hasHorizontalOverflow).toBe(false);
   });
 
   test('sign-in page card is centered and fully visible within viewport', async ({ page }) => {
