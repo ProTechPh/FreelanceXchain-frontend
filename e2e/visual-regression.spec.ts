@@ -46,6 +46,7 @@ test.describe('Visual & Layout Regression Suite', () => {
 
     // Theme class on root element should reflect the toggle change
     expect(typeof updatedThemeClass).toBe('string');
+    expect(updatedThemeClass).not.toBe(initialThemeClass);
   });
 
   test('sign-in page card is centered and fully visible within viewport', async ({ page }) => {

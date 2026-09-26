@@ -154,6 +154,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
   }, [kind]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadResults(appliedFilters);
   }, [appliedFilters, loadResults]);
 
