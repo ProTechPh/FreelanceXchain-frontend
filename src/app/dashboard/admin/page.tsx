@@ -48,10 +48,10 @@ export default function AdminDashboard() {
 
     const [statsRes, disputesRes, kycRes, activityRes, healthRes] = await Promise.allSettled([
       adminApi.getStats(),
-      canViewDisputes ? adminApi.getDisputeManagement('open') : Promise.resolve({ data: { disputes: [] } } as any),
-      canViewKyc ? kycApi.adminGetPending() : Promise.resolve({ data: [] } as any),
-      canViewAudit ? auditLogsApi.getByDateRange(yesterday.toISOString(), now.toISOString()) : Promise.resolve({ data: { logs: [] } } as any),
-      canViewHealth ? adminApi.getSystemHealth() : Promise.resolve({ data: null } as any),
+      canViewDisputes ? adminApi.getDisputeManagement('open') : Promise.resolve({ data: { disputes: [] as Dispute[], total: 0 } }),
+      canViewKyc ? kycApi.adminGetPending() : Promise.resolve({ data: [] as unknown[] }),
+      canViewAudit ? auditLogsApi.getByDateRange(yesterday.toISOString(), now.toISOString()) : Promise.resolve({ data: { logs: [] as AuditLogEntry[] } }),
+      canViewHealth ? adminApi.getSystemHealth() : Promise.resolve({ data: null as SystemHealth | null }),
     ]);
 
     if (statsRes.status === 'fulfilled') setStats(statsRes.value.data);

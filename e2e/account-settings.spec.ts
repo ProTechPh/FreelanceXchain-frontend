@@ -1,9 +1,8 @@
 import { test } from './fixtures/authSetup.js';
 import { expect } from '@playwright/test';
-import AxeBuilder from '@axe-core/playwright';
 import { SettingsPage } from './pages/SettingsPage.js';
 
-test.beforeEach(async ({ page, authenticateAs }) => {
+test.beforeEach(async ({ authenticateAs }) => {
   await authenticateAs('employer');
 });
 

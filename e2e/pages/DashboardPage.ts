@@ -1,4 +1,4 @@
-import { type Page, type Locator, expect } from '@playwright/test';
+import { type Page, type Locator } from '@playwright/test';
 import { NavigationComponent } from './NavigationComponent';
 
 export class DashboardPage {

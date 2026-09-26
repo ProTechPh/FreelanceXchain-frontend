@@ -9,7 +9,6 @@ import { test } from './fixtures/authSetup.js';
 import { expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { NavigationComponent } from './pages/NavigationComponent.js';
-import type { Page } from '@playwright/test';
 
 const PUBLIC_ROUTES = [
   '/',
