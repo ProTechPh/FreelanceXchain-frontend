@@ -13,11 +13,11 @@ export function useAdminPermissions() {
 
   // Super Admin check:
   // If user is admin and has no explicit permissions array set (legacy full admin),
-  // has empty array, or includes '*' or 'admin:manage', they possess full access.
+  // or includes '*' or 'admin:manage', they possess full access.
+  // Note: an explicit array (including empty array []) means granular permissions are active and enforced.
   const isSuperAdmin = Boolean(
     isAdmin &&
-      (!permissions ||
-        permissions.length === 0 ||
+      (permissions === undefined ||
         (permissions as string[]).includes('*') ||
         permissions.includes('admin:manage'))
   );

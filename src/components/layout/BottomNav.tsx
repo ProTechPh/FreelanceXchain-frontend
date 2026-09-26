@@ -49,8 +49,7 @@ function getBottomNavItems(role: UserRole | undefined, permissions?: AdminPermis
 
   if (role === 'admin') {
     const isSuperAdmin =
-      !permissions ||
-      permissions.length === 0 ||
+      permissions === undefined ||
       (permissions as string[]).includes('*') ||
       permissions.includes('admin:manage');
 

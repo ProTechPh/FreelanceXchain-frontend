@@ -61,6 +61,7 @@ export default function UsersPage() {
   const { hasPermission } = useAdminPermissions();
   const canManageAdmins = hasPermission('admin:manage');
   const canManageUsers = hasPermission('users:manage');
+  const canManageKyc = hasPermission('kyc:manage');
 
   const load = useCallback(async () => {
     const { data } = await adminApi.getUsers();
@@ -406,47 +407,51 @@ export default function UsersPage() {
                               <Key className="w-4 h-4" />
                             </Button>
                           )}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-primary touch-manipulation"
-                            title={isKycApproved ? 'KYC verified' : 'Manually verify KYC'}
-                            aria-label={isKycApproved ? 'KYC verified' : `Manually verify KYC for ${user.name || user.email}`}
-                            disabled={pendingActionId === user.id || isKycApproved}
-                            onClick={() => {
-                              setUserToVerify(user);
-                              setVerifyReason('');
-                            }}
-                          >
-                            <ShieldCheck className="w-4 h-4" />
-                          </Button>
-                          {user.isActive ? (
+                          {canManageKyc && (
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 text-warning touch-manipulation"
-                              title="Suspend user"
-                              aria-label={`Suspend ${user.name || user.email}`}
-                              disabled={pendingActionId === user.id}
+                              className="h-8 w-8 text-primary touch-manipulation"
+                              title={isKycApproved ? 'KYC verified' : 'Manually verify KYC'}
+                              aria-label={isKycApproved ? 'KYC verified' : `Manually verify KYC for ${user.name || user.email}`}
+                              disabled={pendingActionId === user.id || isKycApproved}
                               onClick={() => {
-                                setUserToSuspend(user);
-                                setSuspendReason('');
+                                setUserToVerify(user);
+                                setVerifyReason('');
                               }}
                             >
-                              <Ban className="w-4 h-4" />
+                              <ShieldCheck className="w-4 h-4" />
                             </Button>
-                          ) : (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-success touch-manipulation"
-                              title="Unsuspend user"
-                              aria-label={`Unsuspend ${user.name || user.email}`}
-                              disabled={pendingActionId === user.id}
-                              onClick={() => setUserToUnsuspend(user)}
-                            >
-                              <UserCheck className="w-4 h-4" />
-                            </Button>
+                          )}
+                          {canManageUsers && (
+                            user.isActive ? (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-warning touch-manipulation"
+                                title="Suspend user"
+                                aria-label={`Suspend ${user.name || user.email}`}
+                                disabled={pendingActionId === user.id}
+                                onClick={() => {
+                                  setUserToSuspend(user);
+                                  setSuspendReason('');
+                                }}
+                              >
+                                <Ban className="w-4 h-4" />
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-success touch-manipulation"
+                                title="Unsuspend user"
+                                aria-label={`Unsuspend ${user.name || user.email}`}
+                                disabled={pendingActionId === user.id}
+                                onClick={() => setUserToUnsuspend(user)}
+                              >
+                                <UserCheck className="w-4 h-4" />
+                              </Button>
+                            )
                           )}
                         </div>
                       </TableCell>
@@ -572,44 +577,48 @@ export default function UsersPage() {
                         <Key className="w-4 h-4" />
                       </Button>
                     )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-9 w-9 text-primary touch-manipulation"
-                      aria-label={isKycApproved ? 'KYC verified' : `Manually verify KYC for ${user.name || user.email}`}
-                      disabled={pendingActionId === user.id || isKycApproved}
-                      onClick={() => {
-                        setUserToVerify(user);
-                        setVerifyReason('');
-                      }}
-                    >
-                      <ShieldCheck className="w-4 h-4" />
-                    </Button>
-                    {user.isActive ? (
+                    {canManageKyc && (
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-9 w-9 text-warning touch-manipulation"
-                        aria-label={`Suspend ${user.name || user.email}`}
-                        disabled={pendingActionId === user.id}
+                        className="h-9 w-9 text-primary touch-manipulation"
+                        aria-label={isKycApproved ? 'KYC verified' : `Manually verify KYC for ${user.name || user.email}`}
+                        disabled={pendingActionId === user.id || isKycApproved}
                         onClick={() => {
-                          setUserToSuspend(user);
-                          setSuspendReason('');
+                          setUserToVerify(user);
+                          setVerifyReason('');
                         }}
                       >
-                        <Ban className="w-4 h-4" />
+                        <ShieldCheck className="w-4 h-4" />
                       </Button>
-                    ) : (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-9 w-9 text-success touch-manipulation"
-                        aria-label={`Unsuspend ${user.name || user.email}`}
-                        disabled={pendingActionId === user.id}
-                        onClick={() => setUserToUnsuspend(user)}
-                      >
-                        <UserCheck className="w-4 h-4" />
-                      </Button>
+                    )}
+                    {canManageUsers && (
+                      user.isActive ? (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-9 w-9 text-warning touch-manipulation"
+                          aria-label={`Suspend ${user.name || user.email}`}
+                          disabled={pendingActionId === user.id}
+                          onClick={() => {
+                            setUserToSuspend(user);
+                            setSuspendReason('');
+                          }}
+                        >
+                          <Ban className="w-4 h-4" />
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-9 w-9 text-success touch-manipulation"
+                          aria-label={`Unsuspend ${user.name || user.email}`}
+                          disabled={pendingActionId === user.id}
+                          onClick={() => setUserToUnsuspend(user)}
+                        >
+                          <UserCheck className="w-4 h-4" />
+                        </Button>
+                      )
                     )}
                   </div>
                 </div>

@@ -27,6 +27,19 @@ test('getNavSections for Super Admin with admin:manage returns all items', () =>
   assert.ok(allLabels.includes('Disputes'));
 });
 
+test('getNavSections with empty permissions array [] does not grant super admin access', () => {
+  const sections = getNavSections('admin', []);
+  const allLabels = sections.flatMap((s) => s.items.map((i) => i.label));
+  assert.ok(!allLabels.includes('KYC review'));
+  assert.ok(!allLabels.includes('Users'));
+  assert.ok(!allLabels.includes('Disputes'));
+  assert.ok(!allLabels.includes('System health'));
+  assert.ok(!allLabels.includes('Audit logs'));
+  assert.ok(!allLabels.includes('Analytics'));
+  assert.ok(!allLabels.includes('Skills'));
+  assert.ok(!allLabels.includes('Support tickets'));
+});
+
 test('getNavSections for KYC Officer (Admin 2: kyc:view, kyc:manage) restricts navigation strictly to KYC', () => {
   // Exactly matching user request:
   // "si admin 2 ang ilalagay ko lang na permission sa kanya is read and edit and write sa kyc lang wala na siyang access sa ibang admin like that and the rest permission"

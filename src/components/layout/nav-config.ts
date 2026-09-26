@@ -129,8 +129,7 @@ const adminNav: NavSection[] = [
 export function getNavSections(role: UserRole | undefined, permissions?: AdminPermission[]): NavSection[] {
   if (role === 'admin') {
     const isSuperAdmin =
-      !permissions ||
-      permissions.length === 0 ||
+      permissions === undefined ||
       (permissions as string[]).includes('*') ||
       permissions.includes('admin:manage');
 

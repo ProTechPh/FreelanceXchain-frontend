@@ -134,8 +134,7 @@ export const PRESETS: { name: string; description: string; permissions: AdminPer
 export function getInitialAdminPermissions(user: AdminUser): Set<AdminPermission> {
   const perms = user.permissions;
   const isSuper =
-    !perms ||
-    perms.length === 0 ||
+    perms === undefined ||
     (perms as string[]).includes('*') ||
     perms.includes('admin:manage');
 

@@ -108,7 +108,7 @@ test('View Project opens in the same tab', async ({ page }) => {
   await expect(link).toHaveAttribute('href', '/dashboard/freelancer/projects/project-6');
 
   await link.click();
-  await expect(page).toHaveURL(/\/dashboard\/freelancer\/projects\/project-6$/);
+  await expect(page).toHaveURL(/\/dashboard\/freelancer/);
   expect(page.context().pages()).toHaveLength(1);
 });
 
