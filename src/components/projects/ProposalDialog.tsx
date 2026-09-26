@@ -2,7 +2,7 @@
 
 import { useId, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Paperclip, Send, ShieldAlert, Sparkles, Wand2, Check, RefreshCw, Eye, Edit3, X, FileText, Layers } from 'lucide-react';
+import { Paperclip, Send, ShieldAlert, Sparkles, Wand2, Check, RefreshCw, Eye, Edit3, X, FileText, Layers, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -22,12 +22,18 @@ import { Alert } from '@/components/ui/alert';
 import { Field, useField } from '@/components/ui/field';
 import { reportFailure } from '@/lib/report-failure';
 import { formatAmount } from '@/lib/format';
+import { formatFileSize } from '@/lib/attachment-presentation';
+import { cn } from '@/lib/utils';
 import { matchingApi, type AIProposalResult } from '@/lib/api';
 import { UpgradeButton } from '@/components/billing/upgrade-button';
 import { usePlan } from '@/hooks/use-plan';
 import { useRateApp } from '@/components/feedback/rate-app-provider';
 import {
+  MAX_COVER_LETTER_LENGTH,
+  MAX_DURATION_DAYS,
   MAX_FILE_COUNT,
+  MAX_PROPOSED_RATE,
+  MIN_PROPOSED_RATE,
 } from '@/lib/proposal-submission';
 import {
   DOCUMENT_ACCEPT_STRING,
@@ -109,6 +115,7 @@ export function ProposalDialog({
     form,
     setForm,
     fieldError,
+    setFieldError,
     submitting,
     handleSubmit: submitForm,
     handleRateChange,
@@ -229,6 +236,7 @@ export function ProposalDialog({
   const handleCoverLetterChange = (newText: string) => {
     const cleanText = sanitizeMarkdownText(newText);
     setEditableCoverLetter(cleanText);
+    setFieldError((current) => (current?.field === 'coverLetter' ? null : current));
     if (project && aiProposal) {
       const updatedFile = createProposalDocumentFile(
         project.title,
@@ -251,6 +259,9 @@ export function ProposalDialog({
     if (!project) return;
     const success = await submitForm(editableCoverLetter ? sanitizeMarkdownText(editableCoverLetter) : undefined);
     if (success) {
+      // The proposal is sent, so nothing here is a draft any more: clear the AI
+      // state too and close without the discard prompt.
+      resetAndClose();
       requestRatingPrompt('proposal_submitted', project.id);
     }
   };
@@ -273,7 +284,9 @@ export function ProposalDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleSubmit}>
+        {/* findProposalFormError owns validation and shows it under each field;
+            native bubbles would pre-empt it with differently worded messages. */}
+        <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleSubmit} noValidate>
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5">
         {!isKycApproved && (
           <Alert
@@ -423,10 +436,19 @@ export function ProposalDialog({
                   rows={8}
                   className="max-h-52 min-h-40 font-mono text-2xs leading-relaxed sm:max-h-none sm:text-xs"
                   placeholder="Introduce yourself, your experience, and outline your approach for this project..."
-                  maxLength={2000}
+                  maxLength={MAX_COVER_LETTER_LENGTH}
+                  aria-invalid={fieldError?.field === 'coverLetter' || undefined}
                 />
-                <p className="text-xs text-muted-foreground text-right mt-1">{editableCoverLetter.length} / 2000</p>
+                <p className="text-xs text-muted-foreground text-right mt-1">
+                  {editableCoverLetter.length.toLocaleString('en-US')} / {MAX_COVER_LETTER_LENGTH.toLocaleString('en-US')}
+                </p>
               </div>
+            )}
+            {fieldError?.field === 'coverLetter' && (
+              <p role="alert" className="mt-1 flex items-start gap-1.5 text-xs font-medium text-destructive">
+                <ShieldAlert className="mt-px size-3.5 shrink-0" aria-hidden="true" />
+                {fieldError.message}
+              </p>
             )}
           </div>
 
@@ -457,59 +479,150 @@ export function ProposalDialog({
             <Field
               label="Proposed rate (USD)"
               htmlFor={`${fieldId}-rate`}
-              description={`Project budget: ${project ? formatAmount(project.budget) : '—'}`}
+              description={project ? `Client budget: ${formatAmount(project.budget)}` : undefined}
               error={fieldError?.field === 'proposedRate' ? fieldError.message : null}
               required
             >
-              <FieldInput
-                type="number"
-                min="0.0001"
-                step="any"
-                inputMode="decimal"
-                placeholder="0.00"
-                value={form.proposedRate}
-                onChange={(event) => handleRateChange(event.target.value)}
-              />
+              <div className="relative">
+                <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground" aria-hidden="true">
+                  $
+                </span>
+                <FieldInput
+                  type="number"
+                  min={MIN_PROPOSED_RATE}
+                  max={MAX_PROPOSED_RATE}
+                  step="any"
+                  inputMode="decimal"
+                  placeholder="0.00"
+                  className="pl-7 pr-14 tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  value={form.proposedRate}
+                  onChange={(event) => handleRateChange(event.target.value)}
+                />
+                <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs font-medium text-muted-foreground" aria-hidden="true">
+                  USD
+                </span>
+              </div>
             </Field>
 
             <Field
               label="Estimated duration (days)"
               htmlFor={`${fieldId}-duration`}
+              description="Whole days from kickoff to final delivery."
               error={fieldError?.field === 'estimatedDuration' ? fieldError.message : null}
               required
             >
-              <FieldInput
-                type="number"
-                min="1"
-                step="1"
-                inputMode="numeric"
-                value={form.estimatedDuration}
-                onChange={(event) => handleDurationChange(event.target.value)}
-              />
+              <div className="relative">
+                <FieldInput
+                  type="number"
+                  min="1"
+                  max={MAX_DURATION_DAYS}
+                  step="1"
+                  inputMode="numeric"
+                  placeholder="14"
+                  className="pr-14 tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  value={form.estimatedDuration}
+                  onChange={(event) => handleDurationChange(event.target.value)}
+                />
+                <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs font-medium text-muted-foreground" aria-hidden="true">
+                  days
+                </span>
+              </div>
             </Field>
           </div>
 
           <div className="space-y-2">
-            <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
-              <Label htmlFor={`${fieldId}-files`}>Proposal attachments</Label>
-              {form.files.some((f) => f.name.startsWith('Proposal_')) && (
-                <span className="flex items-center gap-1 text-2xs font-medium text-success">
-                  <Check className="size-3 shrink-0" /> AI brief document attached automatically
-                </span>
-              )}
+            <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
+              <Label htmlFor={`${fieldId}-files`}>
+                Proposal attachments <span className="text-destructive" aria-hidden="true">*</span>
+              </Label>
+              <span className="text-xs text-muted-foreground tabular-nums" aria-live="polite">
+                {form.files.length} of {MAX_FILE_COUNT} attached
+              </span>
             </div>
-            <Input
-              id={`${fieldId}-files`}
-              type="file"
-              multiple
-              accept={DOCUMENT_ACCEPT_STRING}
-              className="text-xs file:text-xs"
-              aria-describedby={`${fieldId}-files-hint`}
-              onChange={(event) => handleFilesChange(event.target.files)}
-            />
-            <p id={`${fieldId}-files-hint`} className="text-xs text-muted-foreground">
-              Attach 1–{MAX_FILE_COUNT} files (up to 10 MB each, 25 MB total).
-            </p>
+
+            {form.files.length > 0 && (
+              <ul className="space-y-2" aria-label="Selected proposal files">
+                {form.files.map((file, idx) => {
+                  const isBrief = file.name.startsWith('Proposal_');
+                  const Icon = isBrief ? FileText : Paperclip;
+                  return (
+                    <li
+                      key={`${file.name}-${idx}`}
+                      className="flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-2"
+                    >
+                      <span
+                        className={cn(
+                          'flex size-8 shrink-0 items-center justify-center rounded-md',
+                          isBrief ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground',
+                        )}
+                        aria-hidden="true"
+                      >
+                        <Icon className="size-4" />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-medium text-foreground">{file.name}</span>
+                        <span className="block text-xs text-muted-foreground">
+                          {isBrief ? 'AI brief · generated from your pitch' : formatFileSize(file.size)}
+                        </span>
+                      </span>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        className="shrink-0 text-muted-foreground hover:text-destructive"
+                        aria-label={`Remove ${file.name}`}
+                        onClick={() => handleRemoveFile(idx)}
+                      >
+                        <X className="size-4" />
+                      </Button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+
+            {form.files.length < MAX_FILE_COUNT && (
+              <label
+                htmlFor={`${fieldId}-files`}
+                className={cn(
+                  'flex cursor-pointer items-center gap-3 rounded-lg border-2 border-dashed px-4 py-3 transition-colors hover:border-primary/50 hover:bg-primary/5 focus-within:border-primary focus-within:ring-[3px] focus-within:ring-ring/50',
+                  fieldError?.field === 'files' ? 'border-destructive' : 'border-border',
+                )}
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  handleFilesChange(event.dataTransfer.files);
+                }}
+              >
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground" aria-hidden="true">
+                  <Upload className="size-4" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-medium text-foreground">
+                    {form.files.length === 0 ? 'Choose files' : 'Add more files'}
+                    <span className="font-normal text-muted-foreground"> or drag them here</span>
+                  </span>
+                  <span id={`${fieldId}-files-hint`} className="block text-xs text-muted-foreground">
+                    PDF, Word, Excel, PowerPoint, text, CSV or images · up to 10 MB each, 25 MB total
+                  </span>
+                </span>
+                <input
+                  id={`${fieldId}-files`}
+                  type="file"
+                  multiple
+                  accept={DOCUMENT_ACCEPT_STRING}
+                  className="sr-only"
+                  aria-describedby={`${fieldId}-files-hint`}
+                  aria-invalid={fieldError?.field === 'files' || undefined}
+                  onChange={(event) => {
+                    handleFilesChange(event.target.files);
+                    // Allow picking the same file again after removing it.
+                    event.target.value = '';
+                  }}
+                />
+              </label>
+            )}
+
             {fieldError?.field === 'files' && (
               <p
                 id={`${fieldId}-files-error`}
@@ -519,32 +632,6 @@ export function ProposalDialog({
                 <ShieldAlert className="mt-px size-3.5 shrink-0" aria-hidden="true" />
                 {fieldError.message}
               </p>
-            )}
-            {form.files.length > 0 && (
-              <ul className="space-y-1 text-sm" aria-label="Selected proposal files">
-                {form.files.map((file, idx) => (
-                  <li key={`${file.name}-${idx}`} className="flex items-center justify-between gap-2 rounded-md bg-secondary/30 px-2.5 py-1 text-2xs text-muted-foreground sm:text-xs">
-                    <span className="flex min-w-0 flex-1 items-center gap-2">
-                      {file.name.startsWith('Proposal_') ? (
-                        <FileText className="h-3.5 w-3.5 text-primary shrink-0" />
-                      ) : (
-                        <Paperclip className="h-3.5 w-3.5 shrink-0" />
-                      )}
-                      <span className="truncate font-medium text-foreground">{file.name}</span>
-                      {file.name.startsWith('Proposal_') && (
-                        <Badge variant="secondary" className="text-2xs py-0 px-1 text-primary">Auto-Generated</Badge>
-                      )}
-                    </span>
-                    <button
-                      type="button"
-                      className="ml-2 shrink-0 p-2 text-muted-foreground hover:text-destructive touch-manipulation"
-                      onClick={() => handleRemoveFile(idx)}
-                    >
-                      <X className="size-3.5" />
-                    </button>
-                  </li>
-                ))}
-              </ul>
             )}
           </div>
 
