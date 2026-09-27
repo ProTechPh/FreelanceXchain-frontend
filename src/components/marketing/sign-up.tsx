@@ -43,6 +43,7 @@ interface SignUpPageProps {
   loading?: boolean;
   oauthLoading?: 'google' | 'github' | null;
   oauthError?: string | null;
+  serverError?: string | null;
   turnstileSlot?: React.ReactNode;
 }
 
@@ -55,6 +56,7 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
   loading = false,
   oauthLoading = null,
   oauthError,
+  serverError,
   turnstileSlot,
 }) => {
   const isButtonLoading = isLoading || loading;
@@ -438,9 +440,9 @@ export const SignUpPage: React.FC<SignUpPageProps> = ({
                   </div>
 
                   {/* Error message */}
-                  {formError && (
+                  {(formError || serverError) && (
                     <p id="registration-error" role="alert" className="text-sm text-destructive bg-destructive-subtle px-4 py-3 rounded-xl sm:rounded-2xl font-medium">
-                      {formError}
+                      {formError || serverError}
                     </p>
                   )}
 
