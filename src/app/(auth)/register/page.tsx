@@ -25,6 +25,7 @@ export default function RegisterPage() {
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const turnstileRef = useRef<TurnstileWidgetRef>(null);
   const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
 
   // Parse OAuth error from URL query parameters
   useEffect(() => {
@@ -67,6 +68,7 @@ export default function RegisterPage() {
 
   const handleSubmit = async (data: { email: string; password: string; role: UserRole }) => {
     if (isLoading || oauthLoading) return;
+    setServerError(null);
     try {
       await register(data.email, data.password, data.role, turnstileToken || undefined);
       try {
@@ -78,7 +80,9 @@ export default function RegisterPage() {
     } catch (error) {
       turnstileRef.current?.reset();
       setTurnstileToken(null);
-      toast.error(getApiErrorMessage(error, 'Couldn\'t create your account. Try again.'));
+      const msg = getApiErrorMessage(error, 'Couldn\'t create your account. Try again.');
+      setServerError(msg);
+      toast.error(msg);
     }
   };
 
@@ -158,6 +162,7 @@ export default function RegisterPage() {
         isLoading={isLoading}
         oauthLoading={oauthLoading}
         oauthError={oauthError}
+        serverError={serverError}
         turnstileSlot={
           <TurnstileWidget
             ref={turnstileRef}
