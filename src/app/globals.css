@@ -731,8 +731,8 @@
 
 /* ---- Print Styles for Invoices and Statements of Work -------------------- */
 @media print {
-  /* Hide everything that isn't the printable document */
-  body > *:not([data-slot="dialog-overlay"]),
+  /* Hide everything except the dialog portal / printable document */
+  body > *:not(:has(#printable-contract-document)):not([data-slot="dialog-portal"]),
   nav,
   header,
   footer,
@@ -747,32 +747,62 @@
   /* Page setup — A4 portrait with comfortable margins */
   @page {
     size: A4 portrait;
-    margin: 18mm 15mm 18mm 15mm;
+    margin: 12mm 15mm;
   }
 
   html,
   body {
     width: 100% !important;
     height: auto !important;
+    min-height: 100% !important;
     overflow: visible !important;
     background: #ffffff !important;
     color: #111827 !important;
-    font-size: 11pt !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 10pt !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  /* Collapse the dialog chrome so it doesn't contribute height/width */
+  /* Reset portal, backdrop, and dialog popup containers */
+  [data-slot="dialog-portal"] {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
   [data-slot="dialog-content"] {
-    all: unset !important;
+    position: static !important;
+    inset: auto !important;
+    top: auto !important;
+    left: auto !important;
+    transform: none !important;
     display: block !important;
     width: 100% !important;
     max-width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    max-height: none !important;
     overflow: visible !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
     background: transparent !important;
   }
 
-  /* The document itself */
+  /* Remove any height and overflow scroll limits in modal body during print */
+  [data-slot="dialog-content"] > div {
+    max-height: none !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  /* The printable document itself */
   #printable-contract-document {
     display: block !important;
     visibility: visible !important;

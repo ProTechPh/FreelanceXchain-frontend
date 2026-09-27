@@ -87,7 +87,10 @@ export function ContractInvoiceDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {/* Wide modal — !sm:max-w-none overrides the sm:max-w-sm default in DialogContent */}
-      <DialogContent showCloseButton={false} className="flex !max-w-[min(56rem,calc(100vw-2rem))] w-full flex-col overflow-hidden p-0">
+      <DialogContent
+        showCloseButton={false}
+        className="flex !max-w-[min(56rem,calc(100vw-2rem))] w-full flex-col overflow-hidden p-0 print:!max-w-none print:overflow-visible print:border-none print:shadow-none print:p-0"
+      >
         {/* ── Controls (hidden when printing) ── */}
         <div className="no-print shrink-0 space-y-3 border-b border-border px-5 py-4 sm:px-7">
           <DialogHeader>
@@ -149,7 +152,7 @@ export function ContractInvoiceDialog({
         </div>
 
         {/* ── Scrollable printable document area ── */}
-        <div className="max-h-[70vh] overflow-y-auto">
+        <div className="max-h-[70vh] overflow-y-auto print:max-h-none print:overflow-visible">
           <div
             id="printable-contract-document"
             className="space-y-6 bg-card p-5 text-card-foreground sm:p-8"
