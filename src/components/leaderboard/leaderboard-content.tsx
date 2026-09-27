@@ -1,22 +1,42 @@
-﻿"use client";
+"use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import type { ReputationLeaderboardEntry } from "@/types";
 import { Trophy, Star, ShieldCheck, Crown, ArrowUpDown } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
-
-interface LeaderboardContentProps {
-  leaderboard: ReputationLeaderboardEntry[];
-}
+import { ListSkeleton } from "@/components/dashboard/skeletons";
+import { reputationApi } from "@/lib/api/features";
 
 type SortKey = "rating" | "reviews";
 
-
-export function LeaderboardContent({ leaderboard }: LeaderboardContentProps) {
+export function LeaderboardContent() {
+  const [leaderboard, setLeaderboard] = useState<ReputationLeaderboardEntry[]>([]);
+  const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<SortKey>("rating");
 
-  const leaderboardData: Array<ReputationLeaderboardEntry & { userName: string }> = leaderboard.map((entry) => ({
+  useEffect(() => {
+    let active = true;
+    reputationApi
+      .getLeaderboard({ limit: 50 })
+      .then((res) => {
+        if (active) {
+          const data = res.data;
+          setLeaderboard(Array.isArray(data) ? data : []);
+        }
+      })
+      .catch(() => {
+        if (active) setLeaderboard([]);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const leaderboardData = leaderboard.map((entry) => ({
     ...entry,
     userName: entry.userName || `Freelancer ${entry.userId.slice(0, 8)}`,
   }));
@@ -29,13 +49,17 @@ export function LeaderboardContent({ leaderboard }: LeaderboardContentProps) {
     );
   }, [leaderboardData, sortBy]);
 
+  if (loading) {
+    return <ListSkeleton rows={8} label="Loading leaderboard" />;
+  }
+
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-10">
       {/* Sort Controls */}
       <div className="flex items-center justify-center gap-2">
         <ArrowUpDown className="size-4 text-muted-foreground" />
         <span className="text-xs font-semibold text-muted-foreground">Sort by:</span>
-        {([["rating", "Highest Rating"], ["reviews", "Most Reviews"]] as const).map(
+        {(([["rating", "Highest Rating"], ["reviews", "Most Reviews"]] as const)).map(
           ([key, label]) => (
             <button
               key={key}
