@@ -1,16 +1,12 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import {
-  FileText,
   Printer,
-  Download,
   ExternalLink,
   Search,
-  Filter,
   Receipt,
-  FileCheck2,
 } from 'lucide-react';
 import { contractsApi } from '@/lib/api';
 import { getContractDetailRoute } from '@/lib/contract-route';
@@ -34,21 +30,26 @@ export function ContractInvoicesList({ role }: ContractInvoicesListProps) {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed'>('all');
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
 
-  const fetchContracts = useCallback(async () => {
-    setLoading(true);
-    try {
-      const { data } = await contractsApi.list({ limit: 50 });
-      setContracts(data.items || []);
-    } catch {
-      setContracts([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
-    void fetchContracts();
-  }, [fetchContracts]);
+    let active = true;
+    contractsApi.list({ limit: 50 })
+      .then(({ data }) => {
+        if (active) {
+          setContracts(data.items || []);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setContracts([]);
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const filteredContracts = useMemo(() => {
     return contracts.filter((contract) => {

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Wallet, Receipt, CreditCard } from 'lucide-react';
 import type { UserRole } from '@/types';
@@ -25,21 +25,12 @@ function FinancesContent({ role, defaultTab = 'transactions' }: FinancesHubProps
   const pathname = usePathname();
 
   const tabParam = searchParams.get('tab') as FinanceTab | null;
-  const initialTab: FinanceTab = (tabParam && ['transactions', 'invoices', 'billing'].includes(tabParam))
+  const activeTab: FinanceTab = (tabParam && ['transactions', 'invoices', 'billing'].includes(tabParam))
     ? tabParam
     : defaultTab;
 
-  const [activeTab, setActiveTab] = useState<FinanceTab>(initialTab);
-
-  useEffect(() => {
-    if (tabParam && ['transactions', 'invoices', 'billing'].includes(tabParam) && tabParam !== activeTab) {
-      setActiveTab(tabParam);
-    }
-  }, [tabParam, activeTab]);
-
   const handleTabChange = (value: string) => {
     const nextTab = value as FinanceTab;
-    setActiveTab(nextTab);
     const params = new URLSearchParams(searchParams.toString());
     params.set('tab', nextTab);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
