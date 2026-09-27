@@ -1,48 +1,13 @@
-import { Suspense } from "react";
 import Navbar from "@/components/layout/navbar";
 import { FooterSection } from "@/components/layout/footer-section";
 import { LeaderboardContent } from "@/components/leaderboard/leaderboard-content";
-import { ListSkeleton } from "@/components/dashboard/skeletons";
 import { Trophy } from "lucide-react";
-import type { ReputationLeaderboardEntry } from "@/types";
 
 export const metadata = {
   title: "Leaderboard | FreelanceXchain",
   description:
     "Top rated freelancers and engineers ranked by on-chain reputation. Transparent, immutable scores from completed smart contract milestones.",
 };
-
-// Server-side data fetching
-async function fetchLeaderboard(): Promise<ReputationLeaderboardEntry[]> {
-  try {
-    const backendBase = (process.env.BACKEND_API_URL || 'https://api.freelancexchain.works').replace(/\/+$/, '');
-    const rawApiUrl = process.env.NEXT_PUBLIC_API_URL;
-    const apiUrl = rawApiUrl && rawApiUrl.startsWith('http') ? rawApiUrl : `${backendBase}/api`;
-
-    const headers: Record<string, string> = {};
-    if (process.env.INTERNAL_API_SECRET) {
-      headers['x-internal-secret'] = process.env.INTERNAL_API_SECRET;
-    }
-
-    const res = await fetch(`${apiUrl}/reputation/leaderboard`, {
-      headers,
-      // Revalidate every 5 minutes since leaderboard data changes
-      next: { revalidate: 300 },
-    });
-
-    if (!res.ok) {
-      throw new Error(`Failed to fetch leaderboard: ${res.status}`);
-    }
-
-    const data = await res.json();
-    return Array.isArray(data) ? data : (data.data || []);
-  } catch (error) {
-    if (process.env.NODE_ENV !== 'test') {
-      console.error("Error fetching leaderboard:", error);
-    }
-    return [];
-  }
-}
 
 // Header section component (static, no interactivity needed)
 function LeaderboardHeader() {
@@ -70,20 +35,16 @@ function LeaderboardHeader() {
   );
 }
 
-// Main page component (Server Component)
-export default async function LeaderboardPage() {
-  const leaderboard = await fetchLeaderboard();
-
+// Main page component — shell is static, data is fetched client-side
+// to avoid Cloudflare blocking Vercel build IPs during SSG.
+export default function LeaderboardPage() {
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <Navbar />
 
       <main className="grow pt-28 sm:pt-36 pb-20">
         <LeaderboardHeader />
-
-        <Suspense fallback={<ListSkeleton rows={8} label="Loading leaderboard" />}>
-          <LeaderboardContent leaderboard={leaderboard} />
-        </Suspense>
+        <LeaderboardContent />
       </main>
 
       <FooterSection />
