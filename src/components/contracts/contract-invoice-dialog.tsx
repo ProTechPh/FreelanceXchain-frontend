@@ -12,6 +12,7 @@ import {
   User,
   Wallet,
   Coins,
+  X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Contract, Milestone, Transaction, ContractFundInfo } from '@/types';
@@ -86,7 +87,7 @@ export function ContractInvoiceDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {/* Wide modal — !sm:max-w-none overrides the sm:max-w-sm default in DialogContent */}
-      <DialogContent className="flex !max-w-[min(56rem,calc(100vw-2rem))] w-full flex-col overflow-hidden p-0">
+      <DialogContent showCloseButton={false} className="flex !max-w-[min(56rem,calc(100vw-2rem))] w-full flex-col overflow-hidden p-0">
         {/* ── Controls (hidden when printing) ── */}
         <div className="no-print shrink-0 space-y-3 border-b border-border px-5 py-4 sm:px-7">
           <DialogHeader>
@@ -101,7 +102,7 @@ export function ContractInvoiceDialog({
                 </DialogDescription>
               </div>
 
-              {/* Action buttons */}
+              {/* Action buttons + close */}
               <div className="flex shrink-0 items-center gap-2">
                 <Button variant="outline" size="sm" onClick={handleCopyId}>
                   {copied ? <Check className="mr-1.5 size-3.5 text-success" /> : <Copy className="mr-1.5 size-3.5" />}
@@ -110,6 +111,15 @@ export function ContractInvoiceDialog({
                 <Button variant="default" size="sm" onClick={handlePrint} className="gap-1.5">
                   <Printer className="size-4" />
                   Print / Save PDF
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => onOpenChange(false)}
+                  className="size-8 shrink-0 text-muted-foreground hover:text-foreground"
+                  aria-label="Close"
+                >
+                  <X className="size-4" />
                 </Button>
               </div>
             </div>
