@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, FileText } from 'lucide-react';
 import type { Contract, UserRole } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,6 +19,7 @@ interface ContractOverviewCardProps {
   actionId: string | null;
   onFundContract: () => void;
   onOpenCancelModal: () => void;
+  onOpenInvoice?: () => void;
 }
 
 export function ContractOverviewCard({
@@ -31,6 +32,7 @@ export function ContractOverviewCard({
   actionId,
   onFundContract,
   onOpenCancelModal,
+  onOpenInvoice,
 }: ContractOverviewCardProps) {
   const verificationPath = `/dashboard/${role}/verification`;
 
@@ -94,6 +96,16 @@ export function ContractOverviewCard({
                 onClick={onOpenCancelModal}
               >
                 Cancel contract
+              </Button>
+            )}
+            {onOpenInvoice && (
+              <Button
+                variant="outline"
+                onClick={onOpenInvoice}
+                className="gap-1.5"
+              >
+                <FileText className="size-4 text-primary" />
+                View Invoice / SOW
               </Button>
             )}
           </div>

@@ -169,34 +169,30 @@ test('freelancer profile renders legacy experiences with unique React keys', asy
   expect(removedExperienceId).toBe('legacy-experience-3');
 });
 
-test('freelancer creates a custom skill and suggests it globally', async ({ page }) => {
+test('freelancer suggests a new skill for administrator review', async ({ page }) => {
   const user = { id: 'freelancer-1', email: 'dev@example.com', name: 'Developer', role: 'freelancer', walletAddress: '', kycStatus: 'approved', ...timestamps };
   const profile = { id: 'profile-2', userId: user.id, name: 'Developer', nationality: 'PH', bio: 'I build accessible web applications.', hourlyRate: 30, skills: [], experience: [], availability: 'available', ...timestamps };
-  let createBody: unknown;
-  let customSkills: unknown[] = [];
+  let suggestionBody: unknown;
   await authenticate(page, user);
   await page.route('**/api/freelancers/profile', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(profile) }));
   await page.route('**/api/skills', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ categories: [] }) }));
-  await page.route('**/api/skills/custom', async (route) => {
+  await page.route('**/api/skills/suggestions', async (route) => {
     if (route.request().method() === 'POST') {
-      createBody = route.request().postDataJSON();
-      customSkills = [{ id: 'custom-1', userId: user.id, ...(createBody as object), suggestedForGlobal: true, isApproved: false, ...timestamps }];
-      await route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify(customSkills[0]) });
+      suggestionBody = route.request().postDataJSON();
+      await route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ message: 'Skill suggestion submitted for administrator review.' }) });
       return;
     }
-    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(customSkills) });
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) });
   });
 
   await page.goto('/dashboard/freelancer/profile');
-  await page.locator('#custom-skill-name').fill('Prompt engineering');
-  await page.locator('#custom-skill-description').fill('Designs and evaluates reliable language-model prompts.');
-  await page.locator('#custom-skill-years').fill('2');
-  await page.getByLabel('Suggest for the global taxonomy').check();
-  await page.getByRole('button', { name: 'Add custom skill' }).click();
+  await page.getByRole('button', { name: "Can't find your skill? Suggest it" }).click();
+  await page.locator('#suggest-skill-name').fill('Prompt engineering');
+  await page.locator('#suggest-skill-description').fill('Designs and evaluates reliable language-model prompts.');
+  await page.getByRole('button', { name: 'Submit suggestion' }).click();
 
-  await expect(page.getByText('Custom skill created and suggested to administrators.')).toBeVisible();
-  await expect(page.getByText('Prompt engineering', { exact: true })).toBeVisible();
-  expect(createBody).toEqual({ name: 'Prompt engineering', description: 'Designs and evaluates reliable language-model prompts.', yearsOfExperience: 2, suggestForGlobal: true });
+  await expect(page.getByText('Skill suggestion sent to administrators for review.')).toBeVisible();
+  expect(suggestionBody).toEqual({ name: 'Prompt engineering', description: 'Designs and evaluates reliable language-model prompts.' });
 });
 
 test('employer sees an in-app unsaved-changes bar and can revert it', async ({ page }) => {

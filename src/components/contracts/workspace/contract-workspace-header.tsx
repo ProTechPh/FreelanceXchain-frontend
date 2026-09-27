@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, FileText } from 'lucide-react';
 import type { Contract, UserRole } from '@/types';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ui/status-badge';
@@ -19,9 +19,10 @@ type ParticipantRole = Extract<UserRole, 'employer' | 'freelancer'>;
 interface ContractWorkspaceHeaderProps {
   contract: Contract;
   role: ParticipantRole;
+  onOpenInvoice?: () => void;
 }
 
-export function ContractWorkspaceHeader({ contract, role }: ContractWorkspaceHeaderProps) {
+export function ContractWorkspaceHeader({ contract, role, onOpenInvoice }: ContractWorkspaceHeaderProps) {
   const contractTitle = contract.project?.title || contract.title || `Contract #${contract.id.slice(0, 8)}`;
 
   return (
@@ -54,7 +55,20 @@ export function ContractWorkspaceHeader({ contract, role }: ContractWorkspaceHea
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground">{contractTitle}</h1>
           <p className="mt-1 text-muted-foreground">Contract #{contract.id.slice(0, 8)}</p>
         </div>
-        <StatusBadge status={contract.status} domain="contract" />
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusBadge status={contract.status} domain="contract" />
+          {onOpenInvoice && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onOpenInvoice}
+              className="gap-1.5"
+            >
+              <FileText className="size-4 text-primary" />
+              Invoice & SOW
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );

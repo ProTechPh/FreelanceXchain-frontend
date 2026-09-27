@@ -729,3 +729,52 @@
   padding-right: env(safe-area-inset-right, 0px);
 }
 
+/* ---- Print Styles for Invoices and Statements of Work -------------------- */
+@media print {
+  nav,
+  header,
+  footer,
+  aside,
+  .no-print,
+  [data-slot="dialog-overlay"],
+  button:not(.print-keep) {
+    display: none !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #111827 !important;
+  }
+
+  [data-slot="dialog-content"] {
+    position: static !important;
+    max-width: 100% !important;
+    transform: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+  }
+
+  #printable-contract-document {
+    visibility: visible !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 1rem !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+    box-shadow: none !important;
+    border: 1px solid #e5e7eb !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  #printable-contract-document * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+

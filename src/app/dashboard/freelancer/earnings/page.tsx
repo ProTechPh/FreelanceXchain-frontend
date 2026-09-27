@@ -1,13 +1,5 @@
-import { MyPaymentsLedger } from '@/components/payments/my-payments-ledger';
-import { PaymentSummaryCards } from '@/components/payments/payment-summary-cards';
-import { ParticipantTransactions } from '@/components/transactions/participant-transactions';
+import { FinancesHub } from '@/components/finances/finances-hub';
 
 export default function FreelancerEarningsPage() {
-  return (
-    <div className="space-y-6">
-      <PaymentSummaryCards show="earnings" />
-      <MyPaymentsLedger role="freelancer" />
-      <ParticipantTransactions role="freelancer" />
-    </div>
-  );
+  return <FinancesHub role="freelancer" defaultTab="transactions" />;
 }

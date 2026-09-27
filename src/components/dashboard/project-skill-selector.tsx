@@ -5,6 +5,7 @@ import { Check, Plus, Search, X } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { SuggestSkillDialog } from '@/components/dashboard/suggest-skill-dialog';
 import type { ProjectSubmissionSkill } from '@/lib/project-submission';
 
 export interface ProjectSkillCategory {
@@ -46,6 +47,7 @@ export function ProjectSkillSelector({
 }: ProjectSkillSelectorProps) {
   const [activeCategory, setActiveCategory] = useState<string>(ALL);
   const [query, setQuery] = useState('');
+  const [suggestSkillOpen, setSuggestSkillOpen] = useState(false);
 
   const search = query.trim().toLowerCase();
   const selectedIds = useMemo(() => new Set(selected.map((skill) => skill.id)), [selected]);
@@ -219,7 +221,7 @@ export function ProjectSkillSelector({
                 No skills match &ldquo;{query.trim()}&rdquo;
                 {activeCategoryName ? ` in ${activeCategoryName}` : ''}.
               </p>
-              <div className="mt-2 flex justify-center gap-3">
+              <div className="mt-3 flex flex-wrap justify-center gap-3">
                 <button type="button" onClick={() => setQuery('')} className="font-medium text-primary hover:underline">
                   Clear search
                 </button>
@@ -228,6 +230,13 @@ export function ProjectSkillSelector({
                     Search all categories
                   </button>
                 )}
+                <button
+                  type="button"
+                  onClick={() => setSuggestSkillOpen(true)}
+                  className="font-medium text-primary hover:underline"
+                >
+                  Suggest missing skill
+                </button>
               </div>
             </div>
           ) : (
@@ -264,6 +273,11 @@ export function ProjectSkillSelector({
           )}
         </div>
       </div>
+      <SuggestSkillDialog
+        open={suggestSkillOpen}
+        onOpenChange={setSuggestSkillOpen}
+        initialName={query.trim()}
+      />
     </div>
   );
 }

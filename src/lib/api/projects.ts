@@ -136,6 +136,9 @@ export const skillsApi = {
 
   listSuggestions: () => api.get<SkillSuggestion[]>('/skills/suggestions'),
 
+  suggestSkill: (data: { name: string; description: string; categoryName?: string }) =>
+    api.post<{ message: string }>('/skills/suggestions', data),
+
   moderateSuggestion: (id: string, status: 'approved' | 'rejected') =>
     api.put<SkillSuggestion>(`/skills/suggestions/${id}/status`, { status }),
 };

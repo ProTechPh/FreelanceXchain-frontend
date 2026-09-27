@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { CircleDollarSign, FileCheck2, FolderOpen } from 'lucide-react';
+import { CircleDollarSign, FileCheck2, FolderOpen, FileText } from 'lucide-react';
 import { reportLoadFailure } from '@/lib/report-failure';
 import { contractsApi } from '@/lib/api';
 import { getContractDetailRoute } from '@/lib/contract-route';
@@ -17,9 +17,11 @@ import { Progress } from '@/components/ui/progress';
 import { formatAmount, formatDate } from '@/lib/format';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { DataFreshness, useDataFreshness } from '@/components/ui/data-freshness';
+import { ContractInvoiceDialog } from '@/components/contracts/contract-invoice-dialog';
 
 export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'freelancer'> }) {
   const [contracts, setContracts] = useState<Contract[]>([]);
+  const [selectedInvoiceContract, setSelectedInvoiceContract] = useState<Contract | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const fetchRef = useRef<() => void>(() => {});
@@ -171,18 +173,40 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
                     <div><p className="text-muted-foreground">Created</p><p className="font-semibold">{formatDate(contract.createdAt)}</p></div>
                   </div>
                   <Progress value={progress} label={`Contract progress: ${progress}%`} />
-                  <Button asChild variant="outline">
-                    <Link href={getContractDetailRoute(role, contract.id)}>View contract</Link>
-                  </Button>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Button asChild variant="outline">
+                      <Link href={getContractDetailRoute(role, contract.id)}>View contract</Link>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setSelectedInvoiceContract(contract)}
+                      className="gap-1.5 text-muted-foreground hover:text-foreground"
+                    >
+                      <FileText className="size-4 text-primary" />
+                      Invoice / SOW
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
-                        );
+            );
           })}
         </div>
       )}
         </>
       )}
       </div>
+
+      {selectedInvoiceContract && (
+        <ContractInvoiceDialog
+          open={Boolean(selectedInvoiceContract)}
+          onOpenChange={(open) => {
+            if (!open) setSelectedInvoiceContract(null);
+          }}
+          contract={selectedInvoiceContract}
+          milestones={selectedInvoiceContract.milestones ?? []}
+        />
+      )}
     </PullToRefresh>
   );
 }
