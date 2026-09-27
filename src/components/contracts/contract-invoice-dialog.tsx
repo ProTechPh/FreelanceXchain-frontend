@@ -81,6 +81,11 @@ export function ContractInvoiceDialog({
   };
 
   const handlePrint = () => {
+    const scrollContainer = document.getElementById('printable-contract-document')?.parentElement;
+    if (scrollContainer) {
+      scrollContainer.scrollTop = 0;
+      scrollContainer.scrollLeft = 0;
+    }
     window.print();
   };
 
@@ -89,7 +94,7 @@ export function ContractInvoiceDialog({
       {/* Wide modal — !sm:max-w-none overrides the sm:max-w-sm default in DialogContent */}
       <DialogContent
         showCloseButton={false}
-        className="flex !max-w-[min(56rem,calc(100vw-2rem))] w-full flex-col overflow-hidden p-0 print:!max-w-none print:overflow-visible print:border-none print:shadow-none print:p-0"
+        className="flex !max-w-[min(56rem,calc(100vw-2rem))] w-full flex-col overflow-hidden p-0 print:!max-w-none print:overflow-visible print:border-none print:shadow-none print:p-0 print:!translate-x-0 print:!translate-y-0 print:!translate-none print:!transform-none print:!static print:!top-0 print:!left-0"
       >
         {/* ── Controls (hidden when printing) ── */}
         <div className="no-print shrink-0 space-y-3 border-b border-border px-5 py-4 sm:px-7">

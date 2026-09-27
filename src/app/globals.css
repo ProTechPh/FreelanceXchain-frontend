@@ -765,6 +765,22 @@
     print-color-adjust: exact !important;
   }
 
+  /* Force light theme variables during print for crisp contrast on white paper */
+  :root,
+  .dark {
+    --background: 0 0% 100% !important;
+    --foreground: 222.2 84% 4.9% !important;
+    --card: 0 0% 100% !important;
+    --card-foreground: 222.2 84% 4.9% !important;
+    --popover: 0 0% 100% !important;
+    --popover-foreground: 222.2 84% 4.9% !important;
+    --muted: 210 40% 96.1% !important;
+    --muted-foreground: 215.4 16.3% 46.9% !important;
+    --border: 214.3 31.8% 91.4% !important;
+    --input: 214.3 31.8% 91.4% !important;
+    --ring: 222.2 84% 4.9% !important;
+  }
+
   /* Reset portal, backdrop, and dialog popup containers */
   [data-slot="dialog-portal"] {
     display: block !important;
@@ -773,6 +789,8 @@
     margin: 0 !important;
     padding: 0 !important;
     overflow: visible !important;
+    translate: none !important;
+    transform: none !important;
   }
 
   [data-slot="dialog-content"] {
@@ -780,7 +798,12 @@
     inset: auto !important;
     top: auto !important;
     left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
     transform: none !important;
+    translate: none !important;
+    --tw-translate-x: 0 !important;
+    --tw-translate-y: 0 !important;
     display: block !important;
     width: 100% !important;
     max-width: 100% !important;
@@ -800,6 +823,8 @@
     max-height: none !important;
     overflow: visible !important;
     height: auto !important;
+    translate: none !important;
+    transform: none !important;
   }
 
   /* The printable document itself */
@@ -807,6 +832,10 @@
     display: block !important;
     visibility: visible !important;
     position: static !important;
+    translate: none !important;
+    transform: none !important;
+    --tw-translate-x: 0 !important;
+    --tw-translate-y: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 !important;
