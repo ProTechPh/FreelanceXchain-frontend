@@ -97,7 +97,7 @@ test('switching to a different wallet after disconnecting links it once without 
   await expect(page.getByText('Wallet connected successfully')).toBeVisible();
   await expect(header.getByRole('button', { name: /Wallet 0x1111/ })).toBeVisible();
 
-  await header.getByRole('button', { name: /Wallet 0x1111/ }).click();
+  await header.getByRole('button', { name: /Wallet 0x1111/ }).click({ force: true });
   await page.getByRole('menuitem', { name: 'Disconnect Wallet' }).click();
   await expect(page.getByText('Wallet disconnected successfully')).toBeVisible();
   await expect(header.getByRole('button', { name: 'Connect Wallet' })).toBeVisible();

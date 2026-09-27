@@ -471,6 +471,7 @@ export function MessagesWorkspace() {
         <div className="flex-1 overflow-y-auto">
           {!selectedId && directRecipient && !filteredContacts.some((c) => c.id === directRecipient.id) && (
             <div
+              key="direct-recipient-preview"
               className="flex w-full items-center gap-3 p-4 text-left transition-colors bg-primary/10 border-r-2 border-primary"
             >
               <Avatar className="w-10 h-10">
@@ -492,7 +493,7 @@ export function MessagesWorkspace() {
           {filteredConversations.length === 0 &&
             filteredContacts.length === 0 &&
             !(!selectedId && directRecipient) && (
-              <div className="flex flex-col items-center justify-center gap-2 py-16 text-center px-4">
+              <div key="empty-conversations-placeholder" className="flex flex-col items-center justify-center gap-2 py-16 text-center px-4">
                 <MessageSquare className="w-8 h-8 text-muted-foreground" />
                 <p className="text-sm text-muted-foreground">
                   {conversations.length === 0 && conversationlessContacts.length === 0
