@@ -58,24 +58,26 @@ export function ContractInvoiceDialog({
   const [copied, setCopied] = useState(false);
 
   const currentUser = useAuthStore((s) => s.user);
-  const [detailContract, setDetailContract] = useState<Contract>(contract);
+  const [extraContract, setExtraContract] = useState<Contract | null>(null);
 
   useEffect(() => {
-    setDetailContract(contract);
+    let active = true;
     // Fetch full contract with relations if relations or names are missing
     if (!contract.employer?.name || !contract.freelancer?.name) {
       contractsApi.get(contract.id)
         .then(({ data }) => {
-          if (data) {
-            setDetailContract((prev) => ({
-              ...prev,
-              ...data,
-            }));
+          if (active && data) {
+            setExtraContract(data);
           }
         })
         .catch(() => {});
     }
-  }, [contract]);
+    return () => {
+      active = false;
+    };
+  }, [contract.id, contract.employer?.name, contract.freelancer?.name]);
+
+  const detailContract = extraContract?.id === contract.id ? { ...contract, ...extraContract } : contract;
 
   const contractTitle = detailContract.project?.title || detailContract.title || `Contract #${detailContract.id.slice(0, 8)}`;
   const invoiceNumber = `INV-${detailContract.id.slice(0, 8).toUpperCase()}`;
@@ -97,7 +99,7 @@ export function ContractInvoiceDialog({
 
   const clientWallet =
     fundInfo?.employerWallet ||
-    (detailContract.employer as any)?.walletAddress ||
+    detailContract.employer?.walletAddress ||
     (isCurrentUserEmployer ? currentUser?.walletAddress : null) ||
     '';
 
@@ -113,7 +115,7 @@ export function ContractInvoiceDialog({
 
   const freelancerWallet =
     fundInfo?.freelancerWallet ||
-    (detailContract.freelancer as any)?.walletAddress ||
+    detailContract.freelancer?.walletAddress ||
     (isCurrentUserFreelancer ? currentUser?.walletAddress : null) ||
     '';
 

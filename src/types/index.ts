@@ -187,6 +187,7 @@ export interface FreelancerProfile {
   skills: SkillReference[];
   experience: WorkExperience[];
   availability: Availability;
+  walletAddress?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -199,6 +200,7 @@ export interface EmployerProfile {
   companyName: string;
   description: string;
   industry: string;
+  walletAddress?: string;
   createdAt: string;
   updatedAt: string;
 }
