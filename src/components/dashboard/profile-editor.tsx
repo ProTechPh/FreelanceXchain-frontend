@@ -1,7 +1,8 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Briefcase, Pencil, Plus, Save, Trash2, UserRound } from 'lucide-react';
+import Link from 'next/link';
+import { Briefcase, ExternalLink, Pencil, Plus, Save, Share2, Trash2, UserRound } from 'lucide-react';
 import { toast } from 'sonner';
 import { skillsApi, freelancersApi } from '@/lib/api';
 import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning';
@@ -19,6 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
 import { Field } from '@/components/ui/field';
 import { UnsavedChangesBar, UnsavedChangesDialog } from '@/components/ui/unsaved-changes';
+import { SuggestSkillDialog } from '@/components/dashboard/suggest-skill-dialog';
 import { formatDate, formatDateTime } from '@/lib/format';
 
 type ProfileRole = Extract<UserRole, 'employer' | 'freelancer'>;
@@ -54,6 +56,7 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
   const [editingExperienceId, setEditingExperienceId] = useState<string | null>(null);
   const [showExperienceForm, setShowExperienceForm] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
+  const [suggestSkillOpen, setSuggestSkillOpen] = useState(false);
 
   useEffect(() => {
     if (role !== 'freelancer') return;
@@ -184,10 +187,37 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
           <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Profile</h1>
           <p className="text-muted-foreground">Keep the information shown to marketplace participants up to date.</p>
         </div>
-        <Button type="button" onClick={() => void saveProfile()} loading={saving} loadingText="Saving…" disabled={!isDirty}>
-          <Save className="size-4" aria-hidden="true" />
-          Save profile
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          {role === 'freelancer' && user?.id && (
+            <>
+              <Button asChild variant="outline" size="sm">
+                <Link href={`/freelancers/${user.id}`} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="mr-1.5 size-3.5" aria-hidden="true" />
+                  View public profile
+                </Link>
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    const url = `${window.location.origin}/freelancers/${user.id}`;
+                    void navigator.clipboard.writeText(url);
+                    toast.success('Public profile link copied to clipboard!');
+                  }
+                }}
+              >
+                <Share2 className="mr-1.5 size-3.5" aria-hidden="true" />
+                Share link
+              </Button>
+            </>
+          )}
+          <Button type="button" onClick={() => void saveProfile()} loading={saving} loadingText="Saving…" disabled={!isDirty}>
+            <Save className="size-4" aria-hidden="true" />
+            Save profile
+          </Button>
+        </div>
       </div>
 
       <Card>
@@ -316,6 +346,20 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
                     Add
                   </Button>
                 </div>
+                <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-3 text-xs text-muted-foreground">
+                  <span>Skills are curated by administrators to ensure accurate job matching.</span>
+                  <button
+                    type="button"
+                    onClick={() => setSuggestSkillOpen(true)}
+                    className="font-medium text-primary underline underline-offset-4 hover:opacity-85 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  >
+                    Can&apos;t find your skill? Suggest it
+                  </button>
+                </div>
+                <SuggestSkillDialog
+                  open={suggestSkillOpen}
+                  onOpenChange={setSuggestSkillOpen}
+                />
               </CardContent>
             </Card>
           )}

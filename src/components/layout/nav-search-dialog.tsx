@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Zap as Lightning, Users, Newspaper } from 'lucide-react';
+import { Zap as Lightning, Users, Trophy } from 'lucide-react';
 import {
   CommandDialog,
   CommandEmpty,
@@ -64,10 +64,10 @@ export function NavSearchDialog({ open, onOpenChange }: NavSearchDialogProps) {
               Find Talent
             </Link>
           </CommandItem>
-          <CommandItem asChild value="crypto news">
-            <Link href="/news" onClick={() => onOpenChange(false)}>
-              <Newspaper className="size-4" strokeWidth={1.5} />
-              Crypto News
+          <CommandItem asChild value="leaderboard">
+            <Link href="/leaderboard" onClick={() => onOpenChange(false)}>
+              <Trophy className="size-4" strokeWidth={1.5} />
+              Leaderboard
             </Link>
           </CommandItem>
         </CommandGroup>

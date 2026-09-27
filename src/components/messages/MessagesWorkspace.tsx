@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
@@ -24,7 +24,7 @@ import { useAuthStore } from '@/stores/authStore';
 import type { ConversationWithDetails, Message, Project } from '@/types';
 import { toast } from 'sonner';
 import { reportFailure, reportLoadFailure } from '@/lib/report-failure';
-import { Send, Search, Check, CheckCheck, MessageSquare, ExternalLink, FileText, Paperclip, X, ArrowLeft, Briefcase, ChevronUp, ChevronDown, Copy } from 'lucide-react';
+import { Send, Search, Check, CheckCheck, MessageSquare, ExternalLink, FileText, Paperclip, X, ArrowLeft, Briefcase, ChevronUp, ChevronDown, Copy, ShieldAlert } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MessagesWorkspaceSkeleton, MessageThreadSkeleton } from '@/components/messages/messages-workspace-skeleton';
 
@@ -40,6 +40,12 @@ function initials(name: string): string {
 function relativeTime(iso: string | null | undefined): string {
   if (!iso) return 'recently';
   return formatRelativeTime(iso);
+}
+
+const OFF_PLATFORM_PATTERN = /\b(telegram|t\.me|whatsapp|wa\.me|paypal|cashapp|venmo|pay outside|direct pay|send to wallet)\b|([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/i;
+
+function detectsOffPlatformContact(text: string): boolean {
+  return OFF_PLATFORM_PATTERN.test(text);
 }
 
 export function MessagesWorkspace() {
@@ -341,6 +347,7 @@ export function MessagesWorkspace() {
 
   const chatKey = selectedId ?? (directRecipient ? `direct:${directRecipient.id}` : null);
   const newMessage = chatKey ? drafts[chatKey] ?? '' : '';
+  const hasOffPlatformRisk = useMemo(() => detectsOffPlatformContact(newMessage), [newMessage]);
   const setNewMessage = useCallback(
     (value: string | ((prev: string) => string)) => {
       if (!chatKey) return;
@@ -464,6 +471,7 @@ export function MessagesWorkspace() {
         <div className="flex-1 overflow-y-auto">
           {!selectedId && directRecipient && !filteredContacts.some((c) => c.id === directRecipient.id) && (
             <div
+              key="direct-recipient-preview"
               className="flex w-full items-center gap-3 p-4 text-left transition-colors bg-primary/10 border-r-2 border-primary"
             >
               <Avatar className="w-10 h-10">
@@ -485,7 +493,7 @@ export function MessagesWorkspace() {
           {filteredConversations.length === 0 &&
             filteredContacts.length === 0 &&
             !(!selectedId && directRecipient) && (
-              <div className="flex flex-col items-center justify-center gap-2 py-16 text-center px-4">
+              <div key="empty-conversations-placeholder" className="flex flex-col items-center justify-center gap-2 py-16 text-center px-4">
                 <MessageSquare className="w-8 h-8 text-muted-foreground" />
                 <p className="text-sm text-muted-foreground">
                   {conversations.length === 0 && conversationlessContacts.length === 0
@@ -740,6 +748,14 @@ export function MessagesWorkspace() {
             {/* Message Input */}
             <div className="px-2.5 py-2 sm:p-4 border-t border-border bg-card shrink-0">
               {messageFiles.length > 0 && <ul className="mb-2.5 flex flex-wrap gap-2" aria-label="Selected message attachments">{messageFiles.map((file) => <li key={`${file.name}-${file.size}-${file.lastModified}`} className="flex max-w-60 items-center gap-2 rounded-lg border border-border px-2 py-1 text-xs"><Paperclip className="h-3.5 w-3.5 shrink-0" /><span className="min-w-0 truncate">{file.name}</span><span className="shrink-0 text-muted-foreground">{formatFileSize(file.size)}</span><button type="button" aria-label={`Remove ${file.name}`} className="p-1 -m-0.5 rounded-sm hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring inline-flex items-center justify-center touch-manipulation" onClick={() => setMessageFiles((current) => current.filter((candidate) => candidate !== file))}><X className="h-3.5 w-3.5" /></button></li>)}</ul>}
+              {hasOffPlatformRisk && (
+                <div className="mb-2.5 flex items-start gap-2 rounded-md bg-warning/10 border border-warning/30 px-3 py-2 text-xs text-warning" role="alert">
+                  <ShieldAlert className="size-4 shrink-0 text-warning mt-0.5" aria-hidden="true" />
+                  <span>
+                    <strong>Safety notice:</strong> Sharing off-platform contact or payment details waives smart contract escrow protection and dispute assistance.
+                  </span>
+                </div>
+              )}
               <div className="flex items-center gap-2 sm:gap-3">
                 <label htmlFor="message-attachments" className="inline-flex size-9 sm:size-10 shrink-0 cursor-pointer items-center justify-center rounded-md border border-border hover:bg-accent focus-within:ring-2 focus-within:ring-ring touch-manipulation" aria-label="Attach files">
                   <Paperclip className="h-4 w-4" />

@@ -73,7 +73,7 @@ export default function Navbar({
     { title: "FAQ", url: "/#faq" },
     { title: "Projects", url: "/projects" },
     { title: "Talent", url: "/freelancers" },
-    { title: "Crypto News", url: "/news" },
+    { title: "Leaderboard", url: "/leaderboard" },
   ],
   auth = {
     login: { text: "Sign in", url: "/login" },

@@ -26,6 +26,7 @@ import { ContractReviewCard } from './workspace/contract-review-card';
 import { MilestoneListCard } from './workspace/milestone-list-card';
 import { ContractHistoryCard } from './workspace/contract-history-card';
 import { ContractWorkspaceDialogs } from './workspace/contract-workspace-dialogs';
+import { ContractInvoiceDialog } from '@/components/contracts/contract-invoice-dialog';
 
 type ParticipantRole = Extract<UserRole, 'employer' | 'freelancer'>;
 
@@ -70,6 +71,7 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
   const [review, setReview] = useState<ReviewDraft>(initialReview);
   const [previewAttachment, setPreviewAttachment] = useState<AttachmentPreviewTarget | null>(null);
   const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
+  const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
   const [approvingMilestone, setApprovingMilestone] = useState<Milestone | null>(null);
   const [localReviewEligibility, setLocalReviewEligibility] = useState(reviewEligibility);
 
@@ -171,7 +173,11 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
-      <ContractWorkspaceHeader contract={contract} role={role} />
+      <ContractWorkspaceHeader
+        contract={contract}
+        role={role}
+        onOpenInvoice={() => setInvoiceModalOpen(true)}
+      />
 
       <ContractOverviewCard
         contract={contract}
@@ -183,6 +189,7 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
         actionId={actionId}
         onFundContract={() => void handleFundContract()}
         onOpenCancelModal={() => setConfirmCancelOpen(true)}
+        onOpenInvoice={() => setInvoiceModalOpen(true)}
       />
 
       <ContractFundingCards
@@ -283,6 +290,15 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
             );
           }
         }}
+      />
+
+      <ContractInvoiceDialog
+        open={invoiceModalOpen}
+        onOpenChange={setInvoiceModalOpen}
+        contract={contract}
+        milestones={milestones}
+        transactions={transactions}
+        fundInfo={fundInfo}
       />
     </div>
   );

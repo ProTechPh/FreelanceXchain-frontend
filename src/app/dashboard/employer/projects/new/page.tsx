@@ -13,7 +13,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { matchingApi, projectsApi, skillsApi } from '@/lib/api';
 import { UpgradeButton } from '@/components/billing/upgrade-button';
 import { usePlan } from '@/hooks/use-plan';
-import { useRateApp } from '@/components/feedback/rate-app-provider';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { formatFileSize } from '@/lib/attachment-presentation';
 import { formatAmount, formatDate } from '@/lib/format';
@@ -42,7 +41,6 @@ const steps = [
 
 export default function CreateProjectPage() {
   const router = useRouter();
-  const { requestRatingPrompt } = useRateApp();
   const [currentStep, setCurrentStep] = useState(1);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -165,8 +163,6 @@ export default function CreateProjectPage() {
           ? `Added ${suggestions.length} suggested skill${suggestions.length === 1 ? '' : 's'}.`
           : 'No further skills found in the description.',
       );
-      // Only worth asking when the AI actually produced something to judge.
-      if (suggestions.length > 0) requestRatingPrompt('ai_skill_extraction');
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Unable to suggest skills right now.'));
     } finally {

@@ -32,8 +32,7 @@ const footerLinks: FooterSection[] = [
 			{ title: 'Compare Platforms', href: '/#compare' },
 			{ title: 'Verified Reviews', href: '/#reviews' },
 			{ title: 'FAQs & Help', href: '/#faq' },
-			{ title: 'Crypto News', href: '/news' },
-			{ title: 'Tutorials', href: '/tutorials' },
+			{ title: 'Platform Guides', href: '/tutorials' },
 		],
 	},
 	{

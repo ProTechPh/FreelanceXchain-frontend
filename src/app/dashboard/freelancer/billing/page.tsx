@@ -1,5 +1,5 @@
-import { BillingSettings } from '@/components/billing/billing-settings';
+import { FinancesHub } from '@/components/finances/finances-hub';
 
 export default function FreelancerBillingPage() {
-  return <BillingSettings />;
+  return <FinancesHub role="freelancer" defaultTab="billing" />;
 }
