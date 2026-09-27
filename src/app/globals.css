@@ -731,50 +731,107 @@
 
 /* ---- Print Styles for Invoices and Statements of Work -------------------- */
 @media print {
+  /* Hide everything that isn't the printable document */
+  body > *:not([data-slot="dialog-overlay"]),
   nav,
   header,
   footer,
   aside,
   .no-print,
   [data-slot="dialog-overlay"],
+  [data-slot="dialog-close"],
   button:not(.print-keep) {
     display: none !important;
   }
 
-  body {
-    background: #ffffff !important;
-    color: #111827 !important;
+  /* Page setup — A4 portrait with comfortable margins */
+  @page {
+    size: A4 portrait;
+    margin: 18mm 15mm 18mm 15mm;
   }
 
+  html,
+  body {
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+    font-size: 11pt !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Collapse the dialog chrome so it doesn't contribute height/width */
   [data-slot="dialog-content"] {
-    position: static !important;
+    all: unset !important;
+    display: block !important;
+    width: 100% !important;
     max-width: 100% !important;
-    transform: none !important;
-    border: none !important;
-    box-shadow: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
+    overflow: visible !important;
     background: transparent !important;
   }
 
+  /* The document itself */
   #printable-contract-document {
+    display: block !important;
     visibility: visible !important;
     position: static !important;
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 !important;
-    padding: 1rem !important;
+    padding: 0 !important;
     background: #ffffff !important;
     color: #111827 !important;
     box-shadow: none !important;
-    border: 1px solid #e5e7eb !important;
+    border: none !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    overflow: visible !important;
   }
 
+  /* Force colour fidelity on every child */
   #printable-contract-document * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Prevent orphan rows in the milestone table */
+  #printable-contract-document table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    page-break-inside: auto !important;
+    min-width: unset !important;
+  }
+
+  #printable-contract-document tr {
+    page-break-inside: avoid !important;
+  }
+
+  /* Prevent page break inside key sections */
+  #printable-contract-document .space-y-3,
+  #printable-contract-document .rounded-lg {
+    page-break-inside: avoid !important;
+  }
+
+  /* Always break before the legal footer if near bottom of page */
+  #printable-contract-document .border-t.pt-4 {
+    page-break-before: auto !important;
+  }
+
+  /* Wallet / mono strings: wrap instead of overflow */
+  #printable-contract-document .break-all,
+  #printable-contract-document .font-mono {
+    word-break: break-all !important;
+    overflow-wrap: break-word !important;
+  }
+
+  /* Financial summary full-width on print */
+  #printable-contract-document .max-w-xs {
+    max-width: 18rem !important;
   }
 }
+
 
