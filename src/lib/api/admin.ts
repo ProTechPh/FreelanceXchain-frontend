@@ -82,8 +82,8 @@ export const auditLogsApi = {
   getFailed: (limit?: number) =>
     api.get<{ logs: AuditLogEntry[] }>('/audit-logs/failed', { params: limit ? { limit } : undefined }),
 
-  getByDateRange: (startDate: string, endDate: string) =>
-    api.get<{ logs: AuditLogEntry[] }>('/audit-logs/range', { params: { startDate, endDate } }),
+  getByDateRange: (startDate: string, endDate: string, limit?: number) =>
+    api.get<{ logs: AuditLogEntry[] }>('/audit-logs/range', { params: { startDate, endDate, ...(limit ? { limit } : {}) } }),
 
   getSystemReport: (startDate: string, endDate: string) =>
     api.get('/audit-logs/report/system', { params: { startDate, endDate } }),

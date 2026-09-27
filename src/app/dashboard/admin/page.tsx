@@ -50,7 +50,7 @@ export default function AdminDashboard() {
       adminApi.getStats(),
       canViewDisputes ? adminApi.getDisputeManagement('open') : Promise.resolve({ data: { disputes: [] as Dispute[], total: 0 } }),
       canViewKyc ? kycApi.adminGetPending() : Promise.resolve({ data: [] as unknown[] }),
-      canViewAudit ? auditLogsApi.getByDateRange(yesterday.toISOString(), now.toISOString()) : Promise.resolve({ data: { logs: [] as AuditLogEntry[] } }),
+      canViewAudit ? auditLogsApi.getByDateRange(yesterday.toISOString(), now.toISOString(), 10) : Promise.resolve({ data: { logs: [] as AuditLogEntry[] } }),
       canViewHealth ? adminApi.getSystemHealth() : Promise.resolve({ data: null as SystemHealth | null }),
     ]);
 

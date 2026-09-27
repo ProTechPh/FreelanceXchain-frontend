@@ -298,11 +298,11 @@ export function MessagesWorkspace() {
   }, [loadMessages]);
 
   useEffect(() => {
-    const loadInbox = async () => {
-      await Promise.all([loadConversations(true), loadAcceptedContacts()]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadConversations(true).finally(() => {
       setLoadingConversations(false);
-    };
-    loadInbox();
+    });
+    void loadAcceptedContacts();
   }, [loadAcceptedContacts, loadConversations]);
 
   useEffect(() => {
