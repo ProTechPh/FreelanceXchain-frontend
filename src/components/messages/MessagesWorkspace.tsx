@@ -298,6 +298,7 @@ export function MessagesWorkspace() {
   }, [loadMessages]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadConversations(true).finally(() => {
       setLoadingConversations(false);
     });
