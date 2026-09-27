@@ -104,14 +104,14 @@ const nextConfig: NextConfig = {
               "default-src 'self'",
               // 'unsafe-eval' only permitted in development for Next.js Fast Refresh / source maps
               process.env.NODE_ENV === 'development'
-                ? "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://challenges.cloudflare.com"
-                : "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com",
+                ? "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://challenges.cloudflare.com https://static.cloudflareinsights.com"
+                : "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://static.cloudflareinsights.com",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' blob: data: https://*.appwrite.io https://cloud.appwrite.io https://cdn.worldvectorlogo.com https://upload.wikimedia.org https://images.unsplash.com https://avatars.githubusercontent.com https://lh3.googleusercontent.com https://*.didit.me https://*.s3.amazonaws.com https://api.microlink.io",
               "font-src 'self' data:",
               process.env.NODE_ENV === 'development'
-                ? `connect-src 'self' https://*.appwrite.io https://cloud.appwrite.io https://challenges.cloudflare.com https://stats.uptimerobot.com https://*.didit.me https://verification.didit.me https://verify.didit.me http://localhost:* http://127.0.0.1:* wss: ws: ${metaMaskConnectSrc}`
-                : `connect-src 'self' https://*.appwrite.io https://cloud.appwrite.io https://challenges.cloudflare.com https://stats.uptimerobot.com https://*.didit.me https://verification.didit.me https://verify.didit.me ${metaMaskConnectSrc}`,
+                ? `connect-src 'self' https://*.appwrite.io https://cloud.appwrite.io https://challenges.cloudflare.com https://cloudflareinsights.com https://stats.uptimerobot.com https://*.didit.me https://verification.didit.me https://verify.didit.me http://localhost:* http://127.0.0.1:* wss: ws: ${metaMaskConnectSrc}`
+                : `connect-src 'self' https://*.appwrite.io https://cloud.appwrite.io https://challenges.cloudflare.com https://cloudflareinsights.com https://stats.uptimerobot.com https://*.didit.me https://verification.didit.me https://verify.didit.me ${metaMaskConnectSrc}`,
               "frame-src 'self' https://challenges.cloudflare.com https://verify.didit.me https://verification.didit.me https://*.didit.me",
               "object-src 'none'",
               "base-uri 'self'",
