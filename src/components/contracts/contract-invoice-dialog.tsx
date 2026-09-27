@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   FileText,
   Printer,
@@ -26,6 +26,8 @@ import {
 } from '@/components/ui/dialog';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { formatAmount, formatDate } from '@/lib/format';
+import { useAuthStore } from '@/stores/authStore';
+import { contractsApi } from '@/lib/api';
 
 export interface ContractInvoiceDialogProps {
   open: boolean;
@@ -55,23 +57,69 @@ export function ContractInvoiceDialog({
   const [docMode, setDocMode] = useState<DocumentMode>('combined');
   const [copied, setCopied] = useState(false);
 
-  const contractTitle = contract.project?.title || contract.title || `Contract #${contract.id.slice(0, 8)}`;
-  const invoiceNumber = `INV-${contract.id.slice(0, 8).toUpperCase()}`;
-  const sowNumber = `SOW-${contract.id.slice(0, 8).toUpperCase()}`;
+  const currentUser = useAuthStore((s) => s.user);
+  const [detailContract, setDetailContract] = useState<Contract>(contract);
 
-  const clientName = contract.employer?.name || contract.employer?.companyName || 'Employer / Client';
-  const clientOrg = contract.employer?.companyName || contract.employer?.industry || 'Client Organization';
-  const clientWallet = fundInfo?.employerWallet || 'Connected Client Wallet';
+  useEffect(() => {
+    setDetailContract(contract);
+    // Fetch full contract with relations if relations or names are missing
+    if (!contract.employer?.name || !contract.freelancer?.name) {
+      contractsApi.get(contract.id)
+        .then(({ data }) => {
+          if (data) {
+            setDetailContract((prev) => ({
+              ...prev,
+              ...data,
+            }));
+          }
+        })
+        .catch(() => {});
+    }
+  }, [contract]);
 
-  const freelancerName = contract.freelancer?.name || 'Freelancer / Contractor';
-  const freelancerTitle = contract.freelancer?.bio
-    ? `${contract.freelancer.bio.slice(0, 45)}…`
-    : 'Web3 Independent Specialist';
-  const freelancerWallet = fundInfo?.freelancerWallet || 'Connected Contractor Wallet';
+  const contractTitle = detailContract.project?.title || detailContract.title || `Contract #${detailContract.id.slice(0, 8)}`;
+  const invoiceNumber = `INV-${detailContract.id.slice(0, 8).toUpperCase()}`;
+  const sowNumber = `SOW-${detailContract.id.slice(0, 8).toUpperCase()}`;
+
+  const isCurrentUserEmployer = currentUser?.id === detailContract.employerId;
+  const isCurrentUserFreelancer = currentUser?.id === detailContract.freelancerId;
+
+  const clientName =
+    detailContract.employer?.name ||
+    (isCurrentUserEmployer ? currentUser?.name : null) ||
+    detailContract.employer?.companyName ||
+    'Client';
+
+  const clientOrg =
+    detailContract.employer?.companyName ||
+    detailContract.employer?.industry ||
+    '';
+
+  const clientWallet =
+    fundInfo?.employerWallet ||
+    (detailContract.employer as any)?.walletAddress ||
+    (isCurrentUserEmployer ? currentUser?.walletAddress : null) ||
+    '';
+
+  const freelancerName =
+    detailContract.freelancer?.name ||
+    (isCurrentUserFreelancer ? currentUser?.name : null) ||
+    'Contractor';
+
+  const freelancerTitle =
+    detailContract.freelancer?.bio
+      ? `${detailContract.freelancer.bio.slice(0, 45)}…`
+      : 'Web3 Specialist';
+
+  const freelancerWallet =
+    fundInfo?.freelancerWallet ||
+    (detailContract.freelancer as any)?.walletAddress ||
+    (isCurrentUserFreelancer ? currentUser?.walletAddress : null) ||
+    '';
 
   const completedMilestones = milestones.filter((m) => ['approved', 'completed'].includes(m.status));
   const releasedTotal = completedMilestones.reduce((sum, m) => sum + (m.amount || 0), 0);
-  const remainingTotal = Math.max(0, contract.totalAmount - releasedTotal);
+  const remainingTotal = Math.max(0, detailContract.totalAmount - releasedTotal);
 
   const handleCopyId = () => {
     void navigator.clipboard.writeText(invoiceNumber);
@@ -205,15 +253,20 @@ export function ContractInvoiceDialog({
                   <Building className="size-3.5 shrink-0" />
                   Client / Billed To
                 </div>
-                <p className="text-sm font-bold text-foreground">{clientName}</p>
-                <p className="text-muted-foreground">{clientOrg}</p>
-                <div className="flex items-center gap-1 text-muted-foreground">
-                  <User className="size-3 shrink-0" />
-                  <span className="font-mono">ID: {contract.employerId.slice(0, 14)}…</span>
+                <div>
+                  <p className="text-sm font-bold text-foreground">{clientName}</p>
+                  {clientOrg && clientOrg !== clientName && (
+                    <p className="text-xs text-muted-foreground mt-0.5">{clientOrg}</p>
+                  )}
                 </div>
-                <div className="flex items-start gap-1 text-muted-foreground">
-                  <Wallet className="mt-0.5 size-3 shrink-0" />
-                  <span className="break-all font-mono">{truncateAddr(clientWallet)}</span>
+                <div className="flex items-start gap-1.5 pt-1 text-muted-foreground">
+                  <Wallet className="mt-0.5 size-3.5 shrink-0 text-primary" />
+                  <div className="min-w-0 flex-1">
+                    <span className="font-semibold text-foreground">Wallet: </span>
+                    <span className="break-all font-mono text-xs text-foreground">
+                      {clientWallet ? truncateAddr(clientWallet, 10, 8) : 'Not connected'}
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -223,15 +276,20 @@ export function ContractInvoiceDialog({
                   <User className="size-3.5 shrink-0" />
                   Contractor / Service Provider
                 </div>
-                <p className="text-sm font-bold text-foreground">{freelancerName}</p>
-                <p className="text-muted-foreground">{freelancerTitle}</p>
-                <div className="flex items-center gap-1 text-muted-foreground">
-                  <User className="size-3 shrink-0" />
-                  <span className="font-mono">ID: {contract.freelancerId.slice(0, 14)}…</span>
+                <div>
+                  <p className="text-sm font-bold text-foreground">{freelancerName}</p>
+                  {freelancerTitle && (
+                    <p className="text-xs text-muted-foreground mt-0.5">{freelancerTitle}</p>
+                  )}
                 </div>
-                <div className="flex items-start gap-1 text-muted-foreground">
-                  <Wallet className="mt-0.5 size-3 shrink-0" />
-                  <span className="break-all font-mono">{truncateAddr(freelancerWallet)}</span>
+                <div className="flex items-start gap-1.5 pt-1 text-muted-foreground">
+                  <Wallet className="mt-0.5 size-3.5 shrink-0 text-primary" />
+                  <div className="min-w-0 flex-1">
+                    <span className="font-semibold text-foreground">Wallet: </span>
+                    <span className="break-all font-mono text-xs text-foreground">
+                      {freelancerWallet ? truncateAddr(freelancerWallet, 10, 8) : 'Not connected'}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
