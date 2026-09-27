@@ -17,6 +17,7 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [oauthError, setOauthError] = useState<string | null>(null);
+  const [lockoutError, setLockoutError] = useState<string | null>(null);
   const [oauthLoading, setOauthLoading] = useState<'google' | 'github' | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const turnstileRef = useRef<TurnstileWidgetRef>(null);
@@ -70,6 +71,7 @@ export default function LoginPage() {
 
     setIsSigningIn(true);
     setOauthError(null); // Clear any OAuth error when trying email sign-in
+    setLockoutError(null); // Clear any previous lockout error
 
     try {
       const result = await login(email, password, turnstileToken || undefined);
@@ -85,11 +87,37 @@ export default function LoginPage() {
     } catch (error: unknown) {
       turnstileRef.current?.reset();
       setTurnstileToken(null);
-      const err = error as { response?: { data?: { error?: { code?: string } } }; code?: string } | undefined;
+      const err = error as {
+        response?: {
+          status?: number;
+          data?: { error?: { code?: string; message?: string } };
+        };
+        code?: string;
+      } | undefined;
+      const statusCode = err?.response?.status;
       const errCode = err?.response?.data?.error?.code || err?.code;
-      const msg = getApiErrorMessage(error, 'Couldn\'t sign in. Check your email and password, then try again.');
+      const serverMessage = err?.response?.data?.error?.message;
+      const msg = getApiErrorMessage(error, "Couldn't sign in. Check your email and password, then try again.");
 
-      if (errCode === 'EMAIL_NOT_VERIFIED' || msg.toLowerCase().includes('verify your email')) {
+      if (
+        errCode === 'ACCOUNT_LOCKED' ||
+        statusCode === 423 ||
+        msg.toLowerCase().includes('temporarily locked') ||
+        (serverMessage && serverMessage.toLowerCase().includes('locked'))
+      ) {
+        const lockMsg =
+          serverMessage ||
+          'Your account has been temporarily locked due to repeated login failures. Please try again after 15 minutes or reset your password.';
+        setLockoutError(lockMsg);
+        toast.error('Account Temporarily Locked', {
+          description: lockMsg,
+          duration: 10000,
+          action: {
+            label: 'Reset password',
+            onClick: () => router.push('/forgot-password'),
+          },
+        });
+      } else if (errCode === 'EMAIL_NOT_VERIFIED' || msg.toLowerCase().includes('verify your email')) {
         toast.error('Email Verification Required', {
           description: msg,
           duration: 10000,
@@ -102,7 +130,7 @@ export default function LoginPage() {
                   description: 'Please check your email inbox.',
                 });
               } catch {
-                toast.error('Couldn\'t resend the verification email. Try again in a moment.');
+                toast.error("Couldn't resend the verification email. Try again in a moment.");
               }
             },
           },
@@ -128,6 +156,7 @@ export default function LoginPage() {
         onCreateAccount={() => router.push('/register')}
         onPasswordlessSignIn={() => router.push('/passwordless')}
         oauthError={oauthError}
+        lockoutError={lockoutError}
         turnstileSlot={
           <TurnstileWidget
             ref={turnstileRef}

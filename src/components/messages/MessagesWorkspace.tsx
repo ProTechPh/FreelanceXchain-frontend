@@ -298,11 +298,10 @@ export function MessagesWorkspace() {
   }, [loadMessages]);
 
   useEffect(() => {
-    const loadInbox = async () => {
-      await Promise.all([loadConversations(true), loadAcceptedContacts()]);
+    void loadConversations(true).finally(() => {
       setLoadingConversations(false);
-    };
-    loadInbox();
+    });
+    void loadAcceptedContacts();
   }, [loadAcceptedContacts, loadConversations]);
 
   useEffect(() => {

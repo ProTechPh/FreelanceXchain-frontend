@@ -49,6 +49,7 @@ interface SignInPageProps {
   onCreateAccount?: () => void;
   onPasswordlessSignIn?: () => void;
   oauthError?: string | null;
+  lockoutError?: string | null;
   turnstileSlot?: React.ReactNode;
 }
 
@@ -66,6 +67,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
   onCreateAccount,
   onPasswordlessSignIn,
   oauthError,
+  lockoutError,
   turnstileSlot,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
@@ -159,6 +161,29 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                 tone="destructive"
                 title="We couldn't sign you in"
                 description={oauthError}
+                className="rounded-2xl"
+              />
+            )}
+
+            {/* Account Lockout Error Banner */}
+            {lockoutError && (
+              <Alert
+                tone="destructive"
+                title="Account Temporarily Locked"
+                description={lockoutError}
+                action={
+                  onResetPassword ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={onResetPassword}
+                      className="mt-2 text-xs font-semibold"
+                    >
+                      Reset password to regain access &rarr;
+                    </Button>
+                  ) : undefined
+                }
                 className="rounded-2xl"
               />
             )}
