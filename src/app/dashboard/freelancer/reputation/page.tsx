@@ -38,7 +38,7 @@ export function ReputationOverview({ role }: { role?: 'freelancer' | 'employer' 
         reputationApi.getBreakdown(userId),
         reputationApi.getHistory(userId),
         reputationApi.getWorkHistory(userId),
-        reputationApi.getLeaderboard({ limit: 5 }),
+        reputationApi.getLeaderboard({ limit: 5, role: effectiveRole }),
         reputationApi.getMetadata(userId),
       ]);
       if (!active) return;
@@ -52,7 +52,7 @@ export function ReputationOverview({ role }: { role?: 'freelancer' | 'employer' 
     };
     void load();
     return () => { active = false; };
-  }, [userId]);
+  }, [effectiveRole, userId]);
 
   if (loading) return <StatsSkeleton tiles={3} label="Loading reputation" />;
 
@@ -119,7 +119,7 @@ export function ReputationOverview({ role }: { role?: 'freelancer' | 'employer' 
         <Card><CardHeader><CardTitle>Completed work</CardTitle></CardHeader><CardContent>{workHistory.length === 0 ? <p className="py-8 text-center text-sm text-muted-foreground">No completed contracts yet.</p> : <ul className="space-y-3">{workHistory.map((item) => <li key={item.contractId} className="rounded-lg border border-border p-3"><div className="flex justify-between gap-3"><div><p className="font-medium">{item.projectTitle}</p><p className="text-xs text-muted-foreground">As {item.role} · {formatDate(item.completedAt)}</p></div>{item.rating && <span className="text-sm">{item.rating} / 5</span>}</div>{item.ratingComment && <p className="mt-2 text-sm text-muted-foreground">{item.ratingComment}</p>}</li>)}</ul>}</CardContent></Card>
       </div>
 
-      <Card><CardHeader><CardTitle>Community leaderboard</CardTitle></CardHeader><CardContent>{leaderboard.length === 0 ? <p className="text-sm text-muted-foreground">No users have enough ratings to rank yet.</p> : <ol className="grid gap-3 md:grid-cols-2">{leaderboard.map((entry, index) => <li key={entry.userId} className="flex items-center gap-3 rounded-lg border border-border p-3"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 font-semibold text-primary">{index + 1}</span><div className="min-w-0 flex-1"><p className="truncate font-medium">{entry.userName}</p><p className="text-xs text-muted-foreground">{entry.totalRatings} ratings</p></div><span className="font-semibold">{entry.averageRating.toFixed(1)}</span></li>)}</ol>}</CardContent></Card>
+      <Card><CardHeader><CardTitle>{effectiveRole === 'employer' ? 'Employer' : 'Freelancer'} leaderboard</CardTitle></CardHeader><CardContent>{leaderboard.length === 0 ? <p className="text-sm text-muted-foreground">No participants in this role have enough ratings to rank yet.</p> : <ol className="grid gap-3 md:grid-cols-2">{leaderboard.map((entry, index) => <li key={entry.userId} className="flex items-center gap-3 rounded-lg border border-border p-3"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 font-semibold text-primary">{index + 1}</span><div className="min-w-0 flex-1"><p className="truncate font-medium">{entry.userName}</p><p className="text-xs text-muted-foreground">{entry.totalRatings} verified reviews</p></div><span className="font-semibold">{entry.averageRating.toFixed(1)}</span></li>)}</ol>}</CardContent></Card>
     </div>
   );
 }

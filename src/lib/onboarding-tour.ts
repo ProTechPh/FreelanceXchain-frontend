@@ -111,7 +111,7 @@ const freelancerSteps: TourStep[] = [
     body: 'Two records, kept apart on purpose: the payment ledger is what you were paid, the blockchain record is what settled on chain.',
     target: '[data-tour="earnings"]',
     side: 'bottom',
-    items: ['Earnings — totals and history by date range', 'Transactions — the on-chain record', 'Reputation grows with every completed contract'],
+    items: ['Finances — earnings and history by date range', 'Transactions — the payment record', 'Reputation grows with every completed contract'],
   },
   {
     id: 'messages',
@@ -194,7 +194,7 @@ const employerSteps: TourStep[] = [
     body: 'Two records, kept apart on purpose: the payment ledger is what you paid, the blockchain record is what settled on chain.',
     target: '[data-tour="earnings"]',
     side: 'bottom',
-    items: ['Spending totals by date range', 'Transactions — the on-chain record', 'Per-contract payment history'],
+    items: ['Finances — spending totals by date range', 'Transactions — the payment record', 'Per-contract payment history'],
   },
   {
     id: 'messages',

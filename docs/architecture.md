@@ -34,7 +34,7 @@ src/
 
 The application enforces strict role-based views and middleware checks:
 
-- **Public Surfaces:** `/`, `/projects`, `/freelancers`, `/leaderboard`, `/crypto-news`
+- **Public Surfaces:** `/`, `/projects`, `/freelancers`, `/leaderboard`
 - **Authentication Flows (`(auth)`):** `/login`, `/register`, `/passwordless`, `/mfa/verify`, `/auth/callback`
 - **Employer Workspaces (`/dashboard/employer`):**
   - Project creation with milestone definitions.
