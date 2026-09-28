@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { PlanComparison } from '@/components/billing/plan-comparison';
 import { UpgradeButton } from '@/components/billing/upgrade-button';
 import { IntervalToggle } from '@/components/billing/interval-toggle';
+import { getFinancesRoute } from '@/lib/finances-route';
 import { usePlan, usePlans } from '@/hooks/use-plan';
 import { useAuthStore } from '@/stores/authStore';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -146,7 +147,7 @@ export function PricingContent() {
               </Button>
             ) : isPro ? (
               <Button asChild variant="outline">
-                <Link href={`/dashboard/${role ?? 'freelancer'}/billing`}>Manage your plan</Link>
+                <Link href={getFinancesRoute(role === 'employer' ? 'employer' : 'freelancer', 'billing')}>Manage your plan</Link>
               </Button>
             ) : (
               <UpgradeButton

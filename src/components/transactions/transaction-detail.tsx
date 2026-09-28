@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { transactionsApi } from '@/lib/api';
 import { reportLoadFailure } from '@/lib/report-failure';
 import { parseTransactionMetadata } from '@/lib/transaction-view';
+import { getFinancesRoute } from '@/lib/finances-route';
 import type { Transaction, UserRole } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -49,7 +50,7 @@ export function TransactionDetail({ transactionId, role }: { transactionId: stri
 
   const metadata = parseTransactionMetadata(transaction.metadata);
   const hash = transaction.transaction_hash;
-  const backPath = role === 'freelancer' ? '/dashboard/freelancer/earnings' : '/dashboard/employer/transactions';
+  const backPath = getFinancesRoute(role, 'transactions');
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
