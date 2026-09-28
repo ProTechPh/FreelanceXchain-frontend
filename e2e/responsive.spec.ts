@@ -21,7 +21,6 @@ const PUBLIC_ROUTES = [
   '/faqs',
   '/help',
   '/blog',
-  '/news',
   '/contact',
   '/about',
   '/status',

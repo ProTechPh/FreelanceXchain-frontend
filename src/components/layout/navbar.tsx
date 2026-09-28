@@ -61,7 +61,7 @@ const Logo = () => (
  * hardcoded allowlists, which meant a new nav item silently disappeared on
  * mobile — /pricing did exactly that.
  */
-const PRODUCT_LINKS = ["/#features", "/pricing", "/#ecosystem", "/#compare", "/#reviews", "/#faq"];
+const PRODUCT_LINKS = ["/#features", "/pricing", "/#ecosystem", "/#compare", "/help#faq"];
 
 export default function Navbar({
   menu = [
@@ -69,8 +69,7 @@ export default function Navbar({
     { title: "Pricing", url: "/pricing" },
     { title: "Ecosystem", url: "/#ecosystem" },
     { title: "Compare", url: "/#compare" },
-    { title: "Reviews", url: "/#reviews" },
-    { title: "FAQ", url: "/#faq" },
+    { title: "Help", url: "/help#faq" },
     { title: "Projects", url: "/projects" },
     { title: "Talent", url: "/freelancers" },
     { title: "Leaderboard", url: "/leaderboard" },

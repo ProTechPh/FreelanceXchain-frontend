@@ -56,6 +56,7 @@ import { WalletBalanceCard } from "@/components/wallet/wallet-balance-card";
 import { useFreelancerDashboard } from "@/hooks/use-freelancer-dashboard";
 import { useMyProposalStatusByProject } from "@/hooks/use-my-proposals";
 import { ProposalSubmittedBadge } from "@/components/proposals/proposal-submitted-badge";
+import { getFinancesRoute } from '@/lib/finances-route';
 
 const statusColors: Record<string, string> = {
   pending: "bg-warning-subtle text-warning",
@@ -396,7 +397,7 @@ export default function FreelancerDashboard() {
 
       {/* Quick Actions */}
       <div className="grid md:grid-cols-3 gap-4">
-        <Link href="/dashboard/freelancer/earnings">
+        <Link href={getFinancesRoute('freelancer', 'transactions')}>
           <Card className="bg-card border-border hover:border-primary/20 transition-all cursor-pointer">
             <CardContent className="p-4 flex items-center gap-4">
               <div className="w-10 h-10 rounded-lg bg-success-subtle flex items-center justify-center">

@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useWalletConnection } from '@/hooks/use-wallet-connection';
+import { getFinancesRoute } from '@/lib/finances-route';
 
 interface WalletBalanceCardProps {
   role?: 'freelancer' | 'employer';
@@ -51,9 +52,7 @@ export function WalletBalanceCard({ role = 'employer', className = '' }: WalletB
   };
 
   const isEmployer = role === 'employer';
-  const transactionsRoute = isEmployer
-    ? '/dashboard/employer/transactions'
-    : '/dashboard/freelancer/earnings';
+  const transactionsRoute = getFinancesRoute(isEmployer ? 'employer' : 'freelancer', 'transactions');
   const isMainnet = networkName === 'Ethereum Mainnet';
 
   return (
