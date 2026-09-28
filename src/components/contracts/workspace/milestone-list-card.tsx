@@ -179,35 +179,43 @@ export function MilestoneListCard({
               )}
 
               {permissions.canApprove && (
-                <div className="flex flex-col gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-end">
-                  <Button
-                    className="bg-success text-success-foreground hover:bg-success/90"
-                    disabled={actionId === milestone.id}
-                    onClick={() => onApproveMilestone(milestone)}
-                    aria-label={`Approve milestone: ${milestone.title}`}
-                  >
-                    Release Payment
-                  </Button>
-                  <div className="flex-1 space-y-2">
+                <div className="space-y-4 rounded-lg border border-border p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <Button
+                      className="bg-success text-success-foreground hover:bg-success/90"
+                      disabled={actionId === milestone.id}
+                      onClick={() => onApproveMilestone(milestone)}
+                      aria-label={`Approve milestone: ${milestone.title}`}
+                    >
+                      Release Payment
+                    </Button>
+                    <p className="text-sm text-muted-foreground">
+                      Happy with the work? Release this milestone&apos;s payment to the freelancer.
+                    </p>
+                  </div>
+                  <div className="space-y-2 border-t border-border pt-4">
                     <Label htmlFor={`reject-${milestone.id}`}>Revision reason</Label>
-                    <Input
-                      id={`reject-${milestone.id}`}
-                      aria-describedby={`reject-hint-${milestone.id}`}
-                      value={rejectionReasons[milestone.id] ?? ''}
-                      onChange={(event) => onRejectionReasonChange(milestone.id, event.target.value)}
-                    />
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <Input
+                        id={`reject-${milestone.id}`}
+                        className="flex-1"
+                        aria-describedby={`reject-hint-${milestone.id}`}
+                        value={rejectionReasons[milestone.id] ?? ''}
+                        onChange={(event) => onRejectionReasonChange(milestone.id, event.target.value)}
+                      />
+                      <Button
+                        variant="outline"
+                        disabled={actionId === milestone.id || !(rejectionReasons[milestone.id] ?? '').trim()}
+                        onClick={() => onRejectMilestone(milestone.id)}
+                        aria-label={`Request revision for milestone: ${milestone.title}`}
+                      >
+                        Request revision
+                      </Button>
+                    </div>
                     <p id={`reject-hint-${milestone.id}`} className="text-xs text-muted-foreground">
                       Explain what needs to be changed before you can approve.
                     </p>
                   </div>
-                  <Button
-                    variant="outline"
-                    disabled={actionId === milestone.id || !(rejectionReasons[milestone.id] ?? '').trim()}
-                    onClick={() => onRejectMilestone(milestone.id)}
-                    aria-label={`Request revision for milestone: ${milestone.title}`}
-                  >
-                    Request revision
-                  </Button>
                 </div>
               )}
             </CardContent>
