@@ -63,7 +63,7 @@ export function SupportFaqSection() {
           size="sm"
           icon={HelpCircle}
           title="No answer matches that"
-          description="Try a different word, or submit a ticket and we will answer it directly."
+          description="Try a different word, or contact support and we will help directly."
         />
       ) : (
         <div className="space-y-6">

@@ -14,12 +14,6 @@ import type {
   BillingRedirect,
   KycVerification,
   KycDecisionDetails,
-  CryptoNewsFeed,
-  CryptoNewsArticle,
-  CryptoPricesResponse,
-  FearGreedIndexData,
-  GlobalMarketStats,
-  CryptoMarketMoversResponse,
 } from '@/types';
 
 export interface ProjectRecommendation {
@@ -91,7 +85,6 @@ export const reputationApi = {
       { params }
     ),
 };
-
 export const reviewsApi = {
   submit: (data: {
     contractId: string;
@@ -178,41 +171,4 @@ export const kycApi = {
 
   adminReview: (id: string, decision: 'approved' | 'rejected', notes?: string) =>
     api.post<KycVerification>(`/kyc/admin/review/${id}`, { decision, notes }),
-};
-
-export const cryptoNewsApi = {
-  getNews: (options?: { limit?: number; coin?: string; sort?: string; sources?: string }) =>
-    api.get<CryptoNewsFeed>('/crypto-news/news', { params: options }),
-
-  search: (query: string, limit?: number) =>
-    api.get<{ results?: CryptoNewsArticle[]; articles?: CryptoNewsArticle[] }>('/crypto-news/search', {
-      params: { q: query, limit },
-    }),
-
-  getSentiment: (options?: { limit?: number; asset?: string }) =>
-    api.get<Record<string, unknown>>('/crypto-news/sentiment', { params: options }),
-
-  getDigest: (options?: { period?: string; format?: string }) =>
-    api.get<Record<string, unknown>>('/crypto-news/digest', { params: options }),
-
-  getPrices: (coins?: string) =>
-    api.get<CryptoPricesResponse>('/crypto-news/prices', {
-      params: coins ? { coins } : undefined,
-    }),
-
-  getFearGreed: () =>
-    api.get<FearGreedIndexData>('/crypto-news/fear-greed'),
-
-  getGlobalMarketStats: () =>
-    api.get<GlobalMarketStats>('/crypto-news/global'),
-
-  getMovers: (direction: 'gainers' | 'losers' = 'gainers', options?: { limit?: number; timeframe?: string }) =>
-    api.get<CryptoMarketMoversResponse>('/crypto-news/movers', {
-      params: { direction, ...options },
-    }),
-
-  getCategories: (limit?: number) =>
-    api.get<{ categories: Array<{ label: string; coin?: string; filter?: string }> }>('/crypto-news/categories', {
-      params: limit ? { limit } : undefined,
-    }),
 };

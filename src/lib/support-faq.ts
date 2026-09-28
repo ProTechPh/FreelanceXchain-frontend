@@ -120,7 +120,7 @@ export const SUPPORT_FAQ: FaqSection[] = [
         id: 'transactions',
         question: 'Where can I see everything that has moved?',
         answer:
-          'Freelancers have Work → Earnings and employers have Work → Transactions. Both show the on-chain record behind each payment, so the two sides are reading the same ledger.',
+          'Both roles use Work → Finances. Open Earnings & Payouts as a freelancer or Payments & Spending as an employer to see the shared transaction ledger behind each payment.',
       },
     ],
   },
@@ -195,7 +195,7 @@ export const SUPPORT_FAQ: FaqSection[] = [
         id: 'manage-billing',
         question: 'Where do I manage my subscription?',
         answer:
-          'Under Profile → Plan & billing. From there you can change or cancel your plan; payments are handled by Stripe, so card details never touch FreelanceXchain.',
+          'Open Work → Finances, then Plan & Billing. From there you can change or cancel your plan; payments are handled by Stripe, so card details never touch FreelanceXchain.',
       },
     ],
   },
@@ -206,7 +206,7 @@ export const SUPPORT_FAQ: FaqSection[] = [
         id: 'password-reset',
         question: 'I cannot sign in — what now?',
         answer:
-          'Use the password reset link on the sign-in page, or sign in passwordlessly with a magic link sent to your email address. If neither reaches you, open a ticket below and we will look into the account.',
+          'Use the password reset link on the sign-in page, or sign in passwordlessly with a magic link sent to your email address. If neither reaches you, use the public contact form and we will look into the account.',
       },
       {
         id: 'mfa',
@@ -224,7 +224,7 @@ export const SUPPORT_FAQ: FaqSection[] = [
         id: 'ticket-reply',
         question: 'How will I hear back about a support ticket?',
         answer:
-          'You will get an in-app notification the moment we resolve it, and the reply appears on the ticket under "Your tickets" on this page.',
+          'You will get an in-app notification when we resolve it, and the reply appears under Your tickets in the dashboard Help & Support page.',
       },
     ],
   },

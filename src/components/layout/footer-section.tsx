@@ -30,9 +30,8 @@ const footerLinks: FooterSection[] = [
 		label: 'Resources',
 		links: [
 			{ title: 'Compare Platforms', href: '/#compare' },
-			{ title: 'Verified Reviews', href: '/#reviews' },
-			{ title: 'FAQs & Help', href: '/#faq' },
-			{ title: 'Platform Guides', href: '/tutorials' },
+			{ title: 'FAQs & Help', href: '/help#faq' },
+			{ title: 'Platform Guides', href: '/help#guides' },
 		],
 	},
 	{
