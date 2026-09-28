@@ -1,5 +1,6 @@
-import { FinancesHub } from '@/components/finances/finances-hub';
+import { permanentRedirect } from 'next/navigation';
+import { getFinancesRoute } from '@/lib/finances-route';
 
 export default function EmployerTransactionsPage() {
-  return <FinancesHub role="employer" defaultTab="transactions" />;
+  permanentRedirect(getFinancesRoute('employer', 'transactions'));
 }

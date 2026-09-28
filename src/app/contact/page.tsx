@@ -26,8 +26,6 @@
  *    - Static parts (header, support channels grid) could theoretically be extracted
  *      to a Server Component, but the benefit is minimal since the form is the
  *      primary content of this page.
- *    - The newsletter section at bottom uses localStorage and would also require
- *      client-side handling.
  */
 
 "use client";
@@ -58,10 +56,10 @@ const SUPPORT_CHANNELS = [
   },
   {
     icon: <Question className="size-5 text-primary" strokeWidth={2.5} />,
-    title: "Help Center & Tutorials",
+    title: "Help Center & Guides",
     description: "Step-by-step documentation for proposals, milestone deliverables, and wallet setups.",
-    action: "Browse Tutorials",
-    href: "/tutorials",
+    action: "Browse Guides",
+    href: "/help#guides",
   },
   {
     icon: <Building2 className="size-5 text-primary" strokeWidth={2.5} />,

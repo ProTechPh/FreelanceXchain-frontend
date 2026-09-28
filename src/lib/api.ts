@@ -74,7 +74,6 @@ export {
   matchingApi,
   billingApi,
   kycApi,
-  cryptoNewsApi,
   type ProjectRecommendation,
   type FreelancerRecommendation,
   type ExtractedSkill,

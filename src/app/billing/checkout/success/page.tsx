@@ -14,6 +14,7 @@ import {
   getBillingReturnPath,
   type CheckoutState,
 } from '@/lib/billing-checkout';
+import { getFinancesRoute } from '@/lib/finances-route';
 
 /**
  * Where Stripe sends the browser after a successful Checkout.
@@ -111,7 +112,7 @@ function CheckoutSuccessContent() {
             Check again
           </Button>
           <Button asChild variant="gradient">
-            <Link href={`/dashboard/${user?.role ?? 'freelancer'}/billing`}>Go to billing</Link>
+            <Link href={getFinancesRoute(user?.role === 'employer' ? 'employer' : 'freelancer', 'billing')}>Go to billing</Link>
           </Button>
         </div>
         <p className="text-xs text-muted-foreground">

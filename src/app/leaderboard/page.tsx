@@ -6,7 +6,7 @@ import { Trophy } from "lucide-react";
 export const metadata = {
   title: "Leaderboard | FreelanceXchain",
   description:
-    "Top rated freelancers and engineers ranked by on-chain reputation. Transparent, immutable scores from completed smart contract milestones.",
+    "Explore freelancers and employers ranked by verified reviews from completed FreelanceXchain contracts.",
 };
 
 // Header section component (static, no interactivity needed)
@@ -16,19 +16,19 @@ function LeaderboardHeader() {
       <div>
         <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold mb-4 border border-primary/20 shadow-xs">
           <Trophy className="size-3.5 text-warning" />
-          <span>On-Chain Verified Rankings</span>
+          <span>Verified Marketplace Reviews</span>
         </div>
 
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-foreground">
-          Top Rated Freelancers & Engineers, <br className="hidden sm:inline" />
+          Trusted marketplace participants, <br className="hidden sm:inline" />
           <span className="text-muted-foreground dark:text-muted-foreground font-semibold">
-            ranked by on-chain reputation.
+            ranked with confidence-aware ratings.
           </span>
         </h1>
 
         <p className="mt-4 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-          Transparent, immutable scores computed from completed smart contract milestones, client
-          ratings, and dispute-free deliverable approvals.
+          Compare freelancers and employers using verified reviews submitted after completed
+          contracts. Profiles identify ratings that also include a blockchain transaction reference.
         </p>
       </div>
     </section>
