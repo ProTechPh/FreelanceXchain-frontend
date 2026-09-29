@@ -119,7 +119,7 @@ export function KycVerificationModal({
         </DialogHeader>
 
         {/* Iframe Viewport */}
-        <div className="relative w-full flex-1 min-h-[350px] sm:min-h-[520px] max-h-[70vh] bg-background/50 flex flex-col overflow-hidden">
+        <div className="relative w-full flex-1 min-h-[350px] sm:min-h-[520px] max-h-[70dvh] bg-background/50 flex flex-col overflow-hidden">
           {safeUrl ? (
             <>
               {isLoading && !loadError && (

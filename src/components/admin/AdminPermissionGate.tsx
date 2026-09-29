@@ -46,7 +46,7 @@ export function AdminPermissionGate({
   const formattedRequired = permissionsList.join(', ');
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[50vh] p-4 text-center">
+    <div className="flex flex-col items-center justify-center min-h-[50dvh] p-4 text-center">
       <Card className="max-w-md w-full border-border bg-card shadow-sm">
         <CardContent className="pt-8 pb-8 px-6 flex flex-col items-center text-center">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10 text-destructive mb-4">

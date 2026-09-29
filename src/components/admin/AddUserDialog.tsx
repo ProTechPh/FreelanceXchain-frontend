@@ -206,12 +206,12 @@ export function AddUserDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[90dvh] overflow-y-auto">
         {createdSuccess ? (
           <div className="space-y-6 py-2">
             <DialogHeader>
               <div className="flex items-center gap-3">
-                <div className="size-10 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
+                <div className="size-10 rounded-full bg-success-subtle text-success flex items-center justify-center shrink-0">
                   <CheckCircle2 className="size-6" />
                 </div>
                 <div>
@@ -263,7 +263,7 @@ export function AddUserDialog({
                   <p className="text-xs text-muted-foreground mb-1.5">Assigned Permissions</p>
                   <div className="flex flex-wrap gap-1">
                     {createdSuccess.user.permissions.map((p) => (
-                      <Badge key={p} variant="secondary" className="text-[10px] font-mono px-1.5 py-0">
+                      <Badge key={p} variant="secondary" className="text-2xs font-mono px-1.5 py-0">
                         {p}
                       </Badge>
                     ))}
@@ -273,13 +273,13 @@ export function AddUserDialog({
             </div>
 
             {createdSuccess.temporaryPassword && (
-              <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-4 space-y-3">
+              <div className="rounded-lg border border-warning-border bg-warning-subtle p-4 space-y-3">
                 <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2 text-amber-500 font-semibold text-sm">
+                  <div className="flex items-center gap-2 text-warning font-semibold text-sm">
                     <Key className="size-4" />
                     <span>Temporary Credentials</span>
                   </div>
-                  <Badge variant="outline" className="border-amber-500/40 text-amber-500 text-[10px]">
+                  <Badge variant="outline" className="border-warning-border text-warning text-2xs">
                     Action Required
                   </Badge>
                 </div>
@@ -308,7 +308,7 @@ export function AddUserDialog({
                     onClick={() => copyToClipboard(createdSuccess.temporaryPassword!)}
                     aria-label="Copy password"
                   >
-                    {copied ? <Check className="size-4 text-emerald-500" /> : <Copy className="size-4" />}
+                    {copied ? <Check className="size-4 text-success" /> : <Copy className="size-4" />}
                   </Button>
                 </div>
 
@@ -489,7 +489,7 @@ export function AddUserDialog({
                         Granular Admin Permissions
                       </span>
                     </div>
-                    <Badge variant="outline" className="border-info/40 text-info text-[10px]">
+                    <Badge variant="outline" className="border-info/40 text-info text-2xs">
                       {selectedPermissions.size} selected
                     </Badge>
                   </div>
@@ -522,7 +522,7 @@ export function AddUserDialog({
                   <div className="space-y-3 pt-2 max-h-48 overflow-y-auto pr-1">
                     {PERMISSION_GROUPS.map((group) => (
                       <div key={group.name} className="space-y-1.5">
-                        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                        <p className="text-2xs font-semibold text-muted-foreground uppercase tracking-wider">
                           {group.name}
                         </p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
@@ -546,7 +546,7 @@ export function AddUserDialog({
                                   <p className="text-xs font-medium text-foreground leading-tight">
                                     {item.label}
                                   </p>
-                                  <p className="text-[10px] text-muted-foreground leading-tight line-clamp-1">
+                                  <p className="text-2xs text-muted-foreground leading-tight line-clamp-1">
                                     {item.description}
                                   </p>
                                 </div>
@@ -576,7 +576,7 @@ export function AddUserDialog({
                     <Key className="size-4 shrink-0 text-primary" />
                     <div>
                       <p className="text-xs font-medium text-foreground">Auto-generate (Recommended)</p>
-                      <p className="text-[10px] text-muted-foreground">Secure random 18-char password</p>
+                      <p className="text-2xs text-muted-foreground">Secure random 18-char password</p>
                     </div>
                   </button>
 
@@ -592,7 +592,7 @@ export function AddUserDialog({
                     <Lock className="size-4 shrink-0 text-primary" />
                     <div>
                       <p className="text-xs font-medium text-foreground">Set custom password</p>
-                      <p className="text-[10px] text-muted-foreground">Specify initial password manually</p>
+                      <p className="text-2xs text-muted-foreground">Specify initial password manually</p>
                     </div>
                   </button>
                 </div>

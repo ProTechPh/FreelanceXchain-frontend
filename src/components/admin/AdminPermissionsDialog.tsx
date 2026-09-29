@@ -137,12 +137,12 @@ function AdminPermissionsForm({
             <div>
               <span className="font-semibold text-foreground">Super Administrator Privileges Active:</span>{' '}
               <span className="text-muted-foreground">
-                With <code className="bg-info/10 px-1 py-0.5 rounded text-[11px]">admin:manage</code> assigned, this user has full access across all platform modules and can assign permissions to other admins.
+                With <code className="bg-info/10 px-1 py-0.5 rounded text-2xs">admin:manage</code> assigned, this user has full access across all platform modules and can assign permissions to other admins.
               </span>
             </div>
           </div>
         ) : selectedPermissions.size === 0 ? (
-          <div className="flex items-start gap-3 p-3.5 rounded-lg border border-amber-500/30 bg-amber-500/5 text-xs text-amber-500 leading-relaxed">
+          <div className="flex items-start gap-3 p-3.5 rounded-lg border border-warning-border bg-warning-subtle text-xs text-warning leading-relaxed">
             <AlertTriangle className="size-5 shrink-0 mt-0.5" />
             <div>
               <span className="font-semibold text-foreground">No Permissions Assigned:</span>{' '}

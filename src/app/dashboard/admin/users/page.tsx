@@ -212,7 +212,7 @@ export default function UsersPage() {
         </Card>
         <Card className="bg-card border-border">
           <CardContent className="p-4">
-            <p className="text-lg sm:text-2xl font-bold text-emerald-500 truncate">{kycApprovedCount}</p>
+            <p className="text-lg sm:text-2xl font-bold text-success truncate">{kycApprovedCount}</p>
             <p className="text-xs text-muted-foreground">KYC Approved</p>
           </CardContent>
         </Card>
@@ -358,26 +358,26 @@ export default function UsersPage() {
                       </TableCell>
                       <TableCell>
                         {user.emailVerified ? (
-                          <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-xs inline-flex items-center gap-1 font-medium">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                          <Badge variant="outline" className="bg-success-subtle text-success border-success-border text-xs inline-flex items-center gap-1 font-medium">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-success" />
                             Verified
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-xs inline-flex items-center gap-1 font-medium">
-                            <XCircle className="w-3.5 h-3.5 text-amber-500" />
+                          <Badge variant="outline" className="bg-warning-subtle text-warning border-warning-border text-xs inline-flex items-center gap-1 font-medium">
+                            <XCircle className="w-3.5 h-3.5 text-warning" />
                             Unverified
                           </Badge>
                         )}
                       </TableCell>
                       <TableCell>
                         {isKycApproved ? (
-                          <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-xs inline-flex items-center gap-1 font-medium">
-                            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                          <Badge variant="outline" className="bg-success-subtle text-success border-success-border text-xs inline-flex items-center gap-1 font-medium">
+                            <ShieldCheck className="w-3.5 h-3.5 text-success" />
                             Approved
                           </Badge>
                         ) : isKycPending ? (
-                          <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-xs inline-flex items-center gap-1 font-medium">
-                            <Clock className="w-3.5 h-3.5 text-amber-500" />
+                          <Badge variant="outline" className="bg-warning-subtle text-warning border-warning-border text-xs inline-flex items-center gap-1 font-medium">
+                            <Clock className="w-3.5 h-3.5 text-warning" />
                             Pending
                           </Badge>
                         ) : isKycRejected ? (
@@ -513,13 +513,13 @@ export default function UsersPage() {
                   <div className="flex items-center gap-1">
                     <span className="text-muted-foreground">Email:</span>
                     {user.emailVerified ? (
-                      <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[11px] py-0 px-1.5 flex items-center gap-1 font-medium">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                      <Badge variant="outline" className="bg-success-subtle text-success border-success-border text-2xs py-0 px-1.5 flex items-center gap-1 font-medium">
+                        <CheckCircle2 className="w-3 h-3 text-success" />
                         Verified
                       </Badge>
                     ) : (
-                      <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[11px] py-0 px-1.5 flex items-center gap-1 font-medium">
-                        <XCircle className="w-3 h-3 text-amber-500" />
+                      <Badge variant="outline" className="bg-warning-subtle text-warning border-warning-border text-2xs py-0 px-1.5 flex items-center gap-1 font-medium">
+                        <XCircle className="w-3 h-3 text-warning" />
                         Unverified
                       </Badge>
                     )}
@@ -527,22 +527,22 @@ export default function UsersPage() {
                   <div className="flex items-center gap-1">
                     <span className="text-muted-foreground">KYC:</span>
                     {isKycApproved ? (
-                      <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[11px] py-0 px-1.5 flex items-center gap-1 font-medium">
-                        <ShieldCheck className="w-3 h-3 text-emerald-500" />
+                      <Badge variant="outline" className="bg-success-subtle text-success border-success-border text-2xs py-0 px-1.5 flex items-center gap-1 font-medium">
+                        <ShieldCheck className="w-3 h-3 text-success" />
                         Approved
                       </Badge>
                     ) : isKycPending ? (
-                      <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20 text-[11px] py-0 px-1.5 flex items-center gap-1 font-medium">
-                        <Clock className="w-3 h-3 text-amber-500" />
+                      <Badge variant="outline" className="bg-warning-subtle text-warning border-warning-border text-2xs py-0 px-1.5 flex items-center gap-1 font-medium">
+                        <Clock className="w-3 h-3 text-warning" />
                         Pending
                       </Badge>
                     ) : isKycRejected ? (
-                      <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20 text-[11px] py-0 px-1.5 flex items-center gap-1 font-medium">
+                      <Badge variant="outline" className="bg-destructive/10 text-destructive border-destructive/20 text-2xs py-0 px-1.5 flex items-center gap-1 font-medium">
                         <AlertTriangle className="w-3 h-3 text-destructive" />
                         Rejected
                       </Badge>
                     ) : (
-                      <Badge variant="outline" className="bg-muted text-muted-foreground border-border text-[11px] py-0 px-1.5 flex items-center gap-1 font-medium">
+                      <Badge variant="outline" className="bg-muted text-muted-foreground border-border text-2xs py-0 px-1.5 flex items-center gap-1 font-medium">
                         <ShieldAlert className="w-3 h-3 text-muted-foreground" />
                         Not Approved
                       </Badge>
@@ -558,9 +558,9 @@ export default function UsersPage() {
                       user.permissions.length === 0 ||
                       (user.permissions as string[]).includes('*') ||
                       user.permissions.includes('admin:manage') ? (
-                        <Badge variant="outline" className="text-[11px] bg-primary/10 text-primary border-primary/20">Super Admin</Badge>
+                        <Badge variant="outline" className="text-2xs bg-primary/10 text-primary border-primary/20">Super Admin</Badge>
                       ) : (
-                        <Badge variant="outline" className="text-[11px] bg-muted text-muted-foreground border-border">{user.permissions.length} perms</Badge>
+                        <Badge variant="outline" className="text-2xs bg-muted text-muted-foreground border-border">{user.permissions.length} perms</Badge>
                       )
                     )}
                     <span className="text-xs text-muted-foreground">{formatDate(user.createdAt)}</span>
