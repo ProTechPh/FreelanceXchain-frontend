@@ -201,7 +201,7 @@ export function DangerZoneCard({ user, onLogout }: DangerZoneCardProps) {
                     autoComplete="off"
                     className="font-mono text-center tracking-widest text-base"
                   />
-                  <p className="text-[11px] text-muted-foreground">
+                  <p className="text-2xs text-muted-foreground">
                     Code sent to {maskedEmail || 'your email'}. Expires in 15 minutes.
                   </p>
                 </div>

@@ -44,7 +44,7 @@ function FinancesContent({ role, defaultTab = 'transactions' }: FinancesHubProps
       />
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full space-y-6">
-        <TabsList className="grid w-full grid-cols-3 sm:w-auto sm:inline-flex">
+        <TabsList className="grid w-full grid-cols-1 sm:w-auto sm:inline-flex">
           <TabsTrigger value="transactions" className="gap-2">
             <Wallet className="size-4" />
             <span>{role === 'freelancer' ? 'Earnings & Payouts' : 'Payments & Spending'}</span>

@@ -36,6 +36,9 @@ const TOUR_ALREADY_SEEN = {
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
+  // Next dev mode can saturate this project under Playwright's default worker
+  // count, causing route loads to time out even when the isolated flow is fine.
+  workers: process.env.CI ? 2 : 1,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 1,
   reporter: process.env.CI ? 'github' : 'list',

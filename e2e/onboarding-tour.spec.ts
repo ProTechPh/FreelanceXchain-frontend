@@ -290,8 +290,7 @@ await page.waitForLoadState('networkidle');
 
   test('Settings restarts the tour and remembers the auto-start preference', async ({ page }) => {
     await authenticate(page, buildUser('freelancer'));
-    await page.goto('/dashboard/freelancer/settings', { timeout: 30000 });
-await page.waitForLoadState('networkidle');
+    await page.goto('/dashboard/freelancer/settings', { waitUntil: 'domcontentloaded' });
 
     const toggle = page.getByRole('switch', { name: 'Show the tour on my next visit' });
     await expect(toggle).toHaveAttribute('aria-checked', 'true');
@@ -302,12 +301,12 @@ await page.waitForLoadState('networkidle');
     await expect(page.getByRole('switch', { name: 'Show the tour on my next visit' })).toHaveAttribute('aria-checked', 'false');
 
     // Turned off, it must not ambush them on the dashboard home either.
-    await page.goto('/dashboard/freelancer');
-    await page.waitForLoadState('networkidle');
+    await page.goto('/dashboard/freelancer', { waitUntil: 'domcontentloaded' });
+    await expect(page.getByRole('heading').first()).toBeVisible();
     await expect(tourDialog(page)).toHaveCount(0);
 
-    await page.goto('/dashboard/freelancer/settings', { timeout: 30000 });
-await page.waitForLoadState('networkidle');
+    await page.goto('/dashboard/freelancer/settings', { waitUntil: 'domcontentloaded' });
+    await expect(page.getByRole('heading', { name: 'Account settings' })).toBeVisible();
     await page.getByRole('button', { name: 'Restart tour' }).click();
     await expect(page).toHaveURL(/\/dashboard\/freelancer$/);
     await expect(tourDialog(page)).toBeVisible();

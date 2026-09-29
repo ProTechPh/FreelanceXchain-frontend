@@ -254,6 +254,9 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
     () => skills.map((skill) => ({ id: skill.id, name: skill.name })),
     [skills],
   );
+  const hasUnresolvedSkillSelection = filters.skillIds.some(
+    (skillId) => !savedSkillOptions.some((skill) => skill.id === skillId),
+  );
 
 
   const submitSearch = useCallback((event: React.FormEvent) => {
@@ -310,6 +313,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
       toast.error("Enter a name for this search.");
       return;
     }
+    if (hasUnresolvedSkillSelection) return;
 
     setSavingSearch(true);
     try {
@@ -327,7 +331,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
     } finally {
       setSavingSearch(false);
     }
-  }, [filters, kind, notifyOnNew, savedSearchName, savedSkillOptions]);
+  }, [filters, hasUnresolvedSkillSelection, kind, notifyOnNew, savedSearchName, savedSkillOptions]);
 
   const runSavedSearch = useCallback(async (savedSearch: SavedSearch) => {
     const restored = restoreSavedSearchFilters(savedSearch.filters, savedSkillOptions);
@@ -657,7 +661,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
                         variant="outline"
                         onClick={saveSearch}
                         loading={savingSearch}
-                        disabled={!savedSearchName.trim()}
+                        disabled={!savedSearchName.trim() || hasUnresolvedSkillSelection}
                         className="h-9 shrink-0 text-xs gap-1"
                       >
                         <BookmarkPlus className="size-3.5" aria-hidden="true" />
@@ -852,7 +856,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
                         className={cn(control, isDashboard && "lg:w-56")}
                       />
                     </div>
-                    <Button size="sm" type="submit" loading={savingSearch} loadingText="Saving…" className={cn("shrink-0", control)}>
+                    <Button size="sm" type="submit" loading={savingSearch} loadingText="Saving…" disabled={hasUnresolvedSkillSelection} className={cn("shrink-0", control)}>
                       <BookmarkPlus className="size-3.5" aria-hidden="true" />Save search
                     </Button>
                   </div>

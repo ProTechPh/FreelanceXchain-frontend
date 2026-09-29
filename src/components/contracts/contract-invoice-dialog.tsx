@@ -207,7 +207,7 @@ export function ContractInvoiceDialog({
         </div>
 
         {/* ── Scrollable printable document area ── */}
-        <div className="max-h-[70vh] overflow-y-auto print:max-h-none print:overflow-visible">
+        <div className="max-h-[70dvh] overflow-y-auto print:max-h-none print:overflow-visible">
           <div
             id="printable-contract-document"
             className="space-y-6 bg-card p-5 text-card-foreground sm:p-8"
