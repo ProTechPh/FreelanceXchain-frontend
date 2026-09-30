@@ -210,7 +210,11 @@ export const SignInPage: React.FC<SignInPageProps> = ({
             </div>
 
             {/* Form */}
-            <form className="space-y-4 sm:space-y-5" onSubmit={handleSubmit}>
+            <form className="space-y-4 sm:space-y-5" onSubmit={handleSubmit} aria-busy={loading}>
+              {/* fieldset[disabled] disables all descendant controls synchronously when
+                  loading=true, giving the E2E test a reliable signal even before React
+                  re-renders the individual Button/input components. */}
+              <fieldset disabled={isAnyLoading} className="contents">
               <div>
                 <label htmlFor="login-email" className="text-sm font-bold text-foreground mb-1.5 sm:mb-2 block">Email Address</label>
                 <input 
@@ -286,6 +290,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                 Sign in
                 <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
+              </fieldset>
             </form>
 
             {/* Divider */}

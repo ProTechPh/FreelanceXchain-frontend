@@ -293,16 +293,25 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
         (project) => (project.budget ?? 0) <= appliedFilters.maxBudget!,
       );
     }
+    // categoryId is sent to the API; client-side we trust the API response
+    // is already scoped to that category. Budget range is re-checked above
+    // as an extra safeguard in case the server returns broader results.
     return filtered as unknown as T[];
   }, [appliedFilters, items, kind, savedSkillOptions]);
 
 
   const submitSearch = useCallback((event: React.FormEvent) => {
     event.preventDefault();
-    const searchParams = marketplaceFiltersToSearchParams(filters);
+    // Typing a keyword clears any active category filter so the two modes
+    // don't conflict. If the user hasn't typed anything, keep the category.
+    const next: MarketplaceFilters = filters.keyword.trim()
+      ? { ...filters, categoryId: undefined, categoryName: undefined }
+      : { ...filters };
+    const searchParams = marketplaceFiltersToSearchParams(next);
     const query = searchParams.toString();
     window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
-    setAppliedFilters({ ...filters });
+    setFilters(next);
+    setAppliedFilters(next);
   }, [filters]);
 
   const resetFilters = useCallback(() => {
@@ -443,7 +452,12 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
                       isDashboard ? "rounded-lg" : "rounded-2xl",
                     )}
                     onClick={() => {
-                      const next = { ...filters, keyword: category.categoryName };
+                      const next: typeof filters = {
+                        ...filters,
+                        keyword: '',
+                        categoryId: category.categoryId,
+                        categoryName: category.categoryName,
+                      };
                       setFilters(next);
                       setAppliedFilters(next);
                     }}
@@ -468,7 +482,11 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                setAppliedFilters({ ...filters });
+                const next: MarketplaceFilters = filters.keyword.trim()
+                  ? { ...filters, categoryId: undefined, categoryName: undefined }
+                  : { ...filters };
+                setFilters(next);
+                setAppliedFilters(next);
               }}
               className="flex items-center gap-2"
             >
@@ -726,7 +744,11 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
                   type="button"
                   size="sm"
                   onClick={() => {
-                    setAppliedFilters({ ...filters });
+                    const next: MarketplaceFilters = filters.keyword.trim()
+                      ? { ...filters, categoryId: undefined, categoryName: undefined }
+                      : { ...filters };
+                    setFilters(next);
+                    setAppliedFilters(next);
                     setMobileFilterOpen(false);
                   }}
                   disabled={loading}

@@ -61,6 +61,7 @@ const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disput
   const [evidenceFiles, setEvidenceFiles] = useState<Record<string, File | null>>({});
   const [evidenceByDispute, setEvidenceByDispute] = useState<Record<string, DisputeEvidence[]>>({});
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
   const [loadingMilestones, setLoadingMilestones] = useState(() => Boolean(contractIdParam));
   const [actionId, setActionId] = useState<string | null>(null);
   const [previewAttachment, setPreviewAttachment] = useState<AttachmentPreviewTarget | null>(null);
@@ -127,7 +128,16 @@ const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disput
     function run() {
       load()
         .catch((error) => {
-          if (active) reportLoadFailure(error, 'disputes', run);
+          if (!active) return;
+          // A 403 on the detail route means this user is not a party to this
+          // dispute. Show a clear "not authorized" message instead of an empty
+          // list, and do NOT retry — retrying will hit the same 403 every time.
+          const status = (error as { response?: { status?: number } })?.response?.status;
+          if (status === 403) {
+            setAuthError('You are not authorised to view this dispute. Only the employer and freelancer involved in the contract may access dispute details.');
+          } else {
+            reportLoadFailure(error, 'disputes', run);
+          }
         })
         .finally(() => {
           if (active) setLoading(false);
@@ -276,6 +286,37 @@ const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disput
 
   if (loading) {
     return <ListSkeleton rows={3} label="Loading disputes" />;
+  }
+
+  if (authError) {
+    return (
+      <div className="mx-auto max-w-5xl space-y-6">
+        <div>
+          {disputeId && (
+            <div className="space-y-3 mb-4">
+              <Button asChild variant="ghost" size="sm" className="-ml-3 text-muted-foreground hover:text-foreground">
+                <Link href={`/dashboard/${role}/disputes`}>
+                  <ArrowLeft className="mr-2 size-4" />Back to disputes
+                </Link>
+              </Button>
+            </div>
+          )}
+          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Dispute details</h1>
+        </div>
+        <Card className="border-destructive/30 bg-destructive/5">
+          <CardContent className="flex flex-col gap-3 p-6">
+            <p className="flex items-center gap-2 text-sm font-medium text-destructive">
+              <ShieldCheck className="size-5 shrink-0" />
+              Access denied
+            </p>
+            <p className="text-sm text-muted-foreground">{authError}</p>
+            <Button asChild variant="outline" size="sm" className="w-fit">
+              <Link href={`/dashboard/${role}/disputes`}>Back to your disputes</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
