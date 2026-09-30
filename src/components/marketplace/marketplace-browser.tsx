@@ -259,6 +259,21 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
     (skillId) => !savedSkillOptions.some((skill) => skill.id === skillId),
   );
 
+  // Live search: automatically update appliedFilters when the user types
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      const trimmed = filters.keyword.trim();
+      if (trimmed !== appliedFilters.keyword) {
+        setAppliedFilters((current) => ({
+          ...current,
+          keyword: trimmed,
+          ...(trimmed ? { categoryId: undefined, categoryName: undefined } : {}),
+        }));
+      }
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [filters.keyword, appliedFilters.keyword]);
+
   const displayedItems = useMemo(() => {
     if (kind === "freelancer") {
       return filterFreelancersByVisibleSkill(
@@ -272,15 +287,33 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
     // when the server doesn't fully enforce keyword or budget constraints.
     // This ensures the rendered list always matches the applied filters.
     let filtered = items as unknown as Project[];
-    const keyword = appliedFilters.keyword.trim().toLowerCase();
+    const keyword = (appliedFilters.keyword || filters.keyword).trim().toLowerCase();
     if (keyword) {
       filtered = filtered.filter(
         (project) =>
           project.title?.toLowerCase().includes(keyword) ||
           project.description?.toLowerCase().includes(keyword) ||
+          project.tags?.some((tag) => tag.toLowerCase().includes(keyword)) ||
           project.requiredSkills?.some((skill) =>
             skill.skillName?.toLowerCase().includes(keyword),
           ),
+      );
+    }
+    // Filter by selected skills
+    if (appliedFilters.skillIds.length > 0) {
+      const selectedSkillIds = new Set(appliedFilters.skillIds);
+      const selectedSkillNames = new Set(
+        skills
+          .filter((s) => selectedSkillIds.has(s.id))
+          .map((s) => s.name.toLowerCase()),
+      );
+      filtered = filtered.filter((project) =>
+        project.requiredSkills?.some(
+          (skill) =>
+            (skill.skillId && selectedSkillIds.has(skill.skillId)) ||
+            (skill.skillName && selectedSkillNames.has(skill.skillName.toLowerCase())) ||
+            (skill.skillName && selectedSkillIds.has(skill.skillName.toLowerCase())),
+        ),
       );
     }
     if (appliedFilters.minBudget !== undefined) {
@@ -293,11 +326,8 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
         (project) => (project.budget ?? 0) <= appliedFilters.maxBudget!,
       );
     }
-    // categoryId is sent to the API; client-side we trust the API response
-    // is already scoped to that category. Budget range is re-checked above
-    // as an extra safeguard in case the server returns broader results.
     return filtered as unknown as T[];
-  }, [appliedFilters, items, kind, savedSkillOptions]);
+  }, [appliedFilters, filters.keyword, items, kind, savedSkillOptions, skills]);
 
 
   const submitSearch = useCallback((event: React.FormEvent) => {
@@ -452,9 +482,15 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
                       isDashboard ? "rounded-lg" : "rounded-2xl",
                     )}
                     onClick={() => {
+                      const matchingSkill = skills.find(
+                        (s) =>
+                          s.name.toLowerCase() === category.categoryName.toLowerCase() ||
+                          s.categoryId === category.categoryId,
+                      );
                       const next: typeof filters = {
                         ...filters,
                         keyword: '',
+                        skillIds: matchingSkill ? [matchingSkill.id] : [],
                         categoryId: category.categoryId,
                         categoryName: category.categoryName,
                       };

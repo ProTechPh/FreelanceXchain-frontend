@@ -298,11 +298,10 @@ export default function CreateProjectPage() {
     setFormError(null);
     setIsSubmitting(true);
     try {
-      // Pre-warm the CSRF token so the first POST is guaranteed to carry a valid
-      // token. The axios interceptor will retry on a 403 CSRF_VALIDATION_FAILED,
-      // but eagerly fetching here removes the round-trip cost on the happy path.
+      // Pre-warm the CSRF token with forceRefresh so the POST is guaranteed to carry
+      // a fresh token matching the active authenticated user session.
       const { csrfTokenManager } = await import('@/lib/api-client');
-      await csrfTokenManager.ensureToken();
+      await csrfTokenManager.ensureToken({ forceRefresh: true });
 
       await submitProject(projectsApi, getForm());
       toast.success('Project posted successfully.');
