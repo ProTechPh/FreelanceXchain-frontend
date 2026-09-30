@@ -260,12 +260,40 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
   );
 
   const displayedItems = useMemo(() => {
-    if (kind !== "freelancer") return items;
-    return filterFreelancersByVisibleSkill(
-      items as FreelancerProfile[],
-      appliedFilters,
-      savedSkillOptions,
-    ) as T[];
+    if (kind === "freelancer") {
+      return filterFreelancersByVisibleSkill(
+        items as FreelancerProfile[],
+        appliedFilters,
+        savedSkillOptions,
+      ) as T[];
+    }
+
+    // Client-side guard for project results: the API may return extra items
+    // when the server doesn't fully enforce keyword or budget constraints.
+    // This ensures the rendered list always matches the applied filters.
+    let filtered = items as unknown as Project[];
+    const keyword = appliedFilters.keyword.trim().toLowerCase();
+    if (keyword) {
+      filtered = filtered.filter(
+        (project) =>
+          project.title?.toLowerCase().includes(keyword) ||
+          project.description?.toLowerCase().includes(keyword) ||
+          project.requiredSkills?.some((skill) =>
+            skill.skillName?.toLowerCase().includes(keyword),
+          ),
+      );
+    }
+    if (appliedFilters.minBudget !== undefined) {
+      filtered = filtered.filter(
+        (project) => (project.budget ?? 0) >= appliedFilters.minBudget!,
+      );
+    }
+    if (appliedFilters.maxBudget !== undefined) {
+      filtered = filtered.filter(
+        (project) => (project.budget ?? 0) <= appliedFilters.maxBudget!,
+      );
+    }
+    return filtered as unknown as T[];
   }, [appliedFilters, items, kind, savedSkillOptions]);
 
 
