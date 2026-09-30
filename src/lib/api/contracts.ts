@@ -19,8 +19,8 @@ export const contractsApi = {
   list: (params?: Record<string, string | number>) =>
     api.get<PaginatedResponse<Contract>>('/contracts', { params }),
   
-  get: (id: string) =>
-    api.get<Contract>(`/contracts/${id}`),
+  get: (id: string, params?: Record<string, string | number>) =>
+    api.get<Contract>(`/contracts/${id}`, { params }),
 
   fund: (id: string, payload?: { escrowAddress?: string; transactionHash?: string }) =>
     api.post<{ message: string; escrowAddress: string; contractStatus: Contract['status'] }>(`/contracts/${id}/fund`, payload),

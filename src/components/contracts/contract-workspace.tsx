@@ -42,9 +42,11 @@ const initialReview: ReviewDraft = {
 export const ContractWorkspace = React.memo(function ContractWorkspace({
   contractId,
   role,
+  disputeId,
 }: {
   contractId: string;
   role: ParticipantRole;
+  disputeId?: string;
 }) {
   const user = useAuthStore((state) => state.user);
   const queryClient = useQueryClient();
@@ -62,7 +64,7 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
     loading,
     reviewEligibility,
     refresh: loadWorkspace,
-  } = useContractWorkspace(contractId, role, requestRatingPrompt);
+  } = useContractWorkspace(contractId, role, requestRatingPrompt, disputeId);
 
   const [actionId, setActionId] = useState<string | null>(null);
   const [notes, setNotes] = useState<Record<string, string>>({});

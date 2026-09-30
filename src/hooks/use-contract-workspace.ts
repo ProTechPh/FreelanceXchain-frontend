@@ -1,4 +1,4 @@
-﻿
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -52,6 +52,7 @@ export function useContractWorkspace(
   contractId: string,
   role: ParticipantRole,
   requestRatingPrompt: (source: AppRatingSource, contextId?: string) => void,
+  disputeId?: string,
 ): UseContractWorkspaceResult {
   const [state, setState] = useState<ContractWorkspaceState>({
     contract: null,
@@ -68,7 +69,10 @@ export function useContractWorkspace(
 
   const loadWorkspace = useCallback(async () => {
     try {
-      const contractResponse = await contractsApi.get(contractId);
+      const contractResponse = await contractsApi.get(
+        contractId,
+        disputeId ? { disputeId } : undefined,
+      );
       const loadedContract = contractResponse.data;
 
       const [
@@ -126,7 +130,7 @@ export function useContractWorkspace(
       reportFailure(error, 'load this contract');
       setState(prev => ({ ...prev, loading: false }));
     }
-  }, [contractId, role, requestRatingPrompt]);
+  }, [contractId, role, requestRatingPrompt, disputeId]);
 
   useEffect(() => {
     let mounted = true;
