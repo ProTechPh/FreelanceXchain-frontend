@@ -5,8 +5,11 @@ function isLocalHostname(hostname?: string): boolean {
 }
 
 export function isTurnstileClientDisabled(
-  env: TurnstileClientEnv = process.env,
+  env?: TurnstileClientEnv,
   hostname = typeof window === 'undefined' ? undefined : window.location.hostname
 ): boolean {
-  return env.NEXT_PUBLIC_DISABLE_TURNSTILE === 'true' || isLocalHostname(hostname);
+  const isExplicitlyDisabled = env
+    ? env.NEXT_PUBLIC_DISABLE_TURNSTILE === 'true'
+    : process.env.NEXT_PUBLIC_DISABLE_TURNSTILE === 'true';
+  return isExplicitlyDisabled || isLocalHostname(hostname);
 }
