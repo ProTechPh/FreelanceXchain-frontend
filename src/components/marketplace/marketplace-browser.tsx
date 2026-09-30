@@ -9,6 +9,7 @@ import { formatAmount } from "@/lib/format";
 import {
   buildMarketplaceSearchParams,
   createSavedSearchFilters,
+  filterFreelancersByVisibleSkill,
   marketplaceFiltersToSearchParams,
   restoreSavedSearchFilters,
   type MarketplaceFilters,
@@ -257,6 +258,15 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
   const hasUnresolvedSkillSelection = filters.skillIds.some(
     (skillId) => !savedSkillOptions.some((skill) => skill.id === skillId),
   );
+
+  const displayedItems = useMemo(() => {
+    if (kind !== "freelancer") return items;
+    return filterFreelancersByVisibleSkill(
+      items as FreelancerProfile[],
+      appliedFilters,
+      savedSkillOptions,
+    ) as T[];
+  }, [appliedFilters, items, kind, savedSkillOptions]);
 
 
   const submitSearch = useCallback((event: React.FormEvent) => {
@@ -911,7 +921,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
             <p aria-live="polite" className="text-sm font-bold text-foreground">
               {loading && items.length === 0
                 ? "Searching…"
-                : `Showing ${items.length} ${kind}${items.length === 1 ? "" : "s"}`}
+                : `Showing ${displayedItems.length} ${kind}${displayedItems.length === 1 ? "" : "s"}`}
             </p>
             {resultsAction}
           </div>
@@ -932,7 +942,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
                 ),
               )}
             </div>
-          ) : items.length === 0 ? (
+          ) : displayedItems.length === 0 ? (
             <div className="rounded-3xl bg-card border border-border/80 p-12 text-center shadow-md shadow-black/5">
               <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-neutral/10 flex items-center justify-center">
                 <Briefcase className="w-8 h-8 text-muted-foreground" />
@@ -952,7 +962,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
                 loading && "pointer-events-none opacity-60",
               )}
             >
-              {items.map((item) => {
+              {displayedItems.map((item) => {
                 const targetId = getTargetId(item);
                 const favorite = favoriteIds.has(targetId);
                 const listingQuery = marketplaceFiltersToSearchParams(appliedFilters).toString();

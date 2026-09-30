@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useWalletConnection } from '@/hooks/use-wallet-connection';
 import { HelpHint } from '@/components/onboarding/help-hint';
+import { formatWalletAddress } from '@/lib/wallet-utils';
 
 interface WalletConnectBannerProps {
   role?: 'freelancer' | 'employer';
@@ -12,13 +13,20 @@ interface WalletConnectBannerProps {
 }
 
 export function WalletConnectBanner({ role = 'freelancer', className = '' }: WalletConnectBannerProps) {
-  const { isConnected, isConnecting, connect } = useWalletConnection();
+  const { isConnected, isConnecting, connect, user } = useWalletConnection();
 
   if (isConnected) {
     return null;
   }
 
   const isFreelancer = role === 'freelancer';
+  const linkedWalletAddress = user?.walletAddress?.trim() || null;
+  const formattedLinkedWallet = formatWalletAddress(linkedWalletAddress);
+  const description = linkedWalletAddress
+    ? `Your account is linked to ${formattedLinkedWallet}. Select that wallet in MetaMask to reconnect, or use Settings to disconnect it first.`
+    : isFreelancer
+      ? 'Link your Ethereum or Polygon wallet (e.g. MetaMask) to automatically receive milestone escrow payouts and build verified on-chain work history.'
+      : 'Link your Web3 wallet (e.g. MetaMask) to fund project escrows securely, approve milestone payments, and manage on-chain contracts.';
 
   return (
     <div
@@ -32,16 +40,14 @@ export function WalletConnectBanner({ role = 'freelancer', className = '' }: Wal
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <h2 className="text-base font-bold text-foreground">
-                Connect your Web3 Wallet
+                {linkedWalletAddress ? 'Reconnect your Web3 Wallet' : 'Connect your Web3 Wallet'}
               </h2>
               <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-2xs font-semibold text-primary">
                 <Sparkles className="size-3" /> Recommended
               </span>
             </div>
             <p className="text-xs sm:text-sm text-muted-foreground max-w-2xl">
-              {isFreelancer
-                ? 'Link your Ethereum or Polygon wallet (e.g. MetaMask) to automatically receive milestone escrow payouts and build verified on-chain work history.'
-                : 'Link your Web3 wallet (e.g. MetaMask) to fund project escrows securely, approve milestone payments, and manage on-chain contracts.'}
+              {description}
             </p>
             <HelpHint topic={isFreelancer ? 'wallet' : 'escrow'} className="pt-1" />
           </div>
@@ -63,7 +69,7 @@ export function WalletConnectBanner({ role = 'freelancer', className = '' }: Wal
             ) : (
               <>
                 <Wallet className="size-4 mr-2" />
-                Connect Wallet
+                {linkedWalletAddress ? 'Reconnect Wallet' : 'Connect Wallet'}
               </>
             )}
           </Button>

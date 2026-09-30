@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useImperativeHandle, forwardRef, useCallback } from 'react';
+import { isTurnstileClientDisabled } from '@/lib/turnstile-config';
 
 declare global {
   interface Window {
@@ -41,6 +42,7 @@ const DEFAULT_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '0x4AAAAA
 
 export const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetProps>(
   ({ action, onVerify, onExpire, onError, className = 'my-3 flex justify-center', theme = 'auto' }, ref) => {
+    const disabled = isTurnstileClientDisabled();
     const containerRef = useRef<HTMLDivElement>(null);
     const widgetIdRef = useRef<string | null>(null);
 
@@ -69,6 +71,8 @@ export const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetPro
     }), [reset]);
 
     useEffect(() => {
+      if (disabled) return;
+
       let isMounted = true;
 
       const renderWidget = () => {
@@ -145,7 +149,11 @@ export const TurnstileWidget = forwardRef<TurnstileWidgetRef, TurnstileWidgetPro
           widgetIdRef.current = null;
         }
       };
-    }, [action, theme]);
+    }, [action, disabled, theme]);
+
+    if (disabled) {
+      return null;
+    }
 
     return (
       <div className={className}>

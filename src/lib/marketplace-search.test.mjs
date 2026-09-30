@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
   buildMarketplaceSearchParams,
   createSavedSearchFilters,
+  filterFreelancersByVisibleSkill,
   restoreSavedSearchFilters,
   marketplaceFiltersFromSearchParams,
   marketplaceFiltersToSearchParams,
@@ -61,4 +62,29 @@ test('restores both current and legacy name-only saved skill filters', () => {
     keyword: 'api',
     skillIds: ['skill-node'],
   });
+});
+
+test('enforces selected freelancer skill against visible profile skills', () => {
+  const freelancers = [
+    {
+      userId: 'solidity-dev',
+      skills: [{ name: 'Solidity', yearsOfExperience: 4 }],
+    },
+    {
+      userId: 'ethereum-dev',
+      skills: [
+        { name: 'Node.js', yearsOfExperience: 5 },
+        { name: 'Python', yearsOfExperience: 3 },
+        { name: 'Ethereum', yearsOfExperience: 4 },
+        { name: 'Smart Contracts', yearsOfExperience: 4 },
+      ],
+    },
+  ];
+
+  assert.deepEqual(
+    filterFreelancersByVisibleSkill(freelancers, { keyword: '', skillIds: ['skill-solidity'] }, [
+      { id: 'skill-solidity', name: 'Solidity' },
+    ]).map((freelancer) => freelancer.userId),
+    ['solidity-dev'],
+  );
 });

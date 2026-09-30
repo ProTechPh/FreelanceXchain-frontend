@@ -14,6 +14,7 @@ import {
   requestWalletProvider,
   restoreWalletSession,
 } from '@/lib/metamask';
+import { decideWalletLinkAction, getLinkedWalletMismatchMessage } from '@/lib/wallet-linking';
 
 export interface WalletConnection {
   address: string;
@@ -213,15 +214,27 @@ export function useWalletConnection() {
       const nextChainId = parseInt(chainIdHex, 16);
       const nextAddress = accounts[0];
 
-      // Link on the server first; the wallet only counts as connected once the
-      // account it is tied to accepts it.
-      let linkedAddress: string;
-      try {
-        const { data } = await authApi.updateWallet(nextAddress);
-        linkedAddress = data.walletAddress;
-      } catch (error) {
-        toast.error(getWalletSyncErrorMessage(error), { id: 'wallet-sync', duration: 8000 });
+      // A profile can already have a locked wallet address. In that case,
+      // connecting the same MetaMask account only restores the local session;
+      // connecting a different account must not try to relink it.
+      const walletAction = decideWalletLinkAction(useAuthStore.getState().user?.walletAddress, nextAddress);
+      if (walletAction.type === 'switch-account') {
+        toast.error(getLinkedWalletMismatchMessage(walletAction.linkedAddress, walletAction.selectedAddress), {
+          id: 'wallet-sync',
+          duration: 8000,
+        });
         return;
+      }
+
+      let linkedAddress = walletAction.type === 'restore' ? walletAction.walletAddress : walletAction.selectedAddress;
+      if (walletAction.type === 'link') {
+        try {
+          const { data } = await authApi.updateWallet(walletAction.selectedAddress);
+          linkedAddress = data.walletAddress;
+        } catch (error) {
+          toast.error(getWalletSyncErrorMessage(error), { id: 'wallet-sync', duration: 8000 });
+          return;
+        }
       }
 
       const currentUser = useAuthStore.getState().user;
