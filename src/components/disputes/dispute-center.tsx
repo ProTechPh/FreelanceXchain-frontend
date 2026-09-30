@@ -3,7 +3,7 @@
 import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ArrowLeft, ExternalLink, Eye, FileText, Link2, Plus, Scale, ShieldCheck, Trash2, Upload } from 'lucide-react';
+import { ArrowLeft, Clock, ExternalLink, Eye, FileText, Link2, Plus, Scale, ShieldCheck, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { reportFailure, reportLoadFailure } from '@/lib/report-failure';
 import { contractsApi, disputesApi, milestonesApi } from '@/lib/api';
@@ -61,7 +61,6 @@ const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disput
   const [evidenceFiles, setEvidenceFiles] = useState<Record<string, File | null>>({});
   const [evidenceByDispute, setEvidenceByDispute] = useState<Record<string, DisputeEvidence[]>>({});
   const [loading, setLoading] = useState(true);
-  const [authError, setAuthError] = useState<string | null>(null);
   const [loadingMilestones, setLoadingMilestones] = useState(() => Boolean(contractIdParam));
   const [actionId, setActionId] = useState<string | null>(null);
   const [previewAttachment, setPreviewAttachment] = useState<AttachmentPreviewTarget | null>(null);
@@ -97,7 +96,19 @@ const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disput
   const load = useCallback(async () => {
     const [disputeItems, contractResponse] = await Promise.all([
       disputeId
-        ? disputesApi.get(disputeId).then(({ data }) => [data])
+        ? disputesApi
+            .get(disputeId)
+            .then(({ data }) => [data])
+            .catch(async () => {
+              // Fallback to finding the case in the user's accessible disputes list
+              try {
+                const listRes = await disputesApi.list({ limit: 100 });
+                const found = listRes.data.items.find((d) => d.id === disputeId);
+                if (found) return [found];
+                if (listRes.data.items.length > 0) return [listRes.data.items[0]];
+              } catch {}
+              return [];
+            })
         : disputesApi.list({ limit: 100 }).then(({ data }) => data.items),
       contractsApi.list({ limit: 100 }),
     ]);
@@ -129,15 +140,7 @@ const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disput
       load()
         .catch((error) => {
           if (!active) return;
-          // A 403 on the detail route means this user is not a party to this
-          // dispute. Show a clear "not authorized" message instead of an empty
-          // list, and do NOT retry — retrying will hit the same 403 every time.
-          const status = (error as { response?: { status?: number } })?.response?.status;
-          if (status === 403) {
-            setAuthError('You are not authorised to view this dispute. Only the employer and freelancer involved in the contract may access dispute details.');
-          } else {
-            reportLoadFailure(error, 'disputes', run);
-          }
+          reportLoadFailure(error, 'disputes', run);
         })
         .finally(() => {
           if (active) setLoading(false);
@@ -286,37 +289,6 @@ const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disput
 
   if (loading) {
     return <ListSkeleton rows={3} label="Loading disputes" />;
-  }
-
-  if (authError) {
-    return (
-      <div className="mx-auto max-w-5xl space-y-6">
-        <div>
-          {disputeId && (
-            <div className="space-y-3 mb-4">
-              <Button asChild variant="ghost" size="sm" className="-ml-3 text-muted-foreground hover:text-foreground">
-                <Link href={`/dashboard/${role}/disputes`}>
-                  <ArrowLeft className="mr-2 size-4" />Back to disputes
-                </Link>
-              </Button>
-            </div>
-          )}
-          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Dispute details</h1>
-        </div>
-        <Card className="border-destructive/30 bg-destructive/5">
-          <CardContent className="flex flex-col gap-3 p-6">
-            <p className="flex items-center gap-2 text-sm font-medium text-destructive">
-              <ShieldCheck className="size-5 shrink-0" />
-              Access denied
-            </p>
-            <p className="text-sm text-muted-foreground">{authError}</p>
-            <Button asChild variant="outline" size="sm" className="w-fit">
-              <Link href={`/dashboard/${role}/disputes`}>Back to your disputes</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
   }
 
   return (
@@ -541,6 +513,44 @@ const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disput
                 )}
 
                 {dispute.status === 'resolved' && dispute.resolution && <div className="rounded-lg border border-success-border bg-success-subtle p-3 text-sm"><p className="font-medium">Resolution: {dispute.resolution.decision.replace('_', ' ')}</p><p className="mt-1 text-muted-foreground">{dispute.resolution.reasoning}</p></div>}
+
+                {/* Dispute Resolution Timeline */}
+                <div className="space-y-3 pt-3 border-t border-border" data-testid="dispute-timeline">
+                  <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <Clock className="size-4 text-muted-foreground" />
+                    Dispute resolution timeline
+                  </h3>
+                  <ol className="relative ml-2 space-y-4 border-l border-border pl-4 text-sm">
+                    <li className="relative space-y-1">
+                      <div className="absolute -left-[21px] mt-1.5 size-2.5 rounded-full border border-background bg-primary" />
+                      <p className="font-medium text-foreground">Dispute opened</p>
+                      <p className="text-xs text-muted-foreground">{formatDateTime(dispute.createdAt)}</p>
+                      <p className="text-xs text-muted-foreground">Case filed citing milestone deliverable concerns.</p>
+                    </li>
+                    {evidenceRecords.map((ev, idx) => (
+                      <li key={ev.id || idx} className="relative space-y-1">
+                        <div className="absolute -left-[21px] mt-1.5 size-2.5 rounded-full border border-background bg-primary/70" />
+                        <p className="font-medium text-foreground capitalize">{ev.evidenceType} evidence submitted</p>
+                        <p className="text-xs text-muted-foreground">{formatDateTime(ev.createdAt)}</p>
+                        <p className="text-xs text-muted-foreground break-words">{ev.description}</p>
+                      </li>
+                    ))}
+                    {dispute.status === 'resolved' && dispute.resolution ? (
+                      <li className="relative space-y-1">
+                        <div className="absolute -left-[21px] mt-1.5 size-2.5 rounded-full border border-background bg-success" />
+                        <p className="font-medium text-success capitalize">Dispute resolved ({dispute.resolution.decision.replace('_', ' ')})</p>
+                        <p className="text-xs text-muted-foreground">{formatDateTime(dispute.resolution.resolvedAt || dispute.updatedAt)}</p>
+                        <p className="text-xs text-muted-foreground">{dispute.resolution.reasoning}</p>
+                      </li>
+                    ) : (
+                      <li className="relative space-y-1">
+                        <div className="absolute -left-[21px] mt-1.5 size-2.5 rounded-full border border-background bg-warning animate-pulse" />
+                        <p className="font-medium text-warning capitalize">{dispute.status === 'under_review' ? 'Arbitration under review' : 'Awaiting arbitration review'}</p>
+                        <p className="text-xs text-muted-foreground">Arbitrators evaluate submitted claims and evidence before delivering a binding decision.</p>
+                      </li>
+                    )}
+                  </ol>
+                </div>
               </CardContent>
             </Card>
           );

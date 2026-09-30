@@ -76,8 +76,12 @@ api.interceptors.request.use(
     if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
       try {
         const csrfToken = await csrfTokenManager.ensureToken();
-        if (csrfToken) {
-          config.headers['x-csrf-token'] = csrfToken;
+        if (csrfToken && config.headers) {
+          if (typeof config.headers.set === 'function') {
+            config.headers.set('x-csrf-token', csrfToken);
+          } else {
+            config.headers['x-csrf-token'] = csrfToken;
+          }
         }
       } catch {
         // Proceed without csrf header for exempt or cross-subdomain requests
@@ -100,7 +104,13 @@ api.interceptors.response.use(
     ) {
       requestConfig.csrfRetryAttempted = true;
       const csrfToken = await csrfTokenManager.ensureToken({ forceRefresh: true });
-      requestConfig.headers['x-csrf-token'] = csrfToken;
+      if (requestConfig.headers) {
+        if (typeof requestConfig.headers.set === 'function') {
+          requestConfig.headers.set('x-csrf-token', csrfToken);
+        } else {
+          requestConfig.headers['x-csrf-token'] = csrfToken;
+        }
+      }
       return api.request(requestConfig);
     }
 

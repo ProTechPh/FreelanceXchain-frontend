@@ -185,10 +185,12 @@ export function ProjectDetailHeader({
             )}
 
             {primaryAction === 'sign-in-to-submit' && (
-              <Button asChild className="rounded-full gradient-primary shadow-md">
-                <Link href={`/login?returnTo=${encodeURIComponent(`/projects/${project.id}`)}`}>
-                  <Send className="w-4 h-4 mr-2" /> Sign in to Submit Proposal
-                </Link>
+              <Button
+                type="button"
+                className="rounded-full gradient-primary shadow-md"
+                onClick={() => onOpenProposal(false)}
+              >
+                <Send className="w-4 h-4 mr-2" /> Submit Proposal
               </Button>
             )}
           </div>

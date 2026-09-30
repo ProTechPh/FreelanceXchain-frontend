@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -227,7 +227,7 @@ export function ProjectDetailView({
         />
       )}
 
-      {project && primaryAction === 'submit-proposal' && (
+      {project && (primaryAction === 'submit-proposal' || primaryAction === 'sign-in-to-submit') && (
         <ProposalDialog
           open={proposalOpen}
           onOpenChange={(next) => {

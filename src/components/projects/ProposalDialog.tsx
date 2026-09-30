@@ -139,9 +139,11 @@ export function ProposalDialog({
   const [editableCoverLetter, setEditableCoverLetter] = useState('');
   const [confirmDiscardOpen, setConfirmDiscardOpen] = useState(false);
 
-  const blockedReason = !isKycApproved
-    ? 'Complete identity verification first — go to Verification in your dashboard.'
-    : null;
+  const blockedReason = !user
+    ? 'Please sign in to submit your proposal.'
+    : !isKycApproved
+      ? 'Complete identity verification first — go to Verification in your dashboard.'
+      : null;
 
   const { isPro } = usePlan();
   const proBlockedReason = !isPro ? 'Drafting with AI is a Pro feature.' : null;
@@ -257,6 +259,11 @@ export function ProposalDialog({
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!project) return;
+    if (!user) {
+      toast.info('Please sign in to submit your proposal.');
+      window.location.href = `/login?returnTo=${encodeURIComponent(`/projects/${project.id}`)}`;
+      return;
+    }
     const success = await submitForm(editableCoverLetter ? sanitizeMarkdownText(editableCoverLetter) : undefined);
     if (success) {
       // The proposal is sent, so nothing here is a draft any more: clear the AI
@@ -288,7 +295,19 @@ export function ProposalDialog({
             native bubbles would pre-empt it with differently worded messages. */}
         <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleSubmit} noValidate>
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 py-4 sm:px-5">
-        {!isKycApproved && (
+        {!user ? (
+          <Alert
+            tone="info"
+            live={false}
+            title="You are browsing as a guest"
+            description="You can draft and review your proposal, but signing in is required to submit it to the employer."
+            action={(
+              <Button asChild size="sm" variant="outline" className="h-8 text-xs">
+                <Link href={`/login?returnTo=${encodeURIComponent(`/projects/${project?.id || ''}`)}`}>Sign in</Link>
+              </Button>
+            )}
+          />
+        ) : !isKycApproved ? (
           <Alert
             tone="warning"
             live={false}
@@ -300,7 +319,7 @@ export function ProposalDialog({
               </Button>
             )}
           />
-        )}
+        ) : null}
 
         <div className="rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-3 space-y-3 sm:p-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -654,11 +673,11 @@ export function ProposalDialog({
             className="w-full sm:w-auto"
             loading={submitting}
             loadingText="Submitting proposal…"
-            disabled={!isKycApproved || submitting || generatingAI}
+            disabled={Boolean(user && !isKycApproved) || submitting || generatingAI}
             title={blockedReason ?? undefined}
           >
             <Send className="size-4" aria-hidden="true" />
-            {isKycApproved ? 'Submit proposal' : 'Identity verification required'}
+            {!user ? 'Sign in to submit proposal' : isKycApproved ? 'Submit proposal' : 'Identity verification required'}
           </Button>
         </DialogFooter>
         </form>
