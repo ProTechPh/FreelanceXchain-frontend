@@ -76,3 +76,74 @@ test('administrator verifies dispute evidence before resolution', async ({ page 
   await expect(page.getByText('Verified', { exact: true })).toBeVisible();
   expect(verifyCalls).toBe(1);
 });
+
+test('Review an existing dispute case from the disputes list shows evidence attachments and resolution', async ({ page }) => {
+  const user = await authenticate(page, 'employer');
+  const fileEvidenceId = '123e4567-e89b-12d3-a456-426614174099';
+  const resolvedDispute = {
+    id: disputeId,
+    contractId,
+    milestoneId: 'milestone-1',
+    initiatorId: user.id,
+    reason: 'The milestone deliverables did not meet specifications.',
+    status: 'resolved',
+    resolution: {
+      decision: 'freelancer_favor',
+      reasoning: 'Deliverables met the contract scope as agreed upon.',
+      resolvedBy: 'arbitrator-1',
+      resolvedAt: createdAt,
+    },
+    evidence: [
+      {
+        id: fileEvidenceId,
+        submitterId: user.id,
+        type: 'file',
+        content: 'https://files.example.com/specifications_audit.pdf',
+        submittedAt: createdAt,
+      },
+    ],
+    createdAt,
+    updatedAt: createdAt,
+  };
+
+  await page.route(`**/api/disputes/${disputeId}`, async (route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(resolvedDispute) });
+  });
+  await page.route('**/api/contracts?**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ items: [makeContract(user.id)], hasMore: false, total: 1 }) }));
+  await page.route(`**/api/disputes/${disputeId}/evidence`, (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify([
+      {
+        id: fileEvidenceId,
+        disputeId,
+        submittedBy: user.id,
+        evidenceType: 'file',
+        fileUrl: 'https://files.example.com/specifications_audit.pdf',
+        description: 'specifications_audit.pdf',
+        createdAt,
+        updatedAt: createdAt,
+      },
+    ]),
+  }));
+
+  await page.goto(`/dashboard/employer/disputes/${disputeId}`);
+
+  // Header and case details
+  await expect(page.getByRole('heading', { name: 'Dispute details' })).toBeVisible();
+  await expect(page.getByText(`Case #${disputeId.slice(0, 8)}`)).toBeVisible();
+  await expect(page.getByText('The milestone deliverables did not meet specifications.')).toBeVisible();
+
+  // Resolution
+  await expect(page.getByText('Resolution: freelancer favor')).toBeVisible();
+
+  // Evidence & attachments section
+  await expect(page.getByRole('heading', { name: 'Evidence & attachments' })).toBeVisible();
+  const fileLink = page.getByTestId('dispute-evidence-section').getByRole('link', { name: /specifications_audit\.pdf/ });
+  await expect(fileLink).toBeVisible();
+  await expect(fileLink).toHaveAttribute('href', 'https://files.example.com/specifications_audit.pdf');
+
+  // Timeline
+  await expect(page.getByRole('heading', { name: 'Dispute resolution timeline' })).toBeVisible();
+  await expect(page.getByText('Dispute resolved (freelancer favor)')).toBeVisible();
+});
