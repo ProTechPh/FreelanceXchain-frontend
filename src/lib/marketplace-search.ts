@@ -3,6 +3,10 @@ export type MarketplaceFilters = {
   skillIds: string[];
   minBudget?: number;
   maxBudget?: number;
+  /** When set, results are restricted to projects in this category. */
+  categoryId?: string;
+  /** Human-readable label for the active category (used only for display, not sent to API). */
+  categoryName?: string;
 };
 
 type SkillOption = { id: string; name: string };
@@ -20,11 +24,14 @@ function optionalNonNegativeNumber(value: string | null): number | undefined {
 export function marketplaceFiltersFromSearchParams(searchParams: URLSearchParams): MarketplaceFilters {
   const minBudget = optionalNonNegativeNumber(searchParams.get('minBudget'));
   const maxBudget = optionalNonNegativeNumber(searchParams.get('maxBudget'));
+  const categoryId = searchParams.get('categoryId')?.trim() || undefined;
+  const categoryName = searchParams.get('categoryName')?.trim() || undefined;
   return {
     keyword: searchParams.get('keyword')?.trim() ?? '',
     skillIds: (searchParams.get('skills') ?? '').split(',').map((value) => value.trim()).filter(Boolean),
     ...(minBudget === undefined ? {} : { minBudget }),
     ...(maxBudget === undefined ? {} : { maxBudget }),
+    ...(categoryId ? { categoryId, categoryName } : {}),
   };
 }
 
@@ -35,6 +42,10 @@ export function marketplaceFiltersToSearchParams(filters: MarketplaceFilters): U
   if (filters.skillIds.length > 0) searchParams.set('skills', filters.skillIds.join(','));
   if (filters.minBudget !== undefined) searchParams.set('minBudget', String(filters.minBudget));
   if (filters.maxBudget !== undefined) searchParams.set('maxBudget', String(filters.maxBudget));
+  if (filters.categoryId) {
+    searchParams.set('categoryId', filters.categoryId);
+    if (filters.categoryName) searchParams.set('categoryName', filters.categoryName);
+  }
   return searchParams;
 }
 
@@ -46,10 +57,12 @@ export function buildMarketplaceSearchParams(filters: MarketplaceFilters, offset
   if (filters.skillIds.length > 0) params.skills = filters.skillIds.join(',');
   if (filters.minBudget !== undefined) params.minBudget = filters.minBudget;
   if (filters.maxBudget !== undefined) params.maxBudget = filters.maxBudget;
+  if (filters.categoryId) params.categoryId = filters.categoryId;
   if (offset > 0) params.continuationToken = String(offset);
 
   return params;
 }
+
 
 export function filterFreelancersByVisibleSkill<T extends ProfileWithVisibleSkills>(
   freelancers: T[],
