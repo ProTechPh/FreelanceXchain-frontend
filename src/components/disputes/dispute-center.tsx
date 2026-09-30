@@ -3,7 +3,7 @@
 import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ArrowLeft, Clock, ExternalLink, Eye, FileText, Link2, Plus, Scale, ShieldCheck, Trash2, Upload } from 'lucide-react';
+import { ArrowLeft, Clock, ExternalLink, Eye, FileText, Link2, Paperclip, Plus, Scale, ShieldCheck, Trash2, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { reportFailure, reportLoadFailure } from '@/lib/report-failure';
 import { contractsApi, disputesApi, milestonesApi } from '@/lib/api';
@@ -115,21 +115,29 @@ const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disput
     setDisputes(disputeItems);
     setContracts(contractResponse.data.items);
     const evidenceEntries = await Promise.all(disputeItems.map(async (dispute) => {
+      const embeddedRecords: DisputeEvidence[] = (dispute.evidence || []).map((evidence) => ({
+        id: evidence.id,
+        disputeId: dispute.id,
+        submittedBy: evidence.submitterId,
+        evidenceType: evidence.type,
+        description: evidence.content,
+        fileUrl: evidence.type === 'text' ? undefined : evidence.content,
+        createdAt: evidence.submittedAt,
+        updatedAt: evidence.submittedAt,
+      }));
+
       try {
         const { data } = await disputesApi.listEvidence(dispute.id);
-        return [dispute.id, data] as const;
+        if (Array.isArray(data) && data.length > 0) {
+          const ids = new Set(data.map((e) => e.id));
+          const combined = [...data, ...embeddedRecords.filter((e) => !ids.has(e.id))];
+          return [dispute.id, combined] as const;
+        }
       } catch {
-        return [dispute.id, dispute.evidence.map((evidence) => ({
-          id: evidence.id,
-          disputeId: dispute.id,
-          submittedBy: evidence.submitterId,
-          evidenceType: evidence.type,
-          description: evidence.content,
-          fileUrl: evidence.type === 'text' ? undefined : evidence.content,
-          createdAt: evidence.submittedAt,
-          updatedAt: evidence.submittedAt,
-        }))] as const;
+        // Fall back to embedded
       }
+
+      return [dispute.id, embeddedRecords] as const;
     }));
     setEvidenceByDispute(Object.fromEntries(evidenceEntries));
   }, [disputeId]);
@@ -279,6 +287,7 @@ const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disput
     try {
       await disputesApi.deleteEvidence(disputeId, evidenceId);
       setEvidenceByDispute((current) => ({ ...current, [disputeId]: (current[disputeId] ?? []).filter((evidence) => evidence.id !== evidenceId) }));
+      setDisputes((current) => current.map((d) => d.id === disputeId ? { ...d, evidence: (d.evidence || []).filter((e) => e.id !== evidenceId) } : d));
       toast.success('Evidence deleted.');
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Unable to delete this evidence.'));
@@ -379,7 +388,23 @@ const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disput
         />}
         {disputes.map((dispute) => {
           const contract = contractsById.get(dispute.contractId);
-          const evidenceRecords = evidenceByDispute[dispute.id] ?? [];
+          const rawEmbedded: DisputeEvidence[] = (dispute.evidence || []).map((evidence) => ({
+            id: evidence.id,
+            disputeId: dispute.id,
+            submittedBy: evidence.submitterId,
+            evidenceType: evidence.type,
+            description: evidence.content,
+            fileUrl: evidence.type === 'text' ? undefined : evidence.content,
+            createdAt: evidence.submittedAt,
+            updatedAt: evidence.submittedAt,
+          }));
+          const standaloneRecords = evidenceByDispute[dispute.id] || [];
+          const seenIds = new Set(standaloneRecords.map((e) => e.id));
+          const evidenceRecords = [
+            ...standaloneRecords,
+            ...rawEmbedded.filter((e) => !seenIds.has(e.id)),
+          ];
+
           return (
             <Card key={dispute.id}>
               <CardHeader>
@@ -392,82 +417,128 @@ const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disput
                   {!disputeId && <Button asChild variant="ghost" size="sm"><Link href={`/dashboard/${role}/disputes/${dispute.id}`}>View case</Link></Button>}
                 </div>
 
-                {evidenceRecords.length > 0 && (
-                  <ul className="space-y-2" aria-label="Submitted evidence">
-                    {evidenceRecords.map((evidence) => {
-                      const evidenceUrl = safeAttachmentUrl(evidence.fileUrl || evidence.description);
-                      const textOnly = evidence.evidenceType === 'text' || evidence.evidenceType === 'message';
-                      return (
-                        <li key={evidence.id} className="flex items-start gap-3 rounded-lg border border-border p-3 text-sm">
-                          <FileText className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-                          <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className="font-medium capitalize">{evidence.evidenceType} evidence</span>
-                              <Badge variant="secondary">{evidence.verifiedBy ? 'Verified' : 'Unverified'}</Badge>
-                            </div>
-                            {textOnly ? (
-                              <p className="mt-1 break-words text-muted-foreground">{evidence.description}</p>
-                            ) : evidence.evidenceType === 'link' ? (
-                              <a
-                                href={evidenceUrl || evidence.description}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                aria-label="Open evidence"
-                                className="mt-1 inline-flex items-center gap-1.5 break-all text-xs font-medium text-primary hover:underline"
-                              >
-                                <ExternalLink className="size-3.5 shrink-0" />
-                                <span>{evidence.description}</span>
-                              </a>
-                            ) : evidenceUrl ? (
-                              <div className="mt-1 flex items-center gap-2">
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-7 gap-1.5 px-2.5 text-xs rounded-lg"
-                                  onClick={() =>
-                                    setPreviewAttachment({
-                                      filename: (!evidence.description.startsWith('http://') && !evidence.description.startsWith('https://')) ? evidence.description : 'Evidence File',
-                                      url: evidenceUrl,
-                                    })
-                                  }
-                                >
-                                  <Eye className="size-3.5" />
-                                  View evidence
-                                </Button>
-                                <Button
-                                  asChild
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground"
-                                >
-                                  <a href={evidenceUrl} target="_blank" rel="noopener noreferrer">
-                                    <ExternalLink className="size-3.5" />
-                                    Open raw
-                                  </a>
-                                </Button>
+                {/* Evidence and Attachments Section */}
+                <div className="space-y-3 pt-3 border-t border-border" data-testid="dispute-evidence-section">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                      <Paperclip className="size-4 text-muted-foreground" />
+                      Evidence &amp; attachments
+                    </h3>
+                    {evidenceRecords.length > 0 && (
+                      <Badge variant="outline" className="text-xs font-normal">
+                        {evidenceRecords.length} {evidenceRecords.length === 1 ? 'attachment' : 'attachments'}
+                      </Badge>
+                    )}
+                  </div>
+
+                  {evidenceRecords.length === 0 ? (
+                    disputeId ? (
+                      <p className="text-xs text-muted-foreground">No evidence attachments have been submitted for this case.</p>
+                    ) : null
+                  ) : (
+                    <ul className="space-y-2" aria-label="Submitted evidence">
+                      {evidenceRecords.map((evidence) => {
+                        const rawTarget = evidence.fileUrl || evidence.description;
+                        const safeUrl = safeAttachmentUrl(rawTarget);
+                        const directUrl = safeUrl || (rawTarget && (rawTarget.startsWith('http://') || rawTarget.startsWith('https://') || rawTarget.startsWith('/')) ? rawTarget : null);
+                        const textOnly = evidence.evidenceType === 'text' || evidence.evidenceType === 'message';
+
+                        // Derive readable file/attachment name
+                        const fileName = ((!evidence.description.startsWith('http://') && !evidence.description.startsWith('https://') && evidence.description.trim())
+                          ? evidence.description
+                          : (directUrl ? directUrl.split('/').pop()?.split('?')[0] : null)) || 'Evidence file';
+
+                        const fileHref = directUrl || (evidence.fileUrl || evidence.description || `#evidence-${evidence.id}`);
+
+                        return (
+                          <li key={evidence.id} className="flex items-start gap-3 rounded-lg border border-border p-3 text-sm">
+                            <FileText className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="font-medium capitalize">{evidence.evidenceType} evidence</span>
+                                <Badge variant="secondary">{evidence.verifiedBy ? 'Verified' : 'Unverified'}</Badge>
                               </div>
-                            ) : (
-                              <p className="mt-1 break-words text-muted-foreground">Attachment unavailable</p>
+                              {textOnly ? (
+                                <p className="mt-1 break-words text-muted-foreground">{evidence.description}</p>
+                              ) : evidence.evidenceType === 'link' ? (
+                                <div className="mt-1">
+                                  <a
+                                    href={directUrl || evidence.description}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    aria-label="Open evidence"
+                                    className="inline-flex items-center gap-1.5 break-all text-xs font-medium text-primary hover:underline"
+                                  >
+                                    <ExternalLink className="size-3.5 shrink-0" />
+                                    <span>{evidence.description}</span>
+                                  </a>
+                                </div>
+                              ) : (
+                                <div className="mt-1 space-y-1.5">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <a
+                                      href={fileHref}
+                                      target={directUrl ? '_blank' : undefined}
+                                      rel={directUrl ? 'noopener noreferrer' : undefined}
+                                      aria-label={`Evidence file: ${fileName}`}
+                                      className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline break-all"
+                                    >
+                                      <Paperclip className="size-3.5 shrink-0" />
+                                      <span>{fileName}</span>
+                                      {directUrl && <ExternalLink className="size-3 shrink-0 opacity-70" />}
+                                    </a>
+                                  </div>
+                                  {directUrl && (
+                                    <div className="flex items-center gap-2">
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-7 gap-1.5 px-2.5 text-xs rounded-lg"
+                                        onClick={() =>
+                                          setPreviewAttachment({
+                                            filename: fileName,
+                                            url: directUrl,
+                                          })
+                                        }
+                                      >
+                                        <Eye className="size-3.5" />
+                                        View evidence
+                                      </Button>
+                                      <Button
+                                        asChild
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-7 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground"
+                                      >
+                                        <a href={directUrl} target="_blank" rel="noopener noreferrer">
+                                          <ExternalLink className="size-3.5" />
+                                          Open raw
+                                        </a>
+                                      </Button>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                            {evidence.submittedBy === user?.id && !evidence.verifiedBy && (
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                aria-label={`Delete ${evidence.evidenceType} evidence`}
+                                disabled={actionId === `delete:${evidence.id}`}
+                                onClick={() => setDeletingEvidence({ disputeId: dispute.id, evidenceId: evidence.id })}
+                              >
+                                <Trash2 className="size-4 text-destructive" />
+                              </Button>
                             )}
-                          </div>
-                          {evidence.submittedBy === user?.id && !evidence.verifiedBy && (
-                            <Button
-                              type="button"
-                              size="icon"
-                              variant="ghost"
-                              aria-label={`Delete ${evidence.evidenceType} evidence`}
-                              disabled={actionId === `delete:${evidence.id}`}
-                              onClick={() => setDeletingEvidence({ disputeId: dispute.id, evidenceId: evidence.id })}
-                            >
-                              <Trash2 className="size-4 text-destructive" />
-                            </Button>
-                          )}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
 
                 {dispute.status !== 'resolved' && (
                   verified ? (
@@ -527,14 +598,38 @@ const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disput
                       <p className="text-xs text-muted-foreground">{formatDateTime(dispute.createdAt)}</p>
                       <p className="text-xs text-muted-foreground">Case filed citing milestone deliverable concerns.</p>
                     </li>
-                    {evidenceRecords.map((ev, idx) => (
-                      <li key={ev.id || idx} className="relative space-y-1">
-                        <div className="absolute -left-[21px] mt-1.5 size-2.5 rounded-full border border-background bg-primary/70" />
-                        <p className="font-medium text-foreground capitalize">{ev.evidenceType} evidence submitted</p>
-                        <p className="text-xs text-muted-foreground">{formatDateTime(ev.createdAt)}</p>
-                        <p className="text-xs text-muted-foreground break-words">{ev.description}</p>
-                      </li>
-                    ))}
+                    {evidenceRecords.map((ev, idx) => {
+                      const rawTarget = ev.fileUrl || ev.description;
+                      const safeUrl = safeAttachmentUrl(rawTarget);
+                      const directUrl = safeUrl || (rawTarget && (rawTarget.startsWith('http://') || rawTarget.startsWith('https://') || rawTarget.startsWith('/')) ? rawTarget : null);
+                      const targetHref = directUrl || (ev.fileUrl || ev.description || `#evidence-${ev.id}`);
+                      const fileName = ((!ev.description.startsWith('http://') && !ev.description.startsWith('https://') && ev.description.trim())
+                        ? ev.description
+                        : (directUrl ? directUrl.split('/').pop()?.split('?')[0] : null)) || 'Evidence file';
+
+                      return (
+                        <li key={ev.id || idx} className="relative space-y-1">
+                          <div className="absolute -left-[21px] mt-1.5 size-2.5 rounded-full border border-background bg-primary/70" />
+                          <p className="font-medium text-foreground capitalize">{ev.evidenceType} evidence submitted</p>
+                          <p className="text-xs text-muted-foreground">{formatDateTime(ev.createdAt)}</p>
+                          <p className="text-xs text-muted-foreground break-words">{ev.description}</p>
+                          {ev.evidenceType !== 'text' && ev.evidenceType !== 'message' && (
+                            <div className="pt-0.5">
+                              <a
+                                href={targetHref}
+                                target={directUrl ? '_blank' : undefined}
+                                rel={directUrl ? 'noopener noreferrer' : undefined}
+                                className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline break-all"
+                              >
+                                <Paperclip className="size-3 shrink-0" />
+                                <span>{fileName}</span>
+                                {directUrl && <ExternalLink className="size-3 shrink-0 opacity-70" />}
+                              </a>
+                            </div>
+                          )}
+                        </li>
+                      );
+                    })}
                     {dispute.status === 'resolved' && dispute.resolution ? (
                       <li className="relative space-y-1">
                         <div className="absolute -left-[21px] mt-1.5 size-2.5 rounded-full border border-background bg-success" />
