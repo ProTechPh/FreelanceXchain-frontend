@@ -71,9 +71,22 @@ export const SignInPage: React.FC<SignInPageProps> = ({
   turnstileSlot,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const isGoogleLoading = oauthLoading === 'google';
   const isGithubLoading = oauthLoading === 'github';
   const isAnyLoading = loading || Boolean(oauthLoading);
+
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    const form = event.currentTarget;
+    const password = (form.elements.namedItem('password') as HTMLInputElement)?.value ?? '';
+    if (password.length < 8) {
+      event.preventDefault();
+      setPasswordError('Password must be at least 8 characters.');
+      return;
+    }
+    setPasswordError(null);
+    onSignIn?.(event);
+  };
 
   return (
     <div className="flex flex-col lg:flex-row min-h-dvh w-full bg-background">
@@ -197,7 +210,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
             </div>
 
             {/* Form */}
-            <form className="space-y-4 sm:space-y-5" onSubmit={onSignIn}>
+            <form className="space-y-4 sm:space-y-5" onSubmit={handleSubmit}>
               <div>
                 <label htmlFor="login-email" className="text-sm font-bold text-foreground mb-1.5 sm:mb-2 block">Email Address</label>
                 <input 
@@ -220,6 +233,10 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                     type={showPassword ? 'text' : 'password'} 
                     autoComplete="current-password"
                     placeholder="Enter your password" 
+                    minLength={8}
+                    aria-invalid={passwordError ? true : undefined}
+                    aria-describedby={passwordError ? 'password-error' : undefined}
+                    onChange={() => { if (passwordError) setPasswordError(null); }}
                     className="w-full px-4 py-3 sm:py-3.5 pr-12 rounded-xl sm:rounded-2xl border border-border/80 bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all placeholder:text-muted-foreground/60" 
                     required 
                   />
@@ -236,6 +253,11 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                     )}
                   </button>
                 </div>
+                {passwordError && (
+                  <p id="password-error" role="alert" className="mt-1.5 text-xs font-medium text-destructive">
+                    {passwordError}
+                  </p>
+                )}
               </div>
 
               {/* Reset password */}
@@ -247,12 +269,18 @@ export const SignInPage: React.FC<SignInPageProps> = ({
 
               {turnstileSlot}
 
+              {/* Screen-reader announcement while the login request is in flight */}
+              <p role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+                {loading ? 'Signing in, please wait…' : ''}
+              </p>
+
               {/* Submit button */}
               <Button
                 type="submit"
                 loading={loading}
                 disabled={isAnyLoading}
                 loadingText="Signing in…"
+                aria-label={loading ? 'Signing in, please wait' : 'Sign in'}
                 className="h-12 sm:h-13 w-full rounded-xl sm:rounded-2xl bg-primary-fill text-primary-fill-foreground font-bold text-sm hover:bg-primary-fill-hover shadow-md shadow-primary/20 transition-all duration-200 active:scale-[0.98]"
               >
                 Sign in
