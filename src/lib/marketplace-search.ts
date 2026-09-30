@@ -7,6 +7,10 @@ export type MarketplaceFilters = {
 
 type SkillOption = { id: string; name: string };
 
+type ProfileWithVisibleSkills = {
+  skills?: Array<{ name?: string | null }>;
+};
+
 function optionalNonNegativeNumber(value: string | null): number | undefined {
   if (value === null || value.trim() === '') return undefined;
   const parsed = Number(value);
@@ -45,6 +49,31 @@ export function buildMarketplaceSearchParams(filters: MarketplaceFilters, offset
   if (offset > 0) params.continuationToken = String(offset);
 
   return params;
+}
+
+export function filterFreelancersByVisibleSkill<T extends ProfileWithVisibleSkills>(
+  freelancers: T[],
+  filters: Pick<MarketplaceFilters, 'skillIds'>,
+  skills: SkillOption[],
+): T[] {
+  if (filters.skillIds.length === 0) return freelancers;
+
+  const namesById = new Map(skills.map((skill) => [skill.id, skill.name]));
+  const selectedNames = new Set(
+    filters.skillIds
+      .flatMap((id) => [id, namesById.get(id)])
+      .filter((name): name is string => typeof name === 'string' && name.trim().length > 0)
+      .map((name) => name.trim().toLowerCase()),
+  );
+
+  if (selectedNames.size === 0) return freelancers;
+
+  return freelancers.filter((freelancer) =>
+    (freelancer.skills ?? []).some((skill) => {
+      const name = typeof skill.name === 'string' ? skill.name.trim().toLowerCase() : '';
+      return name !== '' && selectedNames.has(name);
+    }),
+  );
 }
 
 export function createSavedSearchFilters(filters: MarketplaceFilters, skills: SkillOption[]) {
