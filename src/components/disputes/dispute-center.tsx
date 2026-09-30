@@ -388,7 +388,7 @@ const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disput
               <CardContent className="space-y-4">
                 <p className="rounded-lg bg-muted p-3 text-sm"><span className="font-medium">Reason:</span> {dispute.reason}</p>
                 <div className="flex flex-wrap gap-2">
-                  <Button asChild variant="outline" size="sm"><Link href={`/dashboard/${role}/contracts/${dispute.contractId}`}>View contract</Link></Button>
+                  <Button asChild variant="outline" size="sm"><Link href={`/dashboard/${role}/contracts/${dispute.contractId}?disputeId=${dispute.id}`}>View contract</Link></Button>
                   {!disputeId && <Button asChild variant="ghost" size="sm"><Link href={`/dashboard/${role}/disputes/${dispute.id}`}>View case</Link></Button>}
                 </div>
 
