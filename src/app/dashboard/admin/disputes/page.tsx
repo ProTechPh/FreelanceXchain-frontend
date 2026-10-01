@@ -15,7 +15,7 @@ import { formatAmount, formatRelativeTime } from '@/lib/format';
 import type { Dispute, Contract, DisputeStatus } from '@/types';
 import { toast } from 'sonner';
 import { reportFailure, reportLoadFailure } from '@/lib/report-failure';
-import { Scale, AlertTriangle, Clock, CheckCircle, FileText, DollarSign } from 'lucide-react';
+import { Scale, AlertTriangle, Clock, CheckCircle, FileText, DollarSign, Maximize2, ExternalLink } from 'lucide-react';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { EmptyState } from '@/components/ui/empty-state';
 import {
@@ -59,6 +59,7 @@ export default function DisputesPage() {
     decision: 'freelancer_favor' | 'employer_favor' | 'split';
     percentage?: number;
   } | null>(null);
+  const [viewingEvidence, setViewingEvidence] = useState<{ id: string; url: string; type: string; name?: string } | null>(null);
 
   const { hasPermission } = useAdminPermissions();
   const canManageDisputes = hasPermission('disputes:manage');
@@ -319,9 +320,22 @@ export default function DisputesPage() {
                           {ev.type === 'text' ? (
                             <span className="min-w-0 flex-1 break-words">{ev.content}</span>
                           ) : evidenceUrl ? (
-                            <a href={evidenceUrl} target="_blank" rel="noopener noreferrer" className="min-w-0 flex-1 underline">
-                              {ev.type === 'file' ? 'View file' : ev.content}
-                            </a>
+                            <div className="min-w-0 flex-1 flex flex-wrap items-center gap-2">
+                              <a href={evidenceUrl} target="_blank" rel="noopener noreferrer" className="underline font-medium hover:text-foreground" aria-label="View evidence file">
+                                {ev.type === 'file' ? 'View file' : ev.content}
+                              </a>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 px-2 text-xs text-primary gap-1"
+                                onClick={() => setViewingEvidence({ id: ev.id, url: evidenceUrl, type: ev.type, name: ev.type === 'file' ? 'Evidence Attachment' : ev.content })}
+                                aria-label="Open evidence attachment viewer"
+                              >
+                                <Maximize2 className="w-3 h-3" />
+                                View attachment
+                              </Button>
+                            </div>
                           ) : <span className="min-w-0 flex-1">Attachment unavailable</span>}
                           {verified ? <Badge variant="secondary">Verified</Badge> : <Button type="button" size="sm" variant="outline" disabled={verifyingEvidenceId === ev.id} onClick={() => void handleVerifyEvidence(dispute.id, ev.id)}>{verifyingEvidenceId === ev.id ? 'Verifying…' : 'Verify evidence'}</Button>}
                         </div>
@@ -536,6 +550,74 @@ export default function DisputesPage() {
               }}
             >
               Confirm Resolution
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Evidence Attachment Viewer Dialog */}
+      <Dialog
+        open={viewingEvidence !== null}
+        onOpenChange={(open) => {
+          if (!open) setViewingEvidence(null);
+        }}
+      >
+        <DialogContent
+          className="sm:max-w-2xl max-h-[90dvh] flex flex-col p-6 gap-4 bg-card border-border shadow-xl"
+          aria-label="Evidence attachment viewer"
+        >
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5 text-primary" />
+              Evidence Attachment Viewer
+            </DialogTitle>
+            <DialogDescription>
+              Review submitted evidence document or media attachment.
+            </DialogDescription>
+          </DialogHeader>
+
+          {viewingEvidence && (
+            <div className="space-y-4">
+              <div className="rounded-lg border border-border p-3 bg-secondary/30 flex items-center justify-between">
+                <div className="space-y-0.5 min-w-0 flex-1 mr-3">
+                  <p className="text-sm font-semibold text-foreground truncate">{viewingEvidence.name || 'Evidence Attachment'}</p>
+                  <p className="text-xs text-muted-foreground truncate">{viewingEvidence.url}</p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  asChild
+                  className="gap-1.5 shrink-0"
+                >
+                  <a href={viewingEvidence.url} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    Open original
+                  </a>
+                </Button>
+              </div>
+
+              <div className="flex items-center justify-center p-3 bg-black/60 rounded-lg border border-border max-h-[50dvh] overflow-auto">
+                {viewingEvidence.url.match(/\.(jpeg|jpg|png|gif|webp|svg)/i) || viewingEvidence.url.includes('images.unsplash.com') ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img
+                    src={viewingEvidence.url}
+                    alt="Evidence attachment preview"
+                    className="max-h-[45dvh] max-w-full object-contain rounded"
+                  />
+                ) : (
+                  <iframe
+                    src={viewingEvidence.url}
+                    title="Evidence Document Preview"
+                    className="w-full h-80 rounded border-0 bg-white"
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setViewingEvidence(null)}>
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>
