@@ -116,11 +116,21 @@ export default function AdminSkillsPage() {
 
     setAction('category');
     try {
-      await skillsApi.createCategory(trimmedName, trimmedDesc);
+      const response = await skillsApi.createCategory(trimmedName, trimmedDesc);
+      const newCategory = response.data;
       setCategoryName('');
       setCategoryDescription('');
       setCategoryNameError(null);
       setCategoryDescError(null);
+      if (newCategory) {
+        setTaxonomy((prev) => ({
+          ...prev,
+          categories: [
+            ...prev.categories.filter((c) => c.id !== newCategory.id),
+            { ...newCategory, skills: newCategory.skills || [] },
+          ],
+        }));
+      }
       await load();
       toast.success('Skill category created.');
     } catch (error) {
@@ -148,11 +158,25 @@ export default function AdminSkillsPage() {
 
     setAction('skill');
     try {
-      await skillsApi.createSkill(skillCategoryId, trimmedName, trimmedDesc);
+      const response = await skillsApi.createSkill(skillCategoryId, trimmedName, trimmedDesc);
+      const newSkill = response.data;
       setSkillName('');
       setSkillDescription('');
       setSkillNameError(null);
       setSkillDescError(null);
+      if (newSkill) {
+        setTaxonomy((prev) => ({
+          ...prev,
+          categories: prev.categories.map((c) =>
+            c.id === skillCategoryId
+              ? {
+                  ...c,
+                  skills: [...c.skills.filter((s) => s.id !== newSkill.id), newSkill],
+                }
+              : c
+          ),
+        }));
+      }
       await load();
       toast.success('Skill created.');
     } catch (error) {

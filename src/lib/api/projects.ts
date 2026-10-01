@@ -113,7 +113,11 @@ export const savedSearchesApi = {
 };
 
 export const skillsApi = {
-  getTaxonomy: () => api.get<SkillTaxonomy>('/skills'),
+  getTaxonomy: (params?: { _t?: number }) =>
+    api.get<SkillTaxonomy>('/skills', {
+      params: { _t: Date.now(), ...params },
+      headers: { 'Cache-Control': 'no-cache' },
+    }),
 
   createCategory: (name: string, description: string) =>
     api.post<SkillTaxonomy['categories'][number]>('/skills/categories', { name, description }),

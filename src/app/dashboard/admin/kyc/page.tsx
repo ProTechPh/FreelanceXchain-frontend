@@ -134,8 +134,15 @@ export default function KycReviewPage() {
       toast.success(`User ${decision === 'approved' ? 'approved' : 'rejected'} successfully`);
       setReviewNotes('');
       setExpandedId(null);
-      fetchVerifications(filter);
-      fetchStats();
+      setVerifications((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...item, status: decision, admin_notes: reviewNotes || item.admin_notes } : item
+        )
+      );
+      void fetchStats();
+      setTimeout(() => {
+        void fetchVerifications(filter);
+      }, 1200);
     } catch (error) {
       toast.error(getApiErrorMessage(error, `Couldn't ${decision === 'approved' ? 'approve' : 'reject'} this verification. Try again.`));
     } finally {
