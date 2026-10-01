@@ -18,6 +18,7 @@ import {
 import { adminApi } from '@/lib/api';
 import type { AdminUser, UserRole } from '@/types';
 import { toast } from 'sonner';
+import { getApiErrorMessage } from '@/lib/auth-contract';
 import { reportLoadFailure } from '@/lib/report-failure';
 import { Users, Search, Ban, UserCheck, ShieldCheck, CheckCircle2, XCircle, ShieldAlert, Clock, AlertTriangle, Key, UserPlus } from 'lucide-react';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
@@ -52,6 +53,7 @@ export default function UsersPage() {
   // Dialog states replacing window.prompt
   const [userToSuspend, setUserToSuspend] = useState<AdminUser | null>(null);
   const [suspendReason, setSuspendReason] = useState('');
+  const [suspendError, setSuspendError] = useState<string | null>(null);
   const [userToVerify, setUserToVerify] = useState<AdminUser | null>(null);
   const [verifyReason, setVerifyReason] = useState('');
   const [userToUnsuspend, setUserToUnsuspend] = useState<AdminUser | null>(null);
@@ -91,9 +93,11 @@ export default function UsersPage() {
     if (!userToSuspend) return;
     const reason = suspendReason.trim();
     if (!reason) {
+      setSuspendError('A suspension reason is required — it will be recorded with the action.');
       toast.warning('A suspension reason is required — it will be recorded with the action.');
       return;
     }
+    setSuspendError(null);
     setPendingActionId(userToSuspend.id);
     try {
       await adminApi.suspendUser(userToSuspend.id, reason);
@@ -101,8 +105,11 @@ export default function UsersPage() {
       toast.success('User suspended');
       setUserToSuspend(null);
       setSuspendReason('');
-    } catch {
-      toast.error('Couldn\'t suspend this user. Try again.');
+      setSuspendError(null);
+    } catch (error) {
+      const errorMsg = getApiErrorMessage(error, 'Couldn\'t suspend this user. Try again.');
+      setSuspendError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setPendingActionId(null);
     }
@@ -115,8 +122,8 @@ export default function UsersPage() {
       setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, isActive: true } : u)));
       toast.success('User unsuspended');
       setUserToUnsuspend(null);
-    } catch {
-      toast.error('Couldn\'t unsuspend this user. Try again.');
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Couldn\'t unsuspend this user. Try again.'));
     } finally {
       setPendingActionId(null);
     }
@@ -435,6 +442,7 @@ export default function UsersPage() {
                                 onClick={() => {
                                   setUserToSuspend(user);
                                   setSuspendReason('');
+                                  setSuspendError(null);
                                 }}
                               >
                                 <Ban className="w-4 h-4" />
@@ -603,6 +611,7 @@ export default function UsersPage() {
                           onClick={() => {
                             setUserToSuspend(user);
                             setSuspendReason('');
+                            setSuspendError(null);
                           }}
                         >
                           <Ban className="w-4 h-4" />
@@ -633,7 +642,11 @@ export default function UsersPage() {
       <Dialog
         open={userToSuspend !== null}
         onOpenChange={(open) => {
-          if (!open && !pendingActionId) setUserToSuspend(null);
+          if (!open && !pendingActionId) {
+            setUserToSuspend(null);
+            setSuspendReason('');
+            setSuspendError(null);
+          }
         }}
       >
         <DialogContent className="sm:max-w-md">
@@ -644,20 +657,37 @@ export default function UsersPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2 py-2">
-            <Label htmlFor="suspend-reason">Reason for suspension</Label>
+            <Label htmlFor="suspend-reason">
+              Reason for suspension <span className="text-destructive">*</span>
+            </Label>
             <Textarea
               id="suspend-reason"
               placeholder="e.g. Terms of Service violation, suspicious escrow activity, or chargeback request."
               value={suspendReason}
-              onChange={(e) => setSuspendReason(e.target.value)}
+              onChange={(e) => {
+                setSuspendReason(e.target.value);
+                if (suspendError) setSuspendError(null);
+              }}
               rows={3}
               disabled={Boolean(pendingActionId)}
+              className={suspendError ? 'border-destructive focus-visible:ring-destructive' : ''}
+              aria-invalid={Boolean(suspendError)}
+              aria-describedby={suspendError ? 'suspend-reason-error' : undefined}
             />
+            {suspendError && (
+              <p id="suspend-reason-error" className="text-xs text-destructive mt-1 font-medium">
+                {suspendError}
+              </p>
+            )}
           </div>
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setUserToSuspend(null)}
+              onClick={() => {
+                setUserToSuspend(null);
+                setSuspendReason('');
+                setSuspendError(null);
+              }}
               disabled={Boolean(pendingActionId)}
             >
               Cancel
@@ -666,7 +696,7 @@ export default function UsersPage() {
               variant="destructive"
               loading={Boolean(pendingActionId)}
               loadingText="Suspending…"
-              disabled={!suspendReason.trim() || Boolean(pendingActionId)}
+              disabled={Boolean(pendingActionId)}
               onClick={confirmSuspend}
             >
               Suspend User
