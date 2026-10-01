@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { adminApi, disputesApi, contractsApi } from '@/lib/api';
@@ -50,9 +51,14 @@ export default function DisputesPage() {
   const [tab, setTab] = useState<DisputeStatus>('open');
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const [reasoning, setReasoning] = useState<Record<string, string>>({});
+  const [settlementPercentages, setSettlementPercentages] = useState<Record<string, string>>({});
   const [verifyingEvidenceId, setVerifyingEvidenceId] = useState<string | null>(null);
   const [verifiedEvidenceIds, setVerifiedEvidenceIds] = useState<Set<string>>(new Set());
-  const [confirmResolve, setConfirmResolve] = useState<{ disputeId: string; decision: 'freelancer_favor' | 'employer_favor' } | null>(null);
+  const [confirmResolve, setConfirmResolve] = useState<{
+    disputeId: string;
+    decision: 'freelancer_favor' | 'employer_favor' | 'split';
+    percentage?: number;
+  } | null>(null);
 
   const { hasPermission } = useAdminPermissions();
   const canManageDisputes = hasPermission('disputes:manage');
@@ -111,17 +117,53 @@ export default function DisputesPage() {
     };
   }, [load]);
 
-  const handleResolve = async (disputeId: string, decision: 'freelancer_favor' | 'employer_favor') => {
+  const handleResolve = async (
+    disputeId: string,
+    decision: 'freelancer_favor' | 'employer_favor' | 'split',
+    percentage?: number
+  ) => {
     const reason = reasoning[disputeId]?.trim();
     if (!reason) {
       toast.warning('Add resolution notes before resolving — the parties will see your reasoning.');
       return;
     }
+    if (decision === 'split') {
+      const pct = percentage ?? Number(settlementPercentages[disputeId] ?? 50);
+      if (isNaN(pct) || pct <= 0 || pct >= 100) {
+        toast.warning('Settlement percentage must be between 1 and 99.');
+        return;
+      }
+    }
     setResolvingId(disputeId);
     try {
-      const { data: updated } = await disputesApi.resolve(disputeId, decision, reason);
-      setViews((prev) => prev.map((v) => (v.dispute.id === disputeId ? { ...v, dispute: updated } : v)));
-      toast.success('Dispute resolved');
+      const freelancerBps =
+        decision === 'split'
+          ? Math.round((percentage ?? Number(settlementPercentages[disputeId] ?? 50)) * 100)
+          : undefined;
+      const { data: updated } = await disputesApi.resolve(disputeId, decision, reason, freelancerBps);
+      const resolvedDispute: Dispute = {
+        ...updated,
+        status: 'resolved',
+        resolution: updated.resolution ?? {
+          decision,
+          reasoning: reason,
+          resolvedBy: 'admin',
+          resolvedAt: new Date().toISOString(),
+        },
+      };
+      setViews((prev) =>
+        prev.map((v) => (v.dispute.id === disputeId ? { ...v, dispute: resolvedDispute } : v))
+      );
+      const decisionLabel =
+        decision === 'freelancer_favor'
+          ? 'in favor of freelancer'
+          : decision === 'employer_favor'
+          ? 'in favor of employer'
+          : `with ${percentage ?? 50}% split`;
+      toast.success(`Dispute resolved ${decisionLabel}`);
+      setConfirmResolve(null);
+      setTab('resolved');
+      void load();
     } catch (error) {
       console.error(
         '[disputes] resolve failed. If this is unexpected, check that the admin '
@@ -298,13 +340,54 @@ export default function DisputesPage() {
 
                   {dispute.status !== 'resolved' && canManageDisputes && (
                     <div className="space-y-3">
-                      <Textarea
-                        placeholder="Admin resolution notes..."
-                        rows={2}
-                        value={reasoning[dispute.id] ?? ''}
-                        onChange={(e) => setReasoning((prev) => ({ ...prev, [dispute.id]: e.target.value }))}
-                      />
-                      <div className="flex gap-3">
+                      <div className="space-y-1">
+                        <label htmlFor={`resolution-notes-${dispute.id}`} className="text-xs font-medium text-muted-foreground">
+                          Resolution notes
+                        </label>
+                        <Textarea
+                          id={`resolution-notes-${dispute.id}`}
+                          aria-label="Resolution notes"
+                          placeholder="Admin resolution notes..."
+                          rows={2}
+                          value={reasoning[dispute.id] ?? ''}
+                          onChange={(e) => setReasoning((prev) => ({ ...prev, [dispute.id]: e.target.value }))}
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label htmlFor={`settlement-percentage-${dispute.id}`} className="text-xs font-medium text-muted-foreground">
+                          Settlement percentage (% to freelancer)
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            id={`settlement-percentage-${dispute.id}`}
+                            aria-label="Settlement percentage"
+                            name="settlementPercentage"
+                            type="number"
+                            min={1}
+                            max={99}
+                            placeholder="50"
+                            className="w-32"
+                            value={settlementPercentages[dispute.id] ?? '50'}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setSettlementPercentages((prev) => ({ ...prev, [dispute.id]: val }));
+                            }}
+                          />
+                          <span className="text-xs text-muted-foreground">
+                            {Number(settlementPercentages[dispute.id] ?? 50)}% freelancer / {100 - Number(settlementPercentages[dispute.id] ?? 50)}% employer
+                          </span>
+                        </div>
+                        {settlementPercentages[dispute.id] !== undefined && (
+                          (Number(settlementPercentages[dispute.id]) < 1 || Number(settlementPercentages[dispute.id]) > 99 || isNaN(Number(settlementPercentages[dispute.id]))) && (
+                            <p className="text-xs text-destructive" role="alert">
+                              Settlement percentage must be between 1 and 99.
+                            </p>
+                          )
+                        )}
+                      </div>
+
+                      <div className="flex flex-wrap gap-3">
                         <Button
                           variant="gradient"
                           size="sm"
@@ -322,6 +405,17 @@ export default function DisputesPage() {
                         >
                           <CheckCircle className="w-4 h-4 mr-2" /> Resolve in Favor of Employer
                         </Button>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          disabled={resolvingId === dispute.id}
+                          onClick={() => {
+                            const pct = Number(settlementPercentages[dispute.id] ?? 50);
+                            setConfirmResolve({ disputeId: dispute.id, decision: 'split', percentage: pct });
+                          }}
+                        >
+                          <Scale className="w-4 h-4 mr-2" /> Submit the settlement
+                        </Button>
                       </div>
                     </div>
                   )}
@@ -330,7 +424,7 @@ export default function DisputesPage() {
                     <div className="p-3 rounded-lg bg-success-subtle border border-success-border">
                       <p className="text-sm text-success flex items-center gap-2">
                         <CheckCircle className="w-4 h-4" />
-                        Resolved in favor of {dispute.resolution.decision === 'freelancer_favor' ? 'freelancer' : 'employer'} — {dispute.resolution.reasoning}
+                        Resolved {dispute.resolution.decision === 'freelancer_favor' ? 'in favor of freelancer' : dispute.resolution.decision === 'employer_favor' ? 'in favor of employer' : 'with split'} — {dispute.resolution.reasoning}
                       </p>
                     </div>
                   )}
@@ -352,12 +446,67 @@ export default function DisputesPage() {
           <DialogHeader>
             <DialogTitle className="text-destructive">Resolve this dispute?</DialogTitle>
             <DialogDescription>
-              This action is <strong>permanent and cannot be reversed</strong>. The escrow funds will be released to the{' '}
+              This action is <strong>permanent and cannot be reversed</strong>. The escrow funds will be released to{' '}
               <strong className="text-foreground">
-                {confirmResolve?.decision === 'freelancer_favor' ? 'freelancer' : 'employer'}
+                {confirmResolve?.decision === 'freelancer_favor'
+                  ? 'the freelancer (100%)'
+                  : confirmResolve?.decision === 'employer_favor'
+                  ? 'the employer (100%)'
+                  : `both parties (${confirmResolve?.percentage ?? settlementPercentages[confirmResolve?.disputeId ?? ''] ?? 50}% to freelancer)`}
               </strong>.
             </DialogDescription>
           </DialogHeader>
+
+          {confirmResolve && (
+            <div className="space-y-3 py-2">
+              <div className="space-y-1">
+                <label htmlFor="dialog-resolution-notes" className="text-xs font-medium text-muted-foreground">
+                  Resolution notes
+                </label>
+                <Textarea
+                  id="dialog-resolution-notes"
+                  placeholder="Admin resolution notes..."
+                  rows={2}
+                  value={reasoning[confirmResolve.disputeId] ?? ''}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setReasoning((prev) => ({ ...prev, [confirmResolve.disputeId]: val }));
+                  }}
+                />
+              </div>
+
+              {confirmResolve.decision === 'split' && (
+                <div className="space-y-1">
+                  <label htmlFor="settlement-percentage" className="text-xs font-medium text-muted-foreground">
+                    Settlement percentage (% to freelancer)
+                  </label>
+                  <Input
+                    id="settlement-percentage"
+                    aria-label="Settlement percentage"
+                    name="settlementPercentage"
+                    type="number"
+                    min={1}
+                    max={99}
+                    placeholder="50"
+                    value={settlementPercentages[confirmResolve.disputeId] ?? String(confirmResolve.percentage ?? 50)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSettlementPercentages((prev) => ({ ...prev, [confirmResolve.disputeId]: val }));
+                      setConfirmResolve((prev) => prev ? { ...prev, percentage: Number(val) } : null);
+                    }}
+                  />
+                  {(Number(settlementPercentages[confirmResolve.disputeId] ?? confirmResolve.percentage ?? 50) < 1 ||
+                    Number(settlementPercentages[confirmResolve.disputeId] ?? confirmResolve.percentage ?? 50) > 99 ||
+                    isNaN(Number(settlementPercentages[confirmResolve.disputeId] ?? confirmResolve.percentage ?? 50))) && (
+                    <p className="text-xs text-destructive" role="alert">
+                      Settlement percentage must be between 1 and 99.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           <DialogFooter>
             <Button
               variant="outline"
@@ -370,10 +519,19 @@ export default function DisputesPage() {
               variant="destructive"
               loading={Boolean(resolvingId)}
               loadingText="Resolving…"
-              onClick={() => {
+              disabled={
+                Boolean(resolvingId) ||
+                !confirmResolve ||
+                !reasoning[confirmResolve.disputeId]?.trim() ||
+                (confirmResolve.decision === 'split' && (
+                  isNaN(Number(settlementPercentages[confirmResolve.disputeId] ?? confirmResolve.percentage ?? 50)) ||
+                  Number(settlementPercentages[confirmResolve.disputeId] ?? confirmResolve.percentage ?? 50) < 1 ||
+                  Number(settlementPercentages[confirmResolve.disputeId] ?? confirmResolve.percentage ?? 50) > 99
+                ))
+              }
+              onClick={async () => {
                 if (confirmResolve) {
-                  handleResolve(confirmResolve.disputeId, confirmResolve.decision);
-                  setConfirmResolve(null);
+                  await handleResolve(confirmResolve.disputeId, confirmResolve.decision, confirmResolve.percentage);
                 }
               }}
             >

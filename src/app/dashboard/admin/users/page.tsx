@@ -54,6 +54,7 @@ export default function UsersPage() {
   // Dialog states replacing window.prompt
   const [userToSuspend, setUserToSuspend] = useState<AdminUser | null>(null);
   const [suspendReason, setSuspendReason] = useState('');
+  const [suspendReasonError, setSuspendReasonError] = useState<string | null>(null);
   const [userToVerify, setUserToVerify] = useState<AdminUser | null>(null);
   const [verifyReason, setVerifyReason] = useState('');
   const [userToUnsuspend, setUserToUnsuspend] = useState<AdminUser | null>(null);
@@ -93,8 +94,10 @@ export default function UsersPage() {
   const confirmSuspend = async () => {
     if (!userToSuspend) return;
     const reason = suspendReason.trim();
-    if (!reason) {
-      toast.warning('A suspension reason is required — it will be recorded with the action.');
+    if (!reason || reason.length < 10) {
+      const msg = 'Suspension reason must be at least 10 characters.';
+      setSuspendReasonError(msg);
+      toast.warning(msg);
       return;
     }
     setPendingActionId(userToSuspend.id);
@@ -104,6 +107,7 @@ export default function UsersPage() {
       toast.success('User suspended');
       setUserToSuspend(null);
       setSuspendReason('');
+      setSuspendReasonError(null);
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Couldn\'t suspend this user. Try again.'));
     } finally {
@@ -636,7 +640,11 @@ export default function UsersPage() {
       <Dialog
         open={userToSuspend !== null}
         onOpenChange={(open) => {
-          if (!open && !pendingActionId) setUserToSuspend(null);
+          if (!open && !pendingActionId) {
+            setUserToSuspend(null);
+            setSuspendReason('');
+            setSuspendReasonError(null);
+          }
         }}
       >
         <DialogContent className="sm:max-w-md">
@@ -652,15 +660,43 @@ export default function UsersPage() {
               id="suspend-reason"
               placeholder="e.g. Terms of Service violation, suspicious escrow activity, or chargeback request."
               value={suspendReason}
-              onChange={(e) => setSuspendReason(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSuspendReason(val);
+                if (val.trim().length >= 10) {
+                  setSuspendReasonError(null);
+                } else if (val.trim().length > 0) {
+                  setSuspendReasonError('Suspension reason must be at least 10 characters.');
+                }
+              }}
               rows={3}
               disabled={Boolean(pendingActionId)}
+              aria-invalid={Boolean(suspendReasonError || (suspendReason.length > 0 && suspendReason.trim().length < 10))}
+              aria-describedby="suspend-reason-validation"
             />
+            <div className="flex items-center justify-between text-xs">
+              {(suspendReasonError || (suspendReason.length > 0 && suspendReason.trim().length < 10)) ? (
+                <p id="suspend-reason-validation" className="text-destructive font-medium" role="alert">
+                  Suspension reason must be at least 10 characters.
+                </p>
+              ) : (
+                <p id="suspend-reason-validation" className="text-muted-foreground">
+                  Minimum 10 characters required for audit trail.
+                </p>
+              )}
+              <span className={`ml-auto font-mono ${suspendReason.trim().length < 10 ? 'text-muted-foreground' : 'text-success'}`}>
+                {suspendReason.trim().length}/10
+              </span>
+            </div>
           </div>
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => setUserToSuspend(null)}
+              onClick={() => {
+                setUserToSuspend(null);
+                setSuspendReason('');
+                setSuspendReasonError(null);
+              }}
               disabled={Boolean(pendingActionId)}
             >
               Cancel
@@ -669,7 +705,7 @@ export default function UsersPage() {
               variant="destructive"
               loading={Boolean(pendingActionId)}
               loadingText="Suspending…"
-              disabled={!suspendReason.trim() || Boolean(pendingActionId)}
+              disabled={suspendReason.trim().length < 10 || Boolean(pendingActionId)}
               onClick={confirmSuspend}
             >
               Suspend User
