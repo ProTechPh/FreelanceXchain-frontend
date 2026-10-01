@@ -130,19 +130,25 @@ export default function KycReviewPage() {
   const handleReview = async (id: string, decision: 'approved' | 'rejected') => {
     setReviewing(id);
     try {
-      await kycApi.adminReview(id, decision, reviewNotes || undefined);
+      const { data: reviewedVerification } = await kycApi.adminReview(id, decision, reviewNotes || undefined);
       toast.success(`User ${decision === 'approved' ? 'approved' : 'rejected'} successfully`);
       setReviewNotes('');
-      setExpandedId(null);
       setVerifications((prev) =>
         prev.map((item) =>
-          item.id === id ? { ...item, status: decision, admin_notes: reviewNotes || item.admin_notes } : item
+          item.id === id
+            ? {
+                ...item,
+                ...reviewedVerification,
+                status: decision,
+                admin_notes: reviewNotes || reviewedVerification.admin_notes || item.admin_notes,
+              }
+            : item
         )
       );
+      // Move the reviewed record to its resulting queue while preserving the
+      // expanded selection so the operator can verify the final status/notes.
+      setFilter(decision);
       void fetchStats();
-      setTimeout(() => {
-        void fetchVerifications(filter);
-      }, 1200);
     } catch (error) {
       toast.error(getApiErrorMessage(error, `Couldn't ${decision === 'approved' ? 'approve' : 'reject'} this verification. Try again.`));
     } finally {
