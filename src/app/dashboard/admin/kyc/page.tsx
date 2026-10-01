@@ -5,11 +5,16 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { kycApi } from '@/lib/api';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { kycApi, adminApi } from '@/lib/api';
+import { csrfTokenManager } from '@/lib/api-client';
+import { getApiErrorMessage } from '@/lib/auth-contract';
 import type { KycVerification, KycDecisionDetails, KycImages, KycWarning } from '@/types';
 import Image from 'next/image';
 import {
   Shield,
+  ShieldCheck,
   CheckCircle,
   XCircle,
   Clock,
@@ -63,9 +68,16 @@ export default function KycReviewPage() {
   const [reviewing, setReviewing] = useState<string | null>(null);
   const [reviewNotes, setReviewNotes] = useState('');
   const [stats, setStats] = useState({ completed: 0, approved: 0, rejected: 0, pending: 0 });
+  const [userToVerify, setUserToVerify] = useState<{ id: string; name: string } | null>(null);
+  const [verifyReason, setVerifyReason] = useState('');
+  const [verifyingUser, setVerifyingUser] = useState(false);
 
   const { hasPermission } = useAdminPermissions();
   const canManageKyc = hasPermission('kyc:manage');
+
+  useEffect(() => {
+    void csrfTokenManager.ensureToken();
+  }, []);
 
   const fetchVerifications = useCallback(async (status: typeof filter) => {
     setLoading(true);
@@ -124,10 +136,37 @@ export default function KycReviewPage() {
       setExpandedId(null);
       fetchVerifications(filter);
       fetchStats();
-    } catch {
-      toast.error(`Couldn't ${decision === 'approved' ? 'approve' : 'reject'} this verification. Try again.`);
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, `Couldn't ${decision === 'approved' ? 'approve' : 'reject'} this verification. Try again.`));
     } finally {
       setReviewing(null);
+    }
+  };
+
+  const confirmManualVerify = async () => {
+    if (!userToVerify) return;
+    const trimmedReason = verifyReason.trim();
+    if (!trimmedReason) {
+      toast.warning('A verification reason is required — it will be stored with the manual approval.');
+      return;
+    }
+    if (trimmedReason.length < 10) {
+      toast.warning('Verification reason must be at least 10 characters so there\'s a meaningful audit trail.');
+      return;
+    }
+
+    setVerifyingUser(true);
+    try {
+      await adminApi.verifyUser(userToVerify.id, trimmedReason);
+      toast.success(`${userToVerify.name} manually verified`);
+      setUserToVerify(null);
+      setVerifyReason('');
+      fetchVerifications(filter);
+      fetchStats();
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Couldn\'t verify this user. Try again.'));
+    } finally {
+      setVerifyingUser(false);
     }
   };
 
@@ -170,6 +209,7 @@ export default function KycReviewPage() {
                 expanded={expandedId === v.id}
                 onToggle={() => setExpandedId(expandedId === v.id ? null : v.id)}
                 onReview={handleReview}
+                onManualVerify={(user) => { setUserToVerify(user); setVerifyReason(''); }}
                 reviewing={reviewing === v.id}
                 reviewNotes={reviewNotes}
                 setReviewNotes={setReviewNotes}
@@ -178,6 +218,59 @@ export default function KycReviewPage() {
             ))}
           </div>
         )}
+
+        {/* Manually Verify KYC Modal */}
+        <Dialog
+          open={userToVerify !== null}
+          onOpenChange={(open) => {
+            if (!open && !verifyingUser) setUserToVerify(null);
+          }}
+        >
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-primary">Manually Verify KYC</DialogTitle>
+              <DialogDescription>
+                Grant manual verification status for <strong className="text-foreground">{userToVerify?.name}</strong>. A detailed reason is required for the compliance audit log.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="manual-verify-reason">Verification reason</Label>
+                  <span className={`text-xs ${verifyReason.trim().length >= 10 ? 'text-success' : 'text-muted-foreground'}`}>
+                    {verifyReason.trim().length}/10 characters min
+                  </span>
+                </div>
+                <Textarea
+                  id="manual-verify-reason"
+                  name="reason"
+                  rows={3}
+                  placeholder="Enter compliance / audit rationale for manually verifying this user (min 10 characters)..."
+                  value={verifyReason}
+                  onChange={(e) => setVerifyReason(e.target.value)}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setUserToVerify(null)}
+                disabled={verifyingUser}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="default"
+                loading={verifyingUser}
+                loadingText="Verifying…"
+                disabled={verifyReason.trim().length < 10 || verifyingUser}
+                onClick={confirmManualVerify}
+              >
+                Verify User
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminPermissionGate>
   );
@@ -224,11 +317,22 @@ function StatCard({ icon: Icon, label, count, color, active, onClick }: {
   );
 }
 
-function VerificationCard({ verification: v, expanded, onToggle, onReview, reviewing, reviewNotes, setReviewNotes, canManageKyc = true }: {
+function VerificationCard({
+  verification: v,
+  expanded,
+  onToggle,
+  onReview,
+  onManualVerify,
+  reviewing,
+  reviewNotes,
+  setReviewNotes,
+  canManageKyc = true,
+}: {
   verification: KycVerification;
   expanded: boolean;
   onToggle: () => void;
   onReview: (id: string, decision: 'approved' | 'rejected') => void;
+  onManualVerify: (user: { id: string; name: string }) => void;
   reviewing: boolean;
   reviewNotes: string;
   setReviewNotes: (n: string) => void;
@@ -352,6 +456,19 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
               {expanded ? <ChevronUp className="w-4 h-4 mr-2" /> : <ChevronDown className="w-4 h-4 mr-2" />}
               {expanded ? 'Hide Details' : 'View Details'}
             </Button>
+            {canManageKyc && v.status !== 'approved' && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-primary border-primary/30 hover:bg-primary/5"
+                onClick={() => onManualVerify({ id: v.user_id, name: fullName })}
+                aria-label={`Manually verify KYC for ${fullName}`}
+                title="Manually verify KYC"
+              >
+                <ShieldCheck className="w-4 h-4 mr-2" />
+                Manual verification
+              </Button>
+            )}
           </div>
 
           {/* Expanded Detail View */}
@@ -565,48 +682,62 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
                 </div>
               )}
 
-              {/* Admin Review */}
-              {v.status === 'completed' && (
-                <div className="pt-3 border-t border-border">
-                  <h4 className="text-sm font-medium text-muted-foreground mb-2">Admin Review</h4>
-                  {canManageKyc ? (
-                    <>
-                      <textarea
-                        className="w-full p-3 rounded-lg bg-secondary border border-border text-sm resize-none"
-                        rows={3}
-                        placeholder="Add review notes (optional)..."
-                        value={reviewNotes}
-                        onChange={(e) => setReviewNotes(e.target.value)}
-                      />
-                      <div className="flex flex-wrap gap-3 mt-3">
-                        <Button
-                          size="sm"
-                          className="bg-success hover:bg-success/90 text-success-foreground"
-                          loading={reviewing}
-                          loadingText="Approving…"
-                          onClick={() => setConfirmDecision('approved')}
-                        >
-                          <CheckCircle className="size-4" aria-hidden="true" />
-                          Approve
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-destructive border-destructive-border hover:bg-destructive-subtle"
-                          loading={reviewing}
-                          loadingText="Rejecting…"
-                          onClick={() => setConfirmDecision('rejected')}
-                        >
-                          <XCircle className="size-4" aria-hidden="true" />
-                          Reject
-                        </Button>
-                      </div>
-                    </>
-                  ) : (
-                    <p className="text-xs text-muted-foreground italic">
-                      You have view-only access to KYC submissions. The <code className="font-mono bg-muted px-1 py-0.5 rounded text-foreground">kyc:manage</code> permission is required to approve or reject.
-                    </p>
-                  )}
+              {/* Admin Review / Manual Decision */}
+              {canManageKyc && (
+                <div className="pt-3 border-t border-border space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-semibold text-foreground">Manual KYC Decision</h4>
+                    <span className="text-xs text-muted-foreground">Status: {statusLabels[v.status] || v.status}</span>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor={`kyc-audit-reason-${v.id}`} className="text-sm font-medium text-foreground">
+                      Audit reason
+                    </Label>
+                    <Textarea
+                      id={`kyc-audit-reason-${v.id}`}
+                      name="reason"
+                      aria-label="Audit reason"
+                      className="w-full p-3 rounded-lg bg-secondary border border-border text-sm resize-none"
+                      rows={3}
+                      placeholder="Enter audit reason for manual KYC decision..."
+                      value={reviewNotes}
+                      onChange={(e) => setReviewNotes(e.target.value)}
+                    />
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    <Button
+                      size="sm"
+                      className="bg-success hover:bg-success/90 text-success-foreground"
+                      loading={reviewing}
+                      loadingText="Approving…"
+                      onClick={() => {
+                        if (v.status === 'completed') {
+                          setConfirmDecision('approved');
+                        } else {
+                          onManualVerify({ id: v.user_id, name: fullName });
+                        }
+                      }}
+                    >
+                      <CheckCircle className="size-4 mr-1.5" aria-hidden="true" />
+                      Approve
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-destructive border-destructive-border hover:bg-destructive-subtle"
+                      loading={reviewing}
+                      loadingText="Rejecting…"
+                      onClick={() => {
+                        if (!reviewNotes.trim()) {
+                          toast.warning('An audit reason is required before rejecting.');
+                        }
+                        setConfirmDecision('rejected');
+                      }}
+                    >
+                      <XCircle className="size-4 mr-1.5" aria-hidden="true" />
+                      Reject
+                    </Button>
+                  </div>
                 </div>
               )}
 
@@ -673,6 +804,20 @@ function VerificationCard({ verification: v, expanded, onToggle, onReview, revie
                 : `This will reject ${fullName}'s verification. They will need to resubmit their documents.`}
             </DialogDescription>
           </DialogHeader>
+          <div className="space-y-1.5 py-2">
+            <Label htmlFor="kyc-confirm-audit-reason" className="text-sm font-medium text-foreground">
+              Audit reason
+            </Label>
+            <Textarea
+              id="kyc-confirm-audit-reason"
+              name="reason"
+              aria-label="Audit reason"
+              rows={3}
+              placeholder={confirmDecision === 'approved' ? 'Optional approval notes...' : 'Enter audit reason for rejecting this verification...'}
+              value={reviewNotes}
+              onChange={(e) => setReviewNotes(e.target.value)}
+            />
+          </div>
           <DialogFooter>
             <Button
               variant="outline"
