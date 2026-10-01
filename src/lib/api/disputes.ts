@@ -31,6 +31,15 @@ export const disputesApi = {
   verifyEvidence: (disputeId: string, evidenceId: string) =>
     api.post<DisputeEvidence>(`/disputes/${disputeId}/evidence/${evidenceId}/verify`),
 
-  resolve: (disputeId: string, decision: 'freelancer_favor' | 'employer_favor', reasoning: string) =>
-    api.post<Dispute>(`/disputes/${disputeId}/resolve`, { decision, reasoning }),
+  resolve: (
+    disputeId: string,
+    decision: 'freelancer_favor' | 'employer_favor' | 'split',
+    reasoning: string,
+    freelancerBps?: number
+  ) =>
+    api.post<Dispute>(`/disputes/${disputeId}/resolve`, {
+      decision,
+      reasoning,
+      ...(decision === 'split' && freelancerBps !== undefined ? { freelancerBps } : {}),
+    }),
 };

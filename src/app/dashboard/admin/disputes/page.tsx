@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { adminApi, disputesApi, contractsApi } from '@/lib/api';
@@ -50,9 +51,14 @@ export default function DisputesPage() {
   const [tab, setTab] = useState<DisputeStatus>('open');
   const [resolvingId, setResolvingId] = useState<string | null>(null);
   const [reasoning, setReasoning] = useState<Record<string, string>>({});
+  const [settlementPercentages, setSettlementPercentages] = useState<Record<string, string>>({});
   const [verifyingEvidenceId, setVerifyingEvidenceId] = useState<string | null>(null);
   const [verifiedEvidenceIds, setVerifiedEvidenceIds] = useState<Set<string>>(new Set());
-  const [confirmResolve, setConfirmResolve] = useState<{ disputeId: string; decision: 'freelancer_favor' | 'employer_favor' } | null>(null);
+  const [confirmResolve, setConfirmResolve] = useState<{
+    disputeId: string;
+    decision: 'freelancer_favor' | 'employer_favor' | 'split';
+    percentage?: number;
+  } | null>(null);
 
   const { hasPermission } = useAdminPermissions();
   const canManageDisputes = hasPermission('disputes:manage');
@@ -111,17 +117,53 @@ export default function DisputesPage() {
     };
   }, [load]);
 
-  const handleResolve = async (disputeId: string, decision: 'freelancer_favor' | 'employer_favor') => {
+  const handleResolve = async (
+    disputeId: string,
+    decision: 'freelancer_favor' | 'employer_favor' | 'split',
+    percentage?: number
+  ) => {
     const reason = reasoning[disputeId]?.trim();
     if (!reason) {
       toast.warning('Add resolution notes before resolving — the parties will see your reasoning.');
       return;
     }
+    if (decision === 'split') {
+      const pct = percentage ?? Number(settlementPercentages[disputeId] ?? 50);
+      if (isNaN(pct) || pct <= 0 || pct >= 100) {
+        toast.warning('Settlement percentage must be between 1 and 99.');
+        return;
+      }
+    }
     setResolvingId(disputeId);
     try {
-      const { data: updated } = await disputesApi.resolve(disputeId, decision, reason);
-      setViews((prev) => prev.map((v) => (v.dispute.id === disputeId ? { ...v, dispute: updated } : v)));
-      toast.success('Dispute resolved');
+      const freelancerBps =
+        decision === 'split'
+          ? Math.round((percentage ?? Number(settlementPercentages[disputeId] ?? 50)) * 100)
+          : undefined;
+      const { data: updated } = await disputesApi.resolve(disputeId, decision, reason, freelancerBps);
+      const resolvedDispute: Dispute = {
+        ...updated,
+        status: 'resolved',
+        resolution: updated.resolution ?? {
+          decision,
+          reasoning: reason,
+          resolvedBy: 'admin',
+          resolvedAt: new Date().toISOString(),
+        },
+      };
+      setViews((prev) =>
+        prev.map((v) => (v.dispute.id === disputeId ? { ...v, dispute: resolvedDispute } : v))
+      );
+      const decisionLabel =
+        decision === 'freelancer_favor'
+          ? 'in favor of freelancer'
+          : decision === 'employer_favor'
+          ? 'in favor of employer'
+          : `with ${percentage ?? 50}% split`;
+      toast.success(`Dispute resolved ${decisionLabel}`);
+      setConfirmResolve(null);
+      setTab('resolved');
+      void load();
     } catch (error) {
       console.error(
         '[disputes] resolve failed. If this is unexpected, check that the admin '
