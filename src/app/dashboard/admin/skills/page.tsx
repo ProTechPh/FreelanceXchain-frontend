@@ -5,6 +5,7 @@ import { Plus, Tags, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { reportLoadFailure } from '@/lib/report-failure';
 import { skillsApi } from '@/lib/api';
+import { csrfTokenManager } from '@/lib/api-client';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import type { SkillSuggestion, SkillTaxonomy } from '@/types';
 import { Badge } from '@/components/ui/badge';
@@ -41,6 +42,7 @@ export default function AdminSkillsPage() {
   // call it again; a self-reference inside the callback is not allowed.
   useEffect(() => {
     let active = true;
+    void csrfTokenManager.ensureToken();
     function run() {
       load()
         .catch((error) => {

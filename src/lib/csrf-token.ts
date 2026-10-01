@@ -8,6 +8,7 @@ type CsrfCookieName = (typeof CSRF_COOKIE_NAMES)[number];
 interface CsrfTokenResponse {
   cookieName: string;
   token?: string;
+  csrfToken?: string;
 }
 
 interface CsrfTokenManagerDependencies {
@@ -76,13 +77,14 @@ export function createCsrfTokenManager({
         cookieName = response.cookieName;
       }
 
-      if (response.token) {
-        memoryToken = response.token;
+      const receivedToken = response.token || response.csrfToken;
+      if (receivedToken) {
+        memoryToken = receivedToken;
       } else {
         memoryToken = null;
       }
 
-      const token = response.token || (cookieName ? readCsrfCookie(readCookies(), cookieName) : null) || '';
+      const token = receivedToken || (cookieName ? readCsrfCookie(readCookies(), cookieName) : null) || '';
       initialized = true;
       return token;
     } catch {
@@ -91,10 +93,19 @@ export function createCsrfTokenManager({
   };
 
   const ensureToken = async (options: EnsureTokenOptions = {}): Promise<string> => {
+    if (options.forceRefresh) {
+      memoryToken = null;
+      initialized = false;
+      tokenRequest = generateToken().finally(() => {
+        tokenRequest = null;
+      });
+      return tokenRequest;
+    }
+
     if (tokenRequest) return tokenRequest;
 
     const token = currentToken();
-    if (!options.forceRefresh && initialized && token) return token;
+    if (initialized && token) return token;
 
     tokenRequest = generateToken().finally(() => {
       tokenRequest = null;
@@ -106,6 +117,7 @@ export function createCsrfTokenManager({
     initialized = false;
     memoryToken = null;
     tokenRequest = null;
+    cookieName = null;
   };
 
   return {

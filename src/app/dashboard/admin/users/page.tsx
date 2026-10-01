@@ -16,6 +16,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { adminApi } from '@/lib/api';
+import { csrfTokenManager } from '@/lib/api-client';
+import { getApiErrorMessage } from '@/lib/auth-contract';
 import type { AdminUser, UserRole } from '@/types';
 import { toast } from 'sonner';
 import { reportLoadFailure } from '@/lib/report-failure';
@@ -72,6 +74,7 @@ export default function UsersPage() {
   // call it again; a self-reference inside the callback is not allowed.
   useEffect(() => {
     let active = true;
+    void csrfTokenManager.ensureToken();
     function run() {
       load()
         .catch((error) => {
@@ -101,8 +104,8 @@ export default function UsersPage() {
       toast.success('User suspended');
       setUserToSuspend(null);
       setSuspendReason('');
-    } catch {
-      toast.error('Couldn\'t suspend this user. Try again.');
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Couldn\'t suspend this user. Try again.'));
     } finally {
       setPendingActionId(null);
     }
@@ -115,8 +118,8 @@ export default function UsersPage() {
       setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, isActive: true } : u)));
       toast.success('User unsuspended');
       setUserToUnsuspend(null);
-    } catch {
-      toast.error('Couldn\'t unsuspend this user. Try again.');
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Couldn\'t unsuspend this user. Try again.'));
     } finally {
       setPendingActionId(null);
     }
@@ -142,8 +145,8 @@ export default function UsersPage() {
       toast.success(`${userToVerify.name || userToVerify.email} manually verified`);
       setUserToVerify(null);
       setVerifyReason('');
-    } catch {
-      toast.error('Couldn\'t verify this user. Try again.');
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Couldn\'t verify this user. Try again.'));
     } finally {
       setPendingActionId(null);
     }

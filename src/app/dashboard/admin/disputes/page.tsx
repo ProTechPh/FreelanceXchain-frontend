@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { adminApi, disputesApi, contractsApi } from '@/lib/api';
+import { csrfTokenManager } from '@/lib/api-client';
 import { safeAttachmentUrl } from '@/lib/attachment-presentation';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { formatAmount, formatRelativeTime } from '@/lib/format';
@@ -94,6 +95,7 @@ export default function DisputesPage() {
   // call it again; a self-reference inside the callback is not allowed.
   useEffect(() => {
     let active = true;
+    void csrfTokenManager.ensureToken();
     function run() {
       load()
         .catch((error) => {
