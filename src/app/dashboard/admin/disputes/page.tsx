@@ -25,6 +25,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { AdminPermissionGate } from '@/components/admin/AdminPermissionGate';
+import { useAdminPermissions } from '@/hooks/use-admin-permissions';
 
 const statusColors: Record<DisputeStatus, string> = {
   open: 'bg-destructive-subtle text-destructive',
@@ -51,6 +52,9 @@ export default function DisputesPage() {
   const [verifyingEvidenceId, setVerifyingEvidenceId] = useState<string | null>(null);
   const [verifiedEvidenceIds, setVerifiedEvidenceIds] = useState<Set<string>>(new Set());
   const [confirmResolve, setConfirmResolve] = useState<{ disputeId: string; decision: 'freelancer_favor' | 'employer_favor' } | null>(null);
+
+  const { hasPermission } = useAdminPermissions();
+  const canManageDisputes = hasPermission('disputes:manage');
 
   const load = useCallback(async () => {
     const { data } = await adminApi.getDisputeManagement();
@@ -290,7 +294,7 @@ export default function DisputesPage() {
                     <span>{relativeTime(dispute.createdAt)}</span>
                   </div>
 
-                  {dispute.status !== 'resolved' && (
+                  {dispute.status !== 'resolved' && canManageDisputes && (
                     <div className="space-y-3">
                       <Textarea
                         placeholder="Admin resolution notes..."

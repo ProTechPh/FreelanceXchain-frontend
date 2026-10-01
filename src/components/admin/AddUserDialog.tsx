@@ -17,6 +17,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { adminApi } from '@/lib/api';
+import { csrfTokenManager } from '@/lib/api-client';
 import type { AdminPermission, AdminUser, UserRole } from '@/types';
 import {
   UserPlus,
@@ -88,6 +89,11 @@ export function AddUserDialog({
   const handleOpenChange = (newOpen: boolean) => {
     if (!newOpen) {
       resetForm();
+    } else {
+      // Pre-warm the CSRF token so it is already cached when the form POST fires.
+      // Errors are intentionally swallowed — the request interceptor will retry
+      // on a CSRF rejection if the token happens to be stale.
+      void csrfTokenManager.ensureToken();
     }
     onOpenChange(newOpen);
   };
