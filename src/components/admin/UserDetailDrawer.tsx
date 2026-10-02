@@ -110,7 +110,7 @@ export function UserDetailDrawer({
             </div>
             <div className="min-w-0 flex-1">
               <SheetTitle className="text-lg font-bold truncate">
-                {user.name || 'Unnamed User'}
+                User details for {user.name || user.email}
               </SheetTitle>
               <SheetDescription className="truncate text-xs text-muted-foreground">
                 {user.email}

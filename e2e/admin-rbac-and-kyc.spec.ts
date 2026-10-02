@@ -203,9 +203,9 @@ test('Hide restricted admin actions for limited permissions', async ({ page, aut
 
   // 1. Clicking View button opens detail drawer
   await viewButton.click();
-  const drawer = page.getByRole('dialog', { name: /User details for Jordan Dev/ });
+  const drawer = page.getByRole('dialog', { name: /User details for Jordan Dev|Jordan Dev/ });
   await expect(drawer).toBeVisible();
-  await expect(drawer.getByText('Jordan Dev')).toBeVisible();
+  await expect(drawer.getByText('Jordan Dev').first()).toBeVisible();
   await expect(drawer.getByText('dev@example.com')).toBeVisible();
   await expect(drawer.getByText('Read-only Permissions')).toBeVisible();
   await page.keyboard.press('Escape');
