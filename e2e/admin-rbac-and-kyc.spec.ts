@@ -155,12 +155,73 @@ test('Hide restricted admin actions for limited permissions', async ({ page, aut
     permissions: [...limitedAdminPermissions],
   });
   await mockAnalytics(page);
+  await mockCsrf(page);
+
+  await page.route('**/api/admin/users**', (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({
+      users: [{
+        id: 'freelancer-1',
+        email: 'dev@example.com',
+        name: 'Jordan Dev',
+        role: 'freelancer',
+        walletAddress: '0x1234567890abcdef1234567890abcdef12345678',
+        createdAt: '2026-09-30T10:00:00.000Z',
+        kycVerified: false,
+        kycStatus: 'not_started',
+        emailVerified: true,
+        isActive: true,
+        permissions: [],
+      }],
+      total: 1,
+    }),
+  }));
+
   await page.goto('/dashboard/admin/analytics');
 
   await expect(page.getByRole('link', { name: 'Users' })).toBeVisible();
   await expect(page.getByRole('link', { name: 'KYC review' })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Skills' })).toHaveCount(0);
   await expect(page.getByRole('link', { name: 'Support tickets' })).toHaveCount(0);
+
+  // Navigate to user management page
+  await page.goto('/dashboard/admin/users');
+  await expect(page.getByRole('heading', { name: 'User management' })).toBeVisible();
+
+  // Verify interactive action controls exist in Actions column
+  const viewButton = page.getByRole('button', { name: 'View details for Jordan Dev' });
+  await expect(viewButton).toBeVisible();
+  const actionsButton = page.getByRole('button', { name: 'Actions for Jordan Dev' });
+  await expect(actionsButton).toBeVisible();
+
+  // Verify restricted admin mutation actions are hidden
+  await expect(page.getByRole('button', { name: 'Add / Invite User' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /Manage permissions for/ })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /Suspend/ })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /Manually verify KYC/ })).toHaveCount(0);
+
+  // 1. Clicking View button opens detail drawer
+  await viewButton.click();
+  const drawer = page.getByRole('dialog', { name: /User details for Jordan Dev/ });
+  await expect(drawer).toBeVisible();
+  await expect(drawer.getByText('Jordan Dev')).toBeVisible();
+  await expect(drawer.getByText('dev@example.com')).toBeVisible();
+  await expect(drawer.getByText('Read-only Permissions')).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(drawer).toBeHidden();
+
+  // 2. Clicking username cell opens detail drawer
+  await page.getByText('Jordan Dev').click();
+  await expect(drawer).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(drawer).toBeHidden();
+
+  // 3. Clicking user row opens detail drawer
+  await page.getByRole('row', { name: /Jordan Dev/ }).click();
+  await expect(drawer).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(drawer).toBeHidden();
 });
 
 test('Restrict admin actions for a sub-admin with limited permissions', async ({ page, authenticateAs }) => {
