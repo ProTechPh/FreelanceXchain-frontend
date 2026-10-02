@@ -23,7 +23,7 @@ import { toast } from 'sonner';
 import { reportLoadFailure } from '@/lib/report-failure';
 import { useRouter } from 'next/navigation';
 import { useImpersonate, useLogin } from '@/stores/authStore';
-import { Users, Search, Ban, UserCheck, ShieldCheck, CheckCircle2, XCircle, ShieldAlert, Clock, AlertTriangle, Key, UserPlus, LogIn } from 'lucide-react';
+import { Users, Search, Ban, UserCheck, ShieldCheck, CheckCircle2, XCircle, ShieldAlert, Clock, AlertTriangle, Key, UserPlus, LogIn, Eye, MoreHorizontal, Copy } from 'lucide-react';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -31,6 +31,13 @@ import { formatDate } from '@/lib/format';
 import { AdminPermissionGate } from '@/components/admin/AdminPermissionGate';
 import { AdminPermissionsDialog } from '@/components/admin/AdminPermissionsDialog';
 import { AddUserDialog } from '@/components/admin/AddUserDialog';
+import { UserDetailDrawer } from '@/components/admin/UserDetailDrawer';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useAdminPermissions } from '@/hooks/use-admin-permissions';
 
 const statusColors: Record<string, string> = {
@@ -65,6 +72,7 @@ export default function UsersPage() {
   const [userToUnsuspend, setUserToUnsuspend] = useState<AdminUser | null>(null);
   const [userForPermissions, setUserForPermissions] = useState<AdminUser | null>(null);
   const [addUserOpen, setAddUserOpen] = useState(false);
+  const [viewingUser, setViewingUser] = useState<AdminUser | null>(null);
 
   const { hasPermission } = useAdminPermissions();
   const canManageAdmins = hasPermission('admin:manage');
@@ -376,10 +384,24 @@ export default function UsersPage() {
                     const isKycRejected = user.kycStatus === 'rejected';
 
                     return (
-                    <TableRow key={user.id}>
-                      <TableCell>
+                    <TableRow
+                      key={user.id}
+                      className="cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => setViewingUser(user)}
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setViewingUser(user);
+                        }
+                      }}
+                    >
+                      <TableCell
+                        className="cursor-pointer"
+                        onClick={() => setViewingUser(user)}
+                      >
                         <div className="min-w-0 max-w-[12rem] sm:max-w-none">
-                          <p className="truncate font-medium" title={user.name || 'Unnamed'}>{user.name || 'Unnamed'}</p>
+                          <p className="truncate font-medium text-foreground hover:underline" title={user.name || 'Unnamed'}>{user.name || 'Unnamed'}</p>
                           <p className="truncate text-sm text-muted-foreground" title={user.email}>{user.email}</p>
                         </div>
                       </TableCell>
@@ -440,8 +462,118 @@ export default function UsersPage() {
                         )}
                       </TableCell>
                       <TableCell className="hidden lg:table-cell p-4 text-muted-foreground">{formatDate(user.createdAt)}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center justify-end gap-2">
+                      <TableCell
+                        className="text-right cursor-default"
+                        onClick={(e) => {
+                          if (e.target === e.currentTarget || (e.target as HTMLElement).tagName === 'DIV') {
+                            setViewingUser(user);
+                          }
+                        }}
+                      >
+                        <div className="flex items-center justify-end gap-1.5 sm:gap-2">
+                          {/* Always visible interactive view trigger for allowed users */}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 px-2 sm:px-2.5 text-xs touch-manipulation flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
+                            title={`View details for ${user.name || user.email}`}
+                            aria-label={`View details for ${user.name || user.email}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setViewingUser(user);
+                            }}
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>View</span>
+                          </Button>
+
+                          {/* Actions dropdown menu */}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger
+                              className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none touch-manipulation cursor-pointer"
+                              title="More actions"
+                              aria-label={`Actions for ${user.name || user.email}`}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MoreHorizontal className="w-4 h-4" />
+                              <span className="sr-only">Actions</span>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setViewingUser(user);
+                                }}
+                              >
+                                <Eye className="w-4 h-4 mr-2" />
+                                <span>View details</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  void navigator.clipboard.writeText(user.email);
+                                  toast.success('Email copied to clipboard');
+                                }}
+                              >
+                                <Copy className="w-4 h-4 mr-2" />
+                                <span>Copy email</span>
+                              </DropdownMenuItem>
+                              {canManageAdmins && (
+                                <DropdownMenuItem
+                                  disabled={pendingActionId === user.id}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleLoginAs(user);
+                                  }}
+                                >
+                                  <LogIn className="w-4 h-4 mr-2" />
+                                  <span>Login as</span>
+                                </DropdownMenuItem>
+                              )}
+                              {user.role === 'admin' && canManageAdmins && (
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setUserForPermissions(user);
+                                  }}
+                                >
+                                  <Key className="w-4 h-4 mr-2" />
+                                  <span>Manage permissions</span>
+                                </DropdownMenuItem>
+                              )}
+                              {canManageKyc && (
+                                <DropdownMenuItem
+                                  disabled={pendingActionId === user.id || isKycApproved}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setUserToVerify(user);
+                                    setVerifyReason('');
+                                  }}
+                                >
+                                  <ShieldCheck className="w-4 h-4 mr-2" />
+                                  <span>Manually verify KYC</span>
+                                </DropdownMenuItem>
+                              )}
+                              {canManageUsers && (
+                                <DropdownMenuItem
+                                  disabled={pendingActionId === user.id}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (user.isActive) {
+                                      setUserToSuspend(user);
+                                      setSuspendReason('');
+                                    } else {
+                                      setUserToUnsuspend(user);
+                                    }
+                                  }}
+                                >
+                                  {user.isActive ? <Ban className="w-4 h-4 mr-2 text-warning" /> : <UserCheck className="w-4 h-4 mr-2 text-success" />}
+                                  <span>{user.isActive ? 'Suspend user' : 'Unsuspend user'}</span>
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+
                           {canManageAdmins && (
                             <Button
                               variant="outline"
@@ -450,7 +582,10 @@ export default function UsersPage() {
                               title={`Sign in as ${user.name || user.email}`}
                               aria-label={`Login as ${user.name || user.email} (Sign in as ${user.name || user.email})`}
                               disabled={pendingActionId === user.id}
-                              onClick={() => handleLoginAs(user)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleLoginAs(user);
+                              }}
                             >
                               <LogIn className="w-3.5 h-3.5" />
                               <span>Login as</span>
@@ -463,7 +598,10 @@ export default function UsersPage() {
                               className="h-8 w-8 text-primary touch-manipulation"
                               title="Manage admin permissions"
                               aria-label={`Manage permissions for ${user.name || user.email}`}
-                              onClick={() => setUserForPermissions(user)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setUserForPermissions(user);
+                              }}
                             >
                               <Key className="w-4 h-4" />
                             </Button>
@@ -476,7 +614,8 @@ export default function UsersPage() {
                               title={isKycApproved ? 'KYC verified' : 'Manually verify KYC'}
                               aria-label={isKycApproved ? 'KYC verified' : `Manually verify KYC for ${user.name || user.email}`}
                               disabled={pendingActionId === user.id || isKycApproved}
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 setUserToVerify(user);
                                 setVerifyReason('');
                               }}
@@ -493,7 +632,8 @@ export default function UsersPage() {
                                 title="Suspend user"
                                 aria-label={`Suspend ${user.name || user.email}`}
                                 disabled={pendingActionId === user.id}
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation();
                                   setUserToSuspend(user);
                                   setSuspendReason('');
                                 }}
@@ -508,7 +648,10 @@ export default function UsersPage() {
                                 title="Unsuspend user"
                                 aria-label={`Unsuspend ${user.name || user.email}`}
                                 disabled={pendingActionId === user.id}
-                                onClick={() => setUserToUnsuspend(user)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setUserToUnsuspend(user);
+                                }}
                               >
                                 <UserCheck className="w-4 h-4" />
                               </Button>
@@ -557,11 +700,15 @@ export default function UsersPage() {
             const isKycRejected = user.kycStatus === 'rejected';
 
             return (
-            <Card key={user.id} className="bg-card border-border">
+            <Card
+              key={user.id}
+              className="bg-card border-border cursor-pointer hover:border-border/80 transition-colors"
+              onClick={() => setViewingUser(user)}
+            >
               <CardContent className="p-4 space-y-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="font-medium truncate" title={user.name || 'Unnamed'}>{user.name || 'Unnamed'}</p>
+                    <p className="font-medium truncate hover:underline text-foreground" title={user.name || 'Unnamed'}>{user.name || 'Unnamed'}</p>
                     <p className="text-sm text-muted-foreground truncate" title={user.email}>{user.email}</p>
                   </div>
                   <Badge className={statusColors[user.isActive ? 'active' : 'suspended']}>
@@ -627,6 +774,109 @@ export default function UsersPage() {
                     <span className="text-xs text-muted-foreground">{formatDate(user.createdAt)}</span>
                   </div>
                   <div className="flex items-center gap-1">
+                    {/* Always visible view trigger on mobile */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 px-2 text-xs touch-manipulation flex items-center gap-1 text-muted-foreground hover:text-foreground"
+                      title={`View details for ${user.name || user.email}`}
+                      aria-label={`View details for ${user.name || user.email}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setViewingUser(user);
+                      }}
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      <span>View</span>
+                    </Button>
+
+                    {/* Actions dropdown menu on mobile */}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        className="inline-flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none touch-manipulation cursor-pointer"
+                        title="More actions"
+                        aria-label={`Actions for ${user.name || user.email}`}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MoreHorizontal className="w-4 h-4" />
+                        <span className="sr-only">Actions</span>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-48">
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setViewingUser(user);
+                          }}
+                        >
+                          <Eye className="w-4 h-4 mr-2" />
+                          <span>View details</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            void navigator.clipboard.writeText(user.email);
+                            toast.success('Email copied to clipboard');
+                          }}
+                        >
+                          <Copy className="w-4 h-4 mr-2" />
+                          <span>Copy email</span>
+                        </DropdownMenuItem>
+                        {canManageAdmins && (
+                          <DropdownMenuItem
+                            disabled={pendingActionId === user.id}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleLoginAs(user);
+                            }}
+                          >
+                            <LogIn className="w-4 h-4 mr-2" />
+                            <span>Login as</span>
+                          </DropdownMenuItem>
+                        )}
+                        {user.role === 'admin' && canManageAdmins && (
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setUserForPermissions(user);
+                            }}
+                          >
+                            <Key className="w-4 h-4 mr-2" />
+                            <span>Manage permissions</span>
+                          </DropdownMenuItem>
+                        )}
+                        {canManageKyc && (
+                          <DropdownMenuItem
+                            disabled={pendingActionId === user.id || isKycApproved}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setUserToVerify(user);
+                              setVerifyReason('');
+                            }}
+                          >
+                            <ShieldCheck className="w-4 h-4 mr-2" />
+                            <span>Manually verify KYC</span>
+                          </DropdownMenuItem>
+                        )}
+                        {canManageUsers && (
+                          <DropdownMenuItem
+                            disabled={pendingActionId === user.id}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (user.isActive) {
+                                setUserToSuspend(user);
+                                setSuspendReason('');
+                              } else {
+                                setUserToUnsuspend(user);
+                              }
+                            }}
+                          >
+                            {user.isActive ? <Ban className="w-4 h-4 mr-2 text-warning" /> : <UserCheck className="w-4 h-4 mr-2 text-success" />}
+                            <span>{user.isActive ? 'Suspend user' : 'Unsuspend user'}</span>
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+
                     {canManageAdmins && (
                       <Button
                         variant="outline"
@@ -635,7 +885,10 @@ export default function UsersPage() {
                         title={`Sign in as ${user.name || user.email}`}
                         aria-label={`Login as ${user.name || user.email} (Sign in as ${user.name || user.email})`}
                         disabled={pendingActionId === user.id}
-                        onClick={() => handleLoginAs(user)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleLoginAs(user);
+                        }}
                       >
                         <LogIn className="w-3.5 h-3.5" />
                         <span>Login as</span>
@@ -647,7 +900,10 @@ export default function UsersPage() {
                         size="icon"
                         className="h-9 w-9 text-primary touch-manipulation"
                         aria-label={`Manage permissions for ${user.name || user.email}`}
-                        onClick={() => setUserForPermissions(user)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setUserForPermissions(user);
+                        }}
                       >
                         <Key className="w-4 h-4" />
                       </Button>
@@ -659,7 +915,8 @@ export default function UsersPage() {
                         className="h-9 w-9 text-primary touch-manipulation"
                         aria-label={isKycApproved ? 'KYC verified' : `Manually verify KYC for ${user.name || user.email}`}
                         disabled={pendingActionId === user.id || isKycApproved}
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setUserToVerify(user);
                           setVerifyReason('');
                         }}
@@ -675,7 +932,8 @@ export default function UsersPage() {
                           className="h-9 w-9 text-warning touch-manipulation"
                           aria-label={`Suspend ${user.name || user.email}`}
                           disabled={pendingActionId === user.id}
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setUserToSuspend(user);
                             setSuspendReason('');
                           }}
@@ -689,7 +947,10 @@ export default function UsersPage() {
                           className="h-9 w-9 text-success touch-manipulation"
                           aria-label={`Unsuspend ${user.name || user.email}`}
                           disabled={pendingActionId === user.id}
-                          onClick={() => setUserToUnsuspend(user)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setUserToUnsuspend(user);
+                          }}
                         >
                           <UserCheck className="w-4 h-4" />
                         </Button>
@@ -879,6 +1140,30 @@ export default function UsersPage() {
         onPermissionsSaved={(updatedUser) => {
           setUsers((prev) => prev.map((u) => (u.id === updatedUser.id ? updatedUser : u)));
         }}
+      />
+
+      {/* User Details Drawer */}
+      <UserDetailDrawer
+        open={viewingUser !== null}
+        onOpenChange={(open) => {
+          if (!open) setViewingUser(null);
+        }}
+        user={viewingUser}
+        canManageUsers={canManageUsers}
+        canManageAdmins={canManageAdmins}
+        canManageKyc={canManageKyc}
+        onLoginAs={handleLoginAs}
+        onManagePermissions={setUserForPermissions}
+        onVerifyKyc={(user) => {
+          setUserToVerify(user);
+          setVerifyReason('');
+        }}
+        onSuspend={(user) => {
+          setUserToSuspend(user);
+          setSuspendReason('');
+        }}
+        onUnsuspend={setUserToUnsuspend}
+        pendingActionId={pendingActionId}
       />
 
       {/* Add / Invite User Modal */}

@@ -224,3 +224,32 @@ export function isPreviewableDocument(filename: string): boolean {
   const ext = getFileExtension(filename);
   return previewableExtensions.includes(ext);
 }
+
+/**
+ * Check if an attachment URL or filename represents an image.
+ * Uses robust URL parsing to verify pathname extensions and trusted image hostnames.
+ *
+ * @param url - The URL or file path to check
+ * @param name - Optional filename or attachment label
+ * @returns true if the attachment is an image
+ */
+export function isImageAttachment(url: string, name?: string): boolean {
+  if (!url || typeof url !== 'string') {
+    return false;
+  }
+
+  // Check explicit filename or label extension first
+  if (name && isImageFile(name)) {
+    return true;
+  }
+
+  try {
+    const parsed = new URL(url, 'https://placeholder.invalid');
+    if (parsed.hostname === 'images.unsplash.com' || parsed.hostname === 'unsplash.com') {
+      return true;
+    }
+    return isImageFile(parsed.pathname);
+  } catch {
+    return isImageFile(url);
+  }
+}

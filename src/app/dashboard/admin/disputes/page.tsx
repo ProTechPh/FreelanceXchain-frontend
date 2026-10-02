@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { adminApi, disputesApi, contractsApi } from '@/lib/api';
 import { csrfTokenManager } from '@/lib/api-client';
-import { safeAttachmentUrl } from '@/lib/attachment-presentation';
+import { safeAttachmentUrl, isImageAttachment } from '@/lib/attachment-presentation';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { formatAmount, formatRelativeTime } from '@/lib/format';
 import type { Dispute, Contract, DisputeStatus } from '@/types';
@@ -576,44 +576,50 @@ export default function DisputesPage() {
             </DialogDescription>
           </DialogHeader>
 
-          {viewingEvidence && (
-            <div className="space-y-4">
-              <div className="rounded-lg border border-border p-3 bg-secondary/30 flex items-center justify-between">
-                <div className="space-y-0.5 min-w-0 flex-1 mr-3">
-                  <p className="text-sm font-semibold text-foreground truncate">{viewingEvidence.name || 'Evidence Attachment'}</p>
-                  <p className="text-xs text-muted-foreground truncate">{viewingEvidence.url}</p>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  asChild
-                  className="gap-1.5 shrink-0"
-                >
-                  <a href={viewingEvidence.url} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    Open original
-                  </a>
-                </Button>
-              </div>
+          {viewingEvidence && (() => {
+            const safeUrl = safeAttachmentUrl(viewingEvidence.url) || viewingEvidence.url;
+            const isImage = isImageAttachment(viewingEvidence.url, viewingEvidence.name);
 
-              <div className="flex items-center justify-center p-3 bg-black/60 rounded-lg border border-border max-h-[50dvh] overflow-auto">
-                {viewingEvidence.url.match(/\.(jpeg|jpg|png|gif|webp|svg)/i) || viewingEvidence.url.includes('images.unsplash.com') ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img
-                    src={viewingEvidence.url}
-                    alt="Evidence attachment preview"
-                    className="max-h-[45dvh] max-w-full object-contain rounded"
-                  />
-                ) : (
-                  <iframe
-                    src={viewingEvidence.url}
-                    title="Evidence Document Preview"
-                    className="w-full h-80 rounded border-0 bg-white"
-                  />
-                )}
+            return (
+              <div className="space-y-4">
+                <div className="rounded-lg border border-border p-3 bg-secondary/30 flex items-center justify-between">
+                  <div className="space-y-0.5 min-w-0 flex-1 mr-3">
+                    <p className="text-sm font-semibold text-foreground truncate">{viewingEvidence.name || 'Evidence Attachment'}</p>
+                    <p className="text-xs text-muted-foreground truncate">{viewingEvidence.url}</p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    asChild
+                    className="gap-1.5 shrink-0"
+                  >
+                    <a href={safeUrl} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      Open original
+                    </a>
+                  </Button>
+                </div>
+
+                <div className="flex items-center justify-center p-3 bg-black/60 rounded-lg border border-border max-h-[50dvh] overflow-auto">
+                  {isImage ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={safeUrl}
+                      alt={viewingEvidence.name || "Evidence attachment preview"}
+                      className="max-h-[45dvh] max-w-full object-contain rounded"
+                    />
+                  ) : (
+                    <iframe
+                      src={safeUrl}
+                      title="Evidence Document Preview"
+                      sandbox="allow-scripts allow-same-origin"
+                      className="w-full h-80 rounded border-0 bg-white"
+                    />
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setViewingEvidence(null)}>
