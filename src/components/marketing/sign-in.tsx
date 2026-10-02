@@ -48,7 +48,6 @@ interface SignInPageProps {
   onResendConfirmation?: () => void;
   onCreateAccount?: () => void;
   onPasswordlessSignIn?: () => void;
-  onSubAdminQuickSignIn?: () => void;
   oauthError?: string | null;
   lockoutError?: string | null;
   turnstileSlot?: React.ReactNode;
@@ -67,7 +66,6 @@ export const SignInPage: React.FC<SignInPageProps> = ({
   onResendConfirmation,
   onCreateAccount,
   onPasswordlessSignIn,
-  onSubAdminQuickSignIn,
   oauthError,
   lockoutError,
   turnstileSlot,
@@ -79,12 +77,6 @@ export const SignInPage: React.FC<SignInPageProps> = ({
   const isGoogleLoading = oauthLoading === 'google';
   const isGithubLoading = oauthLoading === 'github';
   const isAnyLoading = loading || Boolean(oauthLoading);
-
-  const handleQuickSubAdmin = () => {
-    setEmailValue('example@gmail.com');
-    setPasswordValue('FreelanceXchain2026!');
-    onSubAdminQuickSignIn?.();
-  };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     const form = event.currentTarget;
@@ -217,28 +209,6 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                 {title}
               </h1>
               <p className="mt-2 text-muted-foreground text-sm">{description}</p>
-            </div>
-
-            {/* Sub-Admin Demo Credentials Card */}
-            <div className="rounded-xl sm:rounded-2xl border border-border/80 bg-muted/40 p-3.5 sm:p-4 text-xs space-y-2.5">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <span className="font-semibold text-foreground">Sub-Admin Demo Credentials</span>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={isAnyLoading}
-                  onClick={handleQuickSubAdmin}
-                  aria-label="Sign in as Sub Administrator"
-                  className="h-7 text-xs px-2.5 font-medium touch-manipulation"
-                >
-                  Sign in as Sub Administrator
-                </Button>
-              </div>
-              <div className="font-mono text-2xs sm:text-xs text-muted-foreground bg-background/60 p-2 rounded-lg border border-border/50 space-y-0.5 select-all">
-                <div>Email: <span className="font-semibold text-foreground">example@gmail.com</span></div>
-                <div>Password: <span className="font-semibold text-foreground">FreelanceXchain2026!</span></div>
-              </div>
             </div>
 
             {/* Form */}

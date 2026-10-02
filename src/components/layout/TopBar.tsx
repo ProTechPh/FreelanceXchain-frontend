@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Bell, MessageSquare, LogOut, User, Settings, ChevronDown, Compass, Search, Shield, Bookmark, History, Star, LifeBuoy, UserCheck } from 'lucide-react';
+import { Bell, MessageSquare, LogOut, User, Settings, ChevronDown, Compass, Search, Shield, Bookmark, History, Star, LifeBuoy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Tooltip } from '@/components/ui/tooltip';
@@ -16,15 +16,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { MobileNav } from './MobileNav';
-import { useUser, useLogout, useLogin, useImpersonate } from '@/stores/authStore';
+import { useUser, useLogout } from '@/stores/authStore';
 import { useState, useEffect } from 'react';
-import { notificationsApi, adminApi } from '@/lib/api';
+import { notificationsApi } from '@/lib/api';
 import { subscribeToNotificationStream } from '@/lib/sse';
 import { WalletHeaderButton } from '@/components/wallet/wallet-header-button';
 import { useStartTour } from '@/components/onboarding/tour-launcher';
 import { useRateApp } from '@/components/feedback/rate-app-provider';
-import { toast } from 'sonner';
-import type { User as AuthUser } from '@/types';
 
 const participantAccountItems = [
   { label: 'Profile', path: 'profile', icon: User },
@@ -39,48 +37,7 @@ const participantAccountItems = [
 export function TopBar() {
   const user = useUser();
   const logout = useLogout();
-  const login = useLogin();
-  const impersonate = useImpersonate();
   const router = useRouter();
-
-  const handleSwitchToSubAdmin = async () => {
-    try {
-      try {
-        const { data } = await adminApi.impersonate({ email: 'example@gmail.com' });
-        if (data?.accessToken && data?.user) {
-          impersonate(data.user as unknown as AuthUser, data.accessToken);
-          toast.success('Signed in as Sub Administrator');
-          router.push('/dashboard/admin');
-          return;
-        }
-      } catch {
-        // Fallback to password login
-      }
-      try {
-        await login('example@gmail.com', 'FreelanceXchain2026!');
-      } catch {
-        await login('example@gmail.com', 'password123');
-      }
-      toast.success('Signed in as Sub Administrator');
-      router.push('/dashboard/admin');
-    } catch {
-      toast.error('Could not switch to Sub Administrator');
-    }
-  };
-
-  const handleSwitchToSystemAdmin = async () => {
-    try {
-      try {
-        await login('admin@freelancexchain.com', 'FreelanceXchain2026!');
-      } catch {
-        await login('admin@freelancexchain.com', 'AdminPassword123!');
-      }
-      toast.success('Signed in as System Administrator');
-      router.push('/dashboard/admin');
-    } catch {
-      toast.error('Could not switch to System Administrator');
-    }
-  };
   const { startTour, canStartTour } = useStartTour();
   const { openRatingDialog } = useRateApp();
   const [mounted, setMounted] = useState(false);
@@ -295,28 +252,6 @@ export function TopBar() {
                   >
                     <Star className="size-4" aria-hidden="true" /> Rate the app
                   </DropdownMenuItem>
-                </>
-              )}
-              {user?.role === 'admin' && (
-                <>
-                  <DropdownMenuSeparator />
-                  {user.email === 'example@gmail.com' ? (
-                    <DropdownMenuItem
-                      aria-label="Sign in as System Administrator"
-                      onClick={handleSwitchToSystemAdmin}
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <UserCheck className="size-4" aria-hidden="true" /> Sign in as System Administrator
-                    </DropdownMenuItem>
-                  ) : (
-                    <DropdownMenuItem
-                      aria-label="Sign in as Sub Administrator"
-                      onClick={handleSwitchToSubAdmin}
-                      className="flex items-center gap-2 cursor-pointer"
-                    >
-                      <UserCheck className="size-4" aria-hidden="true" /> Sign in as Sub Administrator
-                    </DropdownMenuItem>
-                  )}
                 </>
               )}
               <DropdownMenuSeparator />
