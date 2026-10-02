@@ -106,7 +106,7 @@ export function UserDetailDrawer({
         <SheetHeader className="p-0 text-left">
           <div className="flex items-center gap-3">
             <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-lg">
-              {user.name ? user.name.slice(0, 2).toUpperCase() : user.email.slice(0, 2).toUpperCase()}
+              {user.name ? user.name.slice(0, 2).toUpperCase() : user.email ? user.email.slice(0, 2).toUpperCase() : <UserIcon className="size-6" />}
             </div>
             <div className="min-w-0 flex-1">
               <SheetTitle className="text-lg font-bold truncate">
@@ -191,7 +191,10 @@ export function UserDetailDrawer({
             {/* Email Address */}
             <div className="flex items-center justify-between gap-2 p-2.5 rounded-lg bg-muted/40">
               <div className="min-w-0">
-                <span className="text-2xs text-muted-foreground block">Email Address</span>
+                <span className="text-2xs text-muted-foreground flex items-center gap-1">
+                  <Mail className="size-3" />
+                  Email Address
+                </span>
                 <span className="text-xs truncate block select-all">{user.email}</span>
               </div>
               <Button
@@ -209,7 +212,10 @@ export function UserDetailDrawer({
             {/* Wallet Address */}
             <div className="flex items-center justify-between gap-2 p-2.5 rounded-lg bg-muted/40">
               <div className="min-w-0">
-                <span className="text-2xs text-muted-foreground block">Wallet Address</span>
+                <span className="text-2xs text-muted-foreground flex items-center gap-1">
+                  <Wallet className="size-3" />
+                  Wallet Address
+                </span>
                 <span className="font-mono text-xs truncate block select-all">
                   {user.walletAddress ? user.walletAddress : 'No wallet connected'}
                 </span>
