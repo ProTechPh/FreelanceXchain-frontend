@@ -22,7 +22,7 @@ import type { AdminUser, User, UserRole } from '@/types';
 import { toast } from 'sonner';
 import { reportLoadFailure } from '@/lib/report-failure';
 import { useRouter } from 'next/navigation';
-import { useImpersonate, useLogin } from '@/stores/authStore';
+import { useImpersonate } from '@/stores/authStore';
 import { Users, Search, Ban, UserCheck, ShieldCheck, CheckCircle2, XCircle, ShieldAlert, Clock, AlertTriangle, Key, UserPlus, LogIn, Eye, MoreHorizontal, Copy } from 'lucide-react';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -54,7 +54,6 @@ const roleColors: Record<UserRole, string> = {
 export default function UsersPage() {
   const router = useRouter();
   const impersonate = useImpersonate();
-  const login = useLogin();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -172,30 +171,13 @@ export default function UsersPage() {
   const handleLoginAs = async (targetUser: AdminUser) => {
     setPendingActionId(targetUser.id);
     try {
-      try {
-        const { data } = await adminApi.impersonateUser(targetUser.id);
-        if (data?.accessToken && data?.user) {
-          impersonate(data.user as unknown as User, data.accessToken);
-          toast.success(`Signed in as ${targetUser.name || targetUser.email}`);
-          const destination = targetUser.role === 'admin' ? '/dashboard/admin' : `/dashboard/${targetUser.role}`;
-          router.push(destination);
-          return;
-        }
-      } catch (impersonateErr) {
-        if (targetUser.email === 'example@gmail.com') {
-          try {
-            await login('example@gmail.com', 'FreelanceXchain2026!');
-            toast.success(`Signed in as ${targetUser.name || targetUser.email}`);
-            router.push('/dashboard/admin');
-            return;
-          } catch {
-            await login('example@gmail.com', 'password123');
-            toast.success(`Signed in as ${targetUser.name || targetUser.email}`);
-            router.push('/dashboard/admin');
-            return;
-          }
-        }
-        throw impersonateErr;
+      const { data } = await adminApi.impersonateUser(targetUser.id);
+      if (data?.accessToken && data?.user) {
+        impersonate(data.user as unknown as User, data.accessToken);
+        toast.success(`Signed in as ${targetUser.name || targetUser.email}`);
+        const destination = targetUser.role === 'admin' ? '/dashboard/admin' : `/dashboard/${targetUser.role}`;
+        router.push(destination);
+        return;
       }
     } catch (error) {
       toast.error(getApiErrorMessage(error, `Couldn't sign in as ${targetUser.name || targetUser.email}`));
