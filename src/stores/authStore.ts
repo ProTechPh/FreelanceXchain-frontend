@@ -44,6 +44,8 @@ interface AuthState {
   setHasHydrated: (value: boolean) => void;
   /** Re-read the plan from /auth/me without blanking the UI. */
   refreshPlan: () => Promise<void>;
+  /** Switch the active user session directly (e.g. admin impersonation or switcher) */
+  impersonate: (user: User, accessToken: string) => void;
 }
 
 function beginKycReminderSession(userId: string) {
@@ -235,6 +237,20 @@ export const useAuthStore = create<AuthState>()(
 
       setUser: (user) => set({ user }),
 
+      impersonate: (user: User, accessToken: string) => {
+        setTokenStorage(accessToken);
+        beginKycReminderSession(user.id);
+        set({
+          user: normalizeAuthUser(user),
+          accessToken,
+          isAuthenticated: true,
+          isLoading: false,
+          mfaPending: false,
+          mfaSessionToken: null,
+          sessionVerified: true,
+        });
+      },
+
       setAccessToken: (token) => {
         setTokenStorage(token);
         set({ accessToken: token });
@@ -304,4 +320,5 @@ export const useSessionVerified = () => useAuthStore((state) => state.sessionVer
 export const useLogout = () => useAuthStore((state) => state.logout);
 export const useLogin = () => useAuthStore((state) => state.login);
 export const useSetUser = () => useAuthStore((state) => state.setUser);
+export const useImpersonate = () => useAuthStore((state) => state.impersonate);
 

@@ -48,6 +48,7 @@ interface SignInPageProps {
   onResendConfirmation?: () => void;
   onCreateAccount?: () => void;
   onPasswordlessSignIn?: () => void;
+  onSubAdminQuickSignIn?: () => void;
   oauthError?: string | null;
   lockoutError?: string | null;
   turnstileSlot?: React.ReactNode;
@@ -66,19 +67,28 @@ export const SignInPage: React.FC<SignInPageProps> = ({
   onResendConfirmation,
   onCreateAccount,
   onPasswordlessSignIn,
+  onSubAdminQuickSignIn,
   oauthError,
   lockoutError,
   turnstileSlot,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [emailValue, setEmailValue] = useState('');
+  const [passwordValue, setPasswordValue] = useState('');
   const isGoogleLoading = oauthLoading === 'google';
   const isGithubLoading = oauthLoading === 'github';
   const isAnyLoading = loading || Boolean(oauthLoading);
 
+  const handleQuickSubAdmin = () => {
+    setEmailValue('example@gmail.com');
+    setPasswordValue('FreelanceXchain2026!');
+    onSubAdminQuickSignIn?.();
+  };
+
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     const form = event.currentTarget;
-    const password = (form.elements.namedItem('password') as HTMLInputElement)?.value ?? '';
+    const password = (form.elements.namedItem('password') as HTMLInputElement)?.value ?? passwordValue;
     if (password.length < 8) {
       event.preventDefault();
       setPasswordError('Password must be at least 8 characters.');
@@ -209,6 +219,28 @@ export const SignInPage: React.FC<SignInPageProps> = ({
               <p className="mt-2 text-muted-foreground text-sm">{description}</p>
             </div>
 
+            {/* Sub-Admin Demo Credentials Card */}
+            <div className="rounded-xl sm:rounded-2xl border border-border/80 bg-muted/40 p-3.5 sm:p-4 text-xs space-y-2.5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-semibold text-foreground">Sub-Admin Demo Credentials</span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={isAnyLoading}
+                  onClick={handleQuickSubAdmin}
+                  aria-label="Sign in as Sub Administrator"
+                  className="h-7 text-xs px-2.5 font-medium touch-manipulation"
+                >
+                  Sign in as Sub Administrator
+                </Button>
+              </div>
+              <div className="font-mono text-2xs sm:text-xs text-muted-foreground bg-background/60 p-2 rounded-lg border border-border/50 space-y-0.5 select-all">
+                <div>Email: <span className="font-semibold text-foreground">example@gmail.com</span></div>
+                <div>Password: <span className="font-semibold text-foreground">FreelanceXchain2026!</span></div>
+              </div>
+            </div>
+
             {/* Form */}
             <form className="space-y-4 sm:space-y-5" onSubmit={handleSubmit} aria-busy={loading}>
               {/* fieldset[disabled] disables all descendant controls synchronously when
@@ -223,6 +255,8 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                   type="email" 
                   autoComplete="email"
                   placeholder="name@example.com" 
+                  value={emailValue}
+                  onChange={(e) => setEmailValue(e.target.value)}
                   className="w-full px-4 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl border border-border/80 bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all placeholder:text-muted-foreground/60" 
                   required 
                 />
@@ -238,9 +272,13 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                     autoComplete="current-password"
                     placeholder="Enter your password" 
                     minLength={8}
+                    value={passwordValue}
                     aria-invalid={passwordError ? true : undefined}
                     aria-describedby={passwordError ? 'password-error' : undefined}
-                    onChange={() => { if (passwordError) setPasswordError(null); }}
+                    onChange={(e) => {
+                      setPasswordValue(e.target.value);
+                      if (passwordError) setPasswordError(null);
+                    }}
                     className="w-full px-4 py-3 sm:py-3.5 pr-12 rounded-xl sm:rounded-2xl border border-border/80 bg-card text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all placeholder:text-muted-foreground/60" 
                     required 
                   />

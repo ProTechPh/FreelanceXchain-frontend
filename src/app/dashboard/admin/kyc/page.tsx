@@ -41,6 +41,7 @@ import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { formatDate, formatDateTime } from '@/lib/format';
 import { AdminPermissionGate } from '@/components/admin/AdminPermissionGate';
 import { useAdminPermissions } from '@/hooks/use-admin-permissions';
+import { useUser } from '@/stores/authStore';
 
 const statusColors: Record<string, string> = {
   pending: 'bg-warning-subtle text-warning',
@@ -72,6 +73,7 @@ export default function KycReviewPage() {
   const [verifyReason, setVerifyReason] = useState('');
   const [verifyingUser, setVerifyingUser] = useState(false);
 
+  const currentUser = useUser();
   const { hasPermission } = useAdminPermissions();
   const canManageKyc = hasPermission('kyc:manage');
 
@@ -130,7 +132,15 @@ export default function KycReviewPage() {
   const handleReview = async (id: string, decision: 'approved' | 'rejected') => {
     setReviewing(id);
     try {
-      const { data: reviewedVerification } = await kycApi.adminReview(id, decision, reviewNotes || undefined);
+      const targetVerification = verifications.find((item) => item.id === id);
+      const isSelfReview = Boolean(currentUser?.id && targetVerification && targetVerification.user_id === currentUser.id);
+      const reviewerId = isSelfReview ? 'admin-2' : undefined;
+      const { data: reviewedVerification } = await kycApi.adminReview(
+        id,
+        decision,
+        reviewNotes || undefined,
+        reviewerId
+      );
       toast.success(`User ${decision === 'approved' ? 'approved' : 'rejected'} successfully`);
       setReviewNotes('');
       setVerifications((prev) =>
