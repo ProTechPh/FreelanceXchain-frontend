@@ -11,6 +11,7 @@ import {
   getMimeTypeFromExtension,
   isImageFile,
   isPreviewableDocument,
+  isImageAttachment,
 } from './attachment-presentation.ts';
 
 test('only presents http and https attachment URLs as links', () => {
@@ -101,3 +102,28 @@ test('isPreviewableDocument identifies previewable document types', () => {
   assert.equal(isPreviewableDocument('image.png'), false);
   assert.equal(isPreviewableDocument('audio.mp3'), false);
 });
+
+test('isImageAttachment detects images safely using URL parsing without substring vulnerabilities', () => {
+  // Common image extensions
+  assert.equal(isImageAttachment('https://example.com/receipt.png'), true);
+  assert.equal(isImageAttachment('https://example.com/photo.jpeg'), true);
+  assert.equal(isImageAttachment('https://example.com/screenshot.webp'), true);
+
+  // Name fallback
+  assert.equal(isImageAttachment('https://example.com/fetch?id=123', 'screenshot.png'), true);
+  assert.equal(isImageAttachment('https://example.com/fetch?id=123', 'brief.pdf'), false);
+
+  // Trusted host without substring vulnerabilities
+  assert.equal(isImageAttachment('https://images.unsplash.com/photo-1512345'), true);
+  assert.equal(isImageAttachment('https://unsplash.com/photos/123'), true);
+
+  // Substring exploit attempts must NOT be treated as images
+  assert.equal(isImageAttachment('https://evil.com/?images.unsplash.com'), false);
+  assert.equal(isImageAttachment('https://evil.com/fake-images.unsplash.com/doc.pdf'), false);
+  assert.equal(isImageAttachment('https://images.unsplash.com.attacker.com/doc.pdf'), false);
+
+  // Non-images
+  assert.equal(isImageAttachment('https://example.com/contract.pdf'), false);
+  assert.equal(isImageAttachment(''), false);
+  assert.equal(isImageAttachment(null), false);
+});
