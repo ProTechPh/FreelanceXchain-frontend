@@ -56,6 +56,12 @@ export const adminApi = {
   verifyUser: (id: string, reason: string) =>
     api.post(`/admin/users/${id}/verify`, { reason }),
 
+  impersonateUser: (userId: string) =>
+    api.post<{ user: AdminUser; accessToken: string }>(`/admin/users/${userId}/impersonate`),
+
+  impersonate: (data: { userId?: string; email?: string }) =>
+    api.post<{ user: AdminUser; accessToken: string }>('/admin/impersonate', data),
+
   getAnalytics: () =>
     api.get<AdminAnalytics>('/admin/analytics'),
 

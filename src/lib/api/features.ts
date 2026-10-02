@@ -169,6 +169,10 @@ export const kycApi = {
   adminGetDecision: (id: string) =>
     api.get<KycDecisionDetails>(`/kyc/admin/verification/${id}/decision`),
 
-  adminReview: (id: string, decision: 'approved' | 'rejected', notes?: string) =>
-    api.post<KycVerification>(`/kyc/admin/review/${id}`, { decision, notes }),
+  adminReview: (id: string, decision: 'approved' | 'rejected', notes?: string, reviewerId?: string) =>
+    api.post<KycVerification>(`/kyc/admin/review/${id}`, {
+      decision,
+      notes,
+      ...(reviewerId ? { reviewerId } : {}),
+    }),
 };

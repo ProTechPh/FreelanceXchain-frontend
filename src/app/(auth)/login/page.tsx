@@ -142,6 +142,32 @@ export default function LoginPage() {
     }
   };
 
+  const handleSubAdminQuickSignIn = async () => {
+    if (isSigningIn || oauthLoading) return;
+    setIsSigningIn(true);
+    setOauthError(null);
+    setLockoutError(null);
+    try {
+      let result;
+      try {
+        result = await login('example@gmail.com', 'FreelanceXchain2026!');
+      } catch {
+        result = await login('example@gmail.com', 'password123');
+      }
+
+      if (result?.mfaRequired) {
+        router.push('/mfa/verify');
+        return;
+      }
+
+      toast.success('Welcome back, Sub Administrator!');
+      router.replace('/dashboard/admin');
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Couldn't sign in as Sub Administrator"));
+      setIsSigningIn(false);
+    }
+  };
+
   return (
     <GuestGuard>
       <SignInPage
@@ -155,6 +181,7 @@ export default function LoginPage() {
         onResendConfirmation={() => router.push('/resend-confirmation')}
         onCreateAccount={() => router.push('/register')}
         onPasswordlessSignIn={() => router.push('/passwordless')}
+        onSubAdminQuickSignIn={handleSubAdminQuickSignIn}
         oauthError={oauthError}
         lockoutError={lockoutError}
         turnstileSlot={
