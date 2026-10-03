@@ -32,3 +32,15 @@ overrides:
   brace-expansion@5: ^5.0.12
   browserslist@<=4.28.6: '>=4.28.7'
   uuid@<11.1.1: ^11.1.1
+
+auditConfig:
+  ignoreGhsas:
+    # braces <=3.0.3 stack-exhaustion DoS. Mitigated by patches/braces@3.0.3.patch
+    # (the depth limits from upstream PR micromatch/braces#72), since no fixed
+    # release exists on npm yet. pnpm audit matches on version only, so it still
+    # flags the patched 3.0.3. Once 3.0.4 ships, delete this entry, the patch
+    # and its patchedDependencies line, and add a `braces@3: ^3.0.4` override.
+    - GHSA-vfj7-8cjw-p6xm
+
+patchedDependencies:
+  braces@3.0.3: patches/braces@3.0.3.patch

@@ -14,6 +14,9 @@ overrides:
   browserslist@<=4.28.6: '>=4.28.7'
   uuid@<11.1.1: ^11.1.1
 
+patchedDependencies:
+  braces@3.0.3: 58ba366efffb111e51fce827b23f2ab113a5ac1dac9a13407d8fa7b19a933285
+
 importers:
 
   .:
@@ -5960,7 +5963,7 @@ snapshots:
     dependencies:
       balanced-match: 4.0.4
 
-  braces@3.0.3:
+  braces@3.0.3(patch_hash=58ba366efffb111e51fce827b23f2ab113a5ac1dac9a13407d8fa7b19a933285):
     dependencies:
       fill-range: 7.1.1
 
@@ -7743,7 +7746,7 @@ snapshots:
 
   micromatch@4.0.8:
     dependencies:
-      braces: 3.0.3
+      braces: 3.0.3(patch_hash=58ba366efffb111e51fce827b23f2ab113a5ac1dac9a13407d8fa7b19a933285)
       picomatch: 2.3.2
 
   mime-db@1.52.0: {}
