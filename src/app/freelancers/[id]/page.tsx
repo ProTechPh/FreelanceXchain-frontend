@@ -4,15 +4,34 @@ import { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { freelancersApi } from '@/lib/api';
+import { freelancersApi, reputationApi } from '@/lib/api';
 import { FavoriteButton } from '@/components/marketplace/favorite-button';
 import { useAuthStore } from '@/stores/authStore';
-import type { FreelancerProfile } from '@/types';
+import type {
+  FreelancerProfile,
+  AggregatedReputationScore,
+  ReputationBreakdown,
+  ReputationWorkHistoryEntry,
+} from '@/types';
 import { getMarketplaceReturnPath } from '@/lib/marketplace-return';
 import { reportFailure } from '@/lib/report-failure';
 import { formatAmount } from '@/lib/format';
 import { getApiErrorMessage } from '@/lib/auth-contract';
-import { MapPin, ShieldCheck, Send, ArrowLeft, DollarSign, CircleCheck, Clock, CircleMinus } from 'lucide-react';
+import {
+  MapPin,
+  ShieldCheck,
+  Send,
+  ArrowLeft,
+  DollarSign,
+  CircleCheck,
+  Clock,
+  CircleMinus,
+  Star,
+  BriefcaseBusiness,
+  MessageSquare,
+  CheckCircle2,
+  TrendingUp,
+} from 'lucide-react';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
 import Navbar from '@/components/layout/navbar';
 import { FooterSection } from '@/components/layout/footer-section';
@@ -58,6 +77,9 @@ export default function FreelancerProfilePage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const [freelancer, setFreelancer] = useState<FreelancerProfile | null>(null);
+  const [reputationScore, setReputationScore] = useState<AggregatedReputationScore | null>(null);
+  const [reputationBreakdown, setReputationBreakdown] = useState<ReputationBreakdown | null>(null);
+  const [workHistory, setWorkHistory] = useState<ReputationWorkHistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
@@ -69,8 +91,28 @@ export default function FreelancerProfilePage() {
       setLoading(true);
       setFetchError(null);
       try {
-        const res = await freelancersApi.getPublicProfile(params?.id as string);
-        if (active) setFreelancer(res.data);
+        const id = params?.id as string;
+        const res = await freelancersApi.getPublicProfile(id);
+        if (!active) return;
+        setFreelancer(res.data);
+
+        const targetUserId = res.data?.userId || id;
+        const [scoreRes, breakdownRes, historyRes] = await Promise.allSettled([
+          reputationApi.getScore(targetUserId),
+          reputationApi.getBreakdown(targetUserId),
+          reputationApi.getWorkHistory(targetUserId),
+        ]);
+
+        if (!active) return;
+        if (scoreRes.status === 'fulfilled' && scoreRes.value?.data) {
+          setReputationScore(scoreRes.value.data);
+        }
+        if (breakdownRes.status === 'fulfilled' && breakdownRes.value?.data) {
+          setReputationBreakdown(breakdownRes.value.data);
+        }
+        if (historyRes.status === 'fulfilled' && historyRes.value?.data) {
+          setWorkHistory(historyRes.value.data);
+        }
       } catch (error: unknown) {
         if (!active) return;
         const status = (error as { response?: { status?: number } })?.response?.status;
@@ -150,6 +192,9 @@ export default function FreelancerProfilePage() {
   const initials = (freelancer.name ?? 'U').split(' ').map(n => n[0]).join('');
   const marketplaceBackPath = getMarketplaceReturnPath(searchParams?.get('returnTo') ?? null, '/freelancers');
   const availability = availabilityConfig[freelancer.availability] || availabilityConfig.available;
+  const totalReviews = reputationScore?.totalRatings ?? 0;
+  const avgRating = reputationScore?.averageRating ?? 0;
+  const completedContractsCount = reputationScore?.completedContracts ?? workHistory.length;
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -199,6 +244,13 @@ export default function FreelancerProfilePage() {
                     {freelancer.name || 'Verified Freelancer'}
                   </h1>
                   <ShieldCheck className="w-5 h-5 text-success shrink-0" />
+                  {totalReviews > 0 && (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-warning/15 text-warning border border-warning/30">
+                      <Star className="w-3.5 h-3.5 fill-warning text-warning" />
+                      {avgRating.toFixed(1)}
+                      <span className="font-normal text-muted-foreground">({totalReviews} review{totalReviews === 1 ? '' : 's'})</span>
+                    </span>
+                  )}
                 </div>
                 
                 <p className="text-base text-muted-foreground leading-relaxed mb-5 max-w-2xl">
@@ -268,6 +320,198 @@ export default function FreelancerProfilePage() {
                 </div>
               </div>
 
+              {/* Accomplished Projects (Work History on Platform) */}
+              <div className="rounded-3xl bg-card border border-border/80 p-6 sm:p-8 shadow-md shadow-black/5">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2.5">
+                    <BriefcaseBusiness className="w-5 h-5 text-primary" />
+                    <h2 className="text-lg font-bold text-foreground">Accomplished Projects</h2>
+                  </div>
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+                    {completedContractsCount} completed
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mb-5">
+                  Verified projects completed and settled through FreelanceXchain smart contract escrow.
+                </p>
+
+                {workHistory.length > 0 ? (
+                  <div className="space-y-4">
+                    {workHistory.map((item) => (
+                      <div
+                        key={item.contractId}
+                        className="p-5 rounded-2xl bg-background/60 border border-border/60 hover:border-primary/40 transition-colors space-y-3"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div>
+                            <h3 className="text-base font-bold text-foreground">{item.projectTitle}</h3>
+                            <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-muted-foreground">
+                              <span className="inline-flex items-center gap-1 text-success font-medium">
+                                <CheckCircle2 className="w-3.5 h-3.5" /> Completed
+                              </span>
+                              <span>•</span>
+                              <span>{formatDate(item.completedAt)}</span>
+                              <span>•</span>
+                              <span className="inline-flex items-center gap-1 text-primary">
+                                <ShieldCheck className="w-3.5 h-3.5" /> Escrow Settled
+                              </span>
+                            </div>
+                          </div>
+                          {item.rating !== undefined && (
+                            <div className="flex items-center gap-1 self-start sm:self-center px-2.5 py-1 rounded-full bg-warning/10 border border-warning/20 text-warning text-xs font-bold">
+                              <Star className="w-3.5 h-3.5 fill-warning text-warning" />
+                              <span>{item.rating}.0 / 5.0</span>
+                            </div>
+                          )}
+                        </div>
+                        {item.ratingComment && (
+                          <div className="p-3 rounded-xl bg-card border border-border/40 text-sm text-foreground/90 italic">
+                            &ldquo;{item.ratingComment}&rdquo;
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-6 rounded-2xl bg-background/40 border border-dashed border-border text-center">
+                    <BriefcaseBusiness className="w-8 h-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+                    <p className="text-sm font-medium text-foreground">No platform contracts completed yet</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Completed contracts and on-chain verified deliveries will appear here.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Client Reviews & Ratings */}
+              <div className="rounded-3xl bg-card border border-border/80 p-6 sm:p-8 shadow-md shadow-black/5">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2.5">
+                    <Star className="w-5 h-5 text-warning fill-warning" />
+                    <h2 className="text-lg font-bold text-foreground">Client Reviews & Reputation</h2>
+                  </div>
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-warning/10 text-warning border border-warning/20">
+                    {totalReviews} review{totalReviews === 1 ? '' : 's'}
+                  </span>
+                </div>
+
+                {totalReviews > 0 ? (
+                  <div className="space-y-6">
+                    {/* Overall Score & Dimensions */}
+                    <div className="p-5 rounded-2xl bg-background/60 border border-border/60 grid sm:grid-cols-2 gap-6 items-center">
+                      <div className="text-center sm:text-left flex flex-col sm:flex-row items-center gap-4">
+                        <div className="w-20 h-20 rounded-2xl gradient-primary text-primary-foreground font-black text-3xl flex items-center justify-center shadow-md shrink-0">
+                          {avgRating.toFixed(1)}
+                        </div>
+                        <div>
+                          <div className="flex items-center justify-center sm:justify-start gap-1">
+                            {[1, 2, 3, 4, 5].map((s) => (
+                              <Star
+                                key={s}
+                                className={`w-4 h-4 ${
+                                  s <= Math.round(avgRating) ? 'fill-warning text-warning' : 'text-muted-foreground/30'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <p className="text-sm font-semibold text-foreground mt-1.5">
+                            Based on {totalReviews} verified client review{totalReviews === 1 ? '' : 's'}
+                          </p>
+                          {reputationScore?.wouldWorkAgainPercentage !== undefined && (
+                            <p className="text-xs text-success flex items-center justify-center sm:justify-start gap-1 mt-0.5">
+                              <TrendingUp className="w-3.5 h-3.5" />
+                              {reputationScore.wouldWorkAgainPercentage}% would hire again
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Breakdown bars */}
+                      <div className="space-y-1.5 text-xs">
+                        {[
+                          { stars: 5, count: reputationBreakdown?.fiveStars ?? 0 },
+                          { stars: 4, count: reputationBreakdown?.fourStars ?? 0 },
+                          { stars: 3, count: reputationBreakdown?.threeStars ?? 0 },
+                          { stars: 2, count: reputationBreakdown?.twoStars ?? 0 },
+                          { stars: 1, count: reputationBreakdown?.oneStar ?? 0 },
+                        ].map(({ stars, count }) => (
+                          <div key={stars} className="flex items-center gap-2">
+                            <span className="w-4 text-right font-medium">{stars}</span>
+                            <Star className="w-3.5 h-3.5 fill-warning text-warning shrink-0" />
+                            <div className="h-2 flex-1 rounded-full bg-secondary overflow-hidden">
+                              <div
+                                className="h-full bg-warning rounded-full transition-all"
+                                style={{ width: totalReviews > 0 ? `${(count / totalReviews) * 100}%` : '0%' }}
+                              />
+                            </div>
+                            <span className="w-6 text-muted-foreground text-right">{count}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Review Cards */}
+                    <div className="space-y-4">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                        Recent Client Feedback
+                      </h3>
+                      {reputationBreakdown?.recentRatings && reputationBreakdown.recentRatings.length > 0 ? (
+                        reputationBreakdown.recentRatings.map((rev, idx) => (
+                          <div
+                            key={`${rev.reviewerName}-${rev.projectTitle}-${idx}`}
+                            className="p-5 rounded-2xl bg-background/40 border border-border/50 hover:border-border transition-colors space-y-2.5"
+                          >
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-bold text-foreground">{rev.reviewerName}</span>
+                                  <span className="text-3xs px-2 py-0.5 rounded-full bg-secondary font-medium text-muted-foreground">
+                                    Client
+                                  </span>
+                                </div>
+                                <p className="text-xs text-primary font-medium mt-0.5">
+                                  Project: {rev.projectTitle}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2 self-start sm:self-center">
+                                <div className="flex items-center gap-0.5">
+                                  {[1, 2, 3, 4, 5].map((s) => (
+                                    <Star
+                                      key={s}
+                                      className={`w-3.5 h-3.5 ${
+                                        s <= rev.rating ? 'fill-warning text-warning' : 'text-muted-foreground/30'
+                                      }`}
+                                    />
+                                  ))}
+                                </div>
+                                <span className="text-xs text-muted-foreground">
+                                  {formatDate(rev.createdAt)}
+                                </span>
+                              </div>
+                            </div>
+                            {rev.comment && (
+                              <p className="text-sm text-foreground/90 leading-relaxed pt-1">
+                                {rev.comment}
+                              </p>
+                            )}
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-muted-foreground py-4 text-center">No review comments yet.</p>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-6 rounded-2xl bg-background/40 border border-dashed border-border text-center">
+                    <MessageSquare className="w-8 h-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+                    <p className="text-sm font-medium text-foreground">No client reviews yet</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Reviews and ratings will be posted here after completed contracts.
+                    </p>
+                  </div>
+                )}
+              </div>
+
               {/* Experience */}
               <div className="rounded-3xl bg-card border border-border/80 p-6 sm:p-8 shadow-md shadow-black/5">
                 <h2 className="text-lg font-bold text-foreground mb-4">Work Experience</h2>
@@ -302,6 +546,19 @@ export default function FreelancerProfilePage() {
                 <h3 className="text-sm font-bold text-foreground mb-4">Quick Stats</h3>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Client Rating</span>
+                    <span className="font-bold text-foreground flex items-center gap-1">
+                      <Star className={`w-4 h-4 ${totalReviews > 0 ? 'fill-warning text-warning' : 'text-muted-foreground'}`} />
+                      {totalReviews > 0 ? `${avgRating.toFixed(1)} (${totalReviews})` : 'No reviews'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Accomplished</span>
+                    <span className="font-bold text-foreground">
+                      {completedContractsCount} {completedContractsCount === 1 ? 'project' : 'projects'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Hourly Rate</span>
                     <span className="font-bold text-primary">{formatAmount(freelancer.hourlyRate)}/hr</span>
                   </div>
@@ -312,6 +569,14 @@ export default function FreelancerProfilePage() {
                       {availability.label}
                     </span>
                   </div>
+                  {reputationScore?.wouldWorkAgainPercentage !== undefined && reputationScore.wouldWorkAgainPercentage > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Rehire Rate</span>
+                      <span className="font-bold text-success">
+                        {reputationScore.wouldWorkAgainPercentage}%
+                      </span>
+                    </div>
+                  )}
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Member Since</span>
                     <span className="text-sm font-semibold text-foreground">

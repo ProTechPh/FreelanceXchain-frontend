@@ -12,6 +12,9 @@ import {
   ArrowLeft,
   CheckCircle2,
   Star,
+  BriefcaseBusiness,
+  MessageSquare,
+  TrendingUp,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -20,7 +23,13 @@ import { employersApi, reputationApi, projectsApi } from '@/lib/api';
 import { reportLoadFailure } from '@/lib/report-failure';
 import { getDirectMessageRoute } from '@/lib/dashboard-message-route';
 import { getApiErrorMessage } from '@/lib/auth-contract';
-import type { EmployerProfile, AggregatedReputationScore, Project } from '@/types';
+import type {
+  EmployerProfile,
+  AggregatedReputationScore,
+  Project,
+  ReputationBreakdown,
+  ReputationWorkHistoryEntry,
+} from '@/types';
 import { useAuthStore } from '@/stores/authStore';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
 import Navbar from '@/components/layout/navbar';
@@ -34,11 +43,24 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 
+function formatDate(dateStr: string | null | undefined): string {
+  if (!dateStr) return '—';
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  } catch {
+    return dateStr;
+  }
+}
+
 export default function EmployerProfilePage() {
   const params = useParams();
   const employerId = params?.id as string;
   const [profile, setProfile] = useState<EmployerProfile | null>(null);
   const [reputationScore, setReputationScore] = useState<AggregatedReputationScore | null>(null);
+  const [reputationBreakdown, setReputationBreakdown] = useState<ReputationBreakdown | null>(null);
+  const [workHistory, setWorkHistory] = useState<ReputationWorkHistoryEntry[]>([]);
   const [employerProjects, setEmployerProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -53,9 +75,11 @@ export default function EmployerProfilePage() {
       setLoading(true);
       setFetchError(null);
       try {
-        const [profileRes, scoreRes, projectsRes] = await Promise.allSettled([
+        const [profileRes, scoreRes, breakdownRes, historyRes, projectsRes] = await Promise.allSettled([
           employersApi.getPublicProfile(employerId),
           reputationApi.getScore(employerId),
+          reputationApi.getBreakdown(employerId),
+          reputationApi.getWorkHistory(employerId),
           projectsApi.list({ limit: 50 }),
         ]);
 
@@ -72,11 +96,19 @@ export default function EmployerProfilePage() {
           reportLoadFailure(profileRes.reason, 'this employer profile', () => void loadData());
         }
 
-        if (scoreRes.status === 'fulfilled' && scoreRes.value.data) {
+        if (scoreRes.status === 'fulfilled' && scoreRes.value?.data) {
           setReputationScore(scoreRes.value.data);
         }
 
-        if (projectsRes.status === 'fulfilled' && projectsRes.value.data?.items) {
+        if (breakdownRes.status === 'fulfilled' && breakdownRes.value?.data) {
+          setReputationBreakdown(breakdownRes.value.data);
+        }
+
+        if (historyRes.status === 'fulfilled' && historyRes.value?.data) {
+          setWorkHistory(historyRes.value.data);
+        }
+
+        if (projectsRes.status === 'fulfilled' && projectsRes.value?.data?.items) {
           const matching = projectsRes.value.data.items.filter(
             (p) => p.employerId === employerId || p.employer?.userId === employerId
           );
@@ -334,6 +366,202 @@ export default function EmployerProfilePage() {
                   <span>Member Type: <strong className="text-foreground font-semibold">Verified Employer</strong></span>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Accomplished Contracts & Hiring History */}
+          <Card className="overflow-hidden border-border bg-card shadow-sm rounded-3xl">
+            <CardContent className="p-6 sm:p-8 space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <BriefcaseBusiness className="w-5 h-5 text-primary" />
+                  <h2 className="text-lg font-bold text-foreground">Accomplished Contracts & Hiring Record</h2>
+                </div>
+                <Badge variant="outline" className="text-xs font-semibold px-2.5 py-1 rounded-full bg-primary/10 text-primary border-primary/20">
+                  {workHistory.length} completed
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Verified contracts completed and paid out via FreelanceXchain smart contract escrow.
+              </p>
+
+              {workHistory.length > 0 ? (
+                <div className="space-y-4">
+                  {workHistory.map((item) => (
+                    <div
+                      key={item.contractId}
+                      className="p-5 rounded-2xl bg-secondary/30 border border-border hover:border-primary/40 transition-colors space-y-3"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div>
+                          <h3 className="text-base font-bold text-foreground">{item.projectTitle}</h3>
+                          <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-muted-foreground">
+                            <span className="inline-flex items-center gap-1 text-success font-medium">
+                              <CheckCircle2 className="w-3.5 h-3.5" /> Completed Contract
+                            </span>
+                            <span>•</span>
+                            <span>{formatDate(item.completedAt)}</span>
+                            <span>•</span>
+                            <span className="inline-flex items-center gap-1 text-primary">
+                              <ShieldCheck className="w-3.5 h-3.5" /> Escrow Paid Out
+                            </span>
+                          </div>
+                        </div>
+                        {item.rating !== undefined && (
+                          <div className="flex items-center gap-1 self-start sm:self-center px-2.5 py-1 rounded-full bg-warning/10 border border-warning/20 text-warning text-xs font-bold">
+                            <Star className="w-3.5 h-3.5 fill-warning text-warning" />
+                            <span>{item.rating}.0 / 5.0</span>
+                          </div>
+                        )}
+                      </div>
+                      {item.ratingComment && (
+                        <div className="p-3 rounded-xl bg-card border border-border/50 text-sm text-foreground/90 italic">
+                          &ldquo;{item.ratingComment}&rdquo;
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-6 rounded-2xl bg-muted/30 border border-dashed border-border text-center">
+                  <BriefcaseBusiness className="w-8 h-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+                  <p className="text-sm font-medium text-foreground">No completed contracts yet</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Contracts completed and settled on-chain will appear here.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Freelancer Reviews & Reputation */}
+          <Card className="overflow-hidden border-border bg-card shadow-sm rounded-3xl">
+            <CardContent className="p-6 sm:p-8 space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <Star className="w-5 h-5 text-warning fill-warning" />
+                  <h2 className="text-lg font-bold text-foreground">Freelancer Reviews & Feedback</h2>
+                </div>
+                <Badge variant="outline" className="text-xs font-semibold px-2.5 py-1 rounded-full bg-warning/10 text-warning border-warning/20">
+                  {totalReviews} review{totalReviews === 1 ? '' : 's'}
+                </Badge>
+              </div>
+
+              {totalReviews > 0 ? (
+                <div className="space-y-6">
+                  {/* Rating Overview */}
+                  <div className="p-5 rounded-2xl bg-secondary/30 border border-border grid sm:grid-cols-2 gap-6 items-center">
+                    <div className="text-center sm:text-left flex flex-col sm:flex-row items-center gap-4">
+                      <div className="w-20 h-20 rounded-2xl gradient-primary text-primary-foreground font-black text-3xl flex items-center justify-center shadow-md shrink-0">
+                        {avgRating.toFixed(1)}
+                      </div>
+                      <div>
+                        <div className="flex items-center justify-center sm:justify-start gap-1">
+                          {[1, 2, 3, 4, 5].map((s) => (
+                            <Star
+                              key={s}
+                              className={`w-4 h-4 ${
+                                s <= Math.round(avgRating) ? 'fill-warning text-warning' : 'text-muted-foreground/30'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <p className="text-sm font-semibold text-foreground mt-1.5">
+                          Based on {totalReviews} verified freelancer review{totalReviews === 1 ? '' : 's'}
+                        </p>
+                        {reputationScore?.wouldWorkAgainPercentage !== undefined && (
+                          <p className="text-xs text-success flex items-center justify-center sm:justify-start gap-1 mt-0.5">
+                            <TrendingUp className="w-3.5 h-3.5" />
+                            {reputationScore.wouldWorkAgainPercentage}% recommend working with this client
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Breakdown bars */}
+                    <div className="space-y-1.5 text-xs">
+                      {[
+                        { stars: 5, count: reputationBreakdown?.fiveStars ?? 0 },
+                        { stars: 4, count: reputationBreakdown?.fourStars ?? 0 },
+                        { stars: 3, count: reputationBreakdown?.threeStars ?? 0 },
+                        { stars: 2, count: reputationBreakdown?.twoStars ?? 0 },
+                        { stars: 1, count: reputationBreakdown?.oneStar ?? 0 },
+                      ].map(({ stars, count }) => (
+                        <div key={stars} className="flex items-center gap-2">
+                          <span className="w-4 text-right font-medium">{stars}</span>
+                          <Star className="w-3.5 h-3.5 fill-warning text-warning shrink-0" />
+                          <div className="h-2 flex-1 rounded-full bg-secondary overflow-hidden">
+                            <div
+                              className="h-full bg-warning rounded-full transition-all"
+                              style={{ width: totalReviews > 0 ? `${(count / totalReviews) * 100}%` : '0%' }}
+                            />
+                          </div>
+                          <span className="w-6 text-muted-foreground text-right">{count}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Review Cards */}
+                  <div className="space-y-4">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      Recent Freelancer Feedback
+                    </h3>
+                    {reputationBreakdown?.recentRatings && reputationBreakdown.recentRatings.length > 0 ? (
+                      reputationBreakdown.recentRatings.map((rev, idx) => (
+                        <div
+                          key={`${rev.reviewerName}-${rev.projectTitle}-${idx}`}
+                          className="p-5 rounded-2xl bg-secondary/20 border border-border hover:border-primary/30 transition-colors space-y-2.5"
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-bold text-foreground">{rev.reviewerName}</span>
+                                <Badge variant="secondary" className="text-3xs font-medium">
+                                  Freelancer
+                                </Badge>
+                              </div>
+                              <p className="text-xs text-primary font-medium mt-0.5">
+                                Project: {rev.projectTitle}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2 self-start sm:self-center">
+                              <div className="flex items-center gap-0.5">
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                  <Star
+                                    key={s}
+                                    className={`w-3.5 h-3.5 ${
+                                      s <= rev.rating ? 'fill-warning text-warning' : 'text-muted-foreground/30'
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+                              <span className="text-xs text-muted-foreground">
+                                {formatDate(rev.createdAt)}
+                              </span>
+                            </div>
+                          </div>
+                          {rev.comment && (
+                            <p className="text-sm text-foreground/90 leading-relaxed pt-1">
+                              {rev.comment}
+                            </p>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground py-4 text-center">No review comments yet.</p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="p-6 rounded-2xl bg-muted/30 border border-dashed border-border text-center">
+                  <MessageSquare className="w-8 h-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+                  <p className="text-sm font-medium text-foreground">No freelancer reviews yet</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Reviews from freelancers will be visible here once contracts are accomplished.
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
