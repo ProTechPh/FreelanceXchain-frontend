@@ -80,3 +80,27 @@ test('gracefully handles missing or throwing localStorage', () => {
     clearLastUsedOAuthProvider();
   });
 });
+
+test('server snapshot always returns null', async () => {
+  const { getLastUsedOAuthServerSnapshot } = await import('./last-used-auth.ts');
+  assert.equal(getLastUsedOAuthServerSnapshot(), null);
+});
+
+test('notifies subscribers on provider update and un-subscribes cleanly', async () => {
+  const { subscribeToLastUsedOAuth } = await import('./last-used-auth.ts');
+  let calledCount = 0;
+  const unsubscribe = subscribeToLastUsedOAuth(() => {
+    calledCount += 1;
+  });
+
+  setLastUsedOAuthProvider('google');
+  assert.equal(calledCount, 1);
+
+  setLastUsedOAuthProvider('github');
+  assert.equal(calledCount, 2);
+
+  unsubscribe();
+  setLastUsedOAuthProvider(null);
+  assert.equal(calledCount, 2);
+});
+
