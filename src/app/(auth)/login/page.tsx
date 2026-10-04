@@ -10,6 +10,7 @@ import { authApi } from '@/lib/api';
 import { API_URL } from '@/lib/api-client';
 import { GuestGuard } from '@/components/auth/guest-guard';
 import { TurnstileWidget, type TurnstileWidgetRef } from '@/components/auth/turnstile-widget';
+import { getLastUsedOAuthProvider, setLastUsedOAuthProvider, type OAuthProvider } from '@/lib/last-used-auth';
 
 export default function LoginPage() {
   const { login } = useAuthStore();
@@ -19,8 +20,14 @@ export default function LoginPage() {
   const [oauthError, setOauthError] = useState<string | null>(null);
   const [lockoutError, setLockoutError] = useState<string | null>(null);
   const [oauthLoading, setOauthLoading] = useState<'google' | 'github' | null>(null);
+  const [lastUsedOAuth, setLastUsedOAuth] = useState<OAuthProvider | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const turnstileRef = useRef<TurnstileWidgetRef>(null);
+
+  // Restore last used OAuth provider from client storage
+  useEffect(() => {
+    setLastUsedOAuth(getLastUsedOAuthProvider());
+  }, []);
 
   // Parse OAuth error from URL query parameters
   useEffect(() => {
@@ -42,6 +49,8 @@ export default function LoginPage() {
 
   const handleOAuth = async (provider: 'google' | 'github') => {
     if (isSigningIn || oauthLoading) return;
+    setLastUsedOAuthProvider(provider);
+    setLastUsedOAuth(provider);
     setOauthLoading(provider);
     setOauthError(null);
     try {
@@ -149,6 +158,7 @@ export default function LoginPage() {
         onSignIn={handleSignIn}
         loading={isSigningIn}
         oauthLoading={oauthLoading}
+        lastUsedOAuthProvider={lastUsedOAuth}
         onGoogleSignIn={() => handleOAuth('google')}
         onGithubSignIn={() => handleOAuth('github')}
         onResetPassword={() => router.push('/forgot-password')}

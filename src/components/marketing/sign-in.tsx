@@ -5,6 +5,8 @@ import { ArrowLeft, Eye, EyeOff, ArrowRight, Sparkles, Loader2 } from 'lucide-re
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { FreelanceXchainLogo } from '@/components/ui/freelancexchain-logo';
+import { cn } from '@/lib/utils';
+import type { OAuthProvider } from '@/lib/last-used-auth';
 
 // --- HELPER COMPONENTS (ICONS) ---
 
@@ -44,6 +46,7 @@ interface SignInPageProps {
   onGoogleSignIn?: () => void;
   onGithubSignIn?: () => void;
   oauthLoading?: 'google' | 'github' | null;
+  lastUsedOAuthProvider?: OAuthProvider | null;
   onResetPassword?: () => void;
   onResendConfirmation?: () => void;
   onCreateAccount?: () => void;
@@ -62,6 +65,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
   onGoogleSignIn,
   onGithubSignIn,
   oauthLoading = null,
+  lastUsedOAuthProvider = null,
   onResetPassword,
   onResendConfirmation,
   onCreateAccount,
@@ -308,16 +312,31 @@ export const SignInPage: React.FC<SignInPageProps> = ({
             </div>
 
             {/* Social login buttons */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3 pt-1">
               <button 
                 type="button" 
                 onClick={onGoogleSignIn} 
                 disabled={isAnyLoading}
                 aria-busy={isGoogleLoading || undefined}
                 aria-label={isGoogleLoading ? 'Connecting to Google…' : undefined}
+                aria-description={lastUsedOAuthProvider === 'google' ? 'Last used sign-in method' : undefined}
                 data-loading={isGoogleLoading || undefined}
-                className="flex items-center justify-center gap-2.5 border border-border/80 rounded-xl sm:rounded-2xl py-3 sm:py-3.5 transition-all duration-200 hover:bg-muted/50 hover:border-border-strong active:scale-[0.98] disabled:pointer-events-none not-data-[loading=true]:disabled:bg-muted not-data-[loading=true]:disabled:text-muted-foreground data-[loading=true]:cursor-wait data-[loading=true]:border-primary/50 data-[loading=true]:bg-primary/5 font-semibold text-sm text-foreground"
+                className={cn(
+                  "relative flex items-center justify-center gap-2.5 border rounded-xl sm:rounded-2xl py-3 sm:py-3.5 transition-all duration-200 active:scale-[0.98] disabled:pointer-events-none not-data-[loading=true]:disabled:bg-muted not-data-[loading=true]:disabled:text-muted-foreground data-[loading=true]:cursor-wait data-[loading=true]:border-primary/50 data-[loading=true]:bg-primary/5 font-semibold text-sm text-foreground",
+                  lastUsedOAuthProvider === 'google'
+                    ? "border-primary/60 bg-primary/[0.04] dark:bg-primary/[0.08] shadow-xs hover:border-primary hover:bg-primary/[0.07]"
+                    : "border-border/80 hover:bg-muted/50 hover:border-border-strong"
+                )}
               >
+                {lastUsedOAuthProvider === 'google' && !isGoogleLoading && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute -top-2.5 right-2 sm:right-3 inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-2xs font-bold text-primary-foreground shadow-xs tracking-tight select-none pointer-events-none"
+                  >
+                    <span className="size-1.5 rounded-full bg-primary-foreground/90 animate-pulse" />
+                    Last used
+                  </span>
+                )}
                 {isGoogleLoading ? (
                   <Loader2 className="h-5 w-5 animate-spin shrink-0 text-foreground" aria-hidden="true" />
                 ) : (
@@ -331,9 +350,24 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                 disabled={isAnyLoading}
                 aria-busy={isGithubLoading || undefined}
                 aria-label={isGithubLoading ? 'Connecting to GitHub…' : undefined}
+                aria-description={lastUsedOAuthProvider === 'github' ? 'Last used sign-in method' : undefined}
                 data-loading={isGithubLoading || undefined}
-                className="flex items-center justify-center gap-2.5 border border-border/80 rounded-xl sm:rounded-2xl py-3 sm:py-3.5 transition-all duration-200 hover:bg-muted/50 hover:border-border-strong active:scale-[0.98] disabled:pointer-events-none not-data-[loading=true]:disabled:bg-muted not-data-[loading=true]:disabled:text-muted-foreground data-[loading=true]:cursor-wait data-[loading=true]:border-primary/50 data-[loading=true]:bg-primary/5 font-semibold text-sm text-foreground"
+                className={cn(
+                  "relative flex items-center justify-center gap-2.5 border rounded-xl sm:rounded-2xl py-3 sm:py-3.5 transition-all duration-200 active:scale-[0.98] disabled:pointer-events-none not-data-[loading=true]:disabled:bg-muted not-data-[loading=true]:disabled:text-muted-foreground data-[loading=true]:cursor-wait data-[loading=true]:border-primary/50 data-[loading=true]:bg-primary/5 font-semibold text-sm text-foreground",
+                  lastUsedOAuthProvider === 'github'
+                    ? "border-primary/60 bg-primary/[0.04] dark:bg-primary/[0.08] shadow-xs hover:border-primary hover:bg-primary/[0.07]"
+                    : "border-border/80 hover:bg-muted/50 hover:border-border-strong"
+                )}
               >
+                {lastUsedOAuthProvider === 'github' && !isGithubLoading && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute -top-2.5 right-2 sm:right-3 inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-2xs font-bold text-primary-foreground shadow-xs tracking-tight select-none pointer-events-none"
+                  >
+                    <span className="size-1.5 rounded-full bg-primary-foreground/90 animate-pulse" />
+                    Last used
+                  </span>
+                )}
                 {isGithubLoading ? (
                   <Loader2 className="h-5 w-5 animate-spin shrink-0 text-foreground" aria-hidden="true" />
                 ) : (

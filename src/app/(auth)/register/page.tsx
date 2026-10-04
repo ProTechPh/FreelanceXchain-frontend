@@ -15,6 +15,7 @@ import { GuestGuard } from '@/components/auth/guest-guard';
 import { TurnstileWidget, type TurnstileWidgetRef } from '@/components/auth/turnstile-widget';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { setLastUsedOAuthProvider } from '@/lib/last-used-auth';
 
 export default function RegisterPage() {
   const { register, logout, isLoading } = useAuthStore();
@@ -47,6 +48,7 @@ export default function RegisterPage() {
 
   const handleOAuth = async (provider: 'google' | 'github') => {
     if (isLoading || oauthLoading) return;
+    setLastUsedOAuthProvider(provider);
     setOauthLoading(provider);
     setOauthError(null);
     try {
