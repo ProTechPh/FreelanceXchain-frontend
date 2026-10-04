@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useSyncExternalStore } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { toast } from 'sonner';
@@ -10,6 +10,12 @@ import { authApi } from '@/lib/api';
 import { API_URL } from '@/lib/api-client';
 import { GuestGuard } from '@/components/auth/guest-guard';
 import { TurnstileWidget, type TurnstileWidgetRef } from '@/components/auth/turnstile-widget';
+import {
+  getLastUsedOAuthProvider,
+  getLastUsedOAuthServerSnapshot,
+  setLastUsedOAuthProvider,
+  subscribeToLastUsedOAuth,
+} from '@/lib/last-used-auth';
 
 export default function LoginPage() {
   const { login } = useAuthStore();
@@ -21,6 +27,13 @@ export default function LoginPage() {
   const [oauthLoading, setOauthLoading] = useState<'google' | 'github' | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const turnstileRef = useRef<TurnstileWidgetRef>(null);
+
+  // Synchronize last used OAuth provider from client storage without cascading render effects
+  const lastUsedOAuth = useSyncExternalStore(
+    subscribeToLastUsedOAuth,
+    getLastUsedOAuthProvider,
+    getLastUsedOAuthServerSnapshot,
+  );
 
   // Parse OAuth error from URL query parameters
   useEffect(() => {
@@ -42,6 +55,7 @@ export default function LoginPage() {
 
   const handleOAuth = async (provider: 'google' | 'github') => {
     if (isSigningIn || oauthLoading) return;
+    setLastUsedOAuthProvider(provider);
     setOauthLoading(provider);
     setOauthError(null);
     try {
@@ -149,6 +163,7 @@ export default function LoginPage() {
         onSignIn={handleSignIn}
         loading={isSigningIn}
         oauthLoading={oauthLoading}
+        lastUsedOAuthProvider={lastUsedOAuth}
         onGoogleSignIn={() => handleOAuth('google')}
         onGithubSignIn={() => handleOAuth('github')}
         onResetPassword={() => router.push('/forgot-password')}

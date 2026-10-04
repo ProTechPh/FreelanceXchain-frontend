@@ -146,3 +146,17 @@ test('oauth buttons on register report progress and block role interaction', asy
   await expect(freelancerCard).toBeDisabled();
 });
 
+test('displays last used indicator on the previously selected oauth provider', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem('flxc_last_auth_provider', 'google');
+  });
+
+  await page.goto('/login');
+
+  const googleBtn = page.getByRole('button', { name: /^google$/i });
+  const githubBtn = page.getByRole('button', { name: /^github$/i });
+
+  await expect(googleBtn.locator('text=Last used')).toBeVisible();
+  await expect(githubBtn.locator('text=Last used')).toHaveCount(0);
+});
+

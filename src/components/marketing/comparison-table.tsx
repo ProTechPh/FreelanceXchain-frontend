@@ -111,7 +111,7 @@ export function ComparisonTable() {
                 </span>
               </div>
               <div className="col-span-2 text-center text-xs font-semibold text-muted-foreground">
-                Legacy Web2 (Upwork/Fiverr)
+                Legacy Web2 (Upwork/Fiverr)*
               </div>
               <div className="col-span-2 text-center text-xs font-semibold text-muted-foreground">
                 Unprotected Invoicing
@@ -149,6 +149,11 @@ export function ComparisonTable() {
             </div>
           </div>
         </motion.div>
+
+        {/* Legal Disclaimer Footnote */}
+        <p className="mt-4 text-center sm:text-left text-2xs text-muted-foreground/80 leading-relaxed max-w-3xl">
+          * Upwork and Fiverr are trademarks or registered trademarks of their respective owners. Mention of these platforms does not imply any affiliation, sponsorship, or endorsement. Comparison is based on publicly available features, standard published platform rates, and general industry models as of 2026 for informational and comparative purposes only.
+        </p>
       </div>
     </section>
   );

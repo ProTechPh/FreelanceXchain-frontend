@@ -2,6 +2,7 @@
 
 import { useId, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Paperclip, Send, ShieldAlert, Sparkles, Wand2, Check, RefreshCw, Eye, Edit3, X, FileText, Layers, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -107,6 +108,7 @@ export function ProposalDialog({
   project,
   initialGenerateAI = false,
 }: ProposalDialogProps) {
+  const router = useRouter();
   const user = useAuthStore((state) => state.user);
   const isKycApproved = user?.kycStatus === 'approved';
   const fieldId = useId();
@@ -261,7 +263,7 @@ export function ProposalDialog({
     if (!project) return;
     if (!user) {
       toast.info('Please sign in to submit your proposal.');
-      window.location.href = `/login?returnTo=${encodeURIComponent(`/projects/${project.id}`)}`;
+      router.push(`/login?returnTo=${encodeURIComponent(`/projects/${project.id}`)}`);
       return;
     }
     const success = await submitForm(editableCoverLetter ? sanitizeMarkdownText(editableCoverLetter) : undefined);
