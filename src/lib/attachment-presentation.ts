@@ -24,14 +24,18 @@ export function safeAttachmentUrl(value: string): string | null {
       try {
         return getSecureFileUrl(fileInfo.bucket, fileInfo.fileId);
       } catch {
-        // Fall through to try validating as a regular URL
+        return null;
       }
     }
+    return null;
   }
 
   // Standard URL validation for non-Appwrite URLs
   try {
     const url = new URL(value);
+    if (isAppwriteStorageUrl(url.href)) {
+      return null;
+    }
     return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : null;
   } catch {
     return null;

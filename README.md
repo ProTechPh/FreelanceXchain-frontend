@@ -1,7 +1,7 @@
-﻿<!-- markdownlint-disable-next-line MD041 -->
+<!-- markdownlint-disable-next-line MD041 -->
 <div align="center">
 
-# 🌐 FreelanceXchain Frontend
+# FreelanceXchain Frontend
 
 **Blockchain-Based Freelance Marketplace with AI Skill Matching**
 
@@ -16,17 +16,17 @@ The frontend for a decentralized freelance marketplace where employers post proj
 
 ---
 
-## 📖 What is this?
+## What is this?
 
 FreelanceXchain Frontend is a **Next.js 16 application** (React 19 + TypeScript) for the user-facing side of a freelance marketplace built on:
 
-1. **Appwrite** — users, profiles, projects, and data persistence
-2. **Ethereum smart contracts** — escrow, agreements, disputes, and reputation (Polygon Amoy)
-3. **LLM-powered AI matching** — skill extraction and project↔freelancer recommendations
+1. **Appwrite**: users, profiles, projects, and data persistence
+2. **Ethereum smart contracts**: escrow, agreements, disputes, and reputation (Polygon Amoy)
+3. **LLM-powered AI matching**: skill extraction and project↔freelancer recommendations
 
-**Who it's for:** freelancers who want guaranteed, on-time payment; employers who want vetted, well-matched talent; and anyone tired of platforms that take a cut of every payment.
+**Who it's for:** freelancers who want guaranteed, on-time payment and employers who want vetted, well-matched talent.
 
-## 🔄 How it works
+## How it works
 
 ```
 Employer browses dashboard  →  Creates project with milestones
@@ -40,20 +40,20 @@ Freelancer submits work  →  Employer approves milestone
 Payment released from escrow  →  Both parties rate each other (on-chain)
 ```
 
-## ✨ Key features
+## Key features
 
 | Feature | Description |
 | --- | --- |
-| 🔐 **Decentralized Auth** | Appwrite session JWTs, MFA, OAuth, role-based access |
-| 💰 **Smart Contract Escrow** | Milestone-based payment release via Ethereum contracts |
-| 🤖 **AI Matching** | LLM-powered skill extraction & project recommendations |
-| 👤 **KYC Verification** | Didit identity verification (220+ countries) |
-| ⭐ **On-chain Reputation** | Immutable ratings stored in smart contracts |
-| 📊 **Dashboard Analytics** | Real-time project metrics and freelancer insights |
-| 💬 **Messaging** | Real-time notifications with SSE streaming |
-| 🎨 **Modern UI** | shadcn/ui components with Tailwind CSS v4 |
+| **Decentralized Auth** | Appwrite session JWTs, MFA, OAuth, role-based access |
+| **Smart Contract Escrow** | Milestone-based payment release via Ethereum contracts |
+| **AI Matching** | LLM-powered skill extraction & project recommendations |
+| **KYC Verification** | Didit identity verification (220+ countries) |
+| **On-chain Reputation** | Immutable ratings stored in smart contracts |
+| **Dashboard Analytics** | Real-time project metrics |
+| **Messaging** | Real-time notifications with SSE streaming |
+| **UI** | shadcn/ui components with Tailwind CSS v4 |
 
-## 🚀 Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 | --- | --- |
@@ -66,7 +66,7 @@ Payment released from escrow  →  Both parties rate each other (on-chain)
 | **Testing** | Node.js test runner (unit), Playwright (E2E) |
 | **Package Manager** | pnpm (workspaces) |
 
-## 📦 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -90,7 +90,7 @@ cp .env.local.example .env.local
 pnpm dev
 ```
 
-The app listens on **http://localhost:3000** by default.
+The app listens on `http://localhost:3000` by default.
 
 ### Docker
 
@@ -99,7 +99,7 @@ docker build -t freelancexchain-frontend:latest .
 docker run -p 3000:3000 freelancexchain-frontend:latest
 ```
 
-## 🔑 Environment Variables
+## Environment Variables
 
 | Variable | Description |
 | --- | --- |
@@ -107,7 +107,7 @@ docker run -p 3000:3000 freelancexchain-frontend:latest
 | `NEXT_PUBLIC_GANACHE_*_ADDRESS` | Smart contract addresses for local development |
 | `NEXT_DIST_DIR` | Custom build output directory (used by E2E tests) |
 
-## 📜 Available Commands
+## Available Commands
 
 | Purpose | Command |
 | --- | --- |
@@ -122,7 +122,7 @@ docker run -p 3000:3000 freelancexchain-frontend:latest
 | Contract tests | `pnpm run test:auth`, `test:csrf`, etc. |
 | Verify design tokens | `pnpm run verify` (contrast, tokens, responsive) |
 
-## 🗂️ Project Structure
+## Project Structure
 
 ```
 ├── src/
@@ -156,7 +156,7 @@ docker run -p 3000:3000 freelancexchain-frontend:latest
 └── .github/workflows/          # CI/CD workflows
 ```
 
-## 🧪 Testing & Quality
+## Testing & Quality
 
 ```bash
 pnpm test              # Unit and contract tests
@@ -180,7 +180,7 @@ Playwright tests run against a dedicated server at `http://127.0.0.1:3100` with 
 - Profile editing
 - Responsive layouts (320px - desktop)
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -202,17 +202,17 @@ Playwright tests run against a dedicated server at `http://127.0.0.1:3100` with 
 └──────────────────┘ └──────────────────┘ └──────────────────┘
 ```
 
-## 🎨 Design System
+## Design System
 
-- **shadcn/ui** — base-nova style with custom theming
-- **Tailwind CSS v4** — CSS-first configuration, semantic tokens
-- **Lucide** — icon library
-- **Motion** — animation library
-- **WCAG 2.2 AA** — verified contrast ratios (4.5:1 text, 3:1 UI)
+- **shadcn/ui**: base-nova style with custom theming
+- **Tailwind CSS v4**: CSS-first configuration, semantic tokens
+- **Lucide**: icon library
+- **Motion**: animation library
+- **WCAG 2.2 AA**: verified contrast ratios (4.5:1 text, 3:1 UI)
 
 Typography uses **Nunito Sans** with a scale anchored at 16px base. Design tokens are defined in `globals.css` and verified by `pnpm run verify`.
 
-## 📚 Documentation
+## Documentation
 
 | Topic | Link |
 | --- | --- |
@@ -220,7 +220,7 @@ Typography uses **Nunito Sans** with a scale anchored at 16px base. Design token
 | Backend README | [Backend README.md](../FreelanceXchain-api/README.md) |
 | Security Policy | [SECURITY.md](SECURITY.md) |
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Please read the guidelines before submitting a PR:
 
@@ -232,11 +232,11 @@ We welcome contributions! Please read the guidelines before submitting a PR:
 
 Ensure CI passes: `lint` → `typecheck` → `test` → `test:e2e` → `build`.
 
-## 📜 License
+## License
 
 This project is licensed under the [ISC License](LICENSE).
 
-## 🆘 Support
+## Support
 
 - **Bug Reports & Feature Requests:** [GitHub Issues](https://github.com/ProTechPh/FreelanceXchain-frontend/issues)
 - **Security Issues:** See [SECURITY.md](SECURITY.md) for responsible disclosure

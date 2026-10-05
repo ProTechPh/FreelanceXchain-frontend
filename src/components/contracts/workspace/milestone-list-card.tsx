@@ -103,7 +103,7 @@ export function MilestoneListCard({
                             <div className="min-w-0">
                               <p className="font-medium truncate text-foreground">{file.filename}</p>
                               {file.size ? (
-                                <p className="text-3xs text-muted-foreground">{formatFileSize(file.size)}</p>
+                                <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
                               ) : null}
                             </div>
                           </div>

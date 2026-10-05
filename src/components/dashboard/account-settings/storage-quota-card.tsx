@@ -5,7 +5,9 @@ import { ExternalLink, HardDrive, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { fileManagementApi } from '@/lib/api';
 import { formatFileSize } from '@/lib/file-storage';
+import { getSecureFileUrl } from '@/lib/api/files';
 import { safeAttachmentUrl } from '@/lib/attachment-presentation';
+import { AttachmentPreviewDialog, type AttachmentPreviewTarget } from '@/components/ui/attachment-preview-dialog';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import type { FileInfo, FileQuota } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -20,6 +22,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
+const STORAGE_PAGE_SIZE = 5;
+
 export function StorageQuotaCard() {
   const [files, setFiles] = useState<FileInfo[]>([]);
   const [quota, setQuota] = useState<FileQuota | null>(null);
@@ -27,6 +31,13 @@ export function StorageQuotaCard() {
   const [storageAvailable, setStorageAvailable] = useState(true);
   const [deletingFile, setDeletingFile] = useState<string | null>(null);
   const [fileToDelete, setFileToDelete] = useState<FileInfo | null>(null);
+  const [previewTarget, setPreviewTarget] = useState<AttachmentPreviewTarget | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const totalPages = Math.max(1, Math.ceil(files.length / STORAGE_PAGE_SIZE));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (safeCurrentPage - 1) * STORAGE_PAGE_SIZE;
+  const paginatedFiles = files.slice(startIndex, startIndex + STORAGE_PAGE_SIZE);
 
   const loadStorage = async () => {
     setStorageLoading(true);
@@ -140,50 +151,93 @@ export function StorageQuotaCard() {
               {files.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No proposal or portfolio files stored.</p>
               ) : (
-                <ul className="divide-y divide-border rounded-lg border border-border">
-                  {files.map((file) => {
-                    const publicUrl = file.publicUrl ? safeAttachmentUrl(file.publicUrl) : null;
-                    return (
-                      <li key={`${file.bucket}:${file.path}`} className="flex items-center justify-between gap-3 p-3">
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium">{file.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {formatFileSize(file.size)} · {file.bucket.replaceAll('_', ' ')}
-                          </p>
-                        </div>
-                        <div className="flex gap-1">
-                          {publicUrl && (
-                            <Button asChild type="button" variant="ghost" size="icon">
-                              <a
-                                href={publicUrl}
-                                target="_blank"
-                                rel="noreferrer"
+                <div className="space-y-3">
+                  <ul className="divide-y divide-border rounded-lg border border-border">
+                    {paginatedFiles.map((file) => {
+                      const secureUrl = file.bucket && file.path
+                        ? getSecureFileUrl(file.bucket, file.path)
+                        : (file.publicUrl ? safeAttachmentUrl(file.publicUrl) : null);
+                      return (
+                        <li key={`${file.bucket}:${file.path}`} className="flex items-center justify-between gap-3 p-3">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium">{file.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {formatFileSize(file.size)} · {file.bucket.replaceAll('_', ' ')}
+                            </p>
+                          </div>
+                          <div className="flex gap-1">
+                            {secureUrl && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
                                 aria-label={`Open ${file.name}`}
+                                onClick={() => {
+                                  setPreviewTarget({
+                                    filename: file.name,
+                                    url: secureUrl,
+                                    size: file.size,
+                                  });
+                                }}
                               >
                                 <ExternalLink className="size-4" />
-                              </a>
+                              </Button>
+                            )}
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              aria-label={`Delete ${file.name}`}
+                              disabled={deletingFile === file.path}
+                              onClick={() => setFileToDelete(file)}
+                            >
+                              <Trash2 className="size-4 text-destructive" />
                             </Button>
-                          )}
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            aria-label={`Delete ${file.name}`}
-                            disabled={deletingFile === file.path}
-                            onClick={() => setFileToDelete(file)}
-                          >
-                            <Trash2 className="size-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
+
+                  {files.length > STORAGE_PAGE_SIZE && (
+                    <div className="flex items-center justify-between gap-3 pt-1">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={safeCurrentPage <= 1}
+                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                      >
+                        Previous
+                      </Button>
+                      <span className="text-xs text-muted-foreground">
+                        Page {safeCurrentPage} of {totalPages} ({files.length} {files.length === 1 ? 'file' : 'files'})
+                      </span>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={safeCurrentPage >= totalPages}
+                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  )}
+                </div>
               )}
             </>
           )}
         </CardContent>
       </Card>
+
+      <AttachmentPreviewDialog
+        open={previewTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setPreviewTarget(null);
+        }}
+        attachment={previewTarget}
+      />
 
       <Dialog
         open={fileToDelete !== null}

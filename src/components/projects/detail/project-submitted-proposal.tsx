@@ -97,7 +97,7 @@ export function ProjectSubmittedProposal({
                       <FileText className="size-4 text-primary shrink-0" />
                       <div className="min-w-0">
                         <p className="font-medium truncate text-foreground">{att.filename}</p>
-                        <p className="text-3xs text-muted-foreground">{formatFileSize(att.size || 0)}</p>
+                        <p className="text-xs text-muted-foreground">{formatFileSize(att.size || 0)}</p>
                       </div>
                     </div>
                     {safeUrl ? (
@@ -121,7 +121,7 @@ export function ProjectSubmittedProposal({
                         View <ExternalLink className="size-3 ml-1" />
                       </Button>
                     ) : (
-                      <span className="text-3xs text-muted-foreground">Unavailable</span>
+                      <span className="text-xs text-muted-foreground">Unavailable</span>
                     )}
                   </div>
                 );

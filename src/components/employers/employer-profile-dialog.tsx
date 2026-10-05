@@ -124,7 +124,7 @@ export function EmployerProfileDialog({
                   <DialogTitle className="text-xl font-bold text-foreground truncate">
                     {name}
                   </DialogTitle>
-                  <Badge variant="secondary" className="bg-success-subtle text-success border border-success/20 text-3xs font-semibold py-0.5">
+                  <Badge variant="secondary" className="bg-success-subtle text-success border border-success/20 text-xs font-semibold py-0.5">
                     <ShieldCheck className="size-3 mr-1" /> KYC Verified
                   </Badge>
                 </div>
@@ -154,48 +154,48 @@ export function EmployerProfileDialog({
         <div className="p-6 sm:p-7 space-y-5 max-h-[75dvh] overflow-y-auto">
           {/* Live Actual Reputation & Activity Grid */}
           <div>
-            <h4 className="text-3xs font-bold uppercase tracking-wider text-muted-foreground mb-2.5">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2.5">
               Live Client Reputation & Activity
             </h4>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               <div className="p-3 rounded-2xl bg-secondary/50 border border-border text-center">
-                <p className="text-3xs uppercase font-medium text-muted-foreground">Rating</p>
+                <p className="text-xs uppercase font-medium text-muted-foreground">Rating</p>
                 <p className="text-base font-extrabold text-foreground mt-0.5 flex items-center justify-center gap-1">
                   <Star className={`size-3.5 ${totalReviews > 0 ? 'text-warning fill-warning' : 'text-muted-foreground'}`} />
                   {totalReviews > 0 ? avgRating.toFixed(1) : '0.0'}
                 </p>
-                <span className="text-3xs text-muted-foreground">{totalReviews} review{totalReviews === 1 ? '' : 's'}</span>
+                <span className="text-xs text-muted-foreground">{totalReviews} review{totalReviews === 1 ? '' : 's'}</span>
               </div>
 
               <div className="p-3 rounded-2xl bg-secondary/50 border border-border text-center">
-                <p className="text-3xs uppercase font-medium text-muted-foreground">Completed</p>
+                <p className="text-xs uppercase font-medium text-muted-foreground">Completed</p>
                 <p className="text-base font-extrabold text-foreground mt-0.5">
                   {completedContracts}
                 </p>
-                <span className="text-3xs text-muted-foreground">Contracts</span>
+                <span className="text-xs text-muted-foreground">Contracts</span>
               </div>
 
               <div className="p-3 rounded-2xl bg-secondary/50 border border-border text-center">
-                <p className="text-3xs uppercase font-medium text-muted-foreground">Jobs Posted</p>
+                <p className="text-xs uppercase font-medium text-muted-foreground">Jobs Posted</p>
                 <p className="text-base font-extrabold text-foreground mt-0.5">
                   {jobsCount > 0 ? jobsCount : '1+'}
                 </p>
-                <span className="text-3xs text-muted-foreground">Projects</span>
+                <span className="text-xs text-muted-foreground">Projects</span>
               </div>
 
               <div className="p-3 rounded-2xl bg-secondary/50 border border-border text-center">
-                <p className="text-3xs uppercase font-medium text-muted-foreground">Escrow</p>
+                <p className="text-xs uppercase font-medium text-muted-foreground">Escrow</p>
                 <p className="text-base font-extrabold text-success mt-0.5 flex items-center justify-center gap-1">
                   <ShieldCheck className="size-3.5" /> 100%
                 </p>
-                <span className="text-3xs text-muted-foreground">Protected</span>
+                <span className="text-xs text-muted-foreground">Protected</span>
               </div>
             </div>
           </div>
 
           {/* Verification Status */}
           <div className="rounded-2xl bg-muted/40 p-3.5 border border-border/60">
-            <h4 className="text-3xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
               Verification Status
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
@@ -216,7 +216,7 @@ export function EmployerProfileDialog({
 
           {/* About / Description */}
           <div>
-            <h4 className="text-3xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2">
               About the Client & Company
             </h4>
             <div className="bg-muted/40 p-4 rounded-2xl border border-border/50">

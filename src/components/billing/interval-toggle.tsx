@@ -51,7 +51,7 @@ export function IntervalToggle({ value, onChange, savingLabel, className }: Inte
             aria-checked={selected}
             onClick={() => onChange(option.id)}
             className={cn(
-              'flex min-h-[38px] items-center justify-center gap-1.5 rounded-lg px-3',
+              'flex min-h-11 items-center justify-center gap-1.5 rounded-lg px-3',
               'text-sm transition-colors duration-fast ease-out',
               'outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-muted',
               selected

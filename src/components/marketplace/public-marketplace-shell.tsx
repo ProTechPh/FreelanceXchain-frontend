@@ -30,7 +30,7 @@ export function PublicMarketplaceShell({
     <div className="flex min-h-screen flex-col bg-background text-foreground">
       <Navbar />
 
-      <main id="marketplace-content" tabIndex={-1} className="grow pt-28 pb-20 outline-none sm:pt-36">
+      <main id="main-content" tabIndex={-1} className="grow pt-28 pb-20 outline-none sm:pt-36">
         <section className="mx-auto mb-10 max-w-7xl px-6 text-center lg:px-8">
           <p className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary-subtle px-3.5 py-1.5 text-xs font-semibold text-primary">
             <Sparkles className="size-3.5" aria-hidden="true" />

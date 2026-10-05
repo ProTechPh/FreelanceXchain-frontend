@@ -14,7 +14,12 @@ export function PlanComparison({ className }: { className?: string }) {
       {/* The wrapper stays as a safety net for very narrow screens, but the
           table is fluid: a 32rem min-width forced a horizontal scroll on every
           phone for a three-column table that wraps perfectly well. */}
-      <div className="overflow-x-auto">
+      <div
+        className="overflow-x-auto"
+        tabIndex={0}
+        role="region"
+        aria-label="Feature comparison between the Free and Pro plans"
+      >
         <table className="w-full border-collapse text-sm">
           <caption className="sr-only">Feature comparison between the Free and Pro plans</caption>
           <thead>

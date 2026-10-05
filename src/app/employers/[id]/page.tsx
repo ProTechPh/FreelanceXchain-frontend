@@ -293,48 +293,48 @@ export default function EmployerProfilePage() {
             <CardContent className="p-6 sm:p-8 space-y-6">
               {/* Stats Grid */}
               <div>
-                <h3 className="text-3xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
                   Live Client Performance & History
                 </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div className="p-4 rounded-2xl bg-secondary/50 border border-border text-center">
-                    <p className="text-3xs uppercase font-medium text-muted-foreground">Rating</p>
+                    <p className="text-xs uppercase font-medium text-muted-foreground">Rating</p>
                     <p className="text-lg font-extrabold text-foreground mt-0.5 flex items-center justify-center gap-1">
                       <Star className={`size-4 ${totalReviews > 0 ? 'text-warning fill-warning' : 'text-muted-foreground'}`} />
                       {totalReviews > 0 ? avgRating.toFixed(1) : '0.0'}
                     </p>
-                    <span className="text-3xs text-muted-foreground">{totalReviews} review{totalReviews === 1 ? '' : 's'}</span>
+                    <span className="text-xs text-muted-foreground">{totalReviews} review{totalReviews === 1 ? '' : 's'}</span>
                   </div>
 
                   <div className="p-4 rounded-2xl bg-secondary/50 border border-border text-center">
-                    <p className="text-3xs uppercase font-medium text-muted-foreground">Completed</p>
+                    <p className="text-xs uppercase font-medium text-muted-foreground">Completed</p>
                     <p className="text-lg font-extrabold text-foreground mt-0.5">
                       {completedContracts}
                     </p>
-                    <span className="text-3xs text-muted-foreground">Contracts</span>
+                    <span className="text-xs text-muted-foreground">Contracts</span>
                   </div>
 
                   <div className="p-4 rounded-2xl bg-secondary/50 border border-border text-center">
-                    <p className="text-3xs uppercase font-medium text-muted-foreground">Jobs Posted</p>
+                    <p className="text-xs uppercase font-medium text-muted-foreground">Jobs Posted</p>
                     <p className="text-lg font-extrabold text-foreground mt-0.5">
                       {jobsCount > 0 ? jobsCount : '1+'}
                     </p>
-                    <span className="text-3xs text-muted-foreground">Projects</span>
+                    <span className="text-xs text-muted-foreground">Projects</span>
                   </div>
 
                   <div className="p-4 rounded-2xl bg-secondary/50 border border-border text-center">
-                    <p className="text-3xs uppercase font-medium text-muted-foreground">Escrow</p>
+                    <p className="text-xs uppercase font-medium text-muted-foreground">Escrow</p>
                     <p className="text-lg font-extrabold text-success mt-0.5 flex items-center justify-center gap-1">
                       <ShieldCheck className="size-4" /> 100%
                     </p>
-                    <span className="text-3xs text-muted-foreground">Protected</span>
+                    <span className="text-xs text-muted-foreground">Protected</span>
                   </div>
                 </div>
               </div>
 
               {/* Verification Checklist */}
               <div className="rounded-2xl bg-muted/40 p-4 border border-border/60">
-                <h3 className="text-3xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
                   Verification & Security Badges
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
@@ -355,7 +355,7 @@ export default function EmployerProfilePage() {
 
               {/* About Background */}
               <div>
-                <h3 className="text-3xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3">
                   About Company & Background
                 </h3>
                 <p className="text-base text-foreground/90 leading-relaxed bg-muted/40 p-4 rounded-2xl border border-border/50 whitespace-pre-line">
@@ -517,7 +517,7 @@ export default function EmployerProfilePage() {
                             <div>
                               <div className="flex items-center gap-2">
                                 <span className="text-sm font-bold text-foreground">{rev.reviewerName}</span>
-                                <Badge variant="secondary" className="text-3xs font-medium">
+                                <Badge variant="secondary" className="text-xs font-medium">
                                   Freelancer
                                 </Badge>
                               </div>

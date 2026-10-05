@@ -42,7 +42,7 @@ export default function LeaderboardPage() {
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <Navbar />
 
-      <main className="grow pt-28 sm:pt-36 pb-20">
+      <main id="main-content" tabIndex={-1} className="grow pt-28 sm:pt-36 pb-20 outline-none">
         <LeaderboardHeader />
         <LeaderboardContent />
       </main>

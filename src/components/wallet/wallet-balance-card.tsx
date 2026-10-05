@@ -66,7 +66,7 @@ export function WalletBalanceCard({ role = 'employer', className = '' }: WalletB
             <div>
               <div className="flex items-center gap-2">
                 <p className="text-xs font-medium text-muted-foreground">Connected Payment Wallet</p>
-                <span className="inline-flex items-center gap-1 rounded-full bg-success-subtle px-1.5 py-0.5 text-3xs font-semibold text-success">
+                <span className="inline-flex items-center gap-1 rounded-full bg-success-subtle px-1.5 py-0.5 text-xs font-semibold text-success">
                   <span className="size-1.5 rounded-full bg-success animate-pulse" /> Active
                 </span>
               </div>
@@ -105,7 +105,7 @@ export function WalletBalanceCard({ role = 'employer', className = '' }: WalletB
 
           <div className="flex items-center justify-between sm:justify-end gap-3 border-t sm:border-t-0 pt-3 sm:pt-0 border-border/60">
             <div className="text-left sm:text-right">
-              <p className="text-3xs uppercase tracking-wider text-muted-foreground">On-Chain Balance</p>
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">On-Chain Balance</p>
               <div className="flex items-center gap-1.5">
                 <p className="text-lg font-extrabold text-foreground">
                   {balance !== null ? `${balance} ${symbol}` : '—'}

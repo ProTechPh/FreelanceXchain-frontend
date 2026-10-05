@@ -112,7 +112,12 @@ export default function PrivacyPage() {
         <p className="text-sm text-muted-foreground leading-relaxed">
           We work with verified sub-processors bound by strict Data Processing Agreements (DPAs):
         </p>
-        <div className="overflow-x-auto not-prose">
+        <div
+          className="overflow-x-auto not-prose"
+          tabIndex={0}
+          role="region"
+          aria-label="Sub-processors and third-party service providers"
+        >
           <table className="w-full text-xs text-left border border-border/80 rounded-xl overflow-hidden">
             <thead className="bg-muted text-foreground font-semibold">
               <tr>

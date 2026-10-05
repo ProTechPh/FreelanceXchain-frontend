@@ -173,7 +173,7 @@ export function UptimeRobotWidget() {
   const dailyRatios = data?.dailyRatios ?? [];
 
   return (
-    <div className="rounded-3xl bg-card border border-border/80 p-6 sm:p-8 shadow-md shadow-black/5">
+    <div className="rounded-3xl bg-card border border-border/80 p-4 sm:p-6 lg:p-8 shadow-md shadow-black/5 w-full max-w-full overflow-hidden">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pb-6 border-b border-border/60">
         <div className="flex min-w-0 items-center gap-3.5">
@@ -196,7 +196,7 @@ export function UptimeRobotWidget() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 self-end sm:self-auto">
+        <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
           <Button
             variant="ghost"
             size="sm"
@@ -219,46 +219,46 @@ export function UptimeRobotWidget() {
       </div>
 
       {/* Metrics Row */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 py-6">
-        <div className="p-4 rounded-2xl bg-background border border-border/70">
-          <p className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
-            <CheckCircle2 className="size-3.5 text-success" /> 90-Day Uptime
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4 py-6">
+        <div className="p-3 sm:p-4 rounded-2xl bg-background border border-border/70 min-w-0">
+          <p className="text-xs text-muted-foreground font-medium flex items-center gap-1.5 min-w-0 truncate">
+            <CheckCircle2 className="size-3.5 text-success shrink-0" /> <span className="truncate">90-Day Uptime</span>
           </p>
-          <p className="text-xl sm:text-2xl font-black text-foreground mt-1 tracking-tight">
+          <p className="text-xl sm:text-2xl font-black text-foreground mt-1 tracking-tight truncate">
             {loading ? '...' : uptime90d}
           </p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-background border border-border/70">
-          <p className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
-            <Clock className="size-3.5 text-primary" /> 30-Day Uptime
+        <div className="p-3 sm:p-4 rounded-2xl bg-background border border-border/70 min-w-0">
+          <p className="text-xs text-muted-foreground font-medium flex items-center gap-1.5 min-w-0 truncate">
+            <Clock className="size-3.5 text-primary shrink-0" /> <span className="truncate">30-Day Uptime</span>
           </p>
-          <p className="text-xl sm:text-2xl font-black text-foreground mt-1 tracking-tight">
+          <p className="text-xl sm:text-2xl font-black text-foreground mt-1 tracking-tight truncate">
             {loading ? '...' : uptime30d}
           </p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-background border border-border/70">
-          <p className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
-            <ShieldCheck className="size-3.5 text-info" /> Incident Status
+        <div className="p-3 sm:p-4 rounded-2xl bg-background border border-border/70 min-w-0">
+          <p className="text-xs text-muted-foreground font-medium flex items-center gap-1.5 min-w-0 truncate">
+            <ShieldCheck className="size-3.5 text-info shrink-0" /> <span className="truncate">Incident Status</span>
           </p>
-          <p className="text-sm sm:text-base font-bold text-success mt-1.5">
+          <p className="text-sm sm:text-base font-bold text-success mt-1.5 truncate">
             {statistics?.count_result || 'All Clear'}
           </p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-background border border-border/70">
-          <p className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
-            <Activity className="size-3.5 text-muted-foreground" /> Check Interval
+        <div className="p-3 sm:p-4 rounded-2xl bg-background border border-border/70 min-w-0">
+          <p className="text-xs text-muted-foreground font-medium flex items-center gap-1.5 min-w-0 truncate">
+            <Activity className="size-3.5 text-muted-foreground shrink-0" /> <span className="truncate">Check Interval</span>
           </p>
-          <p className="text-sm sm:text-base font-bold text-foreground mt-1.5">
+          <p className="text-sm sm:text-base font-bold text-foreground mt-1.5 truncate">
             Every 5 mins
           </p>
         </div>
       </div>
 
       {/* 90-Day Uptime History Heat-Bars */}
-      <div className="pt-2">
+      <div className="pt-2 w-full max-w-full">
         <div className="flex items-center justify-between text-xs text-muted-foreground font-semibold mb-3">
           <span>90-Day Uptime History</span>
           <span className="text-foreground font-bold">{uptime90d}</span>
@@ -269,7 +269,7 @@ export function UptimeRobotWidget() {
         )}
 
         {loading ? (
-          <div className="h-9 w-full rounded-xl bg-muted/40 animate-pulse flex items-center justify-center text-xs text-muted-foreground font-medium">
+          <div className="h-9 w-full rounded-xl bg-muted flex items-center justify-center text-xs text-foreground font-medium">
             Loading telemetry history…
           </div>
         ) : dailyRatios.length === 0 ? (
@@ -279,7 +279,7 @@ export function UptimeRobotWidget() {
           </div>
         ) : (
           <TooltipProvider>
-            <div className="flex items-center justify-between gap-0.5 sm:gap-1 p-2.5 rounded-2xl bg-background border border-border/70 overflow-hidden">
+            <div className="flex items-center justify-between gap-0.5 sm:gap-1 p-2 sm:p-2.5 rounded-2xl bg-background border border-border/70 overflow-hidden w-full max-w-full">
               {dailyRatios.slice(-90).map((day, index) => {
                 const ratioNum = parseFloat(day.ratio);
                 const isUnmonitored =
@@ -328,12 +328,12 @@ export function UptimeRobotWidget() {
           </TooltipProvider>
         )}
 
-        <div className="flex items-center justify-between text-2xs text-muted-foreground font-medium mt-2.5">
-          <span>90 days ago</span>
-          <span>
+        <div className="flex items-center justify-between text-2xs text-muted-foreground font-medium mt-2.5 gap-2 min-w-0">
+          <span className="shrink-0">90 days ago</span>
+          <span className="truncate text-center">
             {lastUpdated ? `Live updated ${lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'Synchronized'}
           </span>
-          <span>Today</span>
+          <span className="shrink-0">Today</span>
         </div>
       </div>
     </div>

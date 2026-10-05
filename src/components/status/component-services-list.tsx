@@ -145,18 +145,18 @@ export function ComponentServicesList() {
   }, [probeServices]);
 
   return (
-    <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 mb-16">
-      <div className="flex items-center justify-between gap-4 mb-4">
-        <div>
-          <h3 className="text-lg font-extrabold text-foreground tracking-tight">
+    <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 mb-16 w-full max-w-full">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4">
+        <div className="min-w-0">
+          <h3 className="text-lg font-extrabold text-foreground tracking-tight break-words">
             Component Services & Relayers
           </h3>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5 break-words">
             Real-time latency, node synchronization, and pipeline health checks
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
           {lastCheck && (
             <span className="text-2xs text-muted-foreground hidden sm:inline">
               Checked {lastCheck.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
@@ -188,16 +188,16 @@ export function ComponentServicesList() {
           return (
             <div
               key={service.id}
-              className="rounded-3xl bg-card border border-border/80 p-5 sm:p-6 shadow-xs flex flex-col justify-between gap-4 hover:border-primary/40 transition-colors"
+              className="rounded-3xl bg-card border border-border/80 p-4 sm:p-6 shadow-xs flex flex-col justify-between gap-4 hover:border-primary/40 transition-colors min-w-0 overflow-hidden"
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3.5">
+              <div className="flex items-start justify-between gap-3 min-w-0">
+                <div className="flex items-start gap-3 min-w-0 flex-1">
                   <div className="w-10 h-10 rounded-xl bg-background border border-border flex items-center justify-center shrink-0 mt-0.5">
                     {icon}
                   </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-foreground">{service.name}</h4>
-                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                  <div className="min-w-0 flex-1">
+                    <h4 className="text-sm font-bold text-foreground break-words">{service.name}</h4>
+                    <p className="text-xs text-muted-foreground mt-1 leading-relaxed break-words">
                       {service.description}
                     </p>
                   </div>
@@ -225,8 +225,8 @@ export function ComponentServicesList() {
               </div>
 
               {/* Real-time telemetry detail pill */}
-              <div className="pt-2 border-t border-border/50 flex items-center justify-between text-2xs text-muted-foreground">
-                <span className="font-medium truncate max-w-[220px] sm:max-w-xs">
+              <div className="pt-2 border-t border-border/50 flex items-center justify-between gap-2 text-2xs text-muted-foreground min-w-0">
+                <span className="font-medium truncate min-w-0 flex-1">
                   {service.details}
                 </span>
                 <span className="inline-flex items-center gap-1 font-mono font-semibold shrink-0">

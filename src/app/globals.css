@@ -27,10 +27,11 @@
      skill.md's literal sizes (base 12px, xs 6px) were captured at the wrong
      scale and are unreadable. The ratio structure is preserved; the scale is
      re-anchored at base = 16px. `sm` stays the dense-UI default.
-     `2xs` is the sanctioned home for what used to be text-[11px]/[10px]. */
-  --text-2xs: 0.6875rem;
-  --text-2xs--line-height: 1rem;
-  --text-2xs--letter-spacing: 0.01em;
+     `2xs` remains available as a compact semantic alias, but it shares the
+     accessible 12px floor with `xs` so supporting data never drops to 11px. */
+  --text-2xs: 0.75rem;
+  --text-2xs--line-height: 1.125rem;
+  --text-2xs--letter-spacing: 0.005em;
   --text-xs: 0.75rem;
   --text-xs--line-height: 1.125rem;
   --text-xs--letter-spacing: 0.005em;
@@ -894,3 +895,14 @@
 }
 
 
+
+/* Sonner WCAG AA contrast overrides */
+[data-sonner-toast][data-type='warning'] {
+  --warning-text: var(--warning, #8f5700) !important;
+  color: var(--warning, #8f5700) !important;
+}
+
+[data-sonner-toast][data-type='warning'] [data-title],
+[data-sonner-toast][data-type='warning'] [data-description] {
+  color: var(--warning, #8f5700) !important;
+}

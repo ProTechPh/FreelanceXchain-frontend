@@ -98,6 +98,9 @@ export function ComparisonTable() {
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           className="rounded-2xl border border-border/80 bg-card overflow-x-auto shadow-sm"
+          tabIndex={0}
+          role="region"
+          aria-label="Freelance marketplace comparison table"
         >
           <div className="min-w-[620px]">
             {/* Table Header */}
@@ -151,7 +154,7 @@ export function ComparisonTable() {
         </motion.div>
 
         {/* Legal Disclaimer Footnote */}
-        <p className="mt-4 text-center sm:text-left text-2xs text-muted-foreground/80 leading-relaxed max-w-3xl">
+        <p className="mt-4 text-center sm:text-left text-2xs text-muted-foreground leading-relaxed max-w-3xl">
           * Upwork and Fiverr are trademarks or registered trademarks of their respective owners. Mention of these platforms does not imply any affiliation, sponsorship, or endorsement. Comparison is based on publicly available features, standard published platform rates, and general industry models as of 2026 for informational and comparative purposes only.
         </p>
       </div>

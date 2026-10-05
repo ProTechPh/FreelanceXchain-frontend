@@ -465,7 +465,7 @@ export default function FreelancerProfilePage() {
                               <div>
                                 <div className="flex items-center gap-2">
                                   <span className="text-sm font-bold text-foreground">{rev.reviewerName}</span>
-                                  <span className="text-3xs px-2 py-0.5 rounded-full bg-secondary font-medium text-muted-foreground">
+                                  <span className="text-xs px-2 py-0.5 rounded-full bg-secondary font-medium text-muted-foreground">
                                     Client
                                   </span>
                                 </div>

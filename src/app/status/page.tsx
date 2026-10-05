@@ -11,10 +11,10 @@ export const metadata = {
 
 export default function StatusPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col w-full max-w-full overflow-x-clip">
       <Navbar />
 
-      <main className="grow pt-28 sm:pt-36 pb-20">
+      <main id="main-content" tabIndex={-1} className="grow pt-28 sm:pt-36 pb-20 outline-none w-full max-w-full overflow-x-clip">
         {/* Header Hero */}
         <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 mb-12 text-center">
           <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-success-subtle text-success dark:text-success text-xs font-bold mb-4 border border-success-border shadow-xs">
@@ -22,7 +22,7 @@ export default function StatusPage() {
             <span>All Systems Operational</span>
           </div>
 
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-foreground">
+          <h1 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-foreground break-words">
             System Status & <br className="hidden sm:inline" />
             <span className="text-muted-foreground dark:text-muted-foreground font-semibold">
               infrastructure health.

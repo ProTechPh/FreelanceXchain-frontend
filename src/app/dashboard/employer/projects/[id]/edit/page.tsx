@@ -378,7 +378,7 @@ function EditProjectContent() {
                               )}
                               <div className="min-w-0">
                                 <p className="text-xs font-medium truncate text-foreground">{att.filename}</p>
-                                <p className="text-3xs text-muted-foreground">{formatFileSize(att.size || 0)}</p>
+                                <p className="text-xs text-muted-foreground">{formatFileSize(att.size || 0)}</p>
                               </div>
                             </div>
                             <div className="flex items-center gap-1 shrink-0">
@@ -440,7 +440,7 @@ function EditProjectContent() {
                               )}
                               <div className="min-w-0">
                                 <p className="text-xs font-medium truncate text-foreground">{file.name}</p>
-                                <p className="text-3xs text-muted-foreground">{formatFileSize(file.size)} • Ready to upload</p>
+                                <p className="text-xs text-muted-foreground">{formatFileSize(file.size)} • Ready to upload</p>
                               </div>
                             </div>
                             <Button
