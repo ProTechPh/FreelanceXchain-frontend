@@ -22,7 +22,7 @@ export interface CacheStats {
   hitRate: number;
 }
 
-export class LRUCache<K = string, V = any> {
+export class LRUCache<K = string, V = unknown> {
   private cache: Map<K, CacheEntry<V>>;
   private readonly maxSize: number;
   private readonly defaultTtlMs: number;

@@ -39,12 +39,6 @@ export function StorageQuotaCard() {
   const startIndex = (safeCurrentPage - 1) * STORAGE_PAGE_SIZE;
   const paginatedFiles = files.slice(startIndex, startIndex + STORAGE_PAGE_SIZE);
 
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [currentPage, totalPages]);
-
   const loadStorage = async () => {
     setStorageLoading(true);
     try {
