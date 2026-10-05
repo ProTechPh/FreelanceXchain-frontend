@@ -97,7 +97,12 @@ export function CookiePolicyContent() {
       {/* Section 3: What We Store */}
       <section className="space-y-3">
         <h2 className="text-xl font-bold text-foreground">3. What we actually save on your device</h2>
-        <div className="overflow-x-auto not-prose">
+        <div
+          className="overflow-x-auto not-prose"
+          tabIndex={0}
+          role="region"
+          aria-label="Cookies and local storage items"
+        >
           <table className="w-full text-xs text-left border border-border/80 rounded-xl overflow-hidden">
             <thead className="bg-muted text-foreground font-semibold">
               <tr>

@@ -895,3 +895,14 @@
 }
 
 
+
+/* Sonner WCAG AA contrast overrides */
+[data-sonner-toast][data-type='warning'] {
+  --warning-text: var(--warning, #8f5700) !important;
+  color: var(--warning, #8f5700) !important;
+}
+
+[data-sonner-toast][data-type='warning'] [data-title],
+[data-sonner-toast][data-type='warning'] [data-description] {
+  color: var(--warning, #8f5700) !important;
+}

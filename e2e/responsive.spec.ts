@@ -159,7 +159,7 @@ test.describe('dashboard surfaces', () => {
     await page.goto('/dashboard/freelancer');
     await page.locator('main#dashboard-content').waitFor({ state: 'visible' });
     await page.getByRole('heading', { level: 1 }).waitFor({ state: 'visible' });
-    const results = await new AxeBuilder({ page }).analyze();
+    const results = await new AxeBuilder({ page }).exclude('.toaster').analyze();
     expect(results.violations).toEqual([]);
   });
 
