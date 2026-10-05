@@ -122,15 +122,15 @@ export default function Navbar({
 
   return (
     <>
-      {/* Skip link: keyboard users jump straight to page content without tabbing
-          through all nav items. sr-only until focused, then it pops into view. */}
+      <nav className="fixed top-4 left-0 right-0 z-50 px-3 sm:px-6 pointer-events-none flex justify-center">
+      {/* Keep the skip link inside a landmark while placing it before every
+          visible navigation control in the keyboard order. */}
       <a
         href="#main-content"
         className="sr-only z-[60] focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-primary-foreground focus:outline-none"
       >
         Skip to main content
       </a>
-      <nav className="fixed top-4 left-0 right-0 z-50 px-3 sm:px-6 pointer-events-none flex justify-center">
       <div className="pointer-events-auto max-w-7xl w-full mx-auto px-4 sm:px-5 h-14 rounded-full bg-card/90 backdrop-blur-md border border-border/80 shadow-md shadow-black/5 flex items-center justify-between gap-2 lg:gap-4">
 
         {/* Logo — always visible */}
@@ -176,7 +176,7 @@ export default function Navbar({
               <DropdownMenu>
                 <DropdownMenuTrigger
                   aria-label="Open account menu"
-                  className="flex size-10 p-0.5 cursor-pointer items-center justify-center rounded-full outline-none transition-opacity duration-fast hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring touch-manipulation"
+                  className="flex size-11 p-0.5 cursor-pointer items-center justify-center rounded-full outline-none transition-opacity duration-fast hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring touch-manipulation"
                 >
                   <Avatar className="size-7">
                     <AvatarFallback className="text-xs gradient-primary font-bold">
@@ -237,13 +237,13 @@ export default function Navbar({
         <div className="flex lg:hidden items-center gap-1">
           <div className="flex sm:hidden items-center gap-1">
             <ThemeToggle />
-            <Button variant="ghost" size="icon" aria-label="Open search dialog" className="rounded-full size-11 sm:size-9 touch-manipulation" onClick={() => setOpenSearch(true)}>
+            <Button variant="ghost" size="icon" aria-label="Open search dialog" className="rounded-full size-11 touch-manipulation" onClick={() => setOpenSearch(true)}>
               <MagnifyingGlass className="size-4 sm:size-3.5" strokeWidth={2.5} />
             </Button>
           </div>
 
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetTrigger className="inline-flex items-center justify-center size-11 sm:size-9 rounded-full text-sm hover:bg-muted transition-colors touch-manipulation" aria-label="Open menu">
+            <SheetTrigger className="inline-flex size-11 items-center justify-center rounded-full text-sm hover:bg-muted transition-colors touch-manipulation" aria-label="Open menu">
               <List className="size-4.5 sm:size-4" strokeWidth={2.5} />
             </SheetTrigger>
 

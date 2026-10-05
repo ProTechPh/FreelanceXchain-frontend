@@ -269,7 +269,7 @@ export function UptimeRobotWidget() {
         )}
 
         {loading ? (
-          <div className="h-9 w-full rounded-xl bg-muted/40 animate-pulse flex items-center justify-center text-xs text-muted-foreground font-medium">
+          <div className="h-9 w-full rounded-xl bg-muted flex items-center justify-center text-xs text-foreground font-medium">
             Loading telemetry history…
           </div>
         ) : dailyRatios.length === 0 ? (

@@ -53,7 +53,7 @@ export function ProjectEmployerSidebar({
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-bold text-foreground">About Employer</CardTitle>
-              <Badge variant="secondary" className="bg-success-subtle text-success border border-success/20 text-3xs py-0.5">
+              <Badge variant="secondary" className="bg-success-subtle text-success border border-success/20 text-xs py-0.5">
                 <ShieldCheck className="size-3 mr-1" /> Verified
               </Badge>
             </div>
@@ -90,7 +90,7 @@ export function ProjectEmployerSidebar({
           </div>
           <div>
             <h4 className="font-bold text-foreground text-sm">Smart Contract Escrow</h4>
-            <p className="text-3xs text-success font-medium flex items-center gap-1">
+            <p className="text-xs text-success font-medium flex items-center gap-1">
               <span className="size-1.5 rounded-full bg-success animate-pulse" /> 100% Payment Protected
             </p>
           </div>

@@ -126,7 +126,7 @@ export default function ProposalsPage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-lg sm:text-2xl font-bold leading-tight">{count}</p>
-                    <p className="text-3xs sm:text-xs text-muted-foreground capitalize truncate">{status}</p>
+                    <p className="text-xs sm:text-xs text-muted-foreground capitalize truncate">{status}</p>
                   </div>
                 </div>
               </CardContent>

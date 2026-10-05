@@ -6,11 +6,11 @@ test('public landing page exposes primary marketplace navigation', async ({ page
   await expect(
     page.getByRole('heading', { level: 1, name: 'Decentralize Your Freelance Career' }),
   ).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Browse Projects' }).first()).toHaveAttribute(
+  await expect(page.getByRole('link', { name: "I'm freelancing" }).first()).toHaveAttribute(
     'href',
     '/projects',
   );
-  await expect(page.getByRole('link', { name: 'Find Talent' }).first()).toHaveAttribute(
+  await expect(page.getByRole('link', { name: "I'm hiring" }).first()).toHaveAttribute(
     'href',
     '/freelancers',
   );

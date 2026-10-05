@@ -139,7 +139,7 @@ export function TopBar() {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="size-10 sm:hidden touch-manipulation"
+                  className="size-11 sm:hidden touch-manipulation"
                   aria-label={searchLabel}
                   aria-expanded={searchOpen}
                   aria-controls="dashboard-search-row"
@@ -163,7 +163,7 @@ export function TopBar() {
           {/* Notifications */}
           {user && (
             <Tooltip content={`Notifications${unreadNotifications > 0 ? ` (${unreadNotifications} unread)` : ''}`}>
-              <Button asChild variant="ghost" size="icon" className="relative size-10 sm:size-10 touch-manipulation">
+              <Button asChild variant="ghost" size="icon" className="relative size-11 touch-manipulation">
                 <Link
                   href={`/dashboard/${user.role}/notifications`}
                   data-tour="notifications"
@@ -203,7 +203,7 @@ export function TopBar() {
             <DropdownMenuTrigger
               data-tour="account"
               aria-label="Open account menu"
-              className="flex min-h-[40px] min-w-[40px] sm:h-9 sm:min-h-0 sm:min-w-0 cursor-pointer items-center justify-center gap-1 rounded-md px-1 outline-none transition-colors duration-fast hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:gap-2 sm:px-2 touch-manipulation"
+              className="flex min-h-11 min-w-11 cursor-pointer items-center justify-center gap-1 rounded-md px-1 outline-none transition-colors duration-fast hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:gap-2 sm:px-2 touch-manipulation"
             >
               <Avatar className="size-7">
                 <AvatarFallback className="text-xs gradient-primary">{initials}</AvatarFallback>

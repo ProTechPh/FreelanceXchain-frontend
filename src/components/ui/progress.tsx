@@ -44,6 +44,7 @@ function Progress({
     <ProgressPrimitive.Root
       data-slot="progress"
       value={value}
+      aria-label={label}
       className={cn("flex w-full items-center gap-3", className)}
       {...props}
     >

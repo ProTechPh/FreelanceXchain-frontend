@@ -482,7 +482,7 @@ export function MessagesWorkspace() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
                   <p className="truncate text-sm font-semibold text-foreground">{directRecipient.name}</p>
-                  <Badge className="shrink-0 gradient-primary text-3xs py-0.5">New Chat</Badge>
+                  <Badge className="shrink-0 gradient-primary text-xs py-0.5">New Chat</Badge>
                 </div>
                 <p className="mt-0.5 truncate text-xs text-primary font-medium">
                   Type a message to start chatting
@@ -656,7 +656,7 @@ export function MessagesWorkspace() {
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-3xs uppercase font-bold tracking-wider text-primary">Inquiring Project</span>
+                      <span className="text-xs uppercase font-bold tracking-wider text-primary">Inquiring Project</span>
                       <StatusBadge status={inquiredProject.status} domain="project" />
                     </div>
                     <p className="text-xs sm:text-sm font-bold text-foreground truncate">{inquiredProject.title}</p>

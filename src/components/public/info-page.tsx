@@ -18,7 +18,7 @@ export function InfoPage({
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <Navbar />
 
-      <main className="grow pt-28 sm:pt-36 pb-20">
+      <main id="main-content" tabIndex={-1} className="grow pt-28 sm:pt-36 pb-20 outline-none">
         {/* Header Hero */}
         <section className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 mb-12 text-center">
           <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold mb-4 border border-primary/20 shadow-xs">

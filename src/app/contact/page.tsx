@@ -136,7 +136,7 @@ export default function ContactPage() {
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <Navbar />
 
-      <main className="grow pt-28 sm:pt-36 pb-20">
+      <main id="main-content" tabIndex={-1} className="grow pt-28 sm:pt-36 pb-20 outline-none">
         {/* Header Hero */}
         <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 mb-12 text-center">
           <motion.div
@@ -163,7 +163,8 @@ export default function ContactPage() {
         </section>
 
         {/* Support Channels Grid */}
-        <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 mb-12">
+        <section aria-labelledby="support-channels-heading" className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 mb-12">
+          <h2 id="support-channels-heading" className="sr-only">Support channels</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {SUPPORT_CHANNELS.map((channel) => (
               <div

@@ -151,7 +151,7 @@ export function AttachmentPreviewDialog({
             <div className="min-w-0">
               <DialogTitle className="text-base font-bold truncate text-foreground flex items-center gap-2">
                 <span className="truncate">{displayFilename}</span>
-                <Badge variant="secondary" className="uppercase text-3xs px-2 py-0.5 shrink-0">
+                <Badge variant="secondary" className="uppercase text-xs px-2 py-0.5 shrink-0">
                   {badgeText}
                 </Badge>
               </DialogTitle>

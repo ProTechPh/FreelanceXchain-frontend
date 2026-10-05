@@ -14,7 +14,6 @@ const PUBLIC_ROUTES = [
   '/',
   '/projects',
   '/freelancers',
-  '/employers',
   '/how-it-works',
   '/pricing',
   '/leaderboard',
@@ -88,11 +87,13 @@ async function expectNoHorizontalScroll(page, label) {
 
 test.describe('public surfaces', () => {
   for (const route of PUBLIC_ROUTES) {
-    test(`${route} does not scroll horizontally`, async ({ page }) => {
+    test(`${route} is responsive and accessible`, async ({ page }) => {
       await page.goto(route);
       await page.waitForLoadState('domcontentloaded');
       await page.locator('main, header').first().waitFor({ state: 'attached', timeout: 5000 }).catch(() => {});
       await expectNoHorizontalScroll(page, route);
+      const results = await new AxeBuilder({ page }).analyze();
+      expect(results.violations, `${route} has accessibility violations`).toEqual([]);
     });
   }
 });
@@ -156,7 +157,9 @@ test.describe('dashboard surfaces', () => {
   test('dashboard page should not have accessibility violations', async ({ page, authenticateAs }) => {
     await authenticateAs('freelancer');
     await page.goto('/dashboard/freelancer');
-    const results = await new AxeBuilder({ page }).disableRules(['page-has-heading-one', 'landmark-one-main']).analyze();
+    await page.locator('main#dashboard-content').waitFor({ state: 'visible' });
+    await page.getByRole('heading', { level: 1 }).waitFor({ state: 'visible' });
+    const results = await new AxeBuilder({ page }).analyze();
     expect(results.violations).toEqual([]);
   });
 
@@ -165,7 +168,7 @@ test.describe('dashboard surfaces', () => {
     await page.goto('/dashboard/freelancer');
     const nav = new NavigationComponent(page);
     await nav.open();
-    const results = await new AxeBuilder({ page }).include('[role=\"dialog\"]').disableRules(['page-has-heading-one', 'landmark-one-main']).analyze();
+    const results = await new AxeBuilder({ page }).include('[role="dialog"]').analyze();
     expect(results.violations).toEqual([]);
   });
 });

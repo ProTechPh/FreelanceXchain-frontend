@@ -559,7 +559,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
                 <ListFilter className="size-4" aria-hidden="true" />
                 <span className="text-xs font-semibold">Filters</span>
                 {selectedFilterCount > 0 && (
-                  <span className="flex size-4.5 items-center justify-center rounded-full bg-primary-foreground text-primary text-3xs font-bold">
+                  <span className="flex size-4.5 items-center justify-center rounded-full bg-primary-foreground text-primary text-xs font-bold">
                     {selectedFilterCount}
                   </span>
                 )}
@@ -642,7 +642,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
             {/* Saved search chips on mobile */}
             {user && savedSearches.length > 0 && (
               <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-                <span className="text-3xs font-semibold text-muted-foreground uppercase tracking-wider shrink-0 mr-1">Saved:</span>
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider shrink-0 mr-1">Saved:</span>
                 {savedSearches.map((savedSearch) => (
                   <button
                     key={savedSearch.id}

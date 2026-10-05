@@ -14,7 +14,7 @@ export default function StatusPage() {
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <Navbar />
 
-      <main className="grow pt-28 sm:pt-36 pb-20">
+      <main id="main-content" tabIndex={-1} className="grow pt-28 sm:pt-36 pb-20 outline-none">
         {/* Header Hero */}
         <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 mb-12 text-center">
           <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-success-subtle text-success dark:text-success text-xs font-bold mb-4 border border-success-border shadow-xs">
