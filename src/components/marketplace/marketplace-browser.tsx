@@ -15,7 +15,6 @@ import {
   type MarketplaceFilters,
 } from "@/lib/marketplace-search";
 import { useAuthStore } from "@/stores/authStore";
-import { useDebounce } from "@/hooks/use-debounce";
 import type { Favorite, FreelancerProfile, Project, ProjectCategoryStat, SavedSearch, Skill } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -260,19 +259,20 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
     (skillId) => !savedSkillOptions.some((skill) => skill.id === skillId),
   );
 
-  const debouncedKeyword = useDebounce(filters.keyword, 300);
-
-  // Live search: automatically update appliedFilters when debounced keyword changes
+  // Live search: automatically update appliedFilters when the user types
   useEffect(() => {
-    const trimmed = debouncedKeyword.trim();
-    if (trimmed !== appliedFilters.keyword) {
-      setAppliedFilters((current) => ({
-        ...current,
-        keyword: trimmed,
-        ...(trimmed ? { categoryId: undefined, categoryName: undefined } : {}),
-      }));
-    }
-  }, [debouncedKeyword, appliedFilters.keyword]);
+    const handler = setTimeout(() => {
+      const trimmed = filters.keyword.trim();
+      if (trimmed !== appliedFilters.keyword) {
+        setAppliedFilters((current) => ({
+          ...current,
+          keyword: trimmed,
+          ...(trimmed ? { categoryId: undefined, categoryName: undefined } : {}),
+        }));
+      }
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [filters.keyword, appliedFilters.keyword]);
 
   const displayedItems = useMemo(() => {
     if (kind === "freelancer") {
