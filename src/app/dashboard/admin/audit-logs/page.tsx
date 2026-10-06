@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuditLogSearchInfinite, useAdminActivitySummary } from '@/hooks/use-audit-logs';
+import { useDebounce } from '@/hooks/use-debounce';
 import {
   AUDIT_SEARCH_PAGE_SIZE,
   appendCursorPage,
@@ -49,6 +50,10 @@ export default function AuditLogsPage() {
   const [status, setStatus] = useState<AuditLogStatus | 'all'>('all');
   const [rangePreset, setRangePreset] = useState<'7d' | '30d' | '90d'>('7d');
 
+  const debouncedAction = useDebounce(action, 350);
+  const debouncedActor = useDebounce(actor, 350);
+  const debouncedResourceType = useDebounce(resourceType, 350);
+
   // A stable `now` per range selection: recomputing it on every render would change
   // the query params on each keystroke and defeat the cache entirely.
   const range = useMemo(() => resolveRange(rangePreset, new Date()), [rangePreset]);
@@ -58,15 +63,15 @@ export default function AuditLogsPage() {
   const params = useMemo(
     () =>
       buildAuditSearchParams({
-        action,
-        actor,
-        resourceType,
+        action: debouncedAction,
+        actor: debouncedActor,
+        resourceType: debouncedResourceType,
         status: status === 'all' ? undefined : status,
         startDate: range.startDate,
         endDate: range.endDate,
         limit: AUDIT_SEARCH_PAGE_SIZE,
       }),
-    [action, actor, resourceType, status, range],
+    [debouncedAction, debouncedActor, debouncedResourceType, status, range],
   );
 
   const {
