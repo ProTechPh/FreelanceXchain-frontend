@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { debugOnFailure, installMockEthereum } from './fixtures/mockEthereum';
 
 test.describe('End-to-End User Journey - Happy Path Marketplace Lifecycle', () => {
   const contractId = 'c1234567-89ab-cdef-0123-456789abcdef';
@@ -41,6 +42,14 @@ test.describe('End-to-End User Journey - Happy Path Marketplace Lifecycle', () =
         body: JSON.stringify({ factors: [] }),
       }),
     );
+
+    // Funding deploys the escrow from the employer's wallet, so the journey needs an
+    // EIP-1193 provider that can carry the deployment transaction end to end.
+    await installMockEthereum(page, { account: employerUser.walletAddress });
+  });
+
+  test.afterEach(async ({ page }, testInfo) => {
+    await debugOnFailure(page, testInfo);
   });
 
   test('complete happy path: visitor lands -> logs in -> views dashboard -> navigates contract workspace', async ({ page }) => {
@@ -132,6 +141,7 @@ test.describe('End-to-End User Journey - Happy Path Marketplace Lifecycle', () =
         body: JSON.stringify({
           contractId,
           freelancerWallet: '0x3333333333333333333333333333333333333333',
+          arbiterWallet: '0x5555555555555555555555555555555555555555',
           platformWallet: '0x4444444444444444444444444444444444444444',
           milestoneAmounts: ['2000000000000000000000'],
           milestoneDescriptions: ['Main Deliverable'],

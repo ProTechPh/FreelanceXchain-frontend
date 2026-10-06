@@ -27,6 +27,8 @@ import { MilestoneListCard } from './workspace/milestone-list-card';
 import { ContractHistoryCard } from './workspace/contract-history-card';
 import { ContractWorkspaceDialogs } from './workspace/contract-workspace-dialogs';
 import { ContractInvoiceDialog } from '@/components/contracts/contract-invoice-dialog';
+import { deployEscrowFromWallet } from '@/lib/wallet';
+import { requestWalletProvider } from '@/lib/metamask';
 
 type ParticipantRole = Extract<UserRole, 'employer' | 'freelancer'>;
 
@@ -120,7 +122,25 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
   const handleFundContract = async () => {
     setActionId('fund');
     try {
-      await contractsApi.fund(contract.id);
+      if (!fundInfo) throw new Error('Contract funding details are unavailable. Refresh and try again.');
+      // Every constructor argument must be present: an empty arbiter address would only
+      // surface as an opaque encoding failure from the wallet.
+      const { freelancerWallet, arbiterWallet, platformWallet } = fundInfo;
+      if (!freelancerWallet || !arbiterWallet || !platformWallet) {
+        throw new Error('Escrow funding details are incomplete. Refresh and try again.');
+      }
+      const provider = await requestWalletProvider();
+      const deployment = await deployEscrowFromWallet(provider, {
+        freelancerWallet,
+        arbiterAddress: arbiterWallet,
+        platformWallet,
+        contractId: fundInfo.contractId,
+        milestoneAmounts: fundInfo.milestoneAmounts,
+        milestoneDescriptions: fundInfo.milestoneDescriptions,
+        totalAmount: fundInfo.totalAmount,
+        chainId: fundInfo.chainId,
+      });
+      await contractsApi.fund(contract.id, deployment);
       toast.success('Contract funded and activated.');
       void queryClient.invalidateQueries({ queryKey: ['payments'] });
       await loadWorkspace();

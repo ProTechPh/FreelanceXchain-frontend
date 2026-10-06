@@ -16,6 +16,7 @@ minimumReleaseAgeExclude:
   - '@next/swc-win32-arm64-msvc@16.3.8'
   - '@next/swc-win32-x64-msvc@16.3.8'
   - next@16.3.8
+  - source-map-js@1.2.2
 
 # Transitive security patches. Each stays inside the parent's major line.
 # postcss needs an override rather than a lockfile refresh because next pins it
@@ -32,6 +33,7 @@ overrides:
   brace-expansion@5: ^5.0.12
   browserslist@<=4.28.6: '>=4.28.7'
   uuid@<11.1.1: ^11.1.1
+  source-map-js@>=1.0.0 <1.2.2: ^1.2.2
 
 auditConfig:
   ignoreGhsas:

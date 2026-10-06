@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { debugOnFailure } from './fixtures/mockEthereum';
 
 const createdAt = '2026-08-06T00:00:00.000Z';
 const walletA = '0x1111111111111111111111111111111111111111';
@@ -40,6 +41,10 @@ async function installMockWallet(page: Page) {
             return '0x539';
           case 'eth_getBalance':
             return '0xde0b6b3a7640000';
+          case 'personal_sign':
+          case 'eth_sign':
+            // Wallet linking proves ownership with a one-time challenge signature.
+            return '0x' + 'ab'.repeat(65);
           case 'wallet_revokePermissions':
             state.permitted = false;
             return null;
@@ -59,13 +64,31 @@ async function installMockWallet(page: Page) {
 
 /** Mirrors the API: one linked wallet, which must be unlinked before it can change. */
 async function mockWalletApi(page: Page) {
-  const calls = { link: [] as string[], unlink: 0 };
+  const calls = { link: [] as string[], linkPayloads: [] as Record<string, unknown>[], unlink: 0, challenge: 0 };
   let linked = '';
+  // Linking requires a one-time challenge the wallet signs before the PATCH.
+  await page.route('**/api/auth/wallet/challenge', async (route) => {
+    const { walletAddress } = route.request().postDataJSON() as { walletAddress: string };
+    calls.challenge += 1;
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        nonce: 'e2e-nonce',
+        message: `FreelanceXchain wallet verification\nWallet: ${walletAddress}\nNonce: e2e-nonce`,
+        walletAddress,
+        timestamp: '2026-08-06T00:00:00.000Z',
+        requestId: 'e2e-challenge',
+      }),
+    });
+  });
   await page.route('**/api/auth/wallet', async (route) => {
     const method = route.request().method();
     if (method === 'PATCH') {
-      const { walletAddress } = route.request().postDataJSON() as { walletAddress: string };
+      const payload = route.request().postDataJSON() as { walletAddress: string; nonce?: string; signature?: string };
+      const { walletAddress } = payload;
       calls.link.push(walletAddress);
+      calls.linkPayloads.push(payload as unknown as Record<string, unknown>);
       if (linked && linked.toLowerCase() !== walletAddress.toLowerCase()) {
         await route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ error: { code: 'WALLET_LOCKED', message: 'Wallet address is already set and cannot be changed' } }) });
         return;
@@ -111,11 +134,32 @@ test('switching to a different wallet after disconnecting links it once without 
   await expect(page.getByText(/failed to sync/i)).toHaveCount(0);
   expect(calls.link).toEqual([walletA, walletB]);
   expect(calls.unlink).toBe(1);
+  // Every link is preceded by a challenge and carries the signed proof.
+  expect(calls.challenge).toBe(2);
+  expect(
+    calls.linkPayloads.every(
+      (payload) => typeof payload.nonce === 'string' && typeof payload.signature === 'string',
+    ),
+  ).toBe(true);
 });
 
 test('a server refusal keeps the wallet disconnected and explains why', async ({ page }) => {
   await authenticate(page);
   await installMockWallet(page);
+  await page.route('**/api/auth/wallet/challenge', (route) => {
+    const { walletAddress } = route.request().postDataJSON() as { walletAddress: string };
+    return route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        nonce: 'e2e-nonce',
+        message: `FreelanceXchain wallet verification\nWallet: ${walletAddress}\nNonce: e2e-nonce`,
+        walletAddress,
+        timestamp: '2026-08-06T00:00:00.000Z',
+        requestId: 'e2e-challenge',
+      }),
+    });
+  });
   await page.route('**/api/auth/wallet', (route) => route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ error: { code: 'WALLET_LOCKED', message: 'Wallet address is already set and cannot be changed' } }) }));
 
   await page.goto('/dashboard/freelancer');
@@ -125,4 +169,8 @@ test('a server refusal keeps the wallet disconnected and explains why', async ({
   await expect(page.getByText(/Disconnect it first, then connect the new wallet/)).toBeVisible();
   await expect(page.getByText('Wallet connected successfully')).toHaveCount(0);
   await expect(header.getByRole('button', { name: 'Connect Wallet' })).toBeVisible();
+});
+
+test.afterEach(async ({ page }, testInfo) => {
+  await debugOnFailure(page, testInfo);
 });

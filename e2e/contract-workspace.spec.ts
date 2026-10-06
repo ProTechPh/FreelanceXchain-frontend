@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { debugOnFailure, installMockEthereum } from './fixtures/mockEthereum';
 
 const contractId = '123e4567-e89b-12d3-a456-426614174000';
 const user = {
@@ -21,17 +22,11 @@ test.beforeEach(async ({ page }) => {
       state: { user: storedUser, isAuthenticated: true },
       version: 0,
     }));
-    Object.defineProperty(window, 'ethereum', {
-      configurable: true,
-      value: {
-        request: () => {
-          const browserWindow = window as Window & { __ethereumCalls?: number };
-          browserWindow.__ethereumCalls = (browserWindow.__ethereumCalls ?? 0) + 1;
-          throw new Error('Contract funding must not invoke the browser wallet directly.');
-        },
-      },
-    });
   }, user);
+
+  // Funding deploys the escrow from the employer's own wallet, so the spec needs an
+  // EIP-1193 provider that can carry the deployment transaction end to end.
+  await installMockEthereum(page, { account: user.walletAddress });
 
   await page.route('**/api/auth/me', (route) => route.fulfill({
     status: 200,
@@ -52,7 +47,7 @@ test.beforeEach(async ({ page }) => {
   }));
 });
 
-test('employer funds a pending contract through the backend escrow endpoint', async ({ page }) => {
+test('employer deploys escrow from their wallet and funds the contract through the backend endpoint', async ({ page }) => {
   let status = 'pending';
   let fundingRequests = 0;
   let fundingBody: string | null = 'not-called';
@@ -95,7 +90,7 @@ test('employer funds a pending contract through the backend escrow endpoint', as
   await page.route(`**/api/contracts/${contractId}/fund-info`, (route) => route.fulfill({
     status: 200,
     contentType: 'application/json',
-    body: JSON.stringify({ contractId, freelancerWallet: '0x3333333333333333333333333333333333333333', platformWallet: '0x4444444444444444444444444444444444444444', milestoneAmounts: ['1000000000000000000000'], milestoneDescriptions: ['Launch'], totalAmount: '1000000000000000000000' }),
+    body: JSON.stringify({ contractId, freelancerWallet: '0x3333333333333333333333333333333333333333', arbiterWallet: '0x5555555555555555555555555555555555555555', platformWallet: '0x4444444444444444444444444444444444444444', milestoneAmounts: ['1000000000000000000000'], milestoneDescriptions: ['Launch'], totalAmount: '1000000000000000000000' }),
   }));
   await page.route(`**/api/payments/contracts/${contractId}/status`, (route) => route.fulfill({
     status: 200,
@@ -129,6 +124,15 @@ test('employer funds a pending contract through the backend escrow endpoint', as
   await expect(page.getByText('Contract funded and activated.')).toBeVisible();
   await expect(page.getByText('Active', { exact: true })).toBeVisible();
   expect(fundingRequests).toBe(1);
-  expect(fundingBody).toBeNull();
-  expect(await page.evaluate(() => (window as Window & { __ethereumCalls?: number }).__ethereumCalls ?? 0)).toBe(0);
+  // The wallet deploys the escrow and the deployment proof is posted to the backend.
+  const proof = JSON.parse(fundingBody ?? 'null') as { escrowAddress?: string; transactionHash?: string };
+  // Address is computed by ethers from the employer account + nonce, so only assert shape.
+  expect(proof?.escrowAddress).toMatch(/^0x[0-9a-fA-F]{40}$/);
+  expect(proof?.transactionHash).toMatch(/^0x[0-9a-f]{64}$/);
+  expect(await page.evaluate(() => (window as Window & { __ethereumCalls?: number }).__ethereumCalls ?? 0)).toBeGreaterThan(0);
+  expect(await page.evaluate(() => (window as Window & { __unsupportedRpc?: string[] }).__unsupportedRpc ?? [])).toEqual([]);
+});
+
+test.afterEach(async ({ page }, testInfo) => {
+  await debugOnFailure(page, testInfo);
 });
