@@ -229,7 +229,13 @@ export function useWalletConnection() {
       let linkedAddress = walletAction.type === 'restore' ? walletAction.walletAddress : walletAction.selectedAddress;
       if (walletAction.type === 'link') {
         try {
-          const { data } = await authApi.updateWallet(walletAction.selectedAddress);
+          const challengeResponse = await authApi.createWalletChallenge(walletAction.selectedAddress);
+          const { nonce, message, walletAddress } = challengeResponse.data;
+          const signature = await ethereum.request({
+            method: 'personal_sign',
+            params: [message, walletAddress],
+          }) as string;
+          const { data } = await authApi.updateWallet(walletAddress, nonce, signature);
           linkedAddress = data.walletAddress;
         } catch (error) {
           toast.error(getWalletSyncErrorMessage(error), { id: 'wallet-sync', duration: 8000 });

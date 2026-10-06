@@ -91,8 +91,11 @@ export const authApi = {
   mfaDisable: (factorId: string, otpCode: string) =>
     api.post<{ message: string }>('/auth/mfa/disable', { factorId, otpCode }),
 
-  updateWallet: (walletAddress: string) =>
-    api.patch<{ walletAddress: string }>('/auth/wallet', { walletAddress }),
+  createWalletChallenge: (walletAddress: string) =>
+    api.post<{ nonce: string; message: string; walletAddress: string }>('/auth/wallet/challenge', { walletAddress }),
+
+  updateWallet: (walletAddress: string, nonce: string, signature: string) =>
+    api.patch<{ walletAddress: string }>('/auth/wallet', { walletAddress, nonce, signature }),
 
   disconnectWallet: () =>
     api.delete<{ message: string; walletAddress: string }>('/auth/wallet'),

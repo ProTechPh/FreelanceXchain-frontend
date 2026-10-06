@@ -26,7 +26,13 @@ export function WalletSettingsCard({ user, onUserUpdate }: WalletSettingsCardPro
     try {
       const provider = await requestWalletProvider();
       const connection = await connectWallet(provider);
-      const { data } = await authApi.updateWallet(connection.address);
+      const challenge = await authApi.createWalletChallenge(connection.address);
+      const { nonce, message, walletAddress } = challenge.data;
+      const signature = await provider.request({
+        method: 'personal_sign',
+        params: [message, walletAddress],
+      }) as string;
+      const { data } = await authApi.updateWallet(walletAddress, nonce, signature);
       setWallet(connection);
       if (user) onUserUpdate({ ...user, walletAddress: data.walletAddress });
       toast.success('Wallet connected to your account.');
