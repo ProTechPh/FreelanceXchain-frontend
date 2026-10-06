@@ -123,11 +123,17 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
     setActionId('fund');
     try {
       if (!fundInfo) throw new Error('Contract funding details are unavailable. Refresh and try again.');
+      // Every constructor argument must be present: an empty arbiter address would only
+      // surface as an opaque encoding failure from the wallet.
+      const { freelancerWallet, arbiterWallet, platformWallet } = fundInfo;
+      if (!freelancerWallet || !arbiterWallet || !platformWallet) {
+        throw new Error('Escrow funding details are incomplete. Refresh and try again.');
+      }
       const provider = await requestWalletProvider();
       const deployment = await deployEscrowFromWallet(provider, {
-        freelancerWallet: fundInfo.freelancerWallet,
-        arbiterAddress: fundInfo.arbiterWallet ?? '',
-        platformWallet: fundInfo.platformWallet,
+        freelancerWallet,
+        arbiterAddress: arbiterWallet,
+        platformWallet,
         contractId: fundInfo.contractId,
         milestoneAmounts: fundInfo.milestoneAmounts,
         milestoneDescriptions: fundInfo.milestoneDescriptions,
