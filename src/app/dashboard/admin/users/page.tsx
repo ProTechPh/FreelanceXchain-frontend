@@ -5,16 +5,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { adminApi } from '@/lib/api';
 import { csrfTokenManager } from '@/lib/api-client';
 import { getApiErrorMessage } from '@/lib/auth-contract';
@@ -32,6 +22,9 @@ import { AdminPermissionGate } from '@/components/admin/AdminPermissionGate';
 import { AdminPermissionsDialog } from '@/components/admin/AdminPermissionsDialog';
 import { AddUserDialog } from '@/components/admin/AddUserDialog';
 import { UserDetailDrawer } from '@/components/admin/UserDetailDrawer';
+import { SuspendUserDialog } from '@/components/admin/SuspendUserDialog';
+import { VerifyKycDialog } from '@/components/admin/VerifyKycDialog';
+import { UnsuspendUserDialog } from '@/components/admin/UnsuspendUserDialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -64,10 +57,7 @@ export default function UsersPage() {
 
   // Dialog states replacing window.prompt
   const [userToSuspend, setUserToSuspend] = useState<AdminUser | null>(null);
-  const [suspendReason, setSuspendReason] = useState('');
-  const [suspendReasonError, setSuspendReasonError] = useState<string | null>(null);
   const [userToVerify, setUserToVerify] = useState<AdminUser | null>(null);
-  const [verifyReason, setVerifyReason] = useState('');
   const [userToUnsuspend, setUserToUnsuspend] = useState<AdminUser | null>(null);
   const [userForPermissions, setUserForPermissions] = useState<AdminUser | null>(null);
   const [addUserOpen, setAddUserOpen] = useState(false);
@@ -103,23 +93,13 @@ export default function UsersPage() {
     };
   }, [load]);
 
-  const confirmSuspend = async () => {
-    if (!userToSuspend) return;
-    const reason = suspendReason.trim();
-    if (!reason || reason.length < 10) {
-      const msg = 'Suspension reason must be at least 10 characters.';
-      setSuspendReasonError(msg);
-      toast.warning(msg);
-      return;
-    }
-    setPendingActionId(userToSuspend.id);
+  const confirmSuspend = async (user: AdminUser, reason: string) => {
+    setPendingActionId(user.id);
     try {
-      await adminApi.suspendUser(userToSuspend.id, reason);
-      setUsers((prev) => prev.map((u) => (u.id === userToSuspend.id ? { ...u, isActive: false } : u)));
+      await adminApi.suspendUser(user.id, reason);
+      setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, isActive: false } : u)));
       toast.success('User suspended');
       setUserToSuspend(null);
-      setSuspendReason('');
-      setSuspendReasonError(null);
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Couldn\'t suspend this user. Try again.'));
     } finally {
@@ -141,26 +121,13 @@ export default function UsersPage() {
     }
   };
 
-  const confirmVerify = async () => {
-    if (!userToVerify) return;
-    const trimmedReason = verifyReason.trim();
-
-    if (!trimmedReason) {
-      toast.warning('A verification reason is required — it will be stored with the manual approval.');
-      return;
-    }
-    if (trimmedReason.length < 10) {
-      toast.warning('Verification reason must be at least 10 characters so there\'s a meaningful audit trail.');
-      return;
-    }
-
-    setPendingActionId(userToVerify.id);
+  const confirmVerify = async (user: AdminUser, reason: string) => {
+    setPendingActionId(user.id);
     try {
-      await adminApi.verifyUser(userToVerify.id, trimmedReason);
-      setUsers((prev) => prev.map((u) => (u.id === userToVerify.id ? { ...u, kycVerified: true } : u)));
-      toast.success(`${userToVerify.name || userToVerify.email} manually verified`);
+      await adminApi.verifyUser(user.id, reason);
+      setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, kycVerified: true } : u)));
+      toast.success(`${user.name || user.email} manually verified`);
       setUserToVerify(null);
-      setVerifyReason('');
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Couldn\'t verify this user. Try again.'));
     } finally {
@@ -529,7 +496,6 @@ export default function UsersPage() {
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     setUserToVerify(user);
-                                    setVerifyReason('');
                                   }}
                                 >
                                   <ShieldCheck className="w-4 h-4 mr-2" />
@@ -543,7 +509,6 @@ export default function UsersPage() {
                                     e.stopPropagation();
                                     if (user.isActive) {
                                       setUserToSuspend(user);
-                                      setSuspendReason('');
                                     } else {
                                       setUserToUnsuspend(user);
                                     }
@@ -599,7 +564,6 @@ export default function UsersPage() {
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setUserToVerify(user);
-                                setVerifyReason('');
                               }}
                             >
                               <ShieldCheck className="w-4 h-4" />
@@ -617,7 +581,6 @@ export default function UsersPage() {
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setUserToSuspend(user);
-                                  setSuspendReason('');
                                 }}
                               >
                                 <Ban className="w-4 h-4" />
@@ -832,7 +795,6 @@ export default function UsersPage() {
                             onClick={(e) => {
                               e.stopPropagation();
                               setUserToVerify(user);
-                              setVerifyReason('');
                             }}
                           >
                             <ShieldCheck className="w-4 h-4 mr-2" />
@@ -846,7 +808,6 @@ export default function UsersPage() {
                               e.stopPropagation();
                               if (user.isActive) {
                                 setUserToSuspend(user);
-                                setSuspendReason('');
                               } else {
                                 setUserToUnsuspend(user);
                               }
@@ -900,7 +861,6 @@ export default function UsersPage() {
                         onClick={(e) => {
                           e.stopPropagation();
                           setUserToVerify(user);
-                          setVerifyReason('');
                         }}
                       >
                         <ShieldCheck className="w-4 h-4" />
@@ -917,7 +877,6 @@ export default function UsersPage() {
                           onClick={(e) => {
                             e.stopPropagation();
                             setUserToSuspend(user);
-                            setSuspendReason('');
                           }}
                         >
                           <Ban className="w-4 h-4" />
@@ -948,169 +907,37 @@ export default function UsersPage() {
       </div>
 
       {/* Suspend User Modal */}
-      <Dialog
+      <SuspendUserDialog
         open={userToSuspend !== null}
         onOpenChange={(open) => {
-          if (!open && !pendingActionId) {
-            setUserToSuspend(null);
-            setSuspendReason('');
-            setSuspendReasonError(null);
-          }
+          if (!open) setUserToSuspend(null);
         }}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-destructive">Suspend User</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to suspend <strong className="text-foreground">{userToSuspend?.name || userToSuspend?.email}</strong>? They will immediately lose access to their account until unsuspended.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2 py-2">
-            <Label htmlFor="suspend-reason">Reason for suspension</Label>
-            <Textarea
-              id="suspend-reason"
-              placeholder="e.g. Terms of Service violation, suspicious escrow activity, or chargeback request."
-              value={suspendReason}
-              onChange={(e) => {
-                const val = e.target.value;
-                setSuspendReason(val);
-                if (val.trim().length >= 10) {
-                  setSuspendReasonError(null);
-                } else if (val.trim().length > 0) {
-                  setSuspendReasonError('Suspension reason must be at least 10 characters.');
-                }
-              }}
-              rows={3}
-              disabled={Boolean(pendingActionId)}
-              aria-invalid={Boolean(suspendReasonError || (suspendReason.length > 0 && suspendReason.trim().length < 10))}
-              aria-describedby="suspend-reason-validation"
-            />
-            <div className="flex items-center justify-between text-xs">
-              {(suspendReasonError || (suspendReason.length > 0 && suspendReason.trim().length < 10)) ? (
-                <p id="suspend-reason-validation" className="text-destructive font-medium" role="alert">
-                  Suspension reason must be at least 10 characters.
-                </p>
-              ) : (
-                <p id="suspend-reason-validation" className="text-muted-foreground">
-                  Minimum 10 characters required for audit trail.
-                </p>
-              )}
-              <span className={`ml-auto font-mono ${suspendReason.trim().length < 10 ? 'text-muted-foreground' : 'text-success'}`}>
-                {suspendReason.trim().length}/10
-              </span>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setUserToSuspend(null);
-                setSuspendReason('');
-                setSuspendReasonError(null);
-              }}
-              disabled={Boolean(pendingActionId)}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              loading={Boolean(pendingActionId)}
-              loadingText="Suspending…"
-              disabled={suspendReason.trim().length < 10 || Boolean(pendingActionId)}
-              onClick={confirmSuspend}
-            >
-              Suspend User
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        user={userToSuspend}
+        onConfirm={confirmSuspend}
+        isPending={Boolean(pendingActionId)}
+      />
 
       {/* Manually Verify KYC Modal */}
-      <Dialog
+      <VerifyKycDialog
         open={userToVerify !== null}
         onOpenChange={(open) => {
-          if (!open && !pendingActionId) setUserToVerify(null);
+          if (!open) setUserToVerify(null);
         }}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-primary">Manually Verify KYC</DialogTitle>
-            <DialogDescription>
-              Grant manual verification status for <strong className="text-foreground">{userToVerify?.name || userToVerify?.email}</strong>. A detailed reason is required for the compliance audit log.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2 py-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="verify-reason">Verification reason</Label>
-              <span className={`text-xs ${verifyReason.trim().length >= 10 ? 'text-success' : 'text-muted-foreground'}`}>
-                {verifyReason.trim().length}/10 characters min
-              </span>
-            </div>
-            <Textarea
-              id="verify-reason"
-              placeholder="e.g. Verified official national identity document and bank statement during video onboarding interview."
-              value={verifyReason}
-              onChange={(e) => setVerifyReason(e.target.value)}
-              rows={3}
-              disabled={Boolean(pendingActionId)}
-            />
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setUserToVerify(null)}
-              disabled={Boolean(pendingActionId)}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="gradient"
-              loading={Boolean(pendingActionId)}
-              loadingText="Verifying…"
-              disabled={verifyReason.trim().length < 10 || Boolean(pendingActionId)}
-              onClick={confirmVerify}
-            >
-              Verify User
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        user={userToVerify}
+        onConfirm={confirmVerify}
+        isPending={Boolean(pendingActionId)}
+      />
 
       {/* Unsuspend User Confirmation Modal */}
-      <Dialog
+      <UnsuspendUserDialog
         open={userToUnsuspend !== null}
         onOpenChange={(open) => {
-          if (!open && !pendingActionId) setUserToUnsuspend(null);
+          if (!open) setUserToUnsuspend(null);
         }}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-success">Unsuspend User</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to unsuspend <strong className="text-foreground">{userToUnsuspend?.name || userToUnsuspend?.email}</strong>? They will immediately regain full access to their account.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setUserToUnsuspend(null)}
-              disabled={Boolean(pendingActionId)}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="gradient"
-              loading={Boolean(pendingActionId)}
-              loadingText="Unsuspending…"
-              onClick={() => {
-                if (userToUnsuspend) handleUnsuspend(userToUnsuspend);
-              }}
-            >
-              Unsuspend User
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        user={userToUnsuspend}
+        onConfirm={handleUnsuspend}
+        isPending={Boolean(pendingActionId)}
+      />
 
       {/* Admin Permissions Modal */}
       <AdminPermissionsDialog
@@ -1136,14 +963,8 @@ export default function UsersPage() {
         canManageKyc={canManageKyc}
         onLoginAs={handleLoginAs}
         onManagePermissions={setUserForPermissions}
-        onVerifyKyc={(user) => {
-          setUserToVerify(user);
-          setVerifyReason('');
-        }}
-        onSuspend={(user) => {
-          setUserToSuspend(user);
-          setSuspendReason('');
-        }}
+        onVerifyKyc={setUserToVerify}
+        onSuspend={setUserToSuspend}
         onUnsuspend={setUserToUnsuspend}
         pendingActionId={pendingActionId}
       />
