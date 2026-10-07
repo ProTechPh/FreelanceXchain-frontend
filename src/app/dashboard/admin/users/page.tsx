@@ -496,7 +496,6 @@ export default function UsersPage() {
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     setUserToVerify(user);
-                                    setVerifyReason('');
                                   }}
                                 >
                                   <ShieldCheck className="w-4 h-4 mr-2" />
@@ -510,7 +509,6 @@ export default function UsersPage() {
                                     e.stopPropagation();
                                     if (user.isActive) {
                                       setUserToSuspend(user);
-                                      setSuspendReason('');
                                     } else {
                                       setUserToUnsuspend(user);
                                     }
@@ -797,7 +795,6 @@ export default function UsersPage() {
                             onClick={(e) => {
                               e.stopPropagation();
                               setUserToVerify(user);
-                              setVerifyReason('');
                             }}
                           >
                             <ShieldCheck className="w-4 h-4 mr-2" />
@@ -811,7 +808,6 @@ export default function UsersPage() {
                               e.stopPropagation();
                               if (user.isActive) {
                                 setUserToSuspend(user);
-                                setSuspendReason('');
                               } else {
                                 setUserToUnsuspend(user);
                               }

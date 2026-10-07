@@ -25,7 +25,7 @@ type MobileFilterDialogProps = {
   onReset: () => void;
   savedSearchName: string;
   onSavedSearchNameChange: (name: string) => void;
-  onSaveSearch: () => void;
+  onSaveSearch: (event?: React.SyntheticEvent) => void | Promise<void>;
   savingSearch: boolean;
   hasUser: boolean;
 };

@@ -377,8 +377,8 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
     }
   }, [favoriteIds, kind]);
 
-  const saveSearch = useCallback(async (event: React.FormEvent) => {
-    event.preventDefault();
+  const saveSearch = useCallback(async (event?: React.SyntheticEvent) => {
+    event?.preventDefault();
     const name = savedSearchName.trim();
     if (!name) {
       toast.error("Enter a name for this search.");
