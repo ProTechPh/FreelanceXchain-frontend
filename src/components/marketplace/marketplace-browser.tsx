@@ -16,18 +16,12 @@ import {
 } from "@/lib/marketplace-search";
 import { useAuthStore } from "@/stores/authStore";
 import type { Favorite, FreelancerProfile, Project, ProjectCategoryStat, SavedSearch, Skill } from "@/types";
+import { MobileFilterDialog } from "./mobile-filter-dialog";
+import { DeleteSavedSearchDialog } from "./delete-saved-search-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 type MarketplaceKind = "project" | "freelancer";
@@ -658,144 +652,31 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
           </div>
 
           {/* Mobile Filter Dialog */}
-          <Dialog open={mobileFilterOpen} onOpenChange={setMobileFilterOpen}>
-            <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <ListFilter className="size-4 text-primary" />
-                  Filter {kind === "project" ? "Projects" : "Freelancers"}
-                </DialogTitle>
-                <DialogDescription>
-                  Adjust your search criteria to find matching {kind === "project" ? "projects" : "freelancers"}.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-2">
-                <div className="space-y-1.5">
-                  <Label htmlFor="mobile-skill-select" className="text-xs font-semibold text-foreground">
-                    Skill
-                  </Label>
-                  <div className="relative">
-                    <select
-                      id="mobile-skill-select"
-                      aria-label="Skill"
-                      value={filters.skillIds[0] ?? ""}
-                      onChange={(event) => {
-                        const val = event.target.value;
-                        setFilters((current) => ({ ...current, skillIds: val ? [val] : [] }));
-                      }}
-                      className="h-10 w-full appearance-none border border-input bg-background px-3 pr-10 text-sm text-foreground rounded-md hover:border-foreground/30 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40"
-                    >
-                      <option value="">All skills</option>
-                      {skills.map((skill) => (
-                        <option key={skill.id} value={skill.id}>
-                          {skill.name}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-                  </div>
-                </div>
-
-                {kind === "project" && (
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="mobile-min-budget" className="text-xs font-semibold text-foreground">
-                        Min budget ($)
-                      </Label>
-                      <Input
-                        id="mobile-min-budget"
-                        type="number"
-                        min="0"
-                        inputMode="numeric"
-                        value={filters.minBudget ?? ""}
-                        onChange={(event) => setFilters((current) => updateBudget(current, "minBudget", event.target.value))}
-                        placeholder="500"
-                        className="rounded-md"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="mobile-max-budget" className="text-xs font-semibold text-foreground">
-                        Max budget ($)
-                      </Label>
-                      <Input
-                        id="mobile-max-budget"
-                        type="number"
-                        min="0"
-                        inputMode="numeric"
-                        value={filters.maxBudget ?? ""}
-                        onChange={(event) => setFilters((current) => updateBudget(current, "maxBudget", event.target.value))}
-                        placeholder="5000"
-                        className="rounded-md"
-                      />
-                    </div>
-                  </div>
-                )}
-                {filters.minBudget !== undefined && filters.maxBudget !== undefined && filters.minBudget > filters.maxBudget && (
-                  <p className="text-xs text-destructive">Min budget cannot exceed max budget</p>
-                )}
-
-                {user && (
-                  <div className="pt-3 border-t border-border space-y-2">
-                    <Label htmlFor="mobile-saved-name" className="text-xs font-semibold text-muted-foreground">
-                      Save as Search Preset
-                    </Label>
-                    <div className="flex gap-2">
-                      <Input
-                        id="mobile-saved-name"
-                        value={savedSearchName}
-                        onChange={(event) => setSavedSearchName(event.target.value)}
-                        placeholder="e.g. React & Solidity gigs"
-                        className="text-xs h-9 rounded-md flex-1"
-                      />
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={saveSearch}
-                        loading={savingSearch}
-                        disabled={!savedSearchName.trim() || hasUnresolvedSkillSelection}
-                        className="h-9 shrink-0 text-xs gap-1"
-                      >
-                        <BookmarkPlus className="size-3.5" aria-hidden="true" />
-                        Save
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-              <DialogFooter className="flex-row items-center justify-between sm:justify-end gap-2 pt-2 border-t border-border">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    resetFilters();
-                    setMobileFilterOpen(false);
-                  }}
-                  disabled={loading}
-                >
-                  Reset
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={() => {
-                    const next: MarketplaceFilters = filters.keyword.trim()
-                      ? { ...filters, categoryId: undefined, categoryName: undefined }
-                      : { ...filters };
-                    setFilters(next);
-                    setAppliedFilters(next);
-                    setMobileFilterOpen(false);
-                  }}
-                  disabled={loading}
-                  className="gap-1.5"
-                >
-                  <ListFilter className="size-3.5" />
-                  Apply Filters
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <MobileFilterDialog
+            open={mobileFilterOpen}
+            onOpenChange={setMobileFilterOpen}
+            kind={kind}
+            skills={skills}
+            filters={filters}
+            onFilterChange={setFilters}
+            onApply={() => {
+              const next: MarketplaceFilters = filters.keyword.trim()
+                ? { ...filters, categoryId: undefined, categoryName: undefined }
+                : { ...filters };
+              setFilters(next);
+              setAppliedFilters(next);
+              setMobileFilterOpen(false);
+            }}
+            onReset={() => {
+              resetFilters();
+              setMobileFilterOpen(false);
+            }}
+            savedSearchName={savedSearchName}
+            onSavedSearchNameChange={setSavedSearchName}
+            onSaveSearch={saveSearch}
+            savingSearch={savingSearch}
+            hasUser={Boolean(user)}
+          />
 
           {/* Search & filters (Desktop: sm and above). */}
           <div className={cn("hidden sm:block border border-border/80 bg-card shadow-md shadow-black/5", panel)}>
@@ -1094,43 +975,15 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
           )}
 
       {/* Delete Saved Search Confirmation Dialog */}
-      <Dialog
-        open={searchToDelete !== null}
-        onOpenChange={(open) => {
-          if (!open && !isDeletingSearch) setSearchToDelete(null);
+      <DeleteSavedSearchDialog
+        searchToDelete={searchToDelete}
+        isDeleting={isDeletingSearch}
+        onClose={() => setSearchToDelete(null)}
+        onConfirm={async (id) => {
+          setSearchToDelete(null);
+          await deleteSavedSearch(id);
         }}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-destructive">Delete Saved Search?</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete <strong className="text-foreground">&quot;{searchToDelete?.name}&quot;</strong>? This saved filter preset will be permanently removed.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setSearchToDelete(null)}
-              disabled={isDeletingSearch}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              loading={isDeletingSearch}
-              loadingText="Deleting…"
-              onClick={async () => {
-                if (!searchToDelete) return;
-                const id = searchToDelete.id;
-                setSearchToDelete(null);
-                await deleteSavedSearch(id);
-              }}
-            >
-              Delete Search
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      />
     </div>
   );
 }
