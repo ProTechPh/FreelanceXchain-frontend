@@ -39,7 +39,7 @@ export function ContractWorkspacePreview() {
         className="absolute -right-3 -top-5 z-20 hidden items-center gap-3 rounded-2xl border border-border bg-card px-4 py-2.5 shadow-xl backdrop-blur-md sm:flex"
       >
         <span className="flex size-8 items-center justify-center rounded-full bg-success-subtle text-success"><ShieldCheck className="size-4" aria-hidden="true" /></span>
-        <span><span className="block text-xs font-bold text-foreground">Smart Escrow Funded 🔒</span><span className="block text-xs text-muted-foreground">$4,500 USDC locked upfront</span></span>
+        <span><span className="block text-xs font-bold text-foreground">Smart Escrow Funded</span><span className="block text-xs text-muted-foreground">$4,500 USDC locked upfront</span></span>
       </motion.div>
       <motion.div
         animate={reduce ? undefined : { y: [0, 6, 0] }}

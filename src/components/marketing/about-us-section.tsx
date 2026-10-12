@@ -12,7 +12,7 @@ const PILLARS = [
     icon: <LockKey className="size-6 text-primary" strokeWidth={2.5} />,
     title: "100% Smart Contract Escrow",
     description:
-      "Funds are deposited upfront into audited Ethereum & Polygon smart contracts. Payments are auto-released upon deliverable approval — eliminating ghosting, chargebacks, and payment delays forever.",
+      "Funds are deposited upfront into audited Ethereum & Polygon smart contracts. Payments are auto-released upon deliverable approval, eliminating ghosting, chargebacks, and payment delays forever.",
   },
   {
     icon: <Brain className="size-6 text-primary" strokeWidth={2.5} />,
@@ -24,7 +24,7 @@ const PILLARS = [
     icon: <Globe className="size-6 text-primary" strokeWidth={2.5} />,
     title: "Portable On-Chain Reputation",
     description:
-      "Every completed milestone and rating is permanently engraved on-chain. Your reputation is your sovereign asset — it travels with your wallet and cannot be banned or seized by a centralized entity.",
+      "Every completed milestone and rating is permanently engraved on-chain. Your reputation is your sovereign asset that travels with your wallet and cannot be banned or seized by a centralized entity.",
   },
   {
     icon: <ShieldCheck className="size-6 text-primary" strokeWidth={2.5} />,

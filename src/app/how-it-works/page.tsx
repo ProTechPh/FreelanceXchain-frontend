@@ -27,7 +27,7 @@ const WORKFLOW_STEPS = [
     step: '03',
     title: 'Fund smart contract escrow securely',
     icon: ShieldCheck,
-    description: 'Once a proposal is accepted, the employer funds the contract. Funds are locked securely in Ethereum smart contract escrow—neither party can unilaterally withdraw without mutual agreement.',
+    description: 'Once a proposal is accepted, the employer funds the contract. Funds are locked securely in Ethereum smart contract escrow. Neither party can unilaterally withdraw without mutual agreement.',
     tip: '100% smart contract escrow eliminates payment default risk.',
   },
   {

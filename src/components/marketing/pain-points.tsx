@@ -5,7 +5,7 @@ import { X } from 'lucide-react';
 
 const painPoints = [
   "Chasing clients for unpaid milestone invoices",
-  "Excessive 15–20% traditional platform fees",
+  "Excessive 15% to 20% traditional platform fees",
   "Arbitrary account suspensions and payment holds",
   "Fake reviews and unverified client profiles",
   "Rewriting custom proposals from scratch nonstop",
