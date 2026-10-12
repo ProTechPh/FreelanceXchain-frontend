@@ -7,6 +7,8 @@ import './globals.css';
 const nunitoSans = Nunito_Sans({
   subsets: ['latin'],
   variable: '--font-nunito',
+  weight: ['400', '500', '600', '700', '800'],
+  style: ['normal', 'italic'],
   display: 'swap',
 });
 

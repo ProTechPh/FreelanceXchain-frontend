@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Sparkles as Sparkle, ShieldCheck, Globe, ReceiptText } from 'lucide-react';
+import { ArrowRightIcon, ShieldEscrowIcon, GlobalKycIcon, ReceiptGuaranteeIcon } from '@/components/ui/brand-icons';
 import { motion, useReducedMotion } from "motion/react";
 import { useAuthStore } from "@/stores/authStore";
 
@@ -50,9 +50,9 @@ function CallToAction() {
               className="group inline-flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3.5 rounded-full bg-gradient-foreground text-gradient-from font-bold text-sm shadow-lg transition-all duration-150 hover:bg-gradient-foreground/90 active:scale-[0.98]"
             >
               <span>{primaryText}</span>
-              <ArrowRight
+              <ArrowRightIcon
                 className="size-4 transition-transform duration-150 group-hover:translate-x-1"
-                strokeWidth={2.5}
+                aria-hidden="true"
               />
             </Link>
             <Link
@@ -69,14 +69,13 @@ function CallToAction() {
               the glyph into a blob and loses the distinction between the three. */}
           <div className="mt-8 sm:mt-10 pt-6 sm:pt-8 border-t border-gradient-foreground/20 flex flex-wrap justify-center items-center gap-x-6 gap-y-3 sm:gap-x-10 text-xs text-gradient-foreground/90 font-medium">
             {[
-              { Icon: ShieldCheck, label: '100% Smart Contract Escrow' },
-              { Icon: Globe, label: 'Didit KYC in 220+ Countries' },
-              { Icon: ReceiptText, label: 'Zero Unpaid Invoices Guaranteed' },
+              { Icon: ShieldEscrowIcon, label: '100% Smart Contract Escrow' },
+              { Icon: GlobalKycIcon, label: 'Didit KYC in 220+ Countries' },
+              { Icon: ReceiptGuaranteeIcon, label: 'Zero Unpaid Invoices Guaranteed' },
             ].map(({ Icon, label }) => (
               <div key={label} className="flex items-center gap-2">
                 <Icon
                   className="size-4 shrink-0 text-gradient-foreground/70"
-                  strokeWidth={1.75}
                   aria-hidden="true"
                 />
                 <span className="break-words">{label}</span>

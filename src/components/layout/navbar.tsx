@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu as List, Search as MagnifyingGlass, LogOut, LayoutDashboard, User } from 'lucide-react';
+import { NavMenuIcon, NavSearchIcon, NavDashboardIcon, NavUserIcon, NavLogOutIcon } from '@/components/ui/brand-icons';
 import * as React from "react";
 import { usePathname, useRouter } from 'next/navigation';
 
@@ -165,7 +165,7 @@ export default function Navbar({
           <ThemeToggle />
           <Tooltip content="Search">
             <Button variant="ghost" size="icon" aria-label="Open search dialog" className="rounded-full size-11 shrink-0 touch-manipulation" onClick={() => setOpenSearch(true)}>
-              <MagnifyingGlass className="size-3.5" strokeWidth={2.5} />
+              <NavSearchIcon className="size-3.5" />
             </Button>
           </Tooltip>
           {isLoggedIn ? (
@@ -198,7 +198,7 @@ export default function Navbar({
                     onClick={() => router.push(dashboardUrl)}
                     className="flex items-center gap-2 cursor-pointer"
                   >
-                    <LayoutDashboard className="size-4" aria-hidden="true" />
+                    <NavDashboardIcon className="size-4" aria-hidden="true" />
                     <span>Dashboard</span>
                   </DropdownMenuItem>
                   {user.role !== 'admin' && (
@@ -206,7 +206,7 @@ export default function Navbar({
                       onClick={() => router.push(`/dashboard/${user.role}/profile`)}
                       className="flex items-center gap-2 cursor-pointer"
                     >
-                      <User className="size-4" aria-hidden="true" />
+                      <NavUserIcon className="size-4" aria-hidden="true" />
                       <span>Profile</span>
                     </DropdownMenuItem>
                   )}
@@ -215,7 +215,7 @@ export default function Navbar({
                     onClick={() => logout()}
                     className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive"
                   >
-                    <LogOut className="size-4" aria-hidden="true" />
+                    <NavLogOutIcon className="size-4" aria-hidden="true" />
                     <span>Log out</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -238,13 +238,13 @@ export default function Navbar({
           <div className="flex sm:hidden items-center gap-1">
             <ThemeToggle />
             <Button variant="ghost" size="icon" aria-label="Open search dialog" className="rounded-full size-11 touch-manipulation" onClick={() => setOpenSearch(true)}>
-              <MagnifyingGlass className="size-4 sm:size-3.5" strokeWidth={2.5} />
+              <NavSearchIcon className="size-4 sm:size-3.5" />
             </Button>
           </div>
 
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
             <SheetTrigger className="inline-flex size-11 items-center justify-center rounded-full text-sm hover:bg-muted transition-colors touch-manipulation" aria-label="Open menu">
-              <List className="size-4.5 sm:size-4" strokeWidth={2.5} />
+              <NavMenuIcon className="size-4.5 sm:size-4" />
             </SheetTrigger>
 
             <SheetContent side="right" className="w-full max-w-sm overflow-y-auto px-6 pb-safe">
@@ -314,7 +314,7 @@ export default function Navbar({
                         setMobileMenuOpen(false);
                       }}
                     >
-                      <LogOut className="size-4 mr-2" />
+                      <NavLogOutIcon className="size-4 mr-2" />
                       Log out
                     </Button>
                   </div>

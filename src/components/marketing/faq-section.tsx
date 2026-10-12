@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, useReducedMotion, AnimatePresence } from "motion/react";
-import { ChevronDown as CaretDown, Sparkles as Sparkle } from 'lucide-react';
+import { ChevronDownIcon } from '@/components/ui/brand-icons';
 
 const faqs = [
   {
@@ -38,7 +38,7 @@ const faqs = [
   {
     question: "What are the platform fees?",
     answer:
-      "FreelanceXchain charges a flat, transparent 1% protocol fee upon milestone release, compared to the 10%–20% cuts and high foreign exchange fees taken by traditional freelance marketplaces.",
+      "FreelanceXchain charges a flat, transparent 1% protocol fee upon milestone release, compared to the 10% to 20% cuts and high foreign exchange fees taken by traditional freelance marketplaces.",
   },
 ];
 
@@ -52,7 +52,7 @@ function FaqItem({ faq, isOpen, onToggle }: { faq: (typeof faqs)[number]; isOpen
       >
         <span className="min-w-0 flex-1 break-words">{faq.question}</span>
         <span className={`p-1 rounded-lg bg-muted/60 transition-transform duration-200 shrink-0 ${isOpen ? "rotate-180 bg-primary/10 text-primary" : "text-muted-foreground"}`}>
-          <CaretDown className="size-4 shrink-0" strokeWidth={2.5} />
+          <ChevronDownIcon className="size-4 shrink-0" />
         </span>
       </button>
       <AnimatePresence initial={false}>
