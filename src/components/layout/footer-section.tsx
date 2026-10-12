@@ -32,6 +32,7 @@ const footerLinks: FooterSection[] = [
 			{ title: 'Compare Platforms', href: '/#compare' },
 			{ title: 'FAQs & Help', href: '/help#faq' },
 			{ title: 'Platform Guides', href: '/help#guides' },
+			{ title: 'GitHub Repository', href: 'https://github.com/freelancexchain/freelancexchain' },
 		],
 	},
 	{

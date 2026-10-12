@@ -169,7 +169,7 @@ export function EcosystemShowcase() {
       className="py-20 sm:py-28 bg-background overflow-hidden border-b border-border/40 relative scroll-mt-[5.5rem]"
     >
       {/* Background Soft Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[450px] bg-primary/5 rounded-full blur-3xl pointer-events-none -z-10" />
+      
 
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 text-center mb-12">
         <motion.div

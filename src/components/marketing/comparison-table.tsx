@@ -13,7 +13,7 @@ const matrixRows = [
   {
     feature: "Platform Take Rate / Fees",
     freelanceXchain: "Low transparent fees",
-    web2Platforms: "10% – 20% platform cut",
+    web2Platforms: "10% to 20% platform cut",
     directInvoicing: "Bank & wire transfer fees",
   },
   {
@@ -37,8 +37,8 @@ const matrixRows = [
   {
     feature: "Payment Settlement Speed",
     freelanceXchain: "Instant upon milestone approval",
-    web2Platforms: "5 – 14 day escrow hold",
-    directInvoicing: "30 – 90 day invoice lag",
+    web2Platforms: "5 to 14 day escrow hold",
+    directInvoicing: "30 to 90 day invoice lag",
   },
   {
     feature: "Dispute Transparency",

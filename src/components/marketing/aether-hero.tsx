@@ -1,6 +1,6 @@
 "use client";
 
-import { Check } from "lucide-react";
+import { VerifiedCheckIcon } from "@/components/ui/brand-icons";
 import { motion, useReducedMotion } from "motion/react";
 
 import { DesktopContractWorkspace } from "@/components/marketing/desktop-contract-workspace";
@@ -20,7 +20,6 @@ export default function AetherHero() {
       aria-label="Freelance marketplace introduction"
       className="relative overflow-hidden border-b border-border/40 bg-background pb-16 pt-32 lg:pb-24 lg:pt-40"
     >
-      <div aria-hidden="true" className="pointer-events-none absolute left-1/2 top-10 -z-10 h-[350px] w-[700px] -translate-x-1/2 rounded-full bg-primary/5 blur-3xl" />
 
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
@@ -44,7 +43,7 @@ export default function AetherHero() {
           <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-xs text-muted-foreground sm:gap-8 sm:text-sm">
             {trustBadges.map((badge) => (
               <div key={badge} className="flex items-center gap-2">
-                <Check className="size-4 shrink-0 text-primary dark:text-success" strokeWidth={2.5} aria-hidden="true" />
+                <VerifiedCheckIcon className="size-4 shrink-0 text-primary dark:text-success" />
                 <span className="font-medium text-foreground">{badge}</span>
               </div>
             ))}

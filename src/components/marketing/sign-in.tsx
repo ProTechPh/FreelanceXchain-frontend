@@ -102,8 +102,8 @@ export const SignInPage: React.FC<SignInPageProps> = ({
         <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary to-chart-2 dark:from-gradient-from dark:via-gradient-via dark:to-gradient-to" />
         
         {/* Decorative shapes */}
-        <div className="absolute -top-32 -right-32 w-[500px] h-[500px] rounded-full bg-success/15 blur-3xl" />
-        <div className="absolute -bottom-32 -left-32 w-[500px] h-[500px] rounded-full bg-success/15 blur-3xl" />
+        
+        
         
         <div className="relative z-10 flex flex-col justify-between p-12 lg:p-16 text-gradient-foreground w-full">
           {/* Logo */}
@@ -126,7 +126,7 @@ export const SignInPage: React.FC<SignInPageProps> = ({
             
             {/* Description */}
             <p className="text-lg leading-relaxed mb-10 text-gradient-foreground/60 dark:text-gradient-foreground/90">
-              Smart contract escrow, AI proposal matching, and portable on-chain reputation — all in one platform.
+              Smart contract escrow, AI proposal matching, and portable on-chain reputation in one platform.
             </p>
             
             {/* Feature list */}

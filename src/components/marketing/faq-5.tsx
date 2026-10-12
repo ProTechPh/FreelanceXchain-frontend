@@ -21,7 +21,7 @@ const defaultFaqs: FaqItem[] = [
   {
     question: "What fees does FreelanceXchain charge?",
     answer:
-      "FreelanceXchain operates on a 0% platform escrow fee model — 100% of approved milestone funds go directly to freelancers, with zero hidden commission cuts. Platform monetization is powered by optional rush delivery upgrades and Pro AI subscriptions.",
+      "FreelanceXchain operates on a 0% platform escrow fee model: 100% of approved milestone funds go directly to freelancers, with zero hidden commission cuts. Platform monetization is powered by optional rush delivery upgrades and Pro AI subscriptions.",
   },
   {
     question: "How is my reputation calculated on-chain?",
@@ -31,7 +31,7 @@ const defaultFaqs: FaqItem[] = [
   {
     question: "What is the KYC verification process?",
     answer:
-      "We use Didit for identity verification across 220+ countries. The process is quick and secure — simply upload your government-issued ID and take a selfie. Once verified, your identity badge is displayed on your profile, increasing trust with potential employers or freelancers.",
+      "We use Didit for identity verification across 220+ countries. The process is quick and secure: simply upload your government-issued ID and take a selfie. Once verified, your identity badge is displayed on your profile, increasing trust with potential employers or freelancers.",
   },
   {
     question: "How does AI skill matching work?",
