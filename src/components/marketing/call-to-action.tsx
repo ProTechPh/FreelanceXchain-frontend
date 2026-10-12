@@ -35,7 +35,8 @@ function CallToAction() {
 
           {/* Title */}
           <h2 className="mx-auto max-w-2xl break-words text-2xl font-semibold leading-tight tracking-tight text-gradient-foreground sm:text-4xl lg:text-5xl">
-            Start contracts with verified escrow today.
+            Ready to hire or get hired?{' '}
+            <span className="text-primary-subtle dark:text-primary-active">Start with smart escrow today.</span>
           </h2>
 
           <p className="mx-auto mt-4 max-w-xl break-words text-xs font-normal leading-relaxed text-gradient-foreground/95 sm:text-base">

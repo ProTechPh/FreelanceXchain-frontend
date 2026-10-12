@@ -29,7 +29,7 @@ export default function AetherHero() {
           </div>
 
           <h1 className="break-words text-3xl font-semibold leading-[1.12] tracking-tight sm:text-5xl sm:leading-[1.08] lg:text-6xl text-foreground">
-            Freelance contracts settled on-chain. Zero payment chase.
+            Decentralize Your Freelance Career
           </h1>
 
           <p className="mx-auto mt-4 max-w-xl break-words text-sm font-normal leading-relaxed text-muted-foreground sm:mt-5 sm:text-base lg:text-lg">
