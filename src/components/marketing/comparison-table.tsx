@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
-import { Check, Sparkles as Sparkle } from 'lucide-react';
+import { TableCheckIcon } from '@/components/ui/brand-icons';
 
 const matrixRows = [
   {
@@ -127,7 +127,7 @@ export function ComparisonTable() {
 
                   {/* FreelanceXchain Column (Highlighted) */}
                   <div className="col-span-3 text-center px-2 py-1.5 rounded-xl bg-primary/5 text-primary font-bold text-xs flex items-center justify-center gap-1.5 border border-primary/10">
-                    <Check className="size-4 text-success shrink-0" strokeWidth={2.5} />
+                    <TableCheckIcon className="size-4 text-success shrink-0" />
                     <span className="truncate">{row.freelanceXchain}</span>
                   </div>
 

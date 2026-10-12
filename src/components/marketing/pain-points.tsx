@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
-import { X } from 'lucide-react';
+import { XCloseIcon } from '@/components/ui/brand-icons';
 
 const painPoints = [
   "Chasing clients for unpaid milestone invoices",
@@ -60,7 +60,7 @@ export function PainPoints() {
               className="flex items-center gap-3 px-4 py-3.5 rounded-xl bg-card border border-border/80 text-xs sm:text-sm font-medium text-foreground/85 shadow-xs hover:border-destructive/30 hover:bg-muted/40 transition-colors"
             >
               <span className="shrink-0 h-6 w-6 rounded-full bg-destructive/10 text-destructive flex items-center justify-center text-xs font-bold">
-                <X className="size-3.5" strokeWidth={2.5} />
+                <XCloseIcon className="size-3.5" />
               </span>
               <span className="min-w-0 flex-1 break-words">{point}</span>
             </motion.div>

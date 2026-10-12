@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { Globe } from 'lucide-react';
+import { EcosystemGlobeIcon } from '@/components/ui/brand-icons';
 
 interface EcosystemItem {
   name: string;
@@ -180,7 +180,7 @@ export function EcosystemShowcase() {
         >
           {/* Header pill */}
           <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold mb-4 border border-primary/20 shadow-xs">
-            <Globe className="size-3.5" strokeWidth={2.5} />
+            <EcosystemGlobeIcon className="size-3.5" />
             <span>Supported Chains & Web3 Integrations</span>
           </div>
 

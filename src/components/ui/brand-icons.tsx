@@ -213,3 +213,403 @@ export function GitHubIcon({ size = 16, className = "", ...props }: IconProps) {
     </svg>
   );
 }
+
+// ─── Landing-page UI icons ────────────────────────────────────────────────────
+// Custom replacements for the most recognisable lucide-react shapes so the
+// public site stops matching stock shadcn output.
+
+/**
+ * NavMenuIcon - Compact staggered-weight hamburger (3 bars, middle shorter)
+ */
+export function NavMenuIcon({ size = 18, className = "", ...props }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 18 18"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      className={className}
+      aria-hidden="true"
+      {...props}
+    >
+      <line x1="2" y1="4.5" x2="16" y2="4.5" />
+      <line x1="2" y1="9" x2="12" y2="9" />
+      <line x1="2" y1="13.5" x2="16" y2="13.5" />
+    </svg>
+  );
+}
+
+/**
+ * NavSearchIcon - Loupe with an angled handle at 225°
+ */
+export function NavSearchIcon({ size = 16, className = "", ...props }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+      {...props}
+    >
+      <circle cx="6.5" cy="6.5" r="4" />
+      <path d="M9.75 9.75L13.5 13.5" />
+    </svg>
+  );
+}
+
+/**
+ * NavDashboardIcon - Four-quadrant grid with top-left quad enlarged
+ */
+export function NavDashboardIcon({ size = 16, className = "", ...props }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+      {...props}
+    >
+      <rect x="1.5" y="1.5" width="5.5" height="7" rx="1" />
+      <rect x="9" y="1.5" width="5.5" height="4" rx="1" />
+      <rect x="9" y="7.5" width="5.5" height="7" rx="1" />
+      <rect x="1.5" y="10.5" width="5.5" height="4" rx="1" />
+    </svg>
+  );
+}
+
+/**
+ * NavUserIcon - Minimal person silhouette with narrower head radius
+ */
+export function NavUserIcon({ size = 16, className = "", ...props }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+      {...props}
+    >
+      <circle cx="8" cy="5" r="2.75" />
+      <path d="M2 14c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5" />
+    </svg>
+  );
+}
+
+/**
+ * NavLogOutIcon - Door with right-arrow exit, not the standard lucide shape
+ */
+export function NavLogOutIcon({ size = 16, className = "", ...props }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+      {...props}
+    >
+      <path d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h3" />
+      <path d="M10.5 5L14 8l-3.5 3" />
+      <path d="M14 8H6" />
+    </svg>
+  );
+}
+
+/**
+ * XCloseIcon - Asymmetric ×, thinner and slightly rotated feel vs lucide X
+ */
+export function XCloseIcon({ size = 14, className = "", ...props }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 14 14"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.25"
+      strokeLinecap="round"
+      className={className}
+      aria-hidden="true"
+      {...props}
+    >
+      <path d="M2.5 2.5L11.5 11.5" />
+      <path d="M11.5 2.5L2.5 11.5" />
+    </svg>
+  );
+}
+
+/**
+ * ChevronDownIcon - Softer caret, less pointy than lucide ChevronDown
+ */
+export function ChevronDownIcon({ size = 16, className = "", ...props }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+      {...props}
+    >
+      <path d="M3.5 6L8 10.5L12.5 6" />
+    </svg>
+  );
+}
+
+/**
+ * ArrowRightIcon - Weighted arrow with a slightly wider head
+ */
+export function ArrowRightIcon({ size = 16, className = "", ...props }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+      {...props}
+    >
+      <path d="M3 8h10" />
+      <path d="M9 4l4 4-4 4" />
+    </svg>
+  );
+}
+
+/**
+ * BriefcaseIcon - Laptop-bag outline, distinctly taller than lucide Briefcase
+ */
+export function BriefcaseIcon({ size = 16, className = "", ...props }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+      {...props}
+    >
+      <rect x="1.5" y="5.5" width="13" height="9" rx="1.5" />
+      <path d="M5.5 5.5V4a1.5 1.5 0 013 0v1.5" />
+      <path d="M1.5 9.5h13" />
+    </svg>
+  );
+}
+
+/**
+ * UserSearchIcon - Person with a small loupe overlay, distinct from lucide UserRoundSearch
+ */
+export function UserSearchIcon({ size = 16, className = "", ...props }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+      {...props}
+    >
+      <circle cx="6" cy="5" r="2.5" />
+      <path d="M1.5 14c0-2.8 2-4.5 4.5-4.5" />
+      <circle cx="12" cy="11.5" r="2" />
+      <path d="M13.5 13L15 14.5" />
+    </svg>
+  );
+}
+
+/**
+ * ShieldEscrowIcon - Shield with lock body (CTA badge: 100% Smart Contract Escrow)
+ */
+export function ShieldEscrowIcon({ size = 16, className = "", ...props }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+      {...props}
+    >
+      <path d="M8 1.5L13.5 4v4c0 3.5-2.5 6.5-5.5 7-3-0.5-5.5-3.5-5.5-7V4L8 1.5z" />
+      <rect x="5.5" y="7" width="5" height="3.5" rx="0.75" />
+      <path d="M8 7V5.5a1.5 1.5 0 013 0V7" />
+    </svg>
+  );
+}
+
+/**
+ * GlobalKycIcon - Globe with a checkmark overlay (CTA badge: KYC 220+ countries)
+ */
+export function GlobalKycIcon({ size = 16, className = "", ...props }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+      {...props}
+    >
+      <circle cx="8" cy="8" r="6.5" />
+      <path d="M1.5 8h13" />
+      <path d="M8 1.5c-2 2-3 4.1-3 6.5s1 4.5 3 6.5" />
+      <path d="M8 1.5c2 2 3 4.1 3 6.5s-1 4.5-3 6.5" />
+    </svg>
+  );
+}
+
+/**
+ * ReceiptGuaranteeIcon - Receipt with a check at the bottom (CTA badge: Zero Unpaid Invoices)
+ */
+export function ReceiptGuaranteeIcon({ size = 16, className = "", ...props }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+      {...props}
+    >
+      <path d="M3 1.5h10a.5.5 0 01.5.5v12l-2-1.5-2 1.5-2-1.5-2 1.5-2-1.5V2a.5.5 0 01.5-.5z" />
+      <path d="M5.5 5.5h5" />
+      <path d="M5.5 8h5" />
+      <path d="M5.5 10.5l1.5 1.5 2.5-2.5" />
+    </svg>
+  );
+}
+
+/**
+ * SparkleIcon - Four-point star burst, unlike lucide's Sparkles multi-star
+ */
+export function SparkleIcon({ size = 16, className = "", ...props }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+      {...props}
+    >
+      <path d="M8 1.5v13M1.5 8h13M4 4l8 8M12 4l-8 8" strokeWidth="1.25" opacity="0.4" />
+      <path d="M8 2.5L8.75 6.5 12.5 8l-3.75 1.5L8 13.5l-.75-4L3.5 8l3.75-1.5L8 2.5z" />
+    </svg>
+  );
+}
+
+/**
+ * EcosystemGlobeIcon - Simple wireframe globe for the ecosystem section header
+ */
+export function EcosystemGlobeIcon({ size = 14, className = "", ...props }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 14 14"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+      {...props}
+    >
+      <circle cx="7" cy="7" r="5.5" />
+      <path d="M1.5 7h11" />
+      <path d="M7 1.5C5.5 3 4.5 4.9 4.5 7s1 4 2.5 5.5" />
+      <path d="M7 1.5C8.5 3 9.5 4.9 9.5 7s-1 4-2.5 5.5" />
+    </svg>
+  );
+}
+
+/**
+ * TableCheckIcon - Bold square check for the comparison table FreelanceXchain column
+ */
+export function TableCheckIcon({ size = 16, className = "", ...props }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.25"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+      {...props}
+    >
+      <path d="M2.5 8.5L6 12L13.5 4" />
+    </svg>
+  );
+}
+
+
