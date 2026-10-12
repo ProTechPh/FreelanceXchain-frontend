@@ -6,7 +6,7 @@ import { Check, Sparkles as Sparkle } from 'lucide-react';
 const matrixRows = [
   {
     feature: "Milestone Escrow Guarantee",
-    freelanceXchain: "100% Smart Contract Escrow",
+    freelanceXchain: "Smart contract escrow lock",
     web2Platforms: "High fee custody lock",
     directInvoicing: "Zero protection (unpaid risk)",
   },
@@ -18,7 +18,7 @@ const matrixRows = [
   },
   {
     feature: "AI Proposal & Scope Assistant",
-    freelanceXchain: "Tailored milestone scopes",
+    freelanceXchain: "Drafts milestone deliverables & criteria",
     web2Platforms: "Manual copy-pasting",
     directInvoicing: "Manual contract drafting",
   },
@@ -66,24 +66,17 @@ export function ComparisonTable() {
   return (
     <section id="compare" className="py-20 sm:py-28 bg-background border-b border-border/40 scroll-mt-20">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={reduce ? false : { opacity: 0, y: 12 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="text-center mb-16"
-        >
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold mb-3 border border-primary/20">
-            <Sparkle className="size-3.5 fill-primary" fill="currentColor" />
-            <span>Why Choose Us</span>
-          </div>
-          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-foreground break-words">
-            FreelanceXchain vs. The Rest
+        <div className="text-center mb-16">
+          <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-2">
+            Platform Comparison
+          </p>
+          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-semibold tracking-tight leading-tight text-foreground break-words">
+            How FreelanceXchain compares.
           </h2>
           <p className="mt-3 text-xs sm:text-base text-muted-foreground max-w-xl mx-auto break-words">
-            See why freelancers and employers choose FreelanceXchain over traditional 20%-fee platforms and unprotected direct invoicing.
+            A side-by-side comparison against traditional platforms and unprotected direct invoicing.
           </p>
-        </motion.div>
+        </div>
 
         {/* Mobile scroll hint */}
         <div className="block sm:hidden text-center mb-3">

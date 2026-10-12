@@ -1,103 +1,75 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
-import { ShieldCheck, RefreshCw as ArrowsClockwise, LayoutGrid as SquaresFour, FileText, Sparkles as Sparkle, ChartBar, Zap as Lightning, Smartphone as DeviceMobile } from 'lucide-react';
 
-const features = [
+
+const capabilities = [
   {
-    icon: FileText,
-    title: "AI Proposal Assistant",
-    description: "Generates custom proposals, milestone deliverables, and estimated scopes tailored to client specifications.",
+    category: "Scoping & Bidding",
+    title: "Structured Milestone Scopes",
+    description: "Converts requirements into unambiguous deliverable checkpoints with pre-set acceptance criteria.",
   },
   {
-    icon: Sparkle,
-    title: "AI Skill Gap Analysis",
-    description: "Analyzes required project skills against your verified portfolio to maximize win rates.",
+    category: "Escrow Protocol",
+    title: "Non-Custodial Smart Escrow",
+    description: "Milestone funds lock directly in audited EVM smart contracts. Neither party can seize funds unilaterally.",
   },
   {
-    icon: Lightning,
-    title: "1-Click Milestone Bidding",
-    description: "Submit tailored proposals to open projects in seconds without repetitive forms.",
+    category: "Settlement",
+    title: "Instant Wallet Settlement",
+    description: "Funds transfer directly to your Web3 wallet in USDC or ETH upon deliverable sign-off. No withdrawal waiting periods.",
   },
   {
-    icon: SquaresFour,
-    title: "Contract Workspaces",
-    description: "Manage milestones, deliverable uploads, revision requests, and payouts in dedicated workspaces.",
+    category: "Identity",
+    title: "Didit Biometric & ID Verification",
+    description: "Verifies client and freelancer identity across 220+ countries to block sybil spammers and fraudulent accounts.",
   },
   {
-    icon: ShieldCheck,
-    title: "Smart Contract Escrow",
-    description: "Milestone funds are locked in Ethereum smart contracts and released automatically on approval.",
+    category: "Collaboration",
+    title: "Dedicated Workspaces",
+    description: "Keep file uploads, change requests, live chat, and contract milestone statuses unified under a single link.",
   },
   {
-    icon: ArrowsClockwise,
-    title: "Real-Time Direct Chat",
-    description: "Message verified employers and freelancers instantly with real-time WebSocket sync.",
-  },
-  {
-    icon: ChartBar,
-    title: "On-Chain Reputation",
-    description: "Immutable ratings and verified work history recorded permanently on the blockchain.",
-  },
-  {
-    icon: DeviceMobile,
-    title: "Global Didit KYC",
-    description: "Biometric and government ID verification across 220+ countries for trusted collaboration.",
+    category: "Reputation",
+    title: "Portable Proof of Delivery",
+    description: "Completed contracts and client ratings anchor permanently on-chain so your reputation belongs to your wallet.",
   },
 ];
 
 export function FeaturesGrid() {
-  const reduce = useReducedMotion();
-
   return (
     <section className="py-20 sm:py-28 bg-muted/20 border-b border-border/40">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={reduce ? false : { opacity: 0, y: 12 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="text-center max-w-2xl mx-auto mb-14"
-        >
-          <p className="text-xs font-bold text-primary uppercase tracking-wider mb-2">
-            Powerful Platform Architecture
+        <div className="text-center max-w-2xl mx-auto mb-14">
+          <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-2">
+            Contract Infrastructure
           </p>
-          <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight text-foreground break-words">
-            The freelance engine built for trust
+          <h2 className="text-2xl sm:text-4xl font-semibold tracking-tight leading-tight text-foreground break-words">
+            Designed for execution, not invoice disputes.
           </h2>
           <p className="mt-3 text-xs sm:text-sm text-muted-foreground leading-relaxed break-words">
-            Everything you need to discover high-value projects, submit winning proposals, and get paid with zero escrow risk.
+            Every transaction is backed by code, clear deliverable criteria, and verified identities.
           </p>
-        </motion.div>
+        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {features.map((feature, i) => {
-            const Icon = feature.icon;
-            return (
-              <motion.div
-                key={feature.title}
-                initial={reduce ? false : { opacity: 0, y: 12 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.15 }}
-                transition={{
-                  duration: 0.35,
-                  delay: i * 0.04,
-                  ease: [0.16, 1, 0.3, 1],
-                }}
-                className="rounded-2xl border border-border/80 bg-card p-5 transition-all duration-150 hover:border-primary/40 hover:bg-muted/40 shadow-xs"
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary mb-4">
-                  <Icon className="size-5" />
-                </div>
-                <h3 className="text-sm font-bold tracking-tight text-foreground mb-1.5">
-                  {feature.title}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {capabilities.map((item) => (
+            <div
+              key={item.title}
+              className="rounded-2xl border border-border/80 bg-card p-6 shadow-xs hover:border-primary/40 transition-colors flex flex-col justify-between"
+            >
+              <div>
+                <span className="text-2xs font-semibold text-primary uppercase tracking-wider">
+                  {item.category}
+                </span>
+                <h3 className="text-base font-semibold tracking-tight text-foreground mt-1 mb-2">
+                  {item.title}
                 </h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  {feature.description}
+                  {item.description}
                 </p>
-              </motion.div>
-            );
-          })}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>

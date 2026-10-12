@@ -6,44 +6,39 @@ import { ChevronDown as CaretDown, Sparkles as Sparkle } from 'lucide-react';
 
 const faqs = [
   {
-    question: "1. What is FreelanceXchain?",
+    question: "How does smart contract escrow protect against unpaid work?",
     answer:
-      "FreelanceXchain is a decentralized freelance marketplace combining AI skill discovery and automated proposal generation with Ethereum smart contract escrow. Employers post scoped projects, freelancers submit milestone proposals, and funds are locked securely upfront until deliverables are approved.",
+      "When a client accepts a proposal, they fund the milestone escrow into an EVM smart contract before work starts. When the freelancer delivers the milestone and the client signs off, the contract releases payment immediately to the freelancer's wallet. Funds cannot be unilaterally withdrawn by either side during active delivery.",
   },
   {
-    question: "2. How does Smart Contract Escrow protect both parties?",
+    question: "What currencies and networks are supported?",
     answer:
-      "When an employer accepts a proposal, they fund the milestone escrow. Funds remain safely locked in an EVM smart contract. When the freelancer submits deliverables and the employer approves them, funds are released automatically to the freelancer's wallet. Zero unpaid invoices and zero escrow risk.",
+      "FreelanceXchain supports settlements in stablecoins (USDC, USDT) and native tokens (ETH, POL/Polygon) across Ethereum Layer 1 and major Layer 2 networks.",
   },
   {
-    question: "3. How does AI Skill Matching & Proposal Generation work?",
+    question: "How does milestone scoping work?",
     answer:
-      "Our AI analyzes client project specifications, required technical stacks, and milestone deliverables. It evaluates your portfolio and verified skills to draft custom, high-converting proposals with recommended milestones and timelines that you can edit before submitting.",
+      "Instead of writing arbitrary contract terms, FreelanceXchain helps break project requirements into clear deliverable checkpoints with defined acceptance criteria and completion deadlines that both parties sign before escrow funding.",
   },
   {
-    question: "4. What payment methods and currencies are supported?",
+    question: "How are identity and accounts verified?",
     answer:
-      "FreelanceXchain supports on-chain payments in stablecoins (USDC, USDT), native tokens (ETH, MATIC/POL), and standard payment rails with automated escrow triggers.",
+      "FreelanceXchain integrates Didit KYC for identity verification across 220+ countries to ensure all parties are verified human actors, preventing anonymous bot fraud and repeat scam accounts.",
   },
   {
-    question: "5. How does Identity Verification (Didit KYC) work?",
+    question: "What happens if there is a contract dispute?",
     answer:
-      "FreelanceXchain integrates Didit KYC for seamless, biometric and government ID verification across 220+ countries. This keeps the marketplace free of scams, fake profiles, and spam bots.",
+      "If deliverables are rejected without valid criteria, either party can trigger arbitration inside the Contract Workspace. Submitted work, commit logs, and agreement criteria are reviewed to enforce fair settlement.",
   },
   {
-    question: "6. What happens if there is a contract dispute?",
+    question: "What makes reputation portable?",
     answer:
-      "Either participant can open a dispute inside the dedicated Contract Workspace. Both sides upload verified deliverable proofs and chat logs. Platform arbitrators review the on-chain evidence to execute a fair, binding resolution.",
+      "Every successfully completed milestone, client review, and on-time delivery record is tied to your wallet address on-chain. You own your track record permanently, immune to arbitrary platform deplatforming.",
   },
   {
-    question: "7. What is On-Chain Portable Reputation?",
+    question: "What are the platform fees?",
     answer:
-      "Every successfully completed milestone, employer rating, and verified review is recorded permanently on the blockchain. Your reputation belongs to you — it cannot be deleted, suspended, or locked by any central platform.",
-  },
-  {
-    question: "8. What are the platform fees on FreelanceXchain?",
-    answer:
-      "Unlike traditional freelance platforms that charge up to 20% of your earnings, FreelanceXchain operates on a low, transparent fee structure with zero hidden conversion cuts.",
+      "FreelanceXchain charges a flat, transparent 1% protocol fee upon milestone release, compared to the 10%–20% cuts and high foreign exchange fees taken by traditional freelance marketplaces.",
   },
 ];
 
@@ -86,27 +81,17 @@ export function FaqSection() {
   return (
     <section id="faq" className="py-20 sm:py-28 bg-muted/10 border-b border-border/40 scroll-mt-20">
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={reduce ? false : { opacity: 0, y: 12 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="text-center mb-14"
-        >
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold mb-3 border border-primary/20">
-            <Sparkle className="size-3.5 fill-primary" fill="currentColor" />
-            <span>Got Questions?</span>
-          </div>
-          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight break-words">
-            <span className="text-foreground">Still have questions? </span> <br className="hidden sm:inline" />
-            <span className="text-muted-foreground dark:text-muted-foreground">
-              We’ve got you covered.
-            </span>
+        <div className="text-center mb-14">
+          <p className="text-xs font-semibold text-primary uppercase tracking-wider mb-2">
+            Questions &amp; Answers
+          </p>
+          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-semibold tracking-tight leading-tight text-foreground break-words">
+            Frequently asked questions.
           </h2>
           <p className="mt-3 text-xs sm:text-base text-muted-foreground max-w-xl mx-auto break-words leading-relaxed">
-            If it’s not covered here, reach out to our team — or just try FreelanceXchain and see for yourself.
+            Direct details on escrow security, payouts, verification, and dispute resolution.
           </p>
-        </motion.div>
+        </div>
 
         <motion.div
           initial={reduce ? false : { opacity: 0, y: 12 }}
