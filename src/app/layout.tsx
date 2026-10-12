@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     default: 'FreelanceXchain - Decentralized Freelance Marketplace & Smart Escrow',
     template: '%s | FreelanceXchain',
   },
-  description: 'The AI-powered freelance marketplace with Ethereum smart contract escrow. Connect with verified employers, generate tailored milestone proposals, and get paid with zero escrow risk.',
+  description: 'Non-custodial freelance contracts settled on Ethereum smart contracts. Scoped milestones, verified KYC, and instant wallet settlement.',
   icons: {
     icon: [
       { url: '/favicon.svg', type: 'image/svg+xml' },
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     url: 'https://www.freelancexchain.works',
     siteName: 'FreelanceXchain',
     title: 'FreelanceXchain - Decentralized Freelance Marketplace & Smart Escrow',
-    description: 'The AI-powered freelance marketplace with Ethereum smart contract escrow.',
+    description: 'Non-custodial freelance contracts settled on Ethereum smart contracts.',
   },
 };
 

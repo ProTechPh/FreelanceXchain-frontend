@@ -35,20 +35,13 @@ function CallToAction() {
           <div aria-hidden="true" className="pointer-events-none absolute -bottom-36 -left-24 size-72 rounded-full bg-gradient-foreground/10 blur-3xl" />
           <div aria-hidden="true" className="pointer-events-none absolute inset-x-12 top-0 h-px bg-gradient-to-r from-transparent via-gradient-foreground/40 to-transparent" />
 
-          {/* Badge */}
-          <div className="mb-6 inline-flex items-center gap-1.5 rounded-full border border-gradient-foreground/30 bg-gradient-foreground/5 px-3.5 py-1.5 text-xs font-bold text-gradient-foreground backdrop-blur-xs">
-            <Sparkle className="size-3.5 fill-current text-primary-subtle dark:text-primary-active" aria-hidden="true" />
-            <span>Decentralized Freelance Economy</span>
-          </div>
-
           {/* Title */}
-          <h2 className="mx-auto max-w-2xl break-words text-2xl font-extrabold leading-tight tracking-tight text-gradient-foreground sm:text-4xl lg:text-5xl">
-            Ready to hire or get hired? <br className="hidden sm:inline" />
-            <span className="text-primary-subtle dark:text-primary-active">Get started with smart escrow today.</span>
+          <h2 className="mx-auto max-w-2xl break-words text-2xl font-semibold leading-tight tracking-tight text-gradient-foreground sm:text-4xl lg:text-5xl">
+            Start contracts with verified escrow today.
           </h2>
 
-          <p className="mx-auto mt-3 max-w-xl break-words text-xs font-normal leading-relaxed text-gradient-foreground/95 sm:mt-4 sm:text-base">
-            Join verified talent and top employers closing milestone contracts with AI speed, portable reputation, and Ethereum smart contract escrow.
+          <p className="mx-auto mt-4 max-w-xl break-words text-xs font-normal leading-relaxed text-gradient-foreground/95 sm:text-base">
+            Work with verified talent and employers. All milestone agreements backed by non-custodial smart contracts and settled in USDC or ETH.
           </p>
 
           {/* Action Buttons */}

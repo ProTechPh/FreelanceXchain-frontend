@@ -27,26 +27,17 @@ export function PainPoints() {
   return (
     <section className="py-20 sm:py-28 bg-muted/20 border-b border-border/40">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        <motion.div
-          initial={reduce ? false : { opacity: 0, y: 12 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="text-center max-w-3xl mx-auto mb-14"
-        >
-          <p className="text-xs font-bold text-destructive uppercase tracking-wider mb-2">
+        <div className="text-center max-w-3xl mx-auto mb-14">
+          <p className="text-xs font-semibold text-destructive uppercase tracking-wider mb-2">
             The Problem
           </p>
-          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-foreground break-words">
-            Tired of freelance friction? <br className="hidden sm:inline" />
-            <span className="text-muted-foreground font-semibold">
-              Here’s what’s really holding you back.
-            </span>
+          <h2 className="text-2xl sm:text-4xl lg:text-5xl font-semibold tracking-tight leading-tight text-foreground break-words">
+            What breaks in traditional freelancing.
           </h2>
           <p className="mt-3 text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-xl mx-auto break-words">
-            Delayed payouts, 20% platform cuts, and fake reviews shouldn&apos;t exist in 2026. The traditional freelancing system is broken.
+            High take rates, 14-day payout delays, and zero recourse when clients refuse to pay for finished deliverables.
           </p>
-        </motion.div>
+        </div>
 
         <motion.div
           initial={reduce ? false : { opacity: 0 }}
