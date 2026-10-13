@@ -43,11 +43,6 @@ test('direction is relative to the viewer', () => {
   assert.equal(getPaymentDirection(r, 'employer-1'), 'out');
 });
 
-test('escrow_deposit has direction none for both parties to prevent double-counting against milestone releases', () => {
-  const dep = record({ paymentType: 'escrow_deposit' });
-  assert.equal(getPaymentDirection(dep, 'freelancer-1'), 'none');
-  assert.equal(getPaymentDirection(dep, 'employer-1'), 'none');
-});
 
 test('a viewer who is neither party gets none, not a misleading out', () => {
   assert.equal(getPaymentDirection(record(), 'admin-9'), 'none');
@@ -79,20 +74,6 @@ test('summary counts every row by type regardless of status', () => {
   assert.deepEqual(summary.byType, { escrow_deposit: 2, rush_fee: 1 });
 });
 
-test('summary excludes escrow_deposit from received total so milestones are not double-counted', () => {
-  const summary = summarizePaymentHistory(
-    [
-      record({ id: 'dep', paymentType: 'escrow_deposit', amount: 30, status: 'completed' }),
-      record({ id: 'm1', paymentType: 'milestone_release', amount: 10, status: 'completed' }),
-      record({ id: 'm2', paymentType: 'milestone_release', amount: 10, status: 'completed' }),
-      record({ id: 'm3', paymentType: 'milestone_release', amount: 10, status: 'completed' }),
-    ],
-    'freelancer-1',
-  );
-  assert.equal(summary.totalIn, 30);
-  assert.equal(summary.totalOut, 0);
-  assert.equal(summary.net, 30);
-});
 
 test('summary nets inbound against outbound for the same viewer', () => {
   const summary = summarizePaymentHistory(

@@ -81,7 +81,7 @@ export function ContractWorkspaceDialogs({
             <DialogDescription>
               You are about to release payment for{' '}
               <strong>&quot;{approvingMilestone?.title}&quot;</strong> (
-              {formatAmount(approvingMilestone?.amount, { currency: 'ETH' })}). This will transfer funds to the freelancer. This cannot be undone.
+              {formatAmount(approvingMilestone?.amount)}). This will transfer funds to the freelancer. This cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

@@ -72,7 +72,7 @@ export function MilestoneListCard({
             <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
                 <span>
-                  <span className="text-muted-foreground">Amount:</span> {formatAmount(milestone.amount, { currency: 'ETH' })}
+                  <span className="text-muted-foreground">Amount:</span> {formatAmount(milestone.amount)}
                 </span>
                 <span>
                   <span className="text-muted-foreground">Due:</span>{' '}
