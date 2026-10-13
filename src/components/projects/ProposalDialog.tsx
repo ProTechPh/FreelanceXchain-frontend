@@ -278,7 +278,7 @@ export function ProposalDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={handleOpenChange}>
-        <DialogContent className="flex max-h-[calc(100dvh-1rem)] w-[calc(100%-1rem)] max-w-[calc(100%-1rem)] flex-col gap-0 overflow-hidden p-0 sm:max-h-[90dvh] sm:w-full sm:max-w-2xl">
+        <DialogContent className="flex max-h-[calc(100dvh-1rem)] w-[calc(100%-1rem)] max-w-[calc(100%-1rem)] flex-col gap-0 overflow-clip p-0 sm:max-h-[90dvh] sm:w-full sm:max-w-2xl">
         <DialogHeader className="shrink-0 gap-1.5 border-b border-border/60 px-4 pt-4 pr-12 pb-3 text-left sm:px-5 sm:pt-5">
           <div className="flex flex-wrap items-center gap-2">
             <DialogTitle className="text-lg font-bold sm:text-xl">Submit Proposal</DialogTitle>
@@ -606,7 +606,7 @@ export function ProposalDialog({
               <label
                 htmlFor={`${fieldId}-files`}
                 className={cn(
-                  'flex cursor-pointer items-center gap-3 rounded-lg border-2 border-dashed px-4 py-3 transition-colors hover:border-primary/50 hover:bg-primary/5 focus-within:border-primary focus-within:ring-[3px] focus-within:ring-ring/50',
+                  'relative flex cursor-pointer items-center gap-3 rounded-lg border-2 border-dashed px-4 py-3 transition-colors hover:border-primary/50 hover:bg-primary/5 focus-within:border-primary focus-within:ring-[3px] focus-within:ring-ring/50',
                   fieldError?.field === 'files' ? 'border-destructive' : 'border-border',
                 )}
                 onDragOver={(event) => event.preventDefault()}

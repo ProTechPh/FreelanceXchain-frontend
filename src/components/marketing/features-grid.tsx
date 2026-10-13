@@ -129,7 +129,7 @@ export function FeaturesGrid() {
                 <div className="space-y-2">
                   <div className="flex items-start justify-between gap-2 text-2xs">
                     <span className="text-muted-foreground font-mono">Contract Logic:</span>
-                    <span className="font-mono text-foreground text-right font-medium">FreelanceEscrowEngineV2.sol</span>
+                    <span className="min-w-0 break-all font-mono text-foreground text-right font-medium">FreelanceEscrowEngineV2.sol</span>
                   </div>
                   <div className="flex items-start justify-between gap-2 text-2xs">
                     <span className="text-muted-foreground font-mono">Milestone Hold:</span>
