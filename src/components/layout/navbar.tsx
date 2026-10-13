@@ -50,7 +50,9 @@ interface NavbarProps {
 
 const Logo = () => (
   <Link href="/" className="group flex items-center shrink-0">
-    <FreelanceXchainLogo iconSize={32} />
+    {/* Below 360px the wordmark plus the three 44px controls overflow the bar and push
+        the menu trigger off-screen, so show the mark alone (the name stays as the link's label). */}
+    <FreelanceXchainLogo iconSize={32} wordmarkClassName="max-[359px]:sr-only" />
   </Link>
 );
 
