@@ -36,7 +36,7 @@ export function ContractPaymentHistory({
   const summary = summarizePaymentHistory(items, userId);
   // The totals are sums of these rows, so they must carry the rows' own currency —
   // formatting them as USD next to ETH rows would misstate the amount.
-  const currency = items[0]?.currency ?? 'USD';
+  const currency = items[0]?.currency ?? 'ETH';
 
   return (
     <Card data-slot="contract-payment-ledger" className="bg-card border-border">

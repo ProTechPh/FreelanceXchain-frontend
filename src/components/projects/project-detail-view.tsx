@@ -297,7 +297,7 @@ export function ProjectDetailView({
         <div className="fixed bottom-0 inset-x-0 p-3 bg-background/95 backdrop-blur border-t sm:hidden z-40 flex items-center justify-between gap-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-lg">
           <div className="min-w-0">
             <span className="block text-xs uppercase tracking-wider text-muted-foreground">Budget</span>
-            <span className="font-bold text-primary text-sm truncate">{formatAmount(project.budget)}</span>
+            <span className="font-bold text-primary text-sm truncate">{formatAmount(project.budget, { currency: 'ETH' })}</span>
           </div>
           <div className="flex items-center gap-2">
             <Button

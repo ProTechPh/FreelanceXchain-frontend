@@ -38,7 +38,7 @@ export function ProjectMilestonesCard({ milestones }: ProjectMilestonesCardProps
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
                   <StatusBadge status={milestone.status} domain="milestone" size="sm" />
-                  <p className="font-bold text-sm text-primary">{formatAmount(milestone.amount)}</p>
+                  <p className="font-bold text-sm text-primary">{formatAmount(milestone.amount, { currency: 'ETH' })}</p>
                 </div>
               </div>
             </div>

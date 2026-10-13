@@ -84,7 +84,7 @@ ${highlights.map((h) => `- ${h}`).join('\n')}
 ${coverLetter}
 
 ## Proposed Milestones & Delivery Schedule
-${milestones.map((m, i) => `${i + 1}. **${m.title}** (${formatAmount(m.amount)} - ${m.durationDays} days)\n   ${m.description}`).join('\n\n')}
+${milestones.map((m, i) => `${i + 1}. **${m.title}** (${formatAmount(m.amount, { currency: 'ETH' })} - ${m.durationDays} days)\n   ${m.description}`).join('\n\n')}
 
 ---
 Submitted via FreelanceXchain Decentralized Platform with Smart Contract Escrow Protection.
@@ -487,7 +487,7 @@ export function ProposalDialog({
                       <Badge variant="outline" className="shrink-0 px-1.5 py-0 text-2xs">{m.durationDays}d</Badge>
                     </div>
                     <p className="line-clamp-2 text-2xs text-muted-foreground break-words">{m.description}</p>
-                    <p className="text-xs font-medium text-primary">{formatAmount(m.amount)}</p>
+                    <p className="text-xs font-medium text-primary">{formatAmount(m.amount, { currency: 'ETH' })}</p>
                   </div>
                 ))}
               </div>

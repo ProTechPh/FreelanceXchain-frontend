@@ -167,7 +167,7 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
-                    <div><p className="text-muted-foreground">Value</p><p className="font-semibold tabular-nums">{formatAmount(contract.totalAmount, { currency: contract.currency || 'USD' })}</p></div>
+                    <div><p className="text-muted-foreground">Value</p><p className="font-semibold tabular-nums">{formatAmount(contract.totalAmount, { currency: contract.currency || 'ETH' })}</p></div>
                     <div><p className="text-muted-foreground">Milestones</p><p className="font-semibold">{completedMilestones}/{milestones.length}</p></div>
                     <div><p className="text-muted-foreground">Progress</p><p className="font-semibold">{progress}%</p></div>
                     <div><p className="text-muted-foreground">Created</p><p className="font-semibold">{formatDate(contract.createdAt)}</p></div>

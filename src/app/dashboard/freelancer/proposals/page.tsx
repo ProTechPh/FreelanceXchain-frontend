@@ -171,7 +171,7 @@ export default function ProposalsPage() {
                     </Badge>
                   </div>
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs sm:text-sm text-muted-foreground">
-                    <span className="font-bold text-primary">{formatAmount(proposal.proposedRate)}</span>
+                    <span className="font-bold text-primary">{formatAmount(proposal.proposedRate, { currency: 'ETH' })}</span>
                     <span className="flex items-center gap-1"><Clock className="size-3 shrink-0" />{proposal.estimatedDuration} days</span>
                     <span className="flex items-center gap-1">
                       {status === 'pending' ? 'Submitted' : statusConfig[status].label}{' '}

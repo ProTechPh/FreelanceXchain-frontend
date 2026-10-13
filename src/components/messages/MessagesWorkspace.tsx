@@ -24,9 +24,10 @@ import { useAuthStore } from '@/stores/authStore';
 import type { ConversationWithDetails, Message, Project } from '@/types';
 import { toast } from 'sonner';
 import { reportFailure, reportLoadFailure } from '@/lib/report-failure';
-import { Send, Search, Check, CheckCheck, MessageSquare, ExternalLink, FileText, Paperclip, X, ArrowLeft, Briefcase, ChevronUp, ChevronDown, Copy, ShieldAlert } from 'lucide-react';
+import { Send, Search, Check, CheckCheck, MessageSquare, ExternalLink, FileText, Paperclip, X, ArrowLeft, Briefcase, ChevronUp, ChevronDown, Copy, ShieldAlert, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MessagesWorkspaceSkeleton, MessageThreadSkeleton } from '@/components/messages/messages-workspace-skeleton';
+import { AttachmentPreviewDialog, type AttachmentPreviewTarget } from '@/components/ui/attachment-preview-dialog';
 
 function initials(name: string): string {
   return name
@@ -71,6 +72,7 @@ export function MessagesWorkspace() {
   const [inquiryEnded, setInquiryEnded] = useState(false);
   const requestedProjectId = inquiryEnded ? null : rawRequestedProjectId;
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const [previewAttachment, setPreviewAttachment] = useState<AttachmentPreviewTarget | null>(null);
   const selectedIdRef = useRef<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -721,7 +723,43 @@ export function MessagesWorkspace() {
                           <ul className="mt-2 space-y-1.5" aria-label="Message attachments">
                             {(msg.attachments ?? []).map((attachment, attachmentIndex) => {
                               const url = safeAttachmentUrl(attachment.url);
-                              return <li key={`${msg.id}-${attachment.filename}-${attachment.url}-${attachmentIndex}`}>{url ? <a href={url} target="_blank" rel="noreferrer" className={`flex items-center gap-2 rounded-lg border px-2 py-1.5 text-xs ${isMine ? 'border-gradient-foreground/30 dark:border-gradient-foreground/60 hover:bg-gradient-foreground/10 dark:hover:bg-gradient-foreground/20' : 'border-border hover:bg-background'}`}><FileText className="h-3.5 w-3.5 shrink-0" /><span className="min-w-0 flex-1 truncate">{attachment.filename}</span><span className={isMine ? 'text-gradient-foreground/70 dark:text-gradient-foreground' : 'text-muted-foreground'}>{formatFileSize(attachment.size)}</span><ExternalLink className="h-3 w-3 shrink-0" /></a> : <span className="flex items-center gap-2 text-xs"><FileText className="h-3.5 w-3.5" />Attachment unavailable</span>}</li>;
+                              return (
+                                <li key={`${msg.id}-${attachment.filename}-${attachment.url}-${attachmentIndex}`}>
+                                  {url ? (
+                                    <a
+                                      href={url}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        setPreviewAttachment({
+                                          filename: attachment.filename,
+                                          url: attachment.url,
+                                          size: attachment.size,
+                                          mimeType: attachment.mimeType,
+                                        });
+                                      }}
+                                      className={`flex w-full items-center gap-2 rounded-lg border px-2 py-1.5 text-xs text-left cursor-pointer transition-colors ${
+                                        isMine
+                                          ? 'border-gradient-foreground/30 dark:border-gradient-foreground/60 hover:bg-gradient-foreground/10 dark:hover:bg-gradient-foreground/20'
+                                          : 'border-border hover:bg-background'
+                                      }`}
+                                    >
+                                      <FileText className="h-3.5 w-3.5 shrink-0" />
+                                      <span className="min-w-0 flex-1 truncate">{attachment.filename}</span>
+                                      <span className={isMine ? 'text-gradient-foreground/70 dark:text-gradient-foreground' : 'text-muted-foreground'}>
+                                        {formatFileSize(attachment.size)}
+                                      </span>
+                                      <Eye className="h-3 w-3 shrink-0 opacity-70" />
+                                    </a>
+                                  ) : (
+                                    <span className="flex items-center gap-2 text-xs">
+                                      <FileText className="h-3.5 w-3.5" />
+                                      Attachment unavailable
+                                    </span>
+                                  )}
+                                </li>
+                              );
                             })}
                           </ul>
                         )}
@@ -789,6 +827,14 @@ export function MessagesWorkspace() {
           </>
         )}
       </div>
+
+      <AttachmentPreviewDialog
+        open={Boolean(previewAttachment)}
+        onOpenChange={(open) => {
+          if (!open) setPreviewAttachment(null);
+        }}
+        attachment={previewAttachment}
+      />
     </div>
   );
 }

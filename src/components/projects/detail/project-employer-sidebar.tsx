@@ -30,7 +30,7 @@ export function ProjectEmployerSidebar({
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Budget</span>
-            <span className="font-bold text-primary text-lg">{formatAmount(project.budget)}</span>
+            <span className="font-bold text-primary text-lg">{formatAmount(project.budget, { currency: 'ETH' })}</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Deadline</span>
