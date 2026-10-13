@@ -247,6 +247,7 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
 
       <MilestoneListCard
         milestones={milestones}
+        currency={contract.currency || 'ETH'}
         role={role}
         kycStatus={user.kycStatus}
         contractStatus={contract.status}

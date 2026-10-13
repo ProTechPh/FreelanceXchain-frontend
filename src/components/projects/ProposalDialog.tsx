@@ -84,7 +84,7 @@ ${highlights.map((h) => `- ${h}`).join('\n')}
 ${coverLetter}
 
 ## Proposed Milestones & Delivery Schedule
-${milestones.map((m, i) => `${i + 1}. **${m.title}** (${formatAmount(m.amount)} - ${m.durationDays} days)\n   ${m.description}`).join('\n\n')}
+${milestones.map((m, i) => `${i + 1}. **${m.title}** (${formatAmount(m.amount, { currency: 'ETH' })} - ${m.durationDays} days)\n   ${m.description}`).join('\n\n')}
 
 ---
 Submitted via FreelanceXchain Decentralized Platform with Smart Contract Escrow Protection.
@@ -487,7 +487,7 @@ export function ProposalDialog({
                       <Badge variant="outline" className="shrink-0 px-1.5 py-0 text-2xs">{m.durationDays}d</Badge>
                     </div>
                     <p className="line-clamp-2 text-2xs text-muted-foreground break-words">{m.description}</p>
-                    <p className="text-xs font-medium text-primary">{formatAmount(m.amount)}</p>
+                    <p className="text-xs font-medium text-primary">{formatAmount(m.amount, { currency: 'ETH' })}</p>
                   </div>
                 ))}
               </div>
@@ -498,15 +498,15 @@ export function ProposalDialog({
         <div className="space-y-5">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field
-              label="Proposed rate (USD)"
+              label="Proposed rate (ETH)"
               htmlFor={`${fieldId}-rate`}
-              description={project ? `Client budget: ${formatAmount(project.budget)}` : undefined}
+              description={project ? `Client budget: ${formatAmount(project.budget, { currency: 'ETH' })}` : undefined}
               error={fieldError?.field === 'proposedRate' ? fieldError.message : null}
               required
             >
               <div className="relative">
-                <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground" aria-hidden="true">
-                  $
+                <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm font-semibold text-muted-foreground" aria-hidden="true">
+                  Ξ
                 </span>
                 <FieldInput
                   type="number"
@@ -520,7 +520,7 @@ export function ProposalDialog({
                   onChange={(event) => handleRateChange(event.target.value)}
                 />
                 <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs font-medium text-muted-foreground" aria-hidden="true">
-                  USD
+                  ETH
                 </span>
               </div>
             </Field>

@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
-import { formatAmount, formatDate } from '@/lib/format';
+import { formatAmount, formatDate, formatDocumentNumber } from '@/lib/format';
 import { ContractInvoiceDialog } from '@/components/contracts/contract-invoice-dialog';
 
 interface ContractInvoicesListProps {
@@ -59,10 +59,18 @@ export function ContractInvoicesList({ role }: ContractInvoicesListProps) {
           ? contract.freelancer?.name || ''
           : contract.employer?.name || contract.employer?.companyName || ''
       ).toLowerCase();
-      const invoiceId = `inv-${contract.id.slice(0, 8)}`.toLowerCase();
+      const invoiceId = formatDocumentNumber('INV', contract.id).toLowerCase();
+      const sowId = formatDocumentNumber('SOW', contract.id).toLowerCase();
+      const rawContractId = (contract.id || '').toLowerCase();
 
       const query = searchQuery.trim().toLowerCase();
-      const matchesSearch = !query || title.includes(query) || counterparty.includes(query) || invoiceId.includes(query);
+      const matchesSearch =
+        !query ||
+        title.includes(query) ||
+        counterparty.includes(query) ||
+        invoiceId.includes(query) ||
+        sowId.includes(query) ||
+        rawContractId.includes(query);
 
       const matchesStatus =
         statusFilter === 'all' ||
@@ -163,8 +171,8 @@ export function ContractInvoicesList({ role }: ContractInvoicesListProps) {
           ) : (
             <div className="space-y-3">
               {filteredContracts.map((contract) => {
-                const invoiceId = `INV-${contract.id.slice(0, 8).toUpperCase()}`;
-                const sowId = `SOW-${contract.id.slice(0, 8).toUpperCase()}`;
+                const invoiceId = formatDocumentNumber('INV', contract.id);
+                const sowId = formatDocumentNumber('SOW', contract.id);
                 const counterparty =
                   role === 'employer'
                     ? contract.freelancer?.name || 'Contractor'
@@ -192,7 +200,7 @@ export function ContractInvoicesList({ role }: ContractInvoicesListProps) {
                     <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap">
                       <div className="text-right sm:min-w-[120px]">
                         <p className="text-xs text-muted-foreground">Agreed Value</p>
-                        <p className="text-base font-bold tabular-nums text-foreground">{formatAmount(contract.totalAmount)}</p>
+                        <p className="text-base font-bold tabular-nums text-foreground">{formatAmount(contract.totalAmount, { currency: contract.currency || 'ETH' })}</p>
                       </div>
 
                       <div className="flex items-center gap-2">

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * EMPLOYER DASHBOARD - CLIENT COMPONENT
  * 
  * This page MUST remain a Client Component ("use client") because:
@@ -302,7 +302,7 @@ export default function EmployerDashboard() {
                       </div>
                     </div>
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span className="font-medium text-primary">{formatAmount(proposal.proposedRate)}</span>
+                      <span className="font-medium text-primary">{formatAmount(proposal.proposedRate, { currency: 'ETH' })}</span>
                       {rating !== null && <span>★ {rating.toFixed(1)}</span>}
                       <span>{relativeTime(proposal.createdAt)}</span>
                     </div>

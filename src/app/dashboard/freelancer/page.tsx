@@ -1,4 +1,4 @@
-﻿/**
+/**
  * FREELANCER DASHBOARD - CLIENT COMPONENT
  * 
  * This page MUST remain a Client Component ("use client") because:
@@ -308,7 +308,7 @@ export default function FreelancerDashboard() {
                       <Badge className={statusColors[proposal.status]}>{proposal.status}</Badge>
                     </div>
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>{formatAmount(proposal.proposedRate)}</span>
+                      <span>{formatAmount(proposal.proposedRate, { currency: 'ETH' })}</span>
                       <span>{relativeTime(proposal.createdAt)}</span>
                     </div>
                   </Link>

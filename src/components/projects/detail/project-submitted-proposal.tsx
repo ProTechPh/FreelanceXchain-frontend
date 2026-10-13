@@ -59,7 +59,7 @@ export function ProjectSubmittedProposal({
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3.5 rounded-xl bg-card border border-border text-xs">
           <div>
             <span className="text-muted-foreground block">Proposed Rate</span>
-            <span className="text-sm font-bold text-primary">{formatAmount(proposal.proposedRate)}</span>
+            <span className="text-sm font-bold text-primary">{formatAmount(proposal.proposedRate, { currency: 'ETH' })}</span>
           </div>
           <div>
             <span className="text-muted-foreground block">Estimated Delivery</span>

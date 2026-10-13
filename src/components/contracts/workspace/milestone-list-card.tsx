@@ -17,6 +17,7 @@ type ParticipantRole = Extract<UserRole, 'employer' | 'freelancer'>;
 
 interface MilestoneListCardProps {
   milestones: Milestone[];
+  currency?: string;
   role: ParticipantRole;
   kycStatus?: KycStatus;
   contractStatus: Contract['status'];
@@ -34,6 +35,7 @@ interface MilestoneListCardProps {
 
 export function MilestoneListCard({
   milestones,
+  currency,
   role,
   kycStatus,
   contractStatus,
@@ -72,7 +74,7 @@ export function MilestoneListCard({
             <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
                 <span>
-                  <span className="text-muted-foreground">Amount:</span> {formatAmount(milestone.amount)}
+                  <span className="text-muted-foreground">Amount:</span> {formatAmount(milestone.amount, { currency: currency || 'ETH' })}
                 </span>
                 <span>
                   <span className="text-muted-foreground">Due:</span>{' '}

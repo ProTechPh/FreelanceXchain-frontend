@@ -222,3 +222,17 @@ export function formatAuditResource(resourceType: string | null | undefined): st
   if (AUDIT_RESOURCE_LABELS[resourceType]) return AUDIT_RESOURCE_LABELS[resourceType];
   return resourceType.replace(/[._-]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
+
+/**
+ * Formats a document reference number (e.g., INV or SOW) from a contract ID.
+ * Handles seed/mock IDs like `contract-1` -> `INV-CTR-0001` as well as standard UUIDs/Appwrite IDs.
+ */
+export function formatDocumentNumber(prefix: 'INV' | 'SOW', contractId: string | null | undefined): string {
+  if (!contractId) return `${prefix}-00000000`;
+  if (contractId.startsWith('contract-')) {
+    const num = contractId.replace('contract-', '');
+    return `${prefix}-CTR-${num.padStart(4, '0')}`;
+  }
+  return `${prefix}-${contractId.slice(0, 8).toUpperCase()}`;
+}
+

@@ -99,7 +99,7 @@ export default function FreelancerProposalDetailPage() {
         <div className="space-y-6 lg:col-span-2">
           <Card><CardHeader><CardTitle>Proposal</CardTitle></CardHeader><CardContent className="space-y-5">
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-lg border border-border bg-secondary/30 p-3"><p className="text-xs text-muted-foreground">Proposed rate</p><p className="mt-1 font-semibold text-primary">{formatAmount(proposal.proposedRate)}</p></div>
+              <div className="rounded-lg border border-border bg-secondary/30 p-3"><p className="text-xs text-muted-foreground">Proposed rate</p><p className="mt-1 font-semibold text-primary">{formatAmount(proposal.proposedRate, { currency: 'ETH' })}</p></div>
               <div className="rounded-lg border border-border bg-secondary/30 p-3"><p className="text-xs text-muted-foreground">Estimated delivery</p><p className="mt-1 font-semibold">{proposal.estimatedDuration} days</p></div>
             </div>
             {proposal.coverLetter && (

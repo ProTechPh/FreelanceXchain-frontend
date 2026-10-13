@@ -464,12 +464,12 @@ export default function EmployerProjectProposalsPage() {
                     {/* Proposal Metrics */}
                     <div className="grid gap-3 sm:grid-cols-3">
                       <div className="flex items-center gap-3 rounded-xl border border-border/80 bg-secondary/20 p-3.5">
-                        <div className="size-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                          <DollarSign className="size-5" />
+                        <div className="size-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold text-base">
+                          Ξ
                         </div>
                         <div>
                           <span className="text-xs text-muted-foreground block">Proposed Rate</span>
-                          <span className="font-bold text-base text-primary">{formatAmount(proposal.proposedRate)}</span>
+                          <span className="font-bold text-base text-primary">{formatAmount(proposal.proposedRate, { currency: 'ETH' })}</span>
                         </div>
                       </div>
 

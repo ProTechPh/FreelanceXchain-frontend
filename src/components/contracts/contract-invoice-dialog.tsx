@@ -26,9 +26,9 @@ import {
 } from '@/components/ui/dialog';
 import { FreelanceXchainIcon } from '@/components/ui/freelancexchain-logo';
 import { StatusBadge } from '@/components/ui/status-badge';
-import { formatAmount, formatDate } from '@/lib/format';
+import { formatAmount, formatDate, formatDocumentNumber } from '@/lib/format';
 import { useAuthStore } from '@/stores/authStore';
-import { contractsApi } from '@/lib/api';
+import { contractsApi, milestonesApi } from '@/lib/api';
 
 export interface ContractInvoiceDialogProps {
   open: boolean;
@@ -60,6 +60,7 @@ export function ContractInvoiceDialog({
 
   const currentUser = useAuthStore((s) => s.user);
   const [extraContract, setExtraContract] = useState<Contract | null>(null);
+  const [fetchedMilestones, setFetchedMilestones] = useState<Milestone[] | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -78,11 +79,31 @@ export function ContractInvoiceDialog({
     };
   }, [contract.id, contract.employer?.name, contract.freelancer?.name]);
 
+  useEffect(() => {
+    let active = true;
+    // If milestones are empty or not provided, fetch them directly for the contract
+    if ((!milestones || milestones.length === 0) && contract.id) {
+      milestonesApi.listForContract(contract.id)
+        .then(({ data }) => {
+          if (active && data && data.length > 0) {
+            setFetchedMilestones(data);
+          }
+        })
+        .catch(() => {});
+    }
+    return () => {
+      active = false;
+    };
+  }, [contract.id, milestones]);
+
   const detailContract = extraContract?.id === contract.id ? { ...contract, ...extraContract } : contract;
+  const effectiveMilestones = (milestones && milestones.length > 0)
+    ? milestones
+    : (fetchedMilestones || detailContract.milestones || []);
 
   const contractTitle = detailContract.project?.title || detailContract.title || `Contract #${detailContract.id.slice(0, 8)}`;
-  const invoiceNumber = `INV-${detailContract.id.slice(0, 8).toUpperCase()}`;
-  const sowNumber = `SOW-${detailContract.id.slice(0, 8).toUpperCase()}`;
+  const invoiceNumber = formatDocumentNumber('INV', detailContract.id);
+  const sowNumber = formatDocumentNumber('SOW', detailContract.id);
 
   const isCurrentUserEmployer = currentUser?.id === detailContract.employerId;
   const isCurrentUserFreelancer = currentUser?.id === detailContract.freelancerId;
@@ -120,8 +141,19 @@ export function ContractInvoiceDialog({
     (isCurrentUserFreelancer ? currentUser?.walletAddress : null) ||
     '';
 
-  const completedMilestones = milestones.filter((m) => ['approved', 'completed'].includes(m.status));
-  const releasedTotal = completedMilestones.reduce((sum, m) => sum + (m.amount || 0), 0);
+  // If the entire contract is completed, any unfinalized milestones were signed off and released upon contract completion
+  const normalizedMilestones = detailContract.status === 'completed'
+    ? effectiveMilestones.map((m) =>
+        ['pending', 'submitted', 'in_progress'].includes(m.status)
+          ? { ...m, status: 'completed' as const }
+          : m
+      )
+    : effectiveMilestones;
+
+  const completedMilestones = normalizedMilestones.filter((m) => ['approved', 'completed'].includes(m.status));
+  const releasedTotal = detailContract.status === 'completed'
+    ? detailContract.totalAmount
+    : completedMilestones.reduce((sum, m) => sum + (m.amount || 0), 0);
   const remainingTotal = Math.max(0, detailContract.totalAmount - releasedTotal);
 
   const handleCopyId = () => {
@@ -345,14 +377,14 @@ export function ContractInvoiceDialog({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {milestones.length === 0 ? (
+                    {normalizedMilestones.length === 0 ? (
                       <tr>
                         <td colSpan={5} className="py-4 text-center text-muted-foreground">
                           Single contract payment upon deliverable sign-off.
                         </td>
                       </tr>
                     ) : (
-                      milestones.map((milestone, idx) => (
+                      normalizedMilestones.map((milestone, idx) => (
                         <tr key={milestone.id}>
                           <td className="px-3 py-2.5 font-mono text-muted-foreground">
                             {String(idx + 1).padStart(2, '0')}
@@ -372,7 +404,7 @@ export function ContractInvoiceDialog({
                             <StatusBadge status={milestone.status} domain="milestone" />
                           </td>
                           <td className="px-3 py-2.5 text-right font-semibold tabular-nums text-foreground">
-                            {formatAmount(milestone.amount, { currency: contract.currency || 'USD' })}
+                            {formatAmount(milestone.amount, { currency: contract.currency || 'ETH' })}
                           </td>
                         </tr>
                       ))
@@ -385,25 +417,25 @@ export function ContractInvoiceDialog({
               <div className="flex flex-col items-end gap-1.5 pt-2 text-xs">
                 <div className="flex w-full max-w-xs justify-between text-muted-foreground">
                   <span>Milestone Subtotal:</span>
-                  <span className="font-semibold tabular-nums">{formatAmount(contract.baseAmount, { currency: contract.currency || 'USD' })}</span>
+                  <span className="font-semibold tabular-nums">{formatAmount(contract.baseAmount, { currency: contract.currency || 'ETH' })}</span>
                 </div>
                 {contract.rushFee > 0 && (
                   <div className="flex w-full max-w-xs justify-between text-muted-foreground">
                     <span>Rush Acceleration Fee:</span>
-                    <span className="font-semibold tabular-nums">{formatAmount(contract.rushFee, { currency: contract.currency || 'USD' })}</span>
+                    <span className="font-semibold tabular-nums">{formatAmount(contract.rushFee, { currency: contract.currency || 'ETH' })}</span>
                   </div>
                 )}
                 <div className="flex w-full max-w-xs justify-between border-t border-border pt-1.5 text-sm font-bold text-foreground">
                   <span>Total Contract Value:</span>
-                  <span className="tabular-nums text-primary">{formatAmount(contract.totalAmount, { currency: contract.currency || 'USD' })}</span>
+                  <span className="tabular-nums text-primary">{formatAmount(contract.totalAmount, { currency: contract.currency || 'ETH' })}</span>
                 </div>
                 <div className="flex w-full max-w-xs justify-between text-muted-foreground">
                   <span>Released to Contractor:</span>
-                  <span className="font-semibold tabular-nums text-success">{formatAmount(releasedTotal, { currency: contract.currency || 'USD' })}</span>
+                  <span className="font-semibold tabular-nums text-success">{formatAmount(releasedTotal, { currency: contract.currency || 'ETH' })}</span>
                 </div>
                 <div className="flex w-full max-w-xs justify-between text-muted-foreground">
                   <span>Remaining in Escrow:</span>
-                  <span className="font-semibold tabular-nums">{formatAmount(remainingTotal, { currency: contract.currency || 'USD' })}</span>
+                  <span className="font-semibold tabular-nums">{formatAmount(remainingTotal, { currency: contract.currency || 'ETH' })}</span>
                 </div>
               </div>
             </div>
@@ -437,7 +469,7 @@ export function ContractInvoiceDialog({
                           Tx: {tx.transaction_hash || tx.id}
                         </span>
                         <span className="shrink-0 uppercase text-foreground">
-                          {tx.type} • {formatAmount(tx.amount, { currency: contract.currency || 'USD' })}
+                          {tx.type} • {formatAmount(tx.amount, { currency: contract.currency || 'ETH' })}
                         </span>
                       </div>
                     ))}
