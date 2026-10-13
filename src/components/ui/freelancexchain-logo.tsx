@@ -123,6 +123,7 @@ interface LogoProps {
   className?: string;
   iconSize?: number;
   showIcon?: boolean;
+  wordmarkClassName?: string;
 }
 
 /**
@@ -135,6 +136,7 @@ export function FreelanceXchainLogo({
   className = '',
   iconSize = 30,
   showIcon = true,
+  wordmarkClassName = '',
 }: LogoProps) {
   return (
     <div className={`flex items-center gap-2.5 select-none ${className}`}>
@@ -146,7 +148,7 @@ export function FreelanceXchainLogo({
       )}
       {/* No horizontal padding on the X — it is a letter in the word, not a
           separator, and padding here visibly breaks "FreelanceXchain" in two. */}
-      <span className="font-extrabold text-lg text-foreground tracking-tight leading-none">
+      <span className={`font-extrabold text-lg text-foreground tracking-tight leading-none ${wordmarkClassName}`}>
         Freelance<span className="text-primary font-black">X</span>chain
       </span>
     </div>
