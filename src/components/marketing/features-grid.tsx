@@ -149,7 +149,7 @@ export function FeaturesGrid() {
                     &ldquo;On standard platforms I waited two weeks after milestone sign-off to withdraw funds, losing 20% along the way. With FreelanceXchain, USDC arrives in my wallet thirty seconds after approval.&rdquo;
                   </blockquote>
                   <p className="text-2xs text-muted-foreground font-medium text-right pt-0.5">
-                    — Senior Solidity Auditor (42 completed milestones)
+                    Senior Solidity Auditor (42 completed milestones)
                   </p>
                 </div>
               </div>

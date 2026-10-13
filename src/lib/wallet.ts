@@ -111,7 +111,13 @@ export interface DeployEscrowParams {
   milestoneAmounts: string[];
   milestoneDescriptions: string[];
   totalAmount: string;
+  abi?: unknown[];
+  bytecode?: string;
   chainId?: string;
+  existingDeployment?: {
+    escrowAddress: string;
+    transactionHash: string;
+  };
 }
 
 export interface DeployedEscrowResult {
@@ -123,8 +129,17 @@ export async function deployEscrowFromWallet(
   ethereum: EthereumProvider,
   params: DeployEscrowParams
 ): Promise<DeployedEscrowResult> {
+  if (params.existingDeployment?.escrowAddress && params.existingDeployment?.transactionHash) {
+    return params.existingDeployment;
+  }
+
   const { BrowserProvider, ContractFactory } = await import('ethers');
   const { FreelanceEscrowABI, FreelanceEscrowBytecode } = await import('./escrow-abi');
+  const resolvedAbi = Array.isArray(params.abi) && params.abi.length > 0 ? params.abi : FreelanceEscrowABI;
+  const resolvedBytecode =
+    typeof params.bytecode === 'string' && params.bytecode.startsWith('0x') && params.bytecode.length > 2
+      ? params.bytecode
+      : FreelanceEscrowBytecode;
 
   if (params.chainId) {
     try {
@@ -142,9 +157,32 @@ export async function deployEscrowFromWallet(
   }
 
   const browserProvider = new BrowserProvider(ethereum as never);
+  const storageKey = `fx_pending_escrow_${params.contractId}`;
+
+  if (typeof window !== 'undefined') {
+    try {
+      const raw = window.localStorage.getItem(storageKey);
+      if (raw) {
+        const cached = JSON.parse(raw) as { escrowAddress?: string; transactionHash?: string };
+        if (cached?.escrowAddress && cached?.transactionHash) {
+          const code = await browserProvider.getCode(cached.escrowAddress);
+          if (code && code !== '0x') {
+            return {
+              escrowAddress: cached.escrowAddress,
+              transactionHash: cached.transactionHash,
+            };
+          }
+          window.localStorage.removeItem(storageKey);
+        }
+      }
+    } catch {
+      // Ignore storage or RPC check errors and proceed with deployment
+    }
+  }
+
   const signer = await browserProvider.getSigner();
 
-  const factory = new ContractFactory(FreelanceEscrowABI, FreelanceEscrowBytecode, signer);
+  const factory = new ContractFactory(resolvedAbi as import('ethers').InterfaceAbi, resolvedBytecode, signer);
 
   const contract = await factory.deploy(
     params.freelancerWallet,
@@ -165,11 +203,20 @@ export async function deployEscrowFromWallet(
   }
 
   const receipt = await deployTx.wait();
-
-  return {
+  const result: DeployedEscrowResult = {
     escrowAddress,
     transactionHash: receipt?.hash ?? deployTx.hash,
   };
+
+  if (typeof window !== 'undefined') {
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify(result));
+    } catch {
+      // Ignore storage write errors
+    }
+  }
+
+  return result;
 }
 
 export interface SendRushFeeParams {

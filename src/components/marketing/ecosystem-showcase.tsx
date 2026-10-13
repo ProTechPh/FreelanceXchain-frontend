@@ -212,7 +212,7 @@ export function EcosystemShowcase() {
         <ul className="sr-only" aria-label="Ecosystem integrations">
           {Array.from(new Map(baseColumns.flat().map((item) => [item.name, item])).values()).map((item) => (
             <li key={item.name}>
-              {item.name} — {item.category}
+              {item.name}, {item.category}
             </li>
           ))}
         </ul>

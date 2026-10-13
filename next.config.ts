@@ -112,7 +112,7 @@ const nextConfig: NextConfig = {
               process.env.NODE_ENV === 'development'
                 ? `connect-src 'self' https://*.appwrite.io https://cloud.appwrite.io https://challenges.cloudflare.com https://cloudflareinsights.com https://stats.uptimerobot.com https://*.didit.me https://verification.didit.me https://verify.didit.me http://localhost:* http://127.0.0.1:* wss: ws: ${metaMaskConnectSrc}`
                 : `connect-src 'self' https://*.appwrite.io https://cloud.appwrite.io https://challenges.cloudflare.com https://cloudflareinsights.com https://stats.uptimerobot.com https://*.didit.me https://verification.didit.me https://verify.didit.me ${metaMaskConnectSrc}`,
-              "frame-src 'self' https://challenges.cloudflare.com https://verify.didit.me https://verification.didit.me https://*.didit.me",
+              "frame-src 'self' blob: https://challenges.cloudflare.com https://verify.didit.me https://verification.didit.me https://*.didit.me",
               "object-src 'none'",
               "base-uri 'self'",
               "form-action 'self'",

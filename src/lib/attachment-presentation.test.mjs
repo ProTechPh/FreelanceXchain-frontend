@@ -22,12 +22,17 @@ test('only presents http and https attachment URLs as links', () => {
   assert.equal(safeAttachmentUrl('not a URL'), null);
 });
 
-test('converts Appwrite storage URLs to secure proxy URLs', () => {
+test('converts Appwrite storage URLs and relative file proxy paths to secure proxy URLs', () => {
   const appwriteUrl = 'https://cloud.appwrite.io/v1/storage/buckets/contract-documents/files/abc123/view?project=project123';
   const result = safeAttachmentUrl(appwriteUrl);
   // Should return a proxy URL, not the original Appwrite URL
   assert.ok(result !== null);
   assert.ok(result?.includes('/files/access/') || result?.includes('/files/signed-url/'));
+
+  const relativeProxyUrl = '/api/files/access/project-attachments/6acdc361000190031733';
+  const resolvedProxyUrl = safeAttachmentUrl(relativeProxyUrl);
+  assert.ok(resolvedProxyUrl !== null);
+  assert.ok(resolvedProxyUrl?.endsWith('/files/access/project-attachments/6acdc361000190031733'));
 });
 
 test('handles invalid Appwrite URLs gracefully', () => {

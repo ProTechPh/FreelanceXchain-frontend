@@ -4,10 +4,13 @@ import {
   getSecureFileUrl,
 } from './api/files.ts';
 
+const RELATIVE_FILE_PROXY_REGEX = /^\/api\/files\/access\/([A-Za-z0-9._-]{1,36})\/([A-Za-z0-9._-]{1,36})$/;
+
 /**
  * Safely validate and normalize an attachment URL.
- * Supports both direct URLs and Appwrite Storage URLs.
- * For Appwrite URLs, returns the secure proxy URL through the backend.
+ * Supports relative proxy URLs (/api/files/access/:bucket/:fileId),
+ * direct URLs, and legacy Appwrite Storage URLs.
+ * For Appwrite or relative proxy URLs, returns the secure proxy URL through the backend.
  * 
  * @param value - The URL string to validate
  * @returns The normalized URL, or null if invalid
@@ -15,6 +18,16 @@ import {
 export function safeAttachmentUrl(value: string): string | null {
   if (!value || typeof value !== 'string') {
     return null;
+  }
+
+  // Handle backend relative file proxy paths (/api/files/access/:bucket/:fileId)
+  const proxyMatch = RELATIVE_FILE_PROXY_REGEX.exec(value);
+  if (proxyMatch && proxyMatch[1] && proxyMatch[2]) {
+    try {
+      return getSecureFileUrl(proxyMatch[1], proxyMatch[2]);
+    } catch {
+      return null;
+    }
   }
 
   // Check if it's an Appwrite Storage URL that needs conversion

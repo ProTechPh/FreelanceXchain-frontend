@@ -115,7 +115,31 @@ export function ReputationOverview({ role }: { role?: 'freelancer' | 'employer' 
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card><CardHeader><CardTitle>Recent rating details</CardTitle></CardHeader><CardContent>{!breakdown || breakdown.recentRatings.length === 0 ? <div className="flex flex-col items-center gap-2 py-10 text-center"><MessageSquareOff className="h-8 w-8 text-muted-foreground" /><p className="text-sm text-muted-foreground">No reviews yet.</p></div> : <ul className="space-y-4">{breakdown.recentRatings.map((rating, index) => <li key={`${rating.projectTitle}-${rating.createdAt}-${index}`} className="rounded-lg border border-border p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-medium">{rating.projectTitle}</p><p className="text-xs text-muted-foreground">{rating.reviewerName} · {formatDate(rating.createdAt)}</p></div><span className="flex items-center gap-1 text-sm"><Star className="h-4 w-4 fill-warning text-warning" />{rating.rating}</span></div>{rating.comment && <p className="mt-3 text-sm text-muted-foreground">{rating.comment}</p>}</li>)}</ul>}</CardContent></Card>
+        <Card><CardHeader><CardTitle>Recent rating details</CardTitle></CardHeader><CardContent>{!breakdown || breakdown.recentRatings.length === 0 ? <div className="flex flex-col items-center gap-2 py-10 text-center"><MessageSquareOff className="h-8 w-8 text-muted-foreground" /><p className="text-sm text-muted-foreground">No reviews yet.</p></div> : <ul className="space-y-4">{breakdown.recentRatings.map((rating, index) => {
+          const metaRating = metadata?.ratings.find((m) =>
+            (rating.id && m.id === rating.id) ||
+            (rating.contractId && m.contractId === rating.contractId) ||
+            (rating.comment && m.comment === rating.comment)
+          );
+          return (
+            <li key={`${rating.projectTitle}-${rating.createdAt}-${index}`} className="rounded-lg border border-border p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-medium">{rating.projectTitle}</p>
+                  <p className="text-xs text-muted-foreground">{rating.reviewerName} · {formatDate(rating.createdAt)}</p>
+                </div>
+                <span className="flex items-center gap-1 text-sm"><Star className="h-4 w-4 fill-warning text-warning" />{rating.rating}</span>
+              </div>
+              {rating.comment && <p className="mt-3 text-sm text-muted-foreground">{rating.comment}</p>}
+              {metaRating?.transactionHash && /^0x[0-9a-f]{64}$/i.test(metaRating.transactionHash) && (
+                <div className="mt-2.5 flex items-center gap-1.5 rounded bg-primary/5 px-2 py-1 font-mono text-2xs text-primary">
+                  <ShieldCheck className="size-3.5 shrink-0" />
+                  <span>On-Chain Tx: {metaRating.transactionHash.slice(0, 10)}…{metaRating.transactionHash.slice(-8)}</span>
+                </div>
+              )}
+            </li>
+          );
+        })}</ul>}</CardContent></Card>
         <Card><CardHeader><CardTitle>Completed work</CardTitle></CardHeader><CardContent>{workHistory.length === 0 ? <p className="py-8 text-center text-sm text-muted-foreground">No completed contracts yet.</p> : <ul className="space-y-3">{workHistory.map((item) => <li key={item.contractId} className="rounded-lg border border-border p-3"><div className="flex justify-between gap-3"><div><p className="font-medium">{item.projectTitle}</p><p className="text-xs text-muted-foreground">As {item.role} · {formatDate(item.completedAt)}</p></div>{item.rating && <span className="text-sm">{item.rating} / 5</span>}</div>{item.ratingComment && <p className="mt-2 text-sm text-muted-foreground">{item.ratingComment}</p>}</li>)}</ul>}</CardContent></Card>
       </div>
 

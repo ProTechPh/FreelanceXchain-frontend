@@ -138,7 +138,10 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
         milestoneAmounts: fundInfo.milestoneAmounts,
         milestoneDescriptions: fundInfo.milestoneDescriptions,
         totalAmount: fundInfo.totalAmount,
+        abi: fundInfo.abi,
+        bytecode: fundInfo.bytecode,
         chainId: fundInfo.chainId,
+        existingDeployment: fundInfo.existingDeployment,
       });
       await contractsApi.fund(contract.id, deployment);
       toast.success('Contract funded and activated.');
@@ -271,6 +274,7 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
 
       <ContractHistoryCard
         contractId={contract.id}
+        contractStatus={contract.status}
         role={role}
         transactions={transactions}
         disputes={disputes}

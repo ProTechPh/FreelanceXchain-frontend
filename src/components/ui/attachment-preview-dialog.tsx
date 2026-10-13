@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Markdown } from '@/components/ui/markdown';
 import { formatFileSize, safeAttachmentUrl } from '@/lib/attachment-presentation';
+import { api } from '@/lib/api-client';
 import { sanitizeMarkdownText } from '@/components/projects/ProposalDialog';
 import {
   Image as ImageIcon,
@@ -46,6 +47,7 @@ export function AttachmentPreviewDialog({
   attachment,
 }: AttachmentPreviewDialogProps) {
   const [textContent, setTextContent] = useState<string | null>(null);
+  const [blobUrl, setBlobUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -55,6 +57,8 @@ export function AttachmentPreviewDialog({
   const isUrlFilename = rawFilename.startsWith('http://') || rawFilename.startsWith('https://');
   const displayFilename = isUrlFilename ? 'Evidence Attachment' : rawFilename;
   const url = attachment ? safeAttachmentUrl(attachment.url) : null;
+  const isProxyEndpoint = Boolean(url && url.includes('/files/access/'));
+  const resolvedUrl = isProxyEndpoint ? blobUrl : url;
 
   // Extract clean extension from filename or URL
   const cleanName = rawFilename.split('?')[0]?.split('#')[0] || '';
@@ -81,6 +85,7 @@ export function AttachmentPreviewDialog({
     if (!open || !attachment) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setTextContent(null);
+      setBlobUrl(null);
       setError(null);
       setLoading(false);
       return;
@@ -91,8 +96,48 @@ export function AttachmentPreviewDialog({
       return;
     }
 
-    if (isText && url) {
-      let active = true;
+    if (!url) return;
+
+    let active = true;
+    let createdObjectUrl: string | null = null;
+
+    if (isProxyEndpoint) {
+      setLoading(true);
+      setError(null);
+      setBlobUrl(null);
+
+      api.get<Blob>(url, { responseType: 'blob' })
+        .then(async (res) => {
+          if (!active) return;
+          const blob = res.data;
+          createdObjectUrl = URL.createObjectURL(blob);
+          setBlobUrl(createdObjectUrl);
+          if (isText) {
+            const text = await blob.text();
+            if (active) {
+              setTextContent(sanitizeMarkdownText(text));
+            }
+          }
+        })
+        .catch((err) => {
+          if (active) {
+            const status = err?.response?.status;
+            setError(status ? `HTTP ${status}` : (err instanceof Error ? err.message : 'Failed to fetch document content'));
+          }
+        })
+        .finally(() => {
+          if (active) setLoading(false);
+        });
+
+      return () => {
+        active = false;
+        if (createdObjectUrl) {
+          URL.revokeObjectURL(createdObjectUrl);
+        }
+      };
+    }
+
+    if (isText) {
       setLoading(true);
       setError(null);
 
@@ -117,7 +162,7 @@ export function AttachmentPreviewDialog({
         active = false;
       };
     }
-  }, [open, attachment, isText, url]);
+  }, [open, attachment, isText, isProxyEndpoint, url]);
 
   const handleCopy = async () => {
     if (!textContent) return;
@@ -176,7 +221,7 @@ export function AttachmentPreviewDialog({
               </Button>
             )}
 
-            {url && (
+            {resolvedUrl && (
               <>
                 <Button
                   asChild
@@ -184,7 +229,7 @@ export function AttachmentPreviewDialog({
                   size="sm"
                   className="h-9 sm:h-8 px-2.5 text-xs gap-1.5 rounded-lg touch-manipulation"
                 >
-                  <a href={url} target="_blank" rel="noopener noreferrer">
+                  <a href={resolvedUrl} target="_blank" rel="noopener noreferrer">
                     <ExternalLink className="size-3.5" />
                     <span className="hidden sm:inline">Open Raw</span>
                   </a>
@@ -195,7 +240,7 @@ export function AttachmentPreviewDialog({
                   size="sm"
                   className="h-9 sm:h-8 px-2.5 text-xs gap-1.5 rounded-lg gradient-primary touch-manipulation"
                 >
-                  <a href={url} download={displayFilename} target="_blank" rel="noopener noreferrer">
+                  <a href={resolvedUrl} download={displayFilename} target="_blank" rel="noopener noreferrer">
                     <Download className="size-3.5" />
                     <span className="hidden sm:inline">Download</span>
                   </a>
@@ -217,9 +262,9 @@ export function AttachmentPreviewDialog({
           {error && (
             <div className="p-6 rounded-2xl border border-destructive/20 bg-destructive/5 text-center space-y-3">
                             <p className="text-sm text-destructive font-medium">Couldn&apos;t load the preview: {error}</p>
-              {url && (
+              {resolvedUrl && (
                 <Button asChild size="sm" variant="outline">
-                  <a href={url} target="_blank" rel="noopener noreferrer">
+                  <a href={resolvedUrl} target="_blank" rel="noopener noreferrer">
                     Open Directly in Browser <ExternalLink className="ml-1.5 size-3.5" />
                   </a>
                 </Button>
@@ -244,15 +289,15 @@ export function AttachmentPreviewDialog({
               )}
 
               {/* Image Display */}
-              {shouldTryImage && url && (
+              {shouldTryImage && resolvedUrl && (
                 <div className="flex items-center justify-center p-4 rounded-2xl bg-black/5 dark:bg-background border border-border min-h-[300px]">
                   <Image
-                    src={url}
+                    src={resolvedUrl}
                     alt={displayFilename}
                     width={800}
                     height={600}
                     className="max-h-[65dvh] max-w-full rounded-xl object-contain shadow-md"
-                    unoptimized={url?.startsWith('http')}
+                    unoptimized={resolvedUrl.startsWith('http') || resolvedUrl.startsWith('blob:')}
                     loading="lazy"
                     onError={() => setImageFailed(true)}
                   />
@@ -260,9 +305,9 @@ export function AttachmentPreviewDialog({
               )}
 
               {/* PDF Display */}
-              {isPdf && url && (
+              {isPdf && resolvedUrl && (
                 <div className="w-full h-[65dvh] rounded-2xl overflow-hidden border border-border shadow-md">
-                  <iframe src={url} className="w-full h-full border-0" title={displayFilename} />
+                  <iframe src={resolvedUrl} className="w-full h-full border-0" title={displayFilename} />
                 </div>
               )}
 
@@ -278,9 +323,9 @@ export function AttachmentPreviewDialog({
                       {ext ? `Direct in-app preview is not available for .${ext} files.` : 'Direct in-app preview is not available for this file type.'}
                     </p>
                   </div>
-                  {url && (
+                  {resolvedUrl && (
                     <Button asChild className="gradient-primary shadow-md rounded-full">
-                      <a href={url} download={displayFilename} target="_blank" rel="noopener noreferrer">
+                      <a href={resolvedUrl} download={displayFilename} target="_blank" rel="noopener noreferrer">
                         <Download className="size-4 mr-2" /> Download File
                       </a>
                     </Button>

@@ -43,6 +43,7 @@ test('direction is relative to the viewer', () => {
   assert.equal(getPaymentDirection(r, 'employer-1'), 'out');
 });
 
+
 test('a viewer who is neither party gets none, not a misleading out', () => {
   assert.equal(getPaymentDirection(record(), 'admin-9'), 'none');
 });
@@ -72,6 +73,7 @@ test('summary counts every row by type regardless of status', () => {
   );
   assert.deepEqual(summary.byType, { escrow_deposit: 2, rush_fee: 1 });
 });
+
 
 test('summary nets inbound against outbound for the same viewer', () => {
   const summary = summarizePaymentHistory(

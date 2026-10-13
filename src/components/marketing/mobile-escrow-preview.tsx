@@ -1,9 +1,9 @@
 import {
-  CircleCheck,
-  Coins,
-  ShieldCheck,
-  Sparkles,
-} from "lucide-react";
+  SparkleIcon,
+  ShieldEscrowIcon,
+  InstantSettlementIcon,
+  VerifiedCheckIcon,
+} from "@/components/ui/brand-icons";
 
 import { FreelanceXchainIcon } from "@/components/ui/freelancexchain-logo";
 import { Progress } from "@/components/ui/progress";
@@ -11,17 +11,17 @@ import { StatusBadge } from "@/components/ui/status-badge";
 
 const dealActivity = [
   {
-    icon: Sparkles,
+    icon: SparkleIcon,
     title: "Matched at 99%",
     detail: "Skills and scope verified",
   },
   {
-    icon: ShieldCheck,
+    icon: ShieldEscrowIcon,
     title: "Escrow funded",
     detail: "$4,500 USDC secured",
   },
   {
-    icon: Coins,
+    icon: InstantSettlementIcon,
     title: "Milestone paid",
     detail: "$1,500 released instantly",
   },
@@ -91,7 +91,7 @@ export function MobileEscrowPreview() {
                   <span className="block text-xs font-bold text-foreground">{item.title}</span>
                   <span className="block text-2xs text-muted-foreground">{item.detail}</span>
                 </span>
-                <CircleCheck className="size-4 shrink-0 text-success" aria-hidden="true" />
+                <VerifiedCheckIcon className="size-4 shrink-0 text-success" />
               </li>
             );
           })}
