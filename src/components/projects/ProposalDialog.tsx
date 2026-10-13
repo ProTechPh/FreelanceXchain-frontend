@@ -498,15 +498,15 @@ export function ProposalDialog({
         <div className="space-y-5">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field
-              label="Proposed rate (ETH)"
+              label="Proposed rate (USD)"
               htmlFor={`${fieldId}-rate`}
-              description={project ? `Client budget: ${formatAmount(project.budget, { currency: 'ETH' })}` : undefined}
+              description={project ? `Client budget: ${formatAmount(project.budget)}` : undefined}
               error={fieldError?.field === 'proposedRate' ? fieldError.message : null}
               required
             >
               <div className="relative">
-                <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm font-semibold text-muted-foreground" aria-hidden="true">
-                  Ξ
+                <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground" aria-hidden="true">
+                  $
                 </span>
                 <FieldInput
                   type="number"
@@ -520,7 +520,7 @@ export function ProposalDialog({
                   onChange={(event) => handleRateChange(event.target.value)}
                 />
                 <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs font-medium text-muted-foreground" aria-hidden="true">
-                  ETH
+                  USD
                 </span>
               </div>
             </Field>

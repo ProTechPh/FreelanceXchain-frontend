@@ -726,16 +726,19 @@ export function MessagesWorkspace() {
                               return (
                                 <li key={`${msg.id}-${attachment.filename}-${attachment.url}-${attachmentIndex}`}>
                                   {url ? (
-                                    <button
-                                      type="button"
-                                      onClick={() =>
+                                    <a
+                                      href={url}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      onClick={(e) => {
+                                        e.preventDefault();
                                         setPreviewAttachment({
                                           filename: attachment.filename,
                                           url: attachment.url,
                                           size: attachment.size,
                                           mimeType: attachment.mimeType,
-                                        })
-                                      }
+                                        });
+                                      }}
                                       className={`flex w-full items-center gap-2 rounded-lg border px-2 py-1.5 text-xs text-left cursor-pointer transition-colors ${
                                         isMine
                                           ? 'border-gradient-foreground/30 dark:border-gradient-foreground/60 hover:bg-gradient-foreground/10 dark:hover:bg-gradient-foreground/20'
@@ -748,7 +751,7 @@ export function MessagesWorkspace() {
                                         {formatFileSize(attachment.size)}
                                       </span>
                                       <Eye className="h-3 w-3 shrink-0 opacity-70" />
-                                    </button>
+                                    </a>
                                   ) : (
                                     <span className="flex items-center gap-2 text-xs">
                                       <FileText className="h-3.5 w-3.5" />
