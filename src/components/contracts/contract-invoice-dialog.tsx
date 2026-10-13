@@ -24,6 +24,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import { FreelanceXchainIcon } from '@/components/ui/freelancexchain-logo';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { formatAmount, formatDate } from '@/lib/format';
 import { useAuthStore } from '@/stores/authStore';
@@ -216,10 +217,10 @@ export function ContractInvoiceDialog({
             <div className="flex flex-col gap-4 border-b border-border pb-6 sm:flex-row sm:items-start sm:justify-between">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <div className="flex size-8 items-center justify-center rounded-lg bg-primary font-bold text-primary-foreground">
-                    FX
-                  </div>
-                  <span className="text-xl font-black tracking-tight text-foreground">FreelanceXchain</span>
+                  <FreelanceXchainIcon size={32} />
+                  <span className="text-xl font-black tracking-tight text-foreground">
+                    Freelance<span className="text-primary">X</span>chain
+                  </span>
                 </div>
                 <p className="text-xs text-muted-foreground">Decentralized Freelance Escrow Protocol</p>
                 <div className="flex items-center gap-1.5 pt-1 text-xs text-primary">
