@@ -54,7 +54,7 @@ export function ContractHistoryCard({
                       )}
                     </div>
                     <div className="text-right">
-                      <p>{formatAmount(transaction.amount)}</p>
+                      <p>{formatAmount(transaction.amount, { currency: transaction.currency || 'ETH' })}</p>
                       <Badge variant="secondary" className="capitalize">
                         {transaction.status}
                       </Badge>

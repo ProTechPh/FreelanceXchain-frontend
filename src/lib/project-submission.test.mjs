@@ -183,3 +183,72 @@ test('creates a project with multipart data when reference files are selected', 
   assert.deepEqual(submitted.getAll('files'), files);
   assert.equal(calls[1][0], 'setMilestones');
 });
+
+test('validates milestone duration must be a positive integer if provided', () => {
+  assert.equal(
+    validateProjectStep(2, {
+      ...validForm,
+      milestones: [
+        { title: 'Design', description: 'Complete UI', amount: '50', durationDays: '0' },
+      ],
+    }),
+    'Milestone 1 duration must be a positive number of days.',
+  );
+  assert.equal(
+    validateProjectStep(2, {
+      ...validForm,
+      milestones: [
+        { title: 'Design', description: 'Complete UI', amount: '50', durationDays: '2.5' },
+      ],
+    }),
+    'Milestone 1 duration must be a positive number of days.',
+  );
+  assert.equal(
+    validateProjectStep(2, {
+      ...validForm,
+      milestones: [
+        { title: 'Design', description: 'Complete UI', amount: '50', durationDays: '7' },
+      ],
+    }),
+    null,
+  );
+});
+
+test('calculates progressive milestone due dates based on durationDays', async () => {
+  let savedMilestones = null;
+  const api = {
+    async create(payload) {
+      return { data: { id: 'project-with-durations', ...payload } };
+    },
+    async setMilestones(projectId, payload) {
+      savedMilestones = payload.milestones;
+      return { data: { id: projectId, milestones: payload.milestones } };
+    },
+  };
+
+  const baseDate = new Date('2026-09-01T00:00:00.000Z');
+  await submitProject(api, {
+    ...validForm,
+    deadline: '2026-09-30',
+    milestones: [
+      { title: 'Design', description: 'UI', amount: '50', durationDays: '7' },
+      { title: 'Build', description: 'Code', amount: '75', durationDays: '10' },
+    ],
+  }, { now: baseDate });
+
+  assert.deepEqual(savedMilestones, [
+    {
+      title: 'Design',
+      description: 'UI',
+      amount: 50,
+      dueDate: '2026-09-08T23:59:59.999Z',
+    },
+    {
+      title: 'Build',
+      description: 'Code',
+      amount: 75,
+      dueDate: '2026-09-18T23:59:59.999Z',
+    },
+  ]);
+});
+

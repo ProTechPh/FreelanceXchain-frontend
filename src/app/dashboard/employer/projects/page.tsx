@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { projectsApi } from '@/lib/api';
 import type { Project, ProjectStatus } from '@/types';
 import { reportLoadFailure } from '@/lib/report-failure';
-import { PlusCircle, Clock, DollarSign, Users, Eye, FolderSearch, ClipboardList, Pencil } from 'lucide-react';
+import { PlusCircle, Clock, Coins, Users, Eye, FolderSearch, ClipboardList, Pencil } from 'lucide-react';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { formatAmount, formatDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
@@ -163,8 +163,8 @@ export default function EmployerProjectsPage() {
 
                   <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-4">
                     <div className="flex items-center gap-1">
-                      <DollarSign className="w-4 h-4" />
-                      <span className="font-medium text-primary">{formatAmount(project.budget)}</span>
+                      <Coins className="w-4 h-4 text-primary" />
+                      <span className="font-medium text-primary">{formatAmount(project.budget, { currency: 'ETH' })}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Users className="w-4 h-4" />

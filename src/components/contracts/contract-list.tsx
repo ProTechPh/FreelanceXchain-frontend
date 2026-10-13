@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { CircleDollarSign, FileCheck2, FolderOpen, FileText } from 'lucide-react';
+import { Coins, FileCheck2, FolderOpen, FileText } from 'lucide-react';
 import { reportLoadFailure } from '@/lib/report-failure';
 import { contractsApi } from '@/lib/api';
 import { getContractDetailRoute } from '@/lib/contract-route';
@@ -113,7 +113,7 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
       <div className="grid gap-4 sm:grid-cols-3">
         {[
           { label: 'Active', value: active, icon: FolderOpen },
-          { label: 'Total value', value: formatAmount(totalValue), icon: CircleDollarSign },
+          { label: 'Total value', value: formatAmount(totalValue, { currency: 'ETH' }), icon: Coins },
           { label: 'Completed', value: completed, icon: FileCheck2 },
         ].map((stat) => (
           <Card key={stat.label}>

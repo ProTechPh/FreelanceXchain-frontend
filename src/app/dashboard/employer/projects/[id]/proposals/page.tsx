@@ -7,7 +7,6 @@ import {
   ArrowLeft,
   Check,
   Clock,
-  DollarSign,
   FileText,
   MessageSquare,
   Paperclip,
@@ -257,7 +256,7 @@ export default function EmployerProjectProposalsPage() {
             {pendingCount} pending review
           </Badge>
           <Badge variant="secondary" className="h-8 px-3 text-xs font-semibold text-primary">
-            {formatAmount(project.budget)} budget
+            {formatAmount(project.budget, { currency: 'ETH' })} budget
           </Badge>
         </div>
       </div>
@@ -664,6 +663,15 @@ export default function EmployerProjectProposalsPage() {
                 : 'The freelancer will be notified that their proposal was not selected for this project.'}
             </DialogDescription>
           </DialogHeader>
+          {decision?.action === 'accept' && project && Math.abs((decision.proposal.proposedRate || 0) - project.budget) > 0.0001 && (
+            <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 text-xs space-y-1">
+              <p className="font-semibold text-primary">Negotiated Rate</p>
+              <p className="text-muted-foreground">
+                Freelancer proposed <strong>{formatAmount(decision.proposal.proposedRate, { currency: 'ETH' })}</strong> (project listing: {formatAmount(project.budget, { currency: 'ETH' })}).
+                Accepting will update the project milestones and escrow contract to match the agreed rate.
+              </p>
+            </div>
+          )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setDecision(null)} disabled={updating}>
               Cancel

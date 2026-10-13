@@ -62,10 +62,10 @@ export function findProposalFormError(form: ProposalSubmissionForm): ProposalFie
     return { field: 'proposedRate', message: 'Proposed rate must be greater than 0.' };
   }
   if (proposedRate < MIN_PROPOSED_RATE) {
-    return { field: 'proposedRate', message: `Proposed rate must be at least $${MIN_PROPOSED_RATE}.` };
+    return { field: 'proposedRate', message: `Proposed rate must be at least ${MIN_PROPOSED_RATE} ETH.` };
   }
   if (proposedRate > MAX_PROPOSED_RATE) {
-    return { field: 'proposedRate', message: 'Proposed rate cannot exceed $1,000,000.' };
+    return { field: 'proposedRate', message: 'Proposed rate cannot exceed 1,000,000 ETH.' };
   }
 
   const estimatedDuration = Number(form.estimatedDuration);

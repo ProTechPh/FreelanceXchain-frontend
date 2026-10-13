@@ -497,7 +497,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
                       {category.projectCount} open project{category.projectCount === 1 ? "" : "s"}
                     </p>
                     <p className="mt-2 text-sm font-bold text-primary">
-                      {formatAmount(category.totalBudget)} total budget
+                      {formatAmount(category.totalBudget, { currency: 'ETH' })} total budget
                     </p>
                   </button>
                 ))}

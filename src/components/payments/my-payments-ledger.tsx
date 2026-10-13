@@ -108,7 +108,11 @@ export function MyPaymentsLedger({ role }: { role: Extract<UserRole, 'employer' 
                       <TableCell
                         className={cn(
                           'text-right tabular-nums',
-                          direction === 'in' ? 'text-success' : 'text-destructive',
+                          direction === 'in'
+                            ? 'text-success'
+                            : direction === 'out'
+                              ? 'text-destructive'
+                              : 'text-muted-foreground',
                         )}
                       >
                         {direction === 'in' ? '+' : direction === 'out' ? '−' : ''}

@@ -83,7 +83,10 @@ export function ContractPaymentHistory({
                   <li key={record.id} className="flex items-start justify-between gap-3 py-3">
                     <div className="flex min-w-0 items-start gap-3">
                       {direction === 'none' ? (
-                        <span className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                        <Receipt
+                          aria-hidden="true"
+                          className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+                        />
                       ) : (
                         <Icon
                           aria-hidden="true"

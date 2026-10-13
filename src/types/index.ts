@@ -681,6 +681,7 @@ export interface Transaction {
   to_user_id?: string;
   type: string;
   amount: number;
+  currency?: string;
   status: string;
   transaction_hash?: string;
   metadata?: Record<string, unknown> | string;
