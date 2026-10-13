@@ -26,7 +26,7 @@ function OAuthCallbackContent() {
   const processed = useRef(false);
   const accessTokenRef = useRef<string | null>(null);
   const [state, setState] = useState<CallbackState>('processing');
-  const [errorMessage, setErrorMessage] = useState('We couldn\'t sign you in. The link may have expired — please try again.');
+  const [errorMessage, setErrorMessage] = useState('We couldn\'t sign you in. The link may have expired. Please try again.');
   const [isRegistering, setIsRegistering] = useState(false);
 
   useEffect(() => {
@@ -81,7 +81,7 @@ function OAuthCallbackContent() {
         router.replace(`/dashboard/${data.user.role}`);
       })
       .catch((error) => {
-        setErrorMessage(getApiErrorMessage(error, 'Sign-in failed. Your account is unaffected — please try again.'));
+        setErrorMessage(getApiErrorMessage(error, 'Sign-in failed. Your account is unaffected. Please try again.'));
         setState('error');
       });
   }, [beginMfa, completeMfa, router, searchParams]);

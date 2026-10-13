@@ -19,6 +19,7 @@ export function normalizeMilestone(value: unknown): Milestone {
   const approvedAt = stringValue(milestone, 'approvedAt', 'approved_at');
   const rejectedAt = stringValue(milestone, 'rejectedAt', 'rejected_at');
   const rejectionReason = stringValue(milestone, 'rejectionReason', 'rejection_reason');
+  const notes = stringValue(milestone, 'notes', 'submission_notes');
   const files = milestone.deliverableFiles ?? milestone.deliverable_files;
 
   return {
@@ -33,6 +34,7 @@ export function normalizeMilestone(value: unknown): Milestone {
     ...(approvedAt ? { approvedAt } : {}),
     ...(rejectedAt ? { rejectedAt } : {}),
     ...(rejectionReason ? { rejectionReason } : {}),
+    ...(notes ? { notes } : {}),
     ...(Array.isArray(files) ? { deliverableFiles: files as Milestone['deliverableFiles'] } : {}),
   };
 }

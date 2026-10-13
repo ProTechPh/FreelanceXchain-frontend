@@ -201,7 +201,7 @@ export function ContractNegotiationPanel({
       <Card>
         <CardHeader><CardTitle className="flex items-center gap-2"><FastForward className="size-5 text-primary" />Rush upgrade</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          {contract.rushFee > 0 && <p className="rounded-lg bg-primary/10 p-3 text-sm">A {formatAmount(contract.rushFee)} rush fee is active on this contract.</p>}
+          {contract.rushFee > 0 && <p className="rounded-lg bg-primary/10 p-3 text-sm">A {formatAmount(contract.rushFee, { currency: contract.currency || 'ETH' })} rush fee is active on this contract.</p>}
 
           {canCreateRush && (
             <div className="space-y-3 rounded-lg border border-border p-4">
@@ -294,7 +294,7 @@ export function ContractNegotiationPanel({
 <Textarea id="refund-reason" rows={3} value={refundReason} maxLength={1000} onChange={(event) => setRefundReason(event.target.value)} placeholder="Explain why the remaining escrow should be refunded" />
 </Field>
               <Field label="Amount (optional)" htmlFor="refund-amount">
-<Input id="refund-amount" type="number" min="0.01" step="0.01" max={contract.totalAmount} value={refundAmount} onChange={(event) => setRefundAmount(event.target.value)} placeholder={`Full remaining escrow (up to ${formatAmount(contract.totalAmount)})`} />
+<Input id="refund-amount" type="number" min="0.01" step="0.01" max={contract.totalAmount} value={refundAmount} onChange={(event) => setRefundAmount(event.target.value)} placeholder={`Full remaining escrow (up to ${formatAmount(contract.totalAmount, { currency: contract.currency || 'ETH' })})`} />
 </Field>
               <Button type="button" disabled={actionId === 'refund-request'} onClick={requestRefund}><BadgeDollarSign className="mr-2 size-4" />{actionId === 'refund-request' ? 'Submitting…' : 'Request refund'}</Button>
             </div>
@@ -307,7 +307,7 @@ export function ContractNegotiationPanel({
               const rejectionReason = rejectionReasons[refund.id] ?? '';
               return (
                 <li key={refund.id} className="space-y-3 rounded-lg border border-border p-4 text-sm">
-                  <div className="flex flex-wrap items-start justify-between gap-2"><div><p className="font-medium">{formatAmount(refund.amount)} {refund.is_partial ? 'partial refund' : 'refund'}</p><p className="mt-1 text-muted-foreground">{refund.reason}</p></div><StatusBadge status={refund.status} domain="refund" /></div>
+                  <div className="flex flex-wrap items-start justify-between gap-2"><div><p className="font-medium">{formatAmount(refund.amount, { currency: contract.currency || 'ETH' })} {refund.is_partial ? 'partial refund' : 'refund'}</p><p className="mt-1 text-muted-foreground">{refund.reason}</p></div><StatusBadge status={refund.status} domain="refund" /></div>
                   {refund.rejection_reason && <p className="text-destructive">Rejected: {refund.rejection_reason}</p>}
                   {refund.requested_by === currentUserId && refund.status === 'pending' && (
                     <div className="flex flex-wrap items-center gap-4">

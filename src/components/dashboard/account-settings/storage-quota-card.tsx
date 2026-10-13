@@ -149,7 +149,7 @@ export function StorageQuotaCard() {
                 />
               </div>
               {files.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No proposal or portfolio files stored.</p>
+                <p className="text-sm text-muted-foreground">No uploaded files stored.</p>
               ) : (
                 <div className="space-y-3">
                   <ul className="divide-y divide-border rounded-lg border border-border">

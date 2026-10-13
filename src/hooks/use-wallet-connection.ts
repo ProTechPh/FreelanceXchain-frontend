@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -150,7 +150,7 @@ export function useWalletConnection() {
   const networkName = chainId ? (chainNames[chainId] ?? `Chain ${chainId}`) : null;
   const symbol = getNetworkSymbol(chainId);
   const formattedAddress = address ? formatWalletAddress(address) : null;
-  const balance = rawBalance === null ? null : `${rawBalance.toFixed(4)} ${symbol || 'ETH'}`;
+  const balance = rawBalance === null ? null : rawBalance.toFixed(4);
 
   // Start MetaMask Connect early on devices without an injected wallet (mobile browsers),
   // so tapping "Connect" can open the MetaMask app right away.

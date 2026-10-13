@@ -60,15 +60,15 @@ export function ContractOverviewCard({
           <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
             <div>
               <p className="text-muted-foreground">Base amount</p>
-              <p className="font-semibold">{formatAmount(contract.baseAmount)}</p>
+              <p className="font-semibold">{formatAmount(contract.baseAmount, { currency: contract.currency || 'ETH' })}</p>
             </div>
             <div>
               <p className="text-muted-foreground">Rush fee</p>
-              <p className="font-semibold">{formatAmount(contract.rushFee)}</p>
+              <p className="font-semibold">{formatAmount(contract.rushFee, { currency: contract.currency || 'ETH' })}</p>
             </div>
             <div>
               <p className="text-muted-foreground">Total</p>
-              <p className="font-semibold text-primary">{formatAmount(contract.totalAmount)}</p>
+              <p className="font-semibold text-primary">{formatAmount(contract.totalAmount, { currency: contract.currency || 'ETH' })}</p>
             </div>
             <div>
               <p className="text-muted-foreground">Escrow</p>

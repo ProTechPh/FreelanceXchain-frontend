@@ -72,7 +72,7 @@ export function MilestoneListCard({
             <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
                 <span>
-                  <span className="text-muted-foreground">Amount:</span> {formatAmount(milestone.amount)}
+                  <span className="text-muted-foreground">Amount:</span> {formatAmount(milestone.amount, { currency: 'ETH' })}
                 </span>
                 <span>
                   <span className="text-muted-foreground">Due:</span>{' '}
@@ -83,6 +83,16 @@ export function MilestoneListCard({
                 <p className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
                   Revision requested: {milestone.rejectionReason}
                 </p>
+              )}
+              {milestone.notes && (
+                <div className="space-y-1.5 rounded-xl border border-border bg-muted/40 p-3.5">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Submission notes
+                  </p>
+                  <p className="whitespace-pre-wrap text-sm text-foreground">
+                    {milestone.notes}
+                  </p>
+                </div>
               )}
               {(milestone.deliverableFiles ?? []).length > 0 && (
                 <div className="space-y-2">
@@ -161,7 +171,7 @@ export function MilestoneListCard({
                       id={`notes-${milestone.id}`}
                       aria-describedby={`notes-hint-${milestone.id}`}
                       className="min-h-24 w-full rounded-lg border border-input bg-transparent p-3 text-sm"
-                      value={notes[milestone.id] ?? ''}
+                      value={notes[milestone.id] ?? milestone.notes ?? ''}
                       onChange={(event) => onNotesChange(milestone.id, event.target.value)}
                     />
                     <p id={`notes-hint-${milestone.id}`} className="text-xs text-muted-foreground">

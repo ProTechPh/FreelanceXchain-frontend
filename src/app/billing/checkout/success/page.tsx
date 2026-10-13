@@ -94,7 +94,7 @@ function CheckoutSuccessContent() {
       <div className="space-y-4 text-center">
         <Clock className="mx-auto size-10 text-warning" aria-hidden="true" />
         <h1 className="text-xl font-semibold text-foreground">
-          Payment received — activation is taking longer than usual
+          Payment received. Activation is taking longer than usual
         </h1>
         <p className="text-sm text-muted-foreground">
           Your payment went through. Pro usually appears within a minute.

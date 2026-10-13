@@ -313,6 +313,7 @@ export interface Milestone {
   deliverableFiles?: Attachment[];
   rejectionReason?: string;
   revisionCount?: number;
+  notes?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -362,6 +363,7 @@ export interface Contract {
   startDate?: string;
   endDate?: string;
   milestones?: Milestone[];
+  currency?: string;
   createdAt: string;
   updatedAt: string;
   project?: Project;
@@ -378,7 +380,13 @@ export interface ContractFundInfo {
   milestoneAmounts: string[];
   milestoneDescriptions: string[];
   totalAmount: string;
+  abi?: unknown[];
+  bytecode?: string;
   chainId?: string;
+  existingDeployment?: {
+    escrowAddress: string;
+    transactionHash: string;
+  };
 }
 
 export interface ContractPaymentStatus {
@@ -713,6 +721,8 @@ export interface ReputationBreakdown {
   twoStars: number;
   oneStar: number;
   recentRatings: Array<{
+    id?: string;
+    contractId?: string;
     rating: number;
     comment: string;
     reviewerName: string;

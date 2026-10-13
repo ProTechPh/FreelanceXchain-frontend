@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { AlertTriangle } from 'lucide-react';
-import type { Dispute, Transaction, UserRole } from '@/types';
+import type { ContractStatus, Dispute, Transaction, UserRole } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,6 +16,7 @@ interface ContractHistoryCardProps {
   role: ParticipantRole;
   transactions: Transaction[];
   disputes: Dispute[];
+  contractStatus?: ContractStatus;
 }
 
 export function ContractHistoryCard({
@@ -23,7 +24,9 @@ export function ContractHistoryCard({
   role,
   transactions,
   disputes,
+  contractStatus,
 }: ContractHistoryCardProps) {
+  const canFileDispute = contractStatus === 'active';
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <Card>
@@ -51,7 +54,7 @@ export function ContractHistoryCard({
                       )}
                     </div>
                     <div className="text-right">
-                      <p>{formatAmount(transaction.amount)}</p>
+                      <p>{formatAmount(transaction.amount, { currency: 'ETH' })}</p>
                       <Badge variant="secondary" className="capitalize">
                         {transaction.status}
                       </Badge>
@@ -67,9 +70,11 @@ export function ContractHistoryCard({
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0">
           <CardTitle>Disputes</CardTitle>
-          <Button variant="destructive" size="sm" asChild>
-            <Link href={`/dashboard/${role}/disputes?contractId=${contractId}`}>File Dispute</Link>
-          </Button>
+          {canFileDispute && (
+            <Button variant="destructive" size="sm" asChild>
+              <Link href={`/dashboard/${role}/disputes?contractId=${contractId}`}>File Dispute</Link>
+            </Button>
+          )}
         </CardHeader>
         <CardContent className="space-y-3">
           {disputes.length === 0 ? (

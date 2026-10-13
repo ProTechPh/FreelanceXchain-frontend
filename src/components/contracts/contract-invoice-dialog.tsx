@@ -371,7 +371,7 @@ export function ContractInvoiceDialog({
                             <StatusBadge status={milestone.status} domain="milestone" />
                           </td>
                           <td className="px-3 py-2.5 text-right font-semibold tabular-nums text-foreground">
-                            {formatAmount(milestone.amount)}
+                            {formatAmount(milestone.amount, { currency: contract.currency || 'ETH' })}
                           </td>
                         </tr>
                       ))
@@ -384,25 +384,25 @@ export function ContractInvoiceDialog({
               <div className="flex flex-col items-end gap-1.5 pt-2 text-xs">
                 <div className="flex w-full max-w-xs justify-between text-muted-foreground">
                   <span>Milestone Subtotal:</span>
-                  <span className="font-semibold tabular-nums">{formatAmount(contract.baseAmount)}</span>
+                  <span className="font-semibold tabular-nums">{formatAmount(contract.baseAmount, { currency: contract.currency || 'ETH' })}</span>
                 </div>
                 {contract.rushFee > 0 && (
                   <div className="flex w-full max-w-xs justify-between text-muted-foreground">
                     <span>Rush Acceleration Fee:</span>
-                    <span className="font-semibold tabular-nums">{formatAmount(contract.rushFee)}</span>
+                    <span className="font-semibold tabular-nums">{formatAmount(contract.rushFee, { currency: contract.currency || 'ETH' })}</span>
                   </div>
                 )}
                 <div className="flex w-full max-w-xs justify-between border-t border-border pt-1.5 text-sm font-bold text-foreground">
                   <span>Total Contract Value:</span>
-                  <span className="tabular-nums text-primary">{formatAmount(contract.totalAmount)}</span>
+                  <span className="tabular-nums text-primary">{formatAmount(contract.totalAmount, { currency: contract.currency || 'ETH' })}</span>
                 </div>
                 <div className="flex w-full max-w-xs justify-between text-muted-foreground">
                   <span>Released to Contractor:</span>
-                  <span className="font-semibold tabular-nums text-success">{formatAmount(releasedTotal)}</span>
+                  <span className="font-semibold tabular-nums text-success">{formatAmount(releasedTotal, { currency: contract.currency || 'ETH' })}</span>
                 </div>
                 <div className="flex w-full max-w-xs justify-between text-muted-foreground">
                   <span>Remaining in Escrow:</span>
-                  <span className="font-semibold tabular-nums">{formatAmount(remainingTotal)}</span>
+                  <span className="font-semibold tabular-nums">{formatAmount(remainingTotal, { currency: contract.currency || 'ETH' })}</span>
                 </div>
               </div>
             </div>
@@ -436,7 +436,7 @@ export function ContractInvoiceDialog({
                           Tx: {tx.transaction_hash || tx.id}
                         </span>
                         <span className="shrink-0 uppercase text-foreground">
-                          {tx.type} • {formatAmount(tx.amount)}
+                          {tx.type} • {formatAmount(tx.amount, { currency: 'ETH' })}
                         </span>
                       </div>
                     ))}
