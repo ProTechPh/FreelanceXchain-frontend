@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import {
   Building2,
@@ -81,6 +81,9 @@ export function EmployerProfileDialog({
   const [workHistory, setWorkHistory] = useState<ReputationWorkHistoryEntry[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const user = useAuthStore((state) => state.user);
+  // Focus the scroll area on open so the dialog starts at the top instead of
+  // jumping down to the first tab trigger.
+  const bodyRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open || !employerId) return;
@@ -313,17 +316,17 @@ export function EmployerProfileDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl p-0 overflow-hidden sm:rounded-3xl border-border bg-card shadow-2xl">
+      <DialogContent initialFocus={bodyRef} className="flex flex-col gap-0 max-h-[calc(100dvh-2rem)] sm:max-w-2xl p-0 overflow-hidden rounded-2xl sm:rounded-3xl border-border bg-card shadow-2xl">
         {/* Banner Header */}
-        <div className="relative bg-gradient-to-br from-primary/20 via-primary/10 to-transparent p-6 sm:p-7 border-b border-border/60">
+        <div className="relative shrink-0 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent p-4 pr-12 sm:p-7 sm:pr-14 border-b border-border/60">
           <DialogHeader className="p-0">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-              <div className="size-16 rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-black text-xl flex items-center justify-center shadow-md shrink-0">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="size-12 sm:size-16 rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-black text-base sm:text-xl flex items-center justify-center shadow-md shrink-0">
                 {initials}
               </div>
               <div className="min-w-0 flex-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <DialogTitle className="text-xl font-bold text-foreground truncate">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <DialogTitle className="min-w-0 max-w-full text-lg sm:text-xl font-bold text-foreground truncate">
                     {name}
                   </DialogTitle>
                   <Badge variant="secondary" className="bg-success-subtle text-success border border-success/20 text-xs font-semibold py-0.5">
@@ -332,17 +335,17 @@ export function EmployerProfileDialog({
                 </div>
 
                 {companyName && companyName !== name && (
-                  <p className="text-sm font-medium text-muted-foreground mt-0.5 flex items-center gap-1.5">
-                    <Building2 className="size-3.5 text-primary" />
-                    {companyName}
+                  <p className="text-sm font-medium text-muted-foreground mt-0.5 flex items-center gap-1.5 min-w-0">
+                    <Building2 className="size-3.5 text-primary shrink-0" />
+                    <span className="truncate">{companyName}</span>
                   </p>
                 )}
 
-                <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 sm:mt-2 text-xs text-muted-foreground">
                   <span className="inline-flex items-center">
                     <Globe className="size-3.5 mr-1" /> {nationality}
                   </span>
-                  <span>•</span>
+                  <span className="hidden sm:inline">•</span>
                   <span className="inline-flex items-center">
                     <Calendar className="size-3.5 mr-1" /> Joined {memberSince}
                   </span>
@@ -353,7 +356,7 @@ export function EmployerProfileDialog({
         </div>
 
         {/* Content Body */}
-        <div className="p-6 sm:p-7 space-y-5 max-h-[75dvh] overflow-y-auto">
+        <div ref={bodyRef} tabIndex={-1} className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-4 sm:p-7 space-y-5 outline-none">
           {/* Live Actual Reputation & Activity Grid */}
           <div>
             <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2.5">
@@ -435,17 +438,17 @@ export function EmployerProfileDialog({
           {/* Contracts, Reputation & Projects Tabs */}
           <div>
             <Tabs defaultValue="completed" className="w-full">
-              <TabsList className="grid grid-cols-3 w-full bg-muted/60 p-1 rounded-xl">
-                <TabsTrigger value="completed" className="rounded-lg text-xs font-semibold py-2">
-                  <CheckCircle2 className="size-3.5 mr-1.5 text-success" />
+              <TabsList className="grid grid-cols-3 w-full h-auto bg-muted/60 p-1 rounded-xl">
+                <TabsTrigger value="completed" className="min-w-0 h-auto flex-col sm:flex-row gap-0.5 sm:gap-1.5 whitespace-normal text-center leading-tight rounded-lg text-[11px] sm:text-xs font-semibold px-1 py-1.5 sm:py-2">
+                  <CheckCircle2 className="size-3.5 text-success" />
                   Completed ({completedContractsList.length})
                 </TabsTrigger>
-                <TabsTrigger value="reviews" className="rounded-lg text-xs font-semibold py-2">
-                  <Star className="size-3.5 mr-1.5 text-warning fill-warning" />
+                <TabsTrigger value="reviews" className="min-w-0 h-auto flex-col sm:flex-row gap-0.5 sm:gap-1.5 whitespace-normal text-center leading-tight rounded-lg text-[11px] sm:text-xs font-semibold px-1 py-1.5 sm:py-2">
+                  <Star className="size-3.5 text-warning fill-warning" />
                   Reviews ({totalReviews})
                 </TabsTrigger>
-                <TabsTrigger value="all" className="rounded-lg text-xs font-semibold py-2">
-                  <Briefcase className="size-3.5 mr-1.5 text-primary" />
+                <TabsTrigger value="all" className="min-w-0 h-auto flex-col sm:flex-row gap-0.5 sm:gap-1.5 whitespace-normal text-center leading-tight rounded-lg text-[11px] sm:text-xs font-semibold px-1 py-1.5 sm:py-2">
+                  <Briefcase className="size-3.5 text-primary" />
                   All Jobs ({jobsCount})
                 </TabsTrigger>
               </TabsList>
@@ -453,7 +456,7 @@ export function EmployerProfileDialog({
               {/* Completed Contracts Tab */}
               <TabsContent value="completed" className="space-y-2.5 mt-3 focus-visible:outline-none">
                 {completedContractsList.length > 0 ? (
-                  <div className="space-y-2.5 max-h-[340px] overflow-y-auto pr-1">
+                  <div className="space-y-2.5 sm:max-h-[340px] sm:overflow-y-auto sm:pr-1">
                     {completedContractsList.map((item) => (
                       <div
                         key={item.id}
@@ -468,9 +471,9 @@ export function EmployerProfileDialog({
                                     ? `/dashboard/freelancer/projects/${item.projectId}`
                                     : `/projects/${item.projectId}`
                                 }
-                                className="text-sm font-bold text-foreground hover:text-primary transition-colors inline-flex items-center gap-1.5 group"
+                                className="text-sm font-bold text-foreground hover:text-primary transition-colors inline-flex max-w-full items-center gap-1.5 group"
                               >
-                                <span className="line-clamp-1">{item.title}</span>
+                                <span className="min-w-0 line-clamp-1">{item.title}</span>
                                 <ExternalLink className="size-3.5 opacity-60 group-hover:opacity-100 shrink-0" />
                               </Link>
                             ) : (
@@ -486,7 +489,7 @@ export function EmployerProfileDialog({
                               )}
                               {item.budget !== undefined && item.budget > 0 && (
                                 <>
-                                  <span>•</span>
+                                  <span className="hidden sm:inline">•</span>
                                   <span className="font-semibold text-primary">
                                     {formatAmount(item.budget, { currency: 'ETH' })}
                                   </span>
@@ -593,7 +596,7 @@ export function EmployerProfileDialog({
                                 style={{ width: `${pct}%` }}
                               />
                             </div>
-                            <span className="w-6 text-right text-xs text-muted-foreground">{count}</span>
+                            <span className="w-6 shrink-0 text-right text-xs text-muted-foreground">{count}</span>
                           </div>
                         );
                       })}
@@ -642,20 +645,20 @@ export function EmployerProfileDialog({
                   </h5>
 
                   {displayReviews.length > 0 ? (
-                    <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
+                    <div className="space-y-2.5 sm:max-h-[300px] sm:overflow-y-auto sm:pr-1">
                       {displayReviews.map((rating, index) => (
                         <div
                           key={rating.id || `${rating.projectTitle}-${rating.createdAt}-${index}`}
                           className="rounded-2xl border border-border/70 bg-secondary/30 p-4 space-y-2"
                         >
                           <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <p className="font-semibold text-sm text-foreground">{rating.projectTitle}</p>
+                            <div className="min-w-0">
+                              <p className="font-semibold text-sm text-foreground break-words">{rating.projectTitle}</p>
                               <p className="text-xs text-muted-foreground">
                                 {rating.reviewerName} · {formatDateSafe(rating.createdAt)}
                               </p>
                             </div>
-                            <span className="flex items-center gap-1 text-sm font-bold text-foreground">
+                            <span className="flex shrink-0 items-center gap-1 text-sm font-bold text-foreground">
                               <Star className="h-4 w-4 fill-warning text-warning" />
                               {rating.rating.toFixed(1)}
                             </span>
@@ -670,7 +673,7 @@ export function EmployerProfileDialog({
                           {rating.transactionHash && /^0x[0-9a-f]{64}$/i.test(rating.transactionHash) && (
                             <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-primary/10 px-2.5 py-1 font-mono text-2xs text-primary">
                               <ShieldCheck className="size-3.5 shrink-0" />
-                              <span>
+                              <span className="min-w-0 truncate">
                                 On-Chain Tx: {rating.transactionHash.slice(0, 10)}…{rating.transactionHash.slice(-8)}
                               </span>
                             </div>
@@ -693,7 +696,7 @@ export function EmployerProfileDialog({
               {/* All Posted Jobs Tab */}
               <TabsContent value="all" className="space-y-2.5 mt-3 focus-visible:outline-none">
                 {employerProjects.length > 0 ? (
-                  <div className="space-y-2.5 max-h-[340px] overflow-y-auto pr-1">
+                  <div className="space-y-2.5 sm:max-h-[340px] sm:overflow-y-auto sm:pr-1">
                     {employerProjects.map((p) => (
                       <div
                         key={p.id}
@@ -707,9 +710,9 @@ export function EmployerProfileDialog({
                                   ? `/dashboard/freelancer/projects/${p.id}`
                                   : `/projects/${p.id}`
                               }
-                              className="text-sm font-bold text-foreground hover:text-primary transition-colors inline-flex items-center gap-1.5 group"
+                              className="text-sm font-bold text-foreground hover:text-primary transition-colors inline-flex max-w-full items-center gap-1.5 group"
                             >
-                              <span className="line-clamp-1">{p.title}</span>
+                              <span className="min-w-0 line-clamp-1">{p.title}</span>
                               <ExternalLink className="size-3.5 opacity-60 group-hover:opacity-100 shrink-0" />
                             </Link>
                             <div className="flex flex-wrap items-center gap-2 mt-1 text-xs text-muted-foreground">
@@ -717,7 +720,7 @@ export function EmployerProfileDialog({
                                 <Calendar className="size-3 text-muted-foreground" />
                                 Posted {formatDateSafe(p.createdAt)}
                               </span>
-                              <span>•</span>
+                              <span className="hidden sm:inline">•</span>
                               <span className="font-semibold text-primary">
                                 {formatAmount(p.budget, { currency: 'ETH' })}
                               </span>
@@ -759,33 +762,34 @@ export function EmployerProfileDialog({
               </TabsContent>
             </Tabs>
           </div>
+        </div>
 
-          {/* Action Footer */}
-          <div className="flex flex-wrap items-center justify-end gap-2.5 pt-3 border-t border-border">
+        {/* Action Footer */}
+        <div className="shrink-0 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2.5 px-4 py-3 sm:px-7 sm:py-4 border-t border-border bg-card">
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full sm:w-auto"
+            onClick={() => onOpenChange(false)}
+          >
+            Close
+          </Button>
+          {user?.role === 'freelancer' && (
             <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
+              asChild
+              className="w-full sm:w-auto gradient-primary shadow-sm"
             >
-              Close
-            </Button>
-            {user?.role === 'freelancer' && (
-              <Button
-                asChild
-                className="gradient-primary shadow-sm"
+              <Link
+                href={
+                  employerId || profile?.userId || profile?.id
+                    ? getDirectMessageRoute('freelancer', (employerId || profile?.userId || profile?.id)!, projectId)
+                    : '/dashboard/freelancer/messages'
+                }
               >
-                <Link
-                  href={
-                    employerId || profile?.userId || profile?.id
-                      ? getDirectMessageRoute('freelancer', (employerId || profile?.userId || profile?.id)!, projectId)
-                      : '/dashboard/freelancer/messages'
-                  }
-                >
-                  <Mail className="size-4 mr-2" /> Message Client
-                </Link>
-              </Button>
-            )}
-          </div>
+                <Mail className="size-4 mr-2" /> Message Client
+              </Link>
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>
