@@ -7,8 +7,9 @@ const employer = { id: 'employer-9', email: 'employer@example.com', name: 'Emplo
 const freelancer = { ...employer, id: 'freelancer-9', email: 'freelancer@example.com', name: 'Freelancer', role: 'freelancer' };
 
 const ledger = [
-  { id: 'pay-1', milestoneId: null, payerId: employer.id, payeeId: freelancer.id, amount: 2.5, currency: 'ETH', txHash: '0xabc1234567890def', status: 'completed', paymentType: 'escrow_deposit', createdAt: '2026-08-10T00:00:00.000Z' },
-  { id: 'pay-2', milestoneId: 'milestone-1', payerId: employer.id, payeeId: freelancer.id, amount: 1, currency: 'ETH', txHash: null, status: 'pending', paymentType: 'milestone_release', createdAt: '2026-08-09T00:00:00.000Z' },
+  { id: 'pay-0', milestoneId: null, payerId: employer.id, payeeId: freelancer.id, amount: 3.5, currency: 'ETH', txHash: '0xabc1234567890def', status: 'completed', paymentType: 'escrow_deposit', createdAt: '2026-08-08T00:00:00.000Z' },
+  { id: 'pay-1', milestoneId: 'milestone-1', payerId: employer.id, payeeId: freelancer.id, amount: 2.5, currency: 'ETH', txHash: '0xdef1234567890abc', status: 'completed', paymentType: 'milestone_release', createdAt: '2026-08-10T00:00:00.000Z' },
+  { id: 'pay-2', milestoneId: 'milestone-2', payerId: employer.id, payeeId: freelancer.id, amount: 1, currency: 'ETH', txHash: null, status: 'pending', paymentType: 'milestone_release', createdAt: '2026-08-09T00:00:00.000Z' },
 ];
 
 async function setup(page: Page, user: typeof employer, items: typeof ledger) {
@@ -34,7 +35,7 @@ test('freelancer sees ledger entries as money received', async ({ page }) => {
 
   await expect(page.getByText('Payment ledger', { exact: true })).toBeVisible();
   await expect(page.getByText('Escrow deposit')).toBeVisible();
-  await expect(page.getByText('Milestone release')).toBeVisible();
+  await expect(page.getByText('Milestone release').first()).toBeVisible();
   // Inbound money is signed positive for the payee.
   await expect(page.getByText(/\+ETH\s*2\.5000/)).toBeVisible();
 });

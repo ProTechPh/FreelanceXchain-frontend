@@ -9,13 +9,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { adminApi, disputesApi, contractsApi } from '@/lib/api';
 import { csrfTokenManager } from '@/lib/api-client';
-import { safeAttachmentUrl, isImageAttachment } from '@/lib/attachment-presentation';
+import { safeAttachmentUrl } from '@/lib/attachment-presentation';
+import { AttachmentPreviewDialog } from '@/components/ui/attachment-preview-dialog';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { formatAmount, formatRelativeTime } from '@/lib/format';
 import type { Dispute, Contract, DisputeStatus } from '@/types';
 import { toast } from 'sonner';
 import { reportFailure, reportLoadFailure } from '@/lib/report-failure';
-import { Scale, AlertTriangle, Clock, CheckCircle, FileText, DollarSign, Maximize2, ExternalLink } from 'lucide-react';
+import { Scale, AlertTriangle, Clock, CheckCircle, FileText, DollarSign, Maximize2 } from 'lucide-react';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { EmptyState } from '@/components/ui/empty-state';
 import {
@@ -321,9 +322,14 @@ export default function DisputesPage() {
                             <span className="min-w-0 flex-1 break-words">{ev.content}</span>
                           ) : evidenceUrl ? (
                             <div className="min-w-0 flex-1 flex flex-wrap items-center gap-2">
-                              <a href={evidenceUrl} target="_blank" rel="noopener noreferrer" className="underline font-medium hover:text-foreground" aria-label="View evidence file">
+                              <button
+                                type="button"
+                                onClick={() => setViewingEvidence({ id: ev.id, url: evidenceUrl, type: ev.type, name: ev.type === 'file' ? 'Evidence Attachment' : ev.content })}
+                                className="underline font-medium hover:text-foreground text-left cursor-pointer"
+                                aria-label="View evidence file"
+                              >
                                 {ev.type === 'file' ? 'View file' : ev.content}
-                              </a>
+                              </button>
                               <Button
                                 type="button"
                                 variant="ghost"
@@ -556,78 +562,16 @@ export default function DisputesPage() {
       </Dialog>
 
       {/* Evidence Attachment Viewer Dialog */}
-      <Dialog
+      <AttachmentPreviewDialog
         open={viewingEvidence !== null}
         onOpenChange={(open) => {
           if (!open) setViewingEvidence(null);
         }}
-      >
-        <DialogContent
-          className="sm:max-w-2xl max-h-[90dvh] flex flex-col p-6 gap-4 bg-card border-border shadow-xl"
-          aria-label="Evidence attachment viewer"
-        >
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <FileText className="w-5 h-5 text-primary" />
-              Evidence Attachment Viewer
-            </DialogTitle>
-            <DialogDescription>
-              Review submitted evidence document or media attachment.
-            </DialogDescription>
-          </DialogHeader>
-
-          {viewingEvidence && (() => {
-            const safeUrl = safeAttachmentUrl(viewingEvidence.url) || viewingEvidence.url;
-            const isImage = isImageAttachment(viewingEvidence.url, viewingEvidence.name);
-
-            return (
-              <div className="space-y-4">
-                <div className="rounded-lg border border-border p-3 bg-secondary/30 flex items-center justify-between">
-                  <div className="space-y-0.5 min-w-0 flex-1 mr-3">
-                    <p className="text-sm font-semibold text-foreground truncate">{viewingEvidence.name || 'Evidence Attachment'}</p>
-                    <p className="text-xs text-muted-foreground truncate">{viewingEvidence.url}</p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    asChild
-                    className="gap-1.5 shrink-0"
-                  >
-                    <a href={safeUrl} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      Open original
-                    </a>
-                  </Button>
-                </div>
-
-                <div className="flex items-center justify-center p-3 bg-black/60 rounded-lg border border-border max-h-[50dvh] overflow-auto">
-                  {isImage ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img
-                      src={safeUrl}
-                      alt={viewingEvidence.name || "Evidence attachment preview"}
-                      className="max-h-[45dvh] max-w-full object-contain rounded"
-                    />
-                  ) : (
-                    <iframe
-                      src={safeUrl}
-                      title="Evidence Document Preview"
-                      sandbox="allow-scripts allow-same-origin"
-                      className="w-full h-80 rounded border-0 bg-white"
-                    />
-                  )}
-                </div>
-              </div>
-            );
-          })()}
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setViewingEvidence(null)}>
-              Close
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        attachment={viewingEvidence ? {
+          filename: viewingEvidence.name || 'Evidence Attachment',
+          url: viewingEvidence.url,
+        } : null}
+      />
     </div>
     </AdminPermissionGate>
   );

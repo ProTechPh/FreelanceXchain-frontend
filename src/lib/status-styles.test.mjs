@@ -32,6 +32,11 @@ test('an open dispute warns while an open project does not', () => {
   assert.equal(getStatusTone('open', 'dispute'), 'warning');
 });
 
+test('a resolved contract resolves to neutral tone while a resolved dispute is success', () => {
+  assert.equal(getStatusTone('resolved', 'contract'), 'neutral');
+  assert.equal(getStatusTone('resolved', 'dispute'), 'success');
+});
+
 test('descriptors only ever emit semantic token classes', () => {
   const palette = /\b(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-\d{2,3}\b/;
   const statuses = [

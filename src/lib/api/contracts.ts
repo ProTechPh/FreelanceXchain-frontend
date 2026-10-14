@@ -33,6 +33,18 @@ export const contractsApi = {
 
   getDisputes: (id: string) =>
     api.get<Dispute[]>(`/contracts/${id}/disputes`),
+
+  getPendingWithdrawals: (id: string) =>
+    api.get<{
+      contractId: string;
+      escrowAddress: string;
+      pendingWithdrawals: {
+        platformWallet: string;
+        platformAmount: string;
+        freelancerWallet: string;
+        freelancerAmount: string;
+      };
+    }>(`/contracts/${id}/escrow/withdrawals`),
 };
 
 export const rushUpgradesApi = {

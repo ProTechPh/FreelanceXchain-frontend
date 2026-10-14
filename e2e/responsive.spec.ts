@@ -89,8 +89,7 @@ test.describe('public surfaces', () => {
   for (const route of PUBLIC_ROUTES) {
     test(`${route} is responsive and accessible`, async ({ page }) => {
       await page.goto(route);
-      await page.waitForLoadState('domcontentloaded');
-      await page.locator('main, header').first().waitFor({ state: 'attached', timeout: 5000 }).catch(() => {});
+      await page.locator('main').first().waitFor({ state: 'attached', timeout: 15000 });
       await expectNoHorizontalScroll(page, route);
       const results = await new AxeBuilder({ page }).analyze();
       expect(results.violations, `${route} has accessibility violations`).toEqual([]);

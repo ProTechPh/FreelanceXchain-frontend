@@ -48,6 +48,12 @@ test('a viewer who is neither party gets none, not a misleading out', () => {
   assert.equal(getPaymentDirection(record(), 'admin-9'), 'none');
 });
 
+test('escrow deposits have direction none to avoid double counting custody funds', () => {
+  const deposit = record({ paymentType: 'escrow_deposit' });
+  assert.equal(getPaymentDirection(deposit, 'freelancer-1'), 'none');
+  assert.equal(getPaymentDirection(deposit, 'employer-1'), 'none');
+});
+
 test('summary counts only completed payments toward the money totals', () => {
   const summary = summarizePaymentHistory(
     [
