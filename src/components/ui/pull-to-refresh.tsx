@@ -34,7 +34,11 @@ export function PullToRefresh({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const startYRef = useRef(0);
+  const startXRef = useRef(0);
   const isDraggingRef = useRef(false);
+  // Decided on the first meaningful movement. A mostly-horizontal gesture is a
+  // row swipe (e.g. archive/delete), not a pull, and must not move the list.
+  const axisRef = useRef<'x' | 'y' | null>(null);
 
   const handleTouchStart = useCallback(
     (e: React.TouchEvent) => {
@@ -43,6 +47,8 @@ export function PullToRefresh({
       if (!container || container.scrollTop > 0) return;
 
       startYRef.current = e.touches[0]?.clientY ?? 0;
+      startXRef.current = e.touches[0]?.clientX ?? 0;
+      axisRef.current = null;
       isDraggingRef.current = true;
     },
     [disabled, isRefreshing]
@@ -54,6 +60,16 @@ export function PullToRefresh({
 
       const currentY = e.touches[0]?.clientY ?? 0;
       const delta = currentY - startYRef.current;
+
+      if (axisRef.current === null) {
+        const deltaX = Math.abs((e.touches[0]?.clientX ?? 0) - startXRef.current);
+        if (deltaX < 8 && Math.abs(delta) < 8) return;
+        axisRef.current = deltaX > Math.abs(delta) ? 'x' : 'y';
+      }
+      if (axisRef.current === 'x') {
+        isDraggingRef.current = false;
+        return;
+      }
 
       if (delta <= 0) {
         setPullDistance(0);

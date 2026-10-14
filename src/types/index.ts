@@ -669,6 +669,8 @@ export interface Notification {
   message: string;
   data?: Record<string, unknown>;
   isRead: boolean;
+  /** Archived notifications live outside the inbox and do not count as unread. */
+  isArchived?: boolean;
   createdAt: string;
   updatedAt: string;
 }
