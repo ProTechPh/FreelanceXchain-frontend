@@ -17,7 +17,10 @@ import {
   Award,
   TrendingUp,
   MessageSquareOff,
+  Copy,
+  Check,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
@@ -80,10 +83,26 @@ export function EmployerProfileDialog({
   const [employerProjects, setEmployerProjects] = useState<Project[]>([]);
   const [workHistory, setWorkHistory] = useState<ReputationWorkHistoryEntry[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [copiedTxHash, setCopiedTxHash] = useState<string | null>(null);
   const user = useAuthStore((state) => state.user);
   // Focus the scroll area on open so the dialog starts at the top instead of
   // jumping down to the first tab trigger.
   const bodyRef = useRef<HTMLDivElement>(null);
+
+  const handleCopyTx = (txHash: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    e?.preventDefault();
+    if (!txHash) return;
+    void navigator.clipboard.writeText(txHash).then(() => {
+      setCopiedTxHash(txHash);
+      toast.success('Reputation transaction hash copied to clipboard');
+      setTimeout(() => {
+        setCopiedTxHash((prev) => (prev === txHash ? null : prev));
+      }, 2500);
+    }).catch(() => {
+      toast.error('Failed to copy transaction hash');
+    });
+  };
 
   useEffect(() => {
     if (!open || !employerId) return;
@@ -179,6 +198,7 @@ export function EmployerProfileDialog({
     completedAt?: string;
     rating?: number;
     comment?: string;
+    transactionHash?: string;
   }
 
   const completedContractsList: CompletedContractItem[] = [];
@@ -191,6 +211,12 @@ export function EmployerProfileDialog({
         r.contractId === entry.contractId ||
         (entry.projectId && r.projectId === entry.projectId)
     );
+    const metaMatch = metadata?.ratings?.find(
+      (m) =>
+        (entry.contractId && m.contractId === entry.contractId) ||
+        (entry.ratingComment && m.comment === entry.ratingComment)
+    );
+    const txHash = entry.transactionHash || metaMatch?.transactionHash;
 
     const key = entry.projectId || entry.contractId;
     if (key) seenKeys.add(key);
@@ -203,6 +229,7 @@ export function EmployerProfileDialog({
       completedAt: entry.completedAt || matchProj?.updatedAt,
       rating: entry.rating ?? matchRev?.rating,
       comment: entry.ratingComment ?? matchRev?.comment,
+      transactionHash: txHash,
     });
   }
 
@@ -282,6 +309,11 @@ export function EmployerProfileDialog({
 
   for (const wh of workHistory) {
     if (wh.rating && !displayReviews.some((r) => r.contractId === wh.contractId)) {
+      const meta = metadata?.ratings?.find(
+        (m) =>
+          (wh.contractId && m.contractId === wh.contractId) ||
+          (wh.ratingComment && m.comment === wh.ratingComment)
+      );
       displayReviews.push({
         contractId: wh.contractId,
         projectTitle: wh.projectTitle || 'Completed Contract',
@@ -289,6 +321,7 @@ export function EmployerProfileDialog({
         rating: wh.rating,
         comment: wh.ratingComment,
         createdAt: wh.completedAt,
+        transactionHash: wh.transactionHash || meta?.transactionHash,
       });
     }
   }
@@ -536,6 +569,59 @@ export function EmployerProfileDialog({
                             )}
                           </div>
                         )}
+
+                        {item.transactionHash && /^0x[0-9a-f]{64}$/i.test(item.transactionHash) && (
+                          <div className="mt-2 pt-2 border-t border-border/40 flex flex-wrap items-center justify-between gap-2 text-2xs">
+                            <div className="flex items-center gap-1.5 font-mono text-muted-foreground min-w-0">
+                              <ShieldCheck className="size-3.5 text-primary shrink-0" />
+                              <span className="font-sans font-semibold text-muted-foreground uppercase tracking-wider">
+                                Reputation Tx:
+                              </span>
+                              <span className="font-semibold text-foreground truncate select-all" title={item.transactionHash}>
+                                {item.transactionHash.slice(0, 10)}…{item.transactionHash.slice(-8)}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                className="h-6 px-2 text-2xs rounded-full gap-1 font-sans"
+                                onClick={(e) => handleCopyTx(item.transactionHash!, e)}
+                                title="Copy transaction hash to clipboard"
+                              >
+                                {copiedTxHash === item.transactionHash ? (
+                                  <>
+                                    <Check className="size-3 text-success" />
+                                    <span className="text-success font-medium">Copied</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy className="size-3" />
+                                    <span>Copy</span>
+                                  </>
+                                )}
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 px-2 text-2xs rounded-full gap-1 font-sans text-muted-foreground hover:text-foreground"
+                                asChild
+                                title="Search transaction on explorer"
+                              >
+                                <a
+                                  href={`https://etherscan.io/tx/${item.transactionHash}`}
+                                  target="_blank"
+                                  rel="noreferrer noopener"
+                                >
+                                  <ExternalLink className="size-3" />
+                                  <span className="hidden sm:inline">Explorer</span>
+                                </a>
+                              </Button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -671,11 +757,55 @@ export function EmployerProfileDialog({
                           )}
 
                           {rating.transactionHash && /^0x[0-9a-f]{64}$/i.test(rating.transactionHash) && (
-                            <div className="mt-2 flex items-center gap-1.5 rounded-lg bg-primary/10 px-2.5 py-1 font-mono text-2xs text-primary">
-                              <ShieldCheck className="size-3.5 shrink-0" />
-                              <span className="min-w-0 truncate">
-                                On-Chain Tx: {rating.transactionHash.slice(0, 10)}…{rating.transactionHash.slice(-8)}
-                              </span>
+                            <div className="mt-2.5 pt-2 border-t border-border/30 flex flex-wrap items-center justify-between gap-2 text-2xs">
+                              <div className="flex items-center gap-1.5 font-mono text-muted-foreground min-w-0">
+                                <ShieldCheck className="size-3.5 text-primary shrink-0" />
+                                <span className="font-sans font-semibold text-muted-foreground uppercase tracking-wider">
+                                  On-Chain Tx:
+                                </span>
+                                <span className="font-semibold text-foreground truncate select-all" title={rating.transactionHash}>
+                                  {rating.transactionHash.slice(0, 10)}…{rating.transactionHash.slice(-8)}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1 shrink-0">
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-6 px-2 text-2xs rounded-full gap-1 font-sans"
+                                  onClick={(e) => handleCopyTx(rating.transactionHash!, e)}
+                                  title="Copy transaction hash to clipboard"
+                                >
+                                  {copiedTxHash === rating.transactionHash ? (
+                                    <>
+                                      <Check className="size-3 text-success" />
+                                      <span className="text-success font-medium">Copied</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Copy className="size-3" />
+                                      <span>Copy</span>
+                                    </>
+                                  )}
+                                </Button>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-6 px-2 text-2xs rounded-full gap-1 font-sans text-muted-foreground hover:text-foreground"
+                                  asChild
+                                  title="Search transaction on explorer"
+                                >
+                                  <a
+                                    href={`https://etherscan.io/tx/${rating.transactionHash}`}
+                                    target="_blank"
+                                    rel="noreferrer noopener"
+                                  >
+                                    <ExternalLink className="size-3" />
+                                    <span className="hidden sm:inline">Explorer</span>
+                                  </a>
+                                </Button>
+                              </div>
                             </div>
                           )}
                         </div>
