@@ -124,6 +124,9 @@ export const skillsApi = {
   createSkill: (categoryId: string, name: string, description: string) =>
     api.post<Skill>('/skills', { categoryId, name, description }),
 
+  updateSkill: (id: string, data: { categoryId?: string; name?: string; description?: string }) =>
+    api.put<Skill>(`/skills/${id}`, data),
+
   deprecate: (id: string) =>
     api.patch<Skill>(`/skills/${id}/deprecate`),
 
@@ -142,6 +145,6 @@ export const skillsApi = {
   suggestSkill: (data: { name: string; description: string; categoryName?: string }) =>
     api.post<{ message: string }>('/skills/suggestions', data),
 
-  moderateSuggestion: (id: string, status: 'approved' | 'rejected') =>
-    api.put<SkillSuggestion>(`/skills/suggestions/${id}/status`, { status }),
+  moderateSuggestion: (id: string, status: 'approved' | 'rejected', categoryId?: string) =>
+    api.put<SkillSuggestion>(`/skills/suggestions/${id}/status`, { status, ...(categoryId ? { categoryId } : {}) }),
 };

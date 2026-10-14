@@ -16,7 +16,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { portfolioApi } from '@/lib/api';
-import { safeAttachmentUrl } from '@/lib/attachment-presentation';
+import { safeAttachmentUrl, formatFileSize } from '@/lib/attachment-presentation';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { reportLoadFailure } from '@/lib/report-failure';
 import { getWebsitePreviewUrl, isValidHttpUrl, isWebsitePreviewUrl } from '@/lib/portfolio-utils';
@@ -32,6 +32,7 @@ import {
   Globe,
   Image as ImageIcon,
   Tag,
+  X,
 } from 'lucide-react';
 import { CardGridSkeleton } from '@/components/dashboard/skeletons';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -56,6 +57,7 @@ export default function PortfolioPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [files, setFiles] = useState<File[]>([]);
+  const [existingImages, setExistingImages] = useState<any[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [itemToDelete, setItemToDelete] = useState<PortfolioItem | null>(null);
@@ -89,6 +91,7 @@ export default function PortfolioPage() {
     setEditingId(null);
     setForm(EMPTY_FORM);
     setFiles([]);
+    setExistingImages([]);
     setDialogOpen(true);
   };
 
@@ -102,6 +105,7 @@ export default function PortfolioPage() {
       completedAt: item.completedAt ? item.completedAt.slice(0, 10) : '',
     });
     setFiles([]);
+    setExistingImages(Array.isArray(item.images) ? [...item.images] : []);
     setDialogOpen(true);
   };
 
@@ -115,7 +119,8 @@ export default function PortfolioPage() {
       toast.error('A title and description are both required to save a portfolio item.');
       return;
     }
-    if (!editingId && files.length === 0 && !form.projectUrl.trim()) {
+    const totalImagesCount = existingImages.length + files.length;
+    if (totalImagesCount === 0 && !form.projectUrl.trim()) {
       toast.error('Add at least one image or enter a project URL so others can see your work.');
       return;
     }
@@ -125,24 +130,43 @@ export default function PortfolioPage() {
       const skills = form.skills;
 
       if (editingId) {
-        const updatePayload: Record<string, unknown> = {
-          title: form.title,
-          description: form.description,
-          projectUrl: form.projectUrl || undefined,
-          skills,
-          completedAt: form.completedAt || undefined,
-        };
+        if (files && files.length > 0) {
+          const imageError = validateImageFiles(files, { maxCount: 10 - existingImages.length, maxFileSize: 5 * 1024 * 1024 });
+          if (imageError) {
+            toast.error(imageError);
+            return;
+          }
+          const formData = new FormData();
+          formData.append('title', form.title);
+          formData.append('description', form.description);
+          if (form.projectUrl) formData.append('projectUrl', form.projectUrl);
+          formData.append('skills', skills.join(','));
+          if (form.completedAt) formData.append('completedAt', form.completedAt);
+          formData.append('existingImages', JSON.stringify(existingImages));
+          files.forEach((file) => formData.append('files', file));
 
-        // If projectUrl changed or image was not custom, allow setting preview
-        if (form.projectUrl && (!files || files.length === 0)) {
-          updatePayload.images = [{
-            url: getWebsitePreviewUrl(form.projectUrl),
-            filename: 'website-preview.png',
-          }];
+          const { data: updated } = await portfolioApi.update(editingId, formData);
+          setItems((prev) => prev.map((i) => (i.id === editingId ? updated : i)));
+        } else {
+          const updatePayload: Record<string, unknown> = {
+            title: form.title,
+            description: form.description,
+            projectUrl: form.projectUrl || undefined,
+            skills,
+            completedAt: form.completedAt || undefined,
+            images: existingImages,
+          };
+
+          if (form.projectUrl && existingImages.length === 0) {
+            updatePayload.images = [{
+              url: getWebsitePreviewUrl(form.projectUrl),
+              filename: 'website-preview.png',
+            }];
+          }
+
+          const { data: updated } = await portfolioApi.update(editingId, updatePayload as any);
+          setItems((prev) => prev.map((i) => (i.id === editingId ? updated : i)));
         }
-
-        const { data: updated } = await portfolioApi.update(editingId, updatePayload);
-        setItems((prev) => prev.map((i) => (i.id === editingId ? updated : i)));
         toast.success('Portfolio item updated successfully.');
       } else {
         if (files && files.length > 0) {
@@ -165,6 +189,8 @@ export default function PortfolioPage() {
         toast.success('Portfolio item added to your profile.');
       }
       setDialogOpen(false);
+      setFiles([]);
+      setExistingImages([]);
     } catch (error) {
       toast.error(getApiErrorMessage(error, editingId ? 'Couldn\'t save the changes. Try again.' : 'Couldn\'t add the portfolio item. Try again.'));
     } finally {
@@ -266,12 +292,14 @@ export default function PortfolioPage() {
       ) : (
         <div className="grid md:grid-cols-2 gap-6">
           {items.map((item) => {
-            // Uploaded images first: the live screenshot comes from a rate-limited
-            // third-party service and is the source most likely to fail.
+            // Uploaded images first: try both same-origin proxy rewrite and direct API URL,
+            // then fall back to live website screenshot if projectUrl is provided.
             const previewSources = [
-              ...(item.images ?? []).map((image) => image.url).filter((url) => !isWebsitePreviewUrl(url)),
+              ...(item.images ?? [])
+                .flatMap((img) => getPortfolioImageSources(img))
+                .filter((url): url is string => Boolean(url) && !isWebsitePreviewUrl(url)),
               item.projectUrl ? getWebsitePreviewUrl(item.projectUrl) : '',
-            ];
+            ].filter(Boolean);
 
             return (
               <Card key={item.id} className="group bg-card border-border overflow-hidden flex flex-col transition-all hover:border-primary/40">
@@ -444,29 +472,112 @@ export default function PortfolioPage() {
               />
             </div>
 
-            {!editingId && (
-              <div className="space-y-2">
-                <Label htmlFor="portfolio-images">Images (optional if Project URL is provided)</Label>
-                <Input
-                  id="portfolio-images"
-                  type="file"
-                  accept={IMAGE_ACCEPT_STRING}
-                  multiple
-                  onChange={(e) => {
-                    const selected = Array.from(e.target.files ?? []);
-                    if (selected.length > 0) {
-                      const imageError = validateImageFiles(selected, { maxCount: 10, maxFileSize: 5 * 1024 * 1024 });
-                      if (imageError) {
-                        toast.error(imageError);
-                        e.target.value = '';
-                        return;
-                      }
-                    }
-                    setFiles(selected);
-                  }}
-                />
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <Label htmlFor="portfolio-images">
+                  {editingId ? 'Project Images' : 'Images (optional if Project URL is provided)'}
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Upload PNG, JPG, or WEBP screenshots of your work (up to 10 files, 5MB each).
+                </p>
               </div>
-            )}
+
+              {/* Existing Images (in edit mode) */}
+              {existingImages.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold text-foreground">
+                      Current images ({existingImages.length}):
+                    </p>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs text-muted-foreground hover:text-destructive"
+                      onClick={() => setExistingImages([])}
+                    >
+                      Remove all
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                    {existingImages.map((img, idx) => (
+                      <ExistingImageThumbnail
+                        key={`existing-${idx}`}
+                        image={img}
+                        onRemove={() => setExistingImages((prev) => prev.filter((_, i) => i !== idx))}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Upload new images if total is less than 10 */}
+              {existingImages.length + files.length < 10 && (
+                <div className="space-y-1">
+                  {editingId && (
+                    <Label htmlFor="portfolio-images" className="text-xs text-muted-foreground">
+                      Add more images:
+                    </Label>
+                  )}
+                  <Input
+                    id="portfolio-images"
+                    type="file"
+                    accept={IMAGE_ACCEPT_STRING}
+                    multiple
+                    onChange={(e) => {
+                      const selected = Array.from(e.target.files ?? []);
+                      if (selected.length > 0) {
+                        const maxAllowed = 10 - existingImages.length;
+                        const imageError = validateImageFiles(selected, { maxCount: maxAllowed, maxFileSize: 5 * 1024 * 1024 });
+                        if (imageError) {
+                          toast.error(imageError);
+                          e.target.value = '';
+                          return;
+                        }
+                        setFiles((prev) => {
+                          const combined = [...prev, ...selected];
+                          if (combined.length + existingImages.length > 10) {
+                            toast.error('You can only have up to 10 images in total.');
+                            return combined.slice(0, 10 - existingImages.length);
+                          }
+                          return combined;
+                        });
+                      }
+                      e.target.value = '';
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Newly Staged Files */}
+              {files.length > 0 && (
+                <div className="space-y-2 pt-1">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-semibold text-foreground">
+                      {editingId ? `New images to add (${files.length}):` : `Ready to upload (${files.length}/10):`}
+                    </p>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs text-muted-foreground hover:text-destructive"
+                      onClick={() => setFiles([])}
+                    >
+                      Clear new
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                    {files.map((file, idx) => (
+                      <SelectedFileThumbnail
+                        key={`${file.name}-${file.size}-${idx}`}
+                        file={file}
+                        onRemove={() => setFiles((prev) => prev.filter((_, i) => i !== idx))}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
 
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => setDialogOpen(false)}>
@@ -562,3 +673,115 @@ function PortfolioPreviewImage({ sources, alt, className }: { sources: string[];
     </>
   );
 }
+
+function getPortfolioImageSources(image: unknown): string[] {
+  if (!image) return [];
+  const rawUrl = typeof image === 'string' ? image : (image as { url?: string })?.url;
+  if (!rawUrl || typeof rawUrl !== 'string') return [];
+
+  const sources: string[] = [];
+
+  // If it's a relative proxy path, include both the same-origin relative path
+  // (handled by Next.js rewrites) and the direct backend URL
+  if (rawUrl.startsWith('/api/files/access/')) {
+    sources.push(rawUrl);
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+    const directUrl = `${apiBase}${rawUrl.replace(/^\/api/, '')}`;
+    if (!sources.includes(directUrl)) {
+      sources.push(directUrl);
+    }
+  }
+
+  const safe = safeAttachmentUrl(rawUrl);
+  if (safe && !sources.includes(safe)) {
+    sources.push(safe);
+  }
+
+  if (isValidHttpUrl(rawUrl) && !sources.includes(rawUrl)) {
+    sources.push(rawUrl);
+  }
+
+  return sources;
+}
+
+function SelectedFileThumbnail({ file, onRemove }: { file: File; onRemove: () => void }) {
+  const [url, setUrl] = useState<string>('');
+
+  useEffect(() => {
+    const objectUrl = URL.createObjectURL(file);
+    setUrl(objectUrl);
+    return () => {
+      URL.revokeObjectURL(objectUrl);
+    };
+  }, [file]);
+
+  return (
+    <div className="relative group rounded-lg border border-border bg-card p-2 flex flex-col gap-1.5 overflow-hidden">
+      <div className="aspect-video w-full rounded bg-muted/30 overflow-hidden relative">
+        {url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={url} alt={file.name} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+            <ImageIcon className="w-5 h-5" />
+          </div>
+        )}
+      </div>
+      <div className="flex items-center justify-between text-[11px] text-muted-foreground gap-1">
+        <span className="truncate max-w-[100px]" title={file.name}>
+          {file.name}
+        </span>
+        <span className="shrink-0 font-mono">{formatFileSize(file.size)}</span>
+      </div>
+      <Button
+        type="button"
+        variant="destructive"
+        size="icon"
+        className="absolute top-1 right-1 w-6 h-6 rounded-full opacity-80 hover:opacity-100 shadow-sm"
+        onClick={onRemove}
+        aria-label={`Remove ${file.name}`}
+      >
+        <X className="w-3.5 h-3.5" />
+      </Button>
+    </div>
+  );
+}
+
+function ExistingImageThumbnail({
+  image,
+  onRemove,
+}: {
+  image: any;
+  onRemove: () => void;
+}) {
+  const sources = useMemo(() => getPortfolioImageSources(image), [image]);
+  const filename = typeof image === 'string'
+    ? 'Image'
+    : image?.filename || 'Portfolio Image';
+
+  return (
+    <div className="relative group rounded-lg border border-border bg-card p-2 flex flex-col gap-1.5 overflow-hidden">
+      <div className="aspect-video w-full rounded bg-muted/30 overflow-hidden relative">
+        <PortfolioPreviewImage sources={sources} alt={filename} />
+      </div>
+      <div className="flex items-center justify-between text-[11px] text-muted-foreground gap-1">
+        <span className="truncate max-w-[100px]" title={filename}>
+          {filename}
+        </span>
+        <span className="shrink-0 text-[10px] text-muted-foreground/80">Current</span>
+      </div>
+      <Button
+        type="button"
+        variant="destructive"
+        size="icon"
+        className="absolute top-1 right-1 w-6 h-6 rounded-full opacity-80 hover:opacity-100 shadow-sm"
+        onClick={onRemove}
+        aria-label={`Remove ${filename}`}
+      >
+        <X className="w-3.5 h-3.5" />
+      </Button>
+    </div>
+  );
+}
+
+

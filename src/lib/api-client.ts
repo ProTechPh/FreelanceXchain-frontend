@@ -72,6 +72,14 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
+    if (typeof FormData !== 'undefined' && config.data instanceof FormData && config.headers) {
+      if (typeof config.headers.delete === 'function') {
+        config.headers.delete('Content-Type');
+      } else {
+        delete (config.headers as Record<string, unknown>)['Content-Type'];
+      }
+    }
+
     const method = (config.method ?? 'get').toUpperCase();
     if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
       try {

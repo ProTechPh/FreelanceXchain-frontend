@@ -24,6 +24,7 @@ interface SuggestSkillDialogProps {
   onOpenChange: (open: boolean) => void;
   initialName?: string;
   initialCategory?: string;
+  onSkillSuggested?: (skillName: string) => void;
 }
 
 export function SuggestSkillDialog({
@@ -31,6 +32,7 @@ export function SuggestSkillDialog({
   onOpenChange,
   initialName = '',
   initialCategory = '',
+  onSkillSuggested,
 }: SuggestSkillDialogProps) {
   const [name, setName] = useState(initialName);
   const [categoryName, setCategoryName] = useState(initialCategory);
@@ -70,7 +72,8 @@ export function SuggestSkillDialog({
         description: trimmedDesc,
         ...(trimmedCategory ? { categoryName: trimmedCategory } : {}),
       });
-      toast.success('Skill suggestion sent to administrators for review.');
+      toast.success('Skill suggestion sent to administrators and added to your profile.');
+      onSkillSuggested?.(trimmedName);
       reset();
       onOpenChange(false);
     } catch (error) {

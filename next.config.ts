@@ -107,7 +107,9 @@ const nextConfig: NextConfig = {
                 ? "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://challenges.cloudflare.com https://static.cloudflareinsights.com"
                 : "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://static.cloudflareinsights.com",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' blob: data: https://*.appwrite.io https://cloud.appwrite.io https://cdn.worldvectorlogo.com https://upload.wikimedia.org https://images.unsplash.com https://avatars.githubusercontent.com https://lh3.googleusercontent.com https://*.didit.me https://*.s3.amazonaws.com https://api.microlink.io",
+              process.env.NODE_ENV === 'development'
+                ? "img-src 'self' blob: data: http://localhost:* http://127.0.0.1:* https://*.appwrite.io https://cloud.appwrite.io https://cdn.worldvectorlogo.com https://upload.wikimedia.org https://images.unsplash.com https://avatars.githubusercontent.com https://lh3.googleusercontent.com https://*.didit.me https://*.s3.amazonaws.com https://api.microlink.io https://*.freelancexchain.works"
+                : "img-src 'self' blob: data: https://*.appwrite.io https://cloud.appwrite.io https://cdn.worldvectorlogo.com https://upload.wikimedia.org https://images.unsplash.com https://avatars.githubusercontent.com https://lh3.googleusercontent.com https://*.didit.me https://*.s3.amazonaws.com https://api.microlink.io https://*.freelancexchain.works",
               "font-src 'self' data:",
               process.env.NODE_ENV === 'development'
                 ? `connect-src 'self' https://*.appwrite.io https://cloud.appwrite.io https://challenges.cloudflare.com https://cloudflareinsights.com https://stats.uptimerobot.com https://*.didit.me https://verification.didit.me https://verify.didit.me http://localhost:* http://127.0.0.1:* wss: ws: ${metaMaskConnectSrc}`
@@ -124,10 +126,20 @@ const nextConfig: NextConfig = {
     ];
   },
   async rewrites() {
+    const backendTarget = (
+      process.env.BACKEND_API_URL ||
+      (process.env.NEXT_PUBLIC_API_URL ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/?$/, '') : '') ||
+      (process.env.NODE_ENV === 'development' ? 'http://localhost:3001' : 'https://api.freelancexchain.works')
+    ).replace(/\/+$/, '');
+
     return [
       {
         source: '/api/proxy/:path*',
-        destination: `${(process.env.BACKEND_API_URL || 'https://api.freelancexchain.works').replace(/\/+$/, '')}/api/:path*`,
+        destination: `${backendTarget}/api/:path*`,
+      },
+      {
+        source: '/api/files/access/:path*',
+        destination: `${backendTarget}/api/files/access/:path*`,
       },
     ];
   },

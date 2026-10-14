@@ -75,9 +75,7 @@ export const employersApi = {
 
 export const portfolioApi = {
   create: (data: FormData) =>
-    api.post<PortfolioItem>('/portfolio', data, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }),
+    api.post<PortfolioItem>('/portfolio', data),
 
   getByFreelancer: (freelancerId: string) =>
     api.get<PortfolioItem[]>(`/portfolio/freelancer/${freelancerId}`),
@@ -85,7 +83,7 @@ export const portfolioApi = {
   get: (id: string) =>
     api.get<PortfolioItem>(`/portfolio/${id}`),
 
-  update: (id: string, data: Partial<{ title: string; description: string; projectUrl: string; images: Attachment[]; skills: string[]; completedAt: string }>) =>
+  update: (id: string, data: Partial<{ title: string; description: string; projectUrl: string; images: Attachment[]; skills: string[]; completedAt: string }> | FormData) =>
     api.patch<PortfolioItem>(`/portfolio/${id}`, data),
 
   delete: (id: string) =>
