@@ -7,6 +7,7 @@ export interface ProjectSubmissionMilestone {
   title: string;
   description: string;
   amount: string;
+  durationDays?: string | number;
 }
 
 export interface ProjectSubmissionForm {
@@ -117,6 +118,12 @@ export function validateProjectStep(
       if (!Number.isFinite(amount) || amount <= 0) {
         return `Milestone ${index + 1} needs a positive amount.`;
       }
+      if (milestone.durationDays !== undefined && String(milestone.durationDays).trim() !== '') {
+        const days = Number(milestone.durationDays);
+        if (!Number.isInteger(days) || days <= 0) {
+          return `Milestone ${index + 1} duration must be a positive number of days.`;
+        }
+      }
     }
   }
 
@@ -151,6 +158,7 @@ export function validateProjectStep(
 export async function submitProject(
   api: ProjectSubmissionApi,
   form: ProjectSubmissionForm,
+  options?: { now?: Date },
 ): Promise<CreatedProject> {
   const validationError = validateProjectStep(4, form);
   if (validationError) {
@@ -184,15 +192,35 @@ export async function submitProject(
     ({ data: createdProject } = await api.create(projectPayload));
   }
 
+  const now = options?.now ?? new Date();
+  let cumulativeDays = 0;
+  const milestonesPayload = form.milestones.map((milestone) => {
+    let milestoneDueDate = deadline;
+    const rawDays = milestone.durationDays !== undefined && String(milestone.durationDays).trim() !== ''
+      ? Number(milestone.durationDays)
+      : null;
+
+    if (rawDays !== null && Number.isInteger(rawDays) && rawDays > 0) {
+      cumulativeDays += rawDays;
+      const targetDate = new Date(now.getTime() + cumulativeDays * 24 * 60 * 60 * 1000);
+      const targetIso = `${targetDate.toISOString().split('T')[0]}T23:59:59.999Z`;
+      if (new Date(targetIso).getTime() <= new Date(deadline).getTime()) {
+        milestoneDueDate = targetIso;
+      }
+    }
+
+    return {
+      title: milestone.title.trim(),
+      description: milestone.description.trim(),
+      amount: Number(milestone.amount),
+      dueDate: milestoneDueDate,
+    };
+  });
+
   const { data: projectWithMilestones } = await api.setMilestones(
     createdProject.id,
     {
-      milestones: form.milestones.map((milestone) => ({
-        title: milestone.title.trim(),
-        description: milestone.description.trim(),
-        amount: Number(milestone.amount),
-        dueDate: deadline,
-      })),
+      milestones: milestonesPayload,
     },
   );
 

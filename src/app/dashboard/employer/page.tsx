@@ -50,7 +50,7 @@ import Link from "next/link";
 import { AnalyticsRangeFilter } from "@/components/analytics/range-filter";
 import { ProGate } from "@/components/billing/pro-gate";
 import { getRangeLabel } from "@/lib/analytics-range";
-import { DollarSign, FolderOpen, FileText, Users, Clock, ArrowUpRight, PlusCircle, Briefcase } from "lucide-react";
+import { Coins, FolderOpen, FileText, Users, Clock, ArrowUpRight, PlusCircle, Briefcase } from "lucide-react";
 import { formatAmount, formatRelativeTime, formatDate } from "@/lib/format";
 import { StatsSkeleton, ListSkeleton } from "@/components/dashboard/skeletons";
 import { WalletConnectBanner } from "@/components/wallet/wallet-connect-banner";
@@ -99,8 +99,8 @@ export default function EmployerDashboard() {
     },
     {
       title: range === "all" ? "Total Spent" : `Spent · ${getRangeLabel(range)}`,
-      value: formatAmount(totalSpent),
-      icon: DollarSign,
+      value: formatAmount(totalSpent, { currency: "ETH" }),
+      icon: Coins,
       color: "text-success",
       bg: "bg-success-subtle",
       loading: totalSpent === null && completedContractCount === null,
@@ -223,7 +223,7 @@ export default function EmployerDashboard() {
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="font-semibold text-primary">{formatAmount(project.budget)}</p>
+                            <p className="font-semibold text-primary">{formatAmount(project.budget, { currency: "ETH" })}</p>
                             <StatusBadge status={project.status} domain="project" />
                           </div>
                         </div>

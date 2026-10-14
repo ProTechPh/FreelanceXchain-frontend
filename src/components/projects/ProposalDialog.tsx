@@ -500,14 +500,11 @@ export function ProposalDialog({
             <Field
               label="Proposed rate (USD)"
               htmlFor={`${fieldId}-rate`}
-              description={project ? `Client budget: ${formatAmount(project.budget)}` : undefined}
+              description={project ? `Client budget: ${formatAmount(project.budget, { currency: 'ETH' })}` : undefined}
               error={fieldError?.field === 'proposedRate' ? fieldError.message : null}
               required
             >
               <div className="relative">
-                <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground" aria-hidden="true">
-                  $
-                </span>
                 <FieldInput
                   type="number"
                   min={MIN_PROPOSED_RATE}
@@ -515,7 +512,7 @@ export function ProposalDialog({
                   step="any"
                   inputMode="decimal"
                   placeholder="0.00"
-                  className="pl-7 pr-14 tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  className="pr-14 tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   value={form.proposedRate}
                   onChange={(event) => handleRateChange(event.target.value)}
                 />

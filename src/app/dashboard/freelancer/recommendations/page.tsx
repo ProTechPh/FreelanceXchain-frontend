@@ -137,7 +137,7 @@ export default function FreelancerRecommendationsPage() {
                         {item.project.title}
                       </CardTitle>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        {formatAmount(item.project.budget)} · due {formatDate(item.project.deadline)}
+                        {formatAmount(item.project.budget, { currency: 'ETH' })} · due {formatDate(item.project.deadline)}
                       </p>
                     </div>
                     <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">

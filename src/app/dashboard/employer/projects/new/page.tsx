@@ -26,7 +26,7 @@ import {
 } from '@/lib/project-submission';
 import { toast } from 'sonner';
 import { reportFailure } from '@/lib/report-failure';
-import { ChevronRight, ChevronLeft, Plus, X, Upload, FileText, DollarSign, Clock, Target, Sparkles, AlertCircle } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Plus, X, Upload, FileText, Coins, Clock, Target, Sparkles, AlertCircle } from 'lucide-react';
 import { ProjectSkillSelector, type ProjectSkillCategory } from '@/components/dashboard/project-skill-selector';
 import { DOCUMENT_ACCEPT_STRING } from '@/lib/file-validation';
 import { Field } from '@/components/ui/field';
@@ -35,7 +35,7 @@ import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes';
 const steps = [
   { id: 1, title: 'Project Details', icon: FileText },
   { id: 2, title: 'Milestones', icon: Target },
-  { id: 3, title: 'Budget & Timeline', icon: DollarSign },
+  { id: 3, title: 'Budget & Timeline', icon: Coins },
   { id: 4, title: 'Review & Post', icon: FileText },
 ];
 
@@ -50,7 +50,7 @@ export default function CreateProjectPage() {
   const [budget, setBudget] = useState('');
   const [deadline, setDeadline] = useState('');
   const [milestones, setMilestones] = useState([
-    { title: '', description: '', amount: '' },
+    { title: '', description: '', amount: '', durationDays: '' },
   ]);
   const [files, setFiles] = useState<File[]>([]);
   const [extractingSkills, setExtractingSkills] = useState(false);
@@ -61,7 +61,7 @@ export default function CreateProjectPage() {
 
   // Warn if user tries to leave with unsaved changes
   const isDirty = title !== '' || description !== '' || skills.length > 0 || budget !== '' || deadline !== '' ||
-    milestones.some(m => m.title !== '' || m.description !== '' || m.amount !== '') || files.length > 0;
+    milestones.some(m => m.title !== '' || m.description !== '' || m.amount !== '' || (m.durationDays && m.durationDays !== '')) || files.length > 0;
   const unsavedChanges = useUnsavedChangesWarning(isDirty && !isSubmitting);
 
   useEffect(() => {
@@ -187,7 +187,7 @@ export default function CreateProjectPage() {
   };
 
   const addMilestone = () => {
-    setMilestones([...milestones, { title: '', description: '', amount: '' }]);
+    setMilestones([...milestones, { title: '', description: '', amount: '', durationDays: '' }]);
   };
 
   const removeMilestone = (index: number) => {
@@ -239,6 +239,13 @@ export default function CreateProjectPage() {
           showFormError(`Milestone ${index + 1} needs a positive amount.`, `milestone-${index}-amount`);
           return;
         }
+        if (milestone.durationDays && milestone.durationDays.trim() !== '') {
+          const days = Number(milestone.durationDays);
+          if (!Number.isInteger(days) || days <= 0) {
+            showFormError(`Milestone ${index + 1} duration must be a positive whole number of days.`, `milestone-${index}-duration`);
+            return;
+          }
+        }
       }
       // Auto-sync budget from milestone total when advancing to step 3
       const milestoneTotal = milestones.reduce(
@@ -247,6 +254,17 @@ export default function CreateProjectPage() {
       );
       if (milestoneTotal > 0) {
         setBudget(milestoneTotal.toFixed(2));
+      }
+
+      // If user hasn't set deadline yet, suggest deadline from milestone durations
+      const totalMilestoneDays = milestones.reduce(
+        (sum, m) => sum + (Number(m.durationDays) || 0),
+        0,
+      );
+      if (!deadline && totalMilestoneDays > 0) {
+        const suggestedDate = new Date();
+        suggestedDate.setDate(suggestedDate.getDate() + totalMilestoneDays);
+        setDeadline(suggestedDate.toISOString().split('T')[0]);
       }
     }
 
@@ -513,7 +531,7 @@ export default function CreateProjectPage() {
                         </Button>
                       )}
                     </div>
-                    <div className="grid md:grid-cols-2 gap-4">
+                    <div className="grid md:grid-cols-3 gap-4">
                       <Field
                         label="Title"
                         htmlFor={`milestone-${index}-title`}
@@ -543,7 +561,22 @@ export default function CreateProjectPage() {
                           onChange={(e) => updateMilestone(index, 'amount', e.target.value)}
                         />
                       </Field>
-                      <div className="md:col-span-2">
+                      <Field
+                        label="Duration (Days)"
+                        htmlFor={`milestone-${index}-duration`}
+                        error={fieldErrors[`milestone-${index}-duration`]}
+                      >
+                        <Input
+                          id={`milestone-${index}-duration`}
+                          type="number"
+                          min="1"
+                          step="1"
+                          placeholder="e.g., 7"
+                          value={milestone.durationDays}
+                          onChange={(e) => updateMilestone(index, 'durationDays', e.target.value)}
+                        />
+                      </Field>
+                      <div className="md:col-span-3">
                         <Field
                           label="Description"
                           htmlFor={`milestone-${index}-description`}
@@ -622,7 +655,11 @@ export default function CreateProjectPage() {
                     <Field
                       label="Target Completion Deadline"
                       htmlFor="deadline"
-                      description="The target delivery date for all project deliverables and milestone completion."
+                      description={
+                        milestones.some((m) => Number(m.durationDays) > 0)
+                          ? `Total milestone duration: ${milestones.reduce((s, m) => s + (Number(m.durationDays) || 0), 0)} day(s). Target delivery date for all deliverables.`
+                          : 'The target delivery date for all project deliverables and milestone completion.'
+                      }
                       error={fieldErrors.deadline}
                       required
                     >
@@ -706,7 +743,14 @@ export default function CreateProjectPage() {
                   <div className="space-y-2">
                     {milestones.map((m, i) => (
                       <div key={i} className="flex items-center justify-between text-sm">
-                        <span>{m.title || `Milestone ${i + 1}`}</span>
+                        <div className="flex items-center gap-2">
+                          <span>{m.title || `Milestone ${i + 1}`}</span>
+                          {m.durationDays && Number(m.durationDays) > 0 ? (
+                            <Badge variant="outline" className="text-xs font-normal">
+                              {m.durationDays}d
+                            </Badge>
+                          ) : null}
+                        </div>
                         <span className="font-medium">{formatAmount(Number(m.amount) || 0, { currency: 'ETH' })}</span>
                       </div>
                     ))}

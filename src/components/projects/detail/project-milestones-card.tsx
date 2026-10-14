@@ -3,7 +3,7 @@
 import type { Project } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatusBadge } from '@/components/ui/status-badge';
-import { formatAmount } from '@/lib/format';
+import { formatAmount, formatDate } from '@/lib/format';
 
 interface ProjectMilestonesCardProps {
   milestones: NonNullable<Project['milestones']>;
@@ -33,6 +33,11 @@ export function ProjectMilestonesCard({ milestones }: ProjectMilestonesCardProps
                     <h4 className="font-semibold text-sm text-foreground">{milestone.title}</h4>
                     {milestone.description && (
                       <p className="text-xs text-muted-foreground mt-1">{milestone.description}</p>
+                    )}
+                    {milestone.dueDate && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Due: {formatDate(milestone.dueDate)}
+                      </p>
                     )}
                   </div>
                 </div>

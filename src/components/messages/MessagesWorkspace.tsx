@@ -24,7 +24,7 @@ import { useAuthStore } from '@/stores/authStore';
 import type { ConversationWithDetails, Message, Project } from '@/types';
 import { toast } from 'sonner';
 import { reportFailure, reportLoadFailure } from '@/lib/report-failure';
-import { Send, Search, Check, CheckCheck, MessageSquare, ExternalLink, FileText, Paperclip, X, ArrowLeft, Briefcase, ChevronUp, ChevronDown, Copy, ShieldAlert, Eye } from 'lucide-react';
+import { Send, Search, Check, CheckCheck, MessageSquare, FileText, Paperclip, X, ArrowLeft, Briefcase, ChevronUp, ChevronDown, Copy, ShieldAlert, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MessagesWorkspaceSkeleton, MessageThreadSkeleton } from '@/components/messages/messages-workspace-skeleton';
 import { AttachmentPreviewDialog, type AttachmentPreviewTarget } from '@/components/ui/attachment-preview-dialog';
@@ -666,7 +666,7 @@ export function MessagesWorkspace() {
                 </div>
                 <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
                   <span className="text-xs font-bold text-foreground px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-card border border-border">
-                    {formatAmount(inquiredProject.budget)}
+                    {formatAmount(inquiredProject.budget, { currency: 'ETH' })}
                   </span>
                   <Button asChild variant="outline" size="sm" className="h-7 text-xs rounded-lg border-border">
                     <Link
