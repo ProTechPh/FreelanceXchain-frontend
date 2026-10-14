@@ -12,11 +12,13 @@ import type {
   AggregatedReputationScore,
   ReputationBreakdown,
   ReputationWorkHistoryEntry,
+  ReputationMetadata,
 } from '@/types';
 import { getMarketplaceReturnPath } from '@/lib/marketplace-return';
 import { reportFailure } from '@/lib/report-failure';
 import { formatAmount } from '@/lib/format';
 import { getApiErrorMessage } from '@/lib/auth-contract';
+import { toast } from 'sonner';
 import {
   MapPin,
   ShieldCheck,
@@ -31,6 +33,9 @@ import {
   MessageSquare,
   CheckCircle2,
   TrendingUp,
+  Copy,
+  Check,
+  ExternalLink,
 } from 'lucide-react';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
 import Navbar from '@/components/layout/navbar';
@@ -80,6 +85,8 @@ export default function FreelancerProfilePage() {
   const [reputationScore, setReputationScore] = useState<AggregatedReputationScore | null>(null);
   const [reputationBreakdown, setReputationBreakdown] = useState<ReputationBreakdown | null>(null);
   const [workHistory, setWorkHistory] = useState<ReputationWorkHistoryEntry[]>([]);
+  const [metadata, setMetadata] = useState<ReputationMetadata | null>(null);
+  const [copiedTxHash, setCopiedTxHash] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
@@ -97,10 +104,11 @@ export default function FreelancerProfilePage() {
         setFreelancer(res.data);
 
         const targetUserId = res.data?.userId || id;
-        const [scoreRes, breakdownRes, historyRes] = await Promise.allSettled([
+        const [scoreRes, breakdownRes, historyRes, metadataRes] = await Promise.allSettled([
           reputationApi.getScore(targetUserId),
           reputationApi.getBreakdown(targetUserId),
           reputationApi.getWorkHistory(targetUserId),
+          reputationApi.getMetadata(targetUserId),
         ]);
 
         if (!active) return;
@@ -112,6 +120,9 @@ export default function FreelancerProfilePage() {
         }
         if (historyRes.status === 'fulfilled' && historyRes.value?.data) {
           setWorkHistory(historyRes.value.data);
+        }
+        if (metadataRes.status === 'fulfilled' && metadataRes.value?.data) {
+          setMetadata(metadataRes.value.data);
         }
       } catch (error: unknown) {
         if (!active) return;
@@ -131,6 +142,35 @@ export default function FreelancerProfilePage() {
       active = false;
     };
   }, [params?.id, retryCount]);
+
+  const getTxHash = (contractId?: string, comment?: string, directTx?: string): string | undefined => {
+    if (directTx && /^0x[0-9a-f]{64}$/i.test(directTx)) return directTx;
+    if (!metadata?.ratings?.length) return undefined;
+    const match = metadata.ratings.find(
+      (m) =>
+        (contractId && m.contractId === contractId) ||
+        (comment && m.comment === comment)
+    );
+    if (match?.transactionHash && /^0x[0-9a-f]{64}$/i.test(match.transactionHash)) {
+      return match.transactionHash;
+    }
+    return undefined;
+  };
+
+  const handleCopyTx = (txHash: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    e?.preventDefault();
+    if (!txHash) return;
+    void navigator.clipboard.writeText(txHash).then(() => {
+      setCopiedTxHash(txHash);
+      toast.success('Reputation transaction hash copied to clipboard');
+      setTimeout(() => {
+        setCopiedTxHash((prev) => (prev === txHash ? null : prev));
+      }, 2500);
+    }).catch(() => {
+      toast.error('Failed to copy transaction hash');
+    });
+  };
 
   if (loading) {
     return (
@@ -369,6 +409,62 @@ export default function FreelancerProfilePage() {
                             &ldquo;{item.ratingComment}&rdquo;
                           </div>
                         )}
+                        {(() => {
+                          const txHash = getTxHash(item.contractId, item.ratingComment, item.transactionHash);
+                          if (!txHash) return null;
+                          return (
+                            <div className="pt-2 border-t border-border/40 flex flex-wrap items-center justify-between gap-2 text-xs">
+                              <div className="flex items-center gap-2 font-mono text-xs text-muted-foreground min-w-0">
+                                <ShieldCheck className="size-3.5 text-primary shrink-0" />
+                                <span className="font-sans text-2xs uppercase tracking-wider font-semibold text-muted-foreground">
+                                  Reputation Tx:
+                                </span>
+                                <span className="font-mono text-xs font-medium text-foreground bg-muted/60 px-2 py-0.5 rounded select-all truncate max-w-[180px] sm:max-w-none" title={txHash}>
+                                  {txHash.slice(0, 10)}…{txHash.slice(-8)}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 px-2.5 text-xs rounded-full gap-1.5 font-sans"
+                                  onClick={(e) => handleCopyTx(txHash, e)}
+                                  title="Copy transaction hash to clipboard"
+                                >
+                                  {copiedTxHash === txHash ? (
+                                    <>
+                                      <Check className="size-3 text-success" />
+                                      <span className="text-success font-medium">Copied</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Copy className="size-3" />
+                                      <span>Copy Tx</span>
+                                    </>
+                                  )}
+                                </Button>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 px-2.5 text-xs rounded-full gap-1 font-sans text-muted-foreground hover:text-foreground"
+                                  asChild
+                                  title="Search transaction on blockchain explorer"
+                                >
+                                  <a
+                                    href={`https://etherscan.io/tx/${txHash}`}
+                                    target="_blank"
+                                    rel="noreferrer noopener"
+                                  >
+                                    <ExternalLink className="size-3" />
+                                    <span className="hidden sm:inline">Search Explorer</span>
+                                  </a>
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     ))}
                   </div>
@@ -494,6 +590,62 @@ export default function FreelancerProfilePage() {
                                 {rev.comment}
                               </p>
                             )}
+                            {(() => {
+                              const txHash = getTxHash(rev.contractId, rev.comment, rev.transactionHash);
+                              if (!txHash) return null;
+                              return (
+                                <div className="pt-2 border-t border-border/40 flex flex-wrap items-center justify-between gap-2 text-xs">
+                                  <div className="flex items-center gap-2 font-mono text-xs text-muted-foreground min-w-0">
+                                    <ShieldCheck className="size-3.5 text-primary shrink-0" />
+                                    <span className="font-sans text-2xs uppercase tracking-wider font-semibold text-muted-foreground">
+                                      Reputation Tx:
+                                    </span>
+                                    <span className="font-mono text-xs font-medium text-foreground bg-muted/60 px-2 py-0.5 rounded select-all truncate max-w-[180px] sm:max-w-none" title={txHash}>
+                                      {txHash.slice(0, 10)}…{txHash.slice(-8)}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-1.5 shrink-0">
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-7 px-2.5 text-xs rounded-full gap-1.5 font-sans"
+                                      onClick={(e) => handleCopyTx(txHash, e)}
+                                      title="Copy transaction hash to clipboard"
+                                    >
+                                      {copiedTxHash === txHash ? (
+                                        <>
+                                          <Check className="size-3 text-success" />
+                                          <span className="text-success font-medium">Copied</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Copy className="size-3" />
+                                          <span>Copy Tx</span>
+                                        </>
+                                      )}
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-7 px-2.5 text-xs rounded-full gap-1 font-sans text-muted-foreground hover:text-foreground"
+                                      asChild
+                                      title="Search transaction on blockchain explorer"
+                                    >
+                                      <a
+                                        href={`https://etherscan.io/tx/${txHash}`}
+                                        target="_blank"
+                                        rel="noreferrer noopener"
+                                      >
+                                        <ExternalLink className="size-3" />
+                                        <span className="hidden sm:inline">Search Explorer</span>
+                                      </a>
+                                    </Button>
+                                  </div>
+                                </div>
+                              );
+                            })()}
                           </div>
                         ))
                       ) : (

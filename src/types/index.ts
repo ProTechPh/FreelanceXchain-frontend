@@ -716,6 +716,7 @@ export interface ReputationBreakdown {
     reviewerName: string;
     projectTitle: string;
     createdAt: string;
+    transactionHash?: string;
   }>;
 }
 
@@ -750,6 +751,7 @@ export interface ReputationWorkHistoryEntry {
   completedAt: string;
   rating?: number;
   ratingComment?: string;
+  transactionHash?: string;
 }
 
 export interface ReputationLeaderboardEntry {

@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Award, BriefcaseBusiness, History, MessageSquareOff, ShieldCheck, Star, TrendingUp, Users } from 'lucide-react';
+import { Award, BriefcaseBusiness, History, MessageSquareOff, ShieldCheck, Star, TrendingUp, Users, Copy, Check, ExternalLink } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 import { reputationApi } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
 import type { AggregatedReputationScore, ReputationBreakdown, ReputationHistoryEntry, ReputationLeaderboardEntry, ReputationMetadata, ReputationWorkHistoryEntry } from '@/types';
@@ -27,7 +29,23 @@ export function ReputationOverview({ role }: { role?: 'freelancer' | 'employer' 
   const [workHistory, setWorkHistory] = useState<ReputationWorkHistoryEntry[]>([]);
   const [leaderboard, setLeaderboard] = useState<ReputationLeaderboardEntry[]>([]);
   const [metadata, setMetadata] = useState<ReputationMetadata | null>(null);
+  const [copiedTxHash, setCopiedTxHash] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const handleCopyTx = (txHash: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    e?.preventDefault();
+    if (!txHash) return;
+    void navigator.clipboard.writeText(txHash).then(() => {
+      setCopiedTxHash(txHash);
+      toast.success('Reputation transaction hash copied to clipboard');
+      setTimeout(() => {
+        setCopiedTxHash((prev) => (prev === txHash ? null : prev));
+      }, 2500);
+    }).catch(() => {
+      toast.error('Failed to copy transaction hash');
+    });
+  };
 
   useEffect(() => {
     if (!userId) return;
@@ -132,15 +150,121 @@ export function ReputationOverview({ role }: { role?: 'freelancer' | 'employer' 
               </div>
               {rating.comment && <p className="mt-3 text-sm text-muted-foreground">{rating.comment}</p>}
               {metaRating?.transactionHash && /^0x[0-9a-f]{64}$/i.test(metaRating.transactionHash) && (
-                <div className="mt-2.5 flex items-center gap-1.5 rounded bg-primary/5 px-2 py-1 font-mono text-2xs text-primary">
-                  <ShieldCheck className="size-3.5 shrink-0" />
-                  <span>On-Chain Tx: {metaRating.transactionHash.slice(0, 10)}…{metaRating.transactionHash.slice(-8)}</span>
+                <div className="mt-2.5 pt-2 border-t border-border/40 flex flex-wrap items-center justify-between gap-2 text-2xs">
+                  <div className="flex items-center gap-1.5 font-mono text-primary min-w-0">
+                    <ShieldCheck className="size-3.5 shrink-0" />
+                    <span>On-Chain Tx: {metaRating.transactionHash.slice(0, 10)}…{metaRating.transactionHash.slice(-8)}</span>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-6 px-2 text-2xs rounded-full gap-1"
+                      onClick={(e) => handleCopyTx(metaRating.transactionHash!, e)}
+                      title="Copy transaction hash to clipboard"
+                    >
+                      {copiedTxHash === metaRating.transactionHash ? (
+                        <>
+                          <Check className="size-3 text-success" />
+                          <span className="text-success font-medium">Copied</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="size-3" />
+                          <span>Copy</span>
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 px-2 text-2xs rounded-full gap-1 text-muted-foreground hover:text-foreground"
+                      asChild
+                      title="Search transaction on blockchain explorer"
+                    >
+                      <a
+                        href={`https://etherscan.io/tx/${metaRating.transactionHash}`}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                      >
+                        <ExternalLink className="size-3" />
+                        <span className="hidden sm:inline">Explorer</span>
+                      </a>
+                    </Button>
+                  </div>
                 </div>
               )}
             </li>
           );
         })}</ul>}</CardContent></Card>
-        <Card><CardHeader><CardTitle>Completed work</CardTitle></CardHeader><CardContent>{workHistory.length === 0 ? <p className="py-8 text-center text-sm text-muted-foreground">No completed contracts yet.</p> : <ul className="space-y-3">{workHistory.map((item) => <li key={item.contractId} className="rounded-lg border border-border p-3"><div className="flex justify-between gap-3"><div><p className="font-medium">{item.projectTitle}</p><p className="text-xs text-muted-foreground">As {item.role} · {formatDate(item.completedAt)}</p></div>{item.rating && <span className="text-sm">{item.rating} / 5</span>}</div>{item.ratingComment && <p className="mt-2 text-sm text-muted-foreground">{item.ratingComment}</p>}</li>)}</ul>}</CardContent></Card>
+        <Card><CardHeader><CardTitle>Completed work</CardTitle></CardHeader><CardContent>{workHistory.length === 0 ? <p className="py-8 text-center text-sm text-muted-foreground">No completed contracts yet.</p> : <ul className="space-y-3">{workHistory.map((item) => {
+          const matchMeta = metadata?.ratings.find((m) =>
+            (item.contractId && m.contractId === item.contractId) ||
+            (item.ratingComment && m.comment === item.ratingComment)
+          );
+          const txHash = item.transactionHash || matchMeta?.transactionHash;
+          return (
+            <li key={item.contractId} className="rounded-lg border border-border p-3 space-y-2">
+              <div className="flex justify-between gap-3">
+                <div>
+                  <p className="font-medium">{item.projectTitle}</p>
+                  <p className="text-xs text-muted-foreground">As {item.role} · {formatDate(item.completedAt)}</p>
+                </div>
+                {item.rating && <span className="text-sm font-semibold">{item.rating} / 5</span>}
+              </div>
+              {item.ratingComment && <p className="text-sm text-muted-foreground italic">&ldquo;{item.ratingComment}&rdquo;</p>}
+              {txHash && /^0x[0-9a-f]{64}$/i.test(txHash) && (
+                <div className="pt-2 border-t border-border/40 flex flex-wrap items-center justify-between gap-2 text-2xs">
+                  <div className="flex items-center gap-1.5 font-mono text-primary min-w-0">
+                    <ShieldCheck className="size-3.5 shrink-0" />
+                    <span>On-Chain Tx: {txHash.slice(0, 10)}…{txHash.slice(-8)}</span>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="h-6 px-2 text-2xs rounded-full gap-1"
+                      onClick={(e) => handleCopyTx(txHash, e)}
+                      title="Copy transaction hash to clipboard"
+                    >
+                      {copiedTxHash === txHash ? (
+                        <>
+                          <Check className="size-3 text-success" />
+                          <span className="text-success font-medium">Copied</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="size-3" />
+                          <span>Copy</span>
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 px-2 text-2xs rounded-full gap-1 text-muted-foreground hover:text-foreground"
+                      asChild
+                      title="Search transaction on blockchain explorer"
+                    >
+                      <a
+                        href={`https://etherscan.io/tx/${txHash}`}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                      >
+                        <ExternalLink className="size-3" />
+                        <span className="hidden sm:inline">Explorer</span>
+                      </a>
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </li>
+          );
+        })}</ul>}</CardContent></Card>
       </div>
 
       <Card><CardHeader><CardTitle>{effectiveRole === 'employer' ? 'Employer' : 'Freelancer'} leaderboard</CardTitle></CardHeader><CardContent>{leaderboard.length === 0 ? <p className="text-sm text-muted-foreground">No participants in this role have enough ratings to rank yet.</p> : <ol className="grid gap-3 md:grid-cols-2">{leaderboard.map((entry, index) => <li key={entry.userId} className="flex items-center gap-3 rounded-lg border border-border p-3"><span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 font-semibold text-primary">{index + 1}</span><div className="min-w-0 flex-1"><p className="truncate font-medium">{entry.userName}</p><p className="text-xs text-muted-foreground">{entry.totalRatings} verified reviews</p></div><span className="font-semibold">{entry.averageRating.toFixed(1)}</span></li>)}</ol>}</CardContent></Card>
