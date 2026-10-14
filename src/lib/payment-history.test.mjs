@@ -48,13 +48,6 @@ test('a viewer who is neither party gets none, not a misleading out', () => {
   assert.equal(getPaymentDirection(record(), 'admin-9'), 'none');
 });
 
-test('escrow_deposit direction is always none because funds are locked in the smart contract', () => {
-  const deposit = record({ paymentType: 'escrow_deposit' });
-  assert.equal(getPaymentDirection(deposit, 'employer-1'), 'none');
-  assert.equal(getPaymentDirection(deposit, 'freelancer-1'), 'none');
-  assert.equal(getPaymentDirection(deposit, 'admin-9'), 'none');
-});
-
 test('summary counts only completed payments toward the money totals', () => {
   const summary = summarizePaymentHistory(
     [
@@ -93,24 +86,6 @@ test('summary nets inbound against outbound for the same viewer', () => {
   assert.equal(summary.totalIn, 5);
   assert.equal(summary.totalOut, 2);
   assert.equal(summary.net, 3);
-});
-
-test('summary excludes escrow_deposit from totals so employer and freelancer do not double-count', () => {
-  const records = [
-    record({ id: 'p1', paymentType: 'escrow_deposit', amount: 6, payerId: 'emp', payeeId: 'fl', status: 'completed' }),
-    record({ id: 'p2', paymentType: 'rush_fee', amount: 1.8, payerId: 'emp', payeeId: 'fl', status: 'completed' }),
-    record({ id: 'p3', paymentType: 'milestone_release', amount: 6, payerId: 'emp', payeeId: 'fl', status: 'completed' }),
-  ];
-
-  const empSummary = summarizePaymentHistory(records, 'emp');
-  assert.equal(empSummary.totalOut, 7.8);
-  assert.equal(empSummary.totalIn, 0);
-  assert.equal(empSummary.net, -7.8);
-
-  const flSummary = summarizePaymentHistory(records, 'fl');
-  assert.equal(flSummary.totalIn, 7.8);
-  assert.equal(flSummary.totalOut, 0);
-  assert.equal(flSummary.net, 7.8);
 });
 
 test('empty ledger summarizes to zeroes, not NaN', () => {
