@@ -479,20 +479,23 @@ const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disput
                                 <div className="mt-1 space-y-1.5">
                                   <div className="flex flex-wrap items-center gap-2">
                                     {directUrl ? (
-                                      <button
-                                        type="button"
-                                        onClick={() =>
+                                      <a
+                                        href={directUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        onClick={(e) => {
+                                          e.preventDefault();
                                           setPreviewAttachment({
                                             filename: fileName,
                                             url: directUrl,
-                                          })
-                                        }
+                                          });
+                                        }}
                                         aria-label={`Evidence file: ${fileName}`}
                                         className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline break-all text-left cursor-pointer"
                                       >
                                         <Paperclip className="size-3.5 shrink-0" />
                                         <span>{fileName}</span>
-                                      </button>
+                                      </a>
                                     ) : (
                                       <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground break-all">
                                         <Paperclip className="size-3.5 shrink-0" />
