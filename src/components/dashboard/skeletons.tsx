@@ -114,7 +114,7 @@ export function DetailSkeleton({
   );
 }
 
-/** Card grid: portfolio, recommendations, freelancer results. */
+/** Card grid: recommendations, freelancer results. */
 export function CardGridSkeleton({
   count = 6,
   className,

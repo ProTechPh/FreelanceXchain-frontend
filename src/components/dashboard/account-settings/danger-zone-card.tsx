@@ -124,7 +124,7 @@ export function DangerZoneCard({ user, onLogout }: DangerZoneCardProps) {
           <div className="space-y-1">
             <p className="text-sm font-medium text-foreground">Irreversible Account Removal</p>
             <p className="text-xs text-muted-foreground">
-              Once deleted, your profile, portfolio items, and login access will be erased forever.
+              Once deleted, your profile and login access will be erased forever.
             </p>
           </div>
           <Button variant="destructive" onClick={() => setShowDeleteModal(true)}>

@@ -52,12 +52,6 @@ export const SUPPORT_FAQ: FaqSection[] = [
         answer:
           'It appears in the employer\'s project for review, and in your own list under Find work → My proposals. The employer can accept it, decline it, or come back with a counter-offer, and you are notified either way.',
       },
-      {
-        id: 'portfolio',
-        question: 'Where do I show off previous work?',
-        answer:
-          'Freelancers have a portfolio under Profile → Portfolio. Adding pieces there gives employers something concrete to judge alongside your proposal, which matters most before you have reviews on the platform.',
-      },
     ],
   },
   {

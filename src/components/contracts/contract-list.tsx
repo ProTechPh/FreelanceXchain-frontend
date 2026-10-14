@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Coins, FileCheck2, FolderOpen, FileText, Scale, Clock, Search, X } from 'lucide-react';
+import { Coins, FolderOpen, FileText, Scale, Search, X } from 'lucide-react';
 import { reportLoadFailure } from '@/lib/report-failure';
 import { contractsApi } from '@/lib/api';
 import { getContractDetailRoute } from '@/lib/contract-route';
@@ -21,7 +21,6 @@ import { formatAmount, formatDate } from '@/lib/format';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { DataFreshness, useDataFreshness } from '@/components/ui/data-freshness';
 import { ContractInvoiceDialog } from '@/components/contracts/contract-invoice-dialog';
-import { cn } from '@/lib/utils';
 
 type ContractFilterTab = 'all' | 'active' | 'completed' | 'resolved' | 'cancelled' | 'disputed';
 

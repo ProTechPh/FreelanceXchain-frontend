@@ -610,21 +610,6 @@ export interface Attachment {
   mimeType: string;
 }
 
-// Portfolio responses are camelCase (service layer maps snake_case entities before
-// returning), unlike Message/Conversation which are returned as raw snake_case entities.
-export interface PortfolioItem {
-  id: string;
-  freelancerId: string;
-  title: string;
-  description: string;
-  projectUrl?: string;
-  images: Attachment[];
-  skills: string[];
-  completedAt?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 // Messaging types (backend returns these as-is, snake_case — not mapped to camelCase,
 // same precedent as KycVerification below)
 export interface Message {

@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import {
   ArrowLeft,
-  AlertCircle,
   CheckCircle,
   ChevronDown,
   ChevronUp,
@@ -44,7 +43,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { EmptyState } from '@/components/ui/empty-state';
-import { cn } from '@/lib/utils';
 import {
   ALLOWED_FORMATS_DESCRIPTION,
   DOCUMENT_ACCEPT_STRING,

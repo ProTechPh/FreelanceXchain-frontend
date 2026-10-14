@@ -124,10 +124,10 @@ const freelancerSteps: TourStep[] = [
   {
     id: 'profile',
     title: 'Build a profile people hire',
-    body: 'Verified skills and a real portfolio are what move you up the match rankings.',
+    body: 'Verified skills and on-chain reputation are what move you up the match rankings.',
     target: '[data-tour="account"]',
     side: 'bottom',
-    items: ['Portfolio — show the work itself', 'Identity verification — earn the verified badge', 'Skill analysis — see the gaps worth closing'],
+    items: ['Reputation — build on-chain trust', 'Identity verification — earn the verified badge', 'Skill analysis — see the gaps worth closing'],
   },
   {
     id: 'rate-app',

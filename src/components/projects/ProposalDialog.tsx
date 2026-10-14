@@ -179,7 +179,7 @@ export function ProposalDialog({
         files: [autoFile],
       });
 
-      toast.success('AI Proposal drafted based on your portfolio & reputation!');
+      toast.success('AI Proposal drafted based on your skills & reputation!');
       requestRatingPrompt('ai_proposal_draft', project.id);
     } catch (error) {
       reportFailure(error, 'draft your proposal with AI');
@@ -331,7 +331,7 @@ export function ProposalDialog({
                 <span>AI Proposal Assistant</span>
               </div>
               <p className="text-2xs text-muted-foreground sm:text-xs">
-                Automatically drafts a tailored pitch using your <strong>portfolio projects</strong>, <strong>verified skills</strong>, and <strong>on-chain reputation</strong>.
+                Automatically drafts a tailored pitch using your <strong>verified skills</strong> and <strong>on-chain reputation</strong>.
               </p>
             </div>
             {isPro ? (
