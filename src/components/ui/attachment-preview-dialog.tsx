@@ -25,7 +25,6 @@ import {
   File,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import Image from 'next/image';
 
 export interface AttachmentPreviewTarget {
   filename: string;
@@ -48,20 +47,32 @@ export function AttachmentPreviewDialog({
 }: AttachmentPreviewDialogProps) {
   const [textContent, setTextContent] = useState<string | null>(null);
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [detectedMimeType, setDetectedMimeType] = useState<string | null>(null);
+  const [detectedFilename, setDetectedFilename] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
 
   const rawFilename = attachment?.filename || 'Document';
-  const isUrlFilename = rawFilename.startsWith('http://') || rawFilename.startsWith('https://');
-  const displayFilename = isUrlFilename ? 'Evidence Attachment' : rawFilename;
+  const isUrlOrApiPath =
+    rawFilename.startsWith('http://') ||
+    rawFilename.startsWith('https://') ||
+    rawFilename.startsWith('/api/') ||
+    rawFilename.includes('/files/access/');
+  const isHexId = /^[a-f0-9]{16,}$/i.test(rawFilename.split('.')[0] || '');
+
+  const displayFilename =
+    detectedFilename ||
+    (isUrlOrApiPath || isHexId ? 'Evidence Attachment' : rawFilename);
+
   const url = attachment ? safeAttachmentUrl(attachment.url) : null;
   const isProxyEndpoint = Boolean(url && url.includes('/files/access/'));
   const resolvedUrl = isProxyEndpoint ? blobUrl : url;
 
   // Extract clean extension from filename or URL
-  const cleanName = rawFilename.split('?')[0]?.split('#')[0] || '';
+  const effectiveMimeType = attachment?.mimeType || detectedMimeType;
+  const cleanName = displayFilename.split('?')[0]?.split('#')[0] || '';
   const rawExt = cleanName.includes('.') ? cleanName.split('.').pop()?.toLowerCase() || '' : '';
   const urlPath = url ? (() => { try { return new URL(url).pathname.split('?')[0] || ''; } catch { return ''; } })() : '';
   const urlExt = urlPath.includes('.') ? urlPath.split('.').pop()?.toLowerCase() || '' : '';
@@ -70,9 +81,9 @@ export function AttachmentPreviewDialog({
     : ((urlExt && !urlExt.includes('/') && urlExt.length <= 10) ? urlExt : '');
 
   const isMarkdown = ext === 'md' || ext === 'markdown';
-  const isText = isMarkdown || ['txt', 'csv', 'json', 'log', 'sol', 'ts', 'js'].includes(ext) || attachment?.mimeType?.startsWith('text/');
-  const isKnownImage = ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg', 'bmp', 'ico'].includes(ext) || attachment?.mimeType?.startsWith('image/');
-  const isPdf = ext === 'pdf' || attachment?.mimeType === 'application/pdf';
+  const isText = isMarkdown || ['txt', 'csv', 'json', 'log', 'sol', 'ts', 'js'].includes(ext) || Boolean(effectiveMimeType?.startsWith('text/'));
+  const isKnownImage = ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg', 'bmp', 'ico'].includes(ext) || Boolean(effectiveMimeType?.startsWith('image/'));
+  const isPdf = ext === 'pdf' || effectiveMimeType === 'application/pdf';
   // Try image preview for known images or for unknown binary URLs (e.g. Appwrite storage)
   const shouldTryImage = isKnownImage || (!isText && !isPdf && Boolean(url) && !imageFailed);
 
@@ -86,6 +97,8 @@ export function AttachmentPreviewDialog({
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setTextContent(null);
       setBlobUrl(null);
+      setDetectedMimeType(null);
+      setDetectedFilename(null);
       setError(null);
       setLoading(false);
       return;
@@ -112,7 +125,26 @@ export function AttachmentPreviewDialog({
           const blob = res.data;
           createdObjectUrl = URL.createObjectURL(blob);
           setBlobUrl(createdObjectUrl);
-          if (isText) {
+
+          if (blob.type) {
+            setDetectedMimeType(blob.type);
+          }
+
+          const disposition =
+            res.headers?.['content-disposition'] ||
+            (res.headers && (res.headers as Record<string, string>)['Content-Disposition']);
+          if (typeof disposition === 'string') {
+            const match = disposition.match(/filename\*?=['"]?(?:UTF-8'')?([^"';]+)['"]?/i);
+            if (match && match[1]) {
+              try {
+                setDetectedFilename(decodeURIComponent(match[1].trim()));
+              } catch {
+                setDetectedFilename(match[1].trim());
+              }
+            }
+          }
+
+          if (blob.type?.startsWith('text/') || isText) {
             const text = await blob.text();
             if (active) {
               setTextContent(sanitizeMarkdownText(text));
@@ -176,6 +208,36 @@ export function AttachmentPreviewDialog({
     }
   };
 
+  const handleDownload = async () => {
+    try {
+      let downloadHref = blobUrl;
+      let needsRevoke = false;
+      if (!downloadHref && url) {
+        if (isProxyEndpoint) {
+          const res = await api.get<Blob>(url, { responseType: 'blob' });
+          downloadHref = URL.createObjectURL(res.data);
+          needsRevoke = true;
+        } else {
+          downloadHref = url;
+        }
+      }
+      if (!downloadHref) return;
+
+      const a = document.createElement('a');
+      a.href = downloadHref;
+      a.download = displayFilename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      if (needsRevoke) {
+        setTimeout(() => URL.revokeObjectURL(downloadHref!), 5000);
+      }
+      toast.success('Download started');
+    } catch {
+      toast.error('Failed to download file');
+    }
+  };
+
   const badgeText = ext ? `.${ext}` : (isKnownImage ? 'IMAGE' : (isPdf ? 'PDF' : 'FILE'));
 
   return (
@@ -221,31 +283,31 @@ export function AttachmentPreviewDialog({
               </Button>
             )}
 
-            {resolvedUrl && (
-              <>
-                <Button
-                  asChild
-                  variant="outline"
-                  size="sm"
-                  className="h-9 sm:h-8 px-2.5 text-xs gap-1.5 rounded-lg touch-manipulation"
-                >
-                  <a href={resolvedUrl} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="size-3.5" />
-                    <span className="hidden sm:inline">Open Raw</span>
-                  </a>
-                </Button>
-                <Button
-                  asChild
-                  variant="default"
-                  size="sm"
-                  className="h-9 sm:h-8 px-2.5 text-xs gap-1.5 rounded-lg gradient-primary touch-manipulation"
-                >
-                  <a href={resolvedUrl} download={displayFilename} target="_blank" rel="noopener noreferrer">
-                    <Download className="size-3.5" />
-                    <span className="hidden sm:inline">Download</span>
-                  </a>
-                </Button>
-              </>
+            {!isProxyEndpoint && resolvedUrl && (
+              <Button
+                asChild
+                variant="outline"
+                size="sm"
+                className="h-9 sm:h-8 px-2.5 text-xs gap-1.5 rounded-lg touch-manipulation"
+              >
+                <a href={resolvedUrl} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="size-3.5" />
+                  <span className="hidden sm:inline">Open Raw</span>
+                </a>
+              </Button>
+            )}
+
+            {(resolvedUrl || url) && (
+              <Button
+                type="button"
+                variant="default"
+                size="sm"
+                className="h-9 sm:h-8 px-2.5 text-xs gap-1.5 rounded-lg gradient-primary touch-manipulation"
+                onClick={handleDownload}
+              >
+                <Download className="size-3.5" />
+                <span className="hidden sm:inline">Download</span>
+              </Button>
             )}
           </div>
         </DialogHeader>
@@ -261,8 +323,8 @@ export function AttachmentPreviewDialog({
 
           {error && (
             <div className="p-6 rounded-2xl border border-destructive/20 bg-destructive/5 text-center space-y-3">
-                            <p className="text-sm text-destructive font-medium">Couldn&apos;t load the preview: {error}</p>
-              {resolvedUrl && (
+              <p className="text-sm text-destructive font-medium">Couldn&apos;t load the preview: {error}</p>
+              {!isProxyEndpoint && resolvedUrl && (
                 <Button asChild size="sm" variant="outline">
                   <a href={resolvedUrl} target="_blank" rel="noopener noreferrer">
                     Open Directly in Browser <ExternalLink className="ml-1.5 size-3.5" />
@@ -291,14 +353,11 @@ export function AttachmentPreviewDialog({
               {/* Image Display */}
               {shouldTryImage && resolvedUrl && (
                 <div className="flex items-center justify-center p-4 rounded-2xl bg-black/5 dark:bg-background border border-border min-h-[300px]">
-                  <Image
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
                     src={resolvedUrl}
                     alt={displayFilename}
-                    width={800}
-                    height={600}
                     className="max-h-[65dvh] max-w-full rounded-xl object-contain shadow-md"
-                    unoptimized={resolvedUrl.startsWith('http') || resolvedUrl.startsWith('blob:')}
-                    loading="lazy"
                     onError={() => setImageFailed(true)}
                   />
                 </div>
@@ -323,11 +382,9 @@ export function AttachmentPreviewDialog({
                       {ext ? `Direct in-app preview is not available for .${ext} files.` : 'Direct in-app preview is not available for this file type.'}
                     </p>
                   </div>
-                  {resolvedUrl && (
-                    <Button asChild className="gradient-primary shadow-md rounded-full">
-                      <a href={resolvedUrl} download={displayFilename} target="_blank" rel="noopener noreferrer">
-                        <Download className="size-4 mr-2" /> Download File
-                      </a>
+                  {(resolvedUrl || url) && (
+                    <Button type="button" onClick={handleDownload} className="gradient-primary shadow-md rounded-full">
+                      <Download className="size-4 mr-2" /> Download File
                     </Button>
                   )}
                 </div>

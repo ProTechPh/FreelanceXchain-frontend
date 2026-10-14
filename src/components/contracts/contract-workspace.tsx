@@ -27,8 +27,9 @@ import { MilestoneListCard } from './workspace/milestone-list-card';
 import { ContractHistoryCard } from './workspace/contract-history-card';
 import { ContractWorkspaceDialogs } from './workspace/contract-workspace-dialogs';
 import { ContractInvoiceDialog } from '@/components/contracts/contract-invoice-dialog';
-import { deployEscrowFromWallet } from '@/lib/wallet';
+import { deployEscrowFromWallet, withdrawFromEscrowFromWallet } from '@/lib/wallet';
 import { requestWalletProvider } from '@/lib/metamask';
+import { Coins, ArrowDownToLine, Loader2 } from 'lucide-react';
 
 type ParticipantRole = Extract<UserRole, 'employer' | 'freelancer'>;
 
@@ -63,12 +64,14 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
     refunds,
     fundInfo,
     paymentStatus,
+    pendingWithdrawalEth,
     loading,
     reviewEligibility,
     refresh: loadWorkspace,
   } = useContractWorkspace(contractId, role, requestRatingPrompt, disputeId);
 
   const [actionId, setActionId] = useState<string | null>(null);
+  const [withdrawingFunds, setWithdrawingFunds] = useState(false);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [rejectionReasons, setRejectionReasons] = useState<Record<string, string>>({});
   const [files, setFiles] = useState<Record<string, File[]>>({});
@@ -154,6 +157,33 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
     }
   };
 
+  const handleWithdrawFunds = async () => {
+    if (!contract.escrowAddress) {
+      toast.error('Escrow address is missing for this contract.');
+      return;
+    }
+    setWithdrawingFunds(true);
+    try {
+      const provider = await requestWalletProvider();
+      await withdrawFromEscrowFromWallet(provider, {
+        escrowAddress: contract.escrowAddress,
+        chainId: fundInfo?.chainId,
+      });
+      toast.success(`Successfully claimed and withdrawn ${pendingWithdrawalEth} ETH to your wallet!`);
+      void queryClient.invalidateQueries({ queryKey: ['payments'] });
+      await loadWorkspace();
+    } catch (error) {
+      toast.error(
+        getApiErrorMessage(
+          error,
+          'Failed to withdraw from escrow. Make sure your MetaMask wallet is connected and on the correct network.'
+        )
+      );
+    } finally {
+      setWithdrawingFunds(false);
+    }
+  };
+
   const submitMilestone = (milestone: Milestone) => {
     const selectedFiles = files[milestone.id] ?? [];
     if (selectedFiles.length === 0) {
@@ -203,6 +233,41 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
         role={role}
         onOpenInvoice={() => setInvoiceModalOpen(true)}
       />
+
+      {pendingWithdrawalEth && parseFloat(pendingWithdrawalEth) > 0 && (
+        <Card className="border-emerald-500/30 bg-emerald-500/10 dark:border-emerald-500/30 dark:bg-emerald-950/20 shadow-sm">
+          <CardContent className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <Coins className="mt-0.5 size-6 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <div>
+                <p className="font-semibold text-emerald-900 dark:text-emerald-100">
+                  Escrow Funds Available to Claim
+                </p>
+                <p className="text-sm text-emerald-800/90 dark:text-emerald-300/90">
+                  You have <span className="font-bold text-foreground">{pendingWithdrawalEth} ETH</span> pending in the escrow contract from a dispute resolution or refund. Connect your wallet to claim and withdraw the funds.
+                </p>
+              </div>
+            </div>
+            <Button
+              className="bg-emerald-600 hover:bg-emerald-700 text-white shrink-0"
+              disabled={withdrawingFunds}
+              onClick={() => void handleWithdrawFunds()}
+            >
+              {withdrawingFunds ? (
+                <>
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  Claiming...
+                </>
+              ) : (
+                <>
+                  <ArrowDownToLine className="mr-2 size-4" />
+                  Claim {pendingWithdrawalEth} ETH
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
 
       <ContractOverviewCard
         contract={contract}

@@ -524,7 +524,7 @@ function VerificationCard({
                   </h4>
                   {loadingDecision && (
                     <span className="text-xs text-muted-foreground flex items-center gap-1.5">
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> Fetching latest imagesâ€¦
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> Fetching latest images...
                     </span>
                   )}
                 </div>
@@ -701,7 +701,7 @@ function VerificationCard({
                     <DetailCell label="VPN Detected" value={isVpn ? 'Yes (Detected)' : 'No'} />
                     <DetailCell label="Proxy / Datacenter" value={isProxy ? 'Yes (Detected)' : 'No'} />
                     {(deviceBrand || deviceModel || browserFamily || osFamily) && (
-                      <DetailCell label="Device & Browser" value={[deviceBrand || deviceModel, browserFamily, osFamily].filter(Boolean).join(' â€¢ ')} />
+                      <DetailCell label="Device & Browser" value={[deviceBrand || deviceModel, browserFamily, osFamily].filter(Boolean).join(' • ')} />
                     )}
                   </div>
                 </div>

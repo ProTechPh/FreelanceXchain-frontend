@@ -260,3 +260,57 @@ export async function sendRushFeeFromWallet(
     transactionHash: receipt?.hash ?? tx.hash,
   };
 }
+
+export interface WithdrawFromEscrowParams {
+  escrowAddress: string;
+  chainId?: string;
+}
+
+export async function withdrawFromEscrowFromWallet(
+  ethereum: EthereumProvider,
+  params: WithdrawFromEscrowParams
+): Promise<{ transactionHash: string }> {
+  const { BrowserProvider, Contract } = await import('ethers');
+  const { FreelanceEscrowABI } = await import('./escrow-abi');
+
+  if (params.chainId) {
+    try {
+      await ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: params.chainId }],
+      });
+    } catch (switchError: unknown) {
+      if ((switchError as { code?: number })?.code === 4902 && params.chainId === '0x539') {
+        await switchToGanache(ethereum);
+      } else {
+        throw switchError;
+      }
+    }
+  }
+
+  const browserProvider = new BrowserProvider(ethereum as never);
+  const signer = await browserProvider.getSigner();
+  const contract = new Contract(params.escrowAddress, FreelanceEscrowABI, signer);
+
+  const tx = await contract.withdraw();
+  const receipt = await tx.wait(1);
+
+  return {
+    transactionHash: receipt?.hash ?? tx.hash,
+  };
+}
+
+export async function getEscrowPendingWithdrawal(
+  ethereum: EthereumProvider,
+  escrowAddress: string,
+  walletAddress: string
+): Promise<bigint> {
+  const { BrowserProvider, Contract } = await import('ethers');
+  const { FreelanceEscrowABI } = await import('./escrow-abi');
+
+  const browserProvider = new BrowserProvider(ethereum as never);
+  const contract = new Contract(escrowAddress, FreelanceEscrowABI, browserProvider);
+
+  return await contract.pendingWithdrawals(walletAddress);
+}
+

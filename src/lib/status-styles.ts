@@ -112,6 +112,11 @@ const STATUS_TONE: Record<string, StatusTone> = {
 // Statuses whose tone genuinely changes with context. Everything not listed here
 // resolves identically in every domain, which is the point.
 const DOMAIN_OVERRIDES: Partial<Record<StatusDomain, Record<string, StatusTone>>> = {
+  // A contract settled via dispute resolution is closed with a neutral tone rather than
+  // an ordinary green completion badge.
+  contract: {
+    resolved: 'neutral',
+  },
   // An open dispute is an unresolved problem, not a healthy state — the shared
   // default (`open` = success, correct for a project accepting proposals) would
   // read as reassuring on exactly the screen where it must not.

@@ -37,6 +37,7 @@ interface ContractWorkspaceState {
   refunds: RefundRequest[];
   fundInfo: ContractFundInfo | null;
   paymentStatus: ContractPaymentStatus | null;
+  pendingWithdrawalEth: string | null;
   loading: boolean;
   reviewEligibility: { canRate: boolean; reason?: string } | null;
 }
@@ -63,6 +64,7 @@ export function useContractWorkspace(
     refunds: [],
     fundInfo: null,
     paymentStatus: null,
+    pendingWithdrawalEth: null,
     loading: true,
     reviewEligibility: null,
   });
@@ -98,6 +100,39 @@ export function useContractWorkspace(
           ? milestoneResult.value.data
           : loadedContract.milestones ?? [];
 
+      let pendingWithdrawalEth: string | null = null;
+      if (loadedContract.escrowAddress) {
+        try {
+          const { data: withdrawalsData } = await contractsApi.getPendingWithdrawals(contractId);
+          const amountWei = role === 'freelancer'
+            ? withdrawalsData.pendingWithdrawals?.freelancerAmount
+            : withdrawalsData.pendingWithdrawals?.platformAmount;
+          if (amountWei && BigInt(amountWei) > BigInt(0)) {
+            const { formatEther } = await import('ethers');
+            pendingWithdrawalEth = formatEther(BigInt(amountWei));
+          }
+        } catch {
+          // If backend check unavailable, fallback to client-side contract check
+        }
+
+        if (!pendingWithdrawalEth && typeof window !== 'undefined' && window.ethereum) {
+          try {
+            const accounts = await window.ethereum.request<string[]>({ method: 'eth_accounts' });
+            const userWallet = accounts?.[0];
+            if (userWallet) {
+              const { getEscrowPendingWithdrawal } = await import('@/lib/wallet');
+              const amountWei = await getEscrowPendingWithdrawal(window.ethereum, loadedContract.escrowAddress, userWallet);
+              if (amountWei > BigInt(0)) {
+                const { formatEther } = await import('ethers');
+                pendingWithdrawalEth = formatEther(amountWei);
+              }
+            }
+          } catch {
+            // Ignore wallet RPC check failure
+          }
+        }
+      }
+
       const newState: ContractWorkspaceState = {
         contract: loadedContract,
         milestones: rawMilestones.map(normalizeMilestone),
@@ -110,6 +145,7 @@ export function useContractWorkspace(
           fundInfoResult.status === 'fulfilled' && fundInfoResult.value
             ? fundInfoResult.value.data
             : null,
+        pendingWithdrawalEth,
         loading: false,
         reviewEligibility: null,
       };

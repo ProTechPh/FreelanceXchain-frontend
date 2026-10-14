@@ -43,6 +43,10 @@ import {
 type ParticipantRole = Extract<UserRole, 'employer' | 'freelancer'>;
 const emptyDraft: DisputeDraft = { contractId: '', milestoneId: '', reason: '' };
 
+const isApiOrUrl = (val?: string | null) =>
+  Boolean(val && (val.startsWith('http://') || val.startsWith('https://') || val.startsWith('/api/') || val.includes('/files/access/')));
+
+
 const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disputeId }: { role: ParticipantRole; disputeId?: string }) {
   const user = useAuthStore((state) => state.user);
   const searchParams = useSearchParams();
@@ -355,17 +359,17 @@ const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disput
                 <div className="space-y-2">
                   <Label htmlFor="dispute-milestone">Submitted milestone</Label>
                   <select id="dispute-milestone" disabled={!draft.contractId || loadingMilestones} className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm" value={draft.milestoneId} onChange={(event) => setDraft((current) => ({ ...current, milestoneId: event.target.value }))}>
-                    <option value="">{loadingMilestones ? 'Loadingâ€¦' : 'Choose a milestone'}</option>
+                    <option value="">{loadingMilestones ? 'Loading...' : 'Choose a milestone'}</option>
                     {milestones.map((milestone) => <option key={milestone.id} value={milestone.id}>{milestone.title}</option>)}
                   </select>
                   {draft.contractId && !loadingMilestones && milestones.length === 0 && (
                     <p className="text-xs text-warning">
-                      No submitted milestones available for dispute. Only milestones currently under review (&apos;submitted&apos;) can be disputed.
+                       No submitted milestones available for dispute. Only milestones currently under review (&apos;submitted&apos;) can be disputed.
                     </p>
                   )}
                 </div>
                 <div className="space-y-2 sm:col-span-2"><Label htmlFor="dispute-reason">Reason</Label><Textarea id="dispute-reason" rows={4} maxLength={2000} value={draft.reason} onChange={(event) => setDraft((current) => ({ ...current, reason: event.target.value }))} placeholder="Describe the problem and the resolution you are seeking." /></div>
-                <Button className="sm:col-span-2 sm:w-fit" type="submit" disabled={actionId === 'create' || (Boolean(draft.contractId) && !loadingMilestones && milestones.length === 0)}><Scale className="mr-2 size-4" />{actionId === 'create' ? 'Openingâ€¦' : 'Open dispute'}</Button>
+                <Button className="sm:col-span-2 sm:w-fit" type="submit" disabled={actionId === 'create' || (Boolean(draft.contractId) && !loadingMilestones && milestones.length === 0)}><Scale className="mr-2 size-4" />{actionId === 'create' ? 'Opening...' : 'Open dispute'}</Button>
               </form>
             </CardContent>
           </Card>
@@ -444,11 +448,9 @@ const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disput
                         const textOnly = evidence.evidenceType === 'text' || evidence.evidenceType === 'message';
 
                         // Derive readable file/attachment name
-                        const fileName = ((!evidence.description.startsWith('http://') && !evidence.description.startsWith('https://') && evidence.description.trim())
-                          ? evidence.description
-                          : (directUrl ? directUrl.split('/').pop()?.split('?')[0] : null)) || 'Evidence file';
-
-                        const fileHref = directUrl || (evidence.fileUrl || evidence.description || `#evidence-${evidence.id}`);
+                        const cleanDescription = (!isApiOrUrl(evidence.description) && evidence.description?.trim()) ? evidence.description : null;
+                        const candidateName = cleanDescription || (directUrl ? directUrl.split('/').pop()?.split('?')[0] : null) || 'Evidence file';
+                        const fileName = cleanDescription || (/^[a-f0-9]{16,}$/i.test(candidateName.split('.')[0] || '') ? 'Evidence file' : candidateName);
 
                         return (
                           <li key={evidence.id} className="flex items-start gap-3 rounded-lg border border-border p-3 text-sm">
@@ -476,17 +478,27 @@ const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disput
                               ) : (
                                 <div className="mt-1 space-y-1.5">
                                   <div className="flex flex-wrap items-center gap-2">
-                                    <a
-                                      href={fileHref}
-                                      target={directUrl ? '_blank' : undefined}
-                                      rel={directUrl ? 'noopener noreferrer' : undefined}
-                                      aria-label={`Evidence file: ${fileName}`}
-                                      className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline break-all"
-                                    >
-                                      <Paperclip className="size-3.5 shrink-0" />
-                                      <span>{fileName}</span>
-                                      {directUrl && <ExternalLink className="size-3 shrink-0 opacity-70" />}
-                                    </a>
+                                    {directUrl ? (
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          setPreviewAttachment({
+                                            filename: fileName,
+                                            url: directUrl,
+                                          })
+                                        }
+                                        aria-label={`Evidence file: ${fileName}`}
+                                        className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline break-all text-left cursor-pointer"
+                                      >
+                                        <Paperclip className="size-3.5 shrink-0" />
+                                        <span>{fileName}</span>
+                                      </button>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground break-all">
+                                        <Paperclip className="size-3.5 shrink-0" />
+                                        <span>{fileName}</span>
+                                      </span>
+                                    )}
                                   </div>
                                   {directUrl && (
                                     <div className="flex items-center gap-2">
@@ -504,17 +516,6 @@ const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disput
                                       >
                                         <Eye className="size-3.5" />
                                         View evidence
-                                      </Button>
-                                      <Button
-                                        asChild
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-7 gap-1.5 px-2 text-xs text-muted-foreground hover:text-foreground"
-                                      >
-                                        <a href={directUrl} target="_blank" rel="noopener noreferrer">
-                                          <ExternalLink className="size-3.5" />
-                                          Open raw
-                                        </a>
                                       </Button>
                                     </div>
                                   )}
@@ -571,7 +572,7 @@ const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disput
                           <Upload className="mr-2 size-4" />Upload file
                         </Button>
                       </div>
-                      <div className="space-y-2"><Label htmlFor={`evidence-link-${dispute.id}`}>Evidence link</Label><Input id={`evidence-link-${dispute.id}`} type="url" placeholder="https://â€¦" value={evidenceLinks[dispute.id] ?? ''} onChange={(event) => setEvidenceLinks((current) => ({ ...current, [dispute.id]: event.target.value }))} /><Button type="button" size="sm" variant="outline" disabled={actionId === `link:${dispute.id}`} onClick={() => void submitLinkEvidence(dispute.id)}><Link2 className="mr-2 size-4" />Submit link</Button></div>
+                      <div className="space-y-2"><Label htmlFor={`evidence-link-${dispute.id}`}>Evidence link</Label><Input id={`evidence-link-${dispute.id}`} type="url" placeholder="https://..." value={evidenceLinks[dispute.id] ?? ''} onChange={(event) => setEvidenceLinks((current) => ({ ...current, [dispute.id]: event.target.value }))} /><Button type="button" size="sm" variant="outline" disabled={actionId === `link:${dispute.id}`} onClick={() => void submitLinkEvidence(dispute.id)}><Link2 className="mr-2 size-4" />Submit link</Button></div>
                     </div>
                   ) : (
                     <div className="rounded-lg border border-dashed border-border p-4 text-xs text-muted-foreground flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
@@ -602,29 +603,35 @@ const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disput
                       const rawTarget = ev.fileUrl || ev.description;
                       const safeUrl = safeAttachmentUrl(rawTarget);
                       const directUrl = safeUrl || (rawTarget && (rawTarget.startsWith('http://') || rawTarget.startsWith('https://') || rawTarget.startsWith('/')) ? rawTarget : null);
-                      const targetHref = directUrl || (ev.fileUrl || ev.description || `#evidence-${ev.id}`);
-                      const fileName = ((!ev.description.startsWith('http://') && !ev.description.startsWith('https://') && ev.description.trim())
-                        ? ev.description
-                        : (directUrl ? directUrl.split('/').pop()?.split('?')[0] : null)) || 'Evidence file';
+                      const cleanDescription = (!isApiOrUrl(ev.description) && ev.description?.trim()) ? ev.description : null;
+                      const candidateName = cleanDescription || (directUrl ? directUrl.split('/').pop()?.split('?')[0] : null) || 'Evidence file';
+                      const fileName = cleanDescription || (/^[a-f0-9]{16,}$/i.test(candidateName.split('.')[0] || '') ? 'Evidence file' : candidateName);
 
                       return (
                         <li key={ev.id || idx} className="relative space-y-1">
                           <div className="absolute -left-[21px] mt-1.5 size-2.5 rounded-full border border-background bg-primary/70" />
                           <p className="font-medium text-foreground capitalize">{ev.evidenceType} evidence submitted</p>
                           <p className="text-xs text-muted-foreground">{formatDateTime(ev.createdAt)}</p>
-                          <p className="text-xs text-muted-foreground break-words">{ev.description}</p>
+                          {cleanDescription && (
+                            <p className="text-xs text-muted-foreground break-words">{cleanDescription}</p>
+                          )}
                           {ev.evidenceType !== 'text' && ev.evidenceType !== 'message' && (
                             <div className="pt-0.5">
-                              <a
-                                href={targetHref}
-                                target={directUrl ? '_blank' : undefined}
-                                rel={directUrl ? 'noopener noreferrer' : undefined}
-                                className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline break-all"
-                              >
-                                <Paperclip className="size-3 shrink-0" />
-                                <span>{fileName}</span>
-                                {directUrl && <ExternalLink className="size-3 shrink-0 opacity-70" />}
-                              </a>
+                              {directUrl ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setPreviewAttachment({ filename: fileName, url: directUrl })}
+                                  className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline break-all text-left cursor-pointer"
+                                >
+                                  <Paperclip className="size-3 shrink-0" />
+                                  <span>{fileName}</span>
+                                </button>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 text-xs text-muted-foreground break-all">
+                                  <Paperclip className="size-3 shrink-0" />
+                                  <span>{fileName}</span>
+                                </span>
+                              )}
                             </div>
                           )}
                         </li>
