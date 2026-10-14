@@ -78,12 +78,6 @@ export default function AdminSkillsPage() {
   const [loading, setLoading] = useState(true);
   const [action, setAction] = useState<string | null>(null);
 
-  const [approvingSuggestion, setApprovingSuggestion] = useState<SkillSuggestion | null>(null);
-  const [approvalCategoryId, setApprovalCategoryId] = useState('');
-  const [isCreatingNewCategory, setIsCreatingNewCategory] = useState(false);
-  const [newCatName, setNewCatName] = useState('');
-  const [newCatDesc, setNewCatDesc] = useState('');
-
   const [editingSkill, setEditingSkill] = useState<{
     id: string;
     name: string;
@@ -236,70 +230,12 @@ export default function AdminSkillsPage() {
     finally { setAction(null); }
   };
 
-  const startApproval = (suggestion: SkillSuggestion) => {
-    setApprovingSuggestion(suggestion);
-    setIsCreatingNewCategory(false);
-    setNewCatName(suggestion.categoryName || '');
-    setNewCatDesc(
-      suggestion.categoryName
-        ? `Skills related to ${suggestion.categoryName}`
-        : 'New category'
-    );
-
-    const matched = suggestion.categoryName
-      ? taxonomy.categories.find(
-          (c) => c.name.toLowerCase() === suggestion.categoryName!.trim().toLowerCase()
-        )
-      : null;
-
-    if (matched) {
-      setApprovalCategoryId(matched.id);
-    } else if (taxonomy.categories.length > 0) {
-      setApprovalCategoryId(taxonomy.categories[0].id);
-    } else {
-      setApprovalCategoryId('');
-      setIsCreatingNewCategory(true);
-    }
-  };
-
-  const confirmApproval = async () => {
-    if (!approvingSuggestion) return;
-    setAction('approve-suggestion');
-
-    try {
-      let targetCatId = approvalCategoryId;
-
-      if (isCreatingNewCategory) {
-        if (!newCatName.trim()) {
-          toast.error('Category name is required.');
-          setAction(null);
-          return;
-        }
-        const createdCatRes = await skillsApi.createCategory(
-          newCatName.trim(),
-          newCatDesc.trim() || `Skills related to ${newCatName.trim()}`
-        );
-        targetCatId = createdCatRes.data.id;
-      }
-
-      await skillsApi.moderateSuggestion(approvingSuggestion.id, 'approved', targetCatId);
-      setSuggestions((current) => current.filter((s) => s.id !== approvingSuggestion.id));
-      await load();
-      toast.success(`Skill "${approvingSuggestion.skillName}" approved and added to category.`);
-      setApprovingSuggestion(null);
-    } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Unable to approve suggestion.'));
-    } finally {
-      setAction(null);
-    }
-  };
-
-  const rejectSuggestion = async (id: string) => {
+  const moderateSuggestion = async (id: string, status: 'approved' | 'rejected') => {
     setAction(id);
     try {
-      await skillsApi.moderateSuggestion(id, 'rejected');
-      setSuggestions((current) => current.filter((s) => s.id !== id));
-      toast.success('Suggestion rejected.');
+      await skillsApi.moderateSuggestion(id, status);
+      setSuggestions((current) => current.filter((suggestion) => suggestion.id !== id));
+      toast.success(`Suggestion ${status}.`);
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Unable to update suggestion.'));
     } finally {
@@ -483,8 +419,8 @@ export default function AdminSkillsPage() {
                     <Button
                       type="button"
                       size="sm"
-                      disabled={action === suggestion.id || action === 'approve-suggestion'}
-                      onClick={() => startApproval(suggestion)}
+                      disabled={action === suggestion.id}
+                      onClick={() => void moderateSuggestion(suggestion.id, 'approved')}
                     >
                       Approve
                     </Button>
@@ -493,7 +429,7 @@ export default function AdminSkillsPage() {
                       size="sm"
                       variant="outline"
                       disabled={action === suggestion.id}
-                      onClick={() => void rejectSuggestion(suggestion.id)}
+                      onClick={() => void moderateSuggestion(suggestion.id, 'rejected')}
                     >
                       Reject
                     </Button>
@@ -557,116 +493,6 @@ export default function AdminSkillsPage() {
         ))}
       </div>
 
-      {/* Approval Dialog with Category Selection */}
-      <Dialog
-        open={Boolean(approvingSuggestion)}
-        onOpenChange={(open) => {
-          if (!open) setApprovingSuggestion(null);
-        }}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Approve Skill Suggestion</DialogTitle>
-            <DialogDescription>
-              Assign <strong>{approvingSuggestion?.skillName}</strong> to an existing category or create a new category in the skill taxonomy.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4 py-2">
-            <div className="rounded-md border p-3 bg-muted/40 text-sm space-y-1">
-              <div className="font-medium">{approvingSuggestion?.skillName}</div>
-              <div className="text-muted-foreground">{approvingSuggestion?.skillDescription}</div>
-              {approvingSuggestion?.categoryName && (
-                <div className="text-xs text-muted-foreground pt-1">
-                  Freelancer suggested category: <span className="font-semibold text-foreground">{approvingSuggestion.categoryName}</span>
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium">Category Destination</Label>
-              <Button
-                type="button"
-                variant="link"
-                size="sm"
-                className="h-auto p-0 text-xs"
-                onClick={() => setIsCreatingNewCategory(!isCreatingNewCategory)}
-              >
-                {isCreatingNewCategory ? 'Select existing category' : '+ Create new category instead'}
-              </Button>
-            </div>
-
-            {!isCreatingNewCategory ? (
-              <div className="space-y-1">
-                <Label htmlFor="target-category" className="text-xs text-muted-foreground">
-                  Select Category
-                </Label>
-                <Select
-                  items={categoryItems}
-                  value={approvalCategoryId}
-                  onValueChange={(val) => {
-                    if (val) setApprovalCategoryId(val);
-                  }}
-                >
-                  <SelectTrigger id="target-category" className="w-full">
-                    <SelectValue placeholder="Select destination category">
-                      {(val) => (val && categoryItems[val] ? categoryItems[val] : val)}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {taxonomy.categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            ) : (
-              <div className="space-y-3 rounded-md border p-3 bg-muted/20">
-                <div className="space-y-1">
-                  <Label htmlFor="new-cat-name" className="text-xs">New Category Name</Label>
-                  <Input
-                    id="new-cat-name"
-                    placeholder="e.g. Artificial Intelligence"
-                    value={newCatName}
-                    onChange={(e) => setNewCatName(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="new-cat-desc" className="text-xs">Category Description</Label>
-                  <Textarea
-                    id="new-cat-desc"
-                    rows={2}
-                    placeholder="Description for this new category..."
-                    value={newCatDesc}
-                    onChange={(e) => setNewCatDesc(e.target.value)}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setApprovingSuggestion(null)}
-              disabled={action === 'approve-suggestion'}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={() => void confirmApproval()}
-              loading={action === 'approve-suggestion'}
-              loadingText="Approving…"
-            >
-              Approve & Add to Taxonomy
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Edit Skill Dialog */}
       <Dialog

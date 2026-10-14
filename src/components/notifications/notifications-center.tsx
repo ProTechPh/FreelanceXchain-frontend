@@ -721,7 +721,12 @@ export function NotificationsCenter() {
               <TabsTrigger value="all" className="gap-2 px-3 sm:flex-none">
                 All
               </TabsTrigger>
-              <TabsTrigger value="unread" className="gap-2 px-3 sm:flex-none">
+              <TabsTrigger
+                value="unread"
+                role="button"
+                aria-label={`Unread (${unreadCount})`}
+                className="gap-2 px-3 sm:flex-none"
+              >
                 Unread
                 <CountPill value={unreadCount} emphasis={unreadCount > 0} />
               </TabsTrigger>

@@ -72,7 +72,7 @@ export function SuggestSkillDialog({
         description: trimmedDesc,
         ...(trimmedCategory ? { categoryName: trimmedCategory } : {}),
       });
-      toast.success('Skill suggestion sent to administrators and added to your profile.');
+      toast.success('Skill suggestion sent to administrators for review.');
       onSkillSuggested?.(trimmedName);
       reset();
       onOpenChange(false);
