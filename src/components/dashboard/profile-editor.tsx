@@ -47,6 +47,7 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
     setFreelancerProfile,
     save: saveProfile,
     reset: discardChanges,
+    reload: reloadProfile,
   } = useProfileEditor(role);
 
   const [skills, setSkills] = useState<Skill[]>([]);
@@ -359,6 +360,13 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
                 <SuggestSkillDialog
                   open={suggestSkillOpen}
                   onOpenChange={setSuggestSkillOpen}
+                  onSkillSuggested={async () => {
+                    await reloadProfile();
+                    skillsApi
+                      .getTaxonomy()
+                      .then(({ data }) => setSkills(data.categories.flatMap((category) => category.skills)))
+                      .catch(() => {});
+                  }}
                 />
               </CardContent>
             </Card>

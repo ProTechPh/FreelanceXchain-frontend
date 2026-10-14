@@ -30,7 +30,11 @@ export const messagesApi = {
 };
 
 export const notificationsApi = {
-  list: (params?: { maxItemCount?: number; continuationToken?: string }) =>
+  /**
+   * `continuationToken` is the id of the last notification already loaded;
+   * `archived: true` lists the archive instead of the inbox.
+   */
+  list: (params?: { maxItemCount?: number; continuationToken?: string; archived?: boolean }) =>
     api.get<{ items: Notification[]; continuationToken?: string; hasMore: boolean }>(
       '/notifications',
       { params }
@@ -41,6 +45,19 @@ export const notificationsApi = {
 
   markAllRead: () =>
     api.patch<{ count: number }>('/notifications/read-all'),
+
+  archive: (id: string) =>
+    api.patch<Notification>(`/notifications/${encodeURIComponent(id)}/archive`),
+
+  unarchive: (id: string) =>
+    api.patch<Notification>(`/notifications/${encodeURIComponent(id)}/unarchive`),
+
+  remove: (id: string) =>
+    api.delete<{ id: string }>(`/notifications/${encodeURIComponent(id)}`),
+
+  /** One action over up to 100 ids; ids that are missing or not yours come back in `failed`. */
+  bulk: (action: 'archive' | 'unarchive' | 'delete', ids: string[]) =>
+    api.post<{ action: string; succeeded: string[]; failed: string[] }>('/notifications/bulk', { action, ids }),
 
   getUnreadCount: () =>
     api.get<{ count: number }>('/notifications/unread-count'),

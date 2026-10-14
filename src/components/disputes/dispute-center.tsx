@@ -3,7 +3,26 @@
 import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ArrowLeft, Clock, ExternalLink, Eye, FileText, Link2, Paperclip, Plus, Scale, ShieldCheck, Trash2, Upload } from 'lucide-react';
+import {
+  ArrowLeft,
+  CheckCircle,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  ExternalLink,
+  Eye,
+  FileQuestion,
+  FileText,
+  Link2,
+  Paperclip,
+  Plus,
+  Scale,
+  Search,
+  ShieldCheck,
+  Trash2,
+  Upload,
+  X,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { reportFailure, reportLoadFailure } from '@/lib/report-failure';
 import { contractsApi, disputesApi, milestonesApi } from '@/lib/api';
@@ -14,13 +33,14 @@ import { AttachmentPreviewDialog, type AttachmentPreviewTarget } from '@/compone
 import { normalizeMilestone } from '@/lib/contract-workflow';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { useAuthStore } from '@/stores/authStore';
-import type { Contract, Dispute, DisputeEvidence, Milestone, UserRole } from '@/types';
+import type { Contract, Dispute, DisputeEvidence, DisputeStatus, Milestone, UserRole } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { EmptyState } from '@/components/ui/empty-state';
 import {
@@ -69,6 +89,9 @@ const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disput
   const [actionId, setActionId] = useState<string | null>(null);
   const [previewAttachment, setPreviewAttachment] = useState<AttachmentPreviewTarget | null>(null);
   const [deletingEvidence, setDeletingEvidence] = useState<{ disputeId: string; evidenceId: string } | null>(null);
+  const [selectedTab, setSelectedTab] = useState<'all' | DisputeStatus>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isCreateOpen, setIsCreateOpen] = useState(true);
 
   const verified = canUseDisputeActions(user?.kycStatus);
   const verificationPath = `/dashboard/${role}/verification`;
@@ -166,6 +189,37 @@ const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disput
 
   const activeContracts = contracts.filter((contract) => contract.status === 'active');
   const contractsById = useMemo(() => new Map(contracts.map((contract) => [contract.id, contract])), [contracts]);
+
+  const stats = useMemo(() => {
+    const total = disputes.length;
+    const open = disputes.filter((d) => d.status === 'open').length;
+    const underReview = disputes.filter((d) => d.status === 'under_review').length;
+    const resolved = disputes.filter((d) => d.status === 'resolved').length;
+    return { total, open, underReview, resolved };
+  }, [disputes]);
+
+  const filteredDisputes = useMemo(() => {
+    return disputes.filter((dispute) => {
+      if (selectedTab !== 'all' && dispute.status !== selectedTab) {
+        return false;
+      }
+      if (!searchQuery.trim()) return true;
+      const q = searchQuery.toLowerCase().trim();
+      const contract = contractsById.get(dispute.contractId);
+      const contractTitle = (contract?.project?.title || contract?.title || '').toLowerCase();
+      const reason = (dispute.reason || '').toLowerCase();
+      const id = dispute.id.toLowerCase();
+      const resolutionReason = (dispute.resolution?.reasoning || '').toLowerCase();
+      const resolutionDecision = (dispute.resolution?.decision || '').toLowerCase();
+      return (
+        contractTitle.includes(q) ||
+        reason.includes(q) ||
+        id.includes(q) ||
+        resolutionReason.includes(q) ||
+        resolutionDecision.includes(q)
+      );
+    });
+  }, [disputes, selectedTab, searchQuery, contractsById]);
 
   const selectContract = async (contractId: string) => {
     setDraft((current) => ({ contractId, milestoneId: '', reason: current.reason }));
@@ -349,77 +403,295 @@ const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disput
         <p className="text-muted-foreground">{disputeId ? 'Review the case, linked contract, resolution, and submitted evidence.' : 'Open a case for a submitted milestone and provide evidence for review.'}</p>
       </div>
 
+
+
       {!disputeId && (
-        verified ? (
-          <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2"><Plus className="size-5" />Open a dispute</CardTitle></CardHeader>
-            <CardContent>
-              <form className="grid gap-4 sm:grid-cols-2" onSubmit={createDispute}>
-                <div className="space-y-2"><Label htmlFor="dispute-contract">Active contract</Label><select id="dispute-contract" className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm" value={draft.contractId} onChange={(event) => void selectContract(event.target.value)}><option value="">Choose a contract</option>{activeContracts.map((contract) => <option key={contract.id} value={contract.id}>{contract.project?.title || contract.title || `Contract ${contract.id.slice(0, 8)}`}</option>)}</select></div>
-                <div className="space-y-2">
-                  <Label htmlFor="dispute-milestone">Submitted milestone</Label>
-                  <select id="dispute-milestone" disabled={!draft.contractId || loadingMilestones} className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm" value={draft.milestoneId} onChange={(event) => setDraft((current) => ({ ...current, milestoneId: event.target.value }))}>
-                    <option value="">{loadingMilestones ? 'Loading...' : 'Choose a milestone'}</option>
-                    {milestones.map((milestone) => <option key={milestone.id} value={milestone.id}>{milestone.title}</option>)}
-                  </select>
-                  {draft.contractId && !loadingMilestones && milestones.length === 0 && (
-                    <p className="text-xs text-warning">
-                       No submitted milestones available for dispute. Only milestones currently under review (&apos;submitted&apos;) can be disputed.
-                    </p>
-                  )}
+        <Card className="border-border">
+          <CardHeader
+            className="cursor-pointer select-none transition-colors hover:bg-muted/20"
+            onClick={() => setIsCreateOpen(!isCreateOpen)}
+          >
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                  <Plus className="size-5 text-primary" />
+                  Open a dispute
+                </CardTitle>
+                <p className="text-xs text-muted-foreground">
+                  Escalate a submitted milestone to freeze funds in escrow and submit claims for arbitration review.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 gap-1 text-xs text-muted-foreground hover:text-foreground"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsCreateOpen(!isCreateOpen);
+                }}
+                aria-expanded={isCreateOpen}
+              >
+                {isCreateOpen ? (
+                  <>
+                    <ChevronUp className="size-4" />
+                    <span>Hide form</span>
+                  </>
+                ) : (
+                  <>
+                    <ChevronDown className="size-4" />
+                    <span>New dispute</span>
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardHeader>
+          {isCreateOpen && (
+            <CardContent className="pt-0">
+              {verified ? (
+                <form className="grid gap-4 sm:grid-cols-2 pt-2 border-t border-border/60" onSubmit={createDispute}>
+                  <div className="space-y-2">
+                    <Label htmlFor="dispute-contract">Active contract</Label>
+                    <select
+                      id="dispute-contract"
+                      className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+                      value={draft.contractId}
+                      onChange={(event) => void selectContract(event.target.value)}
+                    >
+                      <option value="">Choose a contract</option>
+                      {activeContracts.map((contract) => (
+                        <option key={contract.id} value={contract.id}>
+                          {contract.project?.title || contract.title || `Contract ${contract.id.slice(0, 8)}`}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="dispute-milestone">Submitted milestone</Label>
+                    <select
+                      id="dispute-milestone"
+                      disabled={!draft.contractId || loadingMilestones}
+                      className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+                      value={draft.milestoneId}
+                      onChange={(event) => setDraft((current) => ({ ...current, milestoneId: event.target.value }))}
+                    >
+                      <option value="">{loadingMilestones ? 'Loading...' : 'Choose a milestone'}</option>
+                      {milestones.map((milestone) => (
+                        <option key={milestone.id} value={milestone.id}>
+                          {milestone.title}
+                        </option>
+                      ))}
+                    </select>
+                    {draft.contractId && !loadingMilestones && milestones.length === 0 && (
+                      <p className="text-xs text-warning">
+                        No submitted milestones available for dispute. Only milestones currently under review (&apos;submitted&apos;) can be disputed.
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-2 sm:col-span-2">
+                    <Label htmlFor="dispute-reason">Reason</Label>
+                    <Textarea
+                      id="dispute-reason"
+                      rows={4}
+                      maxLength={2000}
+                      value={draft.reason}
+                      onChange={(event) => setDraft((current) => ({ ...current, reason: event.target.value }))}
+                      placeholder="Describe the problem and the resolution you are seeking."
+                    />
+                  </div>
+                  <Button
+                    className="sm:col-span-2 sm:w-fit"
+                    type="submit"
+                    disabled={actionId === 'create' || (Boolean(draft.contractId) && !loadingMilestones && milestones.length === 0)}
+                  >
+                    <Scale className="mr-2 size-4" />
+                    {actionId === 'create' ? 'Opening...' : 'Open dispute'}
+                  </Button>
+                </form>
+              ) : (
+                <div className="pt-2 border-t border-border/60">
+                  <p className="text-sm text-muted-foreground">
+                    Identity verification is required before you can open a new dispute against funded contract milestones.
+                  </p>
                 </div>
-                <div className="space-y-2 sm:col-span-2"><Label htmlFor="dispute-reason">Reason</Label><Textarea id="dispute-reason" rows={4} maxLength={2000} value={draft.reason} onChange={(event) => setDraft((current) => ({ ...current, reason: event.target.value }))} placeholder="Describe the problem and the resolution you are seeking." /></div>
-                <Button className="sm:col-span-2 sm:w-fit" type="submit" disabled={actionId === 'create' || (Boolean(draft.contractId) && !loadingMilestones && milestones.length === 0)}><Scale className="mr-2 size-4" />{actionId === 'create' ? 'Opening...' : 'Open dispute'}</Button>
-              </form>
+              )}
             </CardContent>
-          </Card>
-        ) : (
-          <Card className="border-dashed">
-            <CardHeader><CardTitle className="flex items-center gap-2 text-muted-foreground"><Plus className="size-5" />Open a dispute</CardTitle></CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">Identity verification is required before you can open a new dispute against funded contract milestones.</p>
-            </CardContent>
-          </Card>
-        )
+          )}
+        </Card>
       )}
 
       <section className="space-y-4" aria-labelledby="cases-heading">
-        <h2 id="cases-heading" className="text-xl font-semibold">{disputeId ? 'Case' : 'Your cases'}</h2>
-        {disputes.length === 0 && <EmptyState
-          icon={Scale}
-          title="No disputes"
-          description="Disputes appear here when either side raises an issue on a funded contract. Nothing needs your attention right now."
-        />}
-        {disputes.map((dispute) => {
-          const contract = contractsById.get(dispute.contractId);
-          const rawEmbedded: DisputeEvidence[] = (dispute.evidence || []).map((evidence) => ({
-            id: evidence.id,
-            disputeId: dispute.id,
-            submittedBy: evidence.submitterId,
-            evidenceType: evidence.type,
-            description: evidence.content,
-            fileUrl: evidence.type === 'text' ? undefined : evidence.content,
-            createdAt: evidence.submittedAt,
-            updatedAt: evidence.submittedAt,
-          }));
-          const standaloneRecords = evidenceByDispute[dispute.id] || [];
-          const seenIds = new Set(standaloneRecords.map((e) => e.id));
-          const evidenceRecords = [
-            ...standaloneRecords,
-            ...rawEmbedded.filter((e) => !seenIds.has(e.id)),
-          ];
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 id="cases-heading" className="text-xl font-semibold tracking-tight text-foreground">
+              {disputeId ? 'Case' : 'Your cases'}
+            </h2>
+            {!disputeId && (
+              <p className="text-xs text-muted-foreground">
+                Track active claims, submit evidence, and review arbitration outcomes categorized by status.
+              </p>
+            )}
+          </div>
 
-          return (
-            <Card key={dispute.id}>
-              <CardHeader>
-                <div className="flex items-start justify-between gap-3"><div><CardTitle className="text-base">{contract?.project?.title || contract?.title || `Contract ${dispute.contractId.slice(0, 8)}`}</CardTitle><p className="mt-1 text-sm text-muted-foreground">Opened {formatDateTime(dispute.createdAt)}</p></div><StatusBadge status={dispute.status} domain="dispute" /></div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="rounded-lg bg-muted p-3 text-sm"><span className="font-medium">Reason:</span> {dispute.reason}</p>
-                <div className="flex flex-wrap gap-2">
-                  <Button asChild variant="outline" size="sm"><Link href={`/dashboard/${role}/contracts/${dispute.contractId}?disputeId=${dispute.id}`}>View contract</Link></Button>
-                  {!disputeId && <Button asChild variant="ghost" size="sm"><Link href={`/dashboard/${role}/disputes/${dispute.id}`}>View case</Link></Button>}
+          {!disputeId && disputes.length > 0 && (
+            <div className="relative w-full sm:w-72">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Filter by title, reason, or case #..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-9 pl-9 pr-8 text-xs"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label="Clear search"
+                >
+                  <X className="size-3.5" />
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {!disputeId && (
+          <Tabs value={selectedTab} onValueChange={(val) => setSelectedTab(val as typeof selectedTab)} className="w-full">
+            <TabsList className="bg-muted/70 p-1 rounded-xl">
+              <TabsTrigger value="all" className="gap-1.5 text-xs">
+                All Cases <Badge variant="secondary" className="px-1.5 py-0 text-[10px] h-4">{stats.total}</Badge>
+              </TabsTrigger>
+              <TabsTrigger value="open" className="gap-1.5 text-xs">
+                Open <Badge variant="secondary" className="px-1.5 py-0 text-[10px] h-4">{stats.open}</Badge>
+              </TabsTrigger>
+              <TabsTrigger value="under_review" className="gap-1.5 text-xs">
+                Under Review <Badge variant="secondary" className="px-1.5 py-0 text-[10px] h-4">{stats.underReview}</Badge>
+              </TabsTrigger>
+              <TabsTrigger value="resolved" className="gap-1.5 text-xs">
+                Resolved <Badge variant="secondary" className="px-1.5 py-0 text-[10px] h-4">{stats.resolved}</Badge>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        )}
+
+        {filteredDisputes.length === 0 ? (
+          <EmptyState
+            icon={Scale}
+            title={
+              searchQuery
+                ? "No matching disputes"
+                : selectedTab === 'open'
+                ? "No open disputes"
+                : selectedTab === 'under_review'
+                ? "No disputes under review"
+                : selectedTab === 'resolved'
+                ? "No resolved disputes"
+                : "No disputes"
+            }
+            description={
+              searchQuery
+                ? `No cases match "${searchQuery}". Try searching with a different term.`
+                : selectedTab === 'open'
+                ? "You have no active disputes requiring evidence or immediate response."
+                : selectedTab === 'under_review'
+                ? "No cases are currently undergoing arbitration review."
+                : selectedTab === 'resolved'
+                ? "Settled disputes and formal rulings will appear here once resolved."
+                : "Disputes appear here when either side raises an issue on a funded contract. Nothing needs your attention right now."
+            }
+          />
+        ) : (
+          filteredDisputes.map((dispute) => {
+            const contract = contractsById.get(dispute.contractId);
+            const milestone = contract?.milestones?.find((m) => m.id === dispute.milestoneId);
+            const milestoneTitle = milestone?.title;
+            const rawEmbedded: DisputeEvidence[] = (dispute.evidence || []).map((evidence) => ({
+              id: evidence.id,
+              disputeId: dispute.id,
+              submittedBy: evidence.submitterId,
+              evidenceType: evidence.type,
+              description: evidence.content,
+              fileUrl: evidence.type === 'text' ? undefined : evidence.content,
+              createdAt: evidence.submittedAt,
+              updatedAt: evidence.submittedAt,
+            }));
+            const standaloneRecords = evidenceByDispute[dispute.id] || [];
+            const seenIds = new Set(standaloneRecords.map((e) => e.id));
+            const evidenceRecords = [
+              ...standaloneRecords,
+              ...rawEmbedded.filter((e) => !seenIds.has(e.id)),
+            ];
+
+            return (
+              <Card key={dispute.id} className="overflow-hidden border-border bg-card shadow-sm transition-all hover:border-border/80">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-muted/30 px-5 py-3 text-xs">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <StatusBadge status={dispute.status} domain="dispute" />
+                    <span className="text-muted-foreground">•</span>
+                    <Badge variant="outline" className="font-medium text-xs border-border/80 bg-background/60">
+                      {dispute.status === 'open' && 'Category: Open / Action Required'}
+                      {dispute.status === 'under_review' && 'Category: In Arbitration Review'}
+                      {dispute.status === 'resolved' && 'Category: Resolved & Closed'}
+                    </Badge>
+                    {milestoneTitle && (
+                      <span className="text-xs text-muted-foreground hidden sm:inline">
+                        Milestone: <strong className="font-medium text-foreground">{milestoneTitle}</strong>
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground text-xs font-mono">
+                    <span>Ref: #{dispute.id.slice(0, 8)}</span>
+                    <span>•</span>
+                    <span className="font-sans">Opened {formatDateTime(dispute.createdAt)}</span>
+                  </div>
                 </div>
+
+                <CardHeader className="pb-3 pt-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="space-y-1">
+                      <CardTitle className="text-lg font-bold">
+                        <Link
+                          href={`/dashboard/${role}/contracts/${dispute.contractId}?disputeId=${dispute.id}`}
+                          className="hover:text-primary transition-colors hover:underline"
+                        >
+                          {contract?.project?.title || contract?.title || `Contract ${dispute.contractId.slice(0, 8)}`}
+                        </Link>
+                      </CardTitle>
+                      <p className="text-xs text-muted-foreground">
+                        Contract ref: <span className="font-mono">{dispute.contractId.slice(0, 8)}</span>
+                        {milestoneTitle && <span className="sm:hidden"> • Milestone: {milestoneTitle}</span>}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                      <Button asChild variant="outline" size="sm">
+                        <Link href={`/dashboard/${role}/contracts/${dispute.contractId}?disputeId=${dispute.id}`}>
+                          View contract
+                        </Link>
+                      </Button>
+                      {!disputeId && (
+                        <Button asChild variant="secondary" size="sm">
+                          <Link href={`/dashboard/${role}/disputes/${dispute.id}`}>
+                            View case
+                          </Link>
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="space-y-4 pt-0">
+                  <div className="rounded-lg border border-border/80 bg-muted/40 p-3.5 text-sm space-y-1.5">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      <FileQuestion className="size-3.5 text-primary shrink-0" />
+                      <span>Dispute Claim</span>
+                    </div>
+                    <p className="text-sm font-medium text-foreground pl-5 leading-relaxed">
+                      <span className="font-medium">Reason:</span> {dispute.reason}
+                    </p>
+                  </div>
 
                 {/* Evidence and Attachments Section */}
                 <div className="space-y-3 pt-3 border-t border-border" data-testid="dispute-evidence-section">
@@ -587,7 +859,15 @@ const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disput
                   )
                 )}
 
-                {dispute.status === 'resolved' && dispute.resolution && <div className="rounded-lg border border-success-border bg-success-subtle p-3 text-sm"><p className="font-medium">Resolution: {dispute.resolution.decision.replace('_', ' ')}</p><p className="mt-1 text-muted-foreground">{dispute.resolution.reasoning}</p></div>}
+                {dispute.status === 'resolved' && dispute.resolution && (
+                  <div className="rounded-lg border border-success-border bg-success-subtle p-3.5 text-sm space-y-1.5">
+                    <div className="flex items-center gap-2 font-semibold text-success">
+                      <CheckCircle className="size-4 shrink-0" />
+                      <p className="font-medium">Resolution: {dispute.resolution.decision.replace('_', ' ')}</p>
+                    </div>
+                    <p className="mt-1 text-sm text-foreground/80 pl-6 leading-relaxed">{dispute.resolution.reasoning}</p>
+                  </div>
+                )}
 
                 {/* Dispute Resolution Timeline */}
                 <div className="space-y-3 pt-3 border-t border-border" data-testid="dispute-timeline">
@@ -659,7 +939,7 @@ const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disput
               </CardContent>
             </Card>
           );
-        })}
+        }))}
       </section>
 
       <AttachmentPreviewDialog

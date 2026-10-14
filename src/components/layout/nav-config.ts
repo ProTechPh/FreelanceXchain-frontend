@@ -1,4 +1,4 @@
-import { Activity, AlertTriangle, BarChart3, Bell, BrainCircuit, ClipboardList, FileText, FolderOpen, Image, LayoutDashboard, LifeBuoy, MessageSquare, PlusCircle, Search, Shield, Sparkles, Star, Tags, Users, Wallet } from 'lucide-react';
+import { Activity, AlertTriangle, BarChart3, Bell, BrainCircuit, ClipboardList, FileText, FolderOpen, LayoutDashboard, LifeBuoy, MessageSquare, PlusCircle, Search, Shield, Sparkles, Star, Tags, Users, Wallet } from 'lucide-react';
 
 import { getDashboardMessageRoute } from '../../lib/dashboard-message-route.ts';
 import { isNavItemActive } from '../../lib/nav-active.ts';
@@ -57,7 +57,6 @@ const freelancerNav: NavSection[] = [
   {
     title: 'Profile',
     items: [
-      { label: 'Portfolio', href: '/dashboard/freelancer/portfolio', icon: Image },
       { label: 'Reputation', href: '/dashboard/freelancer/reputation', icon: Star },
       { label: 'Skill analysis', href: '/dashboard/freelancer/skill-analysis', icon: BrainCircuit, pro: true },
     ],

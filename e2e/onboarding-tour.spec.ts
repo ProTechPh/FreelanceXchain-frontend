@@ -354,7 +354,7 @@ test.describe('feature coverage', () => {
     }
 
     const transcript = seen.join(' ').toLowerCase();
-    for (const topic of ['recommended', 'proposal', 'escrow', 'milestone', 'earnings', 'transactions', 'messages', 'disputes', 'portfolio', 'reputation', 'verification', 'skill']) {
+    for (const topic of ['recommended', 'proposal', 'escrow', 'milestone', 'earnings', 'transactions', 'messages', 'disputes', 'reputation', 'verification', 'skill']) {
       expect(transcript, `the tour never mentions ${topic}`).toContain(topic);
     }
   });

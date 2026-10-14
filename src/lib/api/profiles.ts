@@ -4,9 +4,7 @@ import { normalizeFreelancerProfile } from '@/lib/freelancer-profile-contract';
 import type {
   FreelancerProfile,
   EmployerProfile,
-  PortfolioItem,
   SearchResult,
-  Attachment,
 } from '@/types';
 
 function normalizeFreelancerProfileResponse(
@@ -71,23 +69,4 @@ export const employersApi = {
 
   getPublicProfile: (id: string) =>
     api.get<EmployerProfile>(`/employers/${id}`),
-};
-
-export const portfolioApi = {
-  create: (data: FormData) =>
-    api.post<PortfolioItem>('/portfolio', data, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    }),
-
-  getByFreelancer: (freelancerId: string) =>
-    api.get<PortfolioItem[]>(`/portfolio/freelancer/${freelancerId}`),
-
-  get: (id: string) =>
-    api.get<PortfolioItem>(`/portfolio/${id}`),
-
-  update: (id: string, data: Partial<{ title: string; description: string; projectUrl: string; images: Attachment[]; skills: string[]; completedAt: string }>) =>
-    api.patch<PortfolioItem>(`/portfolio/${id}`, data),
-
-  delete: (id: string) =>
-    api.delete(`/portfolio/${id}`),
 };

@@ -15,7 +15,6 @@ export {
 export {
   freelancersApi,
   employersApi,
-  portfolioApi,
 } from './api/profiles';
 
 export {

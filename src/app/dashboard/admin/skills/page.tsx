@@ -1,21 +1,37 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { Plus, Tags, Trash2 } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Pencil, Plus, Tags, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { reportLoadFailure } from '@/lib/report-failure';
 import { skillsApi } from '@/lib/api';
 import { csrfTokenManager } from '@/lib/api-client';
 import { getApiErrorMessage } from '@/lib/auth-contract';
-import type { SkillSuggestion, SkillTaxonomy } from '@/types';
+import type { Skill, SkillSuggestion, SkillTaxonomy } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { Field } from '@/components/ui/field';
 import { AdminPermissionGate } from '@/components/admin/AdminPermissionGate';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 function extractApiFieldErrors(error: unknown): Record<string, string> {
   const result: Record<string, string> = {};
@@ -61,6 +77,22 @@ export default function AdminSkillsPage() {
 
   const [loading, setLoading] = useState(true);
   const [action, setAction] = useState<string | null>(null);
+
+  const [editingSkill, setEditingSkill] = useState<{
+    id: string;
+    name: string;
+    description: string;
+    categoryId: string;
+  } | null>(null);
+
+  const categoryItems = useMemo(
+    () =>
+      taxonomy.categories.reduce<Record<string, string>>((acc, cat) => {
+        acc[cat.id] = cat.name;
+        return acc;
+      }, {}),
+    [taxonomy.categories]
+  );
 
   const load = useCallback(async () => {
     const [{ data }, suggestionResponse] = await Promise.all([
@@ -204,8 +236,43 @@ export default function AdminSkillsPage() {
       await skillsApi.moderateSuggestion(id, status);
       setSuggestions((current) => current.filter((suggestion) => suggestion.id !== id));
       toast.success(`Suggestion ${status}.`);
-    } catch (error) { toast.error(getApiErrorMessage(error, 'Unable to update suggestion.')); }
-    finally { setAction(null); }
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Unable to update suggestion.'));
+    } finally {
+      setAction(null);
+    }
+  };
+
+  const startEditSkill = (skill: Skill, categoryId: string) => {
+    setEditingSkill({
+      id: skill.id,
+      name: skill.name,
+      description: skill.description,
+      categoryId,
+    });
+  };
+
+  const saveEditedSkill = async () => {
+    if (!editingSkill) return;
+    if (!editingSkill.name.trim()) {
+      toast.error('Skill name is required.');
+      return;
+    }
+    setAction('save-skill');
+    try {
+      await skillsApi.updateSkill(editingSkill.id, {
+        categoryId: editingSkill.categoryId,
+        name: editingSkill.name.trim(),
+        description: editingSkill.description.trim(),
+      });
+      await load();
+      toast.success('Skill updated successfully.');
+      setEditingSkill(null);
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Unable to update skill.'));
+    } finally {
+      setAction(null);
+    }
   };
 
   if (loading) return <ListSkeleton rows={6} label="Loading skills" />;
@@ -257,27 +324,33 @@ export default function AdminSkillsPage() {
 )}
 </Field><Button type="submit" loading={action === 'category'} loadingText="Creating category…"><Plus className="mr-2 size-4" />Create category</Button></form></CardContent></Card>
         <Card><CardHeader><CardTitle>New skill</CardTitle></CardHeader><CardContent><form className="space-y-3" onSubmit={createSkill}><Field label="Category" htmlFor="skill-category">
-<select
-  id="skill-category"
-  aria-label="Category"
-  name="categoryId"
-  className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+<Select
+  items={categoryItems}
   value={skillCategoryId}
-  onChange={(event) => {
-    setSkillCategoryId(event.target.value);
-    setSkillCategoryError(null);
+  onValueChange={(val) => {
+    if (val) {
+      setSkillCategoryId(val);
+      setSkillCategoryError(null);
+    }
   }}
 >
-  {taxonomy.categories.length === 0 ? (
-    <option value="">No categories available</option>
-  ) : (
-    taxonomy.categories.map((category) => (
-      <option key={category.id} value={category.id}>
-        {category.name}
-      </option>
-    ))
-  )}
-</select>
+  <SelectTrigger id="skill-category" className="w-full">
+    <SelectValue placeholder="Select a category">
+      {(val) => (val && categoryItems[val] ? categoryItems[val] : val)}
+    </SelectValue>
+  </SelectTrigger>
+  <SelectContent>
+    {taxonomy.categories.length === 0 ? (
+      <SelectItem value="none" disabled>No categories available</SelectItem>
+    ) : (
+      taxonomy.categories.map((category) => (
+        <SelectItem key={category.id} value={category.id}>
+          {category.name}
+        </SelectItem>
+      ))
+    )}
+  </SelectContent>
+</Select>
 {skillCategoryError && (
   <p className="text-xs text-destructive mt-1" role="alert">{skillCategoryError}</p>
 )}
@@ -319,8 +392,192 @@ export default function AdminSkillsPage() {
 )}
 </Field><Button type="submit" loading={action === 'skill'} loadingText="Creating skill…"><Plus className="mr-2 size-4" />Create skill</Button></form></CardContent></Card>
       </div>
-      <Card><CardHeader><CardTitle>Custom-skill suggestions</CardTitle><p className="text-sm text-muted-foreground">Review freelancer requests for additions to the global taxonomy.</p></CardHeader><CardContent>{suggestions.length === 0 ? <p className="text-sm text-muted-foreground">No pending suggestions.</p> : <ul className="space-y-3">{suggestions.map((suggestion) => <li key={suggestion.id} className="flex flex-col gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-start sm:justify-between"><div><p className="font-semibold">{suggestion.skillName}</p><p className="mt-1 text-sm text-muted-foreground">{suggestion.skillDescription}</p><p className="mt-2 text-xs text-muted-foreground">Suggested by {suggestion.suggestedBy} · {suggestion.timesRequested} request{suggestion.timesRequested === 1 ? '' : 's'}{suggestion.categoryName ? ` · ${suggestion.categoryName}` : ''}</p></div><div className="flex gap-2"><Button type="button" size="sm" disabled={action === suggestion.id} onClick={() => void moderateSuggestion(suggestion.id, 'approved')}>Approve</Button><Button type="button" size="sm" variant="outline" disabled={action === suggestion.id} onClick={() => void moderateSuggestion(suggestion.id, 'rejected')}>Reject</Button></div></li>)}</ul>}</CardContent></Card>
-      <div className="grid gap-5 md:grid-cols-2">{taxonomy.categories.map((category) => <Card key={category.id}><CardHeader><CardTitle>{category.name}</CardTitle><p className="text-sm text-muted-foreground">{category.description}</p></CardHeader><CardContent><ul className="space-y-2">{category.skills.map((skill) => <li key={skill.id} className="flex items-center justify-between gap-3 rounded-lg border border-border p-3"><div><p className="font-medium">{skill.name}</p><p className="text-sm text-muted-foreground">{skill.description}</p></div><div className="flex items-center gap-2"><Badge variant="secondary">{skill.isActive ? 'Active' : 'Deprecated'}</Badge>{skill.isActive && <Button type="button" size="icon" variant="ghost" className="size-9 sm:size-8 touch-manipulation" aria-label={`Deprecate ${skill.name}`} disabled={action === skill.id} onClick={() => void deprecate(skill.id)}><Trash2 className="size-4 text-destructive" /></Button>}</div></li>)}</ul></CardContent></Card>)}</div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Custom-skill suggestions</CardTitle>
+          <p className="text-sm text-muted-foreground">Review freelancer requests for additions to the global taxonomy.</p>
+        </CardHeader>
+        <CardContent>
+          {suggestions.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No pending suggestions.</p>
+          ) : (
+            <ul className="space-y-3">
+              {suggestions.map((suggestion) => (
+                <li
+                  key={suggestion.id}
+                  className="flex flex-col gap-3 rounded-lg border border-border p-4 sm:flex-row sm:items-start sm:justify-between"
+                >
+                  <div>
+                    <p className="font-semibold">{suggestion.skillName}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">{suggestion.skillDescription}</p>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Suggested by {suggestion.suggestedBy} · {suggestion.timesRequested} request{suggestion.timesRequested === 1 ? '' : 's'}
+                      {suggestion.categoryName ? ` · Suggested Category: ${suggestion.categoryName}` : ''}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={action === suggestion.id}
+                      onClick={() => void moderateSuggestion(suggestion.id, 'approved')}
+                    >
+                      Approve
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      disabled={action === suggestion.id}
+                      onClick={() => void moderateSuggestion(suggestion.id, 'rejected')}
+                    >
+                      Reject
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-5 md:grid-cols-2">
+        {taxonomy.categories.map((category) => (
+          <Card key={category.id}>
+            <CardHeader>
+              <CardTitle>{category.name}</CardTitle>
+              <p className="text-sm text-muted-foreground">{category.description}</p>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {category.skills.map((skill) => (
+                  <li
+                    key={skill.id}
+                    className="flex items-center justify-between gap-3 rounded-lg border border-border p-3"
+                  >
+                    <div>
+                      <p className="font-medium">{skill.name}</p>
+                      <p className="text-sm text-muted-foreground">{skill.description}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary">{skill.isActive ? 'Active' : 'Deprecated'}</Badge>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        className="size-9 sm:size-8 touch-manipulation"
+                        aria-label={`Edit ${skill.name}`}
+                        onClick={() => startEditSkill(skill, category.id)}
+                      >
+                        <Pencil className="size-4 text-muted-foreground hover:text-foreground" />
+                      </Button>
+                      {skill.isActive && (
+                        <Button
+                          type="button"
+                          size="icon"
+                          variant="ghost"
+                          className="size-9 sm:size-8 touch-manipulation"
+                          aria-label={`Deprecate ${skill.name}`}
+                          disabled={action === skill.id}
+                          onClick={() => void deprecate(skill.id)}
+                        >
+                          <Trash2 className="size-4 text-destructive" />
+                        </Button>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+
+      {/* Edit Skill Dialog */}
+      <Dialog
+        open={Boolean(editingSkill)}
+        onOpenChange={(open) => {
+          if (!open) setEditingSkill(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Skill</DialogTitle>
+            <DialogDescription>
+              Update skill name, description, or move it to a different category.
+            </DialogDescription>
+          </DialogHeader>
+
+          {editingSkill && (
+            <div className="space-y-3 py-2">
+              <div className="space-y-1">
+                <Label htmlFor="edit-skill-category" className="text-xs">Category</Label>
+                <Select
+                  items={categoryItems}
+                  value={editingSkill.categoryId}
+                  onValueChange={(val) => {
+                    if (val) setEditingSkill({ ...editingSkill, categoryId: val });
+                  }}
+                >
+                  <SelectTrigger id="edit-skill-category" className="w-full">
+                    <SelectValue placeholder="Select category">
+                      {(val) => (val && categoryItems[val] ? categoryItems[val] : val)}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {taxonomy.categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="edit-skill-name" className="text-xs">Skill Name</Label>
+                <Input
+                  id="edit-skill-name"
+                  value={editingSkill.name}
+                  onChange={(e) =>
+                    setEditingSkill({ ...editingSkill, name: e.target.value })
+                  }
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="edit-skill-desc" className="text-xs">Skill Description</Label>
+                <Textarea
+                  id="edit-skill-desc"
+                  rows={3}
+                  value={editingSkill.description}
+                  onChange={(e) =>
+                    setEditingSkill({ ...editingSkill, description: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setEditingSkill(null)}
+              disabled={action === 'save-skill'}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={() => void saveEditedSkill()}
+              loading={action === 'save-skill'}
+              loadingText="Saving…"
+            >
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
     </AdminPermissionGate>
   );
