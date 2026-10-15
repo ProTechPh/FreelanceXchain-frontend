@@ -18,7 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { setLastUsedOAuthProvider } from '@/lib/last-used-auth';
 
 export default function RegisterPage() {
-  const { register, logout, isLoading } = useAuthStore();
+  const { register, isLoading } = useAuthStore();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [oauthError, setOauthError] = useState<string | null>(null);
@@ -73,11 +73,6 @@ export default function RegisterPage() {
     setServerError(null);
     try {
       await register(data.email, data.password, data.role, turnstileToken || undefined);
-      try {
-        await logout();
-      } catch {
-        // Best effort session cleanup
-      }
       setRegisteredEmail(data.email);
     } catch (error) {
       turnstileRef.current?.reset();

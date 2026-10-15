@@ -113,14 +113,16 @@ export const useAuthStore = create<AuthState>()(
             throw new Error('The server returned an invalid registration response');
           }
 
-          setTokenStorage(data.accessToken);
-          beginKycReminderSession(data.user.id);
+          // Do NOT log the user in immediately upon email registration.
+          // The user must verify their email first and sign in manually at /login.
+          // This avoids redirect loops into protected dashboard routes.
+          clearTokenStorage();
           set({
-            user: normalizeAuthUser(data.user),
-            accessToken: data.accessToken,
-            isAuthenticated: true,
+            user: null,
+            accessToken: null,
+            isAuthenticated: false,
             isLoading: false,
-            sessionVerified: true,
+            sessionVerified: false,
           });
         } catch (error) {
           set({ isLoading: false });
