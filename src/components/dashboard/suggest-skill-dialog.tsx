@@ -130,7 +130,7 @@ export function SuggestSkillDialog({
             />
           </Field>
 
-          <DialogFooter className="gap-2 sm:gap-0 pt-2">
+          <DialogFooter className="pt-2">
             <Button
               type="button"
               variant="outline"
