@@ -13,10 +13,11 @@ import { safeAttachmentUrl } from '@/lib/attachment-presentation';
 import { AttachmentPreviewDialog } from '@/components/ui/attachment-preview-dialog';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { formatAmount, formatRelativeTime } from '@/lib/format';
-import type { Dispute, Contract, DisputeStatus } from '@/types';
+import type { Dispute, Contract, DisputeStatus, Evidence } from '@/types';
 import { toast } from 'sonner';
 import { reportFailure, reportLoadFailure } from '@/lib/report-failure';
-import { Scale, AlertTriangle, Clock, CheckCircle, FileText, DollarSign, Maximize2 } from 'lucide-react';
+import { Scale, AlertTriangle, Clock, CheckCircle, FileText, DollarSign, Maximize2, User, Paperclip } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { EmptyState } from '@/components/ui/empty-state';
 import {
@@ -40,6 +41,66 @@ function relativeTime(iso: string | null | undefined): string {
   if (!iso) return 'recently';
   return formatRelativeTime(iso);
 }
+
+interface PartyInfo {
+  name: string;
+  role: 'Freelancer' | 'Employer' | 'Participant';
+  isFreelancer: boolean;
+  isEmployer: boolean;
+}
+
+function getPartyInfo(userId: string | undefined | null, contract: Contract | null): PartyInfo {
+  if (!userId) {
+    return { name: 'Unknown User', role: 'Participant', isFreelancer: false, isEmployer: false };
+  }
+
+  const isFreelancer =
+    userId === contract?.freelancerId ||
+    userId === contract?.freelancer?.userId ||
+    userId === contract?.freelancer?.id;
+
+  const isEmployer =
+    userId === contract?.employerId ||
+    userId === contract?.employer?.userId ||
+    userId === contract?.employer?.id;
+
+  if (isFreelancer) {
+    return {
+      name: contract?.freelancer?.name || 'Freelancer',
+      role: 'Freelancer',
+      isFreelancer: true,
+      isEmployer: false,
+    };
+  }
+
+  if (isEmployer) {
+    return {
+      name: contract?.employer?.name || contract?.employer?.companyName || 'Employer',
+      role: 'Employer',
+      isFreelancer: false,
+      isEmployer: true,
+    };
+  }
+
+  return {
+    name: userId.length > 12 ? `${userId.slice(0, 8)}…` : userId,
+    role: 'Participant',
+    isFreelancer: false,
+    isEmployer: false,
+  };
+}
+
+type RawEvidenceItem = Partial<Evidence> & {
+  submitter_id?: string;
+  submitted_by?: string;
+  submittedBy?: string;
+  evidence_type?: 'text' | 'file' | 'link';
+  evidenceType?: 'text' | 'file' | 'link';
+  description?: string;
+  submitted_at?: string;
+  createdAt?: string;
+  created_at?: string;
+};
 
 interface DisputeView {
   dispute: Dispute;
@@ -82,8 +143,13 @@ export default function DisputesPage() {
         milestoneId: raw.milestoneId || raw.milestone_id || '',
         initiatorId: raw.initiatorId || raw.initiator_id || '',
         reason: raw.reason || '',
-        status: raw.status || 'open',
-        evidence: Array.isArray(raw.evidence) ? raw.evidence : [],
+        evidence: (Array.isArray(raw.evidence) ? (raw.evidence as RawEvidenceItem[]) : []).map((ev: RawEvidenceItem) => ({
+          id: ev.id || '',
+          submitterId: ev.submitterId || ev.submitter_id || ev.submitted_by || ev.submittedBy || '',
+          type: (ev.type || ev.evidence_type || ev.evidenceType || 'text') as 'text' | 'file' | 'link',
+          content: ev.content || ev.description || '',
+          submittedAt: ev.submittedAt || ev.submitted_at || ev.createdAt || ev.created_at || new Date().toISOString(),
+        })),
         resolution: raw.resolution ?? null,
         createdAt: raw.createdAt || raw.created_at || new Date().toISOString(),
         updatedAt: raw.updatedAt || raw.updated_at || new Date().toISOString(),
@@ -290,60 +356,137 @@ export default function DisputesPage() {
                 description="Disputes land here when a participant escalates a funded contract."
               />
             )}
-            {byStatus(status).map(({ dispute, contract }) => (
+            {byStatus(status).map(({ dispute, contract }) => {
+              const initiatorInfo = getPartyInfo(dispute.initiatorId, contract);
+              return (
               <Card key={dispute.id} className="bg-card border-border">
                 <CardContent className="p-5">
                   <div className="flex items-start justify-between mb-4">
-                    <div>
+                    <div className="space-y-1.5">
                       <h3 className="font-semibold text-lg">{contract?.project?.title ?? 'Unknown project'}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {contract?.freelancer?.name ?? 'Freelancer'} vs {contract?.employer?.name ?? 'Employer'}
-                      </p>
+                      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                        <span>
+                          <strong className="text-foreground">{contract?.freelancer?.name ?? 'Freelancer'}</strong> (Freelancer)
+                          {' vs '}
+                          <strong className="text-foreground">{contract?.employer?.name ?? 'Employer'}</strong> (Employer)
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                        <span className="text-xs text-muted-foreground font-medium">Dispute Initiator:</span>
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            "text-xs font-medium px-2 py-0.5 border flex items-center gap-1",
+                            initiatorInfo.isFreelancer
+                              ? "border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-300"
+                              : initiatorInfo.isEmployer
+                              ? "border-purple-500/30 bg-purple-500/10 text-purple-700 dark:text-purple-300"
+                              : "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                          )}
+                        >
+                          <User className="w-3 h-3" />
+                          <span>Filed by <strong>{initiatorInfo.name}</strong> ({initiatorInfo.role})</span>
+                        </Badge>
+                      </div>
                     </div>
                     <Badge className={statusColors[dispute.status]}>{dispute.status.replace('_', ' ')}</Badge>
                   </div>
 
-                  <div className="p-3 rounded-lg bg-secondary/50 border border-border mb-4">
-                    <p className="text-sm">
-                      <span className="font-medium">Reason: </span>
+                  <div className="p-3.5 rounded-lg bg-secondary/50 border border-border mb-4 space-y-1.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                      <span className="font-semibold text-foreground flex items-center gap-1.5">
+                        <Scale className="w-3.5 h-3.5 text-primary" />
+                        Dispute Reason / Claim
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        Initiated by <strong className="text-foreground">{initiatorInfo.name}</strong> ({initiatorInfo.role})
+                      </span>
+                    </div>
+                    <p className="text-sm text-foreground/90 pl-5 leading-relaxed">
                       {dispute.reason}
                     </p>
                   </div>
 
                   {(dispute.evidence || []).length > 0 && (
-                    <div className="space-y-2 mb-4">
+                    <div className="space-y-2.5 mb-4">
+                      <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                        <span className="flex items-center gap-1.5">
+                          <Paperclip className="w-3.5 h-3.5" />
+                          Submitted Evidence ({(dispute.evidence || []).length})
+                        </span>
+                      </div>
                       {(dispute.evidence || []).map((ev) => {
                         const evidenceUrl = safeAttachmentUrl(ev.content);
                         const verified = verifiedEvidenceIds.has(ev.id);
+                        const submitterInfo = getPartyInfo(ev.submitterId, contract);
                         return (
-                        <div key={ev.id} className="flex items-start gap-2 rounded-lg border border-border p-3 text-sm text-muted-foreground">
-                          <FileText className="w-3 h-3 mt-0.5 shrink-0" />
-                          {ev.type === 'text' ? (
-                            <span className="min-w-0 flex-1 break-words">{ev.content}</span>
-                          ) : evidenceUrl ? (
-                            <div className="min-w-0 flex-1 flex flex-wrap items-center gap-2">
-                              <button
-                                type="button"
-                                onClick={() => setViewingEvidence({ id: ev.id, url: evidenceUrl, type: ev.type, name: ev.type === 'file' ? 'Evidence Attachment' : ev.content })}
-                                className="underline font-medium hover:text-foreground text-left cursor-pointer"
-                                aria-label="View evidence file"
+                        <div key={ev.id} className="flex flex-col gap-2 rounded-lg border border-border p-3 text-sm bg-muted/20">
+                          <div className="flex flex-wrap items-center justify-between gap-2 text-xs pb-1.5 border-b border-border/50">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-muted-foreground">Uploaded by:</span>
+                              <Badge
+                                variant="outline"
+                                className={cn(
+                                  "text-2xs font-medium px-1.5 py-0",
+                                  submitterInfo.isFreelancer
+                                    ? "border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-300"
+                                    : submitterInfo.isEmployer
+                                    ? "border-purple-500/30 bg-purple-500/10 text-purple-700 dark:text-purple-300"
+                                    : "border-border bg-secondary"
+                                )}
                               >
-                                {ev.type === 'file' ? 'View file' : ev.content}
-                              </button>
+                                {submitterInfo.name} ({submitterInfo.role})
+                              </Badge>
+                            </div>
+                            {ev.submittedAt && (
+                              <span className="text-2xs text-muted-foreground font-sans">
+                                {relativeTime(ev.submittedAt)}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-start gap-2 text-muted-foreground">
+                            <FileText className="w-4 h-4 mt-0.5 shrink-0 text-foreground/70" />
+                            {ev.type === 'text' ? (
+                              <span className="min-w-0 flex-1 break-words text-foreground/90">{ev.content}</span>
+                            ) : evidenceUrl ? (
+                              <div className="min-w-0 flex-1 flex flex-wrap items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setViewingEvidence({ id: ev.id, url: evidenceUrl, type: ev.type, name: ev.type === 'file' ? 'Evidence Attachment' : ev.content })}
+                                  className="underline font-medium hover:text-foreground text-left cursor-pointer"
+                                  aria-label="View evidence file"
+                                >
+                                  {ev.type === 'file' ? 'View file' : ev.content}
+                                </button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 px-2 text-xs text-primary gap-1"
+                                  onClick={() => setViewingEvidence({ id: ev.id, url: evidenceUrl, type: ev.type, name: ev.type === 'file' ? 'Evidence Attachment' : ev.content })}
+                                  aria-label="Open evidence attachment viewer"
+                                >
+                                  <Maximize2 className="w-3 h-3" />
+                                  View attachment
+                                </Button>
+                              </div>
+                            ) : <span className="min-w-0 flex-1">Attachment unavailable</span>}
+                            {verified ? (
+                              <Badge variant="secondary" className="shrink-0 text-xs">Verified</Badge>
+                            ) : (
                               <Button
                                 type="button"
-                                variant="ghost"
                                 size="sm"
-                                className="h-6 px-2 text-xs text-primary gap-1"
-                                onClick={() => setViewingEvidence({ id: ev.id, url: evidenceUrl, type: ev.type, name: ev.type === 'file' ? 'Evidence Attachment' : ev.content })}
-                                aria-label="Open evidence attachment viewer"
+                                variant="outline"
+                                className="shrink-0 h-7 text-xs"
+                                disabled={verifyingEvidenceId === ev.id}
+                                onClick={() => void handleVerifyEvidence(dispute.id, ev.id)}
                               >
-                                <Maximize2 className="w-3 h-3" />
-                                View attachment
+                                {verifyingEvidenceId === ev.id ? 'Verifying…' : 'Verify evidence'}
                               </Button>
-                            </div>
-                          ) : <span className="min-w-0 flex-1">Attachment unavailable</span>}
-                          {verified ? <Badge variant="secondary">Verified</Badge> : <Button type="button" size="sm" variant="outline" disabled={verifyingEvidenceId === ev.id} onClick={() => void handleVerifyEvidence(dispute.id, ev.id)}>{verifyingEvidenceId === ev.id ? 'Verifying…' : 'Verify evidence'}</Button>}
+                            )}
+                          </div>
                         </div>
                         );
                       })}
@@ -450,7 +593,7 @@ export default function DisputesPage() {
                   )}
                 </CardContent>
               </Card>
-            ))}
+            )})}
           </TabsContent>
         ))}
       </Tabs>

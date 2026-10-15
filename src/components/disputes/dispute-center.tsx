@@ -21,8 +21,10 @@ import {
   ShieldCheck,
   Trash2,
   Upload,
+  User,
   X,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { reportFailure, reportLoadFailure } from '@/lib/report-failure';
 import { contractsApi, disputesApi, milestonesApi } from '@/lib/api';
@@ -65,6 +67,50 @@ const emptyDraft: DisputeDraft = { contractId: '', milestoneId: '', reason: '' }
 
 const isApiOrUrl = (val?: string | null) =>
   Boolean(val && (val.startsWith('http://') || val.startsWith('https://') || val.startsWith('/api/') || val.includes('/files/access/')));
+
+function getPartyInfo(
+  userId: string | undefined | null,
+  contract: Contract | null | undefined
+): { name: string; role: 'Freelancer' | 'Employer' | 'Participant'; isFreelancer: boolean; isEmployer: boolean } {
+  if (!userId) {
+    return { name: 'Unknown User', role: 'Participant', isFreelancer: false, isEmployer: false };
+  }
+
+  const isFreelancer =
+    userId === contract?.freelancerId ||
+    userId === contract?.freelancer?.userId ||
+    userId === contract?.freelancer?.id;
+
+  const isEmployer =
+    userId === contract?.employerId ||
+    userId === contract?.employer?.userId ||
+    userId === contract?.employer?.id;
+
+  if (isFreelancer) {
+    return {
+      name: contract?.freelancer?.name || 'Freelancer',
+      role: 'Freelancer',
+      isFreelancer: true,
+      isEmployer: false,
+    };
+  }
+
+  if (isEmployer) {
+    return {
+      name: contract?.employer?.name || contract?.employer?.companyName || 'Employer',
+      role: 'Employer',
+      isFreelancer: false,
+      isEmployer: true,
+    };
+  }
+
+  return {
+    name: userId.length > 12 ? `${userId.slice(0, 8)}…` : userId,
+    role: 'Participant',
+    isFreelancer: false,
+    isEmployer: false,
+  };
+}
 
 
 const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disputeId }: { role: ParticipantRole; disputeId?: string }) {
@@ -624,6 +670,8 @@ const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disput
               ...rawEmbedded.filter((e) => !seenIds.has(e.id)),
             ];
 
+            const initiatorInfo = getPartyInfo(dispute.initiatorId, contract);
+
             return (
               <Card key={dispute.id} className="overflow-hidden border-border bg-card shadow-sm transition-all hover:border-border/80">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-muted/30 px-5 py-3 text-xs">
@@ -684,9 +732,25 @@ const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disput
 
                 <CardContent className="space-y-4 pt-0">
                   <div className="rounded-lg border border-border/80 bg-muted/40 p-3.5 text-sm space-y-1.5">
-                    <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      <FileQuestion className="size-3.5 text-primary shrink-0" />
-                      <span>Dispute Claim</span>
+                    <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                      <div className="flex items-center gap-1.5 font-semibold uppercase tracking-wider text-muted-foreground">
+                        <FileQuestion className="size-3.5 text-primary shrink-0" />
+                        <span>Dispute Claim</span>
+                      </div>
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "text-2xs font-medium px-1.5 py-0",
+                          initiatorInfo.isFreelancer
+                            ? "border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-300"
+                            : initiatorInfo.isEmployer
+                            ? "border-purple-500/30 bg-purple-500/10 text-purple-700 dark:text-purple-300"
+                            : "border-border bg-secondary"
+                        )}
+                      >
+                        <User className="w-2.5 h-2.5 mr-1" />
+                        Disputed by {initiatorInfo.name} ({initiatorInfo.role})
+                      </Badge>
                     </div>
                     <p className="text-sm font-medium text-foreground pl-5 leading-relaxed">
                       <span className="font-medium">Reason:</span> {dispute.reason}
@@ -718,6 +782,7 @@ const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disput
                         const safeUrl = safeAttachmentUrl(rawTarget);
                         const directUrl = safeUrl || (rawTarget && (rawTarget.startsWith('http://') || rawTarget.startsWith('https://') || rawTarget.startsWith('/')) ? rawTarget : null);
                         const textOnly = evidence.evidenceType === 'text' || evidence.evidenceType === 'message';
+                        const submitterInfo = getPartyInfo(evidence.submittedBy, contract);
 
                         // Derive readable file/attachment name
                         const cleanDescription = (!isApiOrUrl(evidence.description) && evidence.description?.trim()) ? evidence.description : null;
@@ -727,10 +792,28 @@ const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disput
                         return (
                           <li key={evidence.id} className="flex items-start gap-3 rounded-lg border border-border p-3 text-sm">
                             <FileText className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-                            <div className="min-w-0 flex-1">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <span className="font-medium capitalize">{evidence.evidenceType} evidence</span>
-                                <Badge variant="secondary">{evidence.verifiedBy ? 'Verified' : 'Unverified'}</Badge>
+                            <div className="min-w-0 flex-1 space-y-1">
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <span className="font-medium capitalize">{evidence.evidenceType} evidence</span>
+                                  <Badge variant="secondary">{evidence.verifiedBy ? 'Verified' : 'Unverified'}</Badge>
+                                </div>
+                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                  <span>Uploaded by:</span>
+                                  <Badge
+                                    variant="outline"
+                                    className={cn(
+                                      "text-2xs font-normal",
+                                      submitterInfo.isFreelancer
+                                        ? "border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-300"
+                                        : submitterInfo.isEmployer
+                                        ? "border-purple-500/30 bg-purple-500/10 text-purple-700 dark:text-purple-300"
+                                        : "border-border bg-secondary"
+                                    )}
+                                  >
+                                    {submitterInfo.name} ({submitterInfo.role})
+                                  </Badge>
+                                </div>
                               </div>
                               {textOnly ? (
                                 <p className="mt-1 break-words text-muted-foreground">{evidence.description}</p>
