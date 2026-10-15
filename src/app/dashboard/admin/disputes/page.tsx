@@ -13,7 +13,7 @@ import { safeAttachmentUrl } from '@/lib/attachment-presentation';
 import { AttachmentPreviewDialog } from '@/components/ui/attachment-preview-dialog';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { formatAmount, formatRelativeTime } from '@/lib/format';
-import type { Dispute, Contract, DisputeStatus } from '@/types';
+import type { Dispute, Contract, DisputeStatus, Evidence } from '@/types';
 import { toast } from 'sonner';
 import { reportFailure, reportLoadFailure } from '@/lib/report-failure';
 import { Scale, AlertTriangle, Clock, CheckCircle, FileText, DollarSign, Maximize2, User, Paperclip } from 'lucide-react';
@@ -90,6 +90,18 @@ function getPartyInfo(userId: string | undefined | null, contract: Contract | nu
   };
 }
 
+type RawEvidenceItem = Partial<Evidence> & {
+  submitter_id?: string;
+  submitted_by?: string;
+  submittedBy?: string;
+  evidence_type?: 'text' | 'file' | 'link';
+  evidenceType?: 'text' | 'file' | 'link';
+  description?: string;
+  submitted_at?: string;
+  createdAt?: string;
+  created_at?: string;
+};
+
 interface DisputeView {
   dispute: Dispute;
   contract: Contract | null;
@@ -131,10 +143,10 @@ export default function DisputesPage() {
         milestoneId: raw.milestoneId || raw.milestone_id || '',
         initiatorId: raw.initiatorId || raw.initiator_id || '',
         reason: raw.reason || '',
-        evidence: (Array.isArray(raw.evidence) ? raw.evidence : []).map((ev: any) => ({
+        evidence: (Array.isArray(raw.evidence) ? (raw.evidence as RawEvidenceItem[]) : []).map((ev: RawEvidenceItem) => ({
           id: ev.id || '',
           submitterId: ev.submitterId || ev.submitter_id || ev.submitted_by || ev.submittedBy || '',
-          type: ev.type || ev.evidence_type || ev.evidenceType || 'text',
+          type: (ev.type || ev.evidence_type || ev.evidenceType || 'text') as 'text' | 'file' | 'link',
           content: ev.content || ev.description || '',
           submittedAt: ev.submittedAt || ev.submitted_at || ev.createdAt || ev.created_at || new Date().toISOString(),
         })),
