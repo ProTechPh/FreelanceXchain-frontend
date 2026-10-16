@@ -53,7 +53,7 @@ function VerifyKycForm({
       </DialogHeader>
       <div className="space-y-2 py-2">
         <div className="flex items-center justify-between">
-          <Label htmlFor="verify-reason">Verification reason</Label>
+          <Label htmlFor="verify-reason">Audit reason</Label>
           <span className={`text-xs ${isValid ? 'text-success' : 'text-muted-foreground'}`}>
             {verifyReason.trim().length}/10 characters min
           </span>
