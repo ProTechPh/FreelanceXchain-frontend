@@ -175,6 +175,8 @@ export interface WorkExperience {
   description: string;
   startDate: string;
   endDate: string | null;
+  /** Technical and soft skills used in this role; they feed the profile's skills. */
+  skills: string[];
 }
 
 export interface FreelancerProfile {
@@ -260,6 +262,8 @@ export interface SkillSuggestion {
 export interface SkillReference {
   name: string;
   yearsOfExperience: number;
+  /** True when the freelancer picked the skill directly, not only through work history. */
+  addedManually: boolean;
 }
 
 // A skill required by a project (Project.requiredSkills)

@@ -28,6 +28,7 @@ import { toast } from 'sonner';
 import { reportFailure } from '@/lib/report-failure';
 import { ChevronRight, ChevronLeft, Plus, X, Upload, FileText, Coins, Clock, Target, Sparkles, AlertCircle } from 'lucide-react';
 import { ProjectSkillSelector, type ProjectSkillCategory } from '@/components/dashboard/project-skill-selector';
+import { toSkillCategories } from '@/lib/skill-taxonomy';
 import { DOCUMENT_ACCEPT_STRING } from '@/lib/file-validation';
 import { Field } from '@/components/ui/field';
 import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes';
@@ -71,18 +72,7 @@ export default function CreateProjectPage() {
       try {
         const { data } = await skillsApi.getTaxonomy();
         if (active) {
-          setSkillCategories(
-            (data.categories ?? [])
-              .filter((category) => category.isActive !== false)
-              .map((category) => ({
-                id: category.id,
-                name: category.name,
-                skills: (category.skills ?? [])
-                  .filter((skill) => skill.isActive !== false)
-                  .map((skill) => ({ id: skill.id, name: skill.name })),
-              }))
-              .filter((category) => category.skills.length > 0),
-          );
+          setSkillCategories(toSkillCategories(data.categories));
         }
       } catch (error) {
         if (active) {

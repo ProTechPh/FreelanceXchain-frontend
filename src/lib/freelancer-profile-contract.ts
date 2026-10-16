@@ -21,6 +21,12 @@ function skillYears(skill: Record<string, unknown>): number {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : 0;
 }
 
+// Skills saved before work history fed the skill list were all picked by hand.
+function skillAddedManually(skill: Record<string, unknown>): boolean {
+  const value = skill.addedManually ?? skill.added_manually;
+  return typeof value === 'boolean' ? value : true;
+}
+
 /**
  * Keep components on the current camelCase profile contract while tolerating
  * legacy skill objects that can still exist in persisted profile documents.
@@ -31,8 +37,15 @@ export function normalizeFreelancerSkills(value: unknown): SkillReference[] {
   return value.flatMap((candidate) => {
     if (!isRecord(candidate)) return [];
     const name = skillName(candidate);
-    return name ? [{ name, yearsOfExperience: skillYears(candidate) }] : [];
+    return name
+      ? [{ name, yearsOfExperience: skillYears(candidate), addedManually: skillAddedManually(candidate) }]
+      : [];
   });
+}
+
+function experienceSkills(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => (typeof item === 'string' && item.trim() ? [item.trim()] : []));
 }
 
 function stringValue(value: unknown): string {
@@ -88,6 +101,7 @@ export function normalizeFreelancerExperience(value: unknown): WorkExperience[] 
       description: stringValue(candidate.description),
       startDate: stringValue(candidate.startDate ?? candidate.start_date),
       endDate: nullableStringValue(candidate.endDate, candidate.end_date),
+      skills: experienceSkills(candidate.skills),
     }];
   });
 }
