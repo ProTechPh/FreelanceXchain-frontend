@@ -7,7 +7,7 @@ import { getApiErrorMessage } from '@/lib/auth-contract';
 import { formatFileSize } from '@/lib/attachment-presentation';
 import { formatDate } from '@/lib/format';
 import { BUSINESS_DOCUMENT_LABELS, getBusinessTypeLabel, getRegistrationNumberLabel } from '@/lib/profile-form';
-import type { AdminUser, BusinessDocument, BusinessProfileCompleteness, EmployerProfile } from '@/types';
+import type { BusinessDocument, BusinessProfileCompleteness, EmployerProfile } from '@/types';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -30,7 +30,8 @@ export function EmployerBusinessDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  user: AdminUser | null;
+  /** The employer to show; the Users page and the Business documents page both pass one. */
+  user: { id: string; name?: string | null; email?: string | null } | null;
 }) {
   // Keyed by user id so a result is never shown for a different employer.
   const [result, setResult] = useState<{ userId: string; data?: BusinessProfileResponse; error?: string } | null>(null);

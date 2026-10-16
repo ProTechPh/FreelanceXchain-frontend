@@ -109,6 +109,7 @@ const adminNav: NavSection[] = [
     items: [
       { label: 'Users', href: '/dashboard/admin/users', icon: Users, permission: 'users:view' },
       { label: 'KYC review', href: '/dashboard/admin/kyc', icon: Shield, permission: 'kyc:view' },
+      { label: 'Business documents', href: '/dashboard/admin/business-documents', icon: FileText, permission: 'users:view' },
       { label: 'Disputes', href: '/dashboard/admin/disputes', icon: AlertTriangle, permission: 'disputes:view' },
       { label: 'Skills', href: '/dashboard/admin/skills', icon: Tags, permission: 'skills:manage' },
       { label: 'Support tickets', href: '/dashboard/admin/support-tickets', icon: LifeBuoy, permission: 'support:manage' },
