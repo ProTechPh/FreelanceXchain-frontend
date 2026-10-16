@@ -4,6 +4,8 @@ import test from 'node:test';
 import {
   employerFormFromProfile,
   getFirstIncompleteTab,
+  getEmployerStepErrors,
+  getFirstStepWithErrors,
   getNextEmployerTab,
   getPreviousEmployerTab,
   EMPLOYER_PROFILE_TAB_LABELS,
@@ -115,4 +117,20 @@ test('steps through the employer setup in tab order', () => {
   assert.equal(getPreviousEmployerTab('business'), 'company');
   assert.equal(getPreviousEmployerTab('documents'), 'business');
   assert.equal(EMPLOYER_PROFILE_TAB_LABELS.business, 'Business details');
+});
+
+test('checks each setup step on its own', () => {
+  const blank = { ...validEmployer, companyName: '', tin: '', businessEmail: 'nope' };
+  assert.deepEqual(Object.keys(getEmployerStepErrors(blank, 'company')), ['companyName']);
+  assert.deepEqual(Object.keys(getEmployerStepErrors(blank, 'business')), ['tin', 'businessEmail']);
+  assert.deepEqual(getEmployerStepErrors(blank, 'documents'), {});
+  assert.deepEqual(getEmployerStepErrors(validEmployer, 'company'), {});
+  // The optional website is only checked when filled in.
+  assert.deepEqual(Object.keys(getEmployerStepErrors({ ...validEmployer, website: 'acme.ph' }, 'company')), ['website']);
+});
+
+test('finds the first step that still has problems', () => {
+  assert.equal(getFirstStepWithErrors({ tin: 'x' }), 'business');
+  assert.equal(getFirstStepWithErrors({ tin: 'x', industry: 'y' }), 'company');
+  assert.equal(getFirstStepWithErrors({}), null);
 });
