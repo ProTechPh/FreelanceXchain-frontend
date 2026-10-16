@@ -822,23 +822,27 @@ function VerificationCard({
                     ) : (
                       <Clock className="size-4 shrink-0" aria-hidden="true" />
                     )}
-                    <span className="font-medium">
-                      {v.status === 'approved'
-                        ? 'This verification has been approved and finalized. No further review actions required.'
-                        : v.status === 'rejected'
-                        ? 'This verification has been rejected and finalized.'
-                        : 'This verification has expired.'}
-                    </span>
+                    <div>
+                      <span className="font-semibold">Status: {statusLabels[v.status] || v.status}</span>
+                      <span className="font-medium">
+                        {' — '}
+                        {v.status === 'approved'
+                          ? 'This verification has been approved and finalized. No further review actions required.'
+                          : v.status === 'rejected'
+                          ? 'This verification has been rejected and finalized.'
+                          : 'This verification has expired.'}
+                      </span>
+                    </div>
                   </div>
                 </div>
               )}
 
               {/* Previous Review Info */}
-              {v.reviewed_by && (
+              {(v.reviewed_by || v.admin_notes) && (
                 <div className="pt-3 border-t border-border">
                   <h4 className="text-sm font-medium text-muted-foreground mb-2">Review History</h4>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    <DetailCell label="Reviewed By" value={v.reviewed_by} />
+                    <DetailCell label="Reviewed By" value={v.reviewed_by || 'Admin'} />
                     <DetailCell label="Reviewed At" value={v.reviewed_at ? formatDateTime(v.reviewed_at) : (v.updated_at ? formatDateTime(v.updated_at) : 'N/A')} />
                     <DetailCell label="Notes" value={v.admin_notes || 'N/A'} />
                   </div>
