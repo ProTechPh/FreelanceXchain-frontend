@@ -16,6 +16,7 @@ export type ExperienceForm = {
   description: string;
   startDate: string;
   endDate: string | null;
+  skills: string[];
 };
 
 export function validateFreelancerProfile(form: FreelancerProfileForm): string | null {
@@ -32,10 +33,30 @@ export function validateEmployerProfile(form: EmployerProfileForm): string | nul
 }
 
 export function validateExperience(form: ExperienceForm): string | null {
-  if (form.title.trim().length < 2) return 'Job title must be at least 2 characters.';
+  if (form.title.trim().length < 2) return 'Job position must be at least 2 characters.';
   if (form.company.trim().length < 2) return 'Company must be at least 2 characters.';
-  if (form.description.trim().length < 10) return 'Experience description must be at least 10 characters.';
+  if (form.description.trim().length < 10) return 'Work history description must be at least 10 characters.';
   if (!form.startDate) return 'Start date is required.';
   if (form.endDate && form.endDate < form.startDate) return 'End date cannot be before start date.';
   return null;
+}
+
+function experienceKeyPart(value: string | null | undefined): string {
+  return (value ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+/** An existing entry with the same position, company and dates, other than the one being edited. */
+export function findDuplicateExperience<T extends { id: string; title: string; company: string; startDate: string; endDate: string | null }>(
+  form: ExperienceForm,
+  entries: T[],
+  editingId: string | null,
+): T | undefined {
+  return entries.find(
+    (entry) =>
+      entry.id !== editingId &&
+      experienceKeyPart(entry.title) === experienceKeyPart(form.title) &&
+      experienceKeyPart(entry.company) === experienceKeyPart(form.company) &&
+      experienceKeyPart(entry.startDate).slice(0, 10) === experienceKeyPart(form.startDate).slice(0, 10) &&
+      experienceKeyPart(entry.endDate).slice(0, 10) === experienceKeyPart(form.endDate).slice(0, 10),
+  );
 }

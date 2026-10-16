@@ -35,7 +35,7 @@ export const freelancersApi = {
   updateProfile: (data: Partial<Pick<FreelancerProfile, 'bio' | 'hourlyRate' | 'availability'>>) =>
     api.patch<FreelancerProfile>('/freelancers/profile', data).then(normalizeFreelancerProfileResponse),
 
-  addSkills: (skills: FreelancerProfile['skills']) =>
+  addSkills: (skills: Array<Pick<FreelancerProfile['skills'][number], 'name' | 'yearsOfExperience'>>) =>
     api.post<FreelancerProfile>('/freelancers/profile/skills', { skills }).then(normalizeFreelancerProfileResponse),
 
   removeSkill: (name: string) =>
