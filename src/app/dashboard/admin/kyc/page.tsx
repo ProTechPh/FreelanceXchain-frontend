@@ -232,7 +232,10 @@ export default function KycReviewPage() {
                 expanded={expandedId === v.id}
                 onToggle={() => setExpandedId(expandedId === v.id ? null : v.id)}
                 onReview={handleReview}
-                onManualVerify={(user) => { setUserToVerify(user); setVerifyReason(''); }}
+                onManualVerify={(user, initialReason) => {
+                  setUserToVerify(user);
+                  setVerifyReason(initialReason || reviewNotes || '');
+                }}
                 reviewing={reviewing === v.id}
                 reviewNotes={reviewNotes}
                 setReviewNotes={setReviewNotes}
@@ -259,7 +262,7 @@ export default function KycReviewPage() {
             <div className="space-y-4 py-2">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="manual-verify-reason">Verification reason</Label>
+                  <Label htmlFor="manual-verify-reason">Audit reason</Label>
                   <span className={`text-xs ${verifyReason.trim().length >= 10 ? 'text-success' : 'text-muted-foreground'}`}>
                     {verifyReason.trim().length}/10 characters min
                   </span>
@@ -268,7 +271,7 @@ export default function KycReviewPage() {
                   id="manual-verify-reason"
                   name="reason"
                   rows={3}
-                  placeholder="Enter compliance / audit rationale for manually verifying this user (min 10 characters)..."
+                  placeholder="Provide a clear, auditable reason for manually verifying this user (minimum 10 characters)..."
                   value={verifyReason}
                   onChange={(e) => setVerifyReason(e.target.value)}
                 />
@@ -355,7 +358,7 @@ function VerificationCard({
   expanded: boolean;
   onToggle: () => void;
   onReview: (id: string, decision: 'approved' | 'rejected') => void;
-  onManualVerify: (user: { id: string; name: string }) => void;
+  onManualVerify: (user: { id: string; name: string }, reason?: string) => void;
   reviewing: boolean;
   reviewNotes: string;
   setReviewNotes: (n: string) => void;
@@ -441,6 +444,7 @@ function VerificationCard({
   const deviceModel = (ipReport?.['device_model'] as string) || null;
   const browserFamily = (ipReport?.['browser_family'] as string) || null;
   const osFamily = (ipReport?.['os_family'] as string) || null;
+  const isPendingReview = v.status !== 'approved' && v.status !== 'rejected' && v.status !== 'expired';
 
   return (
     <>
@@ -486,7 +490,7 @@ function VerificationCard({
                 variant="outline"
                 size="sm"
                 className="text-primary border-primary/30 hover:bg-primary/5"
-                onClick={() => onManualVerify({ id: v.user_id, name: fullName })}
+                onClick={() => onManualVerify({ id: v.user_id, name: fullName }, reviewNotes)}
                 aria-label={`Manually verify KYC for ${fullName}`}
                 title="Manually verify KYC"
               >
@@ -708,7 +712,7 @@ function VerificationCard({
               )}
 
               {/* Admin Review / Manual Decision */}
-              {canManageKyc && (
+              {canManageKyc && isPendingReview && (
                 <div className="pt-3 border-t border-border space-y-3">
                   <div className="flex items-center justify-between">
                     <h4 className="text-sm font-semibold text-foreground">Manual KYC Decision</h4>
@@ -769,7 +773,7 @@ function VerificationCard({
                         if (v.status === 'completed') {
                           setConfirmDecision('approved');
                         } else {
-                          onManualVerify({ id: v.user_id, name: fullName });
+                          onManualVerify({ id: v.user_id, name: fullName }, reviewNotes);
                         }
                       }}
                     >
@@ -799,13 +803,43 @@ function VerificationCard({
                 </div>
               )}
 
+              {/* Finalized Status Info */}
+              {!isPendingReview && (
+                <div className="pt-3 border-t border-border">
+                  <div
+                    className={`flex items-center gap-2.5 p-3 rounded-lg border text-sm ${
+                      v.status === 'approved'
+                        ? 'bg-success-subtle border-success/30 text-success'
+                        : v.status === 'rejected'
+                        ? 'bg-destructive-subtle border-destructive/30 text-destructive'
+                        : 'bg-secondary border-border text-muted-foreground'
+                    }`}
+                  >
+                    {v.status === 'approved' ? (
+                      <CheckCircle className="size-4 shrink-0" aria-hidden="true" />
+                    ) : v.status === 'rejected' ? (
+                      <XCircle className="size-4 shrink-0" aria-hidden="true" />
+                    ) : (
+                      <Clock className="size-4 shrink-0" aria-hidden="true" />
+                    )}
+                    <span className="font-medium">
+                      {v.status === 'approved'
+                        ? 'This verification has been approved and finalized. No further review actions required.'
+                        : v.status === 'rejected'
+                        ? 'This verification has been rejected and finalized.'
+                        : 'This verification has expired.'}
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {/* Previous Review Info */}
               {v.reviewed_by && (
                 <div className="pt-3 border-t border-border">
                   <h4 className="text-sm font-medium text-muted-foreground mb-2">Review History</h4>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     <DetailCell label="Reviewed By" value={v.reviewed_by} />
-                    <DetailCell label="Reviewed At" value={v.reviewed_at ? formatDateTime(v.reviewed_at) : 'N/A'} />
+                    <DetailCell label="Reviewed At" value={v.reviewed_at ? formatDateTime(v.reviewed_at) : (v.updated_at ? formatDateTime(v.updated_at) : 'N/A')} />
                     <DetailCell label="Notes" value={v.admin_notes || 'N/A'} />
                   </div>
                 </div>
