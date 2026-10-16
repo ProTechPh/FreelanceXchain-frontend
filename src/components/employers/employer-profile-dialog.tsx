@@ -43,6 +43,7 @@ import type {
   ReputationMetadata,
 } from '@/types';
 import { useAuthStore } from '@/stores/authStore';
+import { EmployerBusinessInfo } from '@/components/employers/employer-business-info';
 
 interface EmployerProfileDialogProps {
   open: boolean;
@@ -467,6 +468,8 @@ export function EmployerProfileDialog({
               </div>
             </div>
           </div>
+
+          <EmployerBusinessInfo employerId={employerId} profile={profile ?? initialProfile ?? null} compact />
 
           {/* Contracts, Reputation & Projects Tabs */}
           <div>

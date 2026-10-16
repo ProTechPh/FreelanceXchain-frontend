@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import axios from 'axios';
 import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +12,7 @@ import { HelpHint } from '@/components/onboarding/help-hint';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { matchingApi, projectsApi, skillsApi } from '@/lib/api';
+import { employersApi, matchingApi, projectsApi, skillsApi } from '@/lib/api';
 import { UpgradeButton } from '@/components/billing/upgrade-button';
 import { usePlan } from '@/hooks/use-plan';
 import { getApiErrorMessage } from '@/lib/auth-contract';
@@ -32,6 +34,9 @@ import { toSkillCategories } from '@/lib/skill-taxonomy';
 import { DOCUMENT_ACCEPT_STRING } from '@/lib/file-validation';
 import { Field } from '@/components/ui/field';
 import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes';
+import { BusinessProfileCompletenessAlert } from '@/components/dashboard/employer-profile-fields';
+import { getFirstIncompleteTab } from '@/lib/profile-form';
+import type { BusinessProfileCompleteness } from '@/types';
 
 const steps = [
   { id: 1, title: 'Project Details', icon: FileText },
@@ -59,6 +64,8 @@ export default function CreateProjectPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  // Posting a project requires a complete business profile (enforced by the API too).
+  const [businessCompleteness, setBusinessCompleteness] = useState<BusinessProfileCompleteness | null>(null);
 
   // Warn if user tries to leave with unsaved changes
   const isDirty = title !== '' || description !== '' || skills.length > 0 || budget !== '' || deadline !== '' ||
@@ -84,6 +91,29 @@ export default function CreateProjectPage() {
     };
 
     void loadSkills();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    employersApi
+      .getCompleteness()
+      .then(({ data }) => {
+        if (active) setBusinessCompleteness(data);
+      })
+      .catch((error) => {
+        // No employer profile yet: everything is missing. Other failures are left
+        // to the API, which rejects the post if the profile is incomplete.
+        if (active && axios.isAxiosError(error) && error.response?.status === 404) {
+          setBusinessCompleteness({
+            complete: false,
+            missingFields: ['companyName', 'description', 'industry', 'businessType', 'tin', 'registrationNumber', 'businessAddress', 'businessPhone', 'businessEmail', 'yearEstablished'],
+            missingDocuments: ['bir_2303', 'sec_registration', 'mayors_permit'],
+          });
+        }
+      });
     return () => {
       active = false;
     };
@@ -320,12 +350,47 @@ export default function CreateProjectPage() {
         ? error.message
         : 'Unable to post the project. Please try again.';
       const message = getApiErrorMessage(error, fallback);
+      if (axios.isAxiosError(error) && error.response?.data?.error?.code === 'BUSINESS_PROFILE_INCOMPLETE') {
+        const details = error.response.data.error.details as Partial<BusinessProfileCompleteness> | undefined;
+        setBusinessCompleteness({
+          complete: false,
+          missingFields: details?.missingFields ?? [],
+          missingDocuments: details?.missingDocuments ?? [],
+        });
+      }
       setFormError(message);
       toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const businessProfileIncomplete = businessCompleteness !== null && !businessCompleteness.complete;
+  const businessProfileGate = businessProfileIncomplete && businessCompleteness && (
+    <BusinessProfileCompletenessAlert
+      completeness={businessCompleteness}
+      action={
+        <Button asChild size="sm">
+          <Link href={`/dashboard/employer/profile?tab=${getFirstIncompleteTab(businessCompleteness)}`}>
+            Complete business profile
+          </Link>
+        </Button>
+      }
+    />
+  );
+
+  // Nothing typed yet: show only the gate instead of a form that cannot be posted.
+  if (businessProfileIncomplete && !isDirty) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div>
+          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Post a new project</h1>
+          <p className="text-muted-foreground">Create a project listing to find the best talent</p>
+        </div>
+        {businessProfileGate}
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -334,6 +399,8 @@ export default function CreateProjectPage() {
         <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Post a new project</h1>
         <p className="text-muted-foreground">Create a project listing to find the best talent</p>
       </div>
+
+      {businessProfileGate}
 
       {/* Progress Steps */}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">

@@ -194,6 +194,8 @@ export interface FreelancerProfile {
   updatedAt: string;
 }
 
+export type BusinessType = 'sole_proprietorship' | 'partnership' | 'corporation' | 'cooperative';
+
 export interface EmployerProfile {
   id: string;
   userId: string;
@@ -202,9 +204,52 @@ export interface EmployerProfile {
   companyName: string;
   description: string;
   industry: string;
+  businessType: BusinessType | null;
+  /** Hidden (null) on public profiles for signed-out visitors. */
+  tin: string | null;
+  /** DTI (sole proprietorship) or SEC registration number. Hidden for signed-out visitors. */
+  registrationNumber: string | null;
+  businessAddress: string | null;
+  businessPhone: string | null;
+  businessEmail: string | null;
+  website: string | null;
+  yearEstablished: number | null;
   walletAddress?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export type BusinessDocumentType =
+  | 'bir_2303'
+  | 'dti_certificate'
+  | 'sec_registration'
+  | 'mayors_permit'
+  | 'barangay_clearance'
+  | 'other';
+
+/**
+ * A business document an employer keeps on file. Documents are collected for
+ * transparency only; they are not checked against BIR, DTI or SEC records.
+ */
+export interface BusinessDocument {
+  id: string;
+  employerId: string;
+  documentType: BusinessDocumentType;
+  label: string | null;
+  /** Omitted for signed-out visitors. */
+  fileName?: string;
+  /** Omitted for signed-out visitors. */
+  fileUrl?: string;
+  mimeType: string;
+  size: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BusinessProfileCompleteness {
+  complete: boolean;
+  missingFields: string[];
+  missingDocuments: BusinessDocumentType[];
 }
 
 // Full skill catalog entry

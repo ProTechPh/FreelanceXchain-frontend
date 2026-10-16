@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 import { employersApi, freelancersApi } from '@/lib/api';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import {
+  employerFormFromProfile,
+  employerFormToUpdate,
   validateEmployerProfile,
   validateFreelancerProfile,
   type EmployerProfileForm,
@@ -26,6 +28,14 @@ const emptyEmployerForm: EmployerProfileForm = {
   companyName: '',
   description: '',
   industry: '',
+  businessType: '',
+  tin: '',
+  registrationNumber: '',
+  businessAddress: '',
+  businessPhone: '',
+  businessEmail: '',
+  website: '',
+  yearEstablished: '',
 };
 
 export interface ProfileEditorState {
@@ -88,11 +98,7 @@ export function useProfileEditor(role: ProfileRole): UseProfileEditorResult {
       } else {
         const { data } = await employersApi.getProfile();
         setEmployerProfile(data);
-        const loaded = {
-          companyName: data.companyName,
-          description: data.description,
-          industry: data.industry,
-        };
+        const loaded = employerFormFromProfile(data);
         setEmployerForm(loaded);
         setSavedEmployerForm(loaded);
       }
@@ -104,8 +110,8 @@ export function useProfileEditor(role: ProfileRole): UseProfileEditorResult {
           setSavedFreelancerForm(emptyFreelancerForm);
         } else {
           const blank = {
+            ...emptyEmployerForm,
             companyName: user?.name || '',
-            description: '',
             industry: 'Technology',
           };
           setEmployerProfile(null);
@@ -168,9 +174,11 @@ export function useProfileEditor(role: ProfileRole): UseProfileEditorResult {
         setFreelancerProfile(response.data);
         setSavedFreelancerForm(freelancerForm);
       } else {
-        const { data } = await employersApi.updateProfile(employerForm);
+        const { data } = await employersApi.updateProfile(employerFormToUpdate(employerForm));
         setEmployerProfile(data);
-        setSavedEmployerForm(employerForm);
+        const saved = employerFormFromProfile(data);
+        setEmployerForm(saved);
+        setSavedEmployerForm(saved);
       }
       toast.success('Profile saved.');
       return true;
