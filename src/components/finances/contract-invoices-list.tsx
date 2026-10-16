@@ -9,6 +9,8 @@ import {
   Receipt,
 } from 'lucide-react';
 import { contractsApi } from '@/lib/api';
+import { useAuthStore } from '@/stores/authStore';
+import { isOnRoleSide } from '@/lib/role-switch';
 import { getContractDetailRoute } from '@/lib/contract-route';
 import { StatusBadge } from '@/components/ui/status-badge';
 import type { Contract, UserRole } from '@/types';
@@ -29,13 +31,16 @@ export function ContractInvoicesList({ role }: ContractInvoicesListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed'>('all');
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
+  const userId = useAuthStore((state) => state.user?.id);
 
   useEffect(() => {
     let active = true;
     contractsApi.list({ limit: 50 })
       .then(({ data }) => {
         if (active) {
-          setContracts(data.items || []);
+          // Contracts from both sides of the account come back; keep this role's side.
+          const items = data.items || [];
+          setContracts(items.filter((contract) => isOnRoleSide(contract, role, userId)));
           setLoading(false);
         }
       })
@@ -49,7 +54,7 @@ export function ContractInvoicesList({ role }: ContractInvoicesListProps) {
     return () => {
       active = false;
     };
-  }, []);
+  }, [role, userId]);
 
   const filteredContracts = useMemo(() => {
     return contracts.filter((contract) => {

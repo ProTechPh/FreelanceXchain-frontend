@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Contract } from '@/types';
+import { isOnRoleSide } from '@/lib/role-switch';
 import { contractsApi, projectsApi } from '@/lib/api';
 
 export interface ActiveContractView {
@@ -51,8 +52,9 @@ export function useFreelancerContracts(freelancerId: string): FreelancerContract
 
       const contractsRes = await contractsApi.list();
 
+      // Only contracts where this account is the freelancer (it may also be the employer on others).
       const activeContractsList: Contract[] = contractsRes.data.items.filter(
-        (c: Contract) => c.status === 'active'
+        (c: Contract) => c.status === 'active' && isOnRoleSide(c, 'freelancer', freelancerId)
       );
 
       const projectIdsToFetch = new Set<string>();

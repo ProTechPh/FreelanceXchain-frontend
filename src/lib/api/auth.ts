@@ -28,6 +28,10 @@ export const authApi = {
   
   getMe: () =>
     api.get<{ user: AuthApiUser }>('/auth/me'),
+
+  /** Switch the active role. Switching to employer needs a complete business profile (409 otherwise). */
+  switchRole: (role: Exclude<UserRole, 'admin'>) =>
+    api.post<{ user: AuthApiUser }>('/auth/switch-role', { role }),
   
   refreshToken: (refreshToken?: string) => {
     const token = refreshToken || getAccessToken() || undefined;

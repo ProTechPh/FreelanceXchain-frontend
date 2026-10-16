@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import { usePathname, useRouter } from 'next/navigation';
 import { Briefcase, ExternalLink, Pencil, Plus, Save, Share2, Trash2, UserRound, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { skillsApi, freelancersApi } from '@/lib/api';
 import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning';
 import { useProfileEditor } from '@/hooks/use-profile-editor';
 import { getApiErrorMessage } from '@/lib/auth-contract';
-import { findDuplicateExperience, validateExperience, type ExperienceForm, type FreelancerProfileForm } from '@/lib/profile-form';
+import { getFirstIncompleteTab, findDuplicateExperience, validateExperience, type ExperienceForm, type FreelancerProfileForm } from '@/lib/profile-form';
 import { useAuthStore } from '@/stores/authStore';
 import type { UserRole, WorkExperience } from '@/types';
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +24,7 @@ import { UnsavedChangesBar, UnsavedChangesDialog } from '@/components/ui/unsaved
 import { SuggestSkillDialog } from '@/components/dashboard/suggest-skill-dialog';
 import { ProjectSkillSelector } from '@/components/dashboard/project-skill-selector';
 import { EmployerProfileFields } from '@/components/dashboard/employer-profile-fields';
+import { useRoleSwitch } from '@/hooks/use-role-switch';
 import {
   detectCategoryIds,
   isSoftSkillCategory,
@@ -42,8 +44,18 @@ function dateInputValue(value: string | null | undefined) {
   return value ? value.slice(0, 10) : '';
 }
 
-export function ProfileEditor({ role }: { role: ProfileRole }) {
+export function ProfileEditor({
+  role,
+  onboarding = false,
+}: {
+  role: ProfileRole;
+  /** Employer only: "Become an employer" setup for a freelancer, finishing with a role switch. */
+  onboarding?: boolean;
+}) {
   const user = useAuthStore((state) => state.user);
+  const { switchTo, switching } = useRoleSwitch();
+  const router = useRouter();
+  const pathname = usePathname();
   const {
     freelancerProfile,
     employerProfile,
@@ -303,6 +315,17 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
     );
   }
 
+  // Last step of "Become an employer": save any edits, then switch. If the
+  // server still finds gaps, jump to the first step that has them.
+  const finishOnboarding = async () => {
+    if (isDirty && !(await saveProfile())) return;
+    await switchTo('employer', {
+      onIncomplete: (gaps) => {
+        router.replace(`${pathname}?tab=${getFirstIncompleteTab(gaps)}`, { scroll: false });
+      },
+    });
+  };
+
   const identityCard = (
     <Card>
       <CardHeader>
@@ -328,10 +351,20 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Profile</h1>
-          <p className="text-muted-foreground">Keep the information shown to marketplace participants up to date.</p>
-        </div>
+        {onboarding ? (
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Become an employer</h1>
+            <p className="text-muted-foreground">
+              Add your business information and documents. Once everything required is in, you can start acting as an
+              employer — and switch back to freelancer any time.
+            </p>
+          </div>
+        ) : (
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Profile</h1>
+            <p className="text-muted-foreground">Keep the information shown to marketplace participants up to date.</p>
+          </div>
+        )}
         <div className="flex flex-wrap items-center gap-2">
           {role === 'freelancer' && user?.id && (
             <>
@@ -358,7 +391,14 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
               </Button>
             </>
           )}
-          <Button type="button" onClick={() => void saveProfile()} loading={saving} loadingText="Saving…" disabled={!isDirty}>
+          <Button
+            type="button"
+            variant={onboarding ? 'outline' : 'default'}
+            onClick={() => void saveProfile()}
+            loading={saving}
+            loadingText="Saving…"
+            disabled={!isDirty}
+          >
             <Save className="size-4" aria-hidden="true" />
             Save profile
           </Button>
@@ -748,6 +788,7 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
           profile={employerProfile}
           updateField={updateEmployerField}
           identityCard={identityCard}
+          onboarding={onboarding ? { onFinish: () => void finishOnboarding(), finishing: saving || switching === 'employer' } : undefined}
         />
       )}
 

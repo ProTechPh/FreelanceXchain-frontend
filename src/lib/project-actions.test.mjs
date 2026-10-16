@@ -45,3 +45,10 @@ test('exposes sign-in CTA for unauthenticated visitors on open projects', () => 
     'none',
   );
 });
+
+test('never lets a user propose on their own project while acting as a freelancer', () => {
+  assert.equal(
+    getProjectPrimaryAction({ id: 'employer-1', role: 'freelancer' }, openProject),
+    'none',
+  );
+});
