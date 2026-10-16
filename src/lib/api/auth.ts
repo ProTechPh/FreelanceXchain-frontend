@@ -100,6 +100,13 @@ export const authApi = {
   disconnectWallet: () =>
     api.delete<{ message: string; walletAddress: string }>('/auth/wallet'),
 
+  checkDeletionEligibility: () =>
+    api.get<{
+      canDelete: boolean;
+      reason?: string;
+      counts?: { pending: number; active: number; disputed: number };
+    }>('/auth/account/deletion-eligibility'),
+
   requestAccountDeletion: () =>
     api.post<{ success: boolean; message: string; email?: string }>('/auth/account/delete-request'),
 

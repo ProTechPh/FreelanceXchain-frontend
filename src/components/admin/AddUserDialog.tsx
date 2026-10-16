@@ -68,6 +68,7 @@ export function AddUserDialog({
     user: AdminUser;
     plan?: 'free' | 'pro';
     temporaryPassword?: string;
+    emailSent?: boolean;
   } | null>(null);
   const [showTempPassword, setShowTempPassword] = useState(true);
   const [copied, setCopied] = useState(false);
@@ -151,7 +152,7 @@ export function AddUserDialog({
         grantPro: role === 'admin' ? undefined : grantPro,
       });
 
-      const { user, plan, temporaryPassword } = response.data;
+      const { user, plan, temporaryPassword, emailSent } = response.data;
       onUserAdded(user);
 
       const wantedPro = role === 'admin' || grantPro;
@@ -164,7 +165,7 @@ export function AddUserDialog({
       }
 
       if (temporaryPassword) {
-        setCreatedSuccess({ user, plan, temporaryPassword });
+        setCreatedSuccess({ user, plan, temporaryPassword, emailSent });
       } else {
         handleOpenChange(false);
       }
@@ -330,6 +331,32 @@ export function AddUserDialog({
                     Copy All Credentials
                   </Button>
                 </div>
+              </div>
+            )}
+
+            {createdSuccess.emailSent !== undefined && (
+              <div
+                className={`flex items-start gap-2.5 rounded-lg border p-3 text-xs leading-relaxed ${
+                  createdSuccess.emailSent
+                    ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-300'
+                    : 'border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300'
+                }`}
+              >
+                {createdSuccess.emailSent ? (
+                  <>
+                    <Mail className="size-4 shrink-0 mt-0.5 text-emerald-600 dark:text-emerald-400" />
+                    <span>
+                      An automated welcome email with login credentials has been sent to <strong>{createdSuccess.user.email}</strong>.
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Mail className="size-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+                    <span>
+                      Email delivery could not be completed (or is not configured). Please copy and send the credentials above to <strong>{createdSuccess.user.email}</strong> manually.
+                    </span>
+                  </>
+                )}
               </div>
             )}
 

@@ -36,6 +36,34 @@ export function DangerZoneCard({ user, onLogout }: DangerZoneCardProps) {
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
 
+  const [eligibility, setEligibility] = useState<{
+    canDelete: boolean;
+    reason?: string;
+    counts?: { pending: number; active: number; disputed: number };
+  } | null>(null);
+  const [loadingEligibility, setLoadingEligibility] = useState(true);
+
+  // Check whether user has blocking contracts on mount
+  useEffect(() => {
+    let mounted = true;
+    authApi.checkDeletionEligibility()
+      .then((res) => {
+        if (mounted && res.data) {
+          setEligibility(res.data);
+        }
+      })
+      .catch(() => {
+        // Fallback: silently handle if endpoint fails
+      })
+      .finally(() => {
+        if (mounted) setLoadingEligibility(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   // Timer countdown for resending confirmation code
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -79,7 +107,7 @@ export function DangerZoneCard({ user, onLogout }: DangerZoneCardProps) {
         confirmation: deleteConfirmationText.trim().toUpperCase(),
         code: verificationCode.trim(),
       });
-      toast.success(data.message || 'Your account and personal data have been permanently deleted.');
+      toast.success(data.message || 'Your account has been scheduled for deletion. You can log in within 30 days to cancel and restore it.', { duration: 6000 });
       setShowDeleteModal(false);
       await onLogout();
       router.push('/');
@@ -99,15 +127,18 @@ export function DangerZoneCard({ user, onLogout }: DangerZoneCardProps) {
     setShowDeleteModal(open);
   };
 
-  if (user?.role !== 'freelancer') {
+  if (user?.role !== 'freelancer' && user?.role !== 'employer') {
     return null;
   }
+
+  const hasBlockingContracts = Boolean(eligibility && !eligibility.canDelete);
 
   const isDeleteReady =
     codeSent &&
     verificationCode.trim().length === 6 &&
     deleteConfirmationText.trim().toUpperCase() === 'DELETE' &&
-    !isDeletingAccount;
+    !isDeletingAccount &&
+    !hasBlockingContracts;
 
   return (
     <>
@@ -120,16 +151,37 @@ export function DangerZoneCard({ user, onLogout }: DangerZoneCardProps) {
             Permanently delete your profile, work history, and personal account data.
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-foreground">Irreversible Account Removal</p>
-            <p className="text-xs text-muted-foreground">
-              Once deleted, your profile and login access will be erased forever.
-            </p>
+        <CardContent className="space-y-4">
+          {hasBlockingContracts && (
+            <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-900 dark:text-amber-200 space-y-1">
+              <div className="flex items-center gap-1.5 font-semibold text-amber-600 dark:text-amber-400">
+                <AlertTriangle className="size-4 shrink-0" />
+                <span>Account Deletion Blocked</span>
+              </div>
+              <p>
+                {eligibility?.reason ||
+                  'You currently have pending, active, or disputed contracts with escrow commitments. You must complete, cancel, or resolve all ongoing contracts before your account can be deleted.'}
+              </p>
+            </div>
+          )}
+
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-foreground">Irreversible Account Removal</p>
+              <p className="text-xs text-muted-foreground">
+                Once deleted, your profile and login access will be erased forever after a 30-day grace period.
+              </p>
+            </div>
+            <Button
+              variant="destructive"
+              onClick={() => setShowDeleteModal(true)}
+              disabled={hasBlockingContracts || loadingEligibility}
+              title={hasBlockingContracts ? eligibility?.reason : undefined}
+            >
+              <Trash2 className="size-4 mr-1.5" />
+              {hasBlockingContracts ? 'Deletion Blocked' : 'Delete Account'}
+            </Button>
           </div>
-          <Button variant="destructive" onClick={() => setShowDeleteModal(true)}>
-            <Trash2 className="size-4 mr-1.5" /> Delete Account
-          </Button>
         </CardContent>
       </Card>
 
@@ -140,17 +192,16 @@ export function DangerZoneCard({ user, onLogout }: DangerZoneCardProps) {
               <ShieldAlert className="size-5 text-destructive" />
               Confirm Account Deletion
             </DialogTitle>
-            <DialogDescription className="space-y-2 pt-2">
-              <p>
-                Are you sure you want to delete your FreelanceXchain account? This action is <strong className="text-foreground">permanent and cannot be undone</strong>.
-              </p>
-              <div className="rounded-xl bg-muted/40 p-3 text-xs text-muted-foreground space-y-1.5">
-                <p><strong>Security notice:</strong></p>
-                <p>• A secondary 6-digit confirmation code must be sent to your email to verify account ownership.</p>
-                <p>• If you have an active contract with funds locked in escrow, please complete or resolve the contract first.</p>
-                <p>• Past blockchain transaction history remains immutable on the distributed ledger.</p>
-              </div>
+            <DialogDescription className="pt-2">
+              Are you sure you want to request account deletion? Your account will be <strong className="text-foreground">deactivated with a 30-day grace period</strong>.
             </DialogDescription>
+            <div className="rounded-xl bg-muted/40 p-3 text-xs text-muted-foreground space-y-1.5 mt-2 text-left">
+              <p><strong>30-Day Retrieval Grace Period:</strong></p>
+              <p>• If you change your mind, simply log in within 30 days to cancel the deletion and restore your account.</p>
+              <p>• A secondary 6-digit confirmation code must be sent to your email to verify account ownership.</p>
+              <p>• After 30 days, your account, profile, and personal data will be permanently and irreversibly purged.</p>
+              <p>• Past blockchain transaction history remains immutable on the distributed ledger.</p>
+            </div>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
