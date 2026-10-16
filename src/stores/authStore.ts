@@ -93,7 +93,7 @@ export const useAuthStore = create<AuthState>()(
             mfaSessionToken: null,
             sessionVerified: true,
           });
-          return { accountRestored: Boolean((data as any).accountRestored) };
+          return { accountRestored: Boolean(data.accountRestored) };
         } catch (error) {
           set({ isLoading: false });
           throw error;
