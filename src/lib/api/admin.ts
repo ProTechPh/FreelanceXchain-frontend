@@ -39,7 +39,7 @@ export const adminApi = {
     /** Start on Pro at no charge. Defaults to true server-side; admins are always Pro. */
     grantPro?: boolean;
     // `plan` in the response is the plan the new account actually starts on.
-  }) => api.post<{ user: AdminUser; plan?: 'free' | 'pro'; temporaryPassword?: string }>('/admin/users', data),
+  }) => api.post<{ user: AdminUser; plan?: 'free' | 'pro'; temporaryPassword?: string; emailSent?: boolean }>('/admin/users', data),
 
   updateUser: (userId: string, data: { name?: string; role?: string; isActive?: boolean }) =>
     api.patch<AdminUser>(`/admin/users/${userId}`, data),

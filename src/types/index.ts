@@ -930,6 +930,8 @@ export interface AuthSuccessResponse {
   user: AuthApiUser;
   accessToken: string;
   refreshToken: string;
+  accountRestored?: boolean;
+  message?: string;
 }
 
 export interface MfaRequiredResponse {

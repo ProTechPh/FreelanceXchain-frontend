@@ -95,7 +95,11 @@ export default function LoginPage() {
         return;
       }
 
-      toast.success('Welcome back!');
+      if (result.accountRestored) {
+        toast.success('Welcome back! Your pending account deletion has been cancelled and your account has been fully restored.', { duration: 6000 });
+      } else {
+        toast.success('Welcome back!');
+      }
       const user = useAuthStore.getState().user;
       router.replace(`/dashboard/${user?.role || 'freelancer'}`);
     } catch (error: unknown) {

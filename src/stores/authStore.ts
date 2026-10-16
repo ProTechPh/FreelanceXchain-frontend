@@ -32,7 +32,7 @@ interface AuthState {
    * decision, and gates render a skeleton until this flips.
    */
   sessionVerified: boolean;
-  login: (email: string, password: string, turnstileToken?: string) => Promise<{ mfaRequired?: boolean }>;
+  login: (email: string, password: string, turnstileToken?: string) => Promise<{ mfaRequired?: boolean; accountRestored?: boolean }>;
   register: (email: string, password: string, role: UserRole, turnstileToken?: string) => Promise<void>;
   logout: () => Promise<void>;
   loadUser: () => Promise<void>;
@@ -93,7 +93,7 @@ export const useAuthStore = create<AuthState>()(
             mfaSessionToken: null,
             sessionVerified: true,
           });
-          return {};
+          return { accountRestored: Boolean(data.accountRestored) };
         } catch (error) {
           set({ isLoading: false });
           throw error;
