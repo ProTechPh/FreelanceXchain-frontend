@@ -59,11 +59,7 @@ export default function AboutUsSection() {
     <div className="w-full">
       {/* Hero Intro */}
       <section className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 mb-16 text-center">
-        <motion.div
-          initial={reduce ? false : { opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-        >
+        <div>
           <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold mb-4 border border-primary/20 shadow-xs">
             <Sparkle className="size-3.5 fill-primary" fill="currentColor" />
             <span>Our Mission & Web3 Vision</span>
@@ -71,7 +67,7 @@ export default function AboutUsSection() {
 
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-foreground">
             Building the trustless standard <br className="hidden sm:inline" />
-            <span className="text-muted-foreground dark:text-muted-foreground font-semibold">
+            <span className="text-muted-foreground font-semibold">
               for the global freelance economy.
             </span>
           </h1>
@@ -79,7 +75,7 @@ export default function AboutUsSection() {
           <p className="mt-4 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             FreelanceXchain was built to fix broken Web2 freelance platforms. By fusing Ethereum smart contract escrow with AI-assisted proposal bidding, we protect freelancers from non-payment and give employers verifiable talent.
           </p>
-        </motion.div>
+        </div>
       </section>
 
       {/* Stats Counter Bar */}

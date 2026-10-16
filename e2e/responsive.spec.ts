@@ -10,6 +10,8 @@ import { expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { NavigationComponent } from './pages/NavigationComponent.js';
 
+test.use({ reducedMotion: 'reduce' });
+
 const PUBLIC_ROUTES = [
   '/',
   '/projects',
