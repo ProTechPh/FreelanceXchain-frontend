@@ -45,6 +45,11 @@ export function DangerZoneCard({ user, onLogout }: DangerZoneCardProps) {
 
   // Check whether user has blocking contracts on mount
   useEffect(() => {
+    if (user?.role !== 'freelancer') {
+      setLoadingEligibility(false);
+      return;
+    }
+
     let mounted = true;
     authApi.checkDeletionEligibility()
       .then((res) => {
@@ -127,7 +132,7 @@ export function DangerZoneCard({ user, onLogout }: DangerZoneCardProps) {
     setShowDeleteModal(open);
   };
 
-  if (user?.role !== 'freelancer' && user?.role !== 'employer') {
+  if (user?.role !== 'freelancer') {
     return null;
   }
 
