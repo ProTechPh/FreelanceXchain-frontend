@@ -36,19 +36,18 @@ export function DangerZoneCard({ user, onLogout }: DangerZoneCardProps) {
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
 
+  const isFreelancer = user?.role === 'freelancer';
+
   const [eligibility, setEligibility] = useState<{
     canDelete: boolean;
     reason?: string;
     counts?: { pending: number; active: number; disputed: number };
   } | null>(null);
-  const [loadingEligibility, setLoadingEligibility] = useState(true);
+  const [loadingEligibility, setLoadingEligibility] = useState(isFreelancer);
 
   // Check whether user has blocking contracts on mount
   useEffect(() => {
-    if (user?.role !== 'freelancer') {
-      setLoadingEligibility(false);
-      return;
-    }
+    if (!isFreelancer) return;
 
     let mounted = true;
     authApi.checkDeletionEligibility()
@@ -67,7 +66,7 @@ export function DangerZoneCard({ user, onLogout }: DangerZoneCardProps) {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [isFreelancer]);
 
   // Timer countdown for resending confirmation code
   useEffect(() => {
