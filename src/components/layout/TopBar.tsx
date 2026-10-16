@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Bell, MessageSquare, LogOut, User, Settings, ChevronDown, Compass, Search, Shield, Bookmark, History, Star, LifeBuoy } from 'lucide-react';
+import { Bell, MessageSquare, LogOut, User, Settings, ChevronDown, Compass, Search, Shield, Bookmark, History, Star, LifeBuoy, ArrowLeftRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Tooltip } from '@/components/ui/tooltip';
@@ -23,6 +23,8 @@ import { subscribeToNotificationStream } from '@/lib/sse';
 import { WalletHeaderButton } from '@/components/wallet/wallet-header-button';
 import { useStartTour } from '@/components/onboarding/tour-launcher';
 import { useRateApp } from '@/components/feedback/rate-app-provider';
+import { useRoleSwitch } from '@/hooks/use-role-switch';
+import { getOtherRole, getRoleLabel } from '@/lib/role-switch';
 
 const participantAccountItems = [
   { label: 'Profile', path: 'profile', icon: User },
@@ -40,6 +42,7 @@ export function TopBar() {
   const router = useRouter();
   const { startTour, canStartTour } = useStartTour();
   const { openRatingDialog } = useRateApp();
+  const { switchTo, switching } = useRoleSwitch();
   const [mounted, setMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [unreadNotifications, setUnreadNotifications] = useState(0);
@@ -221,7 +224,25 @@ export function TopBar() {
                 <p className="truncate text-xs text-muted-foreground" title={user?.email}>
                   {user?.email}
                 </p>
+                {participantRole && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Acting as <span className="font-semibold text-foreground">{getRoleLabel(participantRole)}</span>
+                  </p>
+                )}
               </div>
+              {participantRole && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    disabled={switching !== null}
+                    onClick={() => void switchTo(getOtherRole(participantRole))}
+                    className="flex items-center gap-2 cursor-pointer font-medium"
+                  >
+                    <ArrowLeftRight className="size-4" aria-hidden="true" />
+                    {switching ? 'Switching…' : `Switch to ${getRoleLabel(getOtherRole(participantRole)).toLowerCase()}`}
+                  </DropdownMenuItem>
+                </>
+              )}
               {hasParticipantDashboard && (
                 <>
                   <DropdownMenuSeparator />

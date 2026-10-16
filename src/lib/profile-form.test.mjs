@@ -4,6 +4,9 @@ import test from 'node:test';
 import {
   employerFormFromProfile,
   getFirstIncompleteTab,
+  getNextEmployerTab,
+  getPreviousEmployerTab,
+  EMPLOYER_PROFILE_TAB_LABELS,
   groupMissingByTab,
   isEmployerProfileTab,
   employerFormToUpdate,
@@ -102,4 +105,14 @@ test('picks the first employer profile tab that still has gaps', () => {
   assert.equal(isEmployerProfileTab('documents'), true);
   assert.equal(isEmployerProfileTab('billing'), false);
   assert.equal(isEmployerProfileTab(null), false);
+});
+
+test('steps through the employer setup in tab order', () => {
+  assert.equal(getNextEmployerTab('company'), 'business');
+  assert.equal(getNextEmployerTab('business'), 'documents');
+  assert.equal(getNextEmployerTab('documents'), null);
+  assert.equal(getPreviousEmployerTab('company'), null);
+  assert.equal(getPreviousEmployerTab('business'), 'company');
+  assert.equal(getPreviousEmployerTab('documents'), 'business');
+  assert.equal(EMPLOYER_PROFILE_TAB_LABELS.business, 'Business details');
 });

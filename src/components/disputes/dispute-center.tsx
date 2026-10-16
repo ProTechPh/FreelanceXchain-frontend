@@ -35,6 +35,7 @@ import { AttachmentPreviewDialog, type AttachmentPreviewTarget } from '@/compone
 import { normalizeMilestone } from '@/lib/contract-workflow';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { useAuthStore } from '@/stores/authStore';
+import { isOnRoleSide } from '@/lib/role-switch';
 import type { Contract, Dispute, DisputeEvidence, DisputeStatus, Milestone, UserRole } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -115,6 +116,7 @@ function getPartyInfo(
 
 const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disputeId }: { role: ParticipantRole; disputeId?: string }) {
   const user = useAuthStore((state) => state.user);
+  const userId = user?.id;
   const searchParams = useSearchParams();
   const contractIdParam = searchParams?.get('contractId') || '';
 
@@ -185,8 +187,13 @@ const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disput
         : disputesApi.list({ limit: 100 }).then(({ data }) => data.items),
       contractsApi.list({ limit: 100 }),
     ]);
-    setDisputes(disputeItems);
-    setContracts(contractResponse.data.items);
+    // One account can be on both sides of different contracts: keep this role's side.
+    const allContracts = contractResponse.data.items;
+    const otherSideContractIds = new Set(
+      allContracts.filter((contract) => !isOnRoleSide(contract, role, userId)).map((contract) => contract.id),
+    );
+    setDisputes(disputeId ? disputeItems : disputeItems.filter((dispute) => !otherSideContractIds.has(dispute.contractId)));
+    setContracts(allContracts.filter((contract) => isOnRoleSide(contract, role, userId)));
     const evidenceEntries = await Promise.all(disputeItems.map(async (dispute) => {
       const embeddedRecords: DisputeEvidence[] = (dispute.evidence || []).map((evidence) => ({
         id: evidence.id,
@@ -213,7 +220,7 @@ const DisputeCenterInner = React.memo(function DisputeCenterInner({ role, disput
       return [dispute.id, embeddedRecords] as const;
     }));
     setEvidenceByDispute(Object.fromEntries(evidenceEntries));
-  }, [disputeId]);
+  }, [disputeId, role, userId]);
 
   useEffect(() => {
     let active = true;

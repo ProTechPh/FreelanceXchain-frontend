@@ -2,12 +2,16 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Building2, FileText, Landmark } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Building2, FileText, Landmark } from 'lucide-react';
 import { employersApi } from '@/lib/api';
 import {
   BUSINESS_DOCUMENT_LABELS,
   BUSINESS_TYPE_OPTIONS,
+  EMPLOYER_PROFILE_TABS,
+  EMPLOYER_PROFILE_TAB_LABELS,
   getBusinessFieldLabel,
+  getNextEmployerTab,
+  getPreviousEmployerTab,
   getRegistrationNumberLabel,
   groupMissingByTab,
   isEmployerProfileTab,
@@ -18,6 +22,7 @@ import { formatDateTime } from '@/lib/format';
 import type { BusinessProfileCompleteness, EmployerProfile } from '@/types';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field } from '@/components/ui/field';
@@ -109,17 +114,67 @@ function TabCount({ count }: { count: number }) {
   );
 }
 
+export interface EmployerOnboardingControls {
+  /** Save and switch to employer; called from the last step. */
+  onFinish: () => void;
+  finishing: boolean;
+}
+
+/** Back / Next (or Finish) controls under each step of the employer setup. */
+function StepFooter({
+  tab,
+  onNavigate,
+  onboarding,
+}: {
+  tab: EmployerProfileTab;
+  onNavigate: (tab: EmployerProfileTab) => void;
+  onboarding: EmployerOnboardingControls;
+}) {
+  const previous = getPreviousEmployerTab(tab);
+  const next = getNextEmployerTab(tab);
+  const step = EMPLOYER_PROFILE_TABS.indexOf(tab) + 1;
+
+  return (
+    <div className="flex flex-col-reverse gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center gap-3">
+        {previous && (
+          <Button type="button" variant="outline" onClick={() => onNavigate(previous)}>
+            <ArrowLeft className="size-4" aria-hidden="true" />
+            Back
+          </Button>
+        )}
+        <span className="text-sm text-muted-foreground">
+          Step {step} of {EMPLOYER_PROFILE_TABS.length}
+        </span>
+      </div>
+      {next ? (
+        <Button type="button" onClick={() => onNavigate(next)}>
+          Next: {EMPLOYER_PROFILE_TAB_LABELS[next]}
+          <ArrowRight className="size-4" aria-hidden="true" />
+        </Button>
+      ) : (
+        <Button type="button" onClick={onboarding.onFinish} loading={onboarding.finishing} loadingText="Finishing…">
+          Finish &amp; switch to employer
+        </Button>
+      )}
+    </div>
+  );
+}
+
 export function EmployerProfileFields({
   form,
   profile,
   updateField,
   identityCard,
+  onboarding,
 }: {
   form: EmployerProfileForm;
   profile: EmployerProfile | null;
   updateField: <K extends keyof EmployerProfileForm>(field: K, value: EmployerProfileForm[K]) => void;
   /** Account identity card, shown on the Company profile tab. */
   identityCard?: React.ReactNode;
+  /** "Become an employer" setup: adds Back / Next / Finish under each tab. */
+  onboarding?: EmployerOnboardingControls;
 }) {
   const [completeness, setCompleteness] = useState<BusinessProfileCompleteness | null>(null);
   const router = useRouter();
@@ -133,6 +188,11 @@ export function EmployerProfileFields({
     const params = new URLSearchParams(searchParams?.toString() ?? '');
     params.set('tab', value);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
+  const goToStep = (tab: EmployerProfileTab) => {
+    changeTab(tab);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const missing = completeness
@@ -250,6 +310,7 @@ export function EmployerProfileFields({
             </CardContent>
           </Card>
 
+          {onboarding && <StepFooter tab="company" onNavigate={goToStep} onboarding={onboarding} />}
         </TabsContent>
 
         <TabsContent value="business" className="space-y-6">
@@ -262,7 +323,8 @@ export function EmployerProfileFields({
             <CardContent className="grid gap-4 sm:grid-cols-2">
               <Field label="Business type" htmlFor="business-type" required>
                 <Select
-                  value={form.businessType || undefined}
+                  // null (not undefined) keeps the Select controlled before a type is picked.
+                  value={form.businessType || null}
                   onValueChange={(value) => {
                     if (value) updateField('businessType', value as EmployerProfileForm['businessType']);
                   }}
@@ -344,6 +406,7 @@ export function EmployerProfileFields({
             </CardContent>
           </Card>
 
+          {onboarding && <StepFooter tab="business" onNavigate={goToStep} onboarding={onboarding} />}
         </TabsContent>
 
         <TabsContent value="documents" className="space-y-4">
@@ -354,6 +417,7 @@ export function EmployerProfileFields({
           ) : (
             <Alert tone="info" live={false} title="Save your company profile first" description="You can upload business documents once your employer profile exists." />
           )}
+          {onboarding && <StepFooter tab="documents" onNavigate={goToStep} onboarding={onboarding} />}
         </TabsContent>
       </Tabs>
     </>

@@ -89,6 +89,23 @@ const EMPLOYER_FIELD_TAB: Record<string, Exclude<EmployerProfileTab, 'documents'
   businessEmail: 'business',
 };
 
+export const EMPLOYER_PROFILE_TAB_LABELS: Record<EmployerProfileTab, string> = {
+  company: 'Company profile',
+  business: 'Business details',
+  documents: 'Documents',
+};
+
+/** The next step in the employer setup, or null on the last step. */
+export function getNextEmployerTab(tab: EmployerProfileTab): EmployerProfileTab | null {
+  return EMPLOYER_PROFILE_TABS[EMPLOYER_PROFILE_TABS.indexOf(tab) + 1] ?? null;
+}
+
+/** The previous step in the employer setup, or null on the first step. */
+export function getPreviousEmployerTab(tab: EmployerProfileTab): EmployerProfileTab | null {
+  const index = EMPLOYER_PROFILE_TABS.indexOf(tab);
+  return index > 0 ? EMPLOYER_PROFILE_TABS[index - 1]! : null;
+}
+
 export function isEmployerProfileTab(value: string | null | undefined): value is EmployerProfileTab {
   return EMPLOYER_PROFILE_TABS.includes(value as EmployerProfileTab);
 }

@@ -12,6 +12,8 @@ import { AttachmentPreviewDialog, type AttachmentPreviewTarget } from '@/compone
 import { validateReviewDraft, type ReviewDraft } from '@/lib/review-form';
 import { validateDocumentFiles } from '@/lib/file-validation';
 import { useAuthStore } from '@/stores/authStore';
+import { useRoleSwitch } from '@/hooks/use-role-switch';
+import { getOtherRole, getRoleLabel, isOnRoleSide } from '@/lib/role-switch';
 import type { Milestone, UserRole } from '@/types';
 import { useContractWorkspace } from '@/hooks/use-contract-workspace';
 import { ContractNegotiationPanel } from '@/components/contracts/contract-negotiation-panel';
@@ -54,6 +56,7 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
   const user = useAuthStore((state) => state.user);
   const queryClient = useQueryClient();
   const { requestRatingPrompt } = useRateApp();
+  const { switchTo, switching } = useRoleSwitch();
 
   const {
     contract,
@@ -97,6 +100,32 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
           <p>Contract unavailable or failed to load.</p>
           <Button variant="outline" size="sm" onClick={() => void loadWorkspace()}>
             Retry
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // One account can be the employer on some contracts and the freelancer on
+  // others. A contract from the other side (e.g. a notification link) must not
+  // render with this side's actions.
+  if (!isOnRoleSide(contract, role, user.id)) {
+    const otherRole = getOtherRole(role);
+    const otherLabel = getRoleLabel(otherRole).toLowerCase();
+    return (
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+          <p className="font-semibold text-foreground">This contract is on your {otherLabel} side</p>
+          <p className="max-w-md text-sm text-muted-foreground">
+            You&apos;re acting as {role === 'employer' ? 'an' : 'a'} {getRoleLabel(role).toLowerCase()}. Switch to {otherLabel} to work on it.
+          </p>
+          <Button
+            size="sm"
+            onClick={() => void switchTo(otherRole, { redirectTo: `/dashboard/${otherRole}/contracts/${contract.id}` })}
+            loading={switching === otherRole}
+            loadingText="Switching…"
+          >
+            Switch to {otherLabel}
           </Button>
         </CardContent>
       </Card>

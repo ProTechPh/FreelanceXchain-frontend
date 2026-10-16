@@ -18,7 +18,8 @@ export function getProjectPrimaryAction(
     return 'manage-proposals';
   }
 
-  if (viewer?.role === 'freelancer' && project.status === 'open') {
+  // One account can act as both roles; never offer a proposal on your own project.
+  if (viewer?.role === 'freelancer' && viewer.id !== project.employerId && project.status === 'open') {
     return 'submit-proposal';
   }
 

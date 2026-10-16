@@ -89,6 +89,10 @@ export const employersApi = {
   getPublicProfile: (id: string) =>
     api.get<EmployerProfile>(`/employers/${id}`),
 
+  /** Create the employer profile if missing (lets a freelancer set up their employer side). */
+  ensureProfile: () =>
+    api.post<EmployerProfile>('/employers/profile'),
+
   getCompleteness: () =>
     api.get<BusinessProfileCompleteness>('/employers/profile/completeness'),
 

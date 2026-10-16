@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { Coins, FolderOpen, FileText, Scale, Search, X } from 'lucide-react';
 import { reportLoadFailure } from '@/lib/report-failure';
 import { contractsApi } from '@/lib/api';
+import { useAuthStore } from '@/stores/authStore';
+import { isOnRoleSide } from '@/lib/role-switch';
 import { getContractDetailRoute } from '@/lib/contract-route';
 import { StatusBadge } from '@/components/ui/status-badge';
 import type { Contract, UserRole } from '@/types';
@@ -68,20 +70,27 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
     return fetchContracts();
   }, [fetchContracts]);
 
+  // The API returns contracts from both sides of the account; show this role's side only.
+  const userId = useAuthStore((state) => state.user?.id);
+  const sideContracts = useMemo(
+    () => contracts.filter((contract) => isOnRoleSide(contract, role, userId)),
+    [contracts, role, userId],
+  );
+
   const stats = useMemo(() => {
-    const total = contracts.length;
-    const active = contracts.filter((c) => c.status === 'active').length;
-    const completed = contracts.filter((c) => c.status === 'completed').length;
-    const resolved = contracts.filter((c) => c.status === 'resolved').length;
-    const cancelled = contracts.filter((c) => c.status === 'cancelled').length;
-    const disputed = contracts.filter((c) => c.status === 'disputed').length;
-    const pending = contracts.filter((c) => c.status === 'pending').length;
-    const totalValue = contracts.reduce((sum, c) => sum + (c.totalAmount || 0), 0);
+    const total = sideContracts.length;
+    const active = sideContracts.filter((c) => c.status === 'active').length;
+    const completed = sideContracts.filter((c) => c.status === 'completed').length;
+    const resolved = sideContracts.filter((c) => c.status === 'resolved').length;
+    const cancelled = sideContracts.filter((c) => c.status === 'cancelled').length;
+    const disputed = sideContracts.filter((c) => c.status === 'disputed').length;
+    const pending = sideContracts.filter((c) => c.status === 'pending').length;
+    const totalValue = sideContracts.reduce((sum, c) => sum + (c.totalAmount || 0), 0);
     return { total, active, completed, resolved, cancelled, disputed, pending, totalValue };
-  }, [contracts]);
+  }, [sideContracts]);
 
   const filteredContracts = useMemo(() => {
-    return contracts.filter((contract) => {
+    return sideContracts.filter((contract) => {
       if (selectedTab !== 'all' && contract.status !== selectedTab) {
         return false;
       }
@@ -96,7 +105,7 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
       const id = contract.id.toLowerCase();
       return title.includes(q) || counterparty.includes(q) || id.includes(q);
     });
-  }, [contracts, selectedTab, searchQuery, role]);
+  }, [sideContracts, selectedTab, searchQuery, role]);
 
   const handleRefresh = useCallback(async () => {
     let active = true;
@@ -117,7 +126,7 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
         <PageHeader
           title="Contracts"
           description="Track funding, deliverables, approvals, and payment activity."
-          actions={!loading && !error && contracts.length > 0 ? (
+          actions={!loading && !error && sideContracts.length > 0 ? (
             <DataFreshness
               lastUpdated={lastUpdated}
               isRefreshing={isRefreshing}
@@ -178,7 +187,7 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
                 </div>
               )}
 
-              {contracts.length > 0 && (
+              {sideContracts.length > 0 && (
                 <div className="relative w-full sm:w-64 shrink-0">
                   <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
