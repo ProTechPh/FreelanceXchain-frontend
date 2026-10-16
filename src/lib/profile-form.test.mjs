@@ -2,6 +2,12 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  employerFormFromProfile,
+  getFirstIncompleteTab,
+  groupMissingByTab,
+  isEmployerProfileTab,
+  employerFormToUpdate,
+  getRequiredBusinessDocuments,
   validateEmployerProfile,
   validateExperience,
   findDuplicateExperience,
@@ -14,10 +20,52 @@ test('validates freelancer profile fields against backend constraints', () => {
   assert.equal(validateFreelancerProfile({ bio: 'A sufficiently detailed bio', hourlyRate: 25, availability: 'available' }), null);
 });
 
+const validEmployer = {
+  companyName: 'Acme',
+  description: 'A detailed company description',
+  industry: 'Tech',
+  businessType: 'sole_proprietorship',
+  tin: '123-456-789',
+  registrationNumber: 'DTI-12345',
+  businessAddress: '1 Ayala Ave, Makati City',
+  businessPhone: '+63 912 345 6789',
+  businessEmail: 'hello@acme.ph',
+  website: '',
+  yearEstablished: '2015',
+};
+
 test('validates employer profile fields against backend constraints', () => {
-  assert.equal(validateEmployerProfile({ companyName: 'X', description: 'A detailed company description', industry: 'Tech' }), 'Company name must be at least 2 characters.');
-  assert.equal(validateEmployerProfile({ companyName: 'Acme', description: 'short', industry: 'Tech' }), 'Description must be at least 10 characters.');
-  assert.equal(validateEmployerProfile({ companyName: 'Acme', description: 'A detailed company description', industry: 'Tech' }), null);
+  assert.equal(validateEmployerProfile({ ...validEmployer, companyName: 'X' }), 'Company name must be at least 2 characters.');
+  assert.equal(validateEmployerProfile({ ...validEmployer, description: 'short' }), 'Description must be at least 10 characters.');
+  assert.equal(validateEmployerProfile(validEmployer), null);
+});
+
+test('requires every business field except the website', () => {
+  assert.equal(validateEmployerProfile({ ...validEmployer, businessType: '' }), 'Select your business type.');
+  assert.equal(validateEmployerProfile({ ...validEmployer, tin: '12345' }), 'TIN must look like 123-456-789 or 123-456-789-000.');
+  assert.equal(validateEmployerProfile({ ...validEmployer, registrationNumber: '' }), 'DTI registration number must be 3 to 50 characters.');
+  assert.equal(validateEmployerProfile({ ...validEmployer, businessType: 'corporation', registrationNumber: '' }), 'SEC registration number must be 3 to 50 characters.');
+  assert.equal(validateEmployerProfile({ ...validEmployer, businessAddress: '' }), 'Business address must be 5 to 500 characters.');
+  assert.equal(validateEmployerProfile({ ...validEmployer, businessPhone: 'call me' }), 'Enter a valid business phone number.');
+  assert.equal(validateEmployerProfile({ ...validEmployer, businessEmail: 'nope' }), 'Enter a valid business email address.');
+  assert.equal(validateEmployerProfile({ ...validEmployer, website: 'acme.ph' }), 'Website must start with http:// or https://.');
+  assert.equal(validateEmployerProfile({ ...validEmployer, website: 'https://acme.ph' }), null);
+  assert.match(validateEmployerProfile({ ...validEmployer, yearEstablished: '' }) ?? '', /^Year established must be between 1800 and \d{4}\.$/);
+});
+
+test('requires DTI for sole proprietorships and SEC otherwise', () => {
+  assert.deepEqual(getRequiredBusinessDocuments('sole_proprietorship'), ['bir_2303', 'dti_certificate', 'mayors_permit']);
+  assert.deepEqual(getRequiredBusinessDocuments('corporation'), ['bir_2303', 'sec_registration', 'mayors_permit']);
+});
+
+test('converts between the employer profile and the form', () => {
+  const update = employerFormToUpdate({ ...validEmployer, tin: ' 123-456-789 ' });
+  assert.equal(update.tin, '123-456-789');
+  assert.equal(update.yearEstablished, 2015);
+  assert.equal(update.website, '');
+  const form = employerFormFromProfile({ companyName: 'Acme', description: 'd', industry: 'i', businessType: null, tin: null, registrationNumber: null, businessAddress: null, businessPhone: null, businessEmail: null, website: null, yearEstablished: null });
+  assert.equal(form.businessType, '');
+  assert.equal(form.yearEstablished, '');
 });
 
 test('requires coherent experience dates and backend minimum lengths', () => {
@@ -37,4 +85,21 @@ test('finds a work history entry with the same position, company and dates', () 
   assert.equal(findDuplicateExperience(form, entries, 'e1'), undefined);
   // Different dates make it a separate stint.
   assert.equal(findDuplicateExperience({ ...form, endDate: null }, entries, null), undefined);
+});
+
+test('groups missing business items by employer profile tab', () => {
+  const groups = groupMissingByTab({ missingFields: ['tin', 'yearEstablished', 'businessEmail'], missingDocuments: ['mayors_permit'] });
+  assert.deepEqual(groups.company, ['Year established']);
+  assert.deepEqual(groups.business, ['TIN', 'Business email']);
+  assert.deepEqual(groups.documents, ["Mayor's / Business Permit"]);
+});
+
+test('picks the first employer profile tab that still has gaps', () => {
+  assert.equal(getFirstIncompleteTab({ missingFields: ['tin'], missingDocuments: ['bir_2303'] }), 'business');
+  assert.equal(getFirstIncompleteTab({ missingFields: ['industry', 'tin'], missingDocuments: [] }), 'company');
+  assert.equal(getFirstIncompleteTab({ missingFields: [], missingDocuments: ['bir_2303'] }), 'documents');
+  assert.equal(getFirstIncompleteTab({ missingFields: [], missingDocuments: [] }), 'company');
+  assert.equal(isEmployerProfileTab('documents'), true);
+  assert.equal(isEmployerProfileTab('billing'), false);
+  assert.equal(isEmployerProfileTab(null), false);
 });

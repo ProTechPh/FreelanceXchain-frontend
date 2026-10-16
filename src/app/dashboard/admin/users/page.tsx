@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import { reportLoadFailure } from '@/lib/report-failure';
 import { useRouter } from 'next/navigation';
 import { useImpersonate } from '@/stores/authStore';
-import { Users, Search, Ban, UserCheck, ShieldCheck, CheckCircle2, XCircle, ShieldAlert, Clock, AlertTriangle, Key, UserPlus, LogIn, Eye, MoreHorizontal, Copy } from 'lucide-react';
+import { Users, Search, Ban, UserCheck, ShieldCheck, CheckCircle2, XCircle, ShieldAlert, Clock, AlertTriangle, Key, UserPlus, LogIn, Eye, MoreHorizontal, Copy, Building2 } from 'lucide-react';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -25,6 +25,7 @@ import { UserDetailDrawer } from '@/components/admin/UserDetailDrawer';
 import { SuspendUserDialog } from '@/components/admin/SuspendUserDialog';
 import { VerifyKycDialog } from '@/components/admin/VerifyKycDialog';
 import { UnsuspendUserDialog } from '@/components/admin/UnsuspendUserDialog';
+import { EmployerBusinessDialog } from '@/components/admin/EmployerBusinessDialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -62,6 +63,7 @@ export default function UsersPage() {
   const [userForPermissions, setUserForPermissions] = useState<AdminUser | null>(null);
   const [addUserOpen, setAddUserOpen] = useState(false);
   const [viewingUser, setViewingUser] = useState<AdminUser | null>(null);
+  const [businessProfileUser, setBusinessProfileUser] = useState<AdminUser | null>(null);
 
   const { hasPermission } = useAdminPermissions();
   const canManageAdmins = hasPermission('admin:manage');
@@ -457,6 +459,17 @@ export default function UsersPage() {
                                 <Eye className="w-4 h-4 mr-2" />
                                 <span>View details</span>
                               </DropdownMenuItem>
+                              {user.role === 'employer' && (
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setBusinessProfileUser(user);
+                                  }}
+                                >
+                                  <Building2 className="w-4 h-4 mr-2" />
+                                  <span>Business profile</span>
+                                </DropdownMenuItem>
+                              )}
                               <DropdownMenuItem
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -756,6 +769,17 @@ export default function UsersPage() {
                           <Eye className="w-4 h-4 mr-2" />
                           <span>View details</span>
                         </DropdownMenuItem>
+                        {user.role === 'employer' && (
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setBusinessProfileUser(user);
+                            }}
+                          >
+                            <Building2 className="w-4 h-4 mr-2" />
+                            <span>Business profile</span>
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation();
@@ -967,6 +991,15 @@ export default function UsersPage() {
         onSuspend={setUserToSuspend}
         onUnsuspend={setUserToUnsuspend}
         pendingActionId={pendingActionId}
+      />
+
+      {/* Employer Business Profile (read-only) */}
+      <EmployerBusinessDialog
+        open={businessProfileUser !== null}
+        onOpenChange={(open) => {
+          if (!open) setBusinessProfileUser(null);
+        }}
+        user={businessProfileUser}
       />
 
       {/* Add / Invite User Modal */}

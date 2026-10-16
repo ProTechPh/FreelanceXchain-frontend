@@ -22,6 +22,7 @@ import { Field } from '@/components/ui/field';
 import { UnsavedChangesBar, UnsavedChangesDialog } from '@/components/ui/unsaved-changes';
 import { SuggestSkillDialog } from '@/components/dashboard/suggest-skill-dialog';
 import { ProjectSkillSelector } from '@/components/dashboard/project-skill-selector';
+import { EmployerProfileFields } from '@/components/dashboard/employer-profile-fields';
 import {
   detectCategoryIds,
   isSoftSkillCategory,
@@ -30,7 +31,7 @@ import {
   type SkillOption,
   type SkillOptionCategory,
 } from '@/lib/skill-taxonomy';
-import { formatDate, formatDateTime } from '@/lib/format';
+import { formatDate } from '@/lib/format';
 
 type ProfileRole = Extract<UserRole, 'employer' | 'freelancer'>;
 
@@ -302,6 +303,28 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
     );
   }
 
+  const identityCard = (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <UserRound className="size-5" />
+          Account identity
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="grid gap-4 sm:grid-cols-3">
+        <Field label="Verified name" htmlFor="profile-name">
+          <Input id="profile-name" value={identityProfile?.name || user?.name || ''} disabled />
+        </Field>
+        <Field label="Nationality" htmlFor="profile-nationality">
+          <Input id="profile-nationality" value={identityProfile?.nationality || 'Not available'} disabled />
+        </Field>
+        <Field label="Email" htmlFor="profile-email">
+          <Input id="profile-email" value={user?.email ?? ''} disabled />
+        </Field>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -342,28 +365,9 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <UserRound className="size-5" />
-            Account identity
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 sm:grid-cols-3">
-          <Field label="Verified name" htmlFor="profile-name">
-            <Input id="profile-name" value={identityProfile?.name || user?.name || ''} disabled />
-          </Field>
-          <Field label="Nationality" htmlFor="profile-nationality">
-            <Input id="profile-nationality" value={identityProfile?.nationality || 'Not available'} disabled />
-          </Field>
-          <Field label="Email" htmlFor="profile-email">
-            <Input id="profile-email" value={user?.email ?? ''} disabled />
-          </Field>
-        </CardContent>
-      </Card>
-
       {role === 'freelancer' ? (
         <>
+          {identityCard}
           <Card>
             <CardHeader>
               <CardTitle>Professional details</CardTitle>
@@ -739,41 +743,12 @@ export function ProfileEditor({ role }: { role: ProfileRole }) {
           )}
         </>
       ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>Company details</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-4 sm:grid-cols-2">
-            <Field label="Company name" htmlFor="company-name">
-              <Input
-                id="company-name"
-                value={employerForm.companyName}
-                onChange={(event) => updateEmployerField('companyName', event.target.value)}
-              />
-            </Field>
-            <Field label="Industry" htmlFor="industry">
-              <Input
-                id="industry"
-                value={employerForm.industry}
-                onChange={(event) => updateEmployerField('industry', event.target.value)}
-              />
-            </Field>
-            <div className="space-y-2 sm:col-span-2">
-              <Label htmlFor="company-description">Company description</Label>
-              <Textarea
-                id="company-description"
-                rows={6}
-                value={employerForm.description}
-                onChange={(event) => updateEmployerField('description', event.target.value)}
-              />
-            </div>
-            {employerProfile && (
-              <p className="text-xs text-muted-foreground sm:col-span-2">
-                Company profile last updated {formatDateTime(employerProfile.updatedAt)}.
-              </p>
-            )}
-          </CardContent>
-        </Card>
+        <EmployerProfileFields
+          form={employerForm}
+          profile={employerProfile}
+          updateField={updateEmployerField}
+          identityCard={identityCard}
+        />
       )}
 
       <UnsavedChangesBar visible={isDirty} saving={saving} onCancel={discardChanges} onSave={() => void saveProfile()} />

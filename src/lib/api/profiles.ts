@@ -2,10 +2,29 @@ import type { AxiosResponse } from 'axios';
 import api from '@/lib/api-client';
 import { normalizeFreelancerProfile } from '@/lib/freelancer-profile-contract';
 import type {
+  BusinessDocument,
+  BusinessDocumentType,
+  BusinessProfileCompleteness,
   FreelancerProfile,
   EmployerProfile,
   SearchResult,
 } from '@/types';
+
+export type EmployerProfileUpdate = Partial<Pick<
+  EmployerProfile,
+  | 'companyName'
+  | 'description'
+  | 'industry'
+  | 'tin'
+  | 'registrationNumber'
+  | 'businessAddress'
+  | 'businessPhone'
+  | 'businessEmail'
+  | 'website'
+>> & {
+  businessType?: NonNullable<EmployerProfile['businessType']>;
+  yearEstablished?: number;
+};
 
 function normalizeFreelancerProfileResponse(
   response: AxiosResponse<FreelancerProfile>,
@@ -64,9 +83,31 @@ export const employersApi = {
   getProfile: () =>
     api.get<EmployerProfile>('/employers/profile'),
   
-  updateProfile: (data: Partial<Pick<EmployerProfile, 'companyName' | 'description' | 'industry'>>) =>
+  updateProfile: (data: EmployerProfileUpdate) =>
     api.patch<EmployerProfile>('/employers/profile', data),
 
   getPublicProfile: (id: string) =>
     api.get<EmployerProfile>(`/employers/${id}`),
+
+  getCompleteness: () =>
+    api.get<BusinessProfileCompleteness>('/employers/profile/completeness'),
+
+  listDocuments: () =>
+    api.get<{ documents: BusinessDocument[] }>('/employers/profile/documents'),
+
+  uploadDocument: (file: File, documentType: BusinessDocumentType, label?: string) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('documentType', documentType);
+    if (label) formData.append('label', label);
+    return api.post<BusinessDocument>('/employers/profile/documents', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
+  deleteDocument: (documentId: string) =>
+    api.delete<{ id: string }>(`/employers/profile/documents/${documentId}`),
+
+  getPublicDocuments: (id: string) =>
+    api.get<{ documents: BusinessDocument[] }>(`/employers/${id}/documents`),
 };
