@@ -41,21 +41,23 @@ const validEmployer = {
 
 test('validates employer profile fields against backend constraints', () => {
   assert.equal(validateEmployerProfile({ ...validEmployer, companyName: 'X' }), 'Company name must be at least 2 characters.');
-  assert.equal(validateEmployerProfile({ ...validEmployer, description: 'short' }), 'Description must be at least 10 characters.');
+  assert.equal(validateEmployerProfile({ ...validEmployer, description: 'short' }), 'Company description must be at least 10 characters.');
   assert.equal(validateEmployerProfile(validEmployer), null);
 });
 
 test('requires every business field except the website', () => {
   assert.equal(validateEmployerProfile({ ...validEmployer, businessType: '' }), 'Select your business type.');
   assert.equal(validateEmployerProfile({ ...validEmployer, tin: '12345' }), 'TIN must look like 123-456-789 or 123-456-789-000.');
-  assert.equal(validateEmployerProfile({ ...validEmployer, registrationNumber: '' }), 'DTI registration number must be 3 to 50 characters.');
-  assert.equal(validateEmployerProfile({ ...validEmployer, businessType: 'corporation', registrationNumber: '' }), 'SEC registration number must be 3 to 50 characters.');
-  assert.equal(validateEmployerProfile({ ...validEmployer, businessAddress: '' }), 'Business address must be 5 to 500 characters.');
-  assert.equal(validateEmployerProfile({ ...validEmployer, businessPhone: 'call me' }), 'Enter a valid business phone number.');
-  assert.equal(validateEmployerProfile({ ...validEmployer, businessEmail: 'nope' }), 'Enter a valid business email address.');
+  assert.equal(validateEmployerProfile({ ...validEmployer, registrationNumber: '' }), 'Enter your DTI registration number.');
+  assert.equal(validateEmployerProfile({ ...validEmployer, registrationNumber: 'ab' }), 'DTI registration number must be 3 to 50 characters.');
+  assert.equal(validateEmployerProfile({ ...validEmployer, businessType: 'corporation', registrationNumber: '' }), 'Enter your SEC registration number.');
+  assert.equal(validateEmployerProfile({ ...validEmployer, businessAddress: '' }), 'Enter your business address.');
+  assert.equal(validateEmployerProfile({ ...validEmployer, businessAddress: 'abc' }), 'Business address must be 5 to 500 characters.');
+  assert.equal(validateEmployerProfile({ ...validEmployer, businessPhone: 'call me' }), 'Enter a valid phone number, e.g. +63 912 345 6789.');
+  assert.equal(validateEmployerProfile({ ...validEmployer, businessEmail: 'nope' }), 'Enter a valid email address, e.g. name@company.com.');
   assert.equal(validateEmployerProfile({ ...validEmployer, website: 'acme.ph' }), 'Website must start with http:// or https://.');
   assert.equal(validateEmployerProfile({ ...validEmployer, website: 'https://acme.ph' }), null);
-  assert.match(validateEmployerProfile({ ...validEmployer, yearEstablished: '' }) ?? '', /^Year established must be between 1800 and \d{4}\.$/);
+  assert.equal(validateEmployerProfile({ ...validEmployer, yearEstablished: '' }), 'Enter the year your business was established, e.g. 2015.');
 });
 
 test('requires DTI for sole proprietorships and SEC otherwise', () => {
@@ -133,4 +135,23 @@ test('finds the first step that still has problems', () => {
   assert.equal(getFirstStepWithErrors({ tin: 'x' }), 'business');
   assert.equal(getFirstStepWithErrors({ tin: 'x', industry: 'y' }), 'company');
   assert.equal(getFirstStepWithErrors({}), null);
+});
+
+test('says what to enter for empty fields and what is wrong for invalid ones', () => {
+  const thisYear = new Date().getFullYear();
+  assert.equal(validateEmployerProfile({ ...validEmployer, companyName: '' }), 'Enter your company name.');
+  assert.equal(validateEmployerProfile({ ...validEmployer, industry: ' ' }), 'Enter your industry, e.g. Construction or Retail.');
+  assert.equal(validateEmployerProfile({ ...validEmployer, industry: 'X' }), 'Industry must be at least 2 characters.');
+  assert.equal(validateEmployerProfile({ ...validEmployer, description: '' }), 'Add a short description of your company.');
+  assert.equal(validateEmployerProfile({ ...validEmployer, yearEstablished: '15' }), 'Enter the year as 4 digits, e.g. 2015.');
+  assert.equal(validateEmployerProfile({ ...validEmployer, yearEstablished: String(thisYear + 1) }), `Year established can't be later than ${thisYear}.`);
+  assert.equal(validateEmployerProfile({ ...validEmployer, yearEstablished: '1700' }), "Year established can't be earlier than 1800.");
+  assert.equal(validateEmployerProfile({ ...validEmployer, tin: '' }), 'Enter your TIN, e.g. 123-456-789-000.');
+  assert.equal(validateEmployerProfile({ ...validEmployer, businessPhone: '' }), 'Enter your business phone number.');
+  assert.equal(validateEmployerProfile({ ...validEmployer, businessEmail: '' }), 'Enter your business email.');
+  assert.equal(validateEmployerProfile({ ...validEmployer, businessType: '', registrationNumber: '' }), 'Select your business type.');
+  assert.equal(
+    getEmployerStepErrors({ ...validEmployer, businessType: '', registrationNumber: '' }, 'business').registrationNumber,
+    'Enter your DTI or SEC registration number.',
+  );
 });

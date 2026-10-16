@@ -361,13 +361,19 @@ export function EmployerProfileFields({
                 />
               </Field>
               <Field label="Industry" htmlFor="industry" required error={fieldErrors.industry}>
-                <Input id="industry" value={form.industry} onChange={(event) => setField('industry', event.target.value)} />
+                <Input
+                  id="industry"
+                  placeholder="e.g. Construction, Retail, Software"
+                  value={form.industry}
+                  onChange={(event) => setField('industry', event.target.value)}
+                />
               </Field>
               <Field label="Year established" htmlFor="year-established" required error={fieldErrors.yearEstablished}>
                 <Input
                   id="year-established"
                   type="number"
                   inputMode="numeric"
+                  placeholder="e.g. 2015"
                   min={1800}
                   max={new Date().getFullYear()}
                   value={form.yearEstablished}
@@ -478,6 +484,7 @@ export function EmployerProfileFields({
               <Field label="Business address" htmlFor="business-address" required error={fieldErrors.businessAddress} className="sm:col-span-2">
                 <Textarea
                   id="business-address"
+                  placeholder="Street, barangay, city, province"
                   rows={2}
                   maxLength={500}
                   value={form.businessAddress}
@@ -497,6 +504,7 @@ export function EmployerProfileFields({
                 <Input
                   id="business-email"
                   type="email"
+                  placeholder="name@company.com"
                   value={form.businessEmail}
                   onChange={(event) => setField('businessEmail', event.target.value)}
                 />
