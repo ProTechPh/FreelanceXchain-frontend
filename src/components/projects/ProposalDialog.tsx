@@ -35,6 +35,8 @@ import {
   MAX_COVER_LETTER_LENGTH,
   MAX_DURATION_DAYS,
   MAX_FILE_COUNT,
+  MIN_PROPOSED_RATE,
+  MAX_PROPOSED_RATE,
 } from '@/lib/proposal-submission';
 import {
   DOCUMENT_ACCEPT_STRING,
@@ -111,11 +113,9 @@ export function ProposalDialog({
 }: ProposalDialogProps) {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
-  const { rate: currentEthRate, formatEthToPhp, convertEthToPhp, convertPhpToEth, formatPhpToEth } = useEthPhpRate();
+  const { formatEthToPhp } = useEthPhpRate();
   const isKycApproved = user?.kycStatus === 'approved';
   const fieldId = useId();
-
-  const [phpRate, setPhpRate] = useState('');
 
   const {
     form,
@@ -140,12 +140,11 @@ export function ProposalDialog({
   const [generatingAI, setGeneratingAI] = useState(false);
   const [aiProposal, setAiProposal] = useState<AIProposalResult | null>(null);
   const [customNotes, setCustomNotes] = useState('');
-  const [ndaAgreed, setNdaAgreed] = useState(false);
+  const [ndaAgreed, setNdaAgreed] = useState(true);
   const [showCustomNotes, setShowCustomNotes] = useState(false);
   const [viewMode, setViewMode] = useState<'preview' | 'edit'>('edit');
   const [editableCoverLetter, setEditableCoverLetter] = useState('');
   const [confirmDiscardOpen, setConfirmDiscardOpen] = useState(false);
-  const [rateMode, setRateMode] = useState<'PHP' | 'ETH'>('PHP');
 
   const blockedReason = !user
     ? 'Please sign in to submit your proposal.'
@@ -222,74 +221,8 @@ export function ProposalDialog({
     aiProposal
   );
 
-  // Synchronize phpRate when form.proposedRate changes from AI or resets
-  useEffect(() => {
-    if (!form.proposedRate) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setPhpRate('');
-      return;
-    }
-    const ethNum = parseFloat(form.proposedRate);
-    if (!Number.isFinite(ethNum) || ethNum <= 0) {
-      setPhpRate('');
-      return;
-    }
-    const phpVal = convertEthToPhp(ethNum);
-    if (phpVal !== null) {
-      // Format with up to 2 decimal places, avoiding trailing zeroes if whole
-      const rounded = Math.round(phpVal * 100) / 100;
-      setPhpRate(String(rounded));
-    }
-  }, [form.proposedRate, convertEthToPhp]);
-
-  const handlePhpRateChange = (inputVal: string) => {
-    setPhpRate(inputVal);
-    setFieldError((current) => (current?.field === 'proposedRate' ? null : current));
-    if (!inputVal || inputVal.trim() === '') {
-      handleRateChange('', '');
-      return;
-    }
-    const phpNum = parseFloat(inputVal);
-    if (!Number.isFinite(phpNum) || phpNum <= 0) {
-      handleRateChange('', inputVal);
-      return;
-    }
-    const ethVal = convertPhpToEth(phpNum);
-    if (ethVal !== null && Number.isFinite(ethVal) && ethVal > 0) {
-      // Keep precision up to 6 decimal places for ETH
-      const roundedEth = Math.round(ethVal * 1000000) / 1000000;
-      handleRateChange(String(roundedEth), inputVal);
-    } else {
-      handleRateChange('', inputVal);
-    }
-  };
-
-  const handleEthRateChange = (inputVal: string) => {
-    setFieldError((current) => (current?.field === 'proposedRate' ? null : current));
-    if (!inputVal || inputVal.trim() === '') {
-      setPhpRate('');
-      handleRateChange('', '');
-      return;
-    }
-    const ethNum = parseFloat(inputVal);
-    if (!Number.isFinite(ethNum) || ethNum <= 0) {
-      setPhpRate('');
-      handleRateChange(inputVal, '');
-      return;
-    }
-    const phpVal = convertEthToPhp(ethNum);
-    if (phpVal !== null && Number.isFinite(phpVal) && phpVal > 0) {
-      const roundedPhp = Math.round(phpVal * 100) / 100;
-      setPhpRate(String(roundedPhp));
-      handleRateChange(inputVal, String(roundedPhp));
-    } else {
-      handleRateChange(inputVal, '');
-    }
-  };
-
   const resetAndClose = () => {
     resetForm();
-    setPhpRate('');
     setAiProposal(null);
     setCustomNotes('');
     setShowCustomNotes(false);
@@ -580,109 +513,42 @@ export function ProposalDialog({
         <div className="space-y-5">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field
-              label={
-                <span className="flex items-center justify-between w-full">
-                  <span>Proposed rate ({rateMode === 'PHP' ? 'PHP' : 'ETH'})</span>
-                  <span className="inline-flex items-center gap-1 rounded bg-muted/60 p-0.5 text-2xs font-normal">
-                    <button
-                      type="button"
-                      onClick={() => setRateMode('PHP')}
-                      className={cn(
-                        'px-2 py-0.5 rounded font-semibold transition-all cursor-pointer',
-                        rateMode === 'PHP'
-                          ? 'bg-background text-primary shadow-xs'
-                          : 'text-muted-foreground hover:text-foreground'
-                      )}
-                    >
-                      ₱ PHP
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setRateMode('ETH')}
-                      className={cn(
-                        'px-2 py-0.5 rounded font-semibold transition-all cursor-pointer',
-                        rateMode === 'ETH'
-                          ? 'bg-background text-primary shadow-xs'
-                          : 'text-muted-foreground hover:text-foreground'
-                      )}
-                    >
-                      Ξ ETH
-                    </button>
-                  </span>
-                </span>
-              }
+              label="Proposed rate (USD)"
               htmlFor={`${fieldId}-rate`}
               description={
                 project
-                  ? `Client budget: ${project.budget && project.budget > 0 ? `${formatEthToPhp(project.budget)} (${formatAmount(project.budget, { currency: 'ETH' })})` : 'Negotiable'}`
+                  ? `Client budget: ${project.budget && project.budget > 0 ? `${formatAmount(project.budget, { currency: 'USD' })}` : 'Negotiable'}`
                   : undefined
               }
               error={fieldError?.field === 'proposedRate' ? fieldError.message : null}
               required
             >
               <div className="relative">
-                {rateMode === 'PHP' ? (
-                  <FieldInput
-                    type="number"
-                    min="1"
-                    step="any"
-                    inputMode="decimal"
-                    placeholder="e.g. 1500"
-                    className="pr-16 tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none font-medium"
-                    value={phpRate}
-                    onChange={(event) => handlePhpRateChange(event.target.value)}
-                  />
-                ) : (
-                  <FieldInput
-                    type="number"
-                    min="0.0001"
-                    step="any"
-                    inputMode="decimal"
-                    placeholder="e.g. 0.05"
-                    className="pr-16 tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none font-medium"
-                    value={form.proposedRate}
-                    onChange={(event) => handleEthRateChange(event.target.value)}
-                  />
-                )}
-                <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs font-bold text-muted-foreground" aria-hidden="true">
-                  {rateMode === 'PHP' ? 'PHP (₱)' : 'ETH (Ξ)'}
+                <FieldInput
+                  id={`${fieldId}-rate`}
+                  aria-label="Proposed rate (USD)"
+                  type="number"
+                  min={MIN_PROPOSED_RATE}
+                  max={MAX_PROPOSED_RATE}
+                  step="any"
+                  inputMode="decimal"
+                  placeholder="0.00"
+                  className="pr-14 tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  value={form.proposedRate}
+                  onChange={(event) => handleRateChange(event.target.value)}
+                />
+                <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs font-medium text-muted-foreground" aria-hidden="true">
+                  USD
                 </span>
               </div>
               {form.proposedRate && parseFloat(form.proposedRate) > 0 ? (
                 <div className="mt-1.5 space-y-1">
                   <div className="flex items-center justify-between rounded-md bg-primary/10 px-2.5 py-1.5 text-xs border border-primary/20">
-                    <span className="text-muted-foreground font-medium">
-                      {rateMode === 'PHP' ? 'Auto-converted Escrow Rate:' : 'Philippine Peso Value:'}
-                    </span>
-                    <span className="font-bold text-primary">
-                      {rateMode === 'PHP'
-                        ? `≈ ${formatPhpToEth(phpRate)}`
-                        : `≈ ${formatEthToPhp(form.proposedRate)}`}
-                    </span>
+                    <span className="text-muted-foreground font-medium">Philippine Peso Value:</span>
+                    <span className="font-bold text-primary">≈ {formatEthToPhp(form.proposedRate)}</span>
                   </div>
-                  {currentEthRate ? (
-                    <div className="flex items-center justify-between px-1 text-2xs text-muted-foreground">
-                      <span>Live rate:</span>
-                      <span className="font-medium text-foreground">
-                        1 ETH = {formatAmount(currentEthRate, { currency: 'PHP' })}
-                      </span>
-                    </div>
-                  ) : null}
                 </div>
-              ) : (
-                <div className="mt-1 space-y-0.5">
-                  <p className="text-2xs text-muted-foreground">
-                    {rateMode === 'PHP'
-                      ? 'Enter rate in Philippine Peso (₱). Automatically converts to ETH for on-chain escrow.'
-                      : 'Enter rate in ETH. Automatically converts to Philippine Peso (₱).'}
-                  </p>
-                  {currentEthRate ? (
-                    <p className="text-2xs text-muted-foreground font-medium">
-                      Live rate: 1 ETH = {formatAmount(currentEthRate, { currency: 'PHP' })}
-                    </p>
-                  ) : null}
-                </div>
-              )}
+              ) : null}
             </Field>
 
             <Field

@@ -92,20 +92,12 @@ test('does not call the API when proposal input is invalid', async () => {
 
 test('holds rate, duration, and cover letter to the same bounds as the API', () => {
   assert.equal(
-    validateProposalForm({ ...validForm, proposedRate: '0.00001' }),
-    'Proposed rate must be at least 0.0001 ETH.',
-  );
-  assert.equal(
-    validateProposalForm({ ...validForm, proposedRate: '0.006986', phpRate: '1063' }),
-    null,
-  );
-  assert.equal(
-    validateProposalForm({ ...validForm, proposedRate: '0.006986', phpRate: '0.5' }),
-    'Proposed rate must be at least ₱1.',
+    validateProposalForm({ ...validForm, proposedRate: '0.5' }),
+    'Proposed rate must be at least $1.',
   );
   assert.equal(
     validateProposalForm({ ...validForm, proposedRate: '1000001' }),
-    'Proposed rate cannot exceed 1,000,000 ETH.',
+    'Proposed rate cannot exceed $1,000,000.',
   );
   assert.equal(
     validateProposalForm({ ...validForm, estimatedDuration: '10.5' }),

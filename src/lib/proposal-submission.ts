@@ -37,7 +37,7 @@ const MAX_TOTAL_SIZE = 25 * 1024 * 1024;
 
 // Mirrors submitProposalMultipartSchema on the API, so anything the form
 // accepts the server accepts too. Minimum 0.0001 ETH (~₱15).
-export const MIN_PROPOSED_RATE = 0.0001;
+export const MIN_PROPOSED_RATE = 1;
 export const MAX_PROPOSED_RATE = 1_000_000;
 export const MIN_PROPOSED_RATE_PHP = 1;
 export const MAX_DURATION_DAYS = 3650;
@@ -74,10 +74,10 @@ export function findProposalFormError(form: ProposalSubmissionForm): ProposalFie
     return { field: 'proposedRate', message: 'Proposed rate must be greater than 0.' };
   }
   if (proposedRate < MIN_PROPOSED_RATE) {
-    return { field: 'proposedRate', message: `Proposed rate must be at least ${MIN_PROPOSED_RATE} ETH.` };
+    return { field: 'proposedRate', message: `Proposed rate must be at least $${MIN_PROPOSED_RATE}.` };
   }
   if (proposedRate > MAX_PROPOSED_RATE) {
-    return { field: 'proposedRate', message: `Proposed rate cannot exceed ${MAX_PROPOSED_RATE.toLocaleString('en-US')} ETH.` };
+    return { field: 'proposedRate', message: 'Proposed rate cannot exceed $1,000,000.' };
   }
 
   const estimatedDuration = Number(form.estimatedDuration);

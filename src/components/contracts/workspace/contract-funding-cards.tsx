@@ -32,15 +32,15 @@ export function ContractFundingCards({
               <div className="grid grid-cols-1 gap-3 text-sm xs:grid-cols-3">
                 <div>
                   <p className="text-muted-foreground">Total</p>
-                  <p className="font-semibold">{formatAmount(paymentStatus.totalAmount, { currency: contract.currency || 'PHP' })}</p>
+                  <p className="font-semibold">{formatAmount(paymentStatus.totalAmount, { currency: contract.currency || 'USD' })}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Released</p>
-                  <p className="font-semibold text-success">{formatAmount(paymentStatus.releasedAmount, { currency: contract.currency || 'PHP' })}</p>
+                  <p className="font-semibold text-success">{formatAmount(paymentStatus.releasedAmount, { currency: contract.currency || 'USD' })}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Pending</p>
-                  <p className="font-semibold text-warning">{formatAmount(paymentStatus.pendingAmount, { currency: contract.currency || 'PHP' })}</p>
+                  <p className="font-semibold text-warning">{formatAmount(paymentStatus.pendingAmount, { currency: contract.currency || 'USD' })}</p>
                 </div>
               </div>
               <div>
@@ -89,7 +89,7 @@ export function ContractFundingCards({
                 <p className="truncate font-mono text-xs">{fundInfo.arbiterWallet || 'Configured'}</p>
               </div>
               <p className="text-xs text-muted-foreground">
-                Funding will prompt MetaMask to deposit {formatAmount(contract.totalAmount, { currency: contract.currency || 'PHP' })} directly from your
+                Funding will prompt MetaMask to deposit {formatAmount(contract.totalAmount, { currency: contract.currency || 'USD' })} directly from your
                 wallet into the secure smart contract escrow on the blockchain.
               </p>
               <GasFeeBreakdownCard

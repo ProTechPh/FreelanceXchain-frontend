@@ -129,6 +129,7 @@ export function ContractPaymentHistory({
                       </span>
                       {(!record.currency || record.currency.toUpperCase() === 'ETH') && (
                         <span className="text-2xs text-muted-foreground">
+                          {direction === 'in' ? '+' : direction === 'out' ? '−' : ''}
                           {formatAmount(record.amount, { currency: 'ETH', fractionDigits: 4 })}
                         </span>
                       )}

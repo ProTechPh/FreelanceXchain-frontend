@@ -25,7 +25,7 @@ import {
 // values the form (and the API) accept, so an AI draft never blocks submission.
 function toSubmittableRate(value: number): string {
   if (!Number.isFinite(value) || value <= 0) return '';
-  return String(Math.min(MAX_PROPOSED_RATE, Math.max(MIN_PROPOSED_RATE, Math.round(value * 1000000) / 1000000)));
+  return String(Math.min(MAX_PROPOSED_RATE, Math.max(MIN_PROPOSED_RATE, Math.round(value))));
 }
 
 function toSubmittableDuration(value: number): string {

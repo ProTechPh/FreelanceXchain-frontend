@@ -182,6 +182,11 @@ export default function CreateProjectPage() {
         return [...current, ...suggestions.filter((skill) => !selectedIds.has(skill.id))];
       });
       clearFieldError('skills');
+      toast.success(
+        suggestions.length > 0
+          ? `Added ${suggestions.length} suggested skill${suggestions.length === 1 ? '' : 's'}.`
+          : 'No additional taxonomy skills were found in the description.',
+      );
     } catch (error) {
       reportFailure(error, 'suggest matching skills');
     } finally {
@@ -451,7 +456,7 @@ export default function CreateProjectPage() {
                         className="h-8"
                       >
                         <Sparkles className="mr-1.5 h-3.5 w-3.5 text-primary" />
-                        {extractingSkills ? 'Extracting…' : 'Suggest with AI'}
+                        {extractingSkills ? 'Extracting…' : 'Suggest from description'}
                       </Button>
                     ) : (
                       <UpgradeButton
