@@ -68,44 +68,61 @@ test('project form adds AI-suggested taxonomy skills and real reference files', 
   await expect(page.getByRole('list', { name: 'Selected project attachments' })).toContainText('requirements.pdf');
 });
 
-test('project form lets employers browse every skill by category', async ({ page }) => {
+test('project form splits technical and soft skills and narrows them by title', async ({ page }) => {
   await authenticate(page, 'employer');
   const development = Array.from({ length: 10 }, (_, index) => ({ id: `dev-${index}`, categoryId: 'category-1', name: `Dev Skill ${index}`, description: '', isActive: true }));
   const design = [{ id: 'design-figma', categoryId: 'category-2', name: 'Figma', description: '', isActive: true }];
+  const soft = [{ id: 'soft-communication', categoryId: 'category-3', name: 'Communication', description: '', isActive: true }];
   await page.route('**/api/skills', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ categories: [
     { id: 'category-1', name: 'Development', description: '', isActive: true, skills: development },
     { id: 'category-2', name: 'Design', description: '', isActive: true, skills: design },
+    { id: 'category-3', name: 'Soft Skills', description: '', isActive: true, skills: soft },
   ] }) }));
 
   await page.goto('/dashboard/employer/projects/new');
-  await expect(page.getByText('No skills selected yet')).toBeVisible();
+  await expect(page.getByText('No technical skills picked yet. Choose from the list below.')).toBeVisible();
+  await expect(page.getByText('Add a project title to narrow these skills.')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Dev Skill 9', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Figma', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Communication', exact: true })).toHaveCount(0);
 
-  const categories = page.getByRole('group', { name: 'Skill categories' });
-  await categories.getByRole('button', { name: 'Design' }).click();
-  await expect(page.getByRole('button', { name: 'Dev Skill 0', exact: true })).toBeHidden();
+  // A title that names a catalog skill narrows the technical skills to its category.
+  await page.getByLabel('Project Title').fill('Figma landing page redesign');
+  await expect(page.getByText('Showing skills for:')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Dev Skill 0', exact: true })).toHaveCount(0);
   const figma = page.getByRole('button', { name: 'Figma', exact: true });
   await figma.click();
   await expect(figma).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByLabel('Remove Figma')).toBeVisible();
-  await expect(categories.getByRole('button', { name: /^Design\s+1 selected$/ })).toBeVisible();
+  await expect(page.getByRole('tab', { name: /Technical skills/ })).toContainText('1');
 
   // Clicking a selected skill again removes it.
   await figma.click();
   await expect(page.getByLabel('Remove Figma')).toBeHidden();
 
-  await categories.getByRole('button', { name: 'All categories' }).click();
+  // Removing the detected category shows every technical skill again.
+  await page.getByRole('button', { name: 'Stop showing Design skills' }).click();
+  await expect(page.getByText('No match for your project title — showing all technical skills.')).toBeVisible();
   await page.getByLabel('Search skills').fill('skill 7');
   await expect(page.getByRole('button', { name: /^Dev Skill/ })).toHaveCount(1);
   await page.getByRole('button', { name: 'Dev Skill 7', exact: true }).click();
+  await expect(page.getByLabel('Remove Dev Skill 7')).toBeVisible();
+
+  // Soft skills live on their own tab, and Clear all there leaves technical picks alone.
+  await page.getByRole('tab', { name: /Soft skills/ }).click();
+  await expect(page.getByRole('button', { name: 'Dev Skill 7', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Communication', exact: true }).click();
+  await expect(page.getByRole('tab', { name: /Soft skills/ })).toContainText('1');
+  await page.getByRole('button', { name: 'Clear all' }).click();
+  await expect(page.getByText('No soft skills picked yet. Choose from the list below.')).toBeVisible();
+  await page.getByRole('tab', { name: /Technical skills/ }).click();
   await expect(page.getByLabel('Remove Dev Skill 7')).toBeVisible();
 
   await page.getByLabel('Search skills').fill('zzz');
   await expect(page.getByText('No skills match')).toBeVisible();
   await page.getByRole('button', { name: 'Clear search' }).first().click();
   await page.getByRole('button', { name: 'Clear all' }).click();
-  await expect(page.getByText('No skills selected yet')).toBeVisible();
+  await expect(page.getByText('No technical skills picked yet. Choose from the list below.')).toBeVisible();
 });
 
 test('freelancer can open the full recommendation list', async ({ page }) => {

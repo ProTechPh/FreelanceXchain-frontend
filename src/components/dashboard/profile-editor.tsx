@@ -23,10 +23,10 @@ import { Field } from '@/components/ui/field';
 import { UnsavedChangesBar, UnsavedChangesDialog } from '@/components/ui/unsaved-changes';
 import { SuggestSkillDialog } from '@/components/dashboard/suggest-skill-dialog';
 import { ProjectSkillSelector } from '@/components/dashboard/project-skill-selector';
+import { SkillCategoryScope, useSkillCategoryScope } from '@/components/dashboard/skill-category-scope';
 import { EmployerProfileFields } from '@/components/dashboard/employer-profile-fields';
 import { useRoleSwitch } from '@/hooks/use-role-switch';
 import {
-  detectCategoryIds,
   isSoftSkillCategory,
   skillNameKey,
   toSkillCategories,
@@ -78,9 +78,6 @@ export function ProfileEditor({
   const [experienceForm, setExperienceForm] = useState<ExperienceForm>(emptyExperience);
   const [editingExperienceId, setEditingExperienceId] = useState<string | null>(null);
   const [showExperienceForm, setShowExperienceForm] = useState(false);
-  // Manual corrections to the categories detected from the job position.
-  const [excludedCategoryIds, setExcludedCategoryIds] = useState<string[]>([]);
-  const [addedCategoryIds, setAddedCategoryIds] = useState<string[]>([]);
   const [actionId, setActionId] = useState<string | null>(null);
   const [suggestSkillOpen, setSuggestSkillOpen] = useState(false);
   const [skillPickerOpen, setSkillPickerOpen] = useState(false);
@@ -132,37 +129,8 @@ export function ProfileEditor({
     () => toSkillOptions(experienceForm.skills),
     [experienceForm.skills, toSkillOptions]
   );
-  const technicalCategories = useMemo(
-    () => skillCategories.filter((category) => !isSoftSkillCategory(category.name)),
-    [skillCategories]
-  );
-  const detectedCategoryIds = useMemo(
-    () => detectCategoryIds(experienceForm.title, skillCategories),
-    [experienceForm.title, skillCategories]
-  );
-  const shownCategoryIds = useMemo(() => {
-    const shown = new Set(detectedCategoryIds.filter((id) => !excludedCategoryIds.includes(id)));
-    addedCategoryIds.forEach((id) => shown.add(id));
-    return shown;
-  }, [detectedCategoryIds, excludedCategoryIds, addedCategoryIds]);
   // The job position narrows the technical skills to its categories; soft skills always show.
-  const positionSkillCategories = useMemo(
-    () =>
-      shownCategoryIds.size > 0
-        ? skillCategories.filter((category) => shownCategoryIds.has(category.id) || isSoftSkillCategory(category.name))
-        : skillCategories,
-    [shownCategoryIds, skillCategories]
-  );
-
-  const hideCategory = (id: string) => {
-    setAddedCategoryIds((current) => current.filter((candidate) => candidate !== id));
-    setExcludedCategoryIds((current) => (current.includes(id) ? current : [...current, id]));
-  };
-
-  const showCategory = (id: string) => {
-    setExcludedCategoryIds((current) => current.filter((candidate) => candidate !== id));
-    setAddedCategoryIds((current) => (current.includes(id) ? current : [...current, id]));
-  };
+  const positionScope = useSkillCategoryScope(experienceForm.title, skillCategories);
 
   const softSkillNames = useMemo(
     () =>
@@ -234,8 +202,7 @@ export function ProfileEditor({
 
   const editExperience = (experience: WorkExperience) => {
     setEditingExperienceId(experience.id);
-    setExcludedCategoryIds([]);
-    setAddedCategoryIds([]);
+    positionScope.reset();
     setExperienceForm({
       title: experience.title,
       company: experience.company,
@@ -250,8 +217,7 @@ export function ProfileEditor({
   const resetExperienceForm = () => {
     setEditingExperienceId(null);
     setExperienceForm(emptyExperience);
-    setExcludedCategoryIds([]);
-    setAddedCategoryIds([]);
+    positionScope.reset();
     setShowExperienceForm(false);
   };
 
@@ -583,58 +549,14 @@ export function ProfileEditor({
                       <p id="experience-skills-hint" className="text-xs text-muted-foreground">
                         Pick the technical and soft skills you used. They are added to your Skills automatically.
                       </p>
-                      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground" aria-live="polite">
-                        {shownCategoryIds.size > 0 ? (
-                          <>
-                            <span>Showing skills for:</span>
-                            {technicalCategories
-                              .filter((category) => shownCategoryIds.has(category.id))
-                              .map((category) => (
-                                <span
-                                  key={category.id}
-                                  className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 py-0.5 pl-2.5 pr-1 font-medium text-primary"
-                                >
-                                  {category.name}
-                                  <button
-                                    type="button"
-                                    aria-label={`Stop showing ${category.name} skills`}
-                                    onClick={() => hideCategory(category.id)}
-                                    className="rounded-full p-0.5 hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                  >
-                                    <X className="size-3" aria-hidden="true" />
-                                  </button>
-                                </span>
-                              ))}
-                          </>
-                        ) : (
-                          <span>
-                            {experienceForm.title.trim()
-                              ? 'No match for your job position — showing all technical skills.'
-                              : 'Type your job position to narrow these skills.'}
-                          </span>
-                        )}
-                        {technicalCategories.some((category) => !shownCategoryIds.has(category.id)) && (
-                          <select
-                            aria-label="Add a skill category"
-                            className="h-7 rounded-full border border-dashed border-input bg-transparent px-2.5 text-xs text-foreground"
-                            value=""
-                            onChange={(event) => {
-                              if (event.target.value) showCategory(event.target.value);
-                            }}
-                          >
-                            <option value="">+ Add category</option>
-                            {technicalCategories
-                              .filter((category) => !shownCategoryIds.has(category.id))
-                              .map((category) => (
-                                <option key={category.id} value={category.id}>
-                                  {category.name}
-                                </option>
-                              ))}
-                          </select>
-                        )}
-                      </div>
+                      <SkillCategoryScope
+                        scope={positionScope}
+                        hasText={Boolean(experienceForm.title.trim())}
+                        emptyText="Type your job position to narrow these skills."
+                        noMatchText="No match for your job position — showing all technical skills."
+                      />
                       <ProjectSkillSelector
-                        categories={positionSkillCategories}
+                        categories={positionScope.scopedCategories}
                         selected={experienceSkillOptions}
                         loading={skillsLoading}
                         labelledBy="experience-skills-label"
