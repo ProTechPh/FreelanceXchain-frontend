@@ -23,18 +23,20 @@ import { Alert } from '@/components/ui/alert';
 import { Field, useField } from '@/components/ui/field';
 import { reportFailure } from '@/lib/report-failure';
 import { formatAmount } from '@/lib/format';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 import { formatFileSize } from '@/lib/attachment-presentation';
 import { cn } from '@/lib/utils';
 import { matchingApi, type AIProposalResult } from '@/lib/api';
 import { UpgradeButton } from '@/components/billing/upgrade-button';
 import { usePlan } from '@/hooks/use-plan';
 import { useRateApp } from '@/components/feedback/rate-app-provider';
+import { GasFeeBreakdownCard } from '@/components/ui/gas-fee-breakdown-card';
 import {
   MAX_COVER_LETTER_LENGTH,
   MAX_DURATION_DAYS,
   MAX_FILE_COUNT,
-  MAX_PROPOSED_RATE,
   MIN_PROPOSED_RATE,
+  MAX_PROPOSED_RATE,
 } from '@/lib/proposal-submission';
 import {
   DOCUMENT_ACCEPT_STRING,
@@ -71,7 +73,8 @@ function createProposalDocumentFile(
   projectTitle: string,
   coverLetter: string,
   highlights: string[],
-  milestones: Array<{ title: string; description: string; amount: number; durationDays: number }>
+  milestones: Array<{ title: string; description: string; amount: number; durationDays: number }>,
+  formatEthToPhp?: (val: number | string) => string
 ): File {
   const safeTitle = projectTitle.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 30);
   const rawContent = `# Proposal: ${projectTitle}
@@ -84,7 +87,7 @@ ${highlights.map((h) => `- ${h}`).join('\n')}
 ${coverLetter}
 
 ## Proposed Milestones & Delivery Schedule
-${milestones.map((m, i) => `${i + 1}. **${m.title}** (${formatAmount(m.amount, { currency: 'ETH' })} - ${m.durationDays} days)\n   ${m.description}`).join('\n\n')}
+${milestones.map((m, i) => `${i + 1}. **${m.title}** (${formatEthToPhp ? `${formatEthToPhp(m.amount)} (${formatAmount(m.amount, { currency: 'ETH' })})` : formatAmount(m.amount, { currency: 'ETH' })} - ${m.durationDays} days)\n   ${m.description}`).join('\n\n')}
 
 ---
 Submitted via FreelanceXchain Decentralized Platform with Smart Contract Escrow Protection.
@@ -110,6 +113,7 @@ export function ProposalDialog({
 }: ProposalDialogProps) {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
+  const { formatEthToPhp } = useEthPhpRate();
   const isKycApproved = user?.kycStatus === 'approved';
   const fieldId = useId();
 
@@ -136,8 +140,9 @@ export function ProposalDialog({
   const [generatingAI, setGeneratingAI] = useState(false);
   const [aiProposal, setAiProposal] = useState<AIProposalResult | null>(null);
   const [customNotes, setCustomNotes] = useState('');
+  const [ndaAgreed, setNdaAgreed] = useState(true);
   const [showCustomNotes, setShowCustomNotes] = useState(false);
-  const [viewMode, setViewMode] = useState<'preview' | 'edit'>('preview');
+  const [viewMode, setViewMode] = useState<'preview' | 'edit'>('edit');
   const [editableCoverLetter, setEditableCoverLetter] = useState('');
   const [confirmDiscardOpen, setConfirmDiscardOpen] = useState(false);
 
@@ -165,12 +170,14 @@ export function ProposalDialog({
         highlights: (data.highlights || []).map(sanitizeMarkdownText),
       });
       setEditableCoverLetter(cleanCoverLetter);
+      setViewMode('preview');
 
       const autoFile = createProposalDocumentFile(
         project.title,
         cleanCoverLetter,
         (data.highlights || []).map(sanitizeMarkdownText),
-        data.proposedMilestones || []
+        data.proposedMilestones || [],
+        formatEthToPhp
       );
 
       updateFormWithAI({
@@ -186,7 +193,7 @@ export function ProposalDialog({
     } finally {
       setGeneratingAI(false);
     }
-  }, [project, requestRatingPrompt, updateFormWithAI]);
+  }, [project, requestRatingPrompt, updateFormWithAI, formatEthToPhp]);
 
   useEffect(() => {
     if (open && initialGenerateAI && isPro && project && !aiProposal && !generatingAI) {
@@ -220,6 +227,7 @@ export function ProposalDialog({
     setCustomNotes('');
     setShowCustomNotes(false);
     setEditableCoverLetter('');
+    setViewMode('edit');
     setConfirmDiscardOpen(false);
     onOpenChange(false);
   };
@@ -246,7 +254,8 @@ export function ProposalDialog({
         project.title,
         cleanText,
         aiProposal.highlights,
-        aiProposal.proposedMilestones || []
+        aiProposal.proposedMilestones || [],
+        formatEthToPhp
       );
       setForm((current) => {
         const otherFiles = current.files.filter((f) => !f.name.startsWith('Proposal_'));
@@ -446,8 +455,11 @@ export function ProposalDialog({
             </div>
 
             {viewMode === 'preview' ? (
-              <div className="max-h-52 overflow-y-auto overscroll-contain rounded-lg border border-border/50 bg-background/50 p-3 text-sm sm:max-h-60">
-                <Markdown content={editableCoverLetter || '_No cover letter written yet._'} className="text-xs sm:text-sm" />
+              <div
+                className={`max-h-52 overflow-y-auto overscroll-contain rounded-lg border border-border/50 bg-background/50 p-3 text-sm sm:max-h-60 ${!editableCoverLetter ? 'cursor-pointer hover:border-primary/40' : ''}`}
+                onClick={() => { if (!editableCoverLetter) setViewMode('edit'); }}
+              >
+                <Markdown content={editableCoverLetter || '_No cover letter written yet. Click to write your pitch..._'} className="text-xs sm:text-sm" />
               </div>
             ) : (
               <div>
@@ -487,7 +499,10 @@ export function ProposalDialog({
                       <Badge variant="outline" className="shrink-0 px-1.5 py-0 text-2xs">{m.durationDays}d</Badge>
                     </div>
                     <p className="line-clamp-2 text-2xs text-muted-foreground break-words">{m.description}</p>
-                    <p className="text-xs font-medium text-primary">{formatAmount(m.amount, { currency: 'ETH' })}</p>
+                    <p className="text-xs font-medium text-primary">
+                      {formatEthToPhp(m.amount)}{' '}
+                      <span className="text-2xs text-muted-foreground font-normal">({formatAmount(m.amount, { currency: 'ETH' })})</span>
+                    </p>
                   </div>
                 ))}
               </div>
@@ -500,12 +515,18 @@ export function ProposalDialog({
             <Field
               label="Proposed rate (USD)"
               htmlFor={`${fieldId}-rate`}
-              description={project ? `Client budget: ${formatAmount(project.budget, { currency: 'ETH' })}` : undefined}
+              description={
+                project
+                  ? `Client budget: ${project.budget && project.budget > 0 ? `${formatAmount(project.budget, { currency: 'USD' })}` : 'Negotiable'}`
+                  : undefined
+              }
               error={fieldError?.field === 'proposedRate' ? fieldError.message : null}
               required
             >
               <div className="relative">
                 <FieldInput
+                  id={`${fieldId}-rate`}
+                  aria-label="Proposed rate (USD)"
                   type="number"
                   min={MIN_PROPOSED_RATE}
                   max={MAX_PROPOSED_RATE}
@@ -520,6 +541,14 @@ export function ProposalDialog({
                   USD
                 </span>
               </div>
+              {form.proposedRate && parseFloat(form.proposedRate) > 0 ? (
+                <div className="mt-1.5 space-y-1">
+                  <div className="flex items-center justify-between rounded-md bg-primary/10 px-2.5 py-1.5 text-xs border border-primary/20">
+                    <span className="text-muted-foreground font-medium">Philippine Peso Value:</span>
+                    <span className="font-bold text-primary">≈ {formatEthToPhp(form.proposedRate)}</span>
+                  </div>
+                </div>
+              ) : null}
             </Field>
 
             <Field
@@ -536,7 +565,7 @@ export function ProposalDialog({
                   max={MAX_DURATION_DAYS}
                   step="1"
                   inputMode="numeric"
-                  placeholder="14"
+                  placeholder="e.g. 14"
                   className="pr-14 tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   value={form.estimatedDuration}
                   onChange={(event) => handleDurationChange(event.target.value)}
@@ -547,6 +576,13 @@ export function ProposalDialog({
               </div>
             </Field>
           </div>
+
+          {form.proposedRate && parseFloat(form.proposedRate) > 0 ? (
+            <GasFeeBreakdownCard
+              proposedRateEth={form.proposedRate}
+              variant="freelancer"
+            />
+          ) : null}
 
           <div className="space-y-2">
             <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
@@ -653,6 +689,26 @@ export function ProposalDialog({
             )}
           </div>
 
+          {/* Non-Disclosure Agreement (NDA) & Milestone Terms Commitment */}
+          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4 space-y-2.5">
+            <label className="flex items-start gap-3 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={ndaAgreed}
+                onChange={(e) => setNdaAgreed(e.target.checked)}
+                className="mt-1 size-4 rounded border-border text-primary focus:ring-primary accent-primary"
+              />
+              <div className="space-y-1 text-xs">
+                <span className="font-semibold text-foreground flex items-center gap-1.5">
+                  <span>🔒 Non-Disclosure & Milestone Negotiation Agreement</span>
+                </span>
+                <p className="text-muted-foreground leading-relaxed">
+                  I commit to standard Non-Disclosure (NDA) and confidentiality terms regarding client specifications, business logic, and deliverables. I acknowledge that proposed milestones and rates are subject to mutual discussion with the employer, and will be formally locked in Smart Contract Escrow upon contract creation.
+                </p>
+              </div>
+            </label>
+          </div>
+
         </div>
         </div>
 
@@ -672,8 +728,8 @@ export function ProposalDialog({
             className="w-full sm:w-auto"
             loading={submitting}
             loadingText="Submitting proposal…"
-            disabled={Boolean(user && !isKycApproved) || submitting || generatingAI}
-            title={blockedReason ?? undefined}
+            disabled={Boolean(user && !isKycApproved) || !ndaAgreed || submitting || generatingAI}
+            title={!ndaAgreed ? 'Please agree to the NDA & Milestone Negotiation terms' : blockedReason ?? undefined}
           >
             <Send className="size-4" aria-hidden="true" />
             {!user ? 'Sign in to submit proposal' : isKycApproved ? 'Submit proposal' : 'Identity verification required'}

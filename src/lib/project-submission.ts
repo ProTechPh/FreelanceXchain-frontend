@@ -14,9 +14,10 @@ export interface ProjectSubmissionForm {
   title: string;
   description: string;
   skills: ProjectSubmissionSkill[];
-  budget: string;
-  deadline: string;
-  milestones: ProjectSubmissionMilestone[];
+  freelancerLimit?: number;
+  budget?: string;
+  deadline?: string;
+  milestones?: ProjectSubmissionMilestone[];
   files: File[];
 }
 
@@ -24,9 +25,10 @@ export interface CreateProjectPayload {
   title: string;
   description: string;
   requiredSkills: Array<{ skillId: string }>;
-  budget: number;
-  deadline: string;
-  isRush: boolean;
+  freelancerLimit?: number;
+  budget?: number;
+  deadline?: string;
+  isRush?: boolean;
 }
 
 export interface SetProjectMilestonesPayload {
@@ -45,7 +47,7 @@ interface CreatedProject {
 export interface ProjectSubmissionApi {
   create(data: CreateProjectPayload): Promise<{ data: CreatedProject }>;
   createWithAttachments?(data: FormData): Promise<{ data: CreatedProject }>;
-  setMilestones(
+  setMilestones?(
     projectId: string,
     data: SetProjectMilestonesPayload,
   ): Promise<{ data: CreatedProject }>;
@@ -102,11 +104,14 @@ export function validateProjectStep(
     if (form.skills.length === 0) {
       return 'Select at least one required skill.';
     }
+    if (form.freelancerLimit !== undefined && (!Number.isInteger(form.freelancerLimit) || form.freelancerLimit < 1)) {
+      return 'Freelancer limit must be at least 1.';
+    }
     const fileError = validateProjectFiles(form.files);
     if (fileError) return fileError;
   }
 
-  if (step === 2) {
+  if (step === 2 && form.milestones && form.milestones.length > 0) {
     for (const [index, milestone] of form.milestones.entries()) {
       if (!milestone.title.trim()) {
         return `Milestone ${index + 1} needs a title.`;
@@ -127,29 +132,25 @@ export function validateProjectStep(
     }
   }
 
-  if (step === 3) {
+  if (step === 3 && form.budget) {
     const budget = Number(form.budget);
-    if (!Number.isFinite(budget) || budget <= 0) {
-      return 'Total budget must be greater than 0.';
+    if (!Number.isFinite(budget) || budget < 0) {
+      return 'Budget must be a non-negative number.';
     }
-    if (!form.deadline) {
-      return 'Select a project deadline.';
-    }
-
-    const milestoneTotal = form.milestones.reduce(
-      (total, milestone) => total + Number(milestone.amount),
-      0,
-    );
-    if (Math.abs(milestoneTotal - budget) > 0.01) {
-      return 'Milestone amounts must equal the total budget.';
+    if (form.milestones && form.milestones.length > 0) {
+      const milestoneTotal = form.milestones.reduce(
+        (sum, m) => sum + (Number(m.amount) || 0),
+        0,
+      );
+      if (Math.abs(milestoneTotal - budget) > 0.001) {
+        return 'Milestone amounts must equal the total budget.';
+      }
     }
   }
 
   if (step === 4) {
-    for (const formStep of [1, 2, 3]) {
-      const error = validateProjectStep(formStep, form);
-      if (error) return error;
-    }
+    const error = validateProjectStep(1, form);
+    if (error) return error;
   }
 
   return null;
@@ -160,17 +161,21 @@ export async function submitProject(
   form: ProjectSubmissionForm,
   options?: { now?: Date },
 ): Promise<CreatedProject> {
-  const validationError = validateProjectStep(4, form);
+  const validationError = validateProjectStep(1, form);
   if (validationError) {
     throw new ProjectFormValidationError(validationError);
   }
 
-  const deadline = getDeadlineTimestamp(form.deadline);
+  const deadline = form.deadline
+    ? getDeadlineTimestamp(form.deadline)
+    : new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString();
+
   const projectPayload: CreateProjectPayload = {
     title: form.title.trim(),
     description: form.description.trim(),
     requiredSkills: form.skills.map((skill) => ({ skillId: skill.id })),
-    budget: Number(form.budget),
+    freelancerLimit: form.freelancerLimit && form.freelancerLimit >= 1 ? form.freelancerLimit : 1,
+    budget: form.budget ? Number(form.budget) : 0,
     deadline,
     isRush: false,
   };
@@ -184,45 +189,49 @@ export async function submitProject(
     formData.set('title', projectPayload.title);
     formData.set('description', projectPayload.description);
     formData.set('requiredSkills', JSON.stringify(projectPayload.requiredSkills));
+    formData.set('freelancerLimit', String(projectPayload.freelancerLimit));
     formData.set('budget', String(projectPayload.budget));
-    formData.set('deadline', projectPayload.deadline);
+    formData.set('deadline', projectPayload.deadline ?? deadline);
     form.files.forEach((file) => formData.append('files', file));
     ({ data: createdProject } = await api.createWithAttachments(formData));
   } else {
     ({ data: createdProject } = await api.create(projectPayload));
   }
 
-  const now = options?.now ?? new Date();
-  let cumulativeDays = 0;
-  const milestonesPayload = form.milestones.map((milestone) => {
-    let milestoneDueDate = deadline;
-    const rawDays = milestone.durationDays !== undefined && String(milestone.durationDays).trim() !== ''
-      ? Number(milestone.durationDays)
-      : null;
+  if (api.setMilestones && form.milestones && form.milestones.length > 0) {
+    const now = options?.now ?? new Date();
+    let cumulativeDays = 0;
+    const milestonesPayload = form.milestones.map((milestone) => {
+      let milestoneDueDate = deadline;
+      const rawDays = milestone.durationDays !== undefined && String(milestone.durationDays).trim() !== ''
+        ? Number(milestone.durationDays)
+        : null;
 
-    if (rawDays !== null && Number.isInteger(rawDays) && rawDays > 0) {
-      cumulativeDays += rawDays;
-      const targetDate = new Date(now.getTime() + cumulativeDays * 24 * 60 * 60 * 1000);
-      const targetIso = `${targetDate.toISOString().split('T')[0]}T23:59:59.999Z`;
-      if (new Date(targetIso).getTime() <= new Date(deadline).getTime()) {
-        milestoneDueDate = targetIso;
+      if (rawDays !== null && Number.isInteger(rawDays) && rawDays > 0) {
+        cumulativeDays += rawDays;
+        const targetDate = new Date(now.getTime() + cumulativeDays * 24 * 60 * 60 * 1000);
+        const targetIso = `${targetDate.toISOString().split('T')[0]}T23:59:59.999Z`;
+        if (new Date(targetIso).getTime() <= new Date(deadline).getTime()) {
+          milestoneDueDate = targetIso;
+        }
       }
-    }
 
-    return {
-      title: milestone.title.trim(),
-      description: milestone.description.trim(),
-      amount: Number(milestone.amount),
-      dueDate: milestoneDueDate,
-    };
-  });
+      return {
+        title: milestone.title.trim(),
+        description: milestone.description.trim(),
+        amount: Number(milestone.amount),
+        dueDate: milestoneDueDate,
+      };
+    });
 
-  const { data: projectWithMilestones } = await api.setMilestones(
-    createdProject.id,
-    {
-      milestones: milestonesPayload,
-    },
-  );
+    const { data: projectWithMilestones } = await api.setMilestones(
+      createdProject.id,
+      {
+        milestones: milestonesPayload,
+      },
+    );
+    return projectWithMilestones;
+  }
 
-  return projectWithMilestones;
+  return createdProject;
 }

@@ -18,6 +18,11 @@ import type {
   FunnelMetricsReport,
   FileInfo,
   FileQuota,
+  EmployerProfile,
+  BusinessDocument,
+  BusinessProfileCompleteness,
+  AdminBusinessProfileList,
+  AdminBusinessProfileStatus,
 } from '@/types';
 import type { AuditSearchParams } from '@/lib/audit-log-search';
 import { convertToSecureUrl } from '@/lib/api/files';
@@ -55,6 +60,18 @@ export const adminApi = {
 
   verifyUser: (id: string, reason: string) =>
     api.post(`/admin/users/${id}/verify`, { reason }),
+
+  /** Read-only overview of every employer business profile and its documents. */
+  listEmployerBusinessProfiles: (params?: { status?: AdminBusinessProfileStatus; search?: string }) =>
+    api.get<AdminBusinessProfileList>('/admin/employers/business-profiles', { params }),
+
+  /** Read-only: documents are kept on file, not checked against BIR/DTI/SEC records. */
+  getEmployerBusinessProfile: (userId: string) =>
+    api.get<{
+      profile: EmployerProfile;
+      documents: BusinessDocument[];
+      completeness: BusinessProfileCompleteness | null;
+    }>(`/admin/employers/${userId}/business-profile`),
 
   impersonateUser: (userId: string) =>
     api.post<{ user: AdminUser; accessToken: string }>(`/admin/users/${userId}/impersonate`),

@@ -37,6 +37,7 @@ import type {
 } from '@/types';
 import { useAuthStore } from '@/stores/authStore';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
+import { EmployerBusinessInfo } from '@/components/employers/employer-business-info';
 import Navbar from '@/components/layout/navbar';
 import { FooterSection } from '@/components/layout/footer-section';
 import {
@@ -407,6 +408,8 @@ export default function EmployerProfilePage() {
                   <span>Member Type: <strong className="text-foreground font-semibold">Verified Employer</strong></span>
                 </div>
               </div>
+
+              <EmployerBusinessInfo employerId={employerId} profile={profile} />
             </CardContent>
           </Card>
 

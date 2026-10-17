@@ -9,6 +9,8 @@ import {
   Receipt,
 } from 'lucide-react';
 import { contractsApi } from '@/lib/api';
+import { useAuthStore } from '@/stores/authStore';
+import { isOnRoleSide } from '@/lib/role-switch';
 import { getContractDetailRoute } from '@/lib/contract-route';
 import { StatusBadge } from '@/components/ui/status-badge';
 import type { Contract, UserRole } from '@/types';
@@ -17,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import { formatAmount, formatDate, formatDocumentNumber } from '@/lib/format';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 import { ContractInvoiceDialog } from '@/components/contracts/contract-invoice-dialog';
 
 interface ContractInvoicesListProps {
@@ -24,18 +27,22 @@ interface ContractInvoicesListProps {
 }
 
 export function ContractInvoicesList({ role }: ContractInvoicesListProps) {
+  const { formatEthToPhp } = useEthPhpRate();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'completed'>('all');
   const [selectedContract, setSelectedContract] = useState<Contract | null>(null);
+  const userId = useAuthStore((state) => state.user?.id);
 
   useEffect(() => {
     let active = true;
     contractsApi.list({ limit: 50 })
       .then(({ data }) => {
         if (active) {
-          setContracts(data.items || []);
+          // Contracts from both sides of the account come back; keep this role's side.
+          const items = data.items || [];
+          setContracts(items.filter((contract) => isOnRoleSide(contract, role, userId)));
           setLoading(false);
         }
       })
@@ -49,7 +56,7 @@ export function ContractInvoicesList({ role }: ContractInvoicesListProps) {
     return () => {
       active = false;
     };
-  }, []);
+  }, [role, userId]);
 
   const filteredContracts = useMemo(() => {
     return contracts.filter((contract) => {
@@ -200,7 +207,8 @@ export function ContractInvoicesList({ role }: ContractInvoicesListProps) {
                     <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap">
                       <div className="text-right sm:min-w-[120px]">
                         <p className="text-xs text-muted-foreground">Agreed Value</p>
-                        <p className="text-base font-bold tabular-nums text-foreground">{formatAmount(contract.totalAmount, { currency: contract.currency || 'ETH' })}</p>
+                        <p className="text-base font-bold tabular-nums text-foreground">{formatEthToPhp(contract.totalAmount)}</p>
+                        <p className="text-2xs text-muted-foreground">{formatAmount(contract.totalAmount, { currency: contract.currency || 'ETH' })}</p>
                       </div>
 
                       <div className="flex items-center gap-2">

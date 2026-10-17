@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
@@ -25,7 +25,7 @@ import {
 // values the form (and the API) accept, so an AI draft never blocks submission.
 function toSubmittableRate(value: number): string {
   if (!Number.isFinite(value) || value <= 0) return '';
-  return String(Math.min(MAX_PROPOSED_RATE, Math.max(MIN_PROPOSED_RATE, Math.round(value * 100) / 100)));
+  return String(Math.min(MAX_PROPOSED_RATE, Math.max(MIN_PROPOSED_RATE, Math.round(value))));
 }
 
 function toSubmittableDuration(value: number): string {
@@ -53,7 +53,7 @@ interface UseProposalFormResult {
   setFieldError: React.Dispatch<React.SetStateAction<{ field: ProposalField; message: string } | null>>;
   submitting: boolean;
   handleSubmit: (coverLetter?: string) => Promise<boolean>;
-  handleRateChange: (value: string) => void;
+  handleRateChange: (value: string, phpRate?: string) => void;
   handleDurationChange: (value: string) => void;
   handleFilesChange: (files: FileList | null) => void;
   handleRemoveFile: (index: number) => void;
@@ -104,9 +104,13 @@ export function useProposalForm({
     }
   }, [form, projectId, onSubmitted]);
 
-  const handleRateChange = useCallback((value: string) => {
+  const handleRateChange = useCallback((value: string, phpRate?: string) => {
     setFieldError(null);
-    setForm((current) => ({ ...current, proposedRate: value }));
+    setForm((current) => ({
+      ...current,
+      proposedRate: value,
+      ...(phpRate !== undefined ? { phpRate } : {}),
+    }));
   }, []);
 
   const handleDurationChange = useCallback((value: string) => {

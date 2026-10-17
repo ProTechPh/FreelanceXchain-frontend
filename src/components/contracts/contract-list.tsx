@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { Coins, FolderOpen, FileText, Scale, Search, X } from 'lucide-react';
 import { reportLoadFailure } from '@/lib/report-failure';
 import { contractsApi } from '@/lib/api';
+import { useAuthStore } from '@/stores/authStore';
+import { isOnRoleSide } from '@/lib/role-switch';
 import { getContractDetailRoute } from '@/lib/contract-route';
 import { StatusBadge } from '@/components/ui/status-badge';
 import type { Contract, UserRole } from '@/types';
@@ -18,6 +20,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatAmount, formatDate } from '@/lib/format';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { DataFreshness, useDataFreshness } from '@/components/ui/data-freshness';
 import { ContractInvoiceDialog } from '@/components/contracts/contract-invoice-dialog';
@@ -25,6 +28,7 @@ import { ContractInvoiceDialog } from '@/components/contracts/contract-invoice-d
 type ContractFilterTab = 'all' | 'active' | 'completed' | 'resolved' | 'cancelled' | 'disputed';
 
 export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'freelancer'> }) {
+  const { formatEthToPhp } = useEthPhpRate();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [selectedInvoiceContract, setSelectedInvoiceContract] = useState<Contract | null>(null);
   const [selectedTab, setSelectedTab] = useState<ContractFilterTab>('all');
@@ -68,20 +72,27 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
     return fetchContracts();
   }, [fetchContracts]);
 
+  // The API returns contracts from both sides of the account; show this role's side only.
+  const userId = useAuthStore((state) => state.user?.id);
+  const sideContracts = useMemo(
+    () => contracts.filter((contract) => isOnRoleSide(contract, role, userId)),
+    [contracts, role, userId],
+  );
+
   const stats = useMemo(() => {
-    const total = contracts.length;
-    const active = contracts.filter((c) => c.status === 'active').length;
-    const completed = contracts.filter((c) => c.status === 'completed').length;
-    const resolved = contracts.filter((c) => c.status === 'resolved').length;
-    const cancelled = contracts.filter((c) => c.status === 'cancelled').length;
-    const disputed = contracts.filter((c) => c.status === 'disputed').length;
-    const pending = contracts.filter((c) => c.status === 'pending').length;
-    const totalValue = contracts.reduce((sum, c) => sum + (c.totalAmount || 0), 0);
+    const total = sideContracts.length;
+    const active = sideContracts.filter((c) => c.status === 'active').length;
+    const completed = sideContracts.filter((c) => c.status === 'completed').length;
+    const resolved = sideContracts.filter((c) => c.status === 'resolved').length;
+    const cancelled = sideContracts.filter((c) => c.status === 'cancelled').length;
+    const disputed = sideContracts.filter((c) => c.status === 'disputed').length;
+    const pending = sideContracts.filter((c) => c.status === 'pending').length;
+    const totalValue = sideContracts.reduce((sum, c) => sum + (c.totalAmount || 0), 0);
     return { total, active, completed, resolved, cancelled, disputed, pending, totalValue };
-  }, [contracts]);
+  }, [sideContracts]);
 
   const filteredContracts = useMemo(() => {
-    return contracts.filter((contract) => {
+    return sideContracts.filter((contract) => {
       if (selectedTab !== 'all' && contract.status !== selectedTab) {
         return false;
       }
@@ -96,7 +107,7 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
       const id = contract.id.toLowerCase();
       return title.includes(q) || counterparty.includes(q) || id.includes(q);
     });
-  }, [contracts, selectedTab, searchQuery, role]);
+  }, [sideContracts, selectedTab, searchQuery, role]);
 
   const handleRefresh = useCallback(async () => {
     let active = true;
@@ -117,7 +128,7 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
         <PageHeader
           title="Contracts"
           description="Track funding, deliverables, approvals, and payment activity."
-          actions={!loading && !error && contracts.length > 0 ? (
+          actions={!loading && !error && sideContracts.length > 0 ? (
             <DataFreshness
               lastUpdated={lastUpdated}
               isRefreshing={isRefreshing}
@@ -174,11 +185,11 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
               {stats.totalValue > 0 && (
                 <div className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-xs">
                   <Coins className="size-3.5 text-primary" />
-                  <span>Total Value: <strong className="font-semibold text-foreground">{formatAmount(stats.totalValue, { currency: 'ETH' })}</strong></span>
+                  <span>Total Value: <strong className="font-semibold text-foreground">{formatEthToPhp(stats.totalValue)} ({formatAmount(stats.totalValue, { currency: 'ETH' })})</strong></span>
                 </div>
               )}
 
-              {contracts.length > 0 && (
+              {sideContracts.length > 0 && (
                 <div className="relative w-full sm:w-64 shrink-0">
                   <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
@@ -334,6 +345,9 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
                         <div>
                           <p className="text-xs text-muted-foreground">Total Value</p>
                           <p className="font-semibold tabular-nums text-foreground mt-0.5">
+                            {formatEthToPhp(contract.totalAmount)}
+                          </p>
+                          <p className="text-2xs text-muted-foreground">
                             {formatAmount(contract.totalAmount, { currency: contract.currency || 'ETH' })}
                           </p>
                         </div>

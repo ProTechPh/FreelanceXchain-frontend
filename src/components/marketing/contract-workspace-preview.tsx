@@ -16,10 +16,10 @@ import {
 import { FreelanceXchainIcon } from "@/components/ui/freelancexchain-logo";
 
 const mockContracts = [
-  { id: 1, role: "DeFi Protocol Full-Stack DApp", client: "Ethereum Ecosystem", location: "Remote • Worldwide", budget: "$4,500 USDC", stage: "Escrow Funded (Milestone 2/3)", stageColor: "bg-success-subtle text-success border-success-border", match: "99% Skill Match", notes: "Employer funded $4,500 into contract escrow. Milestone 1 deliverable verified and $1,500 auto-released to wallet." },
-  { id: 2, role: "AI Agent Workflow Pipeline", client: "Modern SaaS Scaleup", location: "Remote • Global", budget: "$3,200", stage: "Proposal Accepted", stageColor: "bg-info-subtle text-info border-info-border", match: "98% Skill Match", notes: "Proposal tailored by AI assistant matched client requirements perfectly. Contract workspace created and awaiting escrow deposit." },
-  { id: 3, role: "Smart Contract Audit & Formal Verification", client: "Polygon Validator Protocol", location: "Remote • US / EU", budget: "$6,000", stage: "Milestone Paid 🎉", stageColor: "bg-info-subtle text-info border-info-border", match: "99% Skill Match", notes: "Deliverable approved by employer. Funds released instantly on-chain and verified reputation score updated to 99.8%." },
-  { id: 4, role: "Design System & Web3 Component Suite", client: "Supabase Partner", location: "Remote • Global", budget: "$2,800", stage: "In Progress", stageColor: "bg-warning-subtle text-warning border-warning-border", match: "96% Skill Match", notes: "Milestone 1 submitted for client review. Milestone 2 escrow active." },
+  { id: 1, role: "DeFi Protocol Full-Stack DApp", client: "Ethereum Ecosystem", location: "Remote • Worldwide", budget: "₱250,000", stage: "Escrow Funded (Milestone 2/3)", stageColor: "bg-success-subtle text-success border-success-border", match: "99% Skill Match", notes: "Employer funded ₱250,000 into contract escrow. Milestone 1 deliverable verified and ₱85,000 auto-released to wallet." },
+  { id: 2, role: "AI Agent Workflow Pipeline", client: "Modern SaaS Scaleup", location: "Remote • Global", budget: "₱180,000", stage: "Proposal Accepted", stageColor: "bg-info-subtle text-info border-info-border", match: "98% Skill Match", notes: "Proposal tailored by AI assistant matched client requirements perfectly. Contract workspace created and awaiting escrow deposit." },
+  { id: 3, role: "Smart Contract Audit & Formal Verification", client: "Polygon Validator Protocol", location: "Remote • US / EU", budget: "₱340,000", stage: "Milestone Paid 🎉", stageColor: "bg-info-subtle text-info border-info-border", match: "99% Skill Match", notes: "Deliverable approved by employer. Funds released instantly on-chain and verified reputation score updated to 99.8%." },
+  { id: 4, role: "Design System & Web3 Component Suite", client: "Supabase Partner", location: "Remote • Global", budget: "₱150,000", stage: "In Progress", stageColor: "bg-warning-subtle text-warning border-warning-border", match: "96% Skill Match", notes: "Milestone 1 submitted for client review. Milestone 2 escrow active." },
 ];
 
 export function ContractWorkspacePreview() {
@@ -39,7 +39,7 @@ export function ContractWorkspacePreview() {
         className="absolute -right-3 -top-5 z-20 hidden items-center gap-3 rounded-2xl border border-border bg-card px-4 py-2.5 shadow-xl backdrop-blur-md sm:flex"
       >
         <span className="flex size-8 items-center justify-center rounded-full bg-success-subtle text-success"><ShieldCheck className="size-4" aria-hidden="true" /></span>
-        <span><span className="block text-xs font-bold text-foreground">Smart Escrow Funded</span><span className="block text-xs text-muted-foreground">$4,500 USDC locked upfront</span></span>
+        <span><span className="block text-xs font-bold text-foreground">Smart Escrow Funded</span><span className="block text-xs text-muted-foreground">₱250,000 locked upfront</span></span>
       </motion.div>
       <motion.div
         animate={reduce ? undefined : { y: [0, 6, 0] }}
@@ -47,7 +47,7 @@ export function ContractWorkspacePreview() {
         className="absolute -bottom-5 -left-3 z-20 hidden items-center gap-3 rounded-2xl border border-border bg-card px-4 py-2.5 shadow-xl backdrop-blur-md sm:flex"
       >
         <span className="flex size-8 items-center justify-center rounded-full bg-primary/10 text-primary"><Coins className="size-4" aria-hidden="true" /></span>
-        <span><span className="block text-xs font-bold text-foreground">Milestone Payout Released</span><span className="block text-xs text-muted-foreground">$1,500 transferred instantly</span></span>
+        <span><span className="block text-xs font-bold text-foreground">Milestone Payout Released</span><span className="block text-xs text-muted-foreground">₱85,000 transferred instantly</span></span>
       </motion.div>
 
       <div className="grid min-h-[460px] grid-cols-12 overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">

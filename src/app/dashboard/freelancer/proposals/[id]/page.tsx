@@ -3,10 +3,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { ArrowLeft, BriefcaseBusiness, Clock, ExternalLink, FileText, Star } from 'lucide-react';
+import { ArrowLeft, BriefcaseBusiness, Clock, ExternalLink, FileText, Pencil, Star } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
   DialogContent,
@@ -25,15 +28,111 @@ import { AttachmentPreviewDialog, type AttachmentPreviewTarget } from '@/compone
 import type { ProposalWithEmployerHistory } from '@/types';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
 import { formatAmount, formatDateTime } from '@/lib/format';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
+import { GasFeeBreakdownCard } from '@/components/ui/gas-fee-breakdown-card';
 
 export default function FreelancerProposalDetailPage() {
+  const { rate: currentEthRate, formatEthToPhp, convertEthToPhp, convertPhpToEth, formatPhpToEth } = useEthPhpRate();
   const params = useParams<{ id: string }>();
   const proposalId = params?.id;
   const [details, setDetails] = useState<ProposalWithEmployerHistory | null>(null);
   const [loading, setLoading] = useState(true);
   const [withdrawing, setWithdrawing] = useState(false);
   const [confirmWithdraw, setConfirmWithdraw] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editRate, setEditRate] = useState('');
+  const [editPhpRate, setEditPhpRate] = useState('');
+  const [editRateMode, setEditRateMode] = useState<'PHP' | 'ETH'>('PHP');
+  const [editDuration, setEditDuration] = useState('');
+  const [editCoverLetter, setEditCoverLetter] = useState('');
   const [previewAttachment, setPreviewAttachment] = useState<AttachmentPreviewTarget | null>(null);
+
+  const openEditModal = () => {
+    if (!details) return;
+    const currentRate = details.proposal.proposedRate;
+    setEditRate(String(currentRate));
+    const phpVal = convertEthToPhp(currentRate);
+    if (phpVal !== null) {
+      setEditPhpRate(String(Math.round(phpVal * 100) / 100));
+    } else {
+      setEditPhpRate('');
+    }
+    setEditDuration(String(details.proposal.estimatedDuration));
+    setEditCoverLetter(details.proposal.coverLetter || '');
+    setEditOpen(true);
+  };
+
+  const handleEditPhpRateChange = (inputVal: string) => {
+    setEditPhpRate(inputVal);
+    if (!inputVal || inputVal.trim() === '') {
+      setEditRate('');
+      return;
+    }
+    const phpNum = parseFloat(inputVal);
+    if (!Number.isFinite(phpNum) || phpNum <= 0) {
+      setEditRate('');
+      return;
+    }
+    const ethVal = convertPhpToEth(phpNum);
+    if (ethVal !== null && Number.isFinite(ethVal) && ethVal > 0) {
+      const roundedEth = Math.round(ethVal * 1000000) / 1000000;
+      setEditRate(String(roundedEth));
+    } else {
+      setEditRate('');
+    }
+  };
+
+  const handleEditEthRateChange = (inputVal: string) => {
+    setEditRate(inputVal);
+    if (!inputVal || inputVal.trim() === '') {
+      setEditPhpRate('');
+      return;
+    }
+    const ethNum = parseFloat(inputVal);
+    if (!Number.isFinite(ethNum) || ethNum <= 0) {
+      setEditPhpRate('');
+      return;
+    }
+    const phpVal = convertEthToPhp(ethNum);
+    if (phpVal !== null && Number.isFinite(phpVal) && phpVal > 0) {
+      const roundedPhp = Math.round(phpVal * 100) / 100;
+      setEditPhpRate(String(roundedPhp));
+    } else {
+      setEditPhpRate('');
+    }
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!proposalId) return;
+    const rateNum = Number(editRate);
+    if (!Number.isFinite(rateNum) || rateNum <= 0) {
+      toast.error('Proposed rate must be greater than 0.');
+      return;
+    }
+    const durationNum = Number(editDuration);
+    if (!Number.isInteger(durationNum) || durationNum < 1 || durationNum > 3650) {
+      toast.error('Estimated delivery must be an integer between 1 and 3650 days.');
+      return;
+    }
+
+    setSavingEdit(true);
+    try {
+      await proposalsApi.update(proposalId, {
+        proposedRate: rateNum,
+        estimatedDuration: durationNum,
+        coverLetter: editCoverLetter.trim(),
+      });
+      toast.success('Proposal terms updated.');
+      setEditOpen(false);
+      void load();
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Failed to update proposal terms.'));
+    } finally {
+      setSavingEdit(false);
+    }
+  };
 
   const load = useCallback(async () => {
     if (!proposalId) return;
@@ -99,9 +198,21 @@ export default function FreelancerProposalDetailPage() {
         <div className="space-y-6 lg:col-span-2">
           <Card><CardHeader><CardTitle>Proposal</CardTitle></CardHeader><CardContent className="space-y-5">
             <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-lg border border-border bg-secondary/30 p-3"><p className="text-xs text-muted-foreground">Proposed rate</p><p className="mt-1 font-semibold text-primary">{formatAmount(proposal.proposedRate, { currency: 'ETH' })}</p></div>
+              <div className="rounded-lg border border-border bg-secondary/30 p-3">
+                <p className="text-xs text-muted-foreground">Proposed rate</p>
+                <p className="mt-1 font-semibold text-primary">
+                  {formatEthToPhp(proposal.proposedRate)}
+                  <span className="text-xs font-normal text-muted-foreground ml-1">({formatAmount(proposal.proposedRate, { currency: 'ETH' })})</span>
+                </p>
+              </div>
               <div className="rounded-lg border border-border bg-secondary/30 p-3"><p className="text-xs text-muted-foreground">Estimated delivery</p><p className="mt-1 font-semibold">{proposal.estimatedDuration} days</p></div>
             </div>
+
+            <GasFeeBreakdownCard
+              proposedRateEth={proposal.proposedRate}
+              variant="freelancer"
+            />
+
             {proposal.coverLetter && (
               <div>
                 <h2 className="mb-2 text-sm font-medium">Cover letter</h2>
@@ -163,7 +274,28 @@ export default function FreelancerProposalDetailPage() {
                 </ul>
               </div>
             )}
-            <div className="flex flex-wrap gap-2 border-t border-border pt-4"><Button asChild variant="outline"><Link href={`/dashboard/freelancer/projects/${project.id}`}>View project</Link></Button>{proposal.status === 'pending' && <Button type="button" variant="ghost" className="text-destructive" disabled={withdrawing} onClick={() => setConfirmWithdraw(true)}>{withdrawing ? 'Withdrawing…' : 'Withdraw proposal'}</Button>}</div>
+            <div className="flex flex-wrap items-center gap-2 border-t border-border pt-4">
+              <Button asChild variant="outline">
+                <Link href={`/dashboard/freelancer/projects/${project.id}`}>View project</Link>
+              </Button>
+              {proposal.status === 'pending' && (
+                <>
+                  <Button type="button" variant="outline" onClick={openEditModal}>
+                    <Pencil className="mr-1.5 h-3.5 w-3.5 text-primary" />
+                    Edit proposal terms
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    disabled={withdrawing}
+                    onClick={() => setConfirmWithdraw(true)}
+                  >
+                    {withdrawing ? 'Withdrawing…' : 'Withdraw proposal'}
+                  </Button>
+                </>
+              )}
+            </div>
           </CardContent></Card>
         </div>
 
@@ -184,6 +316,150 @@ export default function FreelancerProposalDetailPage() {
         }}
         attachment={previewAttachment}
       />
+
+      {/* Edit Proposal Terms Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Proposal Terms</DialogTitle>
+            <DialogDescription>
+              Update your negotiated rate, delivery timeline, or approach notes while this proposal is pending.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSaveEdit} className="space-y-4 py-2">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="edit-proposal-rate">
+                    Proposed Rate ({editRateMode === 'PHP' ? 'PHP' : 'ETH'}) *
+                  </Label>
+                  <div className="flex items-center gap-1 rounded bg-muted/60 p-0.5 text-2xs">
+                    <button
+                      type="button"
+                      onClick={() => setEditRateMode('PHP')}
+                      className={`px-2 py-0.5 rounded font-semibold transition-all cursor-pointer ${
+                        editRateMode === 'PHP'
+                          ? 'bg-background text-primary shadow-xs'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      ₱ PHP
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditRateMode('ETH')}
+                      className={`px-2 py-0.5 rounded font-semibold transition-all cursor-pointer ${
+                        editRateMode === 'ETH'
+                          ? 'bg-background text-primary shadow-xs'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      Ξ ETH
+                    </button>
+                  </div>
+                </div>
+                <div className="relative">
+                  {editRateMode === 'PHP' ? (
+                    <Input
+                      id="edit-proposal-rate"
+                      type="number"
+                      step="any"
+                      min="1"
+                      placeholder="e.g. 1500"
+                      value={editPhpRate}
+                      onChange={(e) => handleEditPhpRateChange(e.target.value)}
+                      required
+                      className="pr-16 font-medium"
+                    />
+                  ) : (
+                    <Input
+                      id="edit-proposal-rate"
+                      type="number"
+                      step="any"
+                      min="0.0001"
+                      placeholder="e.g. 0.05"
+                      value={editRate}
+                      onChange={(e) => handleEditEthRateChange(e.target.value)}
+                      required
+                      className="pr-16 font-medium"
+                    />
+                  )}
+                  <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs font-bold text-muted-foreground">
+                    {editRateMode === 'PHP' ? 'PHP (₱)' : 'ETH (Ξ)'}
+                  </span>
+                </div>
+                {editRate && parseFloat(editRate) > 0 && (
+                  <div className="mt-1 space-y-1">
+                    <div className="flex items-center justify-between rounded-md bg-primary/10 px-2 py-1 text-xs">
+                      <span className="text-muted-foreground">
+                        {editRateMode === 'PHP' ? 'Auto-converted Escrow Rate:' : 'Philippine Peso Value:'}
+                      </span>
+                      <span className="font-bold text-primary">
+                        {editRateMode === 'PHP'
+                          ? `≈ ${formatPhpToEth(editPhpRate)}`
+                          : `≈ ${formatEthToPhp(editRate)}`}
+                      </span>
+                    </div>
+                    {currentEthRate ? (
+                      <p className="px-1 text-2xs text-muted-foreground">
+                        Live rate: 1 ETH = {formatAmount(currentEthRate, { currency: 'PHP' })}
+                      </p>
+                    ) : null}
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="edit-proposal-duration">Estimated Delivery (days) *</Label>
+                <div className="relative">
+                  <Input
+                    id="edit-proposal-duration"
+                    type="number"
+                    step="1"
+                    min="1"
+                    max="3650"
+                    placeholder="e.g. 10"
+                    value={editDuration}
+                    onChange={(e) => setEditDuration(e.target.value)}
+                    required
+                    className="pr-14"
+                  />
+                  <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs font-medium text-muted-foreground">
+                    days
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {editRate && parseFloat(editRate) > 0 ? (
+              <GasFeeBreakdownCard
+                proposedRateEth={editRate}
+                variant="freelancer"
+              />
+            ) : null}
+
+            <div className="space-y-1.5">
+              <Label htmlFor="edit-proposal-cover">Cover Letter / Negotiation Notes</Label>
+              <Textarea
+                id="edit-proposal-cover"
+                rows={5}
+                placeholder="Mention any updated terms or approach discussed with the client..."
+                value={editCoverLetter}
+                onChange={(e) => setEditCoverLetter(e.target.value)}
+              />
+            </div>
+
+            <DialogFooter className="pt-2">
+              <Button type="button" variant="outline" onClick={() => setEditOpen(false)} disabled={savingEdit}>
+                Cancel
+              </Button>
+              <Button type="submit" loading={savingEdit} loadingText="Saving…">
+                Save & Update Terms
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Withdraw Confirmation Dialog */}
       <Dialog

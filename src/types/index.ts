@@ -24,7 +24,7 @@ export const ADMIN_PERMISSIONS = [
 
 export type AdminPermission = typeof ADMIN_PERMISSIONS[number];
 
-export type ProjectStatus = 'draft' | 'open' | 'in_progress' | 'completed' | 'cancelled' | 'disputed';
+export type ProjectStatus = 'draft' | 'open' | 'in_progress' | 'completed' | 'cancelled' | 'closed' | 'disputed';
 
 export type ProposalStatus = 'pending' | 'accepted' | 'rejected' | 'withdrawn';
 
@@ -175,6 +175,8 @@ export interface WorkExperience {
   description: string;
   startDate: string;
   endDate: string | null;
+  /** Technical and soft skills used in this role; they feed the profile's skills. */
+  skills: string[];
 }
 
 export interface FreelancerProfile {
@@ -192,6 +194,8 @@ export interface FreelancerProfile {
   updatedAt: string;
 }
 
+export type BusinessType = 'sole_proprietorship' | 'partnership' | 'corporation' | 'cooperative';
+
 export interface EmployerProfile {
   id: string;
   userId: string;
@@ -200,9 +204,78 @@ export interface EmployerProfile {
   companyName: string;
   description: string;
   industry: string;
+  businessType: BusinessType | null;
+  /** Hidden (null) on public profiles for signed-out visitors. */
+  tin: string | null;
+  /** DTI (sole proprietorship) or SEC registration number. Hidden for signed-out visitors. */
+  registrationNumber: string | null;
+  businessAddress: string | null;
+  businessPhone: string | null;
+  businessEmail: string | null;
+  website: string | null;
+  yearEstablished: number | null;
   walletAddress?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export type BusinessDocumentType =
+  | 'bir_2303'
+  | 'dti_certificate'
+  | 'sec_registration'
+  | 'mayors_permit'
+  | 'barangay_clearance'
+  | 'other';
+
+/**
+ * A business document an employer keeps on file. Documents are collected for
+ * transparency only; they are not checked against BIR, DTI or SEC records.
+ */
+export interface BusinessDocument {
+  id: string;
+  employerId: string;
+  documentType: BusinessDocumentType;
+  label: string | null;
+  /** Omitted for signed-out visitors. */
+  fileName?: string;
+  /** Omitted for signed-out visitors. */
+  fileUrl?: string;
+  mimeType: string;
+  size: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** One row of the admin Business documents page (read-only overview). */
+export interface AdminBusinessProfileSummary {
+  userId: string;
+  name: string | null;
+  email: string | null;
+  /** The account's active role; 'freelancer' when they set up an employer side but are acting as a freelancer. */
+  activeRole: UserRole | null;
+  companyName: string;
+  businessType: BusinessType | null;
+  documentCount: number;
+  requiredDocumentCount: number;
+  submittedRequiredCount: number;
+  complete: boolean;
+  missingFieldCount: number;
+  missingDocumentCount: number;
+  lastDocumentAt: string | null;
+  updatedAt: string;
+}
+
+export type AdminBusinessProfileStatus = 'all' | 'with_documents' | 'complete' | 'incomplete';
+
+export interface AdminBusinessProfileList {
+  items: AdminBusinessProfileSummary[];
+  counts: { all: number; withDocuments: number; complete: number; incomplete: number };
+}
+
+export interface BusinessProfileCompleteness {
+  complete: boolean;
+  missingFields: string[];
+  missingDocuments: BusinessDocumentType[];
 }
 
 // Full skill catalog entry
@@ -260,6 +333,8 @@ export interface SkillSuggestion {
 export interface SkillReference {
   name: string;
   yearsOfExperience: number;
+  /** True when the freelancer picked the skill directly, not only through work history. */
+  addedManually: boolean;
 }
 
 // A skill required by a project (Project.requiredSkills)
@@ -289,6 +364,7 @@ export interface Project {
   updatedAt: string;
   employer?: EmployerProfile;
   proposalCount?: number;
+  hiredCount?: number;
 }
 
 export interface ProjectCategoryStat {

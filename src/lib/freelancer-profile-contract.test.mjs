@@ -13,9 +13,9 @@ test('normalizes current and persisted freelancer skill field shapes', () => {
     { skillName: 'TypeScript', yearsOfExperience: 3 },
     { skill_name: 'Node.js', years_of_experience: 2 },
   ]), [
-    { name: 'React', yearsOfExperience: 4 },
-    { name: 'TypeScript', yearsOfExperience: 3 },
-    { name: 'Node.js', yearsOfExperience: 2 },
+    { name: 'React', yearsOfExperience: 4, addedManually: true },
+    { name: 'TypeScript', yearsOfExperience: 3, addedManually: true },
+    { name: 'Node.js', yearsOfExperience: 2, addedManually: true },
   ]);
 });
 
@@ -26,7 +26,7 @@ test('drops nameless skills instead of exposing unsafe profile data to component
     { name: '   ' },
     { name: 'Rust', yearsOfExperience: Number.NaN },
   ]), [
-    { name: 'Rust', yearsOfExperience: 0 },
+    { name: 'Rust', yearsOfExperience: 0, addedManually: true },
   ]);
   assert.deepEqual(normalizeFreelancerSkills(null), []);
 });
@@ -41,7 +41,7 @@ test('normalizes skills while preserving the rest of a freelancer profile', () =
 
   assert.deepEqual(normalizeFreelancerProfile(profile), {
     ...profile,
-    skills: [{ name: 'Vue', yearsOfExperience: 6 }],
+    skills: [{ name: 'Vue', yearsOfExperience: 6, addedManually: true }],
     experience: [],
   });
 });
@@ -87,6 +87,7 @@ test('normalizes legacy experience fields and assigns stable unique ids', () => 
       description: 'Current contract',
       startDate: '2024-01-01',
       endDate: null,
+      skills: [],
     },
     {
       id: 'legacy-experience-1',
@@ -95,6 +96,7 @@ test('normalizes legacy experience fields and assigns stable unique ids', () => 
       description: 'Duplicate persisted id',
       startDate: '2022-01-01',
       endDate: '2023-12-31',
+      skills: [],
     },
     {
       id: 'experience-3',
@@ -103,6 +105,7 @@ test('normalizes legacy experience fields and assigns stable unique ids', () => 
       description: 'Legacy identifier',
       startDate: '2020-01-01',
       endDate: null,
+      skills: [],
     },
     {
       id: 'legacy-experience-3',
@@ -111,6 +114,20 @@ test('normalizes legacy experience fields and assigns stable unique ids', () => 
       description: 'Missing persisted id',
       startDate: '2019-01-01',
       endDate: '2019-12-31',
+      skills: [],
     },
+  ]);
+});
+
+test('keeps work history skills and the manual flag from the API', () => {
+  assert.deepEqual(normalizeFreelancerExperience([
+    { id: 'e1', title: 'Lead', company: 'Acme', description: 'Led the team', startDate: '2024-01-01', endDate: null, skills: [' React ', '', 7, 'Leadership'] },
+  ])[0].skills, ['React', 'Leadership']);
+  assert.deepEqual(normalizeFreelancerSkills([
+    { name: 'React', yearsOfExperience: 2, addedManually: false },
+    { name: 'Teamwork', years_of_experience: 1, added_manually: false },
+  ]), [
+    { name: 'React', yearsOfExperience: 2, addedManually: false },
+    { name: 'Teamwork', yearsOfExperience: 1, addedManually: false },
   ]);
 });

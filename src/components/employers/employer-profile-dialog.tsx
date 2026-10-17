@@ -32,6 +32,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { employersApi, reputationApi, projectsApi, reviewsApi } from '@/lib/api';
 import { formatAmount } from '@/lib/format';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 import { getDirectMessageRoute } from '@/lib/dashboard-message-route';
 import type {
   EmployerProfile,
@@ -43,6 +44,7 @@ import type {
   ReputationMetadata,
 } from '@/types';
 import { useAuthStore } from '@/stores/authStore';
+import { EmployerBusinessInfo } from '@/components/employers/employer-business-info';
 
 interface EmployerProfileDialogProps {
   open: boolean;
@@ -74,6 +76,7 @@ export function EmployerProfileDialog({
   projectId,
   initialProfile,
 }: EmployerProfileDialogProps) {
+  const { formatEthToPhp } = useEthPhpRate();
   const [profile, setProfile] = useState<EmployerProfile | null>(
     (initialProfile as EmployerProfile) || null
   );
@@ -468,6 +471,8 @@ export function EmployerProfileDialog({
             </div>
           </div>
 
+          <EmployerBusinessInfo employerId={employerId} profile={profile ?? initialProfile ?? null} compact />
+
           {/* Contracts, Reputation & Projects Tabs */}
           <div>
             <Tabs defaultValue="completed" className="w-full">
@@ -524,7 +529,7 @@ export function EmployerProfileDialog({
                                 <>
                                   <span className="hidden sm:inline">•</span>
                                   <span className="font-semibold text-primary">
-                                    {formatAmount(item.budget, { currency: 'ETH' })}
+                                    {formatEthToPhp(item.budget)} ({formatAmount(item.budget, { currency: 'ETH' })})
                                   </span>
                                 </>
                               )}
@@ -852,7 +857,7 @@ export function EmployerProfileDialog({
                               </span>
                               <span className="hidden sm:inline">•</span>
                               <span className="font-semibold text-primary">
-                                {formatAmount(p.budget, { currency: 'ETH' })}
+                                {formatEthToPhp(p.budget)} ({formatAmount(p.budget, { currency: 'ETH' })})
                               </span>
                             </div>
                           </div>

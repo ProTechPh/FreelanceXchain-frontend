@@ -98,6 +98,18 @@ export function ProjectDetailHeader({
                   Rush +{project.rushFeePercentage}%
                 </span>
               )}
+              {Boolean(project.freelancerLimit && project.freelancerLimit > 1) ? (
+                <Badge variant="secondary" className="px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                  {project.hiredCount ?? 0} of {project.freelancerLimit} Freelancers Hired
+                </Badge>
+              ) : (
+                <Badge variant="secondary" className="px-3 py-1 rounded-full text-xs font-semibold bg-secondary/80 text-foreground border border-border">
+                  {(project.hiredCount ?? 0) >= 1 ? '1 of 1 Hired' : '1 Freelancer Slot'}
+                </Badge>
+              )}
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full">
+                🔒 NDA Protected Scope
+              </span>
             </div>
             <p className="text-sm text-muted-foreground">
               Posted by <span className="font-semibold text-foreground">{project.employer?.name || project.employer?.companyName || 'Employer'}</span>
@@ -162,6 +174,10 @@ export function ProjectDetailHeader({
                       </Link>
                     </Button>
                   </div>
+                ) : (project.hiredCount ?? 0) >= (project.freelancerLimit ?? 1) ? (
+                  <Badge variant="secondary" className="h-9 px-4 rounded-full bg-secondary/80 text-muted-foreground border border-border text-xs font-semibold">
+                    All Slots Filled ({project.freelancerLimit} of {project.freelancerLimit} Hired)
+                  </Badge>
                 ) : (
                   <>
                     <Button
@@ -185,13 +201,19 @@ export function ProjectDetailHeader({
             )}
 
             {primaryAction === 'sign-in-to-submit' && (
-              <Button
-                type="button"
-                className="rounded-full gradient-primary shadow-md"
-                onClick={() => onOpenProposal(false)}
-              >
-                <Send className="w-4 h-4 mr-2" /> Submit Proposal
-              </Button>
+              (project.hiredCount ?? 0) >= (project.freelancerLimit ?? 1) ? (
+                <Badge variant="secondary" className="h-9 px-4 rounded-full bg-secondary/80 text-muted-foreground border border-border text-xs font-semibold">
+                  All Slots Filled ({project.freelancerLimit} of {project.freelancerLimit} Hired)
+                </Badge>
+              ) : (
+                <Button
+                  type="button"
+                  className="rounded-full gradient-primary shadow-md"
+                  onClick={() => onOpenProposal(false)}
+                >
+                  <Send className="w-4 h-4 mr-2" /> Submit Proposal
+                </Button>
+              )
             )}
           </div>
         </div>

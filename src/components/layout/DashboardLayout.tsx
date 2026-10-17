@@ -12,10 +12,16 @@ import { cn } from '@/lib/utils';
 import type { UserRole } from '@/types';
 import { useDashboardAuthGuard } from '@/hooks/use-dashboard-auth-guard';
 import { DashboardLayoutSkeleton, DashboardRedirectSpinner } from './dashboard-layout-skeleton';
+import { RoleSwitchPrompt } from './RoleSwitchPrompt';
+import { isParticipantRole } from '@/lib/role-switch';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
-  /** If provided, only these roles may view this section — everyone else is redirected to their own dashboard home. */
+  /**
+   * If provided, only these roles may view this section. A freelancer or employer
+   * opening their other role's section is offered a role switch; everyone else is
+   * redirected to their own dashboard home.
+   */
   allowedRoles?: UserRole[];
 }
 
@@ -27,6 +33,7 @@ export function DashboardLayout({ children, allowedRoles }: DashboardLayoutProps
     hasHydrated,
     isWrongRole,
     isRedirecting,
+    roleSwitchTarget,
     isEmailUnverified,
     kycReminder,
     isReminderResolved,
@@ -43,6 +50,10 @@ export function DashboardLayout({ children, allowedRoles }: DashboardLayoutProps
 
   if (!hasHydrated || isLoading) {
     return <DashboardLayoutSkeleton />;
+  }
+
+  if (isAuthenticated && isWrongRole && roleSwitchTarget && isParticipantRole(user?.role)) {
+    return <RoleSwitchPrompt currentRole={user.role} targetRole={roleSwitchTarget} />;
   }
 
   if (!isAuthenticated || isWrongRole) {

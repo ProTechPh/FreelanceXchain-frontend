@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { getMilestonePermissions } from '@/lib/contract-workflow';
 import { formatAmount, formatDate } from '@/lib/format';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 import { formatFileSize, safeAttachmentUrl } from '@/lib/attachment-presentation';
 import { DOCUMENT_ACCEPT_STRING } from '@/lib/file-validation';
 import type { AttachmentPreviewTarget } from '@/components/ui/attachment-preview-dialog';
@@ -50,23 +51,35 @@ export function MilestoneListCard({
   onRejectMilestone,
   onPreviewAttachment,
 }: MilestoneListCardProps) {
+  const { formatEthToPhp } = useEthPhpRate();
+  const isDirectDeliverables = milestones.length === 1 && (milestones[0]?.id.startsWith('payout-') || !milestones[0]?.id);
+
   return (
     <section className="space-y-3" aria-labelledby="milestones-title">
-      <h2 id="milestones-title" className="text-xl font-semibold">Milestones</h2>
+      <h2 id="milestones-title" className="text-xl font-semibold">
+        {isDirectDeliverables ? 'Deliverables & Payment Release' : 'Milestones'}
+      </h2>
       {milestones.length === 0 && (
         <Card>
-          <CardContent className="py-8 text-center text-muted-foreground">No milestones found.</CardContent>
+          <CardContent className="py-8 text-center text-muted-foreground">No deliverables or milestones found.</CardContent>
         </Card>
       )}
       {milestones.map((milestone) => {
         const permissions = getMilestonePermissions(milestone.status, role, kycStatus, contractStatus);
+        const isPayoutMilestone = milestone.id.startsWith('payout-');
         return (
           <Card key={milestone.id}>
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <CardTitle className="text-base">{milestone.title}</CardTitle>
-                  <p className="mt-1 text-sm text-muted-foreground">{milestone.description}</p>
+                  <CardTitle className="text-base">
+                    {isPayoutMilestone ? 'Agreed Deliverables & Escrow Payout' : milestone.title}
+                  </CardTitle>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {isPayoutMilestone
+                      ? 'Funds are held in secure escrow. Once agreed project work is satisfied, the employer can release the payment directly.'
+                      : milestone.description}
+                  </p>
                 </div>
                 <StatusBadge status={milestone.status} domain="milestone" />
               </div>
@@ -74,7 +87,15 @@ export function MilestoneListCard({
             <CardContent className="space-y-4">
               <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
                 <span>
-                  <span className="text-muted-foreground">Amount:</span> {formatAmount(milestone.amount, { currency: currency || 'ETH' })}
+                  <span className="text-muted-foreground">Amount:</span>{' '}
+                  <span className="font-semibold text-primary">
+                    {(!currency || currency.toUpperCase() === 'ETH') ? formatEthToPhp(milestone.amount) : formatAmount(milestone.amount, { currency })}
+                  </span>
+                  {(!currency || currency.toUpperCase() === 'ETH') && (
+                    <span className="text-xs text-muted-foreground font-normal ml-1">
+                      ({formatAmount(milestone.amount, { currency: 'ETH' })})
+                    </span>
+                  )}
                 </span>
                 <span>
                   <span className="text-muted-foreground">Due:</span>{' '}
@@ -183,9 +204,9 @@ export function MilestoneListCard({
                   <Button
                     disabled={actionId === milestone.id}
                     onClick={() => onSubmitMilestone(milestone)}
-                    aria-label={`Submit milestone: ${milestone.title}`}
+                    aria-label={isPayoutMilestone ? 'Submit deliverable files and notes' : `Submit milestone: ${milestone.title}`}
                   >
-                    Submit milestone
+                    {isPayoutMilestone ? 'Submit Deliverable' : 'Submit milestone'}
                   </Button>
                 </div>
               )}
@@ -197,12 +218,14 @@ export function MilestoneListCard({
                       className="bg-success text-success-foreground hover:bg-success/90"
                       disabled={actionId === milestone.id}
                       onClick={() => onApproveMilestone(milestone)}
-                      aria-label={`Approve milestone: ${milestone.title}`}
+                      aria-label={`Release payment: ${milestone.title}`}
                     >
                       Release Payment
                     </Button>
                     <p className="text-sm text-muted-foreground">
-                      Happy with the work? Release this milestone&apos;s payment to the freelancer.
+                      {isPayoutMilestone
+                        ? 'Happy with the work? Release payment to the freelancer directly from escrow.'
+                        : "Happy with the work? Release this milestone's payment to the freelancer."}
                     </p>
                   </div>
                   <div className="space-y-2 border-t border-border pt-4">

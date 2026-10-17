@@ -11,6 +11,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { contractsApi, employersApi, fileUploadsApi, freelancersApi, messagesApi, projectsApi } from '@/lib/api';
 import { formatFileSize, safeAttachmentUrl } from '@/lib/attachment-presentation';
 import { formatAmount, formatRelativeTime } from '@/lib/format';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 import { MessageAttachmentValidationError, sendMessageWithAttachments, validateMessageAttachments } from '@/lib/message-attachment';
 import { DOCUMENT_ACCEPT_STRING } from '@/lib/file-validation';
 import {
@@ -50,6 +51,7 @@ function detectsOffPlatformContact(text: string): boolean {
 }
 
 export function MessagesWorkspace() {
+  const { formatEthToPhp } = useEthPhpRate();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -666,7 +668,7 @@ export function MessagesWorkspace() {
                 </div>
                 <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
                   <span className="text-xs font-bold text-foreground px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg bg-card border border-border">
-                    {formatAmount(inquiredProject.budget, { currency: 'ETH' })}
+                    {inquiredProject.budget > 0 ? `${formatEthToPhp(inquiredProject.budget)} (${formatAmount(inquiredProject.budget, { currency: 'ETH' })})` : 'Flexible'}
                   </span>
                   <Button asChild variant="outline" size="sm" className="h-7 text-xs rounded-lg border-border">
                     <Link

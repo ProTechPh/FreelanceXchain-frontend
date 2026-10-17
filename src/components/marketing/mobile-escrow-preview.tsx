@@ -18,12 +18,12 @@ const dealActivity = [
   {
     icon: ShieldEscrowIcon,
     title: "Escrow funded",
-    detail: "$4,500 USDC secured",
+    detail: "₱250,000 secured",
   },
   {
     icon: InstantSettlementIcon,
     title: "Milestone paid",
-    detail: "$1,500 released instantly",
+    detail: "₱85,000 released instantly",
   },
 ];
 
@@ -58,7 +58,7 @@ export function MobileEscrowPreview() {
             </div>
             <div className="shrink-0 text-right">
               <p className="text-2xs font-medium text-muted-foreground">Contract value</p>
-              <p className="text-sm font-extrabold tabular-nums text-foreground">$4,500</p>
+              <p className="text-sm font-extrabold tabular-nums text-foreground">₱250,000</p>
             </div>
           </div>
 

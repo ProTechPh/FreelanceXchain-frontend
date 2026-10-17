@@ -14,10 +14,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
 import { formatAmount, formatDateTime } from '@/lib/format';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 
 type ParticipantRole = Extract<UserRole, 'employer' | 'freelancer'>;
 
 export function TransactionDetail({ transactionId, role }: { transactionId: string; role: ParticipantRole }) {
+  const { formatEthToPhp } = useEthPhpRate();
   const [transaction, setTransaction] = useState<Transaction | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -61,7 +63,19 @@ export function TransactionDetail({ transactionId, role }: { transactionId: stri
         <CardHeader><CardTitle className="flex items-center gap-2"><ReceiptText className="size-5" />Ledger entry</CardTitle></CardHeader>
         <CardContent className="grid gap-5 sm:grid-cols-2">
           <div><p className="text-sm text-muted-foreground">Type</p><p className="font-medium capitalize">{transaction.type.replaceAll('_', ' ')}</p></div>
-          <div><p className="text-sm text-muted-foreground">Amount</p><p className="text-xl font-semibold">{formatAmount(transaction.amount, { currency: transaction.currency || 'ETH' })}</p></div>
+          <div>
+            <p className="text-sm text-muted-foreground">Amount</p>
+            <p className="text-xl font-semibold">
+              {(!transaction.currency || transaction.currency === 'ETH')
+                ? formatEthToPhp(transaction.amount)
+                : formatAmount(transaction.amount, { currency: transaction.currency })}
+            </p>
+            {(!transaction.currency || transaction.currency === 'ETH') && (
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {formatAmount(transaction.amount, { currency: 'ETH' })}
+              </p>
+            )}
+          </div>
           <div><p className="text-sm text-muted-foreground">Created</p><p>{formatDateTime(transaction.created_at)}</p></div>
           <div><p className="text-sm text-muted-foreground">Updated</p><p>{formatDateTime(transaction.updated_at)}</p></div>
           {transaction.contract_id && <div><p className="text-sm text-muted-foreground">Contract</p><Button asChild variant="link" className="h-auto p-0"><Link href={`/dashboard/${role}/contracts/${transaction.contract_id}`}>{transaction.contract_id}</Link></Button></div>}

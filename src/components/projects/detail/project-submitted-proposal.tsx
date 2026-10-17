@@ -8,8 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Markdown } from '@/components/ui/markdown';
 import { formatAmount } from '@/lib/format';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 import { formatFileSize, safeAttachmentUrl } from '@/lib/attachment-presentation';
 import type { AttachmentPreviewTarget } from '@/components/ui/attachment-preview-dialog';
+import { GasFeeBreakdownCard } from '@/components/ui/gas-fee-breakdown-card';
 import { formatPostedDate } from './project-meta-helpers';
 
 interface ProjectSubmittedProposalProps {
@@ -25,6 +27,7 @@ export function ProjectSubmittedProposal({
   onRequestWithdraw,
   onPreviewAttachment,
 }: ProjectSubmittedProposalProps) {
+  const { formatEthToPhp } = useEthPhpRate();
   return (
     <Card className="rounded-2xl border-2 border-primary/40 bg-primary/5 shadow-sm overflow-hidden">
       <CardHeader className="bg-primary/10 border-b border-primary/20 pb-3">
@@ -59,7 +62,8 @@ export function ProjectSubmittedProposal({
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3.5 rounded-xl bg-card border border-border text-xs">
           <div>
             <span className="text-muted-foreground block">Proposed Rate</span>
-            <span className="text-sm font-bold text-primary">{formatAmount(proposal.proposedRate, { currency: 'ETH' })}</span>
+            <span className="text-sm font-bold text-primary block">{formatEthToPhp(proposal.proposedRate)}</span>
+            <span className="text-2xs text-muted-foreground block">{formatAmount(proposal.proposedRate, { currency: 'ETH' })}</span>
           </div>
           <div>
             <span className="text-muted-foreground block">Estimated Delivery</span>
@@ -70,6 +74,11 @@ export function ProjectSubmittedProposal({
             <span className="text-sm font-bold text-foreground">{proposal.attachments?.length || 0} file(s)</span>
           </div>
         </div>
+
+        <GasFeeBreakdownCard
+          proposedRateEth={proposal.proposedRate}
+          variant="freelancer"
+        />
 
         {/* Cover Letter / Proposal Pitch */}
         {proposal.coverLetter && (

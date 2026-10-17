@@ -15,10 +15,12 @@ const ANNUAL = { interval: 'year', priceId: 'price_y', unitAmount: 20000, curren
 test('formats whole amounts without stray cents', () => {
   assert.equal(formatPrice(2000, 'usd'), '$20');
   assert.equal(formatPrice(20000, 'usd'), '$200');
+  assert.equal(formatPrice(100000, 'php'), '₱1,000');
 });
 
 test('keeps cents when the amount actually has them', () => {
   assert.equal(formatPrice(1999, 'usd'), '$19.99');
+  assert.equal(formatPrice(99950, 'php'), '₱999.50');
 });
 
 test('returns null rather than guessing when Stripe could not be read', () => {

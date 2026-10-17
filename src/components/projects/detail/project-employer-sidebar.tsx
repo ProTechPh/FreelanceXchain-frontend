@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatAmount } from '@/lib/format';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 import { formatDate, formatPostedDate } from './project-meta-helpers';
 
 interface ProjectEmployerSidebarProps {
@@ -17,6 +18,7 @@ export function ProjectEmployerSidebar({
   project,
   onOpenEmployerDialog,
 }: ProjectEmployerSidebarProps) {
+  const { formatEthToPhp } = useEthPhpRate();
   const employerDisplayName = project.employer?.name || project.employer?.companyName || 'Employer';
   const employerInitials = employerDisplayName.split(' ').map((n) => n[0]).join('') || '?';
 
@@ -30,11 +32,31 @@ export function ProjectEmployerSidebar({
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Budget</span>
-            <span className="font-bold text-primary text-lg">{formatAmount(project.budget, { currency: 'ETH' })}</span>
+            <div className="text-right">
+              <span className="font-bold text-primary text-lg block">
+                {project.budget > 0 ? formatEthToPhp(project.budget) : 'Negotiable'}
+              </span>
+              {project.budget > 0 && (
+                <span className="text-xs font-medium text-muted-foreground block">
+                  {formatAmount(project.budget, { currency: 'ETH' })}
+                </span>
+              )}
+            </div>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Deadline</span>
             <span className="text-sm font-semibold text-foreground">{formatDate(project.deadline)}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">Capacity</span>
+            <div className="text-right">
+              <span className="text-sm font-semibold text-foreground block">
+                {project.hiredCount ?? 0} of {project.freelancerLimit && project.freelancerLimit > 1 ? project.freelancerLimit : 1} Hired
+              </span>
+              <span className="text-2xs text-muted-foreground block">
+                {Math.max(0, (project.freelancerLimit || 1) - (project.hiredCount ?? 0))} slot{Math.max(0, (project.freelancerLimit || 1) - (project.hiredCount ?? 0)) === 1 ? '' : 's'} remaining
+              </span>
+            </div>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Proposals</span>

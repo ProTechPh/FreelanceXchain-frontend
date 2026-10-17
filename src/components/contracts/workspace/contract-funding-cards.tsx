@@ -3,6 +3,7 @@
 import type { Contract, ContractFundInfo, ContractPaymentStatus, UserRole } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatAmount } from '@/lib/format';
+import { GasFeeBreakdownCard } from '@/components/ui/gas-fee-breakdown-card';
 
 type ParticipantRole = Extract<UserRole, 'employer' | 'freelancer'>;
 
@@ -91,6 +92,12 @@ export function ContractFundingCards({
                 Funding will prompt MetaMask to deposit {formatAmount(contract.totalAmount, { currency: contract.currency || 'USD' })} directly from your
                 wallet into the secure smart contract escrow on the blockchain.
               </p>
+              <GasFeeBreakdownCard
+                proposedRateEth={contract.totalAmount}
+                variant="employer"
+                compact
+                className="mt-2 pt-2 border-t border-border/60"
+              />
             </>
           ) : (
             <p className="text-muted-foreground">

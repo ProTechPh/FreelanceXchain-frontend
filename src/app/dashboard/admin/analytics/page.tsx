@@ -9,7 +9,7 @@ import { reportLoadFailure } from '@/lib/report-failure';
 import {
   TrendingUp,
   Users,
-  DollarSign,
+  Coins,
   FolderOpen,
   Star,
   AlertTriangle,
@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { StatsSkeleton } from '@/components/dashboard/skeletons';
 import { formatAmount, formatNumber } from '@/lib/format';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 import { AdminPermissionGate } from '@/components/admin/AdminPermissionGate';
 
 interface LeaderboardEntry {
@@ -34,6 +35,7 @@ interface LeaderboardEntry {
 }
 
 export default function AnalyticsPage() {
+  const { formatEthToPhp } = useEthPhpRate();
   const [loading, setLoading] = useState(true);
   const [analytics, setAnalytics] = useState<AdminAnalytics | null>(null);
   const [skillTrends, setSkillTrends] = useState<SkillTrend[]>([]);
@@ -88,7 +90,7 @@ export default function AnalyticsPage() {
       title: 'Gross Marketplace Volume (GMV)',
       value: analytics ? formatAmount(gmv) : '—',
       description: 'Total completed milestone value',
-      icon: DollarSign,
+      icon: Coins,
       color: 'text-success',
       bg: 'bg-success-subtle',
     },
@@ -191,12 +193,14 @@ export default function AnalyticsPage() {
           <CardContent className="p-3">
             <div className="flex items-center justify-between">
               <span className="text-xs text-muted-foreground">Rush Fee Revenue</span>
-              <DollarSign className="w-4 h-4 text-accent" />
+              <Coins className="w-4 h-4 text-accent" />
             </div>
             <p className="text-xl font-bold mt-1">
-              {analytics?.rushFeeRevenue !== undefined ? `${analytics.rushFeeRevenue.toFixed(2)} ETH` : '—'}
+              {analytics?.rushFeeRevenue !== undefined ? formatEthToPhp(analytics.rushFeeRevenue) : '—'}
             </p>
-            <p className="text-2xs text-muted-foreground mt-0.5">10% platform take</p>
+            <p className="text-2xs text-muted-foreground mt-0.5">
+              {analytics?.rushFeeRevenue !== undefined ? `(${analytics.rushFeeRevenue.toFixed(2)} ETH) • 10% platform take` : '10% platform take'}
+            </p>
           </CardContent>
         </Card>
         <Card className="bg-card border-border">
@@ -305,7 +309,9 @@ export default function AnalyticsPage() {
           <div className="flex items-center gap-6 text-sm">
             <div>
               <span className="text-xs text-muted-foreground block">Realized Rush Fee Cut</span>
-              <span className="font-semibold text-success">{analytics?.rushFeeRevenue !== undefined ? `${analytics.rushFeeRevenue.toFixed(2)} ETH` : '0.00 ETH'}</span>
+              <span className="font-semibold text-success">
+                {analytics?.rushFeeRevenue !== undefined ? `${formatEthToPhp(analytics.rushFeeRevenue)} (${analytics.rushFeeRevenue.toFixed(2)} ETH)` : '₱0.00'}
+              </span>
             </div>
             <div className="border-l border-border pl-6">
               <span className="text-xs text-muted-foreground block">Pro Subscriptions</span>
@@ -313,11 +319,13 @@ export default function AnalyticsPage() {
             </div>
             <div className="border-l border-border pl-6">
               <span className="text-xs text-muted-foreground block">Projected 5% Benchmark</span>
-              <span className="font-semibold text-muted-foreground">{analytics?.projectedBenchmarkRevenue !== undefined ? `${analytics.projectedBenchmarkRevenue.toFixed(2)} ETH` : analytics ? formatAmount(analytics.totalRevenue) : '—'}</span>
+              <span className="font-semibold text-muted-foreground">
+                {analytics?.projectedBenchmarkRevenue !== undefined ? `${formatEthToPhp(analytics.projectedBenchmarkRevenue)} (${analytics.projectedBenchmarkRevenue.toFixed(2)} ETH)` : analytics ? formatAmount(analytics.totalRevenue) : '—'}
+              </span>
             </div>
             <div className="border-l border-border pl-6">
               <span className="text-xs text-muted-foreground block">Community Savings vs 20%</span>
-              <span className="font-semibold text-primary">{`${(gmv * 0.20).toFixed(2)} ETH`}</span>
+              <span className="font-semibold text-primary">{`${formatEthToPhp(gmv * 0.20)} (${(gmv * 0.20).toFixed(2)} ETH)`}</span>
             </div>
           </div>
         </CardContent>

@@ -24,7 +24,7 @@ import {
   ShieldCheck,
   Send,
   ArrowLeft,
-  DollarSign,
+  Banknote,
   CircleCheck,
   Clock,
   CircleMinus,
@@ -307,7 +307,7 @@ export default function FreelancerProfilePage() {
                     {freelancer.nationality || 'Remote'}
                   </span>
                   <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                    <DollarSign className="w-4 h-4" />
+                    <Banknote className="w-4 h-4" />
                     <span className="font-bold text-primary">{formatAmount(freelancer.hourlyRate)}/hr</span>
                   </span>
                 </div>
@@ -664,9 +664,9 @@ export default function FreelancerProfilePage() {
                 )}
               </div>
 
-              {/* Experience */}
+              {/* Work History */}
               <div className="rounded-3xl bg-card border border-border/80 p-6 sm:p-8 shadow-md shadow-black/5">
-                <h2 className="text-lg font-bold text-foreground mb-4">Work Experience</h2>
+                <h2 className="text-lg font-bold text-foreground mb-4">Work History</h2>
                 <div className="space-y-4">
                   {freelancer.experience?.map((exp) => (
                     <div key={exp.id} className="p-5 rounded-2xl bg-background/50 border border-border/50 hover:border-border transition-colors">
@@ -677,15 +677,27 @@ export default function FreelancerProfilePage() {
                           {exp.description && (
                             <p className="text-sm text-muted-foreground mt-2 leading-relaxed">{exp.description}</p>
                           )}
+                          {exp.skills?.length > 0 && (
+                            <ul className="mt-3 flex flex-wrap gap-1.5" aria-label={`Skills used as ${exp.title}`}>
+                              {exp.skills.map((skill) => (
+                                <li
+                                  key={skill}
+                                  className="rounded-full border border-border px-2.5 py-0.5 text-xs text-muted-foreground"
+                                >
+                                  {skill}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
                         </div>
                         <span className="text-xs text-muted-foreground whitespace-nowrap">
-                          {formatDate(exp.startDate)} - {formatDate(exp.endDate)}
+                          {formatDate(exp.startDate)} – {exp.endDate ? formatDate(exp.endDate) : 'Present'}
                         </span>
                       </div>
                     </div>
                   ))}
                   {(!freelancer.experience || freelancer.experience.length === 0) && (
-                    <p className="text-sm text-muted-foreground">No experience listed</p>
+                    <p className="text-sm text-muted-foreground">No work history listed</p>
                   )}
                 </div>
               </div>

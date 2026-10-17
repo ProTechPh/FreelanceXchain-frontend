@@ -11,9 +11,9 @@ import {
 } from './format.ts';
 
 test('formatAmount drops cents for whole values and keeps them otherwise', () => {
-  assert.equal(formatAmount(1200), '$1,200');
-  assert.equal(formatAmount(1200.5), '$1,200.50');
-  assert.equal(formatAmount(0), '$0');
+  assert.equal(formatAmount(1200), '₱1,200');
+  assert.equal(formatAmount(1200.5), '₱1,200.50');
+  assert.equal(formatAmount(0), '₱0');
 });
 
 test('formatAmount formats crypto currencies with currency ticker', () => {
@@ -22,8 +22,12 @@ test('formatAmount formats crypto currencies with currency ticker', () => {
   assert.match(formatAmount(1.25, { currency: 'ETH', fractionDigits: 2 }), /ETH\s*1\.25/);
 });
 
+test('formatAmount still supports explicit USD when requested', () => {
+  assert.equal(formatAmount(1200, { currency: 'USD' }), '$1,200');
+});
+
 test('formatAmount accepts numeric strings from the API', () => {
-  assert.equal(formatAmount('2500'), '$2,500');
+  assert.equal(formatAmount('2500'), '₱2,500');
 });
 
 test('formatAmount renders a dash rather than NaN for missing values', () => {
@@ -33,13 +37,13 @@ test('formatAmount renders a dash rather than NaN for missing values', () => {
 });
 
 test('formatAmount honours an explicit fraction count', () => {
-  assert.equal(formatAmount(1200, { fractionDigits: 2 }), '$1,200.00');
+  assert.equal(formatAmount(1200, { fractionDigits: 2 }), '₱1,200.00');
 });
 
 test('formatAmountCompact abbreviates only above a thousand', () => {
-  assert.equal(formatAmountCompact(999), '$999');
-  assert.equal(formatAmountCompact(1200), '$1.2K');
-  assert.equal(formatAmountCompact(3_400_000), '$3.4M');
+  assert.equal(formatAmountCompact(999), '₱999');
+  assert.equal(formatAmountCompact(1200), '₱1.2K');
+  assert.equal(formatAmountCompact(3_400_000), '₱3.4M');
 });
 
 test('number, score and percent helpers', () => {

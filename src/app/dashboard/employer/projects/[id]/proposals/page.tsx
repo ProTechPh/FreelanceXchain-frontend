@@ -58,7 +58,9 @@ import { getDirectMessageRoute } from '@/lib/dashboard-message-route';
 import { AttachmentPreviewDialog, type AttachmentPreviewTarget } from '@/components/ui/attachment-preview-dialog';
 import type { FreelancerProfile, Project, Proposal } from '@/types';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
+import { GasFeeBreakdownCard } from '@/components/ui/gas-fee-breakdown-card';
 import { formatAmount } from '@/lib/format';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 
 interface PendingDecision {
   proposal: Proposal;
@@ -66,6 +68,7 @@ interface PendingDecision {
 }
 
 export default function EmployerProjectProposalsPage() {
+  const { formatEthToPhp } = useEthPhpRate();
   const params = useParams<{ id: string }>();
   const projectId = params?.id;
   const [project, setProject] = useState<Project | null>(null);
@@ -168,6 +171,14 @@ export default function EmployerProjectProposalsPage() {
     [proposals],
   );
 
+  const acceptedCount = useMemo(
+    () => proposals.filter((proposal) => proposal.status === 'accepted').length,
+    [proposals],
+  );
+
+  const freelancerLimit = project?.freelancerLimit ?? 1;
+  const isCapacityReached = acceptedCount >= freelancerLimit;
+
   const confirmDecision = async () => {
     if (!decision || !projectId) return;
 
@@ -255,11 +266,31 @@ export default function EmployerProjectProposalsPage() {
           <Badge className="h-8 bg-warning-subtle text-warning border-warning/30 px-3 text-xs font-semibold">
             {pendingCount} pending review
           </Badge>
+          <Badge
+            variant={isCapacityReached ? 'secondary' : 'default'}
+            className="h-8 px-3 text-xs font-semibold"
+          >
+            Team: {acceptedCount} / {freelancerLimit} Hired
+          </Badge>
           <Badge variant="secondary" className="h-8 px-3 text-xs font-semibold text-primary">
-            {formatAmount(project.budget, { currency: 'ETH' })} budget
+            {project.budget > 0 ? `${formatEthToPhp(project.budget)} (${formatAmount(project.budget, { currency: 'ETH' })}) budget` : 'Flexible budget'}
           </Badge>
         </div>
       </div>
+
+      {isCapacityReached && (
+        <div className="rounded-xl border border-warning/40 bg-warning/10 p-3.5 text-xs text-warning-foreground flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <p className="font-semibold text-warning">Project capacity reached ({acceptedCount} / {freelancerLimit} freelancers hired)</p>
+            <p className="text-muted-foreground mt-0.5">
+              All hiring slots for this project are filled. You can increase openings in project settings if you need more freelancers.
+            </p>
+          </div>
+          <Button asChild size="sm" variant="outline" className="shrink-0 text-xs h-8">
+            <Link href={`/dashboard/employer/projects/${project.id}/edit`}>Edit Openings</Link>
+          </Button>
+        </div>
+      )}
 
       {/* Recommended Talent (AI Matches) */}
       {(!isPro || recommendationsLoading || recommendations.length > 0) && (
@@ -464,11 +495,14 @@ export default function EmployerProjectProposalsPage() {
                     <div className="grid gap-3 sm:grid-cols-3">
                       <div className="flex items-center gap-3 rounded-xl border border-border/80 bg-secondary/20 p-3.5">
                         <div className="size-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold text-base">
-                          Ξ
+                          ₱
                         </div>
                         <div>
                           <span className="text-xs text-muted-foreground block">Proposed Rate</span>
-                          <span className="font-bold text-base text-primary">{formatAmount(proposal.proposedRate, { currency: 'ETH' })}</span>
+                          <span className="font-bold text-base text-primary">
+                            {formatEthToPhp(proposal.proposedRate)}
+                            <span className="text-xs font-normal text-muted-foreground ml-1">({formatAmount(proposal.proposedRate, { currency: 'ETH' })})</span>
+                          </span>
                         </div>
                       </div>
 
@@ -492,6 +526,11 @@ export default function EmployerProjectProposalsPage() {
                         </div>
                       </div>
                     </div>
+
+                    <GasFeeBreakdownCard
+                      proposedRateEth={proposal.proposedRate}
+                      variant="employer"
+                    />
 
                     {/* Proposal Pitch / Cover Letter */}
                     {proposal.coverLetter ? (
@@ -618,7 +657,9 @@ export default function EmployerProjectProposalsPage() {
                           <Button
                             type="button"
                             size="sm"
-                            className="rounded-full gradient-primary shadow-md text-xs font-semibold"
+                            disabled={isCapacityReached}
+                            title={isCapacityReached ? `Capacity reached (${acceptedCount}/${freelancerLimit} hired)` : undefined}
+                            className="rounded-full gradient-primary shadow-md text-xs font-semibold disabled:opacity-50"
                             onClick={() => setDecision({ proposal, action: 'accept' })}
                           >
                             <Check className="mr-1.5 size-3.5" /> Accept Proposal & Create Contract
@@ -659,17 +700,25 @@ export default function EmployerProjectProposalsPage() {
             </DialogTitle>
             <DialogDescription>
               {decision?.action === 'accept'
-                ? 'This will accept the proposal, create a secure on-chain escrow contract, and notify the freelancer.'
+                ? 'This will accept the proposal, establish an individual contract & escrow for this freelancer, and notify them to begin.'
                 : 'The freelancer will be notified that their proposal was not selected for this project.'}
             </DialogDescription>
           </DialogHeader>
-          {decision?.action === 'accept' && project && Math.abs((decision.proposal.proposedRate || 0) - project.budget) > 0.0001 && (
-            <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 text-xs space-y-1">
-              <p className="font-semibold text-primary">Negotiated Rate</p>
+          {decision?.action === 'accept' && project && (
+            <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 text-xs space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="font-semibold text-primary">Hiring Slot</span>
+                <span className="font-medium text-foreground">{acceptedCount + 1} of {freelancerLimit}</span>
+              </div>
               <p className="text-muted-foreground">
-                Freelancer proposed <strong>{formatAmount(decision.proposal.proposedRate, { currency: 'ETH' })}</strong> (project listing: {formatAmount(project.budget, { currency: 'ETH' })}).
-                Accepting will update the project milestones and escrow contract to match the agreed rate.
+                Agreed Rate: <strong>{formatEthToPhp(decision.proposal.proposedRate || project.budget)} ({formatAmount(decision.proposal.proposedRate || project.budget, { currency: 'ETH' })})</strong>.
+                Escrow funds can be released directly to this freelancer upon satisfactory completion of agreed work.
               </p>
+              <GasFeeBreakdownCard
+                proposedRateEth={decision.proposal.proposedRate || project.budget}
+                variant="employer"
+                className="mt-2"
+              />
             </div>
           )}
           <DialogFooter>

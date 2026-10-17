@@ -115,6 +115,7 @@ test('creates the project and then saves its milestones using the created projec
       ],
       budget: 125,
       deadline: '2026-09-30T23:59:59.999Z',
+      freelancerLimit: 1,
       isRush: false,
     }],
     ['setMilestones', 'project-123', {

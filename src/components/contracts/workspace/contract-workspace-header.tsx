@@ -62,10 +62,10 @@ export function ContractWorkspaceHeader({ contract, role, onOpenInvoice }: Contr
               variant="outline"
               size="sm"
               onClick={onOpenInvoice}
-              className="gap-1.5"
+              className="gap-1.5 border-primary/30 hover:bg-primary/5"
             >
               <FileText className="size-4 text-primary" />
-              Invoice & SOW
+              Contract Agreement &amp; Print (NDA / SOW)
             </Button>
           )}
         </div>

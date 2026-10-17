@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { favoritesApi, freelancersApi, projectsApi, savedSearchesApi, skillsApi } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/auth-contract";
 import { formatAmount } from "@/lib/format";
+import { useEthPhpRate } from "@/hooks/use-eth-php-rate";
 import {
   buildMarketplaceSearchParams,
   createSavedSearchFilters,
@@ -77,6 +78,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
   variant = "public",
   resultsAction,
 }: MarketplaceBrowserProps<T>) {
+  const { formatEthToPhp } = useEthPhpRate();
   const isDashboard = variant === "dashboard";
   const panel = isDashboard ? "overflow-hidden rounded-lg" : "rounded-3xl p-6 sm:p-8";
   const control = isDashboard ? "rounded-md" : "rounded-full";
@@ -497,7 +499,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
                       {category.projectCount} open project{category.projectCount === 1 ? "" : "s"}
                     </p>
                     <p className="mt-2 text-sm font-bold text-primary">
-                      {formatAmount(category.totalBudget, { currency: 'ETH' })} total budget
+                      {formatEthToPhp(category.totalBudget)} ({formatAmount(category.totalBudget, { currency: 'ETH' })}) total budget
                     </p>
                   </button>
                 ))}

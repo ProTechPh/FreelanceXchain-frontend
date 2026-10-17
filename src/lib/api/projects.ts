@@ -79,6 +79,9 @@ export const proposalsApi = {
 
   withdraw: (id: string) =>
     api.post<Proposal>(`/proposals/${id}/withdraw`),
+
+  update: (id: string, data: { proposedRate?: number; estimatedDuration?: number; coverLetter?: string }) =>
+    api.patch<Proposal>(`/proposals/${id}`, data),
 };
 
 export const favoritesApi = {
