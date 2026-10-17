@@ -61,18 +61,18 @@ export function WhySection() {
                   <span className="px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-mono text-2xs">Arbitrum One</span>
                 </div>
                 <span className="px-2 py-0.5 rounded-full bg-success-subtle text-success font-semibold">
-                  Locked Balance: 4,500 USDC
+                  Locked Balance: ₱250,000 (1.85 ETH)
                 </span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-sans">
                 <div className="p-2.5 rounded-lg bg-muted/40 border border-border/50">
                   <p className="font-semibold text-foreground text-2xs">Milestone 1 (Released)</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Scaffold smart contract protocol &bull; 1,500 USDC</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Scaffold smart contract protocol &bull; ₱85,000 (0.63 ETH)</p>
                   <p className="text-2xs text-success font-medium mt-1">Tx: 0x3d8...a19 &bull; Verified</p>
                 </div>
                 <div className="p-2.5 rounded-lg bg-primary/5 border border-primary/20">
                   <p className="font-semibold text-foreground text-2xs">Milestone 2 (In Progress)</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Workspace integration &amp; test suite &bull; 3,000 USDC</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Workspace integration &amp; test suite &bull; ₱165,000 (1.22 ETH)</p>
                   <p className="text-2xs text-primary font-medium mt-1">Acceptance: &gt;98% Test Coverage</p>
                 </div>
               </div>
@@ -136,7 +136,7 @@ export function WhySection() {
               </div>
               <div className="flex items-center justify-between p-2 rounded-lg bg-success-subtle border border-success-border text-success dark:text-success">
                 <span className="font-bold">Locked in Escrow</span>
-                <span className="font-mono text-2xs font-semibold">14,500 USDC</span>
+                <span className="font-mono text-2xs font-semibold">₱820,000 (6.07 ETH)</span>
               </div>
             </div>
           </div>

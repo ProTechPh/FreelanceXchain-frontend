@@ -179,6 +179,23 @@ function walletProblem(error: unknown): FailureMessage | null {
   return null;
 }
 
+function extractDetailMessage(data: Record<string, unknown>): string | null {
+  const details = Array.isArray(data.details)
+    ? data.details
+    : isRecord(data.error) && Array.isArray(data.error.details)
+      ? data.error.details
+      : null;
+
+  if (details && details.length > 0) {
+    const first = details[0];
+    if (typeof first === 'string' && first.trim()) return first.trim();
+    if (isRecord(first) && typeof first.message === 'string' && first.message.trim()) {
+      return first.message.trim();
+    }
+  }
+  return null;
+}
+
 /**
  * The backend's own message, when there is one.
  *
@@ -191,6 +208,9 @@ export function getApiErrorMessage(error: unknown, fallback: string): string {
 
   const data = error.response.data;
   if (!isRecord(data)) return fallback;
+
+  const detail = extractDetailMessage(data);
+  if (detail) return detail;
 
   if (typeof data.error === 'string' && data.error.trim()) return data.error;
   if (typeof data.message === 'string' && data.message.trim()) return data.message;
@@ -238,6 +258,8 @@ const UNHELPFUL_BACKEND_MESSAGES = new Set([
   'unauthorized',
   'forbidden',
   'bad request',
+  'validation failed',
+  'validation error',
   'an unexpected error occurred',
   'internal server error',
 ]);
@@ -253,6 +275,9 @@ function rawBackendMessage(error: unknown): string | null {
 
   const data = error.response.data;
   if (!isRecord(data)) return null;
+
+  const detail = extractDetailMessage(data);
+  if (detail) return detail;
 
   if (typeof data.error === 'string' && data.error.trim()) return data.error;
   if (typeof data.message === 'string' && data.message.trim()) return data.message;

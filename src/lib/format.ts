@@ -51,7 +51,7 @@ export interface AmountOptions {
 export function formatAmount(value: number | string | null | undefined, options: AmountOptions = {}): string {
   const amount = typeof value === 'string' ? Number(value) : value;
   if (amount == null || !Number.isFinite(amount)) return '—';
-  const { currency = 'USD', locale } = options;
+  const { currency = 'PHP', locale } = options;
   const fractionDigits = options.fractionDigits ?? (Number.isInteger(amount) ? 0 : 2);
 
   try {
@@ -65,8 +65,8 @@ export function formatAmount(value: number | string | null | undefined, options:
   }
 }
 
-/** Compact form for KPI tiles and charts: $1.2K, $3.4M. */
-export function formatAmountCompact(value: number | null | undefined, currency = 'USD', locale?: string): string {
+/** Compact form for KPI tiles and charts: ₱1.2K, ₱3.4M. */
+export function formatAmountCompact(value: number | null | undefined, currency = 'PHP', locale?: string): string {
   if (value == null || !Number.isFinite(value)) return '—';
   if (Math.abs(value) < 1000) return formatAmount(value, { currency, locale });
 

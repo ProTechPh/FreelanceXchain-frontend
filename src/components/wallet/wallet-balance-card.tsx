@@ -7,6 +7,8 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useWalletConnection } from '@/hooks/use-wallet-connection';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
+import { formatAmount } from '@/lib/format';
 import { getFinancesRoute } from '@/lib/finances-route';
 
 interface WalletBalanceCardProps {
@@ -26,6 +28,7 @@ export function WalletBalanceCard({ role = 'employer', className = '' }: WalletB
     refreshBalance,
     switchToGanacheNetwork,
   } = useWalletConnection();
+  const { rate: ethPhpRate, formatEthToPhp } = useEthPhpRate();
 
   const [copied, setCopied] = useState(false);
   const [lastSynced, setLastSynced] = useState<string | null>(null);
@@ -125,6 +128,16 @@ export function WalletBalanceCard({ role = 'employer', className = '' }: WalletB
                   <RefreshCw className={`size-3 ${isLoadingBalance ? 'animate-spin' : ''}`} />
                 </Button>
               </div>
+              {balance !== null && (
+                <div className="mt-0.5 flex flex-wrap items-center gap-1.5 sm:justify-end text-xs">
+                  <span className="font-semibold text-primary">
+                    ≈ {formatEthToPhp(balance)}
+                  </span>
+                  <span className="text-2xs text-muted-foreground bg-muted/60 px-1 py-0.5 rounded">
+                    1 ETH ≈ {formatAmount(ethPhpRate, { currency: 'PHP' })}
+                  </span>
+                </div>
+              )}
               {lastSynced && (
                 <p className="text-xs text-muted-foreground mt-1">Synced {lastSynced}</p>
               )}

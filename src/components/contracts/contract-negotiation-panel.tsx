@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { BadgeDollarSign, FastForward, HandCoins } from 'lucide-react';
+import { RotateCcw, FastForward, HandCoins } from 'lucide-react';
 import { toast } from 'sonner';
 import { refundsApi, rushUpgradesApi } from '@/lib/api';
 import { reportFailure } from '@/lib/report-failure';
@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatAmount, formatDate } from '@/lib/format';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -44,6 +45,7 @@ export function ContractNegotiationPanel({
   refunds,
   onRefresh,
 }: ContractNegotiationPanelProps) {
+  const { formatEthToPhp } = useEthPhpRate();
   const [actionId, setActionId] = useState<string | null>(null);
   const [rushPercentage, setRushPercentage] = useState('');
   const [counterPercentage, setCounterPercentage] = useState('');
@@ -201,7 +203,11 @@ export function ContractNegotiationPanel({
       <Card>
         <CardHeader><CardTitle className="flex items-center gap-2"><FastForward className="size-5 text-primary" />Rush upgrade</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          {contract.rushFee > 0 && <p className="rounded-lg bg-primary/10 p-3 text-sm">A {formatAmount(contract.rushFee, { currency: contract.currency || 'ETH' })} rush fee is active on this contract.</p>}
+          {contract.rushFee > 0 && (
+            <p className="rounded-lg bg-primary/10 p-3 text-sm">
+              A {formatEthToPhp(contract.rushFee)} ({formatAmount(contract.rushFee, { currency: 'ETH' })}) rush fee is active on this contract.
+            </p>
+          )}
 
           {canCreateRush && (
             <div className="space-y-3 rounded-lg border border-border p-4">
@@ -212,43 +218,51 @@ export function ContractNegotiationPanel({
                   <span className="text-sm text-muted-foreground">%</span>
                 </div>
                 {rushPercentage && !isNaN(Number(rushPercentage)) && (
-                  <p className="text-sm text-muted-foreground">Estimated fee: {(contract.baseAmount * Number(rushPercentage) / 100).toFixed(4)} ETH</p>
+                  <p className="text-sm text-muted-foreground">
+                    Estimated fee: {formatEthToPhp((contract.baseAmount * Number(rushPercentage)) / 100)} ({((contract.baseAmount * Number(rushPercentage)) / 100).toFixed(4)} ETH)
+                  </p>
                 )}
               </div>
               <Button type="button" disabled={actionId === 'rush-request'} onClick={requestRush}>{actionId === 'rush-request' ? 'Requesting…' : 'Request rush upgrade'}</Button>
             </div>
           )}
 
-          {acceptedUnpaidRushRequest && role === 'employer' && contract.rushFee === 0 && (
-            <div className="space-y-3 rounded-lg border border-primary/40 bg-primary/5 p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="font-medium">Freelancer accepted rush upgrade (+{acceptedUnpaidRushRequest.counterPercentage ?? acceptedUnpaidRushRequest.proposedPercentage}%)</p>
-                <StatusBadge status={acceptedUnpaidRushRequest.status} domain="rush" />
+          {acceptedUnpaidRushRequest && role === 'employer' && contract.rushFee === 0 && (() => {
+            const rushEth = (contract.baseAmount * (acceptedUnpaidRushRequest.counterPercentage ?? acceptedUnpaidRushRequest.proposedPercentage)) / 100;
+            return (
+              <div className="space-y-3 rounded-lg border border-primary/40 bg-primary/5 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="font-medium">Freelancer accepted rush upgrade (+{acceptedUnpaidRushRequest.counterPercentage ?? acceptedUnpaidRushRequest.proposedPercentage}%)</p>
+                  <StatusBadge status={acceptedUnpaidRushRequest.status} domain="rush" />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Please pay the {formatEthToPhp(rushEth)} ({rushEth.toFixed(4)} ETH) rush fee directly from MetaMask to activate rush mode.
+                </p>
+                <Button
+                  type="button"
+                  disabled={actionId === `rush-pay-${acceptedUnpaidRushRequest.id}`}
+                  onClick={() => void handlePayRushFee(acceptedUnpaidRushRequest)}
+                >
+                  {actionId === `rush-pay-${acceptedUnpaidRushRequest.id}` ? 'Processing Payment…' : `Pay Rush Fee (${formatEthToPhp(rushEth)} · ${rushEth.toFixed(4)} ETH)`}
+                </Button>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Please pay the {((contract.baseAmount * (acceptedUnpaidRushRequest.counterPercentage ?? acceptedUnpaidRushRequest.proposedPercentage)) / 100).toFixed(4)} ETH rush fee directly from MetaMask to activate rush mode.
-              </p>
-              <Button
-                type="button"
-                disabled={actionId === `rush-pay-${acceptedUnpaidRushRequest.id}`}
-                onClick={() => void handlePayRushFee(acceptedUnpaidRushRequest)}
-              >
-                {actionId === `rush-pay-${acceptedUnpaidRushRequest.id}` ? 'Processing Payment…' : `Pay Rush Fee (${((contract.baseAmount * (acceptedUnpaidRushRequest.counterPercentage ?? acceptedUnpaidRushRequest.proposedPercentage)) / 100).toFixed(4)} ETH)`}
-              </Button>
-            </div>
-          )}
+            );
+          })()}
 
-          {acceptedUnpaidRushRequest && role === 'freelancer' && contract.rushFee === 0 && (
-            <div className="space-y-3 rounded-lg border border-primary/40 bg-primary/5 p-4">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="font-medium">You accepted rush upgrade (+{acceptedUnpaidRushRequest.counterPercentage ?? acceptedUnpaidRushRequest.proposedPercentage}%)</p>
-                <StatusBadge status={acceptedUnpaidRushRequest.status} domain="rush" />
+          {acceptedUnpaidRushRequest && role === 'freelancer' && contract.rushFee === 0 && (() => {
+            const rushEth = (contract.baseAmount * (acceptedUnpaidRushRequest.counterPercentage ?? acceptedUnpaidRushRequest.proposedPercentage)) / 100;
+            return (
+              <div className="space-y-3 rounded-lg border border-primary/40 bg-primary/5 p-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="font-medium">You accepted rush upgrade (+{acceptedUnpaidRushRequest.counterPercentage ?? acceptedUnpaidRushRequest.proposedPercentage}%)</p>
+                  <StatusBadge status={acceptedUnpaidRushRequest.status} domain="rush" />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Waiting for employer to pay the {formatEthToPhp(rushEth)} ({rushEth.toFixed(4)} ETH) rush fee via MetaMask.
+                </p>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Waiting for employer to pay the {((contract.baseAmount * (acceptedUnpaidRushRequest.counterPercentage ?? acceptedUnpaidRushRequest.proposedPercentage)) / 100).toFixed(4)} ETH rush fee via MetaMask.
-              </p>
-            </div>
-          )}
+            );
+          })()}
 
           {openRushRequest && (
             <div className="space-y-3 rounded-lg border border-border p-4">
@@ -296,7 +310,7 @@ export function ContractNegotiationPanel({
               <Field label="Amount (optional)" htmlFor="refund-amount">
 <Input id="refund-amount" type="number" min="0.01" step="0.01" max={contract.totalAmount} value={refundAmount} onChange={(event) => setRefundAmount(event.target.value)} placeholder={`Full remaining escrow (up to ${formatAmount(contract.totalAmount, { currency: contract.currency || 'ETH' })})`} />
 </Field>
-              <Button type="button" disabled={actionId === 'refund-request'} onClick={requestRefund}><BadgeDollarSign className="mr-2 size-4" />{actionId === 'refund-request' ? 'Submitting…' : 'Request refund'}</Button>
+              <Button type="button" disabled={actionId === 'refund-request'} onClick={requestRefund}><RotateCcw className="mr-2 size-4" />{actionId === 'refund-request' ? 'Submitting…' : 'Request refund'}</Button>
             </div>
           )}
 
@@ -307,7 +321,7 @@ export function ContractNegotiationPanel({
               const rejectionReason = rejectionReasons[refund.id] ?? '';
               return (
                 <li key={refund.id} className="space-y-3 rounded-lg border border-border p-4 text-sm">
-                  <div className="flex flex-wrap items-start justify-between gap-2"><div><p className="font-medium">{formatAmount(refund.amount, { currency: contract.currency || 'ETH' })} {refund.is_partial ? 'partial refund' : 'refund'}</p><p className="mt-1 text-muted-foreground">{refund.reason}</p></div><StatusBadge status={refund.status} domain="refund" /></div>
+                  <div className="flex flex-wrap items-start justify-between gap-2"><div><p className="font-medium">{formatEthToPhp(refund.amount)} ({formatAmount(refund.amount, { currency: 'ETH' })}) {refund.is_partial ? 'partial refund' : 'refund'}</p><p className="mt-1 text-muted-foreground">{refund.reason}</p></div><StatusBadge status={refund.status} domain="refund" /></div>
                   {refund.rejection_reason && <p className="text-destructive">Rejected: {refund.rejection_reason}</p>}
                   {refund.requested_by === currentUserId && refund.status === 'pending' && (
                     <div className="flex flex-wrap items-center gap-4">

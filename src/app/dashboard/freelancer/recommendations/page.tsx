@@ -13,6 +13,7 @@ import type { Project } from '@/types';
 import { CardGridSkeleton } from '@/components/dashboard/skeletons';
 import { Markdown } from '@/components/ui/markdown';
 import { formatAmount, formatDate } from '@/lib/format';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 import { ProGate } from '@/components/billing/pro-gate';
 import { usePlan } from '@/hooks/use-plan';
 import { useRateApp } from '@/components/feedback/rate-app-provider';
@@ -24,6 +25,7 @@ interface RecommendationView extends ProjectRecommendation {
 }
 
 export default function FreelancerRecommendationsPage() {
+  const { formatEthToPhp } = useEthPhpRate();
   const [recommendations, setRecommendations] = useState<RecommendationView[]>([]);
   const [loading, setLoading] = useState(true);
   const [profileNotFound, setProfileNotFound] = useState(false);
@@ -137,7 +139,7 @@ export default function FreelancerRecommendationsPage() {
                         {item.project.title}
                       </CardTitle>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        {formatAmount(item.project.budget, { currency: 'ETH' })} · due {formatDate(item.project.deadline)}
+                        {formatEthToPhp(item.project.budget)} ({formatAmount(item.project.budget, { currency: 'ETH' })}) · due {formatDate(item.project.deadline)}
                       </p>
                     </div>
                     <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">

@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { adminApi, auditLogsApi, kycApi } from '@/lib/api';
 import type { AuditLogEntry, Dispute, SystemHealth } from '@/types';
 import { reportLoadFailure } from '@/lib/report-failure';
-import { Users, FolderOpen, DollarSign, AlertTriangle, Activity, ArrowUpRight, Shield, BarChart3, CheckCircle, Clock } from 'lucide-react';
+import { Users, FolderOpen, Coins, AlertTriangle, Activity, ArrowUpRight, Shield, BarChart3, CheckCircle, Clock } from 'lucide-react';
 import { StatsSkeleton } from '@/components/dashboard/skeletons';
 import { formatAmount, formatAuditAction, formatAuditResource, formatNumber, formatRelativeTime } from '@/lib/format';
 import { useAdminPermissions } from '@/hooks/use-admin-permissions';
@@ -112,7 +112,7 @@ export default function AdminDashboard() {
     {
       title: 'Total Transaction Volume',
       value: stats ? formatAmount(stats.totalTransactionVolume) : '—',
-      icon: DollarSign,
+      icon: Coins,
       color: 'text-success',
       bg: 'bg-success-subtle',
       show: true,

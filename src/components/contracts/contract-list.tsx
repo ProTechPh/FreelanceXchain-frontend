@@ -20,6 +20,7 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatAmount, formatDate } from '@/lib/format';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { DataFreshness, useDataFreshness } from '@/components/ui/data-freshness';
 import { ContractInvoiceDialog } from '@/components/contracts/contract-invoice-dialog';
@@ -27,6 +28,7 @@ import { ContractInvoiceDialog } from '@/components/contracts/contract-invoice-d
 type ContractFilterTab = 'all' | 'active' | 'completed' | 'resolved' | 'cancelled' | 'disputed';
 
 export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'freelancer'> }) {
+  const { formatEthToPhp } = useEthPhpRate();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [selectedInvoiceContract, setSelectedInvoiceContract] = useState<Contract | null>(null);
   const [selectedTab, setSelectedTab] = useState<ContractFilterTab>('all');
@@ -183,7 +185,7 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
               {stats.totalValue > 0 && (
                 <div className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-xs">
                   <Coins className="size-3.5 text-primary" />
-                  <span>Total Value: <strong className="font-semibold text-foreground">{formatAmount(stats.totalValue, { currency: 'ETH' })}</strong></span>
+                  <span>Total Value: <strong className="font-semibold text-foreground">{formatEthToPhp(stats.totalValue)} ({formatAmount(stats.totalValue, { currency: 'ETH' })})</strong></span>
                 </div>
               )}
 
@@ -343,6 +345,9 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
                         <div>
                           <p className="text-xs text-muted-foreground">Total Value</p>
                           <p className="font-semibold tabular-nums text-foreground mt-0.5">
+                            {formatEthToPhp(contract.totalAmount)}
+                          </p>
+                          <p className="text-2xs text-muted-foreground">
                             {formatAmount(contract.totalAmount, { currency: contract.currency || 'ETH' })}
                           </p>
                         </div>

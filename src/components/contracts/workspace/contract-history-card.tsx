@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatAmount, formatDateTime } from '@/lib/format';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 import { getTransactionDetailRoute } from '@/lib/transaction-view';
 
 type ParticipantRole = Extract<UserRole, 'employer' | 'freelancer'>;
@@ -26,6 +27,7 @@ export function ContractHistoryCard({
   disputes,
   contractStatus,
 }: ContractHistoryCardProps) {
+  const { formatEthToPhp } = useEthPhpRate();
   const canFileDispute = contractStatus === 'active';
   return (
     <div className="grid gap-6 lg:grid-cols-2">
@@ -54,7 +56,14 @@ export function ContractHistoryCard({
                       )}
                     </div>
                     <div className="text-right">
-                      <p>{formatAmount(transaction.amount, { currency: transaction.currency || 'ETH' })}</p>
+                      {(!transaction.currency || transaction.currency.toUpperCase() === 'ETH') ? (
+                        <>
+                          <p className="font-semibold text-foreground">{formatEthToPhp(transaction.amount)}</p>
+                          <p className="text-2xs text-muted-foreground">{formatAmount(transaction.amount, { currency: 'ETH' })}</p>
+                        </>
+                      ) : (
+                        <p className="font-semibold text-foreground">{formatAmount(transaction.amount, { currency: transaction.currency })}</p>
+                      )}
                       <Badge variant="secondary" className="capitalize">
                         {transaction.status}
                       </Badge>

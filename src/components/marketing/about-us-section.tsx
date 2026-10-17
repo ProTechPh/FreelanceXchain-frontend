@@ -35,7 +35,7 @@ const PILLARS = [
 ];
 
 const STATS = [
-  { value: "$10M+", label: "Secured in Smart Escrow" },
+  { value: "₱500M+", label: "Secured in Smart Escrow" },
   { value: "99.8%", label: "Milestone Payout Completion" },
   { value: "220+", label: "Countries Supported" },
   { value: "0%", label: "Risk of Unpaid Approved Work" },

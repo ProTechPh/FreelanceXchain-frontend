@@ -49,6 +49,7 @@ import { AnalyticsRangeFilter } from "@/components/analytics/range-filter";
 import { getRangeLabel } from "@/lib/analytics-range";
 import { Coins, FolderOpen, FileText, Star, TrendingUp, Clock, ArrowUpRight, Briefcase, Wallet } from "lucide-react";
 import { formatAmount, formatNumber, formatRelativeTime, formatDate } from "@/lib/format";
+import { useEthPhpRate } from "@/hooks/use-eth-php-rate";
 import { ProGate } from "@/components/billing/pro-gate";
 import { WalletConnectBanner } from "@/components/wallet/wallet-connect-banner";
 import { TourStepLink } from "@/components/onboarding/tour-step-link";
@@ -88,6 +89,7 @@ export default function FreelancerDashboard() {
     hasData,
   } = useFreelancerDashboard();
   const proposalStatusByProject = useMyProposalStatusByProject();
+  const { formatEthToPhp } = useEthPhpRate();
 
   if (coreLoading && !hasData) {
     return <StatsSkeleton label="Loading dashboard" />;
@@ -96,8 +98,10 @@ export default function FreelancerDashboard() {
   const stats = [
     {
       title: range === "all" ? "Total Earned" : `Earned · ${getRangeLabel(range)}`,
-      value: formatAmount(totalEarnings, { currency: "ETH" }),
-      change: projectsCompleted != null ? `${formatNumber(projectsCompleted)} completed contracts` : undefined,
+      value: totalEarnings != null ? formatEthToPhp(totalEarnings) : "₱0.00",
+      change: totalEarnings != null && totalEarnings > 0
+        ? `${formatAmount(totalEarnings, { currency: "ETH" })}${projectsCompleted != null ? ` · ${formatNumber(projectsCompleted)} completed` : ''}`
+        : projectsCompleted != null ? `${formatNumber(projectsCompleted)} completed contracts` : undefined,
       icon: Coins,
       color: "text-success",
       bg: "bg-success-subtle",
@@ -233,7 +237,10 @@ export default function FreelancerDashboard() {
                               {project?.employer?.name ?? project?.employer?.companyName ?? ""}
                             </p>
                           </div>
-                          <p className="font-semibold text-primary">{formatAmount(contract.totalAmount, { currency: contract.currency || 'ETH' })}</p>
+                          <div className="text-right">
+                            <p className="font-semibold text-primary">{formatEthToPhp(contract.totalAmount)}</p>
+                            <p className="text-2xs text-muted-foreground">{formatAmount(contract.totalAmount, { currency: contract.currency || 'ETH' })}</p>
+                          </div>
                         </div>
                         <div className="flex items-center gap-4">
                           <div className="flex-1">
@@ -308,7 +315,10 @@ export default function FreelancerDashboard() {
                       <Badge className={statusColors[proposal.status]}>{proposal.status}</Badge>
                     </div>
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>{formatAmount(proposal.proposedRate, { currency: 'ETH' })}</span>
+                      <span>
+                        {formatEthToPhp(proposal.proposedRate)}
+                        <span className="ml-1 text-2xs font-normal text-muted-foreground">({formatAmount(proposal.proposedRate, { currency: 'ETH' })})</span>
+                      </span>
                       <span>{relativeTime(proposal.createdAt)}</span>
                     </div>
                   </Link>
@@ -374,7 +384,10 @@ export default function FreelancerDashboard() {
                           <ProposalSubmittedBadge status={proposalStatus} />
                         </div>
                       )}
-                      <p className="text-sm text-primary font-medium mb-2">{formatAmount(project.budget, { currency: 'ETH' })}</p>
+                      <p className="text-sm text-primary font-medium mb-2">
+                        {formatEthToPhp(project.budget)}{' '}
+                        <span className="text-2xs text-muted-foreground font-normal">({formatAmount(project.budget, { currency: 'ETH' })})</span>
+                      </p>
                       <div className="flex flex-wrap gap-1.5 mb-3">
                         {matchedSkills.map((skill) => (
                           <Badge key={skill} variant="secondary" className="text-xs">

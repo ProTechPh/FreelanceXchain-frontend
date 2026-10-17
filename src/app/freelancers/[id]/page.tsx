@@ -24,7 +24,7 @@ import {
   ShieldCheck,
   Send,
   ArrowLeft,
-  DollarSign,
+  Banknote,
   CircleCheck,
   Clock,
   CircleMinus,
@@ -307,7 +307,7 @@ export default function FreelancerProfilePage() {
                     {freelancer.nationality || 'Remote'}
                   </span>
                   <span className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                    <DollarSign className="w-4 h-4" />
+                    <Banknote className="w-4 h-4" />
                     <span className="font-bold text-primary">{formatAmount(freelancer.hourlyRate)}/hr</span>
                   </span>
                 </div>

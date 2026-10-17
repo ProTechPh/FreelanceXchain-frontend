@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ArrowDownLeft, ArrowUpRight, ChevronDown, CircleDollarSign, ListFilter, ReceiptText, WalletCards, X } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, ChevronDown, ListFilter, ReceiptText, WalletCards, X } from 'lucide-react';
 import { reportLoadFailure } from '@/lib/report-failure';
 import { transactionsApi } from '@/lib/api';
 import { getSignedTransactionAmount, getTransactionDetailRoute } from '@/lib/transaction-view';
 import { useAuthStore } from '@/stores/authStore';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 import type { Transaction, UserRole } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,7 @@ const typeLabels: Record<string, string> = {
 
 export function ParticipantTransactions({ role }: { role: ParticipantRole }) {
   const user = useAuthStore((state) => state.user);
+  const { formatEthToPhp } = useEthPhpRate();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [typeFilter, setTypeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -97,7 +99,17 @@ export function ParticipantTransactions({ role }: { role: ParticipantRole }) {
           { label: 'Completed outgoing', value: totals.outgoing, icon: ArrowUpRight },
           { label: 'Net this month', value: totals.netThisMonth, icon: WalletCards },
         ].map((stat) => (
-          <Card key={stat.label}><CardContent className="flex items-center gap-3 p-4"><div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary"><stat.icon className="size-5" /></div><div><p className="text-xl font-bold">{formatAmount(stat.value, { currency: 'ETH' })}</p><p className="text-xs text-muted-foreground">{stat.label}</p></div></CardContent></Card>
+          <Card key={stat.label}>
+            <CardContent className="flex items-center gap-3 p-4">
+              <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <stat.icon className="size-5" />
+              </div>
+              <div>
+                <p className="text-xl font-bold">{formatEthToPhp(stat.value)}</p>
+                <p className="text-2xs text-muted-foreground">{formatAmount(stat.value, { currency: 'ETH' })} • {stat.label}</p>
+              </div>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
@@ -177,16 +189,28 @@ export function ParticipantTransactions({ role }: { role: ParticipantRole }) {
           {loading ? (
             <ListSkeleton rows={4} label="Loading transactions" />
           ) : transactions.length === 0 ? (
-            <div className="flex flex-col items-center gap-3 py-12 text-center text-muted-foreground"><CircleDollarSign className="size-10" /><p>No transactions match these filters.</p></div>
+            <div className="flex flex-col items-center gap-3 py-12 text-center text-muted-foreground"><WalletCards className="size-10" /><p>No transactions match these filters.</p></div>
           ) : (
             <ul className="divide-y divide-border">
               {transactions.map((transaction) => {
                 const signedAmount = user ? getSignedTransactionAmount(transaction, user.id) : 0;
+                const isEth = !transaction.currency || transaction.currency === 'ETH';
                 return (
                   <li key={transaction.id}>
                     <Link href={getTransactionDetailRoute(role, transaction.id)} className="flex flex-col gap-3 rounded-lg px-2 py-4 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-3"><div className="flex size-10 items-center justify-center rounded-lg bg-muted"><ReceiptText className="size-5 text-primary" /></div><div><p className="font-medium">{typeLabels[transaction.type] || transaction.type.replaceAll('_', ' ')}</p><p className="text-sm text-muted-foreground">{formatDateTime(transaction.created_at)}</p></div></div>
-                      <div className="text-left sm:text-right"><p className={signedAmount > 0 ? 'font-semibold text-success' : 'font-semibold'}>{signedAmount > 0 ? '+' : signedAmount < 0 ? '−' : ''}{formatAmount(Math.abs(transaction.amount), { currency: transaction.currency || 'ETH' })}</p><Badge variant="secondary">{transaction.status}</Badge></div>
+                      <div className="text-left sm:text-right">
+                        <p className={signedAmount > 0 ? 'font-semibold text-success' : 'font-semibold'}>
+                          {signedAmount > 0 ? '+' : signedAmount < 0 ? '−' : ''}
+                          {isEth ? formatEthToPhp(Math.abs(transaction.amount)) : formatAmount(Math.abs(transaction.amount), { currency: transaction.currency || 'PHP' })}
+                        </p>
+                        {isEth && (
+                          <p className="text-2xs text-muted-foreground">
+                            {formatAmount(Math.abs(transaction.amount), { currency: 'ETH' })}
+                          </p>
+                        )}
+                        <Badge variant="secondary">{transaction.status}</Badge>
+                      </div>
                     </Link>
                   </li>
                 );

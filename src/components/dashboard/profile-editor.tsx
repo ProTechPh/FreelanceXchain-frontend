@@ -422,7 +422,7 @@ export function ProfileEditor({
                   rows={5}
                 />
               </div>
-              <Field label="Hourly rate (USD)" htmlFor="hourly-rate">
+              <Field label="Hourly rate (PHP)" htmlFor="hourly-rate">
                 <Input
                   id="hourly-rate"
                   type="number"

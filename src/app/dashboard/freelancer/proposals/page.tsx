@@ -13,6 +13,7 @@ import { reportLoadFailure } from '@/lib/report-failure';
 import { Clock, CheckCircle, XCircle, FileText, RefreshCw } from 'lucide-react';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { formatAmount, formatDate } from '@/lib/format';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 import {
   Dialog,
   DialogContent,
@@ -37,6 +38,7 @@ interface ProposalView {
 }
 
 export default function ProposalsPage() {
+  const { formatEthToPhp } = useEthPhpRate();
   const [proposals, setProposals] = useState<ProposalView[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<ProposalStatus>('pending');
@@ -171,7 +173,10 @@ export default function ProposalsPage() {
                     </Badge>
                   </div>
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs sm:text-sm text-muted-foreground">
-                    <span className="font-bold text-primary">{formatAmount(proposal.proposedRate, { currency: 'ETH' })}</span>
+                    <span className="font-bold text-primary">
+                      {formatEthToPhp(proposal.proposedRate)}
+                      <span className="text-xs font-normal text-muted-foreground ml-1">({formatAmount(proposal.proposedRate, { currency: 'ETH' })})</span>
+                    </span>
                     <span className="flex items-center gap-1"><Clock className="size-3 shrink-0" />{proposal.estimatedDuration} days</span>
                     <span className="flex items-center gap-1">
                       {status === 'pending' ? 'Submitted' : statusConfig[status].label}{' '}

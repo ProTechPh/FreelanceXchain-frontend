@@ -16,6 +16,7 @@ import { useRoleSwitch } from '@/hooks/use-role-switch';
 import { getOtherRole, getRoleLabel, isOnRoleSide } from '@/lib/role-switch';
 import type { Milestone, UserRole } from '@/types';
 import { useContractWorkspace } from '@/hooks/use-contract-workspace';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 import { ContractNegotiationPanel } from '@/components/contracts/contract-negotiation-panel';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -72,6 +73,7 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
     reviewEligibility,
     refresh: loadWorkspace,
   } = useContractWorkspace(contractId, role, requestRatingPrompt, disputeId);
+  const { formatEthToPhp } = useEthPhpRate();
 
   const [actionId, setActionId] = useState<string | null>(null);
   const [withdrawingFunds, setWithdrawingFunds] = useState(false);
@@ -273,7 +275,7 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
                   Escrow Funds Available to Claim
                 </p>
                 <p className="text-sm text-emerald-800/90 dark:text-emerald-300/90">
-                  You have <span className="font-bold text-foreground">{pendingWithdrawalEth} ETH</span> pending in the escrow contract from a dispute resolution or refund. Connect your wallet to claim and withdraw the funds.
+                  You have <span className="font-bold text-foreground">{pendingWithdrawalEth} ETH (≈ {formatEthToPhp(pendingWithdrawalEth)})</span> pending in the escrow contract from a dispute resolution or refund. Connect your wallet to claim and withdraw the funds.
                 </p>
               </div>
             </div>

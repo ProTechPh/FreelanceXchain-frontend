@@ -41,6 +41,12 @@ function ProjectResult({ project, listingQuery }: { project: Project; listingQue
               Rush +{project.rushFeePercentage}%
             </span>
           )}
+          {Boolean(project.freelancerLimit && project.freelancerLimit > 1) && (
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary/10 border border-primary/20 px-3 py-1 rounded-full">
+              <Users className="w-3.5 h-3.5" />
+              {project.freelancerLimit} Openings
+            </span>
+          )}
         </div>
 
         {/* Title + Employer */}
@@ -81,7 +87,7 @@ function ProjectResult({ project, listingQuery }: { project: Project; listingQue
           <div className="flex flex-wrap items-center gap-5 text-sm">
             <span className="flex items-center gap-1.5 font-bold text-foreground">
               <Coins className="w-4 h-4 text-primary" />
-              {formatAmount(project.budget)}
+              {project.budget > 0 ? formatAmount(project.budget) : 'Negotiable'}
             </span>
             <span className="flex items-center gap-1.5 text-muted-foreground">
               <Clock className="w-4 h-4" />

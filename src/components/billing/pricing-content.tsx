@@ -60,7 +60,7 @@ export function PricingContent() {
           <CardHeader className="space-y-3">
             <CardTitle className="text-xl">Free</CardTitle>
             <p className="text-3xl font-extrabold text-foreground">
-              $0<span className="text-base font-medium text-muted-foreground"> / forever</span>
+              ₱0<span className="text-base font-medium text-muted-foreground"> / forever</span>
             </p>
             <CardDescription>Everything you need to work and get paid.</CardDescription>
           </CardHeader>

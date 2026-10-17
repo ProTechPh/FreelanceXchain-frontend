@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import { formatAmount, formatDate, formatDocumentNumber } from '@/lib/format';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 import { ContractInvoiceDialog } from '@/components/contracts/contract-invoice-dialog';
 
 interface ContractInvoicesListProps {
@@ -26,6 +27,7 @@ interface ContractInvoicesListProps {
 }
 
 export function ContractInvoicesList({ role }: ContractInvoicesListProps) {
+  const { formatEthToPhp } = useEthPhpRate();
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -205,7 +207,8 @@ export function ContractInvoicesList({ role }: ContractInvoicesListProps) {
                     <div className="flex flex-wrap items-center gap-3 sm:flex-nowrap">
                       <div className="text-right sm:min-w-[120px]">
                         <p className="text-xs text-muted-foreground">Agreed Value</p>
-                        <p className="text-base font-bold tabular-nums text-foreground">{formatAmount(contract.totalAmount, { currency: contract.currency || 'ETH' })}</p>
+                        <p className="text-base font-bold tabular-nums text-foreground">{formatEthToPhp(contract.totalAmount)}</p>
+                        <p className="text-2xs text-muted-foreground">{formatAmount(contract.totalAmount, { currency: contract.currency || 'ETH' })}</p>
                       </div>
 
                       <div className="flex items-center gap-2">

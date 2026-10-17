@@ -3,6 +3,7 @@ export interface ProposalSubmissionForm {
   estimatedDuration: string;
   coverLetter?: string;
   files: File[];
+  phpRate?: string;
 }
 
 interface SubmittedProposal {
@@ -35,9 +36,10 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const MAX_TOTAL_SIZE = 25 * 1024 * 1024;
 
 // Mirrors submitProposalMultipartSchema on the API, so anything the form
-// accepts the server accepts too.
-export const MIN_PROPOSED_RATE = 1;
+// accepts the server accepts too. Minimum 0.0001 ETH (~₱15).
+export const MIN_PROPOSED_RATE = 0.0001;
 export const MAX_PROPOSED_RATE = 1_000_000;
+export const MIN_PROPOSED_RATE_PHP = 1;
 export const MAX_DURATION_DAYS = 3650;
 export const MAX_COVER_LETTER_LENGTH = 10_000;
 
@@ -57,15 +59,25 @@ export interface ProposalFieldError {
  * under the control it describes.
  */
 export function findProposalFormError(form: ProposalSubmissionForm): ProposalFieldError | null {
+  if (form.phpRate !== undefined && form.phpRate.trim() !== '') {
+    const php = Number(form.phpRate);
+    if (!Number.isFinite(php) || php <= 0) {
+      return { field: 'proposedRate', message: 'Proposed rate must be greater than ₱0.' };
+    }
+    if (php < MIN_PROPOSED_RATE_PHP) {
+      return { field: 'proposedRate', message: `Proposed rate must be at least ₱${MIN_PROPOSED_RATE_PHP}.` };
+    }
+  }
+
   const proposedRate = Number(form.proposedRate);
   if (form.proposedRate.trim() === '' || !Number.isFinite(proposedRate) || proposedRate <= 0) {
     return { field: 'proposedRate', message: 'Proposed rate must be greater than 0.' };
   }
   if (proposedRate < MIN_PROPOSED_RATE) {
-    return { field: 'proposedRate', message: `Proposed rate must be at least $${MIN_PROPOSED_RATE}.` };
+    return { field: 'proposedRate', message: `Proposed rate must be at least ${MIN_PROPOSED_RATE} ETH.` };
   }
   if (proposedRate > MAX_PROPOSED_RATE) {
-    return { field: 'proposedRate', message: 'Proposed rate cannot exceed $1,000,000.' };
+    return { field: 'proposedRate', message: `Proposed rate cannot exceed ${MAX_PROPOSED_RATE.toLocaleString('en-US')} ETH.` };
   }
 
   const estimatedDuration = Number(form.estimatedDuration);

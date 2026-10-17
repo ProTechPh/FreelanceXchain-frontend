@@ -24,7 +24,7 @@ export const ADMIN_PERMISSIONS = [
 
 export type AdminPermission = typeof ADMIN_PERMISSIONS[number];
 
-export type ProjectStatus = 'draft' | 'open' | 'in_progress' | 'completed' | 'cancelled' | 'disputed';
+export type ProjectStatus = 'draft' | 'open' | 'in_progress' | 'completed' | 'cancelled' | 'closed' | 'disputed';
 
 export type ProposalStatus = 'pending' | 'accepted' | 'rejected' | 'withdrawn';
 
@@ -364,6 +364,7 @@ export interface Project {
   updatedAt: string;
   employer?: EmployerProfile;
   proposalCount?: number;
+  hiredCount?: number;
 }
 
 export interface ProjectCategoryStat {

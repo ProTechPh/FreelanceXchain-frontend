@@ -12,6 +12,7 @@ import {
   summarizePaymentHistory,
 } from '@/lib/payment-history';
 import { formatAmount, formatDateTime } from '@/lib/format';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { cn } from '@/lib/utils';
 
@@ -30,6 +31,7 @@ export function ContractPaymentHistory({
   contractId: string;
   userId: string;
 }) {
+  const { formatEthToPhp } = useEthPhpRate();
   const { data, isPending, isError, error } = useContractPaymentHistory(contractId);
 
   const items = data?.items ?? [];
@@ -113,7 +115,7 @@ export function ContractPaymentHistory({
                         )}
                       </div>
                     </div>
-                    <div className="flex shrink-0 flex-col items-end gap-1">
+                    <div className="flex shrink-0 flex-col items-end gap-0.5">
                       <span
                         className={cn(
                           'text-sm font-medium tabular-nums',
@@ -121,8 +123,15 @@ export function ContractPaymentHistory({
                         )}
                       >
                         {direction === 'in' ? '+' : direction === 'out' ? '−' : ''}
-                        {formatAmount(record.amount, { currency: record.currency, fractionDigits: 4 })}
+                        {(!record.currency || record.currency.toUpperCase() === 'ETH')
+                          ? formatEthToPhp(record.amount)
+                          : formatAmount(record.amount, { currency: record.currency, fractionDigits: 4 })}
                       </span>
+                      {(!record.currency || record.currency.toUpperCase() === 'ETH') && (
+                        <span className="text-2xs text-muted-foreground">
+                          {formatAmount(record.amount, { currency: 'ETH', fractionDigits: 4 })}
+                        </span>
+                      )}
                       <StatusBadge status={record.status} domain="transaction" size="sm" />
                     </div>
                   </li>
@@ -147,6 +156,8 @@ function LedgerTotal({
   currency: string;
   tone: 'success' | 'muted';
 }) {
+  const { formatEthToPhp } = useEthPhpRate();
+  const isEth = !currency || currency.toUpperCase() === 'ETH';
   return (
     <div data-slot="ledger-total" className="rounded-lg border border-border p-3">
       <p className="text-xs text-muted-foreground">{label}</p>
@@ -156,8 +167,13 @@ function LedgerTotal({
           tone === 'success' ? 'text-success' : 'text-foreground',
         )}
       >
-        {formatAmount(value, { currency, fractionDigits: 4 })}
+        {isEth ? formatEthToPhp(value) : formatAmount(value, { currency, fractionDigits: 4 })}
       </p>
+      {isEth && (
+        <p className="text-2xs text-muted-foreground">
+          {formatAmount(value, { currency: 'ETH', fractionDigits: 4 })}
+        </p>
+      )}
     </div>
   );
 }

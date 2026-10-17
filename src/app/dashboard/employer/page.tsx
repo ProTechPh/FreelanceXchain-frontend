@@ -51,7 +51,8 @@ import { AnalyticsRangeFilter } from "@/components/analytics/range-filter";
 import { ProGate } from "@/components/billing/pro-gate";
 import { getRangeLabel } from "@/lib/analytics-range";
 import { Coins, FolderOpen, FileText, Users, Clock, ArrowUpRight, PlusCircle, Briefcase } from "lucide-react";
-import { formatAmount, formatRelativeTime, formatDate } from "@/lib/format";
+import { formatAmount, formatNumber, formatRelativeTime, formatDate } from "@/lib/format";
+import { useEthPhpRate } from "@/hooks/use-eth-php-rate";
 import { StatsSkeleton, ListSkeleton } from "@/components/dashboard/skeletons";
 import { WalletConnectBanner } from "@/components/wallet/wallet-connect-banner";
 import { TourStepLink } from "@/components/onboarding/tour-step-link";
@@ -82,6 +83,7 @@ export default function EmployerDashboard() {
     totalSpent,
     completedContractCount,
   } = useEmployerDashboard();
+  const { formatEthToPhp } = useEthPhpRate();
 
   if (loading) {
     return <StatsSkeleton label="Loading dashboard" />;
@@ -99,7 +101,10 @@ export default function EmployerDashboard() {
     },
     {
       title: range === "all" ? "Total Spent" : `Spent · ${getRangeLabel(range)}`,
-      value: formatAmount(totalSpent, { currency: "ETH" }),
+      value: totalSpent != null ? formatEthToPhp(totalSpent) : "₱0.00",
+      change: totalSpent != null && totalSpent > 0
+        ? `${formatAmount(totalSpent, { currency: "ETH" })}${completedContractCount != null ? ` · ${formatNumber(completedContractCount)} contracts` : ''}`
+        : completedContractCount != null ? `${formatNumber(completedContractCount)} completed contracts` : undefined,
       icon: Coins,
       color: "text-success",
       bg: "bg-success-subtle",
@@ -223,7 +228,8 @@ export default function EmployerDashboard() {
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="font-semibold text-primary">{formatAmount(project.budget, { currency: "ETH" })}</p>
+                            <p className="font-semibold text-primary">{formatEthToPhp(project.budget)}</p>
+                            <p className="text-2xs text-muted-foreground">{formatAmount(project.budget, { currency: "ETH" })}</p>
                             <StatusBadge status={project.status} domain="project" />
                           </div>
                         </div>
@@ -302,7 +308,10 @@ export default function EmployerDashboard() {
                       </div>
                     </div>
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span className="font-medium text-primary">{formatAmount(proposal.proposedRate, { currency: 'ETH' })}</span>
+                      <span className="font-medium text-primary">
+                        {formatEthToPhp(proposal.proposedRate)}
+                        <span className="ml-1 text-2xs font-normal text-muted-foreground">({formatAmount(proposal.proposedRate, { currency: 'ETH' })})</span>
+                      </span>
                       {rating !== null && <span>★ {rating.toFixed(1)}</span>}
                       <span>{relativeTime(proposal.createdAt)}</span>
                     </div>

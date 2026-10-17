@@ -8,7 +8,6 @@ import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { HelpHint } from '@/components/onboarding/help-hint';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -17,7 +16,6 @@ import { UpgradeButton } from '@/components/billing/upgrade-button';
 import { usePlan } from '@/hooks/use-plan';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { formatFileSize } from '@/lib/attachment-presentation';
-import { formatAmount, formatDate } from '@/lib/format';
 import {
   ProjectFormValidationError,
   submitProject,
@@ -28,7 +26,7 @@ import {
 } from '@/lib/project-submission';
 import { toast } from 'sonner';
 import { reportFailure } from '@/lib/report-failure';
-import { ChevronRight, ChevronLeft, Plus, X, Upload, FileText, Coins, Clock, Target, Sparkles, AlertCircle } from 'lucide-react';
+import { ChevronRight, ChevronLeft, X, Upload, FileText, Target, Sparkles, AlertCircle, Users, HandCoins } from 'lucide-react';
 import { ProjectSkillSelector, type ProjectSkillCategory } from '@/components/dashboard/project-skill-selector';
 import { toSkillCategories } from '@/lib/skill-taxonomy';
 import { DOCUMENT_ACCEPT_STRING } from '@/lib/file-validation';
@@ -39,10 +37,8 @@ import { getFirstIncompleteTab } from '@/lib/profile-form';
 import type { BusinessProfileCompleteness } from '@/types';
 
 const steps = [
-  { id: 1, title: 'Project Details', icon: FileText },
-  { id: 2, title: 'Milestones', icon: Target },
-  { id: 3, title: 'Budget & Timeline', icon: Coins },
-  { id: 4, title: 'Review & Post', icon: FileText },
+  { id: 1, title: 'Project Details & Team', icon: FileText },
+  { id: 2, title: 'Review & Post', icon: Target },
 ];
 
 export default function CreateProjectPage() {
@@ -53,11 +49,7 @@ export default function CreateProjectPage() {
   const [skills, setSkills] = useState<ProjectSubmissionSkill[]>([]);
   const [skillCategories, setSkillCategories] = useState<ProjectSkillCategory[]>([]);
   const [skillsLoading, setSkillsLoading] = useState(true);
-  const [budget, setBudget] = useState('');
-  const [deadline, setDeadline] = useState('');
-  const [milestones, setMilestones] = useState([
-    { title: '', description: '', amount: '', durationDays: '' },
-  ]);
+  const [freelancerLimit, setFreelancerLimit] = useState(5);
   const [files, setFiles] = useState<File[]>([]);
   const [extractingSkills, setExtractingSkills] = useState(false);
   const { isPro } = usePlan();
@@ -71,8 +63,7 @@ export default function CreateProjectPage() {
   const [gateOnly, setGateOnly] = useState(false);
 
   // Warn if user tries to leave with unsaved changes
-  const isDirty = title !== '' || description !== '' || skills.length > 0 || budget !== '' || deadline !== '' ||
-    milestones.some(m => m.title !== '' || m.description !== '' || m.amount !== '' || (m.durationDays && m.durationDays !== '')) || files.length > 0;
+  const isDirty = title !== '' || description !== '' || skills.length > 0 || files.length > 0;
   const unsavedChanges = useUnsavedChangesWarning(isDirty && !isSubmitting);
   const isDirtyRef = useRef(isDirty);
   useEffect(() => {
@@ -138,9 +129,10 @@ export default function CreateProjectPage() {
     title,
     description,
     skills,
-    budget,
-    deadline,
-    milestones,
+    freelancerLimit,
+    budget: '',
+    deadline: '',
+    milestones: [],
     files,
   });
 
@@ -173,9 +165,6 @@ export default function CreateProjectPage() {
   };
 
   const suggestSkills = async () => {
-    // Pro-only, and guarded here as well as in the UI so a stale plan cannot
-    // fire the request. Manual skill selection below stays free, so posting a
-    // project is never blocked.
     if (!isPro) return;
     if (!description.trim()) {
       showFormError('Add a project description before suggesting skills.', 'description');
@@ -193,47 +182,23 @@ export default function CreateProjectPage() {
         return [...current, ...suggestions.filter((skill) => !selectedIds.has(skill.id))];
       });
       clearFieldError('skills');
-      toast.success(
-        suggestions.length > 0
-          ? `Added ${suggestions.length} suggested skill${suggestions.length === 1 ? '' : 's'}.`
-          : 'No further skills found in the description.',
-      );
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Unable to suggest skills right now.'));
+      reportFailure(error, 'suggest matching skills');
     } finally {
       setExtractingSkills(false);
     }
   };
 
-  const addFiles = (selected: File[]) => {
-    const next = [...files, ...selected].filter(
-      (file, index, all) => all.findIndex((candidate) => (
-        candidate.name === file.name && candidate.size === file.size && candidate.lastModified === file.lastModified
-      )) === index,
-    );
-    const error = validateProjectFiles(next);
-    if (error) {
-      showFormError(error, 'files');
+  const addFiles = (newFiles: File[]) => {
+    clearFieldError('files');
+    const combined = [...files, ...newFiles];
+    const fileError = validateProjectFiles(combined);
+    if (fileError) {
+      showFormError(fileError, 'files');
       return;
     }
-    clearFieldError('files');
     setFormError(null);
-    setFiles(next);
-  };
-
-  const addMilestone = () => {
-    setMilestones([...milestones, { title: '', description: '', amount: '', durationDays: '' }]);
-  };
-
-  const removeMilestone = (index: number) => {
-    setMilestones(milestones.filter((_, i) => i !== index));
-  };
-
-  const updateMilestone = (index: number, field: string, value: string) => {
-    clearFieldError(`milestone-${index}-${field}`);
-    const updated = [...milestones];
-    (updated[index] as Record<string, string>)[field] = value;
-    setMilestones(updated);
+    setFiles(combined);
   };
 
   const handleNext = () => {
@@ -252,73 +217,13 @@ export default function CreateProjectPage() {
         showFormError('Select at least one required skill.', 'skills');
         return;
       }
+      if (!freelancerLimit || freelancerLimit < 1) {
+        showFormError('Please specify how many freelancers can join (minimum 1).', 'freelancerLimit');
+        return;
+      }
       const fileError = validateProjectFiles(files);
       if (fileError) {
         showFormError(fileError, 'files');
-        return;
-      }
-    }
-
-    if (currentStep === 2) {
-      for (const [index, milestone] of milestones.entries()) {
-        if (!milestone.title.trim()) {
-          showFormError(`Milestone ${index + 1} needs a title.`, `milestone-${index}-title`);
-          return;
-        }
-        if (!milestone.description.trim()) {
-          showFormError(`Milestone ${index + 1} needs a description.`, `milestone-${index}-description`);
-          return;
-        }
-        const amount = Number(milestone.amount);
-        if (!Number.isFinite(amount) || amount <= 0) {
-          showFormError(`Milestone ${index + 1} needs a positive amount.`, `milestone-${index}-amount`);
-          return;
-        }
-        if (milestone.durationDays && milestone.durationDays.trim() !== '') {
-          const days = Number(milestone.durationDays);
-          if (!Number.isInteger(days) || days <= 0) {
-            showFormError(`Milestone ${index + 1} duration must be a positive whole number of days.`, `milestone-${index}-duration`);
-            return;
-          }
-        }
-      }
-      // Auto-sync budget from milestone total when advancing to step 3
-      const milestoneTotal = milestones.reduce(
-        (total, milestone) => total + Number(milestone.amount || 0),
-        0,
-      );
-      if (milestoneTotal > 0) {
-        setBudget(milestoneTotal.toFixed(2));
-      }
-
-      // If user hasn't set deadline yet, suggest deadline from milestone durations
-      const totalMilestoneDays = milestones.reduce(
-        (sum, m) => sum + (Number(m.durationDays) || 0),
-        0,
-      );
-      if (!deadline && totalMilestoneDays > 0) {
-        const suggestedDate = new Date();
-        suggestedDate.setDate(suggestedDate.getDate() + totalMilestoneDays);
-        setDeadline(suggestedDate.toISOString().split('T')[0]);
-      }
-    }
-
-    if (currentStep === 3) {
-      const budgetNumber = Number(budget);
-      if (!Number.isFinite(budgetNumber) || budgetNumber <= 0) {
-        showFormError('Total budget must be greater than 0.', 'budget');
-        return;
-      }
-      if (!deadline) {
-        showFormError('Select a project deadline.', 'deadline');
-        return;
-      }
-      const milestoneTotal = milestones.reduce(
-        (total, milestone) => total + Number(milestone.amount),
-        0,
-      );
-      if (Math.abs(milestoneTotal - budgetNumber) > 0.01) {
-        showFormError('Milestone amounts must equal the total budget.', 'budget');
         return;
       }
     }
@@ -330,7 +235,7 @@ export default function CreateProjectPage() {
     }
 
     setFormError(null);
-    setCurrentStep((step) => Math.min(4, step + 1));
+    setCurrentStep((step) => Math.min(2, step + 1));
   };
 
   const handlePrevious = () => {
@@ -342,7 +247,7 @@ export default function CreateProjectPage() {
   const handleSubmit = async () => {
     if (isSubmitting) return;
 
-    const validationError = validateProjectStep(4, getForm());
+    const validationError = validateProjectStep(1, getForm());
     if (validationError) {
       showFormError(validationError);
       return;
@@ -351,8 +256,6 @@ export default function CreateProjectPage() {
     setFormError(null);
     setIsSubmitting(true);
     try {
-      // Pre-warm the CSRF token with forceRefresh so the POST is guaranteed to carry
-      // a fresh token matching the active authenticated user session.
       const { csrfTokenManager } = await import('@/lib/api-client');
       await csrfTokenManager.ensureToken({ forceRefresh: true });
 
@@ -413,160 +316,217 @@ export default function CreateProjectPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Post a new project</h1>
-        <p className="text-muted-foreground">Create a project listing to find the best talent</p>
+        <p className="text-muted-foreground">Define your project requirements and hire the best freelancers</p>
       </div>
 
       {businessProfileGate}
 
       {/* Progress Steps */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2">
         {steps.map((step) => (
           <div
             key={step.id}
             aria-current={currentStep === step.id ? 'step' : undefined}
-            className={`flex min-h-10 items-center justify-center gap-2 rounded-lg px-2 py-2 text-center ${
+            className={`flex min-h-10 items-center justify-center gap-2 rounded-lg px-2 py-2 text-center text-sm font-medium ${
               currentStep === step.id
-                ? 'gradient-primary'
+                ? 'gradient-primary text-white shadow-sm'
                 : currentStep > step.id
-                ? 'bg-success-subtle text-success'
+                ? 'bg-success-subtle text-success border border-success/30'
                 : 'bg-secondary text-muted-foreground'
             }`}
           >
             <step.icon className="h-4 w-4 shrink-0" />
-            <span className="text-sm font-medium">{step.title}</span>
+            <span>{step.id}. {step.title}</span>
           </div>
         ))}
       </div>
 
-      {/* Step Content */}
-      <Card className="bg-card border-border">
+      {/* Form Content */}
+      <Card>
         <CardContent className="p-6">
           {currentStep === 1 && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-lg font-semibold mb-4">Project Details</h2>
-                <div className="space-y-4">
-                  <Field label="Project Title" htmlFor="title" error={fieldErrors.title} required>
-                    <Input
-                      id="title"
-                      placeholder="e.g., E-commerce Platform Development"
-                      value={title}
-                      maxLength={120}
-                      onChange={(e) => {
-                        setTitle(e.target.value);
-                        clearFieldError('title');
-                      }}
-                    />
-                  </Field>
-                  <Field label="Description" htmlFor="description" error={fieldErrors.description} required>
-                    <Textarea
-                      id="description"
-                      placeholder="Describe your project in detail..."
-                      rows={6}
-                      value={description}
-                      maxLength={4000}
-                      onChange={(e) => {
-                        setDescription(e.target.value);
-                        clearFieldError('description');
-                      }}
-                    />
-                  </Field>
-                  <div className="space-y-2">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <Label id="required-skills-label">
-                        Required Skills <span className="text-destructive" aria-hidden="true">*</span>
-                      </Label>
-                      {isPro ? (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          loading={extractingSkills}
-                          loadingText="Analysing…"
-                          disabled={skillsLoading || !description.trim()}
-                          onClick={() => void suggestSkills()}
-                        >
-                          <Sparkles className="size-4" aria-hidden="true" />
-                          Suggest from description
-                        </Button>
-                      ) : (
-                        // Free employers pick skills manually below; only the AI
-                        // shortcut is gated, so the form stays fully usable.
-                        <UpgradeButton
-                          source="extract-skills"
-                          size="sm"
-                          variant="outline"
-                          label="Suggest from description (Pro)"
+                <h2 className="text-lg font-semibold">Project & Team Details</h2>
+                <p className="text-sm text-muted-foreground">Provide core information about your project and team size.</p>
+              </div>
+
+              <div className="space-y-5">
+                <Field
+                  label="Project Title"
+                  htmlFor="project-title"
+                  error={fieldErrors.title}
+                  required
+                >
+                  <Input
+                    id="project-title"
+                    placeholder="e.g., Full-Stack Web3 Marketplace Development"
+                    value={title}
+                    onChange={(e) => {
+                      setTitle(e.target.value);
+                      clearFieldError('title');
+                    }}
+                  />
+                </Field>
+
+                <Field
+                  label="Description"
+                  htmlFor="project-description"
+                  error={fieldErrors.description}
+                  required
+                >
+                  <Textarea
+                    id="project-description"
+                    placeholder="Detailed project description, scope of work, objectives, and deliverables..."
+                    rows={6}
+                    value={description}
+                    onChange={(e) => {
+                      setDescription(e.target.value);
+                      clearFieldError('description');
+                    }}
+                  />
+                </Field>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <Field
+                    label="Freelancers Needed"
+                    htmlFor="freelancer-limit"
+                    description="How many freelancers can join this project? (e.g. 5 freelancers)"
+                    error={fieldErrors.freelancerLimit}
+                    required
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="relative flex-1">
+                        <Users className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="freelancer-limit"
+                          type="number"
+                          min={1}
+                          max={50}
+                          className="pl-9"
+                          value={freelancerLimit}
+                          onChange={(e) => {
+                            const val = parseInt(e.target.value, 10);
+                            setFreelancerLimit(isNaN(val) ? 1 : Math.max(1, Math.min(50, val)));
+                            clearFieldError('freelancerLimit');
+                          }}
                         />
-                      )}
+                      </div>
+                      <Badge variant="outline" className="h-9 px-3 text-xs font-semibold shrink-0">
+                        {freelancerLimit} {freelancerLimit === 1 ? 'Opening' : 'Openings'}
+                      </Badge>
                     </div>
-                    <p id="required-skills-hint" className="text-sm text-muted-foreground">
-                      Pick the skills a freelancer needs for this project. Search by name or filter by category,
-                      and click a skill again to remove it.
+                  </Field>
+
+                  {/* Flexible Agreement Callout */}
+                  <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 flex flex-col justify-center">
+                    <div className="flex items-center gap-2 text-primary text-sm font-semibold mb-1">
+                      <HandCoins className="h-4 w-4 shrink-0" />
+                      <span>Negotiated Budget & Timeline</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Applicants will submit their proposed rates and delivery timelines. You can review proposals individually and release payment per freelancer based on agreed terms.
                     </p>
-                    {fieldErrors.skills && (
-                      <p role="alert" className="flex items-start gap-1.5 text-xs font-medium text-destructive">
-                        <AlertCircle className="mt-px size-3.5 shrink-0" aria-hidden="true" />
-                        {fieldErrors.skills}
-                      </p>
-                    )}
-                    <ProjectSkillSelector
-                      categories={skillCategories}
-                      selected={skills}
-                      loading={skillsLoading}
-                      onAdd={addSkill}
-                      onRemove={removeSkill}
-                      onClear={() => setSkills([])}
-                      invalid={Boolean(fieldErrors.skills)}
-                      labelledBy="required-skills-label"
-                      describedBy="required-skills-hint"
-                    />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="project-files">Reference attachments (optional)</Label>
-                    <label
-                      htmlFor="project-files"
-                      className="block cursor-pointer rounded-xl border-2 border-dashed border-border p-8 text-center transition-colors hover:border-primary/50 focus-within:border-primary"
-                      onDragOver={(event) => event.preventDefault()}
-                      onDrop={(event) => {
-                        event.preventDefault();
-                        addFiles(Array.from(event.dataTransfer.files));
-                      }}
-                    >
-                      <Upload className="mx-auto mb-3 h-8 w-8 text-muted-foreground" />
-                      <span className="text-sm text-muted-foreground">Drag files here or choose files</span>
-                      <span className="mt-1 block text-xs text-muted-foreground">Up to 10 files, 10 MB each and 25 MB total</span>
-                      <input
-                        id="project-files"
-                        type="file"
-                        multiple
-                        className="sr-only"
-                        accept={DOCUMENT_ACCEPT_STRING}
-                        onChange={(event) => {
-                          addFiles(Array.from(event.target.files ?? []));
-                          event.target.value = '';
-                        }}
+                </div>
+
+                {/* Required Skills */}
+                <div className="space-y-3">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <Label id="required-skills-label" className="text-sm font-medium">
+                        Required skills <span className="text-destructive">*</span>
+                      </Label>
+                      <p id="required-skills-hint" className="text-xs text-muted-foreground">
+                        Select skills to match with qualified freelancers.
+                      </p>
+                    </div>
+                    {isPro ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={extractingSkills || !description.trim()}
+                        onClick={() => void suggestSkills()}
+                        className="h-8"
+                      >
+                        <Sparkles className="mr-1.5 h-3.5 w-3.5 text-primary" />
+                        {extractingSkills ? 'Extracting…' : 'Suggest with AI'}
+                      </Button>
+                    ) : (
+                      <UpgradeButton
+                        variant="outline"
+                        size="sm"
+                        source="extract-skills"
+                        label="AI suggestions (Pro)"
+                        className="h-8"
                       />
-                    </label>
-                    {fieldErrors.files && (
-                      <p role="alert" className="flex items-start gap-1.5 text-xs font-medium text-destructive">
-                        <AlertCircle className="mt-px size-3.5 shrink-0" aria-hidden="true" />
-                        {fieldErrors.files}
-                      </p>
-                    )}
-                    {files.length > 0 && (
-                      <ul className="space-y-2" aria-label="Selected project attachments">
-                        {files.map((file) => (
-                          <li key={`${file.name}-${file.size}-${file.lastModified}`} className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2 text-sm">
-                            <span className="min-w-0 truncate">{file.name} <span className="text-muted-foreground">({formatFileSize(file.size)})</span></span>
-                            <Button type="button" size="icon" variant="ghost" aria-label={`Remove ${file.name}`} onClick={() => setFiles((current) => current.filter((candidate) => candidate !== file))}>
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </li>
-                        ))}
-                      </ul>
                     )}
                   </div>
+                  {fieldErrors.skills && (
+                    <p role="alert" className="flex items-start gap-1.5 text-xs font-medium text-destructive">
+                      <AlertCircle className="mt-px size-3.5 shrink-0" aria-hidden="true" />
+                      {fieldErrors.skills}
+                    </p>
+                  )}
+                  <ProjectSkillSelector
+                    categories={skillCategories}
+                    selected={skills}
+                    loading={skillsLoading}
+                    onAdd={addSkill}
+                    onRemove={removeSkill}
+                    onClear={() => setSkills([])}
+                    invalid={Boolean(fieldErrors.skills)}
+                    labelledBy="required-skills-label"
+                    describedBy="required-skills-hint"
+                  />
+                </div>
+
+                {/* Reference Attachments */}
+                <div className="space-y-2">
+                  <Label htmlFor="project-files">Reference attachments (optional)</Label>
+                  <label
+                    htmlFor="project-files"
+                    className="block cursor-pointer rounded-xl border-2 border-dashed border-border p-6 text-center transition-colors hover:border-primary/50 focus-within:border-primary"
+                    onDragOver={(event) => event.preventDefault()}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      addFiles(Array.from(event.dataTransfer.files));
+                    }}
+                  >
+                    <Upload className="mx-auto mb-2 h-7 w-7 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">Drag files here or choose files</span>
+                    <span className="mt-1 block text-xs text-muted-foreground">Up to 10 files, 10 MB each and 25 MB total</span>
+                    <input
+                      id="project-files"
+                      type="file"
+                      multiple
+                      className="sr-only"
+                      accept={DOCUMENT_ACCEPT_STRING}
+                      onChange={(event) => {
+                        addFiles(Array.from(event.target.files ?? []));
+                        event.target.value = '';
+                      }}
+                    />
+                  </label>
+                  {fieldErrors.files && (
+                    <p role="alert" className="flex items-start gap-1.5 text-xs font-medium text-destructive">
+                      <AlertCircle className="mt-px size-3.5 shrink-0" aria-hidden="true" />
+                      {fieldErrors.files}
+                    </p>
+                  )}
+                  {files.length > 0 && (
+                    <ul className="space-y-2" aria-label="Selected project attachments">
+                      {files.map((file) => (
+                        <li key={`${file.name}-${file.size}-${file.lastModified}`} className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2 text-sm">
+                          <span className="min-w-0 truncate">{file.name} <span className="text-muted-foreground">({formatFileSize(file.size)})</span></span>
+                          <Button type="button" size="icon" variant="ghost" aria-label={`Remove ${file.name}`} onClick={() => setFiles((current) => current.filter((candidate) => candidate !== file))}>
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               </div>
             </div>
@@ -574,276 +534,65 @@ export default function CreateProjectPage() {
 
           {currentStep === 2 && (
             <div className="space-y-6">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="flex flex-col gap-1">
-                  <h2 className="text-lg font-semibold">Milestones</h2>
-                  <HelpHint topic="milestones" />
-                </div>
-                <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={addMilestone}>
-                  <Plus className="w-4 h-4 mr-2" /> Add Milestone
-                </Button>
+              <div>
+                <h2 className="text-lg font-semibold">Review & Post Project</h2>
+                <p className="text-sm text-muted-foreground">Double check your project details before publishing to the marketplace.</p>
               </div>
-              <div className="space-y-4">
-                {milestones.map((milestone, index) => (
-                  <div
-                    key={index}
-                    className="p-4 rounded-xl bg-secondary/50 border border-border"
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="font-medium">Milestone {index + 1}</span>
-                      {milestones.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          aria-label={`Remove milestone ${index + 1}`}
-                          className="h-8 w-8 text-destructive"
-                          onClick={() => removeMilestone(index)}
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
-                    <div className="grid md:grid-cols-3 gap-4">
-                      <Field
-                        label="Title"
-                        htmlFor={`milestone-${index}-title`}
-                        error={fieldErrors[`milestone-${index}-title`]}
-                        required
-                      >
-                        <Input
-                          id={`milestone-${index}-title`}
-                          placeholder="e.g., UI Design"
-                          value={milestone.title}
-                          onChange={(e) => updateMilestone(index, 'title', e.target.value)}
-                        />
-                      </Field>
-                      <Field
-                        label="Amount (ETH)"
-                        htmlFor={`milestone-${index}-amount`}
-                        error={fieldErrors[`milestone-${index}-amount`]}
-                        required
-                      >
-                        <Input
-                          id={`milestone-${index}-amount`}
-                          type="number"
-                          min="0.0001"
-                          step="any"
-                          placeholder="0.00"
-                          value={milestone.amount}
-                          onChange={(e) => updateMilestone(index, 'amount', e.target.value)}
-                        />
-                      </Field>
-                      <Field
-                        label="Duration (Days)"
-                        htmlFor={`milestone-${index}-duration`}
-                        error={fieldErrors[`milestone-${index}-duration`]}
-                      >
-                        <Input
-                          id={`milestone-${index}-duration`}
-                          type="number"
-                          min="1"
-                          step="1"
-                          placeholder="e.g., 7"
-                          value={milestone.durationDays}
-                          onChange={(e) => updateMilestone(index, 'durationDays', e.target.value)}
-                        />
-                      </Field>
-                      <div className="md:col-span-3">
-                        <Field
-                          label="Description"
-                          htmlFor={`milestone-${index}-description`}
-                          error={fieldErrors[`milestone-${index}-description`]}
-                          required
-                        >
-                          <Textarea
-                            id={`milestone-${index}-description`}
-                            placeholder="Describe the deliverables..."
-                            rows={2}
-                            value={milestone.description}
-                            onChange={(e) => updateMilestone(index, 'description', e.target.value)}
-                          />
-                        </Field>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
-          {currentStep === 3 && (() => {
-            const milestonesTotal = milestones.reduce((sum, m) => sum + (parseFloat(m.amount) || 0), 0);
-            const budgetNumber = parseFloat(budget || '0');
-            const isBudgetMismatched = milestonesTotal > 0 && Math.abs(budgetNumber - milestonesTotal) > 0.0001;
-
-            return (
-              <div className="space-y-6">
-                <div>
-                  <h2 className="text-lg font-semibold">Budget & Timeline</h2>
-                  <p className="text-sm text-muted-foreground">Define your project budget (in ETH) and expected delivery timeline.</p>
-                </div>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <Field
-                      label="Total Budget (ETH)"
-                      htmlFor="budget"
-                      description={`Calculated sum of all milestones: ${milestonesTotal.toLocaleString('en-US', { maximumFractionDigits: 6 })} ETH`}
-                      error={fieldErrors.budget}
-                      required
-                    >
-                      <Input
-                        id="budget"
-                        type="number"
-                        min="0.0001"
-                        step="any"
-                        placeholder={milestonesTotal > 0 ? String(milestonesTotal) : "0.00"}
-                        value={budget}
-                        onChange={(e) => {
-                          setBudget(e.target.value);
-                          clearFieldError('budget');
-                        }}
-                      />
-                    </Field>
-
-                    {isBudgetMismatched && (
-                      <div className="flex items-center justify-between gap-2 text-xs rounded-lg border border-warning-border bg-warning-subtle text-warning p-2.5">
-                        <span>Milestones total is {milestonesTotal.toLocaleString('en-US', { maximumFractionDigits: 6 })} ETH.</span>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="h-7 text-xs border-warning/40 text-warning hover:bg-warning/10"
-                          onClick={() => {
-                            setBudget(String(milestonesTotal));
-                            clearFieldError('budget');
-                            setFormError(null);
-                          }}
-                        >
-                          Match Milestones ({milestonesTotal.toLocaleString('en-US', { maximumFractionDigits: 6 })} ETH)
-                        </Button>
-                      </div>
-                    )}
-
-                    <Field
-                      label="Target Completion Deadline"
-                      htmlFor="deadline"
-                      description={
-                        milestones.some((m) => Number(m.durationDays) > 0)
-                          ? `Total milestone duration: ${milestones.reduce((s, m) => s + (Number(m.durationDays) || 0), 0)} day(s). Target delivery date for all deliverables.`
-                          : 'The target delivery date for all project deliverables and milestone completion.'
-                      }
-                      error={fieldErrors.deadline}
-                      required
-                    >
-                      <Input
-                        id="deadline"
-                        type="date"
-                        min={new Date().toISOString().split('T')[0]}
-                        value={deadline}
-                        onChange={(e) => {
-                          setDeadline(e.target.value);
-                          clearFieldError('deadline');
-                        }}
-                      />
-                    </Field>
-
-                    <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
-                      <div className="flex items-center gap-2 text-primary mb-2">
-                        <Clock className="w-4 h-4" />
-                        <span className="font-medium">Rush Project?</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Enable rush mode to attract freelancers faster. A rush fee will be added to your budget.
-                      </p>
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="p-4 rounded-xl bg-secondary/50 border border-border">
-                      <h3 className="font-medium mb-3">Budget Summary</h3>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Milestones Total</span>
-                          <span>{milestonesTotal.toLocaleString('en-US', { maximumFractionDigits: 6 })} ETH</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Platform Fee (0%)</span>
-                          <span className="text-success font-medium">0.00 ETH</span>
-                        </div>
-                        <div className="border-t border-border pt-2 flex justify-between font-medium">
-                          <span>Total to Fund</span>
-                          <span className="text-primary">{milestonesTotal.toLocaleString('en-US', { maximumFractionDigits: 6 })} ETH</span>
-                        </div>
-                      </div>
-                      <p className="mt-3 text-xs text-muted-foreground">
-                        Decentralized 0% escrow fee. 100% of your deposited milestone funds are released directly to your freelancer upon approval.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })()}
-
-          {currentStep === 4 && (
-            <div className="space-y-6">
-              <h2 className="text-lg font-semibold">Review & Post</h2>
               <div className="space-y-4">
                 <div className="p-4 rounded-xl bg-secondary/50 border border-border">
-                  <h3 className="font-medium mb-2">Project Title</h3>
-                  <p className="text-muted-foreground">{title || 'Not set'}</p>
+                  <h3 className="font-semibold text-sm mb-1 text-muted-foreground uppercase tracking-wide">Project Title</h3>
+                  <p className="text-foreground font-medium text-base">{title || 'Not set'}</p>
                 </div>
-                {files.length > 0 && (
+
+                <div className="p-4 rounded-xl bg-secondary/50 border border-border">
+                  <h3 className="font-semibold text-sm mb-1 text-muted-foreground uppercase tracking-wide">Description</h3>
+                  <p className="text-muted-foreground text-sm whitespace-pre-wrap">{description || 'Not set'}</p>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
                   <div className="p-4 rounded-xl bg-secondary/50 border border-border">
-                    <h3 className="font-medium mb-2">Reference attachments</h3>
-                    <p className="text-sm text-muted-foreground">{files.length} file{files.length === 1 ? '' : 's'} will be shared with freelancers.</p>
+                    <h3 className="font-semibold text-sm mb-2 text-muted-foreground uppercase tracking-wide">Team Capacity</h3>
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-primary" />
+                      <span className="font-bold text-foreground text-base">
+                        Up to {freelancerLimit} freelancer{freelancerLimit === 1 ? '' : 's'} can join
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      You can accept proposals and create individual contracts up to this limit.
+                    </p>
                   </div>
-                )}
-                <div className="p-4 rounded-xl bg-secondary/50 border border-border">
-                  <h3 className="font-medium mb-2">Description</h3>
-                  <p className="text-muted-foreground">{description || 'Not set'}</p>
+
+                  <div className="p-4 rounded-xl bg-secondary/50 border border-border">
+                    <h3 className="font-semibold text-sm mb-2 text-muted-foreground uppercase tracking-wide">Budget & Timeline Terms</h3>
+                    <div className="flex items-center gap-2">
+                      <HandCoins className="h-4 w-4 text-primary" />
+                      <span className="font-semibold text-foreground text-sm">
+                        Agreed per freelancer
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      No pre-set milestone locking. Rates are based on each freelancer&apos;s proposal.
+                    </p>
+                  </div>
                 </div>
+
                 <div className="p-4 rounded-xl bg-secondary/50 border border-border">
-                  <h3 className="font-medium mb-2">Skills</h3>
+                  <h3 className="font-semibold text-sm mb-2 text-muted-foreground uppercase tracking-wide">Required Skills</h3>
                   <div className="flex flex-wrap gap-2">
                     {skills.map((skill) => (
                       <Badge key={skill.id} variant="secondary">{skill.name}</Badge>
                     ))}
                   </div>
                 </div>
-                <div className="p-4 rounded-xl bg-secondary/50 border border-border">
-                  <h3 className="font-medium mb-2">Milestones</h3>
-                  <div className="space-y-2">
-                    {milestones.map((m, i) => (
-                      <div key={i} className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-2">
-                          <span>{m.title || `Milestone ${i + 1}`}</span>
-                          {m.durationDays && Number(m.durationDays) > 0 ? (
-                            <Badge variant="outline" className="text-xs font-normal">
-                              {m.durationDays}d
-                            </Badge>
-                          ) : null}
-                        </div>
-                        <span className="font-medium">{formatAmount(Number(m.amount) || 0, { currency: 'ETH' })}</span>
-                      </div>
-                    ))}
+
+                {files.length > 0 && (
+                  <div className="p-4 rounded-xl bg-secondary/50 border border-border">
+                    <h3 className="font-semibold text-sm mb-1 text-muted-foreground uppercase tracking-wide">Reference Attachments</h3>
+                    <p className="text-sm text-muted-foreground">{files.length} file{files.length === 1 ? '' : 's'} attached.</p>
                   </div>
-                </div>
-                <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 space-y-2">
-                  <h3 className="font-medium text-foreground">Financial & Timeline Summary</h3>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Total Budget</span>
-                      <p className="font-bold text-primary">
-                        {formatAmount(milestones.reduce((sum, m) => sum + (parseFloat(m.amount) || 0), 0), { currency: 'ETH' })}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Deadline</span>
-                      <p className="font-semibold text-foreground">{deadline ? formatDate(deadline) : 'Not specified'}</p>
-                    </div>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
           )}
@@ -866,13 +615,13 @@ export default function CreateProjectPage() {
         >
           <ChevronLeft className="w-4 h-4 mr-2" /> Previous
         </Button>
-        {currentStep < 4 ? (
+        {currentStep < 2 ? (
           <Button
             type="button"
             variant="gradient"
             onClick={handleNext}
           >
-            Next <ChevronRight className="w-4 h-4 ml-2" />
+            Review Project <ChevronRight className="w-4 h-4 ml-2" />
           </Button>
         ) : (
           <Button
@@ -883,7 +632,7 @@ export default function CreateProjectPage() {
             loadingText="Posting…"
             onClick={() => void handleSubmit()}
           >
-            Post project
+            Post Project
           </Button>
         )}
       </div>

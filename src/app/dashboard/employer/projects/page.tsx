@@ -12,6 +12,7 @@ import { reportLoadFailure } from '@/lib/report-failure';
 import { PlusCircle, Clock, Coins, Users, Eye, FolderSearch, ClipboardList, Pencil } from 'lucide-react';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { formatAmount, formatDate } from '@/lib/format';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 import { cn } from '@/lib/utils';
 
 type StatusFilter = 'all' | ProjectStatus;
@@ -21,10 +22,12 @@ const STATUS_TABS: { label: string; value: StatusFilter }[] = [
   { label: 'Open', value: 'open' },
   { label: 'In Progress', value: 'in_progress' },
   { label: 'Completed', value: 'completed' },
+  { label: 'Closed', value: 'closed' },
   { label: 'Draft', value: 'draft' },
 ];
 
 export default function EmployerProjectsPage() {
+  const { formatEthToPhp } = useEthPhpRate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<StatusFilter>('all');
@@ -164,7 +167,16 @@ export default function EmployerProjectsPage() {
                   <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-4">
                     <div className="flex items-center gap-1">
                       <Coins className="w-4 h-4 text-primary" />
-                      <span className="font-medium text-primary">{formatAmount(project.budget, { currency: 'ETH' })}</span>
+                      <span className="font-medium text-primary">
+                        {project.budget > 0 ? (
+                          <>
+                            {formatEthToPhp(project.budget)}
+                            <span className="text-xs text-muted-foreground ml-1">({formatAmount(project.budget, { currency: 'ETH' })})</span>
+                          </>
+                        ) : (
+                          'Flexible budget'
+                        )}
+                      </span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Users className="w-4 h-4" />

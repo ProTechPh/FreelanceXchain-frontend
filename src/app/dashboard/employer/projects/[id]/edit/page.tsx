@@ -12,6 +12,7 @@ import { useAuthStore } from '@/stores/authStore';
 import Image from 'next/image';
 import { hasApprovedKyc } from '@/lib/kyc-eligibility';
 import { formatFileSize, safeAttachmentUrl } from '@/lib/attachment-presentation';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 import type { Project, ProjectStatus, Attachment } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -49,6 +50,7 @@ import {
 const MAX_FILES = 10;
 
 function EditProjectContent() {
+  const { formatEthToPhp } = useEthPhpRate();
   const params = useParams<{ id: string }>();
   const projectId = (params?.id as string) ?? '';
   const router = useRouter();
@@ -60,6 +62,7 @@ function EditProjectContent() {
   const [description, setDescription] = useState('');
   const [budget, setBudget] = useState('');
   const [deadline, setDeadline] = useState('');
+  const [freelancerLimit, setFreelancerLimit] = useState(1);
   const [status, setStatus] = useState<ProjectStatus>('draft');
   const [existingAttachments, setExistingAttachments] = useState<Attachment[]>([]);
   const [newFiles, setNewFiles] = useState<File[]>([]);
@@ -77,8 +80,9 @@ function EditProjectContent() {
         setProject(data);
         setTitle(data.title);
         setDescription(data.description);
-        setBudget(String(data.budget));
-        setDeadline(data.deadline.slice(0, 10));
+        setBudget(String(data.budget ?? ''));
+        setDeadline(data.deadline ? data.deadline.slice(0, 10) : '');
+        setFreelancerLimit(data.freelancerLimit ?? 1);
         setStatus(data.status);
         setExistingAttachments(data.attachments || []);
       })
@@ -193,11 +197,16 @@ function EditProjectContent() {
         finalAttachments = [...finalAttachments, ...uploaded];
       }
 
+      const parsedBudget = budget ? Number(budget) : 1;
+      const parsedDeadline = deadline ? `${deadline}T23:59:59.999Z` : new Date(Date.now() + 90 * 86400000).toISOString();
+      const limit = Math.max(1, Math.min(50, Number(freelancerLimit) || 1));
+
       await projectsApi.update(projectId, {
         title: title.trim(),
         description: description.trim(),
-        budget: Number(budget),
-        deadline: `${deadline}T23:59:59.999Z`,
+        budget: parsedBudget,
+        deadline: parsedDeadline,
+        freelancerLimit: limit,
         status,
         attachments: finalAttachments,
       });
@@ -216,8 +225,9 @@ function EditProjectContent() {
     event.preventDefault();
     if (title.trim().length < 5) return toast.error('Project title must be at least 5 characters. Make it descriptive so freelancers know what to expect.');
     if (description.trim().length < 20) return toast.error('Project description must be at least 20 characters. Include requirements and expected outcomes.');
-    if (!Number.isFinite(Number(budget)) || Number(budget) <= 0) return toast.error('Enter a budget greater than $0.');
-    if (!deadline) return toast.error('Choose a project deadline.');
+    if (budget && (Number(budget) <= 0 || !Number.isFinite(Number(budget)))) {
+      return toast.error('Enter a valid budget greater than 0, or leave empty if terms are negotiable.');
+    }
 
     if (status === 'cancelled' && project?.status !== 'cancelled') {
       setConfirmCancelOpen(true);
@@ -297,24 +307,49 @@ function EditProjectContent() {
                 />
               </Field>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Field label="Budget (ETH)" htmlFor="edit-budget">
+              <div className="grid gap-4 sm:grid-cols-3">
+                <Field label="Freelancers Needed" htmlFor="edit-freelancer-limit">
+                  <Input
+                    id="edit-freelancer-limit"
+                    type="number"
+                    min="1"
+                    max="50"
+                    value={freelancerLimit}
+                    onChange={(event) => setFreelancerLimit(Math.max(1, parseInt(event.target.value) || 1))}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Max freelancers who can join (e.g. 5).
+                  </p>
+                </Field>
+                <Field label="Budget (ETH, Optional)" htmlFor="edit-budget">
                   <Input
                     id="edit-budget"
                     type="number"
-                    min="0.0001"
+                    min="0"
                     step="any"
+                    placeholder="Flexible / Negotiable"
                     value={budget}
                     onChange={(event) => setBudget(event.target.value)}
                   />
+                  {budget && parseFloat(budget) > 0 && (
+                    <p className="text-2xs font-medium text-primary mt-1">
+                      ≈ {formatEthToPhp(budget)}
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Agreed upon per freelancer.
+                  </p>
                 </Field>
-                <Field label="Deadline" htmlFor="edit-deadline">
+                <Field label="Target Deadline (Optional)" htmlFor="edit-deadline">
                   <Input
                     id="edit-deadline"
                     type="date"
                     value={deadline}
                     onChange={(event) => setDeadline(event.target.value)}
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Flexible timeline.
+                  </p>
                 </Field>
               </div>
 
@@ -328,6 +363,8 @@ function EditProjectContent() {
                 >
                   <option value="draft">Draft</option>
                   <option value="open">Open</option>
+                  <option value="closed">Closed</option>
+                  <option value="completed">Completed</option>
                   <option value="cancelled">Cancelled</option>
                 </select>
               </div>
@@ -490,10 +527,15 @@ function EditProjectContent() {
                 )}
               </div>
 
-              <div className="pt-2">
+              <div className="flex items-center gap-3 pt-2">
                 <Button type="submit" loading={saving} loadingText={uploadingProgress ? 'Uploading files…' : 'Saving…'}>
                   <Save className="size-4" aria-hidden="true" />
                   Save changes
+                </Button>
+                <Button asChild type="button" variant="outline" disabled={saving}>
+                  <Link href={`/dashboard/employer/projects/${projectId}`}>
+                    Close
+                  </Link>
                 </Button>
               </div>
             </form>

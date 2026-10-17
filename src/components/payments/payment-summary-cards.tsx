@@ -4,6 +4,7 @@ import { TrendingDown, TrendingUp } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePaymentSummary } from '@/hooks/use-payments';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 import { formatAmount } from '@/lib/format';
 import { cn } from '@/lib/utils';
 
@@ -34,6 +35,7 @@ export function PaymentSummaryCards({
   className?: string;
 }) {
   const { data, isPending, isError } = usePaymentSummary();
+  const { formatEthToPhp } = useEthPhpRate();
 
   if (isPending) {
     return (
@@ -81,8 +83,13 @@ export function PaymentSummaryCards({
                       missing && 'text-muted-foreground',
                     )}
                   >
-                    {missing ? 'Unavailable' : formatAmount(tile.value, { currency: LEDGER_CURRENCY, fractionDigits: 4 })}
+                    {missing ? 'Unavailable' : formatEthToPhp(tile.value)}
                   </p>
+                  {!missing && tile.value != null && (
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      {formatAmount(tile.value, { currency: LEDGER_CURRENCY, fractionDigits: 4 })}
+                    </p>
+                  )}
                   <p className="mt-1 text-xs text-muted-foreground">
                     {missing
                       ? 'Totals could not be calculated right now. Try again shortly.'

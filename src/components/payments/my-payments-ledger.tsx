@@ -13,6 +13,7 @@ import { useMyPayments } from '@/hooks/use-payments';
 import { getPaymentDirection, getPaymentTypeLabel } from '@/lib/payment-history';
 import { getContractDetailRoute } from '@/lib/contract-route';
 import { formatDateTime } from '@/lib/format';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 import { getApiErrorMessage } from '@/lib/auth-contract';
 import { useAuthStore } from '@/stores/authStore';
 import { cn } from '@/lib/utils';
@@ -28,6 +29,7 @@ const PAGE_SIZE = 20;
 export function MyPaymentsLedger({ role }: { role: Extract<UserRole, 'employer' | 'freelancer'> }) {
   const [offset, setOffset] = useState(0);
   const user = useAuthStore((state) => state.user);
+  const { formatEthToPhp } = useEthPhpRate();
   const { data, isPending, isError, error, isFetching, refetch } = useMyPayments(PAGE_SIZE, offset);
 
   const items = data?.items ?? [];
@@ -85,7 +87,8 @@ export function MyPaymentsLedger({ role }: { role: Extract<UserRole, 'employer' 
               <TableBody>
                 {items.map((record) => {
                   const direction = user ? getPaymentDirection(record, user.id) : 'none';
-                  const isFiat = ['USD', 'EUR', 'GBP'].includes(record.currency?.toUpperCase());
+                  const isFiat = ['PHP', 'USD', 'EUR', 'GBP'].includes(record.currency?.toUpperCase());
+                  const isEth = !record.currency || record.currency.toUpperCase() === 'ETH';
                   const fractionDigits = isFiat ? 2 : 4;
                   return (
                     <TableRow key={record.id}>
@@ -115,8 +118,17 @@ export function MyPaymentsLedger({ role }: { role: Extract<UserRole, 'employer' 
                               : 'text-muted-foreground',
                         )}
                       >
-                        {direction === 'in' ? '+' : direction === 'out' ? '−' : ''}
-                        {Number(record.amount).toLocaleString(undefined, { minimumFractionDigits: fractionDigits, maximumFractionDigits: fractionDigits })} {record.currency}
+                        <div>
+                          {direction === 'in' ? '+' : direction === 'out' ? '−' : ''}
+                          {isEth
+                            ? formatEthToPhp(record.amount)
+                            : `${Number(record.amount).toLocaleString(undefined, { minimumFractionDigits: fractionDigits, maximumFractionDigits: fractionDigits })} ${record.currency || 'PHP'}`}
+                        </div>
+                        {isEth && (
+                          <div className="text-2xs text-muted-foreground font-normal">
+                            {Number(record.amount).toLocaleString(undefined, { minimumFractionDigits: fractionDigits, maximumFractionDigits: fractionDigits })} ETH
+                          </div>
+                        )}
                       </TableCell>
                     </TableRow>
                   );

@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { formatAmount } from '@/lib/format';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 
 interface ContractWorkspaceDialogsProps {
   cancelModalOpen: boolean;
@@ -31,6 +32,7 @@ export function ContractWorkspaceDialogs({
   onConfirmCancel,
   onConfirmApproveMilestone,
 }: ContractWorkspaceDialogsProps) {
+  const { formatEthToPhp } = useEthPhpRate();
   return (
     <>
       {/* Contract Cancellation Confirmation Modal */}
@@ -80,8 +82,7 @@ export function ContractWorkspaceDialogs({
             <DialogTitle className="text-foreground">Approve Milestone & Release Payment?</DialogTitle>
             <DialogDescription>
               You are about to release payment for{' '}
-              <strong>&quot;{approvingMilestone?.title}&quot;</strong> (
-              {formatAmount(approvingMilestone?.amount, { currency: 'ETH' })}). This will transfer funds to the freelancer. This cannot be undone.
+              <strong>&quot;{approvingMilestone?.title}&quot;</strong> ({formatEthToPhp(approvingMilestone?.amount)} · {formatAmount(approvingMilestone?.amount, { currency: 'ETH' })}). This will transfer funds to the freelancer. This cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

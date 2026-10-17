@@ -6,6 +6,7 @@ import type { Contract, UserRole } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatAmount } from '@/lib/format';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 
 type ParticipantRole = Extract<UserRole, 'employer' | 'freelancer'>;
 
@@ -34,6 +35,7 @@ export function ContractOverviewCard({
   onOpenCancelModal,
   onOpenInvoice,
 }: ContractOverviewCardProps) {
+  const { formatEthToPhp } = useEthPhpRate();
   const verificationPath = `/dashboard/${role}/verification`;
 
   return (
@@ -60,15 +62,18 @@ export function ContractOverviewCard({
           <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
             <div>
               <p className="text-muted-foreground">Base amount</p>
-              <p className="font-semibold">{formatAmount(contract.baseAmount, { currency: contract.currency || 'ETH' })}</p>
+              <p className="font-semibold">{formatEthToPhp(contract.baseAmount)}</p>
+              <p className="text-2xs text-muted-foreground">{formatAmount(contract.baseAmount, { currency: contract.currency || 'ETH' })}</p>
             </div>
             <div>
               <p className="text-muted-foreground">Rush fee</p>
-              <p className="font-semibold">{formatAmount(contract.rushFee, { currency: contract.currency || 'ETH' })}</p>
+              <p className="font-semibold">{formatEthToPhp(contract.rushFee)}</p>
+              <p className="text-2xs text-muted-foreground">{formatAmount(contract.rushFee, { currency: contract.currency || 'ETH' })}</p>
             </div>
             <div>
               <p className="text-muted-foreground">Total</p>
-              <p className="font-semibold text-primary">{formatAmount(contract.totalAmount, { currency: contract.currency || 'ETH' })}</p>
+              <p className="font-semibold text-primary">{formatEthToPhp(contract.totalAmount)}</p>
+              <p className="text-2xs text-muted-foreground">{formatAmount(contract.totalAmount, { currency: contract.currency || 'ETH' })}</p>
             </div>
             <div>
               <p className="text-muted-foreground">Escrow</p>
@@ -105,7 +110,7 @@ export function ContractOverviewCard({
                 className="gap-1.5"
               >
                 <FileText className="size-4 text-primary" />
-                View Invoice / SOW
+                View Contract Agreement &amp; E-Sign
               </Button>
             )}
           </div>

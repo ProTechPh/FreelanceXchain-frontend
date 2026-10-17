@@ -4,6 +4,7 @@ import { BadgeCheck, Clock, ShieldCheck, Users, Zap } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { formatAmount, formatDate } from '@/lib/format';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ProposalSubmittedBadge } from '@/components/proposals/proposal-submitted-badge';
 import type { Project, ProposalStatus } from '@/types';
@@ -42,6 +43,7 @@ export const ProjectListItem = React.memo(function ProjectListItem({
 }: ProjectListItemProps) {
   const client = useMemo(() => project.employer?.name || 'Verified employer', [project.employer?.name]);
   const initial = useMemo(() => client.trim().charAt(0).toUpperCase() || '?', [client]);
+  const { formatEthToPhp } = useEthPhpRate();
   const skills = project.requiredSkills ?? [];
   const matched = useMemo(() => new Set(matchedSkills ?? []), [matchedSkills]);
   const projectLink = useMemo(
@@ -115,7 +117,18 @@ export const ProjectListItem = React.memo(function ProjectListItem({
           <dl className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-2xs text-muted-foreground">
             <div className="flex items-center gap-1">
               <dt className="sr-only">Budget</dt>
-              <dd className="text-xs font-bold text-foreground tabular-nums">{formatAmount(project.budget, { currency: 'ETH' })}</dd>
+              <dd className="text-xs font-bold text-foreground tabular-nums">
+                {project.budget > 0 ? (
+                  <span>
+                    {formatEthToPhp(project.budget)}
+                    <span className="ml-1 text-2xs font-normal text-muted-foreground">
+                      ({formatAmount(project.budget, { currency: 'ETH' })})
+                    </span>
+                  </span>
+                ) : (
+                  'Negotiable'
+                )}
+              </dd>
             </div>
             <span aria-hidden="true">•</span>
             <div className="flex items-center gap-1">
@@ -123,6 +136,16 @@ export const ProjectListItem = React.memo(function ProjectListItem({
               <dt className="sr-only">Deadline</dt>
               <dd>Due {formatDate(project.deadline)}</dd>
             </div>
+            {Boolean(project.freelancerLimit && project.freelancerLimit > 1) && (
+              <>
+                <span aria-hidden="true">•</span>
+                <div className="flex items-center gap-1 font-semibold text-primary">
+                  <Users className="size-3" aria-hidden="true" />
+                  <dt className="sr-only">Openings</dt>
+                  <dd>{project.hiredCount ?? 0}/{project.freelancerLimit} hired</dd>
+                </div>
+              </>
+            )}
             <span aria-hidden="true">•</span>
             <div className="flex items-center gap-1">
               <Users className="size-3" aria-hidden="true" />
