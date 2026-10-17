@@ -251,7 +251,7 @@ export default function FreelancerProposalDetailPage() {
                                   url: attachment.url,
                                   size: attachment.size,
                                   content:
-                                    attachment.filename.startsWith('Proposal_') && proposal.coverLetter
+                                    attachment.filename.startsWith('Proposal_') && attachment.filename.endsWith('.md') && proposal.coverLetter
                                       ? proposal.coverLetter
                                       : undefined,
                                 })

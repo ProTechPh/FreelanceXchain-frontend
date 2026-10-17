@@ -121,7 +121,7 @@ export function ProjectSubmittedProposal({
                             url: att.url,
                             size: att.size,
                             content:
-                              att.filename.startsWith('Proposal_') && proposal.coverLetter
+                              att.filename.startsWith('Proposal_') && att.filename.endsWith('.md') && proposal.coverLetter
                                 ? proposal.coverLetter
                                 : undefined,
                           })

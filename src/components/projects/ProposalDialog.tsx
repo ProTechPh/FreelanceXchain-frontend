@@ -43,6 +43,7 @@ import {
 } from '@/lib/file-validation';
 import { useAuthStore } from '@/stores/authStore';
 import { useProposalForm } from '@/hooks/use-proposal-form';
+import { buildProposalBriefPdf, loadProposalBriefPdf } from '@/lib/proposal-brief-pdf';
 
 interface ProposalDialogProps {
   open: boolean;
@@ -76,28 +77,20 @@ function createProposalDocumentFile(
   milestones: Array<{ title: string; description: string; amount: number; durationDays: number }>,
   formatEthToPhp?: (val: number | string) => string
 ): File {
-  const safeTitle = projectTitle.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 30);
-  const rawContent = `# Proposal: ${projectTitle}
-Generated on: ${new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-
-## Key Qualifications & Highlights
-${highlights.map((h) => `- ${h}`).join('\n')}
-
-## Proposal & Technical Strategy
-${coverLetter}
-
-## Proposed Milestones & Delivery Schedule
-${milestones.map((m, i) => `${i + 1}. **${m.title}** (${formatEthToPhp ? `${formatEthToPhp(m.amount)} (${formatAmount(m.amount, { currency: 'ETH' })})` : formatAmount(m.amount, { currency: 'ETH' })} - ${m.durationDays} days)\n   ${m.description}`).join('\n\n')}
-
----
-Submitted via FreelanceXchain Decentralized Platform with Smart Contract Escrow Protection.
-`;
-
-  const cleanContent = sanitizeMarkdownText(rawContent);
-  const encoder = new TextEncoder();
-  const utf8Bytes = encoder.encode(cleanContent);
-  const blob = new Blob([utf8Bytes], { type: 'text/markdown; charset=utf-8' });
-  return new File([blob], `Proposal_${safeTitle || 'Brief'}.md`, { type: 'text/markdown; charset=utf-8' });
+  return buildProposalBriefPdf({
+    projectTitle: sanitizeMarkdownText(projectTitle),
+    coverLetter: sanitizeMarkdownText(coverLetter),
+    highlights: highlights.map(sanitizeMarkdownText),
+    milestones: milestones.map((m) => ({
+      ...m,
+      title: sanitizeMarkdownText(m.title),
+      description: sanitizeMarkdownText(m.description),
+    })),
+    formatAmount: (amount) => {
+      const eth = formatAmount(amount, { currency: 'ETH' });
+      return formatEthToPhp ? `${formatEthToPhp(amount)} (${eth})` : eth;
+    },
+  });
 }
 
 function FieldInput(props: React.ComponentProps<typeof Input>) {
@@ -161,7 +154,10 @@ export function ProposalDialog({
     if (!project) return;
     setGeneratingAI(true);
     try {
-      const res = await matchingApi.generateProposal(project.id, notes?.trim() || undefined);
+      const [res] = await Promise.all([
+        matchingApi.generateProposal(project.id, notes?.trim() || undefined),
+        loadProposalBriefPdf(),
+      ]);
       const data = res.data;
       const cleanCoverLetter = sanitizeMarkdownText(data.coverLetter);
       setAiProposal({

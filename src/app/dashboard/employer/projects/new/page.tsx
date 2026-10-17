@@ -28,6 +28,7 @@ import { toast } from 'sonner';
 import { reportFailure } from '@/lib/report-failure';
 import { ChevronRight, ChevronLeft, X, Upload, FileText, Target, Sparkles, AlertCircle, Users, HandCoins } from 'lucide-react';
 import { ProjectSkillSelector, type ProjectSkillCategory } from '@/components/dashboard/project-skill-selector';
+import { SkillCategoryScope, useSkillCategoryScope } from '@/components/dashboard/skill-category-scope';
 import { toSkillCategories } from '@/lib/skill-taxonomy';
 import { DOCUMENT_ACCEPT_STRING } from '@/lib/file-validation';
 import { Field } from '@/components/ui/field';
@@ -49,6 +50,8 @@ export default function CreateProjectPage() {
   const [skills, setSkills] = useState<ProjectSubmissionSkill[]>([]);
   const [skillCategories, setSkillCategories] = useState<ProjectSkillCategory[]>([]);
   const [skillsLoading, setSkillsLoading] = useState(true);
+  // The project title narrows the technical skills to its categories; soft skills always show.
+  const titleScope = useSkillCategoryScope(title, skillCategories);
   const [freelancerLimit, setFreelancerLimit] = useState(5);
   const [files, setFiles] = useState<File[]>([]);
   const [extractingSkills, setExtractingSkills] = useState(false);
@@ -443,7 +446,7 @@ export default function CreateProjectPage() {
                         Required skills <span className="text-destructive">*</span>
                       </Label>
                       <p id="required-skills-hint" className="text-xs text-muted-foreground">
-                        Select skills to match with qualified freelancers.
+                        Pick the technical and soft skills freelancers need.
                       </p>
                     </div>
                     {isPro ? (
@@ -474,16 +477,26 @@ export default function CreateProjectPage() {
                       {fieldErrors.skills}
                     </p>
                   )}
+                  <SkillCategoryScope
+                    scope={titleScope}
+                    hasText={Boolean(title.trim())}
+                    emptyText="Add a project title to narrow these skills."
+                    noMatchText="No match for your project title — showing all technical skills."
+                  />
                   <ProjectSkillSelector
-                    categories={skillCategories}
+                    categories={titleScope.scopedCategories}
                     selected={skills}
                     loading={skillsLoading}
                     onAdd={addSkill}
                     onRemove={removeSkill}
-                    onClear={() => setSkills([])}
+                    onClear={(cleared) => {
+                      const clearedIds = new Set(cleared.map((skill) => skill.id));
+                      setSkills((current) => current.filter((skill) => !clearedIds.has(skill.id)));
+                    }}
                     invalid={Boolean(fieldErrors.skills)}
                     labelledBy="required-skills-label"
                     describedBy="required-skills-hint"
+                    splitSoftSkills
                   />
                 </div>
 
