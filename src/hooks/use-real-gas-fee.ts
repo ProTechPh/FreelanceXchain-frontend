@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useEthPhpRate } from './use-eth-php-rate';
-import { formatAmount } from '@/lib/format';
 import { convertEthToPhp, formatEthToPhp } from '@/lib/eth-php-converter';
 import {
   GAS_UNITS,

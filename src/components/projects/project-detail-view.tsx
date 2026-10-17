@@ -340,7 +340,7 @@ export function ProjectDetailView({
         </div>
       )}
     </>
-  ), [project, user, mode, backPath, defaultBackLabel, primaryAction, isOwner, myProposal, withdrawingProposal, proposalOpen, autoGenerateAI, employerDialogOpen, previewAttachment, confirmWithdrawOpen, handleWithdrawProposal, shareProject, fetchMyProposal, invalidateMyProposals]);
+  ), [project, user, mode, backPath, defaultBackLabel, primaryAction, isOwner, myProposal, withdrawingProposal, proposalOpen, autoGenerateAI, employerDialogOpen, previewAttachment, confirmWithdrawOpen, handleWithdrawProposal, shareProject, fetchMyProposal, invalidateMyProposals, formatEthToPhp]);
 
   if (loading) {
     if (mode === 'public') {

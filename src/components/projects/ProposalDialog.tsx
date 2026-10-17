@@ -24,7 +24,6 @@ import { Field, useField } from '@/components/ui/field';
 import { reportFailure } from '@/lib/report-failure';
 import { formatAmount } from '@/lib/format';
 import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
-import { convertEthToPhp, convertPhpToEth } from '@/lib/eth-php-converter';
 import { formatFileSize } from '@/lib/attachment-presentation';
 import { cn } from '@/lib/utils';
 import { matchingApi, type AIProposalResult } from '@/lib/api';
@@ -36,8 +35,6 @@ import {
   MAX_COVER_LETTER_LENGTH,
   MAX_DURATION_DAYS,
   MAX_FILE_COUNT,
-  MAX_PROPOSED_RATE,
-  MIN_PROPOSED_RATE,
 } from '@/lib/proposal-submission';
 import {
   DOCUMENT_ACCEPT_STRING,
@@ -197,7 +194,7 @@ export function ProposalDialog({
     } finally {
       setGeneratingAI(false);
     }
-  }, [project, requestRatingPrompt, updateFormWithAI]);
+  }, [project, requestRatingPrompt, updateFormWithAI, formatEthToPhp]);
 
   useEffect(() => {
     if (open && initialGenerateAI && isPro && project && !aiProposal && !generatingAI) {
@@ -228,6 +225,7 @@ export function ProposalDialog({
   // Synchronize phpRate when form.proposedRate changes from AI or resets
   useEffect(() => {
     if (!form.proposedRate) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPhpRate('');
       return;
     }
