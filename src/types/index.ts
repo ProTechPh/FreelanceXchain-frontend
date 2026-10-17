@@ -246,6 +246,32 @@ export interface BusinessDocument {
   updatedAt: string;
 }
 
+/** One row of the admin Business documents page (read-only overview). */
+export interface AdminBusinessProfileSummary {
+  userId: string;
+  name: string | null;
+  email: string | null;
+  /** The account's active role; 'freelancer' when they set up an employer side but are acting as a freelancer. */
+  activeRole: UserRole | null;
+  companyName: string;
+  businessType: BusinessType | null;
+  documentCount: number;
+  requiredDocumentCount: number;
+  submittedRequiredCount: number;
+  complete: boolean;
+  missingFieldCount: number;
+  missingDocumentCount: number;
+  lastDocumentAt: string | null;
+  updatedAt: string;
+}
+
+export type AdminBusinessProfileStatus = 'all' | 'with_documents' | 'complete' | 'incomplete';
+
+export interface AdminBusinessProfileList {
+  items: AdminBusinessProfileSummary[];
+  counts: { all: number; withDocuments: number; complete: number; incomplete: number };
+}
+
 export interface BusinessProfileCompleteness {
   complete: boolean;
   missingFields: string[];

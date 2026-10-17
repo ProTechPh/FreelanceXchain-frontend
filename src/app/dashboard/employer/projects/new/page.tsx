@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import axios from 'axios';
@@ -66,11 +66,18 @@ export default function CreateProjectPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   // Posting a project requires a complete business profile (enforced by the API too).
   const [businessCompleteness, setBusinessCompleteness] = useState<BusinessProfileCompleteness | null>(null);
+  // Decided once, when the check returns: show only the gate if nothing has been
+  // typed yet. Later edits (e.g. clearing every skill) never swap the form out.
+  const [gateOnly, setGateOnly] = useState(false);
 
   // Warn if user tries to leave with unsaved changes
   const isDirty = title !== '' || description !== '' || skills.length > 0 || budget !== '' || deadline !== '' ||
     milestones.some(m => m.title !== '' || m.description !== '' || m.amount !== '' || (m.durationDays && m.durationDays !== '')) || files.length > 0;
   const unsavedChanges = useUnsavedChangesWarning(isDirty && !isSubmitting);
+  const isDirtyRef = useRef(isDirty);
+  useEffect(() => {
+    isDirtyRef.current = isDirty;
+  }, [isDirty]);
 
   useEffect(() => {
     let active = true;
@@ -101,12 +108,20 @@ export default function CreateProjectPage() {
     employersApi
       .getCompleteness()
       .then(({ data }) => {
-        if (active) setBusinessCompleteness(data);
+        if (!active) return;
+        setBusinessCompleteness(data);
+        setGateOnly(!data.complete && !isDirtyRef.current);
       })
       .catch((error) => {
         // No employer profile yet: everything is missing. Other failures are left
         // to the API, which rejects the post if the profile is incomplete.
-        if (active && axios.isAxiosError(error) && error.response?.status === 404) {
+        if (
+          active &&
+          axios.isAxiosError(error) &&
+          error.response?.status === 404 &&
+          error.response.data?.error?.code === 'PROFILE_NOT_FOUND'
+        ) {
+          setGateOnly(!isDirtyRef.current);
           setBusinessCompleteness({
             complete: false,
             missingFields: ['companyName', 'description', 'industry', 'businessType', 'tin', 'registrationNumber', 'businessAddress', 'businessPhone', 'businessEmail', 'yearEstablished'],
@@ -379,8 +394,9 @@ export default function CreateProjectPage() {
     />
   );
 
-  // Nothing typed yet: show only the gate instead of a form that cannot be posted.
-  if (businessProfileIncomplete && !isDirty) {
+  // Nothing was typed when the check came back: show only the gate instead of a
+  // form that cannot be posted.
+  if (businessProfileIncomplete && gateOnly) {
     return (
       <div className="max-w-4xl mx-auto space-y-6">
         <div>

@@ -25,6 +25,38 @@ const skillTaxonomy = {
   ],
 };
 
+// Every required business field is filled in, so the employer form can be saved.
+const businessFields = {
+  businessType: 'corporation',
+  tin: '123-456-789-000',
+  registrationNumber: 'CS201912345',
+  businessAddress: '1 Ayala Ave, Makati City',
+  businessPhone: '+63 2 8123 4567',
+  businessEmail: 'hello@acme.ph',
+  website: null,
+  yearEstablished: 2015,
+};
+
+// What the employer form sends for the profile above, apart from the edited fields.
+const businessUpdate = {
+  businessType: 'corporation',
+  tin: '123-456-789-000',
+  registrationNumber: 'CS201912345',
+  businessAddress: '1 Ayala Ave, Makati City',
+  businessPhone: '+63 2 8123 4567',
+  businessEmail: 'hello@acme.ph',
+  website: '',
+  yearEstablished: 2015,
+};
+
+async function mockEmployerCompleteness(page: Page) {
+  await page.route('**/api/employers/profile/completeness', (route) => route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({ complete: true, missingFields: [], missingDocuments: [] }),
+  }));
+}
+
 async function authenticate(page: Page, user: Record<string, unknown>) {
   await page.addInitScript((storedUser) => {
     localStorage.setItem('access_token', 'app-access-token');
@@ -49,9 +81,10 @@ async function authenticate(page: Page, user: Record<string, unknown>) {
 
 test('employer edits the company profile through the supported profile endpoint', async ({ page }) => {
   const user = { id: 'employer-1', email: 'owner@example.com', name: 'Owner', role: 'employer', walletAddress: '', kycStatus: 'approved', ...timestamps };
-  const profile = { id: 'profile-1', userId: user.id, name: 'Owner', nationality: 'PH', companyName: 'Acme Labs', description: 'We build reliable digital products.', industry: 'Technology', ...timestamps };
+  const profile = { id: 'profile-1', userId: user.id, name: 'Owner', nationality: 'PH', companyName: 'Acme Labs', description: 'We build reliable digital products.', industry: 'Technology', ...businessFields, ...timestamps };
   let updateBody: unknown;
   await authenticate(page, user);
+  await mockEmployerCompleteness(page);
   await page.route('**/api/employers/profile', async (route) => {
     if (route.request().method() === 'PATCH') {
       updateBody = route.request().postDataJSON();
@@ -71,6 +104,7 @@ test('employer edits the company profile through the supported profile endpoint'
     companyName: 'Acme Studio',
     description: profile.description,
     industry: profile.industry,
+    ...businessUpdate,
   });
 });
 
@@ -236,8 +270,9 @@ test('freelancer suggests a new skill for administrator review', async ({ page }
 
 test('employer sees an in-app unsaved-changes bar and can revert it', async ({ page }) => {
   const user = { id: 'employer-1', email: 'owner@example.com', name: 'Owner', role: 'employer', walletAddress: '', kycStatus: 'approved', ...timestamps };
-  const profile = { id: 'profile-1', userId: user.id, name: 'Owner', nationality: 'PH', companyName: 'Acme Labs', description: 'We build reliable digital products.', industry: 'Technology', ...timestamps };
+  const profile = { id: 'profile-1', userId: user.id, name: 'Owner', nationality: 'PH', companyName: 'Acme Labs', description: 'We build reliable digital products.', industry: 'Technology', ...businessFields, ...timestamps };
   await authenticate(page, user);
+  await mockEmployerCompleteness(page);
   await page.route('**/api/employers/profile', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(profile) }));
 
   await page.goto('/dashboard/employer/profile');
@@ -258,7 +293,7 @@ test('employer sees an in-app unsaved-changes bar and can revert it', async ({ p
 
 test('leaving the profile with pending edits opens the app dialog, not a browser prompt', async ({ page }) => {
   const user = { id: 'employer-1', email: 'owner@example.com', name: 'Owner', role: 'employer', walletAddress: '', kycStatus: 'approved', ...timestamps };
-  const profile = { id: 'profile-1', userId: user.id, name: 'Owner', nationality: 'PH', companyName: 'Acme Labs', description: 'We build reliable digital products.', industry: 'Technology', ...timestamps };
+  const profile = { id: 'profile-1', userId: user.id, name: 'Owner', nationality: 'PH', companyName: 'Acme Labs', description: 'We build reliable digital products.', industry: 'Technology', ...businessFields, ...timestamps };
   const nativeDialogs: string[] = [];
   let updateBody: unknown;
   page.on('dialog', (dialog) => {
@@ -266,6 +301,7 @@ test('leaving the profile with pending edits opens the app dialog, not a browser
     return dialog.dismiss();
   });
   await authenticate(page, user);
+  await mockEmployerCompleteness(page);
   await page.route('**/api/employers/profile', async (route) => {
     if (route.request().method() === 'PATCH') {
       updateBody = route.request().postDataJSON();
@@ -291,7 +327,7 @@ test('leaving the profile with pending edits opens the app dialog, not a browser
   await page.getByRole('link', { name: 'My projects' }).first().click();
   await page.getByRole('button', { name: 'Save and leave' }).click();
   await expect(page).toHaveURL(/\/dashboard\/employer\/projects$/);
-  expect(updateBody).toEqual({ companyName: 'Acme Studio', description: profile.description, industry: profile.industry });
+  expect(updateBody).toEqual({ companyName: 'Acme Studio', description: profile.description, industry: profile.industry, ...businessUpdate });
 });
 
 test('adding work history with skills saves immediately and leaves nothing pending', async ({ page }) => {

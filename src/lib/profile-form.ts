@@ -192,27 +192,96 @@ function isHttpUrl(value: string): boolean {
   }
 }
 
-/** Every business field is required except the website. */
-export function validateEmployerProfile(form: EmployerProfileForm): string | null {
-  if (form.companyName.trim().length < 2) return 'Company name must be at least 2 characters.';
-  if (form.description.trim().length < 10) return 'Description must be at least 10 characters.';
-  if (form.industry.trim().length < 2) return 'Industry must be at least 2 characters.';
-  if (!form.businessType) return 'Select your business type.';
-  if (!TIN_PATTERN.test(form.tin.trim())) return 'TIN must look like 123-456-789 or 123-456-789-000.';
-  const registration = form.registrationNumber.trim();
-  if (registration.length < 3 || registration.length > 50) {
-    return `${getRegistrationNumberLabel(form.businessType)} must be 3 to 50 characters.`;
-  }
-  const address = form.businessAddress.trim();
-  if (address.length < 5 || address.length > 500) return 'Business address must be 5 to 500 characters.';
-  if (!PHONE_PATTERN.test(form.businessPhone.trim())) return 'Enter a valid business phone number.';
-  if (!EMAIL_PATTERN.test(form.businessEmail.trim())) return 'Enter a valid business email address.';
-  const website = form.website.trim();
-  if (website && !isHttpUrl(website)) return 'Website must start with http:// or https://.';
-  const year = Number(form.yearEstablished);
+export type EmployerFieldErrors = Partial<Record<keyof EmployerProfileForm, string>>;
+
+/** Employer form fields in the order they appear on each setup step. */
+export const EMPLOYER_STEP_FIELDS: Record<Exclude<EmployerProfileTab, 'documents'>, (keyof EmployerProfileForm)[]> = {
+  company: ['companyName', 'industry', 'yearEstablished', 'website', 'description'],
+  business: ['businessType', 'tin', 'registrationNumber', 'businessAddress', 'businessPhone', 'businessEmail'],
+};
+
+/**
+ * Every problem in the employer form, keyed by field, in on-screen order.
+ * Every business field is required except the website.
+ */
+export function getEmployerFieldErrors(form: EmployerProfileForm): EmployerFieldErrors {
+  // Empty fields say what to enter; filled-in but invalid fields say what is wrong.
+  const errors: EmployerFieldErrors = {};
+  const companyName = form.companyName.trim();
+  if (!companyName) errors.companyName = 'Enter your company name.';
+  else if (companyName.length < 2) errors.companyName = 'Company name must be at least 2 characters.';
+
+  const industry = form.industry.trim();
+  if (!industry) errors.industry = 'Enter your industry, e.g. Construction or Retail.';
+  else if (industry.length < 2) errors.industry = 'Industry must be at least 2 characters.';
+
+  const yearText = form.yearEstablished.trim();
+  const year = Number(yearText);
   const currentYear = new Date().getFullYear();
-  if (!form.yearEstablished || !Number.isInteger(year) || year < 1800 || year > currentYear) {
-    return `Year established must be between 1800 and ${currentYear}.`;
+  if (!yearText) errors.yearEstablished = 'Enter the year your business was established, e.g. 2015.';
+  else if (!/^\d{4}$/.test(yearText) || !Number.isInteger(year)) errors.yearEstablished = 'Enter the year as 4 digits, e.g. 2015.';
+  else if (year > currentYear) errors.yearEstablished = `Year established can't be later than ${currentYear}.`;
+  else if (year < 1800) errors.yearEstablished = "Year established can't be earlier than 1800.";
+
+  const website = form.website.trim();
+  if (website && !isHttpUrl(website)) errors.website = 'Website must start with http:// or https://.';
+
+  const description = form.description.trim();
+  if (!description) errors.description = 'Add a short description of your company.';
+  else if (description.length < 10) errors.description = 'Company description must be at least 10 characters.';
+
+  if (!form.businessType) errors.businessType = 'Select your business type.';
+
+  const tin = form.tin.trim();
+  if (!tin) errors.tin = 'Enter your TIN, e.g. 123-456-789-000.';
+  else if (!TIN_PATTERN.test(tin)) errors.tin = 'TIN must look like 123-456-789 or 123-456-789-000.';
+
+  const registration = form.registrationNumber.trim();
+  const registrationLabel = getRegistrationNumberLabel(form.businessType);
+  if (!registration) errors.registrationNumber = `Enter your ${registrationLabel.replace('DTI / SEC', 'DTI or SEC')}.`;
+  else if (registration.length < 3 || registration.length > 50) {
+    errors.registrationNumber = `${registrationLabel} must be 3 to 50 characters.`;
+  }
+
+  const address = form.businessAddress.trim();
+  if (!address) errors.businessAddress = 'Enter your business address.';
+  else if (address.length < 5 || address.length > 500) errors.businessAddress = 'Business address must be 5 to 500 characters.';
+
+  const phone = form.businessPhone.trim();
+  if (!phone) errors.businessPhone = 'Enter your business phone number.';
+  else if (!PHONE_PATTERN.test(phone)) errors.businessPhone = 'Enter a valid phone number, e.g. +63 912 345 6789.';
+
+  const email = form.businessEmail.trim();
+  if (!email) errors.businessEmail = 'Enter your business email.';
+  else if (!EMAIL_PATTERN.test(email)) errors.businessEmail = 'Enter a valid email address, e.g. name@company.com.';
+  return errors;
+}
+
+/** Problems on one setup step only (the documents step has no form fields). */
+export function getEmployerStepErrors(form: EmployerProfileForm, tab: EmployerProfileTab): EmployerFieldErrors {
+  if (tab === 'documents') return {};
+  const all = getEmployerFieldErrors(form);
+  const errors: EmployerFieldErrors = {};
+  for (const field of EMPLOYER_STEP_FIELDS[tab]) {
+    if (all[field]) errors[field] = all[field];
+  }
+  return errors;
+}
+
+/** The first step (in order) that has a form problem, or null. */
+export function getFirstStepWithErrors(errors: EmployerFieldErrors): Exclude<EmployerProfileTab, 'documents'> | null {
+  if (EMPLOYER_STEP_FIELDS.company.some((field) => errors[field])) return 'company';
+  if (EMPLOYER_STEP_FIELDS.business.some((field) => errors[field])) return 'business';
+  return null;
+}
+
+/** First problem in the employer form, or null when it can be saved. */
+export function validateEmployerProfile(form: EmployerProfileForm): string | null {
+  const errors = getEmployerFieldErrors(form);
+  for (const tab of ['company', 'business'] as const) {
+    for (const field of EMPLOYER_STEP_FIELDS[tab]) {
+      if (errors[field]) return errors[field]!;
+    }
   }
   return null;
 }
