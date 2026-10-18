@@ -48,11 +48,22 @@ export interface AmountOptions {
  * fractional ones keep them ($1,200.50), so dense tables stay readable without
  * ever truncating a real cent value.
  */
+/**
+ * Fiat shows cents; ETH contract amounts carry up to 4 decimals (0.0001 ETH ≈ ₱15),
+ * so ETH keeps the digits it has (min 2, max 4) instead of rounding 0.1534 to 0.15.
+ */
+function defaultFractionDigits(amount: number, currency: string): number {
+  if (Number.isInteger(amount)) return 0;
+  if (currency.toUpperCase() !== 'ETH') return 2;
+  const decimals = (amount.toFixed(4).split('.')[1] ?? '').replace(/0+$/, '').length;
+  return Math.min(4, Math.max(2, decimals));
+}
+
 export function formatAmount(value: number | string | null | undefined, options: AmountOptions = {}): string {
   const amount = typeof value === 'string' ? Number(value) : value;
   if (amount == null || !Number.isFinite(amount)) return '—';
   const { currency = 'PHP', locale } = options;
-  const fractionDigits = options.fractionDigits ?? (Number.isInteger(amount) ? 0 : 2);
+  const fractionDigits = options.fractionDigits ?? defaultFractionDigits(amount, currency);
 
   try {
     return currencyFormatter(currency, fractionDigits, locale).format(amount);

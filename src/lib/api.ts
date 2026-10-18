@@ -27,6 +27,8 @@ export {
 
 export {
   contractsApi,
+  negotiationApi,
+  signaturesApi,
   rushUpgradesApi,
   refundsApi,
   milestonesApi,

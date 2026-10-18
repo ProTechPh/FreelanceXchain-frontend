@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft,
   Check,
@@ -69,6 +69,7 @@ interface PendingDecision {
 
 export default function EmployerProjectProposalsPage() {
   const { formatEthToPhp } = useEthPhpRate();
+  const router = useRouter();
   const params = useParams<{ id: string }>();
   const projectId = params?.id;
   const [project, setProject] = useState<Project | null>(null);
@@ -184,18 +185,20 @@ export default function EmployerProjectProposalsPage() {
 
     setUpdating(true);
     try {
+      if (decision.action === 'accept') {
+        // Accepting reserves a slot and opens negotiation; continue in the contract workspace.
+        const { data: accepted } = await proposalsApi.accept(decision.proposal.id);
+        toast.success('Proposal accepted. Agree on the terms with the freelancer next.');
+        setDecision(null);
+        requestRatingPrompt('proposal_accepted', decision.proposal.id);
+        router.push(`/dashboard/employer/contracts/${accepted.contract.id}`);
+        return;
+      }
       await updateProposalDecision(proposalsApi, decision.proposal.id, decision.action);
       const { data } = await projectsApi.getProposals(projectId);
       setProposals(data.items);
-      toast.success(
-        decision.action === 'accept'
-          ? 'Proposal accepted and contract created'
-          : 'Proposal rejected',
-      );
+      toast.success('Proposal rejected');
       setDecision(null);
-      if (decision.action === 'accept') {
-        requestRatingPrompt('proposal_accepted', decision.proposal.id);
-      }
     } catch (error) {
       toast.error(getApiErrorMessage(error, `Couldn't ${decision.action} this proposal. Try again.`));
     } finally {
@@ -270,7 +273,7 @@ export default function EmployerProjectProposalsPage() {
             variant={isCapacityReached ? 'secondary' : 'default'}
             className="h-8 px-3 text-xs font-semibold"
           >
-            Team: {acceptedCount} / {freelancerLimit} Hired
+            Slots: {acceptedCount} / {freelancerLimit} reserved
           </Badge>
           <Badge variant="secondary" className="h-8 px-3 text-xs font-semibold text-primary">
             {project.budget > 0 ? `${formatEthToPhp(project.budget)} (${formatAmount(project.budget, { currency: 'ETH' })}) budget` : 'Flexible budget'}
@@ -281,9 +284,9 @@ export default function EmployerProjectProposalsPage() {
       {isCapacityReached && (
         <div className="rounded-xl border border-warning/40 bg-warning/10 p-3.5 text-xs text-warning-foreground flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <p className="font-semibold text-warning">Project capacity reached ({acceptedCount} / {freelancerLimit} freelancers hired)</p>
+            <p className="font-semibold text-warning">All hiring slots are reserved ({acceptedCount} / {freelancerLimit})</p>
             <p className="text-muted-foreground mt-0.5">
-              All hiring slots for this project are filled. You can increase openings in project settings if you need more freelancers.
+              Every slot has a contract in negotiation, signing or progress. A slot opens again if a negotiation ends or a signed contract isn&apos;t funded in time. You can also add openings in project settings.
             </p>
           </div>
           <Button asChild size="sm" variant="outline" className="shrink-0 text-xs h-8">
@@ -658,17 +661,17 @@ export default function EmployerProjectProposalsPage() {
                             type="button"
                             size="sm"
                             disabled={isCapacityReached}
-                            title={isCapacityReached ? `Capacity reached (${acceptedCount}/${freelancerLimit} hired)` : undefined}
+                            title={isCapacityReached ? `All slots reserved (${acceptedCount}/${freelancerLimit})` : undefined}
                             className="rounded-full gradient-primary shadow-md text-xs font-semibold disabled:opacity-50"
                             onClick={() => setDecision({ proposal, action: 'accept' })}
                           >
-                            <Check className="mr-1.5 size-3.5" /> Accept Proposal & Create Contract
+                            <Check className="mr-1.5 size-3.5" /> Accept &amp; negotiate terms
                           </Button>
                         </div>
                       )}
 
                       {proposal.status === 'accepted' && (
-                        <StatusBadge status="accepted" domain="proposal" label="Contract created" />
+                        <StatusBadge status="accepted" domain="proposal" label="Accepted — contract started" />
                       )}
                     </div>
                   </CardContent>
@@ -700,7 +703,7 @@ export default function EmployerProjectProposalsPage() {
             </DialogTitle>
             <DialogDescription>
               {decision?.action === 'accept'
-                ? 'This will accept the proposal, establish an individual contract & escrow for this freelancer, and notify them to begin.'
+                ? 'This reserves a hiring slot and opens a negotiation with this freelancer. You agree on milestones, extra pay, deadline and rush fee, both sign, and then you fund the escrow.'
                 : 'The freelancer will be notified that their proposal was not selected for this project.'}
             </DialogDescription>
           </DialogHeader>
@@ -711,8 +714,8 @@ export default function EmployerProjectProposalsPage() {
                 <span className="font-medium text-foreground">{acceptedCount + 1} of {freelancerLimit}</span>
               </div>
               <p className="text-muted-foreground">
-                Agreed Rate: <strong>{formatEthToPhp(decision.proposal.proposedRate || project.budget)} ({formatAmount(decision.proposal.proposedRate || project.budget, { currency: 'ETH' })})</strong>.
-                Escrow funds can be released directly to this freelancer upon satisfactory completion of agreed work.
+                Proposed rate: <strong>{formatEthToPhp(decision.proposal.proposedRate || project.budget)} ({formatAmount(decision.proposal.proposedRate || project.budget, { currency: 'ETH' })})</strong>.
+                This is the minimum base amount for the contract; extra pay and rush fees can be added during negotiation.
               </p>
               <GasFeeBreakdownCard
                 proposedRateEth={decision.proposal.proposedRate || project.budget}
@@ -732,7 +735,7 @@ export default function EmployerProjectProposalsPage() {
               loadingText="Processing…"
             >
               {decision?.action === 'accept'
-                ? 'Accept & Create Contract'
+                ? 'Accept & start negotiation'
                 : 'Reject Proposal'}
             </Button>
           </DialogFooter>

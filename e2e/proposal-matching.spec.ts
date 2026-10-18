@@ -168,7 +168,7 @@ test('freelancer generates tailored AI proposal and submits it', async ({ page }
   // Verify AI generated fields
   await expect(page.getByText('98% Verified On-Chain Reputation')).toBeVisible();
   await expect(page.getByText('I have extensive experience building React analytics platforms')).toBeVisible();
-  await expect(page.getByLabel('Proposed rate (USD)')).toHaveValue('2400');
+  await expect(page.getByLabel('Proposed rate (ETH)')).toHaveValue('2400');
   await expect(page.getByLabel('Estimated duration (days)')).toHaveValue('14');
   await expect(page.getByText('AI brief · generated from your pitch')).toBeVisible();
   await expect(page.getByText('1 of 5 attached')).toBeVisible();
@@ -201,18 +201,19 @@ test('an AI draft with fractional terms is rounded so it can be submitted', asyn
   await page.route(`**/api/matching/generate-proposal/${projectId}`, (route) => route.fulfill({
     status: 200,
     contentType: 'application/json',
-    body: JSON.stringify({ coverLetter: 'I can build this.', proposedRate: 2399.999, estimatedDuration: 10.5, proposedMilestones: [], highlights: [] }),
+    body: JSON.stringify({ coverLetter: 'I can build this.', proposedRate: 0.12345, estimatedDuration: 10.5, proposedMilestones: [], highlights: [] }),
   }));
   const submitted = await captureProposalSubmission(page);
 
   await page.goto(`/dashboard/freelancer/projects/${projectId}`);
   await page.getByRole('button', { name: 'AI Proposal' }).click();
-  await expect(page.getByLabel('Proposed rate (USD)')).toHaveValue('2400');
+  // ETH rates keep up to 4 decimals.
+  await expect(page.getByLabel('Proposed rate (ETH)')).toHaveValue('0.1235');
   await expect(page.getByLabel('Estimated duration (days)')).toHaveValue('11');
 
   await page.getByRole('button', { name: 'Submit proposal' }).click();
   await expect(page.getByText('Proposal submitted.', { exact: true })).toBeVisible();
-  expect(multipartField(submitted.body ?? '', 'proposedRate')).toBe('2400');
+  expect(multipartField(submitted.body ?? '', 'proposedRate')).toBe('0.1235');
   expect(multipartField(submitted.body ?? '', 'estimatedDuration')).toBe('11');
   expect(submitted.body).toContain('filename="Proposal_');
 });
@@ -227,17 +228,17 @@ test('freelancer submits a proposal manually without the AI assistant', async ({
   await page.getByRole('button', { name: 'Submit Proposal' }).click();
   const dialog = page.getByRole('dialog', { name: 'Submit Proposal' });
 
-  await dialog.getByLabel('Proposed rate (USD)').fill('0.5');
+  await dialog.getByLabel('Proposed rate (ETH)').fill('0.00005');
   await dialog.getByLabel('Estimated duration (days)').fill('20');
   await dialog.getByLabel('Proposal attachments').setInputFiles({ name: 'plan.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4 plan') });
   await dialog.getByRole('button', { name: 'Submit proposal' }).click();
-  await expect(dialog.getByText('Proposed rate must be at least $1.')).toBeVisible();
+  await expect(dialog.getByText('Proposed rate must be at least 0.0001 ETH.')).toBeVisible();
   expect(submitted.body).toBeNull();
 
-  await dialog.getByLabel('Proposed rate (USD)').fill('1800');
+  await dialog.getByLabel('Proposed rate (ETH)').fill('0.15');
   await dialog.getByRole('button', { name: 'Submit proposal' }).click();
   await expect(page.getByText('Proposal submitted.', { exact: true })).toBeVisible();
-  expect(multipartField(submitted.body ?? '', 'proposedRate')).toBe('1800');
+  expect(multipartField(submitted.body ?? '', 'proposedRate')).toBe('0.15');
   expect(multipartField(submitted.body ?? '', 'estimatedDuration')).toBe('20');
   expect(submitted.body).toContain('filename="plan.pdf"');
   await expect(dialog).toBeHidden();

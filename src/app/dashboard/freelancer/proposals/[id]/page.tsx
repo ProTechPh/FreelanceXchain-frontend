@@ -278,6 +278,11 @@ export default function FreelancerProposalDetailPage() {
               <Button asChild variant="outline">
                 <Link href={`/dashboard/freelancer/projects/${project.id}`}>View project</Link>
               </Button>
+              {proposal.status === 'accepted' && (
+                <Button asChild>
+                  <Link href="/dashboard/freelancer/contracts">Review &amp; negotiate terms</Link>
+                </Button>
+              )}
               {proposal.status === 'pending' && (
                 <>
                   <Button type="button" variant="outline" onClick={openEditModal}>

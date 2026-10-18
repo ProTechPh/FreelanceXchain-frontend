@@ -10,6 +10,8 @@ import {
   refundsApi,
   paymentsApi,
   reviewsApi,
+  negotiationApi,
+  signaturesApi,
 } from '@/lib/api';
 import { normalizeMilestone } from '@/lib/contract-workflow';
 import { reportFailure } from '@/lib/report-failure';
@@ -24,6 +26,8 @@ import type {
   RefundRequest,
   UserRole,
   AppRatingSource,
+  NegotiationState,
+  SigningPayload,
 } from '@/types';
 
 type ParticipantRole = Extract<UserRole, 'employer' | 'freelancer'>;
@@ -40,6 +44,10 @@ interface ContractWorkspaceState {
   pendingWithdrawalEth: string | null;
   loading: boolean;
   reviewEligibility: { canRate: boolean; reason?: string } | null;
+  /** Offers, floor and permissions while the contract is negotiating. */
+  negotiation: NegotiationState | null;
+  /** Locked terms, typed data and signatures once terms are agreed. */
+  signingPayload: SigningPayload | null;
 }
 
 interface ContractWorkspaceActions {
@@ -67,6 +75,8 @@ export function useContractWorkspace(
     pendingWithdrawalEth: null,
     loading: true,
     reviewEligibility: null,
+    negotiation: null,
+    signingPayload: null,
   });
 
   const loadWorkspace = useCallback(async () => {
@@ -85,6 +95,8 @@ export function useContractWorkspace(
         refundResult,
         paymentResult,
         fundInfoResult,
+        negotiationResult,
+        signingResult,
       ] = await Promise.allSettled([
         milestonesApi.listForContract(contractId),
         transactionsApi.getForContract(contractId),
@@ -92,7 +104,12 @@ export function useContractWorkspace(
         rushUpgradesApi.list(contractId),
         refundsApi.list(contractId),
         paymentsApi.getStatus(contractId),
-        role === 'employer' ? contractsApi.getFundInfo(contractId) : Promise.resolve(null),
+        // fund-info is only meaningful (and only allowed) while the contract can be funded.
+        role === 'employer' && (loadedContract.status === 'awaiting_funding' || loadedContract.status === 'pending')
+          ? contractsApi.getFundInfo(contractId)
+          : Promise.resolve(null),
+        loadedContract.status === 'negotiating' ? negotiationApi.get(contractId) : Promise.resolve(null),
+        loadedContract.termsHash ? signaturesApi.getPayload(contractId) : Promise.resolve(null),
       ]);
 
       const rawMilestones =
@@ -148,6 +165,8 @@ export function useContractWorkspace(
         pendingWithdrawalEth,
         loading: false,
         reviewEligibility: null,
+        negotiation: negotiationResult.status === 'fulfilled' && negotiationResult.value ? negotiationResult.value.data : null,
+        signingPayload: signingResult.status === 'fulfilled' && signingResult.value ? signingResult.value.data : null,
       };
 
       if (loadedContract.status === 'completed') {

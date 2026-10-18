@@ -37,6 +37,7 @@ import {
   MAX_FILE_COUNT,
   MIN_PROPOSED_RATE,
   MAX_PROPOSED_RATE,
+  MAX_RATE_DECIMALS,
 } from '@/lib/proposal-submission';
 import {
   DOCUMENT_ACCEPT_STRING,
@@ -106,7 +107,10 @@ export function ProposalDialog({
 }: ProposalDialogProps) {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
-  const { formatEthToPhp } = useEthPhpRate();
+  const { formatEthToPhp, convertEthToPhp, convertPhpToEth } = useEthPhpRate();
+  // Freelancers can quote in ETH or in pesos; pesos are converted to ETH at the
+  // live rate, and the ETH amount is what gets submitted.
+  const [rateCurrency, setRateCurrency] = useState<'ETH' | 'PHP'>('ETH');
   const isKycApproved = user?.kycStatus === 'approved';
   const fieldId = useId();
 
@@ -509,11 +513,11 @@ export function ProposalDialog({
         <div className="space-y-5">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Field
-              label="Proposed rate (USD)"
+              label={`Proposed rate (${rateCurrency === 'ETH' ? 'ETH' : '₱'})`}
               htmlFor={`${fieldId}-rate`}
               description={
                 project
-                  ? `Client budget: ${project.budget && project.budget > 0 ? `${formatAmount(project.budget, { currency: 'USD' })}` : 'Negotiable'}`
+                  ? `Client budget: ${project.budget && project.budget > 0 ? `${formatAmount(project.budget, { currency: 'ETH' })} (≈ ${formatEthToPhp(project.budget)})` : 'Negotiable'}`
                   : undefined
               }
               error={fieldError?.field === 'proposedRate' ? fieldError.message : null}
@@ -522,27 +526,78 @@ export function ProposalDialog({
               <div className="relative">
                 <FieldInput
                   id={`${fieldId}-rate`}
-                  aria-label="Proposed rate (USD)"
+                  aria-label={`Proposed rate (${rateCurrency === 'ETH' ? 'ETH' : '₱'})`}
                   type="number"
-                  min={MIN_PROPOSED_RATE}
-                  max={MAX_PROPOSED_RATE}
+                  min={rateCurrency === 'ETH' ? MIN_PROPOSED_RATE : 1}
+                  max={rateCurrency === 'ETH' ? MAX_PROPOSED_RATE : undefined}
                   step="any"
                   inputMode="decimal"
-                  placeholder="0.00"
-                  className="pr-14 tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                  value={form.proposedRate}
-                  onChange={(event) => handleRateChange(event.target.value)}
+                  placeholder={rateCurrency === 'ETH' ? '0.15' : '25000'}
+                  className="pr-28 tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  value={rateCurrency === 'ETH' ? form.proposedRate : form.phpRate ?? ''}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    if (rateCurrency === 'ETH') {
+                      handleRateChange(value, '');
+                      return;
+                    }
+                    const eth = convertPhpToEth(value);
+                    const scale = 10 ** MAX_RATE_DECIMALS;
+                    handleRateChange(eth && eth > 0 ? String(Math.round(eth * scale) / scale) : '', value);
+                  }}
                 />
-                <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs font-medium text-muted-foreground" aria-hidden="true">
-                  USD
-                </span>
+                {/* Currency switch sits inside the field so the row stays aligned with its neighbour. */}
+                <div
+                  role="group"
+                  aria-label="Rate currency"
+                  className="absolute inset-y-0 right-1.5 flex items-center"
+                >
+                  <div className="flex rounded-md bg-muted p-0.5">
+                    {(['ETH', 'PHP'] as const).map((currency) => (
+                      <button
+                        key={currency}
+                        type="button"
+                        aria-pressed={rateCurrency === currency}
+                        className={`rounded px-2 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                          rateCurrency === currency ? 'bg-background text-foreground shadow-xs' : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                        onClick={() => {
+                          if (currency === rateCurrency) return;
+                          if (currency === 'PHP') {
+                            const php = convertEthToPhp(form.proposedRate);
+                            handleRateChange(form.proposedRate, php && php > 0 ? String(Math.round(php * 100) / 100) : '');
+                          } else {
+                            handleRateChange(form.proposedRate, '');
+                          }
+                          setRateCurrency(currency);
+                        }}
+                      >
+                        {currency === 'ETH' ? 'ETH' : '₱'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
               {form.proposedRate && parseFloat(form.proposedRate) > 0 ? (
                 <div className="mt-1.5 space-y-1">
                   <div className="flex items-center justify-between rounded-md bg-primary/10 px-2.5 py-1.5 text-xs border border-primary/20">
-                    <span className="text-muted-foreground font-medium">Philippine Peso Value:</span>
-                    <span className="font-bold text-primary">≈ {formatEthToPhp(form.proposedRate)}</span>
+                    {rateCurrency === 'ETH' ? (
+                      <>
+                        <span className="text-muted-foreground font-medium">Philippine Peso Value:</span>
+                        <span className="font-bold text-primary">≈ {formatEthToPhp(form.proposedRate)}</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-muted-foreground font-medium">Submitted as (ETH):</span>
+                        <span className="font-bold text-primary">{form.proposedRate} ETH</span>
+                      </>
+                    )}
                   </div>
+                  {rateCurrency === 'PHP' && (
+                    <p className="text-2xs text-muted-foreground">
+                      Converted at today&apos;s ETH rate. Contracts are paid in ETH, so the peso value can change.
+                    </p>
+                  )}
                 </div>
               ) : null}
             </Field>

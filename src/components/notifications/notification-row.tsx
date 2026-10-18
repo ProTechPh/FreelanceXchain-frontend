@@ -11,7 +11,10 @@ import {
   FileCheck2,
   FileClock,
   FileText,
+  FileSignature,
   FileX2,
+  Handshake,
+  Hourglass,
   Inbox,
   LifeBuoy,
   MessageSquare,
@@ -38,7 +41,7 @@ import { formatDateTime, formatRelativeTime } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { Notification, NotificationType, UserRole } from '@/types';
 
-export type Category = 'Proposal' | 'Milestone' | 'Payment' | 'Dispute' | 'Refund' | 'Rush upgrade' | 'Review' | 'Message' | 'Discovery' | 'Support';
+export type Category = 'Proposal' | 'Contract' | 'Milestone' | 'Payment' | 'Dispute' | 'Refund' | 'Rush upgrade' | 'Review' | 'Message' | 'Discovery' | 'Support';
 
 type NotificationStyle = { icon: LucideIcon; color: string; bg: string; category: Category };
 
@@ -66,6 +69,16 @@ const ICON_BY_TYPE: Record<NotificationType, NotificationStyle> = {
   rush_upgrade_accepted: { icon: Zap, ...SUCCESS, category: 'Rush upgrade' },
   rush_upgrade_declined: { icon: Zap, ...DANGER, category: 'Rush upgrade' },
   rush_upgrade_counter_offered: { icon: Zap, ...WARNING, category: 'Rush upgrade' },
+  contract_offer_received: { icon: Handshake, ...INFO, category: 'Contract' },
+  contract_offer_accepted: { icon: Handshake, ...SUCCESS, category: 'Contract' },
+  contract_offer_declined: { icon: Handshake, ...DANGER, category: 'Contract' },
+  contract_negotiation_cancelled: { icon: XCircle, ...DANGER, category: 'Contract' },
+  contract_signature_requested: { icon: FileSignature, ...WARNING, category: 'Contract' },
+  contract_signed: { icon: FileSignature, ...SUCCESS, category: 'Contract' },
+  contract_awaiting_funding: { icon: Wallet, ...WARNING, category: 'Contract' },
+  contract_funding_reminder: { icon: Hourglass, ...WARNING, category: 'Contract' },
+  contract_funding_expired: { icon: Hourglass, ...DANGER, category: 'Contract' },
+  contract_activated: { icon: BadgeCheck, ...SUCCESS, category: 'Contract' },
   rating_received: { icon: Star, ...WARNING, category: 'Review' },
   message: { icon: MessageSquare, ...BRAND, category: 'Message' },
   saved_search_match: { icon: Search, ...BRAND, category: 'Discovery' },
@@ -75,7 +88,7 @@ const ICON_BY_TYPE: Record<NotificationType, NotificationStyle> = {
 
 const FALLBACK_STYLE: NotificationStyle = { icon: FileText, ...BRAND, category: 'Support' };
 
-export const CATEGORY_ORDER: Category[] = ['Proposal', 'Milestone', 'Payment', 'Dispute', 'Refund', 'Rush upgrade', 'Review', 'Message', 'Discovery', 'Support'];
+export const CATEGORY_ORDER: Category[] = ['Proposal', 'Contract', 'Milestone', 'Payment', 'Dispute', 'Refund', 'Rush upgrade', 'Review', 'Message', 'Discovery', 'Support'];
 
 export function categoryOf(notification: Notification): Category {
   return (ICON_BY_TYPE[notification.type] ?? FALLBACK_STYLE).category;

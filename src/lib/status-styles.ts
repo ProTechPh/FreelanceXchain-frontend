@@ -77,6 +77,7 @@ const STATUS_TONE: Record<string, StatusTone> = {
   under_review: 'warning',
   in_review: 'warning',
   awaiting_funding: 'warning',
+  awaiting_signatures: 'warning',
   busy: 'warning',
   counter_offered: 'warning',
   requested: 'warning',
@@ -84,6 +85,7 @@ const STATUS_TONE: Record<string, StatusTone> = {
 
   // Transitional / informational
   in_progress: 'info',
+  negotiating: 'info',
   releasing: 'info',
   processing: 'info',
   funding: 'info',

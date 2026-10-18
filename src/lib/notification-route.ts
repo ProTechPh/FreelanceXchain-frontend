@@ -39,7 +39,8 @@ export function getNotificationDestination(notification: Notification, role: Use
   }
 
   if (
-    notification.type.startsWith('milestone_')
+    notification.type.startsWith('contract_')
+    || notification.type.startsWith('milestone_')
     || notification.type === 'payment_released'
     || notification.type.startsWith('refund_')
     || notification.type.startsWith('rush_upgrade_')

@@ -20,6 +20,10 @@ test('formatAmount formats crypto currencies with currency ticker', () => {
   assert.match(formatAmount(2, { currency: 'ETH' }), /ETH\s*2/);
   assert.match(formatAmount(0.5, { currency: 'ETH', fractionDigits: 4 }), /ETH\s*0\.5000/);
   assert.match(formatAmount(1.25, { currency: 'ETH', fractionDigits: 2 }), /ETH\s*1\.25/);
+  assert.match(formatAmount(0.1534, { currency: 'ETH' }), /ETH\s*0\.1534/);
+  assert.match(formatAmount(0.15, { currency: 'ETH' }), /ETH\s*0\.15$/);
+  assert.match(formatAmount(0.375, { currency: 'ETH' }), /ETH\s*0\.375/);
+  assert.match(formatAmount(0.123456, { currency: 'ETH' }), /ETH\s*0\.1235/);
 });
 
 test('formatAmount still supports explicit USD when requested', () => {

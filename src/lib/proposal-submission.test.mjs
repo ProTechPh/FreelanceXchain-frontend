@@ -92,12 +92,12 @@ test('does not call the API when proposal input is invalid', async () => {
 
 test('holds rate, duration, and cover letter to the same bounds as the API', () => {
   assert.equal(
-    validateProposalForm({ ...validForm, proposedRate: '0.5' }),
-    'Proposed rate must be at least $1.',
+    validateProposalForm({ ...validForm, proposedRate: '0.00005' }),
+    'Proposed rate must be at least 0.0001 ETH.',
   );
   assert.equal(
     validateProposalForm({ ...validForm, proposedRate: '1000001' }),
-    'Proposed rate cannot exceed $1,000,000.',
+    'Proposed rate cannot exceed 1,000,000 ETH.',
   );
   assert.equal(
     validateProposalForm({ ...validForm, estimatedDuration: '10.5' }),
@@ -112,4 +112,7 @@ test('holds rate, duration, and cover letter to the same bounds as the API', () 
     'Cover letter must be 10,000 characters or fewer.',
   );
   assert.equal(validateProposalForm({ ...validForm, proposedRate: '1', estimatedDuration: '3650' }), null);
+  assert.equal(validateProposalForm({ ...validForm, proposedRate: '0.15' }), null);
+  assert.equal(validateProposalForm({ ...validForm, proposedRate: '0.0001' }), null);
+  assert.equal(validateProposalForm({ ...validForm, proposedRate: '0.12345' }), 'Use at most 4 decimal places for the ETH rate.');
 });
