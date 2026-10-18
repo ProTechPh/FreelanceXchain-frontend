@@ -115,7 +115,8 @@ test('employer deploys escrow from their wallet and funds the contract through t
 
   await page.goto(`/dashboard/employer/contracts/${contractId}`);
   await expect(page.getByRole('heading', { name: 'Production landing page' })).toBeVisible();
-  await expect(page.getByText('$250')).toBeVisible();
+  // Contract amounts are ETH (the released total in the payment status card).
+  await expect(page.getByText('ETH 250', { exact: true })).toBeVisible();
   await expect(page.getByText('25%')).toBeVisible();
   await expect(page.getByText('0x3333333333333333333333333333333333333333')).toBeVisible();
   await page.evaluate(() => { (window as Window & { __ethereumCalls?: number }).__ethereumCalls = 0; });

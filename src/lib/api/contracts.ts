@@ -9,6 +9,12 @@ import type {
   RefundRequest,
   ContractFundInfo,
   ContractPaymentStatus,
+  ContractOffer,
+  ContractOfferInput,
+  ContractSignature,
+  NegotiationState,
+  SigningPayload,
+  SubmitSignatureInput,
   ContractPaymentHistory,
   MyPaymentsResponse,
   PaymentSummary,
@@ -45,6 +51,37 @@ export const contractsApi = {
         freelancerAmount: string;
       };
     }>(`/contracts/${id}/escrow/withdrawals`),
+};
+
+export const negotiationApi = {
+  get: (contractId: string) =>
+    api.get<NegotiationState>(`/contracts/${contractId}/negotiation`),
+
+  createOffer: (contractId: string, offer: ContractOfferInput) =>
+    api.post<ContractOffer>(`/contracts/${contractId}/offers`, offer),
+
+  acceptOffer: (contractId: string, offerId: string) =>
+    api.post<Contract>(`/contracts/${contractId}/offers/${offerId}/accept`, {}),
+
+  declineOffer: (contractId: string, offerId: string, payload: { reason?: string; endNegotiation?: boolean } = {}) =>
+    api.post<{ offer: ContractOffer; contractCancelled: boolean }>(`/contracts/${contractId}/offers/${offerId}/decline`, payload),
+
+  withdrawOffer: (contractId: string, offerId: string) =>
+    api.post<ContractOffer>(`/contracts/${contractId}/offers/${offerId}/withdraw`, {}),
+
+  reopen: (contractId: string) =>
+    api.post<Contract>(`/contracts/${contractId}/negotiation/reopen`, {}),
+};
+
+export const signaturesApi = {
+  getPayload: (contractId: string) =>
+    api.get<SigningPayload>(`/contracts/${contractId}/signing-payload`),
+
+  list: (contractId: string) =>
+    api.get<ContractSignature[]>(`/contracts/${contractId}/signatures`),
+
+  sign: (contractId: string, input: SubmitSignatureInput) =>
+    api.post<{ contract: Contract; signature: ContractSignature }>(`/contracts/${contractId}/signatures`, input),
 };
 
 export const rushUpgradesApi = {
@@ -102,8 +139,13 @@ export const milestonesApi = {
   // Returns the approval outcome, not the milestone: the endpoint delegates to
   // payment-service.approveMilestone, which releases escrow and reports whether
   // that was the last milestone (`contractCompleted`).
-  approve: (milestoneId: string, feedback?: string) =>
-    api.post<MilestoneApprovalResult>(`/milestones/${milestoneId}/approve`, { feedback }),
+  // `transactionHash` is the employer's own approveMilestone transaction for
+  // escrows funded from their wallet; the server verifies it before recording.
+  approve: (milestoneId: string, feedback?: string, transactionHash?: string) =>
+    api.post<MilestoneApprovalResult>(`/milestones/${milestoneId}/approve`, {
+      ...(feedback ? { feedback } : {}),
+      ...(transactionHash ? { transactionHash } : {}),
+    }),
 
   reject: (milestoneId: string, reason: string, requestRevision = true) =>
     api.post<Milestone>(`/milestones/${milestoneId}/reject`, { reason, requestRevision }),

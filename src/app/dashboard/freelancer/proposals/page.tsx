@@ -187,7 +187,7 @@ export default function ProposalsPage() {
                     {status === 'accepted' && (
                       <Button asChild variant="gradient" size="sm" className="h-8 text-xs font-semibold shrink-0">
                         <Link href="/dashboard/freelancer/contracts">
-                          <FileText className="size-3.5 mr-1.5" /> View Contract
+                          <FileText className="size-3.5 mr-1.5" /> Review &amp; negotiate terms
                         </Link>
                       </Button>
                     )}

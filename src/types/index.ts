@@ -28,7 +28,18 @@ export type ProjectStatus = 'draft' | 'open' | 'in_progress' | 'completed' | 'ca
 
 export type ProposalStatus = 'pending' | 'accepted' | 'rejected' | 'withdrawn';
 
-export type ContractStatus = 'pending' | 'active' | 'completed' | 'disputed' | 'resolved' | 'cancelled';
+// Hiring flow: negotiating → awaiting_signatures → awaiting_funding → active.
+// 'pending' is the legacy status (accept → fund directly).
+export type ContractStatus =
+  | 'negotiating'
+  | 'awaiting_signatures'
+  | 'awaiting_funding'
+  | 'pending'
+  | 'active'
+  | 'completed'
+  | 'disputed'
+  | 'resolved'
+  | 'cancelled';
 
 export type RushUpgradeRequestStatus = 'pending' | 'accepted' | 'declined' | 'counter_offered' | 'expired';
 
@@ -68,6 +79,16 @@ export type NotificationType =
   | 'rush_upgrade_accepted'
   | 'rush_upgrade_declined'
   | 'rush_upgrade_counter_offered'
+  | 'contract_offer_received'
+  | 'contract_offer_accepted'
+  | 'contract_offer_declined'
+  | 'contract_negotiation_cancelled'
+  | 'contract_signature_requested'
+  | 'contract_signed'
+  | 'contract_awaiting_funding'
+  | 'contract_funding_reminder'
+  | 'contract_funding_expired'
+  | 'contract_activated'
   | 'message'
   | 'saved_search_match'
   | 'project_match'
@@ -440,11 +461,171 @@ export interface Contract {
   endDate?: string;
   milestones?: Milestone[];
   currency?: string;
+  // Negotiated terms (absent on legacy contracts)
+  milestoneSource?: 'project' | 'contract';
+  additionalPay?: number;
+  rushFeePercentage?: number;
+  deadline?: string;
+  acceptedOfferId?: string;
+  termsHash?: string;
+  termsLockedAt?: string;
+  fullySignedAt?: string;
+  fundingDeadline?: string;
+  fundedAt?: string;
+  cancelReason?: string;
+  cancelledBy?: string;
   createdAt: string;
   updatedAt: string;
   project?: Project;
   freelancer?: FreelancerProfile;
   employer?: EmployerProfile;
+}
+
+export type ContractPartyRole = 'employer' | 'freelancer';
+
+export interface OfferMilestoneDraft {
+  title: string;
+  description?: string;
+  amount: number;
+  dueDate: string;
+}
+
+export type ContractOfferStatus = 'pending' | 'accepted' | 'countered' | 'declined' | 'withdrawn' | 'superseded';
+
+export interface ContractOffer {
+  id: string;
+  contractId: string;
+  round: number;
+  proposedBy: string;
+  proposerRole: ContractPartyRole;
+  status: ContractOfferStatus;
+  baseAmount: number;
+  additionalPay: number;
+  isRush: boolean;
+  rushFeePercentage: number;
+  rushFee: number;
+  totalAmount: number;
+  milestones: Array<Required<OfferMilestoneDraft>>;
+  deadline: string;
+  message: string | null;
+  parentOfferId: string | null;
+  respondedBy: string | null;
+  respondedAt: string | null;
+  isSeed: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ContractOfferInput {
+  baseAmount: number;
+  additionalPay: number;
+  isRush: boolean;
+  rushFeePercentage: number;
+  deadline: string;
+  message?: string;
+  milestones: OfferMilestoneDraft[];
+}
+
+export interface NegotiationPermissions {
+  canPropose: boolean;
+  canAccept: boolean;
+  canDecline: boolean;
+  canWithdraw: boolean;
+  canEnd: boolean;
+  canReopen: boolean;
+}
+
+export interface NegotiationState {
+  contract: Contract;
+  role: ContractPartyRole | 'admin';
+  floor: { proposedRate: number; estimatedDuration: number | null };
+  template: {
+    projectTitle: string;
+    deadline: string | null;
+    isRush: boolean;
+    rushFeePercentage: number;
+    milestones: Array<Required<OfferMilestoneDraft>>;
+  };
+  offers: ContractOffer[];
+  openOffer: ContractOffer | null;
+  acceptedOffer: ContractOffer | null;
+  permissions: NegotiationPermissions;
+  limits: { maxMilestones: number; maxRounds: number; roundsUsed: number };
+  chat: { otherPartyId: string; projectId: string };
+}
+
+export interface ContractSignature {
+  id: string;
+  contractId: string;
+  signerId: string;
+  signerRole: ContractPartyRole;
+  termsHash: string;
+  signatureType: 'drawn' | 'typed';
+  signatureImage: string | null;
+  typedName: string | null;
+  walletAddress: string;
+  walletSignature: string;
+  consentVersion: string;
+  signedAt: string;
+  status: 'valid' | 'voided';
+  ipAddress?: string | null;
+  userAgent?: string | null;
+}
+
+export interface CanonicalContractTerms {
+  schema: string;
+  contractId: string;
+  projectId: string;
+  employerWallet: string;
+  freelancerWallet: string;
+  currency: 'ETH';
+  baseAmountWei: string;
+  additionalPayWei: string;
+  rushFeeBps: number;
+  rushFeeWei: string;
+  totalAmountWei: string;
+  deadline: string;
+  milestones: Array<{ index: number; title: string; description: string; amountWei: string; dueDate: string }>;
+  legalTermsVersion: string;
+  legalTermsHash: string;
+}
+
+export interface SigningTypedData {
+  domain: { name: string; version: string; chainId: number };
+  types: Record<string, Array<{ name: string; type: string }>>;
+  primaryType: 'SignContract';
+  message: Record<string, unknown>;
+}
+
+export interface SigningPayload {
+  contractId: string;
+  status: ContractStatus;
+  termsHash: string;
+  chainId: number;
+  chainIdHex: string;
+  terms: CanonicalContractTerms;
+  typedData: SigningTypedData | null;
+  legal: {
+    version: string;
+    hash: string;
+    clauses: Array<{ title: string; body: string }>;
+    statement: string;
+    consentVersion: string;
+  };
+  signatures: ContractSignature[];
+  nextSigner: ContractPartyRole | null;
+  canSign: boolean;
+  projectTitle: string;
+}
+
+export interface SubmitSignatureInput {
+  termsHash: string;
+  signatureType: 'drawn' | 'typed';
+  signatureImage?: string;
+  typedName?: string;
+  walletAddress: string;
+  walletSignature: string;
+  consent: boolean;
 }
 
 export interface ContractFundInfo {
@@ -459,6 +640,7 @@ export interface ContractFundInfo {
   abi?: unknown[];
   bytecode?: string;
   chainId?: string;
+  fundingDeadline?: string;
   existingDeployment?: {
     escrowAddress: string;
     transactionHash: string;

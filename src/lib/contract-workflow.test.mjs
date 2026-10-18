@@ -33,6 +33,11 @@ test('only verified employers can fund pending contracts', () => {
   assert.equal(getContractPermissions('pending', 'employer', 'approved').canFund, true);
   assert.equal(getContractPermissions('pending', 'employer', 'pending').canFund, false);
   assert.equal(getContractPermissions('pending', 'freelancer', 'approved').canFund, false);
+  assert.equal(getContractPermissions('awaiting_funding', 'employer', 'approved').canFund, true);
+  assert.equal(getContractPermissions('negotiating', 'employer', 'approved').canFund, false);
+  assert.equal(getContractPermissions('negotiating', 'freelancer', 'approved').canCancel, true);
+  assert.equal(getContractPermissions('awaiting_signatures', 'employer', 'approved').canCancel, true);
+  assert.equal(getContractPermissions('active', 'employer', 'approved').canCancel, false);
 });
 
 test('milestone actions follow role and status transitions', () => {

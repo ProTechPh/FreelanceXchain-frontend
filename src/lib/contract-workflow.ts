@@ -46,8 +46,12 @@ export function getContractPermissions(
 ) {
   const verified = hasApprovedKyc(kycStatus);
   return {
-    canFund: role === 'employer' && status === 'pending' && verified,
-    canCancel: role !== 'admin' && status === 'pending' && verified,
+    // Negotiated contracts are funded once both parties signed (awaiting_funding);
+    // 'pending' is the legacy accept-then-fund status.
+    canFund: role === 'employer' && (status === 'pending' || status === 'awaiting_funding') && verified,
+    canCancel: role !== 'admin'
+      && ['pending', 'negotiating', 'awaiting_signatures', 'awaiting_funding'].includes(status)
+      && verified,
   };
 }
 

@@ -30,11 +30,32 @@ import { MilestoneListCard } from './workspace/milestone-list-card';
 import { ContractHistoryCard } from './workspace/contract-history-card';
 import { ContractWorkspaceDialogs } from './workspace/contract-workspace-dialogs';
 import { ContractInvoiceDialog } from '@/components/contracts/contract-invoice-dialog';
-import { deployEscrowFromWallet, withdrawFromEscrowFromWallet } from '@/lib/wallet';
-import { requestWalletProvider } from '@/lib/metamask';
+import {
+  approveEscrowMilestoneFromWallet,
+  deployEscrowFromWallet,
+  readEscrowMilestone,
+  submitEscrowMilestoneFromWallet,
+  switchToEscrowChain,
+  withdrawFromEscrowFromWallet,
+} from '@/lib/wallet';
+import { DEFAULT_CHAIN_ID, requestWalletProvider } from '@/lib/metamask';
+import { EscrowActionError, releaseFromEmployerWallet } from '@/lib/escrow-milestone-actions';
+import { EscrowSubmissionSync } from './hiring/escrow-submission-sync';
 import { Coins, ArrowDownToLine, Loader2 } from 'lucide-react';
+import { isPreWorkStatus } from '@/lib/contract-lifecycle';
+import { ContractLifecycleStepper } from './hiring/contract-lifecycle-stepper';
+import { NegotiationPanel } from './hiring/negotiation-panel';
+import { SignatureStatusCard } from './hiring/signature-status-card';
+import { FundingStepCard } from './hiring/funding-step-card';
 
 type ParticipantRole = Extract<UserRole, 'employer' | 'freelancer'>;
+
+const escrowWalletDeps = {
+  read: readEscrowMilestone,
+  switchChain: switchToEscrowChain,
+  submit: submitEscrowMilestoneFromWallet,
+  approve: approveEscrowMilestoneFromWallet,
+};
 
 const initialReview: ReviewDraft = {
   rating: 5,
@@ -71,6 +92,8 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
     pendingWithdrawalEth,
     loading,
     reviewEligibility,
+    negotiation,
+    signingPayload,
     refresh: loadWorkspace,
   } = useContractWorkspace(contractId, role, requestRatingPrompt, disputeId);
   const { formatEthToPhp } = useEthPhpRate();
@@ -136,6 +159,7 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
 
   const contractPermissions = getContractPermissions(contract.status, role, user.kycStatus);
   const isVerified = hasApprovedKyc(user.kycStatus);
+  const preWork = isPreWorkStatus(contract.status);
 
   const runAction = async <T,>(id: string, action: () => Promise<T>, success: string): Promise<T | undefined> => {
     setActionId(id);
@@ -146,7 +170,13 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
       await loadWorkspace();
       return result;
     } catch (error) {
-      toast.error(getApiErrorMessage(error, 'Couldn\'t complete this action. Try again.'));
+      if (error instanceof EscrowActionError) {
+        toast.error(error.message);
+      } else if ((error as { code?: unknown })?.code === 4001 || (error as { code?: unknown })?.code === 'ACTION_REJECTED') {
+        toast.error('You rejected the transaction in MetaMask. Nothing was changed.');
+      } else {
+        toast.error(getApiErrorMessage(error, 'Couldn\'t complete this action. Try again.'));
+      }
       return undefined;
     } finally {
       setActionId(null);
@@ -215,6 +245,19 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
     }
   };
 
+  /** Wallet + escrow coordinates for on-chain milestone steps; null for simulated escrows or no wallet. */
+  const getEscrowTarget = async (milestone: Milestone) => {
+    if (!contract.escrowAddress || typeof window === 'undefined' || !window.ethereum) return null;
+    const index = milestones.findIndex((m) => m.id === milestone.id);
+    const ethereum = await requestWalletProvider();
+    return {
+      ethereum,
+      escrowAddress: contract.escrowAddress,
+      milestoneIndex: index >= 0 ? index : 0,
+      chainId: fundInfo?.chainId ?? DEFAULT_CHAIN_ID,
+    };
+  };
+
   const submitMilestone = (milestone: Milestone) => {
     const selectedFiles = files[milestone.id] ?? [];
     if (selectedFiles.length === 0) {
@@ -232,6 +275,9 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
     formData.append('notes', notes[milestone.id] ?? '');
     void runAction(
       milestone.id,
+      // The platform marks the escrow milestone Submitted on the freelancer's behalf
+      // (and pays the gas). Only escrows deployed before that was possible need the
+      // freelancer's wallet; EscrowSubmissionSync offers that step when required.
       () => milestonesApi.submitWithFiles(milestone.id, formData),
       'Milestone submitted for review.',
     );
@@ -300,13 +346,42 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
         </Card>
       )}
 
+      <ContractLifecycleStepper status={contract.status} />
+
+      {contract.status === 'negotiating' && negotiation && (
+        <NegotiationPanel negotiation={negotiation} role={role} onChanged={loadWorkspace} />
+      )}
+
+      {contract.status === 'awaiting_funding' && (
+        <FundingStepCard
+          contract={contract}
+          role={role}
+          canFund={contractPermissions.canFund && Boolean(fundInfo)}
+          hasWallet={Boolean(user.walletAddress)}
+          funding={actionId === 'fund'}
+          onFund={() => void handleFundContract()}
+        />
+      )}
+
+      {signingPayload && ['awaiting_signatures', 'awaiting_funding'].includes(contract.status) && (
+        <SignatureStatusCard
+          payload={signingPayload}
+          role={role}
+          linkedWallet={user.walletAddress}
+          defaultName={user.name}
+          onChanged={loadWorkspace}
+        />
+      )}
+
       <ContractOverviewCard
         contract={contract}
         role={role}
         isVerified={isVerified}
         hasWallet={Boolean(user.walletAddress)}
-        canFund={contractPermissions.canFund}
-        canCancel={contractPermissions.canCancel}
+        // Negotiated contracts are funded from the funding step card; the
+        // negotiation and signature cards own their own cancel actions.
+        canFund={contractPermissions.canFund && contract.status === 'pending'}
+        canCancel={contractPermissions.canCancel && (contract.status === 'pending' || contract.status === 'awaiting_funding')}
         actionId={actionId}
         onFundContract={() => void handleFundContract()}
         onOpenCancelModal={() => setConfirmCancelOpen(true)}
@@ -320,15 +395,17 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
         fundInfo={fundInfo}
       />
 
-      <ContractNegotiationPanel
-        contract={contract}
-        role={role}
-        currentUserId={user.id}
-        kycStatus={user.kycStatus}
-        rushRequests={rushRequests}
-        refunds={refunds}
-        onRefresh={loadWorkspace}
-      />
+      {!preWork && (
+        <ContractNegotiationPanel
+          contract={contract}
+          role={role}
+          currentUserId={user.id}
+          kycStatus={user.kycStatus}
+          rushRequests={rushRequests}
+          refunds={refunds}
+          onRefresh={loadWorkspace}
+        />
+      )}
 
       {contract.status === 'completed' && localReviewEligibility && (
         <ContractReviewCard
@@ -341,6 +418,11 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
         />
       )}
 
+      {role === 'freelancer' && (
+        <EscrowSubmissionSync contract={contract} milestones={milestones} onSynced={() => void loadWorkspace()} />
+      )}
+
+      {contract.status !== 'negotiating' && (
       <MilestoneListCard
         milestones={milestones}
         currency={contract.currency || 'ETH'}
@@ -366,6 +448,7 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
         }}
         onPreviewAttachment={setPreviewAttachment}
       />
+      )}
 
       <ContractPaymentHistory contractId={contractId} userId={user.id} />
 
@@ -397,10 +480,18 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
         }}
         onConfirmApproveMilestone={async () => {
           if (!approvingMilestone) return;
-          const id = approvingMilestone.id;
+          const milestoneToRelease = approvingMilestone;
+          const id = milestoneToRelease.id;
           const result = await runAction(
             id,
-            () => milestonesApi.approve(id),
+            async () => {
+              // Escrows funded from the employer's wallet only release when that wallet signs.
+              const escrowTarget = await getEscrowTarget(milestoneToRelease);
+              const { transactionHash } = escrowTarget
+                ? await releaseFromEmployerWallet(escrowWalletDeps, escrowTarget)
+                : {};
+              return milestonesApi.approve(id, undefined, transactionHash);
+            },
             'Milestone approved and payment released.',
           );
           setApprovingMilestone(null);
@@ -422,6 +513,9 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
         milestones={milestones}
         transactions={transactions}
         fundInfo={fundInfo}
+        signatures={signingPayload?.signatures ?? []}
+        legalClauses={signingPayload?.legal.clauses}
+        termsHash={signingPayload?.termsHash ?? contract.termsHash}
       />
     </div>
   );

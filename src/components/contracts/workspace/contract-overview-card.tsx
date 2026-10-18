@@ -40,12 +40,12 @@ export function ContractOverviewCard({
 
   return (
     <>
-      {!isVerified && ['pending', 'active', 'completed'].includes(contract.status) && (
+      {!isVerified && ['negotiating', 'awaiting_signatures', 'awaiting_funding', 'pending', 'active', 'completed'].includes(contract.status) && (
         <Card className="border-warning-border bg-warning-subtle">
           <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="flex items-center gap-2 text-sm">
               <ShieldCheck className="size-5 text-warning" />
-              Your identity isn&apos;t verified yet. Verification is required to fund, cancel, or modify contracts.
+              Your identity isn&apos;t verified yet. Verification is required to negotiate, sign, fund, cancel, or modify contracts.
             </p>
             <Button asChild size="sm" variant="outline">
               <Link href={verificationPath}>Verify identity — takes ~2 min</Link>
@@ -65,6 +65,13 @@ export function ContractOverviewCard({
               <p className="font-semibold">{formatEthToPhp(contract.baseAmount)}</p>
               <p className="text-2xs text-muted-foreground">{formatAmount(contract.baseAmount, { currency: contract.currency || 'ETH' })}</p>
             </div>
+            {(contract.additionalPay ?? 0) > 0 && (
+              <div>
+                <p className="text-muted-foreground">Additional pay</p>
+                <p className="font-semibold">{formatEthToPhp(contract.additionalPay ?? 0)}</p>
+                <p className="text-2xs text-muted-foreground">{formatAmount(contract.additionalPay ?? 0, { currency: contract.currency || 'ETH' })}</p>
+              </div>
+            )}
             <div>
               <p className="text-muted-foreground">Rush fee</p>
               <p className="font-semibold">{formatEthToPhp(contract.rushFee)}</p>
@@ -110,7 +117,7 @@ export function ContractOverviewCard({
                 className="gap-1.5"
               >
                 <FileText className="size-4 text-primary" />
-                View Contract Agreement &amp; E-Sign
+                View contract agreement
               </Button>
             )}
           </div>

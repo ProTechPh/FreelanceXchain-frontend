@@ -62,7 +62,8 @@ export function ContractNegotiationPanel({
     [rushRequests, contract.rushFee]
   );
   const pendingRefund = refunds.find((refund) => refund.status === 'pending');
-  const canCreateRush = canRequestRushUpgrade({
+  // Negotiated contracts agree the rush fee before signing, so it can't be upgraded later.
+  const canCreateRush = contract.milestoneSource !== 'contract' && canRequestRushUpgrade({
     role,
     contractStatus: contract.status,
     rushFee: contract.rushFee,

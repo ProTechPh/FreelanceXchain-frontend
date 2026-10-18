@@ -15,7 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Contract, Milestone, Transaction, ContractFundInfo } from '@/types';
+import type { Contract, ContractSignature, Milestone, Transaction, ContractFundInfo } from '@/types';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/dialog';
 import { FreelanceXchainIcon } from '@/components/ui/freelancexchain-logo';
 import { StatusBadge } from '@/components/ui/status-badge';
-import { formatAmount, formatDate, formatDocumentNumber } from '@/lib/format';
+import { formatAmount, formatDate, formatDateTime, formatDocumentNumber } from '@/lib/format';
 import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 import { useAuthStore } from '@/stores/authStore';
 import { contractsApi, milestonesApi } from '@/lib/api';
@@ -38,6 +38,81 @@ export interface ContractInvoiceDialogProps {
   milestones: Milestone[];
   transactions?: Transaction[];
   fundInfo?: ContractFundInfo | null;
+  /** Valid signatures over the current terms (negotiated contracts). */
+  signatures?: ContractSignature[];
+  /** The versioned clauses the parties signed. */
+  legalClauses?: Array<{ title: string; body: string }>;
+  termsHash?: string;
+}
+
+const DEFAULT_LEGAL_CLAUSES: Array<{ title: string; body: string }> = [
+  {
+    title: 'Confidentiality & NDA',
+    body: 'Both Client and Contractor agree to keep all technical specifications, code, mockups, trade secrets, and non-public business information confidential. No proprietary materials may be disclosed to third parties without prior written consent.',
+  },
+  {
+    title: 'Intellectual Property (IP) Transfer',
+    body: 'Upon approval of final milestone deliverable and complete release of agreed escrow funds, all intellectual property rights, copyrights, and title in the deliverable are irrevocably transferred to the Client.',
+  },
+  {
+    title: 'Escrow Settlement',
+    body: 'Payments are held securely in non-custodial smart contracts and disbursed strictly upon Client milestone acceptance or formal arbitration ruling under the platform dispute mechanism.',
+  },
+];
+
+function SignatureBlock({
+  title,
+  signerName,
+  signerDetail,
+  signature,
+  negotiated,
+  acceptedAt,
+}: {
+  title: string;
+  signerName: string;
+  signerDetail?: string;
+  signature?: ContractSignature;
+  negotiated: boolean;
+  acceptedAt?: string;
+}) {
+  const statusLabel = signature ? 'E-signed & wallet-verified' : negotiated ? 'Awaiting signature' : 'Accepted in-app';
+  return (
+    <div className="rounded-lg border border-border bg-card p-3.5 space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs font-semibold text-foreground">{title}</span>
+        <span
+          className={signature
+            ? 'inline-flex items-center gap-1 text-2xs font-bold text-success bg-success/10 border border-success/20 px-2 py-0.5 rounded-full'
+            : 'inline-flex items-center gap-1 text-2xs font-semibold text-muted-foreground bg-muted px-2 py-0.5 rounded-full'}
+        >
+          {signature && <Check className="size-3" aria-hidden="true" />} {statusLabel}
+        </span>
+      </div>
+      <div className="border-b border-dashed border-border/80 pb-2 pt-2 min-h-14">
+        {signature?.signatureImage ? (
+          // eslint-disable-next-line @next/next/no-img-element -- inline data URL, nothing to optimize
+          <img src={signature.signatureImage} alt={`${title} signature`} className="h-12 w-auto rounded bg-white" />
+        ) : signature?.typedName ? (
+          <p className="font-serif italic text-base font-bold text-primary tracking-wide">{signature.typedName}</p>
+        ) : (
+          <p className="text-2xs text-muted-foreground">{negotiated ? 'Not signed yet' : 'Signed records are kept for contracts agreed through negotiation.'}</p>
+        )}
+      </div>
+      <div className="space-y-0.5 text-2xs text-muted-foreground">
+        <p><strong className="text-foreground">Signer:</strong> {signerName} {signerDetail ? `(${signerDetail})` : ''}</p>
+        {signature && (
+          <>
+            <p><strong className="text-foreground">Wallet:</strong> {truncateAddr(signature.walletAddress, 12, 8)}</p>
+            <p><strong className="text-foreground">Signed:</strong> {formatDateTime(signature.signedAt)}</p>
+            <p className="break-all font-mono"><strong className="font-sans text-foreground">Wallet signature:</strong> {truncateAddr(signature.walletSignature, 14, 10)}</p>
+          </>
+        )}
+        {!signature && !negotiated && acceptedAt && (
+          <p><strong className="text-foreground">Accepted:</strong> {formatDate(acceptedAt)}</p>
+        )}
+      </div>
+    </div>
+  );
 }
 
 type DocumentMode = 'combined' | 'invoice' | 'sow';
@@ -55,6 +130,9 @@ export function ContractInvoiceDialog({
   milestones,
   transactions = [],
   fundInfo,
+  signatures = [],
+  legalClauses,
+  termsHash,
 }: ContractInvoiceDialogProps) {
   const { formatEthToPhp } = useEthPhpRate();
   const [docMode, setDocMode] = useState<DocumentMode>('combined');
@@ -493,87 +571,53 @@ export function ContractInvoiceDialog({
               )}
             </div>
 
-            {/* Non-Disclosure Agreement (NDA) & Intellectual Property Terms */}
+            {/* Legal terms: the versioned clauses both parties signed (fallback text for older contracts) */}
             {docMode !== 'invoice' && (
               <div className="space-y-2 rounded-lg border border-border bg-card p-4 text-xs">
                 <div className="flex items-center gap-1.5 font-bold uppercase tracking-wider text-foreground">
-                  <ShieldCheck className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <ShieldCheck className="size-3.5 text-success" />
                   Legal Terms, Non-Disclosure (NDA) &amp; IP Protection
                 </div>
                 <div className="space-y-2 text-2xs text-muted-foreground leading-relaxed">
-                  <p>
-                    <strong className="text-foreground">1. Confidentiality &amp; NDA:</strong> Both Client and Contractor agree to keep all technical specifications, code, mockups, trade secrets, and non-public business information confidential. No proprietary materials may be disclosed to third parties without prior written consent.
-                  </p>
-                  <p>
-                    <strong className="text-foreground">2. Intellectual Property (IP) Transfer:</strong> Upon approval of final milestone deliverable and complete release of agreed escrow funds, all intellectual property rights, copyrights, and title in the deliverable are irrevocably transferred to the Client.
-                  </p>
-                  <p>
-                    <strong className="text-foreground">3. Escrow Settlement:</strong> Payments are held securely in non-custodial smart contracts and disbursed strictly upon Client milestone acceptance or formal arbitration ruling under the platform dispute mechanism.
-                  </p>
+                  {(legalClauses ?? DEFAULT_LEGAL_CLAUSES).map((clause, index) => (
+                    <p key={clause.title}>
+                      <strong className="text-foreground">{index + 1}. {clause.title}:</strong> {clause.body}
+                    </p>
+                  ))}
                 </div>
               </div>
             )}
 
-            {/* E-Signature & Execution Block */}
+            {/* E-Signature & Execution Block: real signature records */}
             {docMode !== 'invoice' && (
               <div className="space-y-3 pt-2">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-foreground flex items-center gap-1.5">
                     <ShieldCheck className="size-3.5 text-success" />
-                    Binding E-Signature &amp; Execution Block
+                    E-Signature &amp; Execution Block
                   </h3>
-                  <span className="text-2xs font-mono text-muted-foreground">
-                    Hash: {contract.id.slice(0, 16)}...SECURE
-                  </span>
+                  {termsHash && (
+                    <span className="text-2xs font-mono text-muted-foreground">
+                      Terms hash: {truncateAddr(termsHash, 12, 8)}
+                    </span>
+                  )}
                 </div>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  {/* Employer / Client E-Signature */}
-                  <div className="rounded-lg border border-border bg-card p-3.5 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-foreground">Employer / Client</span>
-                      <span className="inline-flex items-center gap-1 text-2xs font-bold text-success bg-success/10 border border-success/20 px-2 py-0.5 rounded-full">
-                        <Check className="size-3" /> E-Signed &amp; Verified
-                      </span>
-                    </div>
-                    <div className="border-b border-dashed border-border/80 pb-2 pt-2">
-                      <p className="font-serif italic text-base font-bold text-primary tracking-wide">
-                        {clientName}
-                      </p>
-                      <span className="text-3xs font-mono text-muted-foreground uppercase tracking-widest block mt-0.5">
-                        Digital Signature Auth Token
-                      </span>
-                    </div>
-                    <div className="space-y-0.5 text-2xs text-muted-foreground">
-                      <p><strong className="text-foreground">Signer:</strong> {clientName} {clientOrg ? `(${clientOrg})` : ''}</p>
-                      <p><strong className="text-foreground">Wallet:</strong> {clientWallet ? truncateAddr(clientWallet, 12, 8) : 'Verified Business Account'}</p>
-                      <p><strong className="text-foreground">Signed Date:</strong> {contract.createdAt ? formatDate(contract.createdAt) : 'Upon Agreement'}</p>
-                      <p className="text-3xs text-emerald-600 dark:text-emerald-400 font-semibold pt-0.5">✓ NDA &amp; Escrow Terms Bindingly Acknowledged</p>
-                    </div>
-                  </div>
-
-                  {/* Contractor / Freelancer E-Signature */}
-                  <div className="rounded-lg border border-border bg-card p-3.5 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-foreground">Contractor / Freelancer</span>
-                      <span className="inline-flex items-center gap-1 text-2xs font-bold text-success bg-success/10 border border-success/20 px-2 py-0.5 rounded-full">
-                        <Check className="size-3" /> E-Signed &amp; Verified
-                      </span>
-                    </div>
-                    <div className="border-b border-dashed border-border/80 pb-2 pt-2">
-                      <p className="font-serif italic text-base font-bold text-primary tracking-wide">
-                        {freelancerName}
-                      </p>
-                      <span className="text-3xs font-mono text-muted-foreground uppercase tracking-widest block mt-0.5">
-                        Digital Signature Auth Token
-                      </span>
-                    </div>
-                    <div className="space-y-0.5 text-2xs text-muted-foreground">
-                      <p><strong className="text-foreground">Signer:</strong> {freelancerName}</p>
-                      <p><strong className="text-foreground">Wallet:</strong> {freelancerWallet ? truncateAddr(freelancerWallet, 12, 8) : 'Verified Freelancer Account'}</p>
-                      <p><strong className="text-foreground">Signed Date:</strong> {contract.createdAt ? formatDate(contract.createdAt) : 'Upon Agreement'}</p>
-                      <p className="text-3xs text-emerald-600 dark:text-emerald-400 font-semibold pt-0.5">✓ NDA &amp; Deliverable Commitment Bindingly Acknowledged</p>
-                    </div>
-                  </div>
+                  <SignatureBlock
+                    title="Employer / Client"
+                    signerName={clientName}
+                    signerDetail={clientOrg && clientOrg !== clientName ? clientOrg : undefined}
+                    signature={signatures.find((sig) => sig.signerRole === 'employer')}
+                    negotiated={Boolean(termsHash)}
+                    acceptedAt={detailContract.createdAt}
+                  />
+                  <SignatureBlock
+                    title="Contractor / Freelancer"
+                    signerName={freelancerName}
+                    signature={signatures.find((sig) => sig.signerRole === 'freelancer')}
+                    negotiated={Boolean(termsHash)}
+                    acceptedAt={detailContract.createdAt}
+                  />
                 </div>
               </div>
             )}

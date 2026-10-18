@@ -6,6 +6,7 @@ import {
   MAX_DURATION_DAYS,
   MAX_FILE_COUNT,
   MAX_PROPOSED_RATE,
+  MAX_RATE_DECIMALS,
   MIN_PROPOSED_RATE,
   ProposalFormValidationError,
   findProposalFormError,
@@ -21,11 +22,12 @@ import {
   MAX_FILE_SIZE,
 } from '@/lib/file-validation';
 
-// AI drafts can come back as 10.5 days or a rate below $1; round them into
+// AI drafts can come back as 10.5 days or an over-precise ETH rate; round them into
 // values the form (and the API) accept, so an AI draft never blocks submission.
 function toSubmittableRate(value: number): string {
   if (!Number.isFinite(value) || value <= 0) return '';
-  return String(Math.min(MAX_PROPOSED_RATE, Math.max(MIN_PROPOSED_RATE, Math.round(value))));
+  const rounded = Math.round(value * 10 ** MAX_RATE_DECIMALS) / 10 ** MAX_RATE_DECIMALS;
+  return String(Math.min(MAX_PROPOSED_RATE, Math.max(MIN_PROPOSED_RATE, rounded)));
 }
 
 function toSubmittableDuration(value: number): string {
@@ -171,6 +173,7 @@ export function useProposalForm({
       return {
         ...current,
         proposedRate: toSubmittableRate(aiData.proposedRate || projectBudget),
+        phpRate: '',
         estimatedDuration: toSubmittableDuration(aiData.estimatedDuration || 14),
         files: updatedFiles,
       };

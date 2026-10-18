@@ -25,7 +25,10 @@ import { PullToRefresh } from '@/components/ui/pull-to-refresh';
 import { DataFreshness, useDataFreshness } from '@/components/ui/data-freshness';
 import { ContractInvoiceDialog } from '@/components/contracts/contract-invoice-dialog';
 
-type ContractFilterTab = 'all' | 'active' | 'completed' | 'resolved' | 'cancelled' | 'disputed';
+type ContractFilterTab = 'all' | 'setup' | 'active' | 'completed' | 'resolved' | 'cancelled' | 'disputed';
+
+/** Contracts still being negotiated, signed or funded (plus legacy pending). */
+const SETUP_STATUSES: ReadonlySet<string> = new Set(['negotiating', 'awaiting_signatures', 'awaiting_funding', 'pending']);
 
 export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'freelancer'> }) {
   const { formatEthToPhp } = useEthPhpRate();
@@ -87,13 +90,14 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
     const cancelled = sideContracts.filter((c) => c.status === 'cancelled').length;
     const disputed = sideContracts.filter((c) => c.status === 'disputed').length;
     const pending = sideContracts.filter((c) => c.status === 'pending').length;
+    const setup = sideContracts.filter((c) => SETUP_STATUSES.has(c.status)).length;
     const totalValue = sideContracts.reduce((sum, c) => sum + (c.totalAmount || 0), 0);
-    return { total, active, completed, resolved, cancelled, disputed, pending, totalValue };
+    return { total, active, completed, resolved, cancelled, disputed, pending, setup, totalValue };
   }, [sideContracts]);
 
   const filteredContracts = useMemo(() => {
     return sideContracts.filter((contract) => {
-      if (selectedTab !== 'all' && contract.status !== selectedTab) {
+      if (selectedTab === 'setup' ? !SETUP_STATUSES.has(contract.status) : selectedTab !== 'all' && contract.status !== selectedTab) {
         return false;
       }
       if (!searchQuery.trim()) return true;
@@ -161,6 +165,11 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
                 <TabsTrigger value="all" className="gap-1.5 text-xs">
                   All <Badge variant="secondary" className="px-1.5 py-0 text-[10px] h-4">{stats.total}</Badge>
                 </TabsTrigger>
+                {stats.setup > 0 && (
+                  <TabsTrigger value="setup" className="gap-1.5 text-xs">
+                    Setting up <Badge variant="secondary" className="px-1.5 py-0 text-2xs h-4">{stats.setup}</Badge>
+                  </TabsTrigger>
+                )}
                 <TabsTrigger value="active" className="gap-1.5 text-xs">
                   Active <Badge variant="secondary" className="px-1.5 py-0 text-[10px] h-4">{stats.active}</Badge>
                 </TabsTrigger>
@@ -290,6 +299,9 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
                           {contract.status === 'cancelled' && 'Category: Cancelled • Contract Closed'}
                           {contract.status === 'disputed' && 'Category: In Dispute • Escrow Locked'}
                           {contract.status === 'pending' && 'Category: Pending Setup'}
+                          {contract.status === 'negotiating' && 'Setting up • Negotiating terms'}
+                          {contract.status === 'awaiting_signatures' && 'Setting up • Awaiting signatures'}
+                          {contract.status === 'awaiting_funding' && 'Setting up • Awaiting escrow funding'}
                         </Badge>
                       </div>
                       <div className="flex items-center gap-2 text-muted-foreground text-xs font-mono">
