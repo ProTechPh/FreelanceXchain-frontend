@@ -177,7 +177,7 @@ export default function Navbar({
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger
-                  aria-label="Open account menu"
+                  aria-label={`${userInitials} - Open account menu`}
                   className="flex size-11 p-0.5 cursor-pointer items-center justify-center rounded-full outline-none transition-opacity duration-fast hover:opacity-80 focus-visible:ring-2 focus-visible:ring-ring touch-manipulation"
                 >
                   <Avatar className="size-7">
