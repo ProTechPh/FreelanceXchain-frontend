@@ -63,7 +63,7 @@ export async function GET() {
     source = 'polygon';
   }
 
-  // 3. Fallback to 1 Gwei if all network calls fail
+  // 3. Conservative fallback if all network calls fail
   let gasPriceWei = BigInt(20_000_000_000); // 20 Gwei baseline
   if (hexPrice) {
     try {
@@ -78,7 +78,8 @@ export async function GET() {
   const gasPriceWeiStr = gasPriceWei.toString();
   const gasPriceGwei = Number(gasPriceWei) / 1e9;
 
-  // Calculate real gas in ETH: (units * gasPriceWei) / 1e18
+  // Legacy benchmark projection only. Executable transactions use wallet RPC
+  // simulation, and mined receipts provide the final fee actually paid.
   const employerGasEth = (EMPLOYER_DEPLOY_GAS_UNITS * Number(gasPriceWei)) / 1e18;
   const freelancerGasEth = (FREELANCER_CLAIM_GAS_UNITS * Number(gasPriceWei)) / 1e18;
 

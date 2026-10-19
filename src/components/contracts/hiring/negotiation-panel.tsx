@@ -112,7 +112,7 @@ export function NegotiationPanel({
             <h3 id="open-offer-heading" className="text-sm font-semibold">
               {permissions.canAccept ? 'Offer waiting for your response' : 'Your offer is waiting for a response'}
             </h3>
-            <OfferSummary offer={openOffer} previous={previousOf(openOffer.id)} proposerLabel={roleLabel(openOffer.proposerRole, role)} />
+            <OfferSummary offer={openOffer} previous={previousOf(openOffer.id)} proposerLabel={roleLabel(openOffer.proposerRole, role)} viewerRole={role} />
             <div className="flex flex-wrap gap-2">
               {permissions.canAccept && (
                 <Button
@@ -192,7 +192,7 @@ export function NegotiationPanel({
             <ol className="space-y-4 border-t border-border p-4">
               {history.map((offer) => (
                 <li key={offer.id}>
-                  <OfferSummary offer={offer} previous={previousOf(offer.id)} proposerLabel={roleLabel(offer.proposerRole, role)} compact />
+                  <OfferSummary offer={offer} previous={previousOf(offer.id)} proposerLabel={roleLabel(offer.proposerRole, role)} viewerRole={role} compact />
                 </li>
               ))}
             </ol>
@@ -207,6 +207,7 @@ export function NegotiationPanel({
         floor={floor.proposedRate}
         maxMilestones={limits.maxMilestones}
         isCounter={Boolean(openOffer && permissions.canAccept)}
+        role={role}
         defaultRushFeePercentage={template.rushFeePercentage > 0 ? template.rushFeePercentage : 25}
         submitting={busy === 'offer'}
         onSubmit={(draft) => {

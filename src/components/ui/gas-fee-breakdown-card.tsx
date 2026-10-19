@@ -1,13 +1,26 @@
 'use client';
 
-import { Fuel, CheckCircle2 } from 'lucide-react';
-import { useRealGasFee } from '@/hooks/use-real-gas-fee';
+import { CheckCircle2, Fuel, Loader2 } from 'lucide-react';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
+import { formatAmount } from '@/lib/format';
+import type { ActualTransactionGas, WalletGasQuote } from '@/lib/wallet';
 
 interface GasFeeBreakdownCardProps {
   proposedRateEth: number | string | null | undefined;
   variant: 'employer' | 'freelancer';
   className?: string;
   compact?: boolean;
+  milestoneCount?: number;
+  liveDeploymentQuote?: WalletGasQuote | null;
+  actualDeploymentGas?: ActualTransactionGas | null;
+  quoteLoading?: boolean;
+  quoteError?: string | null;
+}
+
+function positiveAmount(value: GasFeeBreakdownCardProps['proposedRateEth']): number | null {
+  if (value === null || value === undefined || value === '') return null;
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
 }
 
 export function GasFeeBreakdownCard({
@@ -15,164 +28,126 @@ export function GasFeeBreakdownCard({
   variant,
   className = '',
   compact = false,
+  milestoneCount = 1,
+  liveDeploymentQuote,
+  actualDeploymentGas,
+  quoteLoading = false,
+  quoteError,
 }: GasFeeBreakdownCardProps) {
-  const {
-    gasPriceGwei,
-    employerGasFormattedEth,
-    employerGasFormattedPhp,
-    freelancerGasFormattedEth,
-    freelancerGasFormattedPhp,
-    getEmployerCost,
-    getFreelancerPayout,
-    source,
-  } = useRealGasFee();
+  const { formatEthToPhp } = useEthPhpRate();
+  const agreedAmount = positiveAmount(proposedRateEth);
+  const exactFee = actualDeploymentGas ? Number(actualDeploymentGas.feeEth) : null;
+  const hasExactFee = exactFee !== null && Number.isFinite(exactFee);
+  const quotedFee = hasExactFee ? exactFee : liveDeploymentQuote ? Number(liveDeploymentQuote.maxFeeEth) : null;
+  const hasQuote = quotedFee !== null && Number.isFinite(quotedFee);
+  const totalNeeded = agreedAmount !== null && hasQuote ? agreedAmount + quotedFee : null;
 
-  const employerCost = getEmployerCost(proposedRateEth);
-  const freelancerPayout = getFreelancerPayout(proposedRateEth);
-
-  if (variant === 'employer') {
-    if (compact) {
-      return (
-        <div className={`flex flex-col gap-1 text-2xs ${className}`}>
-          <div className="flex items-center justify-between text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Fuel className="size-3 text-primary" /> Network Gas Fee:
-            </span>
-            <span className="font-medium text-foreground">
-              {employerGasFormattedEth} ({employerGasFormattedPhp})
-            </span>
-          </div>
-          {employerCost && (
-            <div className="flex items-center justify-between border-t border-border/50 pt-1 font-semibold text-primary">
-              <span>Total with Gas:</span>
-              <span>
-                {employerCost.totalFormattedPhp} ({employerCost.totalFormattedEth})
-              </span>
-            </div>
-          )}
-        </div>
-      );
-    }
-
+  if (variant === 'freelancer') {
     return (
-      <div className={`rounded-xl border border-primary/25 bg-primary/5 p-3.5 text-xs space-y-2.5 ${className}`}>
-        <div className="flex items-center justify-between">
-          <span className="font-semibold text-foreground flex items-center gap-1.5">
-            <Fuel className="size-3.5 text-primary" />
-            Blockchain Network Gas Fee (Escrow)
+      <div className={`${compact ? 'space-y-1 text-2xs' : 'space-y-2.5 rounded-xl border border-primary/25 bg-primary/5 p-3.5 text-xs'} ${className}`}>
+        <div className="flex items-start justify-between gap-3">
+          <span className="flex items-center gap-1.5 font-semibold text-foreground">
+            <Fuel className="size-3.5 shrink-0 text-primary" />
+            Freelancer network fee
           </span>
-          <span className="text-2xs font-semibold text-primary">
-            {employerGasFormattedEth} ({employerGasFormattedPhp})
-          </span>
+          <span className="font-semibold text-success">Not deducted</span>
         </div>
-
-        {employerCost ? (
-          <div className="space-y-1.5 pt-1 border-t border-primary/10">
-            <div className="flex justify-between text-2xs text-muted-foreground">
-              <span>Agreed Freelancer Rate:</span>
-              <span className="font-medium text-foreground">
-                {employerCost.rateFormattedPhp} ({employerCost.rateFormattedEth})
-              </span>
-            </div>
-            <div className="flex justify-between text-2xs text-muted-foreground">
-              <span>Escrow Deployment & Funding Gas:</span>
-              <span className="font-medium text-foreground">
-                + {employerCost.gasFormattedPhp} ({employerCost.gasFormattedEth})
-              </span>
-            </div>
-            <div className="flex justify-between text-xs font-bold text-primary border-t border-primary/20 pt-1.5">
-              <span>Total Deposit Required:</span>
-              <span>
-                {employerCost.totalFormattedPhp} ({employerCost.totalFormattedEth})
-              </span>
-            </div>
-          </div>
-        ) : (
-          <p className="text-2xs text-muted-foreground">
-            Live blockchain gas fee required for smart contract deployment and locking funds on-chain: {employerGasFormattedEth} ({employerGasFormattedPhp}).
-          </p>
-        )}
-
-        <div className="flex items-center justify-between text-3xs text-muted-foreground border-t border-primary/10 pt-1">
-          <span className="flex items-center gap-1 text-success">
-            <CheckCircle2 className="size-3 shrink-0" />
-            Real network gas price: {gasPriceGwei.toFixed(1)} Gwei ({source === 'metamask' ? 'via Connected Wallet' : 'Live Node'})
-          </span>
-          <span>Paid to network validators</span>
-        </div>
+        <p className="text-muted-foreground">
+          The full agreed payout remains payable. Normal submissions are confirmed by the platform; a legacy escrow may ask for a wallet confirmation.
+        </p>
+        <p className="text-muted-foreground">
+          If a wallet transaction is required, MetaMask shows its live fee before approval and the mined receipt records the exact fee paid.
+        </p>
       </div>
     );
   }
 
-  // Freelancer variant
   if (compact) {
     return (
-      <div className={`flex flex-col gap-1 text-2xs ${className}`}>
-        <div className="flex items-center justify-between text-muted-foreground">
+      <div className={`space-y-1.5 text-2xs ${className}`}>
+        <div className="flex items-center justify-between gap-3 text-muted-foreground">
           <span className="flex items-center gap-1">
-            <Fuel className="size-3 text-primary" /> Claim Gas Fee:
+            <Fuel className="size-3 shrink-0 text-primary" /> Funding network fee:
           </span>
-          <span className="font-medium text-foreground">
-            {freelancerGasFormattedEth} ({freelancerGasFormattedPhp})
+          <span className="text-right font-medium text-foreground">
+            {quoteLoading ? (
+              <span className="inline-flex items-center gap-1"><Loader2 className="size-3 animate-spin" /> Simulating…</span>
+            ) : hasQuote ? (
+              <>{hasExactFee ? 'Exact paid' : 'Up to'} {formatAmount(quotedFee, { currency: 'ETH', fractionDigits: 6 })} ({formatEthToPhp(quotedFee)})</>
+            ) : (
+              'Shown in wallet before approval'
+            )}
           </span>
         </div>
-        {freelancerPayout && (
-          <div className="flex items-center justify-between border-t border-border/50 pt-1 font-semibold text-success">
-            <span>Net Payout:</span>
-            <span>
-              {freelancerPayout.netFormattedPhp} ({freelancerPayout.netFormattedEth})
-            </span>
+        {totalNeeded !== null && (
+          <div className="flex items-center justify-between border-t border-border/50 pt-1 font-semibold text-primary">
+            <span>{hasExactFee ? 'Total actually spent:' : 'Max balance needed now:'}</span>
+            <span>{formatAmount(totalNeeded, { currency: 'ETH', fractionDigits: 6 })}</span>
           </div>
         )}
+        <p className="text-muted-foreground">
+          {hasExactFee
+            ? `Final mined receipt · ${Number(actualDeploymentGas!.gasUsed).toLocaleString('en-US')} gas units used`
+            : hasQuote
+              ? `Live wallet RPC simulation · ${Number(liveDeploymentQuote!.gasLimit).toLocaleString('en-US')} gas units`
+            : quoteError || 'A real quote needs the final transaction details and connected contract network.'}
+        </p>
+        <p className="text-muted-foreground">
+          Release fees for {milestoneCount} milestone{milestoneCount === 1 ? '' : 's'} are quoted separately by the wallet at each approval.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className={`rounded-xl border border-primary/25 bg-primary/5 p-3.5 text-xs space-y-2.5 ${className}`}>
-      <div className="flex items-center justify-between">
-        <span className="font-semibold text-foreground flex items-center gap-1.5">
+    <div className={`space-y-2.5 rounded-xl border border-primary/25 bg-primary/5 p-3.5 text-xs ${className}`}>
+      <div className="flex items-center justify-between gap-3">
+        <span className="flex items-center gap-1.5 font-semibold text-foreground">
           <Fuel className="size-3.5 text-primary" />
-          Blockchain Gas Fee & Net Take-Home
+          Employer network fee
         </span>
-        <span className="text-2xs font-semibold text-foreground">
-          Claim Gas: {freelancerGasFormattedEth} ({freelancerGasFormattedPhp})
+        <span className="text-right font-semibold text-primary">
+          {hasQuote ? `${hasExactFee ? 'Exact paid' : 'Up to'} ${formatAmount(quotedFee, { currency: 'ETH', fractionDigits: 6 })}` : 'Final fee in wallet'}
         </span>
       </div>
 
-      {freelancerPayout ? (
-        <div className="space-y-1.5 pt-1 border-t border-primary/10">
-          <div className="flex justify-between text-2xs text-muted-foreground">
-            <span>Proposed Rate:</span>
-            <span className="font-medium text-foreground">
-              {freelancerPayout.rateFormattedPhp} ({freelancerPayout.rateFormattedEth})
-            </span>
+      {quoteLoading ? (
+        <p className="flex items-center gap-1.5 text-muted-foreground"><Loader2 className="size-3 animate-spin" /> Running a live wallet RPC simulation…</p>
+      ) : hasQuote ? (
+        <div className="space-y-1.5 border-t border-primary/10 pt-2">
+          <div className="flex justify-between text-muted-foreground">
+            <span>Agreed contract amount:</span>
+            <span className="font-medium text-foreground">{formatAmount(agreedAmount ?? 0, { currency: 'ETH', fractionDigits: 6 })}</span>
           </div>
-          <div className="flex justify-between text-2xs text-muted-foreground">
-            <span>Milestone Claim Gas Fee:</span>
-            <span className="font-medium text-foreground">
-              - {freelancerPayout.gasFormattedPhp} ({freelancerPayout.gasFormattedEth})
-            </span>
+          <div className="flex justify-between text-muted-foreground">
+            <span>{hasExactFee ? 'Exact deployment fee paid:' : 'Live deployment maximum:'}</span>
+            <span className="font-medium text-foreground">+ {formatAmount(quotedFee, { currency: 'ETH', fractionDigits: 6 })} ({formatEthToPhp(quotedFee)})</span>
           </div>
-          <div className="flex justify-between text-xs font-bold text-success border-t border-primary/20 pt-1.5">
-            <span>Net Take-Home Payout:</span>
-            <span>
-              {freelancerPayout.netFormattedPhp} ({freelancerPayout.netFormattedEth})
-            </span>
-          </div>
+          {totalNeeded !== null && (
+            <div className="flex justify-between border-t border-primary/20 pt-1.5 font-bold text-primary">
+              <span>{hasExactFee ? 'Total actually spent:' : 'Maximum balance needed:'}</span>
+              <span>{formatAmount(totalNeeded, { currency: 'ETH', fractionDigits: 6 })}</span>
+            </div>
+          )}
+          <p className="text-3xs text-muted-foreground">
+            {hasExactFee
+              ? `Read from the final mined receipt (${Number(actualDeploymentGas!.gasUsed).toLocaleString('en-US')} gas units used).`
+              : `Simulated now using the final deployment data and connected wallet network (${Number(liveDeploymentQuote!.gasLimit).toLocaleString('en-US')} gas units).`}
+          </p>
         </div>
       ) : (
-        <p className="text-2xs text-muted-foreground">
-          Zero platform commission. When claiming milestone earnings, network gas fee is {freelancerGasFormattedEth} ({freelancerGasFormattedPhp}).
+        <p className="text-muted-foreground">
+          {quoteError || 'The contract does not have final deployable transaction data yet. MetaMask will show the live fee before approval.'}
         </p>
       )}
 
-      <div className="flex items-center justify-between text-3xs text-muted-foreground border-t border-primary/10 pt-1">
-        <span className="flex items-center gap-1 text-success">
-          <CheckCircle2 className="size-3 shrink-0" />
-          Real network gas price: {gasPriceGwei.toFixed(1)} Gwei ({source === 'metamask' ? 'via Connected Wallet' : 'Live Node'})
+      <div className="flex items-start gap-1.5 border-t border-primary/10 pt-2 text-3xs text-muted-foreground">
+        <CheckCircle2 className="mt-0.5 size-3 shrink-0 text-success" />
+        <span>
+          {hasExactFee
+            ? 'This is the exact deployment fee calculated from the mined receipt. Milestone-release fees are separate transactions.'
+            : 'The wallet quote is live, not contractually fixed. The exact fee paid comes from the mined receipt; milestone-release fees are quoted separately at each approval.'}
         </span>
-        <span>Employer pays escrow creation gas</span>
       </div>
     </div>
   );

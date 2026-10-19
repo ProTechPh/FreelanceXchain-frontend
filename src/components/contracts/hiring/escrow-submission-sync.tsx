@@ -4,12 +4,13 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Contract, Milestone } from '@/types';
-import { readEscrowMilestone, submitEscrowMilestoneFromWallet, switchToEscrowChain } from '@/lib/wallet';
+import { formatWeiAsEther, readEscrowMilestone, submitEscrowMilestoneFromWallet, switchToEscrowChain } from '@/lib/wallet';
 import { DEFAULT_CHAIN_ID, requestWalletProvider } from '@/lib/metamask';
 import { confirmSubmissionOnChain, EscrowActionError } from '@/lib/escrow-milestone-actions';
 import { reportFailure } from '@/lib/report-failure';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 
 const walletDeps = {
   read: readEscrowMilestone,
@@ -27,6 +28,7 @@ export function EscrowSubmissionSync({ contract, milestones, onSynced }: { contr
   const [pending, setPending] = useState<number[]>([]);
   const [busy, setBusy] = useState(false);
   const escrowAddress = contract.escrowAddress;
+  const { formatEthToPhp } = useEthPhpRate();
 
   const check = useCallback(async () => {
     if (!escrowAddress || contract.status !== 'active' || typeof window === 'undefined' || !window.ethereum) return [];
@@ -55,10 +57,24 @@ export function EscrowSubmissionSync({ contract, milestones, onSynced }: { contr
     setBusy(true);
     try {
       const ethereum = await requestWalletProvider();
+      let actualFeeWei = BigInt(0);
+      const deps = {
+        ...walletDeps,
+        submit: async (...args: Parameters<typeof submitEscrowMilestoneFromWallet>) => {
+          const result = await submitEscrowMilestoneFromWallet(...args);
+          if (result.actualGas) actualFeeWei += BigInt(result.actualGas.feeWei);
+          return result;
+        },
+      };
       for (const milestoneIndex of pending) {
-        await confirmSubmissionOnChain(walletDeps, { ethereum, escrowAddress, milestoneIndex, chainId: DEFAULT_CHAIN_ID });
+        await confirmSubmissionOnChain(deps, { ethereum, escrowAddress, milestoneIndex, chainId: DEFAULT_CHAIN_ID });
       }
-      toast.success('Submission confirmed on the blockchain. The client can now release the payment.');
+      const exactFeeEth = actualFeeWei > BigInt(0) ? formatWeiAsEther(actualFeeWei) : null;
+      toast.success(
+        exactFeeEth
+          ? `Submission confirmed. Exact network fee paid: ${exactFeeEth} ETH (${formatEthToPhp(exactFeeEth)}).`
+          : 'Submission confirmed. The exact network fee is available in the transaction receipt.',
+      );
       setPending(await check());
       onSynced();
     } catch (error) {

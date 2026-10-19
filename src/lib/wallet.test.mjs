@@ -3,6 +3,7 @@ import test from 'node:test';
 
 import {
   formatChainId,
+  formatWeiAsEther,
   formatWalletAddress,
   weiHexToEther,
 } from './wallet.ts';
@@ -24,4 +25,9 @@ test('formats known and unknown EVM chain identifiers', () => {
 test('converts hexadecimal wei balances to a readable ether value', () => {
   assert.equal(weiHexToEther('0xde0b6b3a7640000'), '1');
   assert.equal(weiHexToEther('0x6f05b59d3b20000'), '0.5');
+});
+
+test('formats exact receipt fees from wei without losing precision', () => {
+  assert.equal(formatWeiAsEther(BigInt('21000000000000')), '0.000021');
+  assert.equal(formatWeiAsEther(BigInt('1000000000000000001')), '1.000000000000000001');
 });
