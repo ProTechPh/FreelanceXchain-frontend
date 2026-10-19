@@ -211,11 +211,11 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
         escrowAddress: deployment.escrowAddress,
         transactionHash: deployment.transactionHash,
       });
-      toast.success(
-        deployment.actualGas
-          ? `Contract funded. Exact network fee paid: ${deployment.actualGas.feeEth} ETH (${formatEthToPhp(deployment.actualGas.feeEth)}).`
-          : 'Contract funded and activated. The exact network fee is available in the transaction receipt.',
-      );
+      toast.success('Contract funded and activated.', {
+        description: deployment.actualGas
+          ? `Exact network fee paid: ${deployment.actualGas.feeEth} ETH (${formatEthToPhp(deployment.actualGas.feeEth)}).`
+          : 'The exact network fee is available in the transaction receipt.',
+      });
       void queryClient.invalidateQueries({ queryKey: ['payments'] });
       await loadWorkspace();
     } catch (error) {
