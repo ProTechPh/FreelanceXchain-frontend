@@ -205,10 +205,10 @@ export function TopBar() {
           <DropdownMenu>
             <DropdownMenuTrigger
               data-tour="account"
-              aria-label="Open account menu"
+              aria-label={`${initials} - Open account menu`}
               className="flex min-h-11 min-w-11 cursor-pointer items-center justify-center gap-1 rounded-md px-1 outline-none transition-colors duration-fast hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card sm:gap-2 sm:px-2 touch-manipulation"
             >
-              <Avatar className="size-7">
+              <Avatar className="size-7" aria-hidden="true">
                 <AvatarFallback className="text-xs gradient-primary">{initials}</AvatarFallback>
               </Avatar>
               <ChevronDown className="hidden size-4 text-muted-foreground sm:block" aria-hidden="true" />

@@ -168,9 +168,8 @@ export function ComponentServicesList() {
             onClick={() => void probeServices(true)}
             disabled={loading}
             className="h-8 rounded-full text-xs text-muted-foreground hover:text-foreground px-3"
-            aria-label="Probe services now"
           >
-            <RefreshCw className={`size-3.5 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`size-3.5 mr-1.5 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
             Probe Now
           </Button>
         </div>
