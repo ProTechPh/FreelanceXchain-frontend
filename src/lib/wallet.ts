@@ -11,6 +11,27 @@ export interface WalletConnection {
   balance: string;
 }
 
+export interface ActualTransactionGas {
+  gasUsed: string;
+  gasPriceWei: string;
+  feeWei: string;
+  feeEth: string;
+}
+
+export interface WalletTransactionResult {
+  transactionHash: string;
+  /** Final values from the mined receipt. Absent only when the provider returned no receipt. */
+  actualGas?: ActualTransactionGas;
+}
+
+export interface WalletGasQuote {
+  gasLimit: string;
+  feePerGasWei: string;
+  maxFeeWei: string;
+  maxFeeEth: string;
+  quotedAt: string;
+}
+
 declare global {
   interface Window {
     ethereum?: EthereumProvider;
@@ -123,6 +144,100 @@ export interface DeployEscrowParams {
 export interface DeployedEscrowResult {
   escrowAddress: string;
   transactionHash: string;
+  actualGas?: WalletTransactionResult['actualGas'];
+}
+
+export function formatWeiAsEther(wei: bigint): string {
+  const weiPerEther = BigInt('1000000000000000000');
+  const whole = wei / weiPerEther;
+  const fraction = (wei % weiPerEther)
+    .toString()
+    .padStart(18, '0')
+    .replace(/0+$/, '');
+  return fraction ? `${whole}.${fraction}` : whole.toString();
+}
+
+function minedTransactionResult(
+  receipt: { hash: string; gasUsed: bigint; gasPrice: bigint } | null,
+  fallbackHash: string,
+): WalletTransactionResult {
+  if (!receipt) return { transactionHash: fallbackHash };
+  const feeWei = receipt.gasUsed * receipt.gasPrice;
+  return {
+    transactionHash: receipt.hash || fallbackHash,
+    actualGas: {
+      gasUsed: receipt.gasUsed.toString(),
+      gasPriceWei: receipt.gasPrice.toString(),
+      feeWei: feeWei.toString(),
+      feeEth: formatWeiAsEther(feeWei),
+    },
+  };
+}
+
+/** Reads the final fee paid from an already-mined transaction receipt. */
+export async function readActualTransactionGas(
+  ethereum: EthereumProvider,
+  transactionHash: string,
+  chainId?: string,
+): Promise<ActualTransactionGas | null> {
+  const currentChainId = await ethereum.request<string>({ method: 'eth_chainId' });
+  if (chainId && currentChainId.toLowerCase() !== chainId.toLowerCase()) {
+    throw new Error('Switch MetaMask to the contract network to load the exact fee paid.');
+  }
+  const { BrowserProvider } = await import('ethers');
+  const receipt = await new BrowserProvider(ethereum as never).getTransactionReceipt(transactionHash);
+  return receipt ? minedTransactionResult(receipt, transactionHash).actualGas ?? null : null;
+}
+
+/**
+ * Simulates the exact deployment transaction against the connected wallet's
+ * current chain. This is a live RPC quote; the mined receipt remains the only
+ * source of the final fee actually paid.
+ */
+export async function estimateEscrowDeploymentGas(
+  ethereum: EthereumProvider,
+  params: DeployEscrowParams,
+): Promise<WalletGasQuote> {
+  const { BrowserProvider, ContractFactory } = await import('ethers');
+  const { FreelanceEscrowABI, FreelanceEscrowBytecode } = await import('./escrow-abi');
+  const currentChainId = await ethereum.request<string>({ method: 'eth_chainId' });
+  if (params.chainId && currentChainId.toLowerCase() !== params.chainId.toLowerCase()) {
+    throw new Error('Switch MetaMask to the contract network to load a live gas quote.');
+  }
+  const accounts = await ethereum.request<string[]>({ method: 'eth_accounts' });
+  const from = accounts[0];
+  if (!from) throw new Error('Connect MetaMask to load a live gas quote.');
+
+  const resolvedAbi = Array.isArray(params.abi) && params.abi.length > 0 ? params.abi : FreelanceEscrowABI;
+  const resolvedBytecode =
+    typeof params.bytecode === 'string' && params.bytecode.startsWith('0x') && params.bytecode.length > 2
+      ? params.bytecode
+      : FreelanceEscrowBytecode;
+  const factory = new ContractFactory(resolvedAbi as import('ethers').InterfaceAbi, resolvedBytecode);
+  const deployment = await factory.getDeployTransaction(
+    params.freelancerWallet,
+    params.arbiterAddress,
+    params.platformWallet,
+    params.contractId,
+    params.milestoneAmounts.map((amount) => BigInt(amount)),
+    params.milestoneDescriptions,
+    { value: BigInt(params.totalAmount) },
+  );
+  const provider = new BrowserProvider(ethereum as never);
+  const [gasLimit, feeData] = await Promise.all([
+    provider.estimateGas({ ...deployment, from }),
+    provider.getFeeData(),
+  ]);
+  const feePerGas = feeData.maxFeePerGas ?? feeData.gasPrice;
+  if (!feePerGas) throw new Error('The wallet network did not return fee data.');
+  const maxFeeWei = gasLimit * feePerGas;
+  return {
+    gasLimit: gasLimit.toString(),
+    feePerGasWei: feePerGas.toString(),
+    maxFeeWei: maxFeeWei.toString(),
+    maxFeeEth: formatWeiAsEther(maxFeeWei),
+    quotedAt: new Date().toISOString(),
+  };
 }
 
 export async function deployEscrowFromWallet(
@@ -205,7 +320,7 @@ export async function deployEscrowFromWallet(
   const receipt = await deployTx.wait();
   const result: DeployedEscrowResult = {
     escrowAddress,
-    transactionHash: receipt?.hash ?? deployTx.hash,
+    ...minedTransactionResult(receipt, deployTx.hash),
   };
 
   if (typeof window !== 'undefined') {
@@ -228,7 +343,7 @@ export interface SendRushFeeParams {
 export async function sendRushFeeFromWallet(
   ethereum: EthereumProvider,
   params: SendRushFeeParams
-): Promise<{ transactionHash: string }> {
+): Promise<WalletTransactionResult> {
   const { BrowserProvider, parseEther } = await import('ethers');
 
   if (params.chainId) {
@@ -256,9 +371,7 @@ export async function sendRushFeeFromWallet(
 
   const receipt = await tx.wait(1);
 
-  return {
-    transactionHash: receipt?.hash ?? tx.hash,
-  };
+  return minedTransactionResult(receipt, tx.hash);
 }
 
 export interface WithdrawFromEscrowParams {
@@ -269,7 +382,7 @@ export interface WithdrawFromEscrowParams {
 export async function withdrawFromEscrowFromWallet(
   ethereum: EthereumProvider,
   params: WithdrawFromEscrowParams
-): Promise<{ transactionHash: string }> {
+): Promise<WalletTransactionResult> {
   const { BrowserProvider, Contract } = await import('ethers');
   const { FreelanceEscrowABI } = await import('./escrow-abi');
 
@@ -295,9 +408,7 @@ export async function withdrawFromEscrowFromWallet(
   const tx = await contract.withdraw();
   const receipt = await tx.wait(1);
 
-  return {
-    transactionHash: receipt?.hash ?? tx.hash,
-  };
+  return minedTransactionResult(receipt, tx.hash);
 }
 
 export async function getEscrowPendingWithdrawal(
@@ -372,26 +483,26 @@ export async function switchToEscrowChain(ethereum: EthereumProvider, chainId?: 
 export async function submitEscrowMilestoneFromWallet(
   ethereum: EthereumProvider,
   params: { escrowAddress: string; milestoneIndex: number; chainId?: string },
-): Promise<{ transactionHash: string }> {
+): Promise<WalletTransactionResult> {
   await ensureChain(ethereum, params.chainId);
   const { BrowserProvider, Contract } = await import('ethers');
   const { FreelanceEscrowABI } = await import('./escrow-abi');
   const signer = await new BrowserProvider(ethereum as never).getSigner();
   const tx = await new Contract(params.escrowAddress, FreelanceEscrowABI, signer).submitMilestone(params.milestoneIndex);
   const receipt = await tx.wait(1);
-  return { transactionHash: receipt?.hash ?? tx.hash };
+  return minedTransactionResult(receipt, tx.hash);
 }
 
 /** Employer releases the escrow milestone payment from their own wallet. */
 export async function approveEscrowMilestoneFromWallet(
   ethereum: EthereumProvider,
   params: { escrowAddress: string; milestoneIndex: number; chainId?: string },
-): Promise<{ transactionHash: string }> {
+): Promise<WalletTransactionResult> {
   await ensureChain(ethereum, params.chainId);
   const { BrowserProvider, Contract } = await import('ethers');
   const { FreelanceEscrowABI } = await import('./escrow-abi');
   const signer = await new BrowserProvider(ethereum as never).getSigner();
   const tx = await new Contract(params.escrowAddress, FreelanceEscrowABI, signer).approveMilestone(params.milestoneIndex);
   const receipt = await tx.wait(1);
-  return { transactionHash: receipt?.hash ?? tx.hash };
+  return minedTransactionResult(receipt, tx.hash);
 }

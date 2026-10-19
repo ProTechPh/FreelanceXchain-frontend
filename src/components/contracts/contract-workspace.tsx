@@ -207,8 +207,15 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
         chainId: fundInfo.chainId,
         existingDeployment: fundInfo.existingDeployment,
       });
-      await contractsApi.fund(contract.id, deployment);
-      toast.success('Contract funded and activated.');
+      await contractsApi.fund(contract.id, {
+        escrowAddress: deployment.escrowAddress,
+        transactionHash: deployment.transactionHash,
+      });
+      toast.success(
+        deployment.actualGas
+          ? `Contract funded. Exact network fee paid: ${deployment.actualGas.feeEth} ETH (${formatEthToPhp(deployment.actualGas.feeEth)}).`
+          : 'Contract funded and activated. The exact network fee is available in the transaction receipt.',
+      );
       void queryClient.invalidateQueries({ queryKey: ['payments'] });
       await loadWorkspace();
     } catch (error) {
@@ -226,11 +233,15 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
     setWithdrawingFunds(true);
     try {
       const provider = await requestWalletProvider();
-      await withdrawFromEscrowFromWallet(provider, {
+      const withdrawal = await withdrawFromEscrowFromWallet(provider, {
         escrowAddress: contract.escrowAddress,
         chainId: fundInfo?.chainId,
       });
-      toast.success(`Successfully claimed and withdrawn ${pendingWithdrawalEth} ETH to your wallet!`);
+      toast.success(
+        withdrawal.actualGas
+          ? `Claimed ${pendingWithdrawalEth} ETH. Exact network fee paid: ${withdrawal.actualGas.feeEth} ETH (${formatEthToPhp(withdrawal.actualGas.feeEth)}).`
+          : `Successfully claimed and withdrawn ${pendingWithdrawalEth} ETH. The exact network fee is in the transaction receipt.`,
+      );
       void queryClient.invalidateQueries({ queryKey: ['payments'] });
       await loadWorkspace();
     } catch (error) {
@@ -482,19 +493,25 @@ export const ContractWorkspace = React.memo(function ContractWorkspace({
           if (!approvingMilestone) return;
           const milestoneToRelease = approvingMilestone;
           const id = milestoneToRelease.id;
+          let actualReleaseFeeEth: string | undefined;
           const result = await runAction(
             id,
             async () => {
               // Escrows funded from the employer's wallet only release when that wallet signs.
               const escrowTarget = await getEscrowTarget(milestoneToRelease);
-              const { transactionHash } = escrowTarget
+              const { transactionHash, actualGas } = escrowTarget
                 ? await releaseFromEmployerWallet(escrowWalletDeps, escrowTarget)
                 : {};
+              actualReleaseFeeEth = actualGas?.feeEth;
               return milestonesApi.approve(id, undefined, transactionHash);
             },
             'Milestone approved and payment released.',
           );
           setApprovingMilestone(null);
+
+          if (result && actualReleaseFeeEth) {
+            toast.info(`Exact network fee paid: ${actualReleaseFeeEth} ETH (${formatEthToPhp(actualReleaseFeeEth)}).`);
+          }
 
           if (result) {
             const completed = result.data.contractCompleted;

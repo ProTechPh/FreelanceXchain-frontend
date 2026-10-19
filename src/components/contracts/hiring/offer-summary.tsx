@@ -1,11 +1,12 @@
 'use client';
 
-import type { ContractOffer } from '@/types';
+import type { ContractOffer, ContractPartyRole } from '@/types';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Badge } from '@/components/ui/badge';
 import { formatAmount, formatDate, formatDateTime } from '@/lib/format';
 import { diffOffers, type OfferChange } from '@/lib/contract-terms';
 import { cn } from '@/lib/utils';
+import { GasFeeBreakdownCard } from '@/components/ui/gas-fee-breakdown-card';
 
 function Changed({ changed, children }: { changed: boolean; children: React.ReactNode }) {
   return (
@@ -22,11 +23,13 @@ export function OfferSummary({
   previous,
   proposerLabel,
   compact = false,
+  viewerRole,
 }: {
   offer: ContractOffer;
   previous?: ContractOffer | null;
   proposerLabel: string;
   compact?: boolean;
+  viewerRole: ContractPartyRole;
 }) {
   const changes: Set<OfferChange> = diffOffers(previous ?? null, offer);
   const eth = (value: number) => formatAmount(value, { currency: 'ETH' });
@@ -68,6 +71,14 @@ export function OfferSummary({
           <dd className="font-medium"><Changed changed={changes.has('deadline')}>{formatDate(offer.deadline)}</Changed></dd>
         </div>
       </dl>
+
+      <GasFeeBreakdownCard
+        proposedRateEth={offer.totalAmount}
+        variant={viewerRole}
+        milestoneCount={offer.milestones.length}
+        compact
+        className="rounded-lg border border-border bg-muted/40 p-3"
+      />
 
       {!compact && (
         <div className={cn('overflow-x-auto rounded-lg border border-border', changes.has('milestones') && 'border-warning-border')}>

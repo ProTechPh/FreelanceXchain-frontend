@@ -8,6 +8,9 @@ import { convertEthToPhp, formatEthToPhp, DEFAULT_FALLBACK_ETH_PHP } from './eth
  */
 export const GAS_UNITS = {
   EMPLOYER_DEPLOY_AND_DEPOSIT: 850_000,
+  EMPLOYER_RELEASE_MILESTONE: 65_000,
+  FREELANCER_SUBMIT_MILESTONE: 65_000,
+  /** @deprecated Kept for compatibility with older callers. */
   FREELANCER_CLAIM_PAYOUT: 65_000,
 } as const;
 
@@ -65,6 +68,35 @@ export function getFreelancerClaimGasFee(
   gasPriceGwei: number = DEFAULT_GAS_PRICE_GWEI
 ): GasFeeBreakdown {
   const gasUnits = GAS_UNITS.FREELANCER_CLAIM_PAYOUT;
+  const gasEth = calculateGasEth(gasUnits, gasPriceGwei);
+  const gasPhp = convertEthToPhp(gasEth, ethRatePhp) ?? 0;
+
+  return {
+    gasUnits,
+    gasPriceGwei,
+    gasEth,
+    gasPhp,
+    gasFormattedEth: `${gasEth.toLocaleString('en-US', { maximumFractionDigits: 6 })} ETH`,
+    gasFormattedPhp: formatEthToPhp(gasEth, ethRatePhp),
+  };
+}
+
+/**
+ * Estimated gas for repeated milestone actions. The estimate is deliberately
+ * kept separate from the agreed contract amount: gas is paid to validators,
+ * not deducted by FreelanceXchain from escrow.
+ */
+export function getMilestoneActionGasFee(
+  action: 'employer-release' | 'freelancer-submit',
+  milestoneCount: number,
+  ethRatePhp: number = DEFAULT_FALLBACK_ETH_PHP,
+  gasPriceGwei: number = DEFAULT_GAS_PRICE_GWEI
+): GasFeeBreakdown {
+  const count = Number.isFinite(milestoneCount) ? Math.max(0, Math.floor(milestoneCount)) : 0;
+  const unitsPerAction = action === 'employer-release'
+    ? GAS_UNITS.EMPLOYER_RELEASE_MILESTONE
+    : GAS_UNITS.FREELANCER_SUBMIT_MILESTONE;
+  const gasUnits = unitsPerAction * count;
   const gasEth = calculateGasEth(gasUnits, gasPriceGwei);
   const gasPhp = convertEthToPhp(gasEth, ethRatePhp) ?? 0;
 
@@ -147,13 +179,14 @@ export interface FreelancerNetPayout {
 export function computeFreelancerNetPayout(
   proposedRateEth: number | string | null | undefined,
   ethRatePhp: number = DEFAULT_FALLBACK_ETH_PHP,
-  gasPriceGwei: number = DEFAULT_GAS_PRICE_GWEI
+  gasPriceGwei: number = DEFAULT_GAS_PRICE_GWEI,
+  milestoneCount: number = 1
 ): FreelancerNetPayout | null {
   if (proposedRateEth == null) return null;
   const rateEth = typeof proposedRateEth === 'string' ? parseFloat(proposedRateEth) : proposedRateEth;
   if (!Number.isFinite(rateEth) || rateEth <= 0) return null;
 
-  const gas = getFreelancerClaimGasFee(ethRatePhp, gasPriceGwei);
+  const gas = getMilestoneActionGasFee('freelancer-submit', milestoneCount, ethRatePhp, gasPriceGwei);
   const ratePhp = convertEthToPhp(rateEth, ethRatePhp) ?? 0;
   const netEth = Math.max(0, rateEth - gas.gasEth);
   const netPhp = Math.max(0, ratePhp - gas.gasPhp);

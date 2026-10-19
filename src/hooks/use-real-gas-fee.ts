@@ -8,6 +8,7 @@ import {
   calculateGasEth,
   computeEmployerTotalCost,
   computeFreelancerNetPayout,
+  getMilestoneActionGasFee,
   type EmployerTotalCost,
   type FreelancerNetPayout,
 } from '@/lib/gas-fee-estimator';
@@ -42,27 +43,8 @@ async function fetchRealGasFee(): Promise<void> {
   notifyGasListeners();
 
   try {
-    // 1. Try querying connected wallet provider (MetaMask / Brave / Web3)
-    if (typeof window !== 'undefined' && window.ethereum?.request) {
-      try {
-        const hexPrice = await window.ethereum.request<string>({ method: 'eth_gasPrice' });
-        if (hexPrice && typeof hexPrice === 'string' && hexPrice.startsWith('0x')) {
-          const wei = BigInt(hexPrice);
-          const gwei = Number(wei) / 1e9;
-          sharedGasPriceWei = wei.toString();
-          sharedGasPriceGwei = gwei;
-          sharedEmployerGasEth = (GAS_UNITS.EMPLOYER_DEPLOY_AND_DEPOSIT * Number(wei)) / 1e18;
-          sharedFreelancerGasEth = (GAS_UNITS.FREELANCER_CLAIM_PAYOUT * Number(wei)) / 1e18;
-          sharedSource = 'metamask';
-          sharedLastUpdated = new Date();
-          return;
-        }
-      } catch {
-        // Fallback to internal API
-      }
-    }
-
-    // 2. Fetch from backend RPC endpoint
+    // Prefer the app's configured chain. A connected wallet may currently be
+    // viewing another network and would otherwise produce a misleading quote.
     const res = await fetch('/api/crypto/gas-fee', { cache: 'no-store' });
     if (res.ok) {
       const data = (await res.json()) as {
@@ -78,6 +60,22 @@ async function fetchRealGasFee(): Promise<void> {
         sharedEmployerGasEth = data.employerGasEth ?? calculateGasEth(GAS_UNITS.EMPLOYER_DEPLOY_AND_DEPOSIT, data.gasPriceGwei);
         sharedFreelancerGasEth = data.freelancerGasEth ?? calculateGasEth(GAS_UNITS.FREELANCER_CLAIM_PAYOUT, data.gasPriceGwei);
         sharedSource = data.source || 'rpc';
+        sharedLastUpdated = new Date();
+        return;
+      }
+    }
+
+    // Fall back to the connected wallet only when the configured RPC is unavailable.
+    if (typeof window !== 'undefined' && window.ethereum?.request) {
+      const hexPrice = await window.ethereum.request<string>({ method: 'eth_gasPrice' });
+      if (hexPrice && typeof hexPrice === 'string' && hexPrice.startsWith('0x')) {
+        const wei = BigInt(hexPrice);
+        const gwei = Number(wei) / 1e9;
+        sharedGasPriceWei = wei.toString();
+        sharedGasPriceGwei = gwei;
+        sharedEmployerGasEth = (GAS_UNITS.EMPLOYER_DEPLOY_AND_DEPOSIT * Number(wei)) / 1e18;
+        sharedFreelancerGasEth = (GAS_UNITS.FREELANCER_SUBMIT_MILESTONE * Number(wei)) / 1e18;
+        sharedSource = 'metamask';
         sharedLastUpdated = new Date();
       }
     }
@@ -144,8 +142,8 @@ export function useRealGasFee() {
   );
 
   const getFreelancerPayout = useCallback(
-    (rateEth: number | string | null | undefined): FreelancerNetPayout | null => {
-      return computeFreelancerNetPayout(rateEth, currentEthRate, state.gasPriceGwei);
+    (rateEth: number | string | null | undefined, milestoneCount: number = 1): FreelancerNetPayout | null => {
+      return computeFreelancerNetPayout(rateEth, currentEthRate, state.gasPriceGwei, milestoneCount);
     },
     [currentEthRate, state.gasPriceGwei]
   );
@@ -167,5 +165,7 @@ export function useRealGasFee() {
     refresh: fetchRealGasFee,
     getEmployerCost,
     getFreelancerPayout,
+    getMilestoneActionCost: (action: 'employer-release' | 'freelancer-submit', milestoneCount: number) =>
+      getMilestoneActionGasFee(action, milestoneCount, currentEthRate, state.gasPriceGwei),
   };
 }

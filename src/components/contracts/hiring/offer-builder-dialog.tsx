@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { ArrowDown, ArrowUp, Plus, Trash2, Wand2 } from 'lucide-react';
-import type { ContractOfferInput, OfferMilestoneDraft } from '@/types';
+import type { ContractOfferInput, ContractPartyRole, OfferMilestoneDraft } from '@/types';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -19,6 +19,7 @@ import { Switch } from '@/components/ui/switch';
 import { Alert } from '@/components/ui/alert';
 import { formatAmount } from '@/lib/format';
 import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
+import { GasFeeBreakdownCard } from '@/components/ui/gas-fee-breakdown-card';
 import { autoBalanceMilestones, floorToUnits, roundEth, toUnits, todayIso, validateOfferDraft } from '@/lib/contract-terms';
 
 type EntryCurrency = 'PHP' | 'ETH';
@@ -127,6 +128,7 @@ type OfferBuilderProps = {
   floor: number;
   maxMilestones: number;
   isCounter: boolean;
+  role: ContractPartyRole;
   submitting: boolean;
   /** Used when rush is switched on (the project's rush %, else 25). */
   defaultRushFeePercentage?: number;
@@ -151,6 +153,7 @@ function OfferBuilderForm({
   floor,
   maxMilestones,
   isCounter,
+  role,
   submitting,
   defaultRushFeePercentage = 25,
   onSubmit,
@@ -259,6 +262,12 @@ function OfferBuilderForm({
               </div>
             ))}
           </dl>
+
+          <GasFeeBreakdownCard
+            proposedRateEth={totals.totalAmount}
+            variant={role}
+            milestoneCount={draft.milestones.length}
+          />
 
           <fieldset className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">

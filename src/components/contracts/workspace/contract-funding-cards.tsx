@@ -4,6 +4,7 @@ import type { Contract, ContractFundInfo, ContractPaymentStatus, UserRole } from
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatAmount } from '@/lib/format';
 import { GasFeeBreakdownCard } from '@/components/ui/gas-fee-breakdown-card';
+import { useEscrowDeploymentGasQuote } from '@/hooks/use-escrow-deployment-gas-quote';
 
 type ParticipantRole = Extract<UserRole, 'employer' | 'freelancer'>;
 
@@ -20,6 +21,11 @@ export function ContractFundingCards({
   paymentStatus,
   fundInfo,
 }: ContractFundingCardsProps) {
+  const deploymentQuote = useEscrowDeploymentGasQuote(
+    fundInfo,
+    role === 'employer' && Boolean(fundInfo),
+  );
+
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <Card>
@@ -95,6 +101,11 @@ export function ContractFundingCards({
               <GasFeeBreakdownCard
                 proposedRateEth={contract.totalAmount}
                 variant="employer"
+                milestoneCount={paymentStatus?.milestones.length ?? contract.milestones?.length ?? 1}
+                liveDeploymentQuote={deploymentQuote.quote}
+                actualDeploymentGas={deploymentQuote.actualGas}
+                quoteLoading={deploymentQuote.isLoading}
+                quoteError={deploymentQuote.error}
                 compact
                 className="mt-2 pt-2 border-t border-border/60"
               />

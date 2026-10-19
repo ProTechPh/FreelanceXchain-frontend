@@ -4,15 +4,15 @@
  * and (in escrows deployed before the platform could submit) submitMilestone
  * only from the freelancer, so those steps are signed in MetaMask.
  */
-import type { EscrowMilestoneState, EthereumProvider } from './wallet.ts';
+import type { EscrowMilestoneState, EthereumProvider, WalletTransactionResult } from './wallet.ts';
 
 export class EscrowActionError extends Error {}
 
 export interface EscrowWalletDeps {
   read: (ethereum: EthereumProvider, escrowAddress: string, index: number) => Promise<EscrowMilestoneState | null>;
   switchChain: (ethereum: EthereumProvider, chainId?: string) => Promise<void>;
-  submit: (ethereum: EthereumProvider, params: { escrowAddress: string; milestoneIndex: number; chainId?: string }) => Promise<{ transactionHash: string }>;
-  approve: (ethereum: EthereumProvider, params: { escrowAddress: string; milestoneIndex: number; chainId?: string }) => Promise<{ transactionHash: string }>;
+  submit: (ethereum: EthereumProvider, params: { escrowAddress: string; milestoneIndex: number; chainId?: string }) => Promise<WalletTransactionResult>;
+  approve: (ethereum: EthereumProvider, params: { escrowAddress: string; milestoneIndex: number; chainId?: string }) => Promise<WalletTransactionResult>;
 }
 
 export interface EscrowTarget {
@@ -53,7 +53,10 @@ export async function confirmSubmissionOnChain(deps: EscrowWalletDeps, target: E
  * Returns the transaction hash for the server to verify, or no hash when the
  * server can release (simulated or platform-deployed escrows) or it already happened.
  */
-export async function releaseFromEmployerWallet(deps: EscrowWalletDeps, target: EscrowTarget): Promise<{ transactionHash?: string }> {
+export async function releaseFromEmployerWallet(
+  deps: EscrowWalletDeps,
+  target: EscrowTarget,
+): Promise<{ transactionHash?: string; actualGas?: WalletTransactionResult['actualGas'] }> {
   await deps.switchChain(target.ethereum, target.chainId);
   const state = await deps.read(target.ethereum, target.escrowAddress, target.milestoneIndex);
   if (!state || state.status === 'approved') return {};
@@ -68,6 +71,5 @@ export async function releaseFromEmployerWallet(deps: EscrowWalletDeps, target: 
     // The escrow belongs to the platform wallet; the server releases it.
     return {};
   }
-  const { transactionHash } = await deps.approve(target.ethereum, target);
-  return { transactionHash };
+  return deps.approve(target.ethereum, target);
 }
