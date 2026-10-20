@@ -1,6 +1,6 @@
 'use client';
 
-import { Eye, Paperclip } from 'lucide-react';
+import { Clock, Eye, Paperclip } from 'lucide-react';
 import type { Contract, KycStatus, Milestone, UserRole } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -251,6 +251,14 @@ export function MilestoneListCard({
                       Explain what needs to be changed before you can approve.
                     </p>
                   </div>
+                </div>
+              )}
+              {role === 'employer' && ['in_progress', 'pending'].includes(milestone.status) && (
+                <div className="flex items-center gap-2.5 rounded-lg border border-border bg-muted/40 p-3.5 text-xs text-muted-foreground">
+                  <Clock className="size-4 shrink-0 text-primary" />
+                  <span>
+                    Milestone is currently in progress. Deliverables and payment release controls will appear here once submitted by the freelancer.
+                  </span>
                 </div>
               )}
             </CardContent>

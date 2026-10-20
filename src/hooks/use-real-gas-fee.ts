@@ -5,6 +5,7 @@ import { useEthPhpRate } from './use-eth-php-rate';
 import { convertEthToPhp, formatEthToPhp } from '@/lib/eth-php-converter';
 import {
   GAS_UNITS,
+  DEFAULT_GAS_PRICE_GWEI,
   calculateGasEth,
   computeEmployerTotalCost,
   computeFreelancerNetPayout,
@@ -23,11 +24,11 @@ interface RealGasFeeState {
   lastUpdated: Date | null;
 }
 
-// Global shared state for gas fee
-let sharedGasPriceGwei = 20; // 20 Gwei baseline
-let sharedGasPriceWei = '20000000000';
-let sharedEmployerGasEth = (GAS_UNITS.EMPLOYER_DEPLOY_AND_DEPOSIT * 20) / 1e9;
-let sharedFreelancerGasEth = (GAS_UNITS.FREELANCER_CLAIM_PAYOUT * 20) / 1e9;
+// Global shared state for gas fee (defaults to 1 Gwei benchmark for L2 / local EVM)
+let sharedGasPriceGwei = DEFAULT_GAS_PRICE_GWEI;
+let sharedGasPriceWei = String(BigInt(DEFAULT_GAS_PRICE_GWEI * 1e9));
+let sharedEmployerGasEth = (GAS_UNITS.EMPLOYER_DEPLOY_AND_DEPOSIT * DEFAULT_GAS_PRICE_GWEI) / 1e9;
+let sharedFreelancerGasEth = (GAS_UNITS.FREELANCER_CLAIM_PAYOUT * DEFAULT_GAS_PRICE_GWEI) / 1e9;
 let sharedSource = 'initial';
 let sharedLastUpdated: Date | null = null;
 let isFetchingGas = false;

@@ -66,7 +66,7 @@ export function getMilestonePermissions(
     canSubmit: actionable
       && role === 'freelancer'
       && ['pending', 'in_progress', 'rejected'].includes(milestoneStatus),
-    canApprove: actionable && role === 'employer' && ['submitted', 'in_progress'].includes(milestoneStatus),
+    canApprove: actionable && role === 'employer' && milestoneStatus === 'submitted',
     canReject: actionable && role === 'employer' && milestoneStatus === 'submitted',
   };
 }
