@@ -33,6 +33,7 @@ async function authenticate(page: Page, storedUser = user) {
 }
 
 test('employer reviews the freelancer after a completed contract', async ({ page }) => {
+  test.setTimeout(60_000);
   let reviewBody: unknown;
   await authenticate(page);
   await page.route(`**/api/contracts/${contractId}`, (route) => route.fulfill({

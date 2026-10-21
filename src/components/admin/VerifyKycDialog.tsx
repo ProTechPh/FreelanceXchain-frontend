@@ -14,6 +14,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { AdminUser } from '@/types';
 
+const MIN_REASON_LENGTH = 10;
+const MAX_REASON_LENGTH = 500;
+
 interface VerifyKycDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -41,7 +44,8 @@ function VerifyKycForm({
     await onConfirm(user, verifyReason.trim());
   };
 
-  const isValid = verifyReason.trim().length >= 10;
+  const reasonLength = verifyReason.trim().length;
+  const isValid = reasonLength >= MIN_REASON_LENGTH && reasonLength <= MAX_REASON_LENGTH;
 
   return (
     <>
@@ -55,7 +59,7 @@ function VerifyKycForm({
         <div className="flex items-center justify-between">
           <Label htmlFor="verify-reason">Audit reason</Label>
           <span className={`text-xs ${isValid ? 'text-success' : 'text-muted-foreground'}`}>
-            {verifyReason.trim().length}/10 characters min
+            {reasonLength}/{MAX_REASON_LENGTH}
           </span>
         </div>
         <Textarea
@@ -64,8 +68,19 @@ function VerifyKycForm({
           value={verifyReason}
           onChange={(e) => setVerifyReason(e.target.value)}
           rows={3}
+          minLength={MIN_REASON_LENGTH}
+          maxLength={MAX_REASON_LENGTH}
           disabled={isPending}
+          aria-invalid={verifyReason.length > 0 && !isValid}
+          aria-describedby="verify-reason-validation"
         />
+        <p
+          id="verify-reason-validation"
+          className={`text-xs ${verifyReason.length > 0 && !isValid ? 'text-destructive font-medium' : 'text-muted-foreground'}`}
+          role={verifyReason.length > 0 && !isValid ? 'alert' : undefined}
+        >
+          Audit reason must be between {MIN_REASON_LENGTH} and {MAX_REASON_LENGTH} characters.
+        </p>
       </div>
       <DialogFooter>
         <Button

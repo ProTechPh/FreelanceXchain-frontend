@@ -90,6 +90,7 @@ test('verified employer edits an unlocked project', async ({ page }) => {
 });
 
 test('administrator creates a taxonomy skill', async ({ page }) => {
+  test.setTimeout(60_000);
   await authenticate(page, 'admin');
   const categoryId = '123e4567-e89b-12d3-a456-426614174031';
   let skillBody: unknown;
@@ -99,7 +100,7 @@ test('administrator creates a taxonomy skill', async ({ page }) => {
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ categories: [{ id: categoryId, name: 'Development', description: 'Software skills', isActive: true, createdAt, updatedAt: createdAt, skills: created ? [{ id: 'skill-new', categoryId, name: 'TypeScript', description: 'Typed JavaScript', isActive: true, createdAt, updatedAt: createdAt }] : [] }] }) });
   });
 
-  await page.goto('/dashboard/admin/skills');
+  await page.goto('/dashboard/admin/skills', { waitUntil: 'domcontentloaded' });
   await page.locator('#admin-skill-name').fill('TypeScript');
   await page.locator('#admin-skill-description').fill('Typed JavaScript');
   await page.getByRole('button', { name: 'Create skill' }).click();

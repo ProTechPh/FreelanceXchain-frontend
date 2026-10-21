@@ -12,6 +12,7 @@ import {
   User,
   Wallet,
   Coins,
+  Fuel,
   X,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -28,6 +29,8 @@ import { FreelanceXchainIcon } from '@/components/ui/freelancexchain-logo';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { formatAmount, formatDate, formatDateTime, formatDocumentNumber } from '@/lib/format';
 import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
+import { useRealGasFee } from '@/hooks/use-real-gas-fee';
+import { parseTransactionMetadata } from '@/lib/transaction-view';
 import { useAuthStore } from '@/stores/authStore';
 import { contractsApi, milestonesApi } from '@/lib/api';
 
@@ -248,6 +251,43 @@ export function ContractInvoiceDialog({
     ? detailContract.totalAmount
     : completedMilestones.reduce((sum, m) => sum + (m.amount || 0), 0);
   const remainingTotal = Math.max(0, detailContract.totalAmount - releasedTotal);
+
+  const {
+    employerGasEth,
+    gasPriceGwei,
+    getMilestoneActionCost,
+  } = useRealGasFee();
+
+  const getTxGasFee = (tx: (typeof transactions)[number]): number | null => {
+    const meta = parseTransactionMetadata(tx.metadata);
+    const fee = typeof meta['feeEth'] === 'number'
+      ? meta['feeEth']
+      : typeof meta['gasFee'] === 'number'
+      ? meta['gasFee']
+      : meta['gasUsed'] && meta['gasPrice']
+      ? (Number(meta['gasUsed']) * Number(meta['gasPrice'])) / 1e18
+      : null;
+    return typeof fee === 'number' && Number.isFinite(fee) && fee > 0 ? fee : null;
+  };
+
+  // Check if transactions contain actual gas metadata
+  const actualGasFromTxs = (transactions ?? []).reduce((sum, tx) => {
+    const fee = getTxGasFee(tx);
+    return sum + (fee ?? 0);
+  }, 0);
+
+  const releasePerMilestoneCost = getMilestoneActionCost('employer-release', 1);
+  const releasesGasEth = completedMilestones.length * releasePerMilestoneCost.gasEth;
+  const estimatedTotalGasEth = employerGasEth + releasesGasEth;
+
+  const contractHasDeployedEscrow = Boolean(contract.escrowAddress) || ['active', 'completed', 'disputed'].includes(contract.status);
+  const totalGasFeeEth = actualGasFromTxs > 0
+    ? actualGasFromTxs
+    : contractHasDeployedEscrow
+    ? estimatedTotalGasEth
+    : employerGasEth;
+
+  const totalWithGas = (detailContract.totalAmount || 0) + totalGasFeeEth;
 
   const handleCopyId = () => {
     void navigator.clipboard.writeText(invoiceNumber);
@@ -523,6 +563,19 @@ export function ContractInvoiceDialog({
                   <span className="tabular-nums text-primary font-bold">{formatInvoiceMoney(contract.totalAmount)}</span>
                 </div>
                 <div className="flex w-full max-w-xs justify-between text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <Fuel className="size-3 text-primary shrink-0" />
+                    <span>Blockchain Network Gas:</span>
+                  </span>
+                  <span className="font-semibold tabular-nums text-foreground">
+                    {formatInvoiceMoney(totalGasFeeEth)}
+                  </span>
+                </div>
+                <div className="flex w-full max-w-xs justify-between border-t border-dashed border-border/80 pt-1 text-xs font-bold text-foreground">
+                  <span>Total Settlement (with Gas):</span>
+                  <span className="tabular-nums text-foreground font-bold">{formatInvoiceMoney(totalWithGas)}</span>
+                </div>
+                <div className="flex w-full max-w-xs justify-between text-muted-foreground">
                   <span>Released to Contractor:</span>
                   <span className="font-semibold tabular-nums text-success">{formatInvoiceMoney(releasedTotal)}</span>
                 </div>
@@ -550,22 +603,46 @@ export function ContractInvoiceDialog({
                   <span className="font-semibold text-foreground">Settlement Protocol: </span>
                   <p>EVM Trustless Escrow with Multi-Sig Arbitration</p>
                 </div>
+                <div>
+                  <span className="font-semibold text-foreground">Network Gas Used / Allocated: </span>
+                  <p className="font-mono text-2xs text-foreground">
+                    {formatInvoiceMoney(totalGasFeeEth)} · ~{Number(850000 + completedMilestones.length * 65000).toLocaleString('en-US')} gas units @ {gasPriceGwei.toFixed(1)} Gwei
+                  </p>
+                </div>
+                <div>
+                  <span className="font-semibold text-foreground">Gas Settlement Status: </span>
+                  <p className="text-2xs text-foreground">
+                    {actualGasFromTxs > 0
+                      ? 'Mined on blockchain · Settled via transaction receipts'
+                      : contractHasDeployedEscrow
+                      ? 'Escrow deployed · Network fee paid to EVM validators'
+                      : 'Pre-transaction quote · Settled upon escrow funding'}
+                  </p>
+                </div>
               </div>
 
               {transactions.length > 0 && (
                 <div className="space-y-1 border-t border-border pt-2">
-                  <span className="font-semibold text-foreground">Recorded On-Chain Transactions:</span>
+                  <span className="font-semibold text-foreground">Recorded On-Chain Transactions &amp; Gas:</span>
                   <div className="space-y-1">
-                    {transactions.slice(0, 3).map((tx) => (
+                    {transactions.slice(0, 3).map((tx) => {
+                      const txGas = getTxGasFee(tx);
+                      return (
                       <div key={tx.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-0.5 font-mono text-2xs">
                         <span className="truncate max-w-[260px] text-muted-foreground">
                           Tx: {tx.transaction_hash || tx.id}
                         </span>
                         <span className="shrink-0 uppercase text-foreground">
                           {tx.type} • {formatInvoiceMoney(tx.amount)}
+                          {txGas !== null && (
+                            <span className="ml-1 font-sans text-muted-foreground">
+                              (Gas: {formatInvoiceMoney(txGas)})
+                            </span>
+                          )}
                         </span>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}

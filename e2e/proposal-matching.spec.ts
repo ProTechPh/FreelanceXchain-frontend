@@ -244,3 +244,68 @@ test('freelancer submits a proposal manually without the AI assistant', async ({
   await expect(dialog).toBeHidden();
   await expect(page.getByText('Discard unsaved proposal?')).toHaveCount(0);
 });
+
+test('freelancer sees field-level validation and NDA gating before submitting', async ({ page }) => {
+  await authenticate(page, 'freelancer');
+  await page.route(`**/api/projects/${projectId}`, (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(makeProject()) }));
+  await page.route('**/api/favorites/check**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ isFavorite: false }) }));
+  const submitted = await captureProposalSubmission(page);
+
+  await page.goto(`/dashboard/freelancer/projects/${projectId}`);
+  await page.getByRole('button', { name: 'Submit Proposal' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Submit Proposal' });
+  const rate = dialog.getByLabel('Proposed rate (ETH)');
+  const duration = dialog.getByLabel('Estimated duration (days)');
+  const submit = dialog.getByRole('button', { name: 'Submit proposal' });
+
+  // Validation runs field by field, so the first blocked field is the rate.
+  await submit.click();
+  await expect(dialog.getByText('Proposed rate must be greater than 0.')).toBeVisible();
+  expect(submitted.body).toBeNull();
+
+  await rate.fill('0.12345');
+  await submit.click();
+  await expect(dialog.getByText('Use at most 4 decimal places for the ETH rate.')).toBeVisible();
+  expect(submitted.body).toBeNull();
+
+  await rate.fill('0.5');
+  await submit.click();
+  await expect(dialog.getByText('Estimated duration must be at least 1 day.')).toBeVisible();
+  expect(submitted.body).toBeNull();
+
+  await duration.fill('1.5');
+  await submit.click();
+  await expect(dialog.getByText('Estimated duration must be a whole number of days.')).toBeVisible();
+  expect(submitted.body).toBeNull();
+
+  await duration.fill('14');
+  await submit.click();
+  await expect(dialog.getByText('Attach at least one proposal file.')).toBeVisible();
+  expect(submitted.body).toBeNull();
+
+  await dialog.getByLabel('Proposal attachments').setInputFiles({
+    name: 'delivery-plan.pdf',
+    mimeType: 'application/pdf',
+    buffer: Buffer.from('%PDF-1.4 delivery plan'),
+  });
+  await expect(dialog.getByText('1 of 5 attached')).toBeVisible();
+  await dialog.getByRole('button', { name: 'Remove delivery-plan.pdf' }).click();
+  await expect(dialog.getByText('0 of 5 attached')).toBeVisible();
+  expect(submitted.body).toBeNull();
+
+  // Removing the NDA agreement disables submission even when every field is valid.
+  await dialog.getByLabel('Proposal attachments').setInputFiles({
+    name: 'delivery-plan.pdf',
+    mimeType: 'application/pdf',
+    buffer: Buffer.from('%PDF-1.4 delivery plan'),
+  });
+  const nda = dialog.getByRole('checkbox');
+  await expect(nda).toBeChecked();
+  await nda.uncheck();
+  await expect(submit).toBeDisabled();
+  expect(submitted.body).toBeNull();
+
+  await nda.check();
+  await expect(submit).toBeEnabled();
+  expect(submitted.body).toBeNull();
+});
