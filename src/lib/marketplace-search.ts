@@ -89,6 +89,26 @@ export function filterFreelancersByVisibleSkill<T extends ProfileWithVisibleSkil
   );
 }
 
+type ProjectOwnership = {
+  employerId?: string | null;
+};
+
+/**
+ * Removes the viewer's own listings from a public marketplace result set.
+ *
+ * Employers can browse the marketplace, but a project they posted is not
+ * something they can apply to. Keeping it out of the list (rather than showing
+ * it with a disabled action) avoids the "why is my own project here?" dead end.
+ * Signed-out visitors and freelancers see every listing unchanged.
+ */
+export function excludeOwnProjects<T extends ProjectOwnership>(
+  projects: T[],
+  viewerId: string | null | undefined,
+): T[] {
+  if (!viewerId) return projects;
+  return projects.filter((project) => project.employerId !== viewerId);
+}
+
 export function createSavedSearchFilters(filters: MarketplaceFilters, skills: SkillOption[]) {
   const saved: Record<string, unknown> = {};
   const keyword = filters.keyword.trim();

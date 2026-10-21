@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
   buildMarketplaceSearchParams,
   createSavedSearchFilters,
+  excludeOwnProjects,
   filterFreelancersByVisibleSkill,
   restoreSavedSearchFilters,
   marketplaceFiltersFromSearchParams,
@@ -87,4 +88,39 @@ test('enforces selected freelancer skill against visible profile skills', () => 
     ]).map((freelancer) => freelancer.userId),
     ['solidity-dev'],
   );
+});
+
+test("excludeOwnProjects hides only the viewer's listings", () => {
+  const projects = [
+    { id: 'p1', employerId: 'user-employer' },
+    { id: 'p2', employerId: 'user-other' },
+    { id: 'p3', employerId: 'user-employer' },
+  ];
+
+  assert.deepEqual(
+    excludeOwnProjects(projects, 'user-employer').map((project) => project.id),
+    ['p2'],
+  );
+  assert.deepEqual(
+    excludeOwnProjects(projects, 'user-freelancer').map((project) => project.id),
+    ['p1', 'p2', 'p3'],
+  );
+});
+
+test('excludeOwnProjects leaves results untouched for signed-out visitors', () => {
+  const projects = [{ id: 'p1', employerId: 'user-employer' }];
+
+  assert.equal(excludeOwnProjects(projects, null), projects);
+  assert.equal(excludeOwnProjects(projects, undefined), projects);
+});
+
+test('excludeOwnProjects does not mutate the incoming page', () => {
+  const projects = [
+    { id: 'p1', employerId: 'user-employer' },
+    { id: 'p2', employerId: 'user-other' },
+  ];
+
+  excludeOwnProjects(projects, 'user-employer');
+
+  assert.deepEqual(projects.map((project) => project.id), ['p1', 'p2']);
 });
