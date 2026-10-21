@@ -127,7 +127,9 @@ export default function UsersPage() {
     setPendingActionId(user.id);
     try {
       await adminApi.verifyUser(user.id, reason);
-      setUsers((prev) => prev.map((u) => (u.id === user.id ? { ...u, kycVerified: true } : u)));
+      setUsers((prev) => prev.map((u) => (
+        u.id === user.id ? { ...u, kycVerified: true, kycStatus: 'approved' } : u
+      )));
       toast.success(`${user.name || user.email} manually verified`);
       setUserToVerify(null);
     } catch (error) {
@@ -275,7 +277,7 @@ export default function UsersPage() {
               { key: 'all', label: 'All' },
               { key: 'approved', label: 'Approved' },
               { key: 'pending', label: 'Pending' },
-              { key: 'unverified', label: 'Pending' },
+              { key: 'unverified', label: 'Unverified' },
             ] as const).map(({ key, label }) => (
               <Button
                 key={key}

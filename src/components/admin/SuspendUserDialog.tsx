@@ -14,6 +14,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { AdminUser } from '@/types';
 
+const MIN_REASON_LENGTH = 10;
+const MAX_REASON_LENGTH = 500;
+
 interface SuspendUserDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -40,8 +43,10 @@ function SuspendUserForm({
 
   const handleReasonChange = (val: string) => {
     setSuspendReason(val);
-    if (val.trim().length >= 10) {
+    if (val.trim().length >= MIN_REASON_LENGTH && val.trim().length <= MAX_REASON_LENGTH) {
       setSuspendReasonError(null);
+    } else if (val.trim().length > MAX_REASON_LENGTH) {
+      setSuspendReasonError(`Suspension reason must not exceed ${MAX_REASON_LENGTH} characters.`);
     } else if (val.trim().length > 0) {
       setSuspendReasonError('Suspension reason must be at least 10 characters.');
     }
@@ -51,7 +56,8 @@ function SuspendUserForm({
     await onConfirm(user, suspendReason.trim());
   };
 
-  const isValid = suspendReason.trim().length >= 10;
+  const reasonLength = suspendReason.trim().length;
+  const isValid = reasonLength >= MIN_REASON_LENGTH && reasonLength <= MAX_REASON_LENGTH;
 
   return (
     <>
@@ -69,6 +75,7 @@ function SuspendUserForm({
           value={suspendReason}
           onChange={(e) => handleReasonChange(e.target.value)}
           rows={3}
+          maxLength={MAX_REASON_LENGTH}
           disabled={isPending}
           aria-invalid={Boolean(suspendReasonError || (suspendReason.length > 0 && !isValid))}
           aria-describedby="suspend-reason-validation"
@@ -76,15 +83,15 @@ function SuspendUserForm({
         <div className="flex items-center justify-between text-xs">
           {(suspendReasonError || (suspendReason.length > 0 && !isValid)) ? (
             <p id="suspend-reason-validation" className="text-destructive font-medium" role="alert">
-              Suspension reason must be at least 10 characters.
+              {suspendReasonError ?? `Suspension reason must be between ${MIN_REASON_LENGTH} and ${MAX_REASON_LENGTH} characters.`}
             </p>
           ) : (
             <p id="suspend-reason-validation" className="text-muted-foreground">
-              Minimum 10 characters required for audit trail.
+              {MIN_REASON_LENGTH}–{MAX_REASON_LENGTH} characters required for audit trail.
             </p>
           )}
           <span className={`ml-auto font-mono ${!isValid ? 'text-muted-foreground' : 'text-success'}`}>
-            {suspendReason.trim().length}/10
+            {reasonLength}/{MAX_REASON_LENGTH}
           </span>
         </div>
       </div>

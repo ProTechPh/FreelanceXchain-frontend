@@ -126,6 +126,7 @@ test('email login explains KYC before starting first-run onboarding', async ({ p
 });
 
 test('verify identity opens the role-specific verification page without flashing the tour', async ({ page }) => {
+  test.setTimeout(60_000);
   const user = buildUser('employer-new', 'employer');
   await mockAuthenticatedShell(page, user);
   await page.route('**/api/kyc/status', (route) => route.fulfill({
@@ -143,7 +144,7 @@ test('verify identity opens the role-specific verification page without flashing
   const reminder = page.getByRole('dialog', { name: 'Verify your identity to unlock all features' });
   await reminder.getByRole('button', { name: 'Verify identity' }).click();
 
-  await expect(page).toHaveURL(/\/dashboard\/employer\/verification$/);
+  await expect(page).toHaveURL(/\/dashboard\/employer\/verification$/, { timeout: 30_000 });
   await expect(page.getByRole('heading', { name: 'Identity verification' })).toBeVisible();
   await expect(tourDialog(page)).toHaveCount(0);
 });

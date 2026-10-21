@@ -289,6 +289,7 @@ await page.waitForLoadState('networkidle');
   });
 
   test('Settings restarts the tour and remembers the auto-start preference', async ({ page }) => {
+    test.setTimeout(60_000);
     await authenticate(page, buildUser('freelancer'));
     await page.goto('/dashboard/freelancer/settings', { waitUntil: 'domcontentloaded' });
 

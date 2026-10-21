@@ -177,6 +177,10 @@ export default function KycReviewPage() {
       toast.warning('Verification reason must be at least 10 characters so there\'s a meaningful audit trail.');
       return;
     }
+    if (trimmedReason.length > 500) {
+      toast.warning('Verification reason must not exceed 500 characters.');
+      return;
+    }
 
     setVerifyingUser(true);
     try {
@@ -263,8 +267,8 @@ export default function KycReviewPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="manual-verify-reason">Audit reason</Label>
-                  <span className={`text-xs ${verifyReason.trim().length >= 10 ? 'text-success' : 'text-muted-foreground'}`}>
-                    {verifyReason.trim().length}/10 characters min
+                  <span className={`text-xs ${verifyReason.trim().length >= 10 && verifyReason.trim().length <= 500 ? 'text-success' : 'text-muted-foreground'}`}>
+                    {verifyReason.trim().length}/500
                   </span>
                 </div>
                 <Textarea
@@ -274,7 +278,14 @@ export default function KycReviewPage() {
                   placeholder="Provide a clear, auditable reason for manually verifying this user (minimum 10 characters)..."
                   value={verifyReason}
                   onChange={(e) => setVerifyReason(e.target.value)}
+                  minLength={10}
+                  maxLength={500}
+                  aria-invalid={verifyReason.length > 0 && (verifyReason.trim().length < 10 || verifyReason.trim().length > 500)}
+                  aria-describedby="manual-verify-reason-validation"
                 />
+                <p id="manual-verify-reason-validation" className="text-xs text-muted-foreground">
+                  Audit reason must be between 10 and 500 characters.
+                </p>
               </div>
             </div>
             <DialogFooter>
@@ -289,7 +300,7 @@ export default function KycReviewPage() {
                 variant="default"
                 loading={verifyingUser}
                 loadingText="Verifying…"
-                disabled={verifyReason.trim().length < 10 || verifyingUser}
+                disabled={verifyReason.trim().length < 10 || verifyReason.trim().length > 500 || verifyingUser}
                 onClick={confirmManualVerify}
               >
                 Verify User

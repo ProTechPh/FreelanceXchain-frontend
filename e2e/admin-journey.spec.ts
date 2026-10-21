@@ -77,7 +77,7 @@ test.describe('End-to-End User Journey - Admin Role & Governance Lifecycle', () 
     );
 
     // 1. Visit Admin Dashboard
-    await page.goto('/dashboard/admin');
+    await page.goto('/dashboard/admin', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('body')).toBeVisible();
 
     // 2. Visit Disputes Management Page
@@ -93,7 +93,7 @@ test.describe('End-to-End User Journey - Admin Role & Governance Lifecycle', () 
         }),
       }),
     );
-    await page.goto('/dashboard/admin/disputes');
+    await page.goto('/dashboard/admin/disputes', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('#dashboard-content').first()).toBeVisible();
 
     // 3. Visit User Management Page
@@ -117,7 +117,7 @@ test.describe('End-to-End User Journey - Admin Role & Governance Lifecycle', () 
         }),
       }),
     );
-    await page.goto('/dashboard/admin/users');
+    await page.goto('/dashboard/admin/users', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('#dashboard-content').first()).toBeVisible();
 
     // 4. Visit Audit Logs Page
@@ -131,7 +131,7 @@ test.describe('End-to-End User Journey - Admin Role & Governance Lifecycle', () 
         }),
       }),
     );
-    await page.goto('/dashboard/admin/audit-logs');
+    await page.goto('/dashboard/admin/audit-logs', { waitUntil: 'domcontentloaded' });
     await expect(page.locator('#dashboard-content').first()).toBeVisible();
   });
 

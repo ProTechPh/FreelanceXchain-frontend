@@ -116,13 +116,13 @@ export function AddUserDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!name.trim()) {
-      toast.error('Please enter the user full name');
+    if (name.trim().length < 2 || name.trim().length > 100) {
+      toast.error('Full name must be between 2 and 100 characters');
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email.trim() || !emailRegex.test(email.trim())) {
+    if (!email.trim() || email.trim().length > 254 || !emailRegex.test(email.trim())) {
       toast.error('Please enter a valid email address');
       return;
     }
@@ -133,8 +133,8 @@ export function AddUserDialog({
     }
 
     if (passwordMode === 'custom') {
-      if (!customPassword || customPassword.length < 8) {
-        toast.error('Custom password must be at least 8 characters long');
+      if (!customPassword || customPassword.length < 8 || customPassword.length > 256) {
+        toast.error('Custom password must be between 8 and 256 characters long');
         return;
       }
     }
@@ -408,6 +408,8 @@ export function AddUserDialog({
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       className="pl-9"
+                      minLength={2}
+                      maxLength={100}
                       required
                     />
                   </div>
@@ -426,6 +428,7 @@ export function AddUserDialog({
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="pl-9"
+                      maxLength={254}
                       required
                     />
                   </div>
@@ -639,6 +642,8 @@ export function AddUserDialog({
                         value={customPassword}
                         onChange={(e) => setCustomPassword(e.target.value)}
                         className="pr-10"
+                        minLength={8}
+                        maxLength={256}
                       />
                       <Button
                         type="button"

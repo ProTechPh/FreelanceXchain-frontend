@@ -10,6 +10,7 @@ import { useEthPhpRate } from "@/hooks/use-eth-php-rate";
 import {
   buildMarketplaceSearchParams,
   createSavedSearchFilters,
+  excludeOwnProjects,
   filterFreelancersByVisibleSkill,
   marketplaceFiltersToSearchParams,
   restoreSavedSearchFilters,
@@ -282,7 +283,9 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
     // Client-side guard for project results: the API may return extra items
     // when the server doesn't fully enforce keyword or budget constraints.
     // This ensures the rendered list always matches the applied filters.
-    let filtered = items as unknown as Project[];
+    // Never list the viewer's own projects: they cannot propose on them, and
+    // their /dashboard/employer/projects page is the place to manage them.
+    let filtered = excludeOwnProjects(items as unknown as Project[], user?.id);
     const keyword = (appliedFilters.keyword || filters.keyword).trim().toLowerCase();
     if (keyword) {
       filtered = filtered.filter(
@@ -323,7 +326,7 @@ export function MarketplaceBrowser<T extends Project | FreelancerProfile>({
       );
     }
     return filtered as unknown as T[];
-  }, [appliedFilters, filters.keyword, items, kind, savedSkillOptions, skills]);
+  }, [appliedFilters, filters.keyword, items, kind, savedSkillOptions, skills, user?.id]);
 
 
   const submitSearch = useCallback((event: React.FormEvent) => {

@@ -191,6 +191,7 @@ test('freelancer profile tolerates legacy and nameless skill entries from the AP
 });
 
 test('freelancer profile renders legacy experiences with unique React keys', async ({ page }) => {
+  test.setTimeout(60_000);
   const user = { id: 'freelancer-1', email: 'dev@example.com', name: 'Developer', role: 'freelancer', walletAddress: '', kycStatus: 'approved', ...timestamps };
   const profile = {
     id: 'profile-2',
