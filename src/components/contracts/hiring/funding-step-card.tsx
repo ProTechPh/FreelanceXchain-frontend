@@ -6,6 +6,7 @@ import { Hourglass, Wallet } from 'lucide-react';
 import type { Contract, ContractPartyRole } from '@/types';
 import { getFundingCountdown } from '@/lib/contract-lifecycle';
 import { formatAmount, formatDateTime } from '@/lib/format';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert } from '@/components/ui/alert';
@@ -26,6 +27,8 @@ export function FundingStepCard({
   funding: boolean;
   onFund: () => void;
 }) {
+  const { formatEthToPhp } = useEthPhpRate();
+  const isEth = !contract.currency || contract.currency.toUpperCase() === 'ETH';
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
     const timer = window.setInterval(() => setNow(new Date()), 30_000);
@@ -43,7 +46,7 @@ export function FundingStepCard({
         </CardTitle>
         <CardDescription>
           Both parties signed. {role === 'employer'
-            ? `Deposit ${formatAmount(contract.totalAmount, { currency: 'ETH' })} into the escrow smart contract. Milestone payments are released from it as you approve work.`
+            ? `Deposit ${isEth ? `${formatEthToPhp(contract.totalAmount)} (${formatAmount(contract.totalAmount, { currency: 'ETH' })})` : formatAmount(contract.totalAmount, { currency: contract.currency })} into the escrow smart contract. Milestone payments are released from it as you approve work.`
             : 'Work starts once the escrow is funded. You will be notified.'}
         </CardDescription>
       </CardHeader>

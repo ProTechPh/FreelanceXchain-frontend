@@ -10,6 +10,7 @@ import { reportFailure } from '@/lib/report-failure';
 import { getDirectMessageRoute } from '@/lib/dashboard-message-route';
 import { draftFromOffer, floorToUnits } from '@/lib/contract-terms';
 import { formatAmount } from '@/lib/format';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert } from '@/components/ui/alert';
@@ -83,6 +84,7 @@ export function NegotiationPanel({
     }
   };
 
+  const { formatEthToPhp } = useEthPhpRate();
   const chatHref = getDirectMessageRoute(role, chat.otherPartyId, chat.projectId);
   const waitingOnOther = Boolean(openOffer) && !permissions.canAccept;
 
@@ -96,7 +98,7 @@ export function NegotiationPanel({
           </CardTitle>
           <CardDescription>
             Agree on milestones, extra pay, deadline and rush fee. The base amount can&apos;t go below the
-            freelancer&apos;s rate of {formatAmount(floorToUnits(floor.proposedRate), { currency: 'ETH' })}.
+            freelancer&apos;s rate of {formatEthToPhp(floorToUnits(floor.proposedRate))} ({formatAmount(floorToUnits(floor.proposedRate), { currency: 'ETH' })}).
           </CardDescription>
         </div>
         <Button asChild variant="outline" size="sm" className="shrink-0">

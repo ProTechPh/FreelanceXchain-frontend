@@ -7,6 +7,7 @@ import { formatAmount, formatDate, formatDateTime } from '@/lib/format';
 import { diffOffers, type OfferChange } from '@/lib/contract-terms';
 import { cn } from '@/lib/utils';
 import { GasFeeBreakdownCard } from '@/components/ui/gas-fee-breakdown-card';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 
 function Changed({ changed, children }: { changed: boolean; children: React.ReactNode }) {
   return (
@@ -32,6 +33,7 @@ export function OfferSummary({
   viewerRole: ContractPartyRole;
 }) {
   const changes: Set<OfferChange> = diffOffers(previous ?? null, offer);
+  const { formatEthToPhp } = useEthPhpRate();
   const eth = (value: number) => formatAmount(value, { currency: 'ETH' });
 
   return (
@@ -48,23 +50,26 @@ export function OfferSummary({
       <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
         <div>
           <dt className="text-muted-foreground">Base</dt>
-          <dd className="font-semibold"><Changed changed={changes.has('baseAmount')}>{eth(offer.baseAmount)}</Changed></dd>
+          <dd className="font-semibold"><Changed changed={changes.has('baseAmount')}>{formatEthToPhp(offer.baseAmount)}</Changed></dd>
+          <dd className="text-2xs text-muted-foreground">{eth(offer.baseAmount)}</dd>
         </div>
         <div>
           <dt className="text-muted-foreground">Additional pay</dt>
-          <dd className="font-semibold"><Changed changed={changes.has('additionalPay')}>{eth(offer.additionalPay)}</Changed></dd>
+          <dd className="font-semibold"><Changed changed={changes.has('additionalPay')}>{formatEthToPhp(offer.additionalPay)}</Changed></dd>
+          <dd className="text-2xs text-muted-foreground">{eth(offer.additionalPay)}</dd>
         </div>
         <div>
           <dt className="text-muted-foreground">Rush fee</dt>
           <dd className="font-semibold">
             <Changed changed={changes.has('rush')}>
-              {offer.isRush ? `${eth(offer.rushFee)} (${offer.rushFeePercentage}%)` : 'None'}
+              {offer.isRush ? formatEthToPhp(offer.rushFee) : 'None'}
             </Changed>
           </dd>
         </div>
         <div>
           <dt className="text-muted-foreground">Total</dt>
-          <dd className="font-semibold text-primary">{eth(offer.totalAmount)}</dd>
+          <dd className="font-semibold text-primary">{formatEthToPhp(offer.totalAmount)}</dd>
+          <dd className="text-2xs text-muted-foreground">{eth(offer.totalAmount)}</dd>
         </div>
         <div className="col-span-2 sm:col-span-4">
           <dt className="text-muted-foreground">Deadline</dt>
@@ -101,7 +106,10 @@ export function OfferSummary({
                     {m.description && <p className="text-xs text-muted-foreground">{m.description}</p>}
                   </td>
                   <td className="whitespace-nowrap px-3 py-2">{formatDate(m.dueDate)}</td>
-                  <td className="whitespace-nowrap px-3 py-2 text-right font-medium">{eth(m.amount)}</td>
+                  <td className="whitespace-nowrap px-3 py-2 text-right">
+                    <p className="font-semibold text-foreground">{formatEthToPhp(m.amount)}</p>
+                    <p className="text-2xs text-muted-foreground">{eth(m.amount)}</p>
+                  </td>
                 </tr>
               ))}
             </tbody>
