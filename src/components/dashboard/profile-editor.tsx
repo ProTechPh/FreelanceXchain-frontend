@@ -65,7 +65,7 @@ export function ProfileEditor({
   onboarding?: boolean;
 }) {
   const user = useAuthStore((state) => state.user);
-  const { switchTo, switching } = useRoleSwitch();
+  const { switching } = useRoleSwitch();
   const router = useRouter();
   const pathname = usePathname();
   const {

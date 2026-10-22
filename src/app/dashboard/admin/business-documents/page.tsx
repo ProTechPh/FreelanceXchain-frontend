@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Eye, FileText, Search } from 'lucide-react';
 import { adminApi } from '@/lib/api';
 import { formatDate } from '@/lib/format';
@@ -80,6 +80,8 @@ export default function AdminBusinessDocumentsPage() {
   const debouncedSearch = useDebounce(search.trim(), 300);
   const [viewing, setViewing] = useState<AdminBusinessProfileSummary | null>(null);
 
+  const refreshRef = useRef<() => void>(() => {});
+
   const refresh = useCallback(() => {
     let active = true;
     setLoading(true);
@@ -92,7 +94,7 @@ export default function AdminBusinessDocumentsPage() {
         if (active) setData(response);
       })
       .catch((error) => {
-        if (active) reportLoadFailure(error, 'business documents', refresh);
+        if (active) reportLoadFailure(error, 'business documents', () => refreshRef.current());
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -103,6 +105,11 @@ export default function AdminBusinessDocumentsPage() {
   }, [status, debouncedSearch]);
 
   useEffect(() => {
+    refreshRef.current = () => void refresh();
+  }, [refresh]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     return refresh();
   }, [refresh]);
 
