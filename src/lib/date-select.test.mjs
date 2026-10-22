@@ -2,7 +2,10 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  addDaysToDateValue,
+  calendarWeeks,
   changeDatePart,
+  formatDateValue,
   dayOptions,
   joinDateParts,
   monthOptions,
@@ -65,4 +68,19 @@ test('finds the next calendar day across month and year ends', () => {
 
 test('an end date range starting the day after today lists nothing', () => {
   assert.deepEqual(yearOptions(nextDateValue('2026-12-31'), '2026-12-31'), []);
+});
+
+test('lays a month out in Sunday-first weeks', () => {
+  const october = calendarWeeks(2026, 10); // Oct 1, 2026 is a Thursday
+  assert.deepEqual(october[0], [null, null, null, null, '2026-10-01', '2026-10-02', '2026-10-03']);
+  assert.equal(october.at(-1).filter(Boolean).at(-1), '2026-10-31');
+  assert.ok(october.every((week) => week.length === 7));
+  assert.equal(calendarWeeks(2026, 2).flat().filter(Boolean).length, 28);
+  assert.equal(calendarWeeks(2024, 2).flat().filter(Boolean).length, 29);
+});
+
+test('moves dates by days and formats them for display', () => {
+  assert.equal(addDaysToDateValue('2026-10-31', 1), '2026-11-01');
+  assert.equal(addDaysToDateValue('2026-01-03', -7), '2025-12-27');
+  assert.equal(formatDateValue('2026-06-03'), 'Jun 3, 2026');
 });

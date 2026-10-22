@@ -1,19 +1,16 @@
 import { expect, test, type Page } from '@playwright/test';
 
-const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-/** Picks a YYYY-MM-DD date in a work history Year / Month / Day dropdown group. */
+/** Picks a YYYY-MM-DD date in a work history calendar (Start date / End date). */
 async function pickWorkHistoryDate(page: Page, label: 'Start date' | 'End date', date: string) {
   const [year, month, day] = date.split('-');
-  const choices: [string, string][] = [
-    ['year', year!],
-    ['month', MONTH_LABELS[Number(month) - 1]!],
-    ['day', String(Number(day))],
-  ];
-  for (const [part, option] of choices) {
-    await page.getByRole('combobox', { name: `${label} ${part}` }).click();
-    await page.getByRole('option', { name: option, exact: true }).click();
-  }
+  await page.getByRole('button', { name: new RegExp(`^${label},`) }).click();
+  const calendar = page.getByRole('dialog', { name: `Choose ${label.toLowerCase()}` });
+  await calendar.getByLabel('Year').selectOption(year!);
+  await calendar.getByLabel('Month').selectOption(String(Number(month)));
+  await calendar.getByRole('button', { name: new RegExp(`${MONTH_NAMES[Number(month) - 1]} ${Number(day)}, ${year}$`) }).click();
+  await expect(calendar).toBeHidden();
 }
 
 const timestamps = {

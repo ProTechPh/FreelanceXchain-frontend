@@ -30,7 +30,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
 import { Field } from '@/components/ui/field';
-import { DateSelect } from '@/components/ui/date-select';
+import { DatePicker } from '@/components/ui/date-picker';
 import { isCompleteDateValue, nextDateValue } from '@/lib/date-select';
 import { UnsavedChangesBar, UnsavedChangesDialog } from '@/components/ui/unsaved-changes';
 import { SuggestSkillDialog } from '@/components/dashboard/suggest-skill-dialog';
@@ -548,7 +548,7 @@ export function ProfileEditor({
                       />
                     </Field>
                     <Field label="Start date" htmlFor="experience-start" error={experienceDateErrors.startDate}>
-                      <DateSelect
+                      <DatePicker
                         label="Start date"
                         min={EXPERIENCE_MIN_DATE}
                         max={today}
@@ -562,7 +562,7 @@ export function ProfileEditor({
                       error={currentlyWorking ? undefined : experienceDateErrors.endDate}
                       disabled={currentlyWorking || noEndDateAvailable}
                     >
-                      <DateSelect
+                      <DatePicker
                         label="End date"
                         min={earliestEndDate}
                         max={today}

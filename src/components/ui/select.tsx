@@ -44,13 +44,11 @@ function SelectTrigger({
 function SelectContent({
   className,
   children,
-  alignItemWithTrigger,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Popup> &
-  Pick<React.ComponentProps<typeof SelectPrimitive.Positioner>, "alignItemWithTrigger">) {
+}: React.ComponentProps<typeof SelectPrimitive.Popup>) {
   return (
     <SelectPrimitive.Portal>
-      <SelectPrimitive.Positioner sideOffset={6} alignItemWithTrigger={alignItemWithTrigger} className="z-[70]">
+      <SelectPrimitive.Positioner sideOffset={6} className="z-[70]">
         <SelectPrimitive.Popup
           data-slot="select-content"
           className={cn(

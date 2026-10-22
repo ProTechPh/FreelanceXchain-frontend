@@ -39,8 +39,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
 
 /** The calendar day after a complete date value. */
 export function nextDateValue(value: string): string {
-  const [year, month, day] = value.split('-').map(Number);
-  return new Date(Date.UTC(year!, month! - 1, day! + 1)).toISOString().slice(0, 10);
+  return addDaysToDateValue(value, 1);
 }
 
 /** Newest year first. */
@@ -69,6 +68,33 @@ export function dayOptions(year: string, month: string, min: string, max: string
     if (date >= min && date <= max) days.push(pad(day));
   }
   return days;
+}
+
+/**
+ * The weeks of a month for a calendar grid, Sunday first. Each cell is a
+ * YYYY-MM-DD value, or null for the blanks before the 1st and after the last day.
+ */
+export function calendarWeeks(year: number, month: number): (string | null)[][] {
+  const firstWeekday = new Date(Date.UTC(year, month - 1, 1)).getUTCDay();
+  const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+  const cells: (string | null)[] = Array.from({ length: firstWeekday }, () => null);
+  for (let day = 1; day <= daysInMonth; day += 1) cells.push(`${year}-${pad(month)}-${pad(day)}`);
+  while (cells.length % 7 !== 0) cells.push(null);
+  const weeks: (string | null)[][] = [];
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+  return weeks;
+}
+
+/** A complete date value moved by a number of days. */
+export function addDaysToDateValue(value: string, days: number): string {
+  const [year, month, day] = value.split('-').map(Number);
+  return new Date(Date.UTC(year!, month! - 1, day! + days)).toISOString().slice(0, 10);
+}
+
+/** e.g. "2026-06-03" → "Jun 3, 2026", without time-zone shifts. */
+export function formatDateValue(value: string): string {
+  const { year, month, day } = splitDateValue(value);
+  return `${MONTH_LABELS[Number(month) - 1] ?? month} ${Number(day)}, ${year}`;
 }
 
 /** Sets one part and drops any later part that no longer fits the range (e.g. a future month after picking this year). */
