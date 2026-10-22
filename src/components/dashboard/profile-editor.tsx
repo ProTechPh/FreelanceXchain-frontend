@@ -9,17 +9,29 @@ import { skillsApi, freelancersApi } from '@/lib/api';
 import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning';
 import { useProfileEditor } from '@/hooks/use-profile-editor';
 import { getApiErrorMessage } from '@/lib/auth-contract';
-import { getFirstIncompleteTab, findDuplicateExperience, validateExperience, type ExperienceForm, type FreelancerProfileForm } from '@/lib/profile-form';
+import {
+  getFirstIncompleteTab,
+  findDuplicateExperience,
+  validateExperience,
+  getExperienceDateErrors,
+  todayDateInputValue,
+  EXPERIENCE_MIN_DATE,
+  type ExperienceForm,
+  type FreelancerProfileForm,
+} from '@/lib/profile-form';
 import { useAuthStore } from '@/stores/authStore';
 import type { UserRole, WorkExperience } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
 import { Field } from '@/components/ui/field';
+import { DateSelect } from '@/components/ui/date-select';
+import { isCompleteDateValue, nextDateValue } from '@/lib/date-select';
 import { UnsavedChangesBar, UnsavedChangesDialog } from '@/components/ui/unsaved-changes';
 import { SuggestSkillDialog } from '@/components/dashboard/suggest-skill-dialog';
 import { ProjectSkillSelector } from '@/components/dashboard/project-skill-selector';
@@ -78,6 +90,8 @@ export function ProfileEditor({
   const [experienceForm, setExperienceForm] = useState<ExperienceForm>(emptyExperience);
   const [editingExperienceId, setEditingExperienceId] = useState<string | null>(null);
   const [showExperienceForm, setShowExperienceForm] = useState(false);
+  // "I currently work here": the entry has no end date and shows as Present.
+  const [currentlyWorking, setCurrentlyWorking] = useState(false);
   const [actionId, setActionId] = useState<string | null>(null);
   const [suggestSkillOpen, setSuggestSkillOpen] = useState(false);
   const [skillPickerOpen, setSkillPickerOpen] = useState(false);
@@ -200,6 +214,19 @@ export function ProfileEditor({
     removeSkill(skill.name);
   };
 
+  const today = todayDateInputValue();
+  const experienceDateErrors = getExperienceDateErrors(experienceForm, today);
+  // The end date has to be at least a day after the start date.
+  const earliestEndDate = isCompleteDateValue(experienceForm.startDate)
+    ? nextDateValue(experienceForm.startDate)
+    : EXPERIENCE_MIN_DATE;
+  const noEndDateAvailable = earliestEndDate > today && !experienceForm.endDate;
+
+  const changeCurrentlyWorking = (checked: boolean) => {
+    setCurrentlyWorking(checked);
+    if (checked) setExperienceForm((current) => ({ ...current, endDate: null }));
+  };
+
   const editExperience = (experience: WorkExperience) => {
     setEditingExperienceId(experience.id);
     positionScope.reset();
@@ -211,12 +238,14 @@ export function ProfileEditor({
       endDate: dateInputValue(experience.endDate) || null,
       skills: experience.skills ?? [],
     });
+    setCurrentlyWorking(!experience.endDate);
     setShowExperienceForm(true);
   };
 
   const resetExperienceForm = () => {
     setEditingExperienceId(null);
     setExperienceForm(emptyExperience);
+    setCurrentlyWorking(false);
     positionScope.reset();
     setShowExperienceForm(false);
   };
@@ -224,7 +253,7 @@ export function ProfileEditor({
   const saveExperience = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (savingExperience.current) return;
-    const validationError = validateExperience(experienceForm);
+    const validationError = validateExperience(experienceForm, undefined, { currentlyWorking });
     if (validationError) {
       toast.error(validationError);
       return;
@@ -518,21 +547,43 @@ export function ProfileEditor({
                         onChange={(event) => setExperienceForm((current) => ({ ...current, company: event.target.value }))}
                       />
                     </Field>
-                    <Field label="Start date" htmlFor="experience-start">
-                      <Input
-                        id="experience-start"
-                        type="date"
+                    <Field label="Start date" htmlFor="experience-start" error={experienceDateErrors.startDate}>
+                      <DateSelect
+                        label="Start date"
+                        min={EXPERIENCE_MIN_DATE}
+                        max={today}
                         value={experienceForm.startDate}
-                        onChange={(event) => setExperienceForm((current) => ({ ...current, startDate: event.target.value }))}
+                        onChange={(startDate) => setExperienceForm((current) => ({ ...current, startDate }))}
                       />
                     </Field>
-                    <Field label="End date (optional)" htmlFor="experience-end">
-                      <Input
-                        id="experience-end"
-                        type="date"
-                        value={experienceForm.endDate ?? ''}
-                        onChange={(event) => setExperienceForm((current) => ({ ...current, endDate: event.target.value || null }))}
+                    <Field
+                      label="End date"
+                      htmlFor="experience-end"
+                      error={currentlyWorking ? undefined : experienceDateErrors.endDate}
+                      disabled={currentlyWorking || noEndDateAvailable}
+                    >
+                      <DateSelect
+                        label="End date"
+                        min={earliestEndDate}
+                        max={today}
+                        value={currentlyWorking ? '' : experienceForm.endDate ?? ''}
+                        onChange={(endDate) => setExperienceForm((current) => ({ ...current, endDate: endDate || null }))}
                       />
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id="experience-current"
+                          checked={currentlyWorking}
+                          onCheckedChange={(checked) => changeCurrentlyWorking(Boolean(checked))}
+                        />
+                        <Label htmlFor="experience-current" className="text-sm font-normal">
+                          I currently work here
+                        </Label>
+                      </div>
+                      {noEndDateAvailable && !currentlyWorking && (
+                        <p className="text-xs text-muted-foreground">
+                          Your start date is today, so tick &quot;I currently work here&quot;.
+                        </p>
+                      )}
                     </Field>
                     <div className="space-y-2 sm:col-span-2">
                       <Label htmlFor="experience-description">Description</Label>
