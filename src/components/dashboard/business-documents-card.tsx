@@ -105,6 +105,22 @@ export function BusinessDocumentsCard({
       return;
     }
 
+    const duplicateDoc = documents.find((doc) => {
+      const sameName = doc.fileName && doc.fileName.toLowerCase() === file.name.toLowerCase();
+      const sameSize = doc.size === file.size;
+      return sameName && sameSize;
+    });
+
+    if (duplicateDoc) {
+      const docLabel = duplicateDoc.label || BUSINESS_DOCUMENT_LABELS[duplicateDoc.documentType] || duplicateDoc.documentType;
+      if (duplicateDoc.documentType === type && type !== "other") {
+        toast.error("This file \"" + file.name + "\" is identical to the file already uploaded for " + docLabel + ". Please choose an updated file.");
+      } else {
+        toast.error("Duplicate file detected: \"" + file.name + "\" has already been uploaded for \"" + docLabel + "\". Each business document must be unique.");
+      }
+      return;
+    }
+
     setBusyKey(type);
     try {
       await employersApi.uploadDocument(file, type, type === 'other' ? otherLabel.trim() : undefined);

@@ -211,11 +211,17 @@ export interface FreelancerProfile {
   experience: WorkExperience[];
   availability: Availability;
   walletAddress?: string;
+  verificationStatus?: BusinessVerificationStatus | null;
+  verificationNotes?: string | null;
+  verifiedAt?: string | null;
+  verifiedBy?: string | null;
   createdAt: string;
   updatedAt: string;
 }
 
 export type BusinessType = 'sole_proprietorship' | 'partnership' | 'corporation' | 'cooperative';
+
+export type BusinessVerificationStatus = 'unverified' | 'pending' | 'verified' | 'rejected';
 
 export interface EmployerProfile {
   id: string;
@@ -236,6 +242,10 @@ export interface EmployerProfile {
   website: string | null;
   yearEstablished: number | null;
   walletAddress?: string;
+  verificationStatus?: BusinessVerificationStatus | null;
+  verificationNotes?: string | null;
+  verifiedAt?: string | null;
+  verifiedBy?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -261,6 +271,7 @@ export interface BusinessDocument {
   fileName?: string;
   /** Omitted for signed-out visitors. */
   fileUrl?: string;
+  fileHash?: string | null;
   mimeType: string;
   size: number;
   createdAt: string;
@@ -276,6 +287,9 @@ export interface AdminBusinessProfileSummary {
   activeRole: UserRole | null;
   companyName: string;
   businessType: BusinessType | null;
+  verificationStatus: BusinessVerificationStatus;
+  verificationNotes: string | null;
+  verifiedAt: string | null;
   documentCount: number;
   requiredDocumentCount: number;
   submittedRequiredCount: number;
@@ -286,17 +300,20 @@ export interface AdminBusinessProfileSummary {
   updatedAt: string;
 }
 
-export type AdminBusinessProfileStatus = 'all' | 'with_documents' | 'complete' | 'incomplete';
+export type AdminBusinessProfileStatus = 'all' | 'with_documents' | 'complete' | 'incomplete' | 'pending' | 'verified' | 'rejected';
 
 export interface AdminBusinessProfileList {
   items: AdminBusinessProfileSummary[];
-  counts: { all: number; withDocuments: number; complete: number; incomplete: number };
+  counts: { all: number; withDocuments: number; complete: number; incomplete: number; pending: number; verified: number; rejected: number };
 }
 
 export interface BusinessProfileCompleteness {
   complete: boolean;
   missingFields: string[];
   missingDocuments: BusinessDocumentType[];
+  verificationStatus?: BusinessVerificationStatus;
+  verificationNotes?: string | null;
+  verifiedAt?: string | null;
 }
 
 // Full skill catalog entry

@@ -9,6 +9,7 @@ import { PublicMarketplaceShell } from "@/components/marketplace/public-marketpl
 import type { Project } from "@/types";
 import { marketplaceFiltersFromSearchParams } from "@/lib/marketplace-search";
 import { formatAmount } from "@/lib/format";
+import { formatVacancies } from "@/lib/vacancies";
 
 function formatDeadline(dateStr: string): string {
   try {
@@ -44,7 +45,7 @@ function ProjectResult({ project, listingQuery }: { project: Project; listingQue
           {Boolean(project.freelancerLimit && project.freelancerLimit > 1) && (
             <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary/10 border border-primary/20 px-3 py-1 rounded-full">
               <Users className="w-3.5 h-3.5" />
-              {project.freelancerLimit} Openings
+              {formatVacancies(project)}
             </span>
           )}
         </div>

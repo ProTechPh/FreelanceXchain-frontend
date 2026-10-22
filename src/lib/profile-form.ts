@@ -1,5 +1,6 @@
 import type { EmployerProfileUpdate } from '@/lib/api/profiles';
 import type { BusinessDocumentType, BusinessType, EmployerProfile } from '@/types';
+import { isCompleteDateValue, isPartialDateValue } from './date-select.ts';
 
 export type FreelancerProfileForm = {
   bio: string;
@@ -286,13 +287,61 @@ export function validateEmployerProfile(form: EmployerProfileForm): string | nul
   return null;
 }
 
-export function validateExperience(form: ExperienceForm): string | null {
+/** Earliest start date accepted for a work history entry. */
+export const EXPERIENCE_MIN_DATE = '1980-01-01';
+
+/** Today in the user's own time zone, as a date input value (YYYY-MM-DD). */
+export function todayDateInputValue(now = new Date()): string {
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${now.getFullYear()}-${month}-${day}`;
+}
+
+export type ExperienceDateErrors = { startDate?: string; endDate?: string };
+
+/**
+ * Problems with dates the user has entered, shown under each date field.
+ * Empty and half-picked dates are only reported on save (see validateExperience).
+ */
+export function getExperienceDateErrors(
+  form: Pick<ExperienceForm, 'startDate' | 'endDate'>,
+  today = todayDateInputValue(),
+): ExperienceDateErrors {
+  // Dates are compared as strings, so they must be exactly YYYY-MM-DD (a 5-digit year would sort before today).
+  const errors: ExperienceDateErrors = {};
+  const { startDate, endDate } = form;
+  if (startDate && !isPartialDateValue(startDate)) {
+    if (!isCompleteDateValue(startDate)) errors.startDate = 'Enter a valid start date.';
+    else if (startDate < EXPERIENCE_MIN_DATE) errors.startDate = "Start date can't be earlier than 1980.";
+    else if (startDate > today) errors.startDate = "Start date can't be in the future.";
+  }
+  if (endDate && !isPartialDateValue(endDate)) {
+    if (!isCompleteDateValue(endDate)) errors.endDate = 'Enter a valid end date.';
+    else if (endDate > today) errors.endDate = "End date can't be in the future.";
+    else if (isCompleteDateValue(startDate) && !errors.startDate && endDate <= startDate) errors.endDate = 'End date must be after the start date.';
+  }
+  return errors;
+}
+
+/**
+ * First problem in a work history entry, or null when it can be saved.
+ * With `currentlyWorking: false` an end date is required; leaving it unset keeps the
+ * older rule where an empty end date simply means the role is current.
+ */
+export function validateExperience(
+  form: ExperienceForm,
+  today = todayDateInputValue(),
+  { currentlyWorking }: { currentlyWorking?: boolean } = {},
+): string | null {
   if (form.title.trim().length < 2) return 'Job position must be at least 2 characters.';
   if (form.company.trim().length < 2) return 'Company must be at least 2 characters.';
   if (form.description.trim().length < 10) return 'Work history description must be at least 10 characters.';
   if (!form.startDate) return 'Start date is required.';
-  if (form.endDate && form.endDate < form.startDate) return 'End date cannot be before start date.';
-  return null;
+  if (isPartialDateValue(form.startDate)) return 'Choose the year, month and day of your start date.';
+  if (currentlyWorking === false && !form.endDate) return 'Choose an end date, or tick "I currently work here".';
+  if (isPartialDateValue(form.endDate)) return 'Choose the year, month and day of your end date.';
+  const dateErrors = getExperienceDateErrors(form, today);
+  return dateErrors.startDate ?? dateErrors.endDate ?? null;
 }
 
 function experienceKeyPart(value: string | null | undefined): string {

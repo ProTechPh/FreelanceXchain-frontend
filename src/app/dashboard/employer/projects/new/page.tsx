@@ -104,7 +104,7 @@ export default function CreateProjectPage() {
       .then(({ data }) => {
         if (!active) return;
         setBusinessCompleteness(data);
-        setGateOnly(!data.complete && !isDirtyRef.current);
+        setGateOnly((!data.complete || data.verificationStatus !== 'verified') && !isDirtyRef.current);
       })
       .catch((error) => {
         // No employer profile yet: everything is missing. Other failures are left
@@ -276,13 +276,19 @@ export default function CreateProjectPage() {
         ? error.message
         : 'Unable to post the project. Please try again.';
       const message = getApiErrorMessage(error, fallback);
-      if (axios.isAxiosError(error) && error.response?.data?.error?.code === 'BUSINESS_PROFILE_INCOMPLETE') {
+      if (
+        axios.isAxiosError(error) &&
+        (error.response?.data?.error?.code === 'BUSINESS_PROFILE_INCOMPLETE' ||
+          error.response?.data?.error?.code === 'BUSINESS_PROFILE_NOT_VERIFIED')
+      ) {
         const details = error.response.data.error.details as Partial<BusinessProfileCompleteness> | undefined;
-        setBusinessCompleteness({
-          complete: false,
-          missingFields: details?.missingFields ?? [],
-          missingDocuments: details?.missingDocuments ?? [],
-        });
+        setBusinessCompleteness((prev) => ({
+          complete: details?.missingFields && details.missingFields.length > 0 ? false : (prev?.complete ?? false),
+          missingFields: details?.missingFields ?? prev?.missingFields ?? [],
+          missingDocuments: details?.missingDocuments ?? prev?.missingDocuments ?? [],
+          verificationStatus: details?.verificationStatus ?? prev?.verificationStatus ?? 'pending',
+          verificationNotes: details?.verificationNotes ?? prev?.verificationNotes,
+        }));
       }
       setFormError(message);
       toast.error(message);
@@ -291,16 +297,20 @@ export default function CreateProjectPage() {
     }
   };
 
-  const businessProfileIncomplete = businessCompleteness !== null && !businessCompleteness.complete;
+  const businessProfileIncomplete =
+    businessCompleteness !== null &&
+    (!businessCompleteness.complete || businessCompleteness.verificationStatus !== 'verified');
   const businessProfileGate = businessProfileIncomplete && businessCompleteness && (
     <BusinessProfileCompletenessAlert
       completeness={businessCompleteness}
       action={
-        <Button asChild size="sm">
-          <Link href={`/dashboard/employer/profile?tab=${getFirstIncompleteTab(businessCompleteness)}`}>
-            Complete business profile
-          </Link>
-        </Button>
+        !businessCompleteness.complete ? (
+          <Button asChild size="sm">
+            <Link href={`/dashboard/employer/profile?tab=${getFirstIncompleteTab(businessCompleteness)}`}>
+              Complete business profile
+            </Link>
+          </Button>
+        ) : undefined
       }
     />
   );

@@ -15,6 +15,8 @@ import {
   getRequiredBusinessDocuments,
   validateEmployerProfile,
   validateExperience,
+  getExperienceDateErrors,
+  todayDateInputValue,
   findDuplicateExperience,
   validateFreelancerProfile,
 } from './profile-form.ts';
@@ -77,8 +79,46 @@ test('converts between the employer profile and the form', () => {
 
 test('requires coherent experience dates and backend minimum lengths', () => {
   assert.equal(validateExperience({ title: 'Engineer', company: 'Acme', description: 'Built accessible products', startDate: '', endDate: null }), 'Start date is required.');
-  assert.equal(validateExperience({ title: 'Engineer', company: 'Acme', description: 'Built accessible products', startDate: '2026-01-01', endDate: '2025-01-01' }), 'End date cannot be before start date.');
+  assert.equal(validateExperience({ title: 'Engineer', company: 'Acme', description: 'Built accessible products', startDate: '2026-01-01', endDate: '2025-01-01' }), 'End date must be after the start date.');
   assert.equal(validateExperience({ title: 'Engineer', company: 'Acme', description: 'Built accessible products', startDate: '2025-01-01', endDate: null }), null);
+});
+
+test('rejects work history dates in the future or out of range', () => {
+  const today = '2026-10-22';
+  const entry = (startDate, endDate) => ({ title: 'Engineer', company: 'Acme', description: 'Built accessible products', startDate, endDate });
+  assert.equal(validateExperience(entry('2026-10-23', null), today), "Start date can't be in the future.");
+  assert.equal(validateExperience(entry('2100-01-01', null), today), "Start date can't be in the future.");
+  assert.equal(validateExperience(entry('20000-01-01', null), today), 'Enter a valid start date.');
+  assert.equal(validateExperience(entry('1979-12-31', null), today), "Start date can't be earlier than 1980.");
+  assert.equal(validateExperience(entry('2025-01-01', '2026-10-23'), today), "End date can't be in the future.");
+  assert.equal(validateExperience(entry('2025-01-01', '2100-01-01'), today), "End date can't be in the future.");
+  assert.equal(validateExperience(entry('2025-01-01', '20000-01-01'), today), 'Enter a valid end date.');
+  assert.equal(validateExperience(entry('2026-10-22', '2026-10-22'), today), 'End date must be after the start date.');
+  assert.equal(validateExperience(entry('2026-10-21', '2026-10-22'), today), null);
+  assert.equal(validateExperience(entry('2026-10-22', null), today), null);
+  assert.equal(validateExperience(entry('1980-01-01', null), today), null);
+  assert.equal(validateExperience(entry('2024', null), today), 'Choose the year, month and day of your start date.');
+  assert.equal(validateExperience(entry('2024-01-01', '2025-03'), today), 'Choose the year, month and day of your end date.');
+  assert.deepEqual(getExperienceDateErrors({ startDate: '2024-05', endDate: '2025' }, today), {});
+});
+
+test('reports each work history date problem under its own field', () => {
+  const today = '2026-10-22';
+  assert.deepEqual(getExperienceDateErrors({ startDate: '', endDate: null }, today), {});
+  assert.deepEqual(getExperienceDateErrors({ startDate: '2100-01-01', endDate: '2100-02-01' }, today), {
+    startDate: "Start date can't be in the future.",
+    endDate: "End date can't be in the future.",
+  });
+  assert.deepEqual(getExperienceDateErrors({ startDate: '2025-01-01', endDate: '2024-01-01' }, today), {
+    endDate: 'End date must be after the start date.',
+  });
+  assert.deepEqual(getExperienceDateErrors({ startDate: '', endDate: '2027-01-01' }, today), {
+    endDate: "End date can't be in the future.",
+  });
+});
+
+test('formats today as a local date input value', () => {
+  assert.equal(todayDateInputValue(new Date(2026, 0, 5, 23, 30)), '2026-01-05');
 });
 
 test('finds a work history entry with the same position, company and dates', () => {
@@ -154,4 +194,15 @@ test('says what to enter for empty fields and what is wrong for invalid ones', (
     getEmployerStepErrors({ ...validEmployer, businessType: '', registrationNumber: '' }, 'business').registrationNumber,
     'Enter your DTI or SEC registration number.',
   );
+});
+
+test('requires an end date unless the user currently works there', () => {
+  const today = '2026-10-22';
+  const entry = (endDate) => ({ title: 'Engineer', company: 'Acme', description: 'Built accessible products', startDate: '2024-01-01', endDate });
+  assert.equal(
+    validateExperience(entry(null), today, { currentlyWorking: false }),
+    'Choose an end date, or tick "I currently work here".',
+  );
+  assert.equal(validateExperience(entry(null), today, { currentlyWorking: true }), null);
+  assert.equal(validateExperience(entry('2025-06-30'), today, { currentlyWorking: false }), null);
 });

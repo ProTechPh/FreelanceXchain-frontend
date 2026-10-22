@@ -9,6 +9,7 @@ import {
   draftFromOffer,
   todayIso,
   floorToUnits,
+  minimumBaseAmount,
   roundEth,
 } from './contract-terms.ts';
 
@@ -40,10 +41,19 @@ test('a valid draft passes and reports totals', () => {
   assert.equal(result.totals.remaining, 0);
 });
 
-test('the base amount cannot go below the floor', () => {
-  const result = validateOfferDraft(draft({ baseAmount: 1.99, additionalPay: 0.51 }), 2, { now });
+test('the base amount can go down to half the freelancer rate but not below', () => {
+  assert.equal(validateOfferDraft(draft({ baseAmount: 1.99, additionalPay: 0.51 }), 2, { now }).errors.baseAmount, undefined);
+  assert.equal(validateOfferDraft(draft({ baseAmount: 1, additionalPay: 1.5 }), 2, { now }).errors.baseAmount, undefined);
+  const result = validateOfferDraft(draft({ baseAmount: 0.9999, additionalPay: 1.5001 }), 2, { now });
   assert.equal(result.valid, false);
-  assert.match(result.errors.baseAmount, /can't go below/);
+  assert.equal(result.errors.baseAmount, "The base amount can't go below half of the freelancer's rate (1 ETH).");
+});
+
+test('the minimum base amount is half the rate, rounded up to 4 decimals', () => {
+  assert.equal(minimumBaseAmount(2), 1);
+  assert.equal(minimumBaseAmount(0.1294), 0.0647);
+  assert.equal(minimumBaseAmount(0.1535), 0.0768);
+  assert.equal(minimumBaseAmount(0.0001), 0.0001);
 });
 
 test('unallocated or over-allocated totals are reported on milestones', () => {
@@ -110,7 +120,8 @@ test('builder drafts start from the open offer or the posting template', () => {
 test('4-decimal proposed rates are the exact floor', () => {
   assert.equal(floorToUnits(0.1534), 0.1534);
   assert.equal(floorToUnits(0.15345), 0.1535);
-  assert.match(validateOfferDraft(draft({ baseAmount: 0.15, additionalPay: 2.35 }), 0.1534, { now }).errors.baseAmount, /0.1534 ETH/);
+  assert.equal(validateOfferDraft(draft({ baseAmount: 0.15, additionalPay: 2.35 }), 0.1534, { now }).errors.baseAmount, undefined);
+  assert.match(validateOfferDraft(draft({ baseAmount: 0.0766, additionalPay: 2.4234 }), 0.1534, { now }).errors.baseAmount, /0.0767 ETH/);
   assert.equal(draftFromOffer(null, { floor: 0.1534, deadline: '2026-12-31', isRush: false, rushFeePercentage: 0, milestones: [] }, now).baseAmount, 0.1534);
   assert.equal(roundEth(22336.5 / 155000), 0.1441);
 });

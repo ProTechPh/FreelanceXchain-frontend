@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { ArrowLeft, ArrowRight, Building2, FileText, Landmark } from 'lucide-react';
 import { employersApi } from '@/lib/api';
+import { getApiErrorMessage } from '@/lib/auth-contract';
 import {
   BUSINESS_DOCUMENT_LABELS,
   BUSINESS_TYPE_OPTIONS,
@@ -45,20 +46,98 @@ export function BusinessProfileCompletenessAlert({
   completeness,
   action,
   summary = false,
+  onSubmitted,
 }: {
   completeness: BusinessProfileCompleteness;
   /** Optional next step, e.g. a link to the profile page. */
   action?: React.ReactNode;
   /** One-line count instead of the full list (the profile tabs list the items themselves). */
   summary?: boolean;
+  onSubmitted?: () => void;
 }) {
-  if (completeness.complete) {
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmitVerification = async () => {
+    setSubmitting(true);
+    try {
+      await employersApi.submitForVerification();
+      toast.success('Business profile submitted for admin verification.');
+      onSubmitted?.();
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Unable to submit profile for verification.'));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (completeness.verificationStatus === 'rejected') {
+    return (
+      <Alert
+        tone="destructive"
+        title="Business profile not verified"
+        description={
+          completeness.verificationNotes
+            ? `Admin notes: "${completeness.verificationNotes}". Please update your business details or documents based on the admin's notes, then resubmit for verification.`
+            : 'Your business profile was returned as not verified. Please update your business details or documents based on admin notes, then resubmit.'
+        }
+        action={
+          completeness.complete ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              loading={submitting}
+              onClick={handleSubmitVerification}
+            >
+              Resubmit for verification
+            </Button>
+          ) : action
+        }
+      />
+    );
+  }
+
+  if (completeness.verificationStatus === 'verified') {
     return (
       <Alert
         tone="success"
         live={false}
+        title="Business profile verified"
+        description="Your business details and documents have been confirmed and verified by admin."
+        action={action}
+      />
+    );
+  }
+
+  if (completeness.verificationStatus === 'pending') {
+    return (
+      <Alert
+        tone="info"
+        title="Business profile under admin review"
+        description="Your business details and documents are currently under review by admin. You will be notified once verified."
+        action={action}
+      />
+    );
+  }
+
+  if (completeness.complete) {
+    return (
+      <Alert
+        tone="info"
+        live={false}
         title="Business profile complete"
-        description="You can post projects. Keep your business details and documents up to date."
+        description="All required business fields and documents are uploaded. Submit your profile for admin verification."
+        action={
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            loading={submitting}
+            onClick={handleSubmitVerification}
+          >
+            Submit for verification
+          </Button>
+        }
       />
     );
   }
@@ -143,7 +222,7 @@ function focusField(field: keyof EmployerProfileForm) {
 }
 
 export interface EmployerOnboardingControls {
-  /** Save and switch to employer; called from the last step. */
+  /** Save and submit for verification; called from the last step. */
   onFinish: () => void;
   finishing: boolean;
 }
@@ -184,8 +263,8 @@ function StepFooter({
           <ArrowRight className="size-4" aria-hidden="true" />
         </Button>
       ) : (
-        <Button type="button" onClick={() => onContinue(tab)} loading={finishing} loadingText="Finishing…">
-          Finish &amp; switch to employer
+        <Button type="button" onClick={() => onContinue(tab)} loading={finishing} loadingText="Submitting…">
+          Finish &amp; submit for verification
         </Button>
       )}
     </div>
@@ -323,7 +402,7 @@ export function EmployerProfileFields({
 
   return (
     <>
-      {completeness && <BusinessProfileCompletenessAlert completeness={completeness} summary />}
+      {completeness && <BusinessProfileCompletenessAlert completeness={completeness} summary onSubmitted={() => void refreshCompleteness()} />}
 
       <Tabs value={activeTab} onValueChange={changeTab} className="gap-4">
         <TabsList className="w-full flex-nowrap sm:w-fit">

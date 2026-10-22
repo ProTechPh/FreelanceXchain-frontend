@@ -8,6 +8,7 @@ import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ProposalSubmittedBadge } from '@/components/proposals/proposal-submitted-badge';
 import type { Project, ProposalStatus } from '@/types';
+import { formatVacancies } from '@/lib/vacancies';
 
 interface ProjectListItemProps {
   project: Project;
@@ -141,8 +142,8 @@ export const ProjectListItem = React.memo(function ProjectListItem({
                 <span aria-hidden="true">•</span>
                 <div className="flex items-center gap-1 font-semibold text-primary">
                   <Users className="size-3" aria-hidden="true" />
-                  <dt className="sr-only">Openings</dt>
-                  <dd>{project.hiredCount ?? 0}/{project.freelancerLimit} hired</dd>
+                  <dt className="sr-only">Vacancies</dt>
+                  <dd>{formatVacancies(project)}</dd>
                 </div>
               </>
             )}

@@ -8,6 +8,8 @@ import {
   formatPercent,
   formatDate,
   formatRelativeTime,
+  formatGroupedNumberInput,
+  parseGroupedNumber,
 } from './format.ts';
 
 test('formatAmount drops cents for whole values and keeps them otherwise', () => {
@@ -83,3 +85,32 @@ test('formatAuditAction converts variable names to human-readable labels', async
   assert.equal(formatAuditResource('unknown_resource_type'), 'Unknown Resource Type');
 });
 
+
+test('formats typed peso amounts with comma separators', () => {
+  const text = (raw) => formatGroupedNumberInput(raw).text;
+  assert.equal(text('20000'), '20,000');
+  assert.equal(text('1234567.5'), '1,234,567.5');
+  assert.equal(text('20,0000'), '200,000');
+  assert.equal(text('9933.'), '9,933.');
+  assert.equal(text('99.999'), '99.99');
+  assert.equal(text('0012'), '12');
+  assert.equal(text('1.2.3'), '1.23');
+  assert.equal(text('abc'), '');
+  assert.equal(text('500'), '500');
+});
+
+test('keeps the caret after the same digit when commas are added or removed', () => {
+  // Typing a 5th digit at the end: "2000|" + "0" → "20,000|"
+  assert.deepEqual(formatGroupedNumberInput('20000', 5), { text: '20,000', caret: 6 });
+  // Inserting "5" after the first digit of "1,000": "15,000" with caret after the 5
+  assert.deepEqual(formatGroupedNumberInput('15,000', 2), { text: '15,000', caret: 2 });
+  // Deleting a digit: "12,34|5" → "1,234|5" keeps the caret before the 5
+  assert.deepEqual(formatGroupedNumberInput('12,345'.replace('3', ''), 4), { text: '1,245', caret: 4 });
+  assert.deepEqual(formatGroupedNumberInput('', 0), { text: '', caret: 0 });
+});
+
+test('parses comma-separated amounts', () => {
+  assert.equal(parseGroupedNumber('20,000'), 20000);
+  assert.equal(parseGroupedNumber('1,234.56'), 1234.56);
+  assert.ok(Number.isNaN(parseGroupedNumber('')));
+});

@@ -9,10 +9,11 @@ import Link from 'next/link';
 import { projectsApi } from '@/lib/api';
 import type { Project, ProjectStatus } from '@/types';
 import { reportLoadFailure } from '@/lib/report-failure';
-import { PlusCircle, Clock, Coins, Users, Eye, FolderSearch, ClipboardList, Pencil } from 'lucide-react';
+import { PlusCircle, Clock, Coins, Users, Eye, FolderSearch, ClipboardList, Pencil, Briefcase } from 'lucide-react';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { formatAmount, formatDate } from '@/lib/format';
 import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
+import { formatVacancies } from '@/lib/vacancies';
 import { cn } from '@/lib/utils';
 
 type StatusFilter = 'all' | ProjectStatus;
@@ -181,6 +182,10 @@ export default function EmployerProjectsPage() {
                     <div className="flex items-center gap-1">
                       <Users className="w-4 h-4" />
                       {project.proposalCount ?? 0} proposals
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Briefcase className="w-4 h-4" />
+                      {formatVacancies(project)}
                     </div>
                     <div className="flex items-center gap-1">
                       <Clock className="w-4 h-4" />

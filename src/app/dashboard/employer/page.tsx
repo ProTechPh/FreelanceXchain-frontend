@@ -41,7 +41,12 @@
 
 "use client";
 
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BusinessProfileCompletenessAlert } from "@/components/dashboard/employer-profile-fields";
+import { employersApi } from "@/lib/api";
+import { getFirstIncompleteTab } from "@/lib/profile-form";
+import type { BusinessProfileCompleteness } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -83,6 +88,21 @@ export default function EmployerDashboard() {
     totalSpent,
     completedContractCount,
   } = useEmployerDashboard();
+
+  const [businessCompleteness, setBusinessCompleteness] = useState<BusinessProfileCompleteness | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    employersApi
+      .getCompleteness()
+      .then(({ data }) => {
+        if (active) setBusinessCompleteness(data);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
   const { formatEthToPhp } = useEthPhpRate();
 
   if (loading) {
@@ -153,6 +173,25 @@ export default function EmployerDashboard() {
           </Link>
         </Button>
       </div>
+
+      {/* Business Profile Verification Banner if unverified / pending / rejected / incomplete */}
+      {businessCompleteness && (!businessCompleteness.complete || businessCompleteness.verificationStatus !== 'verified') && (
+        <BusinessProfileCompletenessAlert
+          completeness={businessCompleteness}
+          onSubmitted={() => {
+            void employersApi.getCompleteness().then(({ data }) => setBusinessCompleteness(data)).catch(() => {});
+          }}
+          action={
+            !businessCompleteness.complete ? (
+              <Button asChild size="sm">
+                <Link href={`/dashboard/employer/profile?tab=${getFirstIncompleteTab(businessCompleteness)}`}>
+                  Complete business profile
+                </Link>
+              </Button>
+            ) : undefined
+          }
+        />
+      )}
 
       {/* Wallet Connect Banner if unlinked */}
       <WalletConnectBanner role="employer" />

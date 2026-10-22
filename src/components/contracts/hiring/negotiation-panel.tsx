@@ -8,7 +8,7 @@ import type { ContractOfferInput, ContractPartyRole, NegotiationState } from '@/
 import { contractsApi, negotiationApi } from '@/lib/api';
 import { reportFailure } from '@/lib/report-failure';
 import { getDirectMessageRoute } from '@/lib/dashboard-message-route';
-import { draftFromOffer, floorToUnits } from '@/lib/contract-terms';
+import { draftFromOffer, floorToUnits, minimumBaseAmount } from '@/lib/contract-terms';
 import { formatAmount } from '@/lib/format';
 import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 import { Button } from '@/components/ui/button';
@@ -37,7 +37,7 @@ const roleLabel = (role: ContractPartyRole, viewer: ContractPartyRole) =>
 
 /**
  * Structured negotiation between accepting a proposal and signing: offers and
- * counter-offers with the freelancer's rate as the floor. Discussion happens in
+ * counter-offers whose base amount can go down to half the freelancer's rate. Discussion happens in
  * the existing chat.
  */
 export function NegotiationPanel({
@@ -97,8 +97,9 @@ export function NegotiationPanel({
             Negotiate terms
           </CardTitle>
           <CardDescription>
-            Agree on milestones, extra pay, deadline and rush fee. The base amount can&apos;t go below the
-            freelancer&apos;s rate of {formatEthToPhp(floorToUnits(floor.proposedRate))} ({formatAmount(floorToUnits(floor.proposedRate), { currency: 'ETH' })}).
+            Agree on milestones, extra pay, deadline and rush fee. The base amount can&apos;t go below half of the
+            freelancer&apos;s rate of {formatEthToPhp(floorToUnits(floor.proposedRate))} ({formatAmount(floorToUnits(floor.proposedRate), { currency: 'ETH' })}),
+            so at least {formatEthToPhp(minimumBaseAmount(floor.proposedRate))} ({formatAmount(minimumBaseAmount(floor.proposedRate), { currency: 'ETH' })}).
           </CardDescription>
         </div>
         <Button asChild variant="outline" size="sm" className="shrink-0">

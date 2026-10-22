@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Eye, FileText } from 'lucide-react';
+import { CheckCircle2, Eye, FileText } from 'lucide-react';
 import { employersApi } from '@/lib/api';
 import { BUSINESS_DOCUMENT_LABELS, getBusinessTypeLabel, getRegistrationNumberLabel } from '@/lib/profile-form';
 import type { BusinessDocument, EmployerProfile } from '@/types';
@@ -74,7 +74,15 @@ export function EmployerBusinessInfo({
     <div className="space-y-4">
       {(details.length > 0 || website) && (
         <div>
-          <h3 className={headingClass}>Business information</h3>
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <h3 className={headingClass.replace(/mb-\d/, 'mb-0')}>Business information</h3>
+            {profile?.verificationStatus === 'verified' && (
+              <Badge className="bg-success-subtle text-success gap-1">
+                <CheckCircle2 className="size-3.5" />
+                Verified Business
+              </Badge>
+            )}
+          </div>
           <dl className="grid grid-cols-1 gap-x-4 gap-y-2 rounded-2xl border border-border/50 bg-muted/40 p-4 text-sm sm:grid-cols-2">
             {details.map((item) => (
               <div key={item.label} className="min-w-0">
