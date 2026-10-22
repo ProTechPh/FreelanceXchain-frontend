@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
+  getFreelancerLimitError,
   submitProject,
   validateProjectStep,
 } from './project-submission.ts';
@@ -253,3 +254,15 @@ test('calculates progressive milestone due dates based on durationDays', async (
   ]);
 });
 
+
+test('freelancers needed must be a whole number from 1 to 50, not below those already hired', () => {
+  assert.equal(getFreelancerLimitError(''), 'Enter how many freelancers you need.');
+  assert.equal(getFreelancerLimitError('0'), 'Enter a whole number of at least 1.');
+  assert.equal(getFreelancerLimitError('-2'), 'Enter a whole number of at least 1.');
+  assert.equal(getFreelancerLimitError('2.5'), 'Enter a whole number of at least 1.');
+  assert.equal(getFreelancerLimitError('51'), 'You can take on at most 50 freelancers.');
+  assert.equal(getFreelancerLimitError('2', 3), "You've already hired 3, so this can't be lower than 3.");
+  assert.equal(getFreelancerLimitError('3', 3), null);
+  assert.equal(getFreelancerLimitError('1'), null);
+  assert.equal(getFreelancerLimitError('50'), null);
+});

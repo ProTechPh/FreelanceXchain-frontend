@@ -90,6 +90,23 @@ function getDeadlineTimestamp(deadline: string): string {
   return `${deadline}T23:59:59.999Z`;
 }
 
+/** Most freelancers a single project can take on. */
+export const MAX_FREELANCER_LIMIT = 50;
+
+/**
+ * Problem with the "Freelancers needed" value as typed, or null when it is fine.
+ * It can't drop below the freelancers already hired on the project.
+ */
+export function getFreelancerLimitError(value: string, hiredCount = 0): string | null {
+  const text = value.trim();
+  if (text === '') return 'Enter how many freelancers you need.';
+  const limit = Number(text);
+  if (!Number.isInteger(limit) || limit < 1) return 'Enter a whole number of at least 1.';
+  if (limit > MAX_FREELANCER_LIMIT) return `You can take on at most ${MAX_FREELANCER_LIMIT} freelancers.`;
+  if (limit < hiredCount) return `You've already hired ${hiredCount}, so this can't be lower than ${hiredCount}.`;
+  return null;
+}
+
 export function validateProjectStep(
   step: number,
   form: ProjectSubmissionForm,

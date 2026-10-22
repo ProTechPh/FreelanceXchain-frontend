@@ -12,7 +12,7 @@ import { useAuthStore } from '@/stores/authStore';
 import Image from 'next/image';
 import { hasApprovedKyc } from '@/lib/kyc-eligibility';
 import { formatFileSize, safeAttachmentUrl } from '@/lib/attachment-presentation';
-import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
+import { getFreelancerLimitError, MAX_FREELANCER_LIMIT } from '@/lib/project-submission';
 import type { Project, ProjectStatus, Attachment } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -30,6 +30,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { DetailSkeleton } from '@/components/dashboard/skeletons';
 import { Field } from '@/components/ui/field';
 import { Badge } from '@/components/ui/badge';
+import { Alert } from '@/components/ui/alert';
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -50,7 +51,6 @@ import {
 const MAX_FILES = 10;
 
 function EditProjectContent() {
-  const { formatEthToPhp } = useEthPhpRate();
   const params = useParams<{ id: string }>();
   const projectId = (params?.id as string) ?? '';
   const router = useRouter();
@@ -60,9 +60,9 @@ function EditProjectContent() {
   const [project, setProject] = useState<Project | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [budget, setBudget] = useState('');
   const [deadline, setDeadline] = useState('');
-  const [freelancerLimit, setFreelancerLimit] = useState(1);
+  // Kept as typed so the field can be cleared; getFreelancerLimitError says what's wrong.
+  const [freelancerLimit, setFreelancerLimit] = useState('1');
   const [status, setStatus] = useState<ProjectStatus>('draft');
   const [existingAttachments, setExistingAttachments] = useState<Attachment[]>([]);
   const [newFiles, setNewFiles] = useState<File[]>([]);
@@ -80,9 +80,8 @@ function EditProjectContent() {
         setProject(data);
         setTitle(data.title);
         setDescription(data.description);
-        setBudget(String(data.budget ?? ''));
         setDeadline(data.deadline ? data.deadline.slice(0, 10) : '');
-        setFreelancerLimit(data.freelancerLimit ?? 1);
+        setFreelancerLimit(String(data.freelancerLimit ?? 1));
         setStatus(data.status);
         setExistingAttachments(data.attachments || []);
       })
@@ -178,7 +177,7 @@ function EditProjectContent() {
       let finalAttachments: Attachment[] = [...existingAttachments];
 
       // Upload newly added files if any
-      if (newFiles.length > 0) {
+      if (newFiles.length > 0 && !scopeLocked) {
         setUploadingProgress(true);
         const uploaded = await Promise.all(
           newFiles.map(async (file) => {
@@ -197,16 +196,21 @@ function EditProjectContent() {
         finalAttachments = [...finalAttachments, ...uploaded];
       }
 
-      const parsedBudget = budget ? Number(budget) : 1;
       const parsedDeadline = deadline ? `${deadline}T23:59:59.999Z` : new Date(Date.now() + 90 * 86400000).toISOString();
-      const limit = Math.max(1, Math.min(50, Number(freelancerLimit) || 1));
+
+      if (scopeLocked) {
+        // Hired freelancers agreed to this scope: only the openings may change.
+        await projectsApi.update(projectId, { freelancerLimit: Number(freelancerLimit) });
+        toast.success('Project updated.');
+        router.push('/dashboard/employer/projects');
+        return;
+      }
 
       await projectsApi.update(projectId, {
         title: title.trim(),
         description: description.trim(),
-        budget: parsedBudget,
         deadline: parsedDeadline,
-        freelancerLimit: limit,
+        freelancerLimit: Number(freelancerLimit),
         status,
         attachments: finalAttachments,
       });
@@ -221,13 +225,17 @@ function EditProjectContent() {
     }
   };
 
+  const hiredCount = project?.hiredCount ?? 0;
+  // Once anyone is hired, the API keeps the project as agreed; only openings can change.
+  const scopeLocked = hiredCount > 0;
+  const freelancerLimitError = getFreelancerLimitError(freelancerLimit, hiredCount);
+
   const save = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (freelancerLimitError) return;
+    if (scopeLocked) return executeSave();
     if (title.trim().length < 5) return toast.error('Project title must be at least 5 characters. Make it descriptive so freelancers know what to expect.');
     if (description.trim().length < 20) return toast.error('Project description must be at least 20 characters. Include requirements and expected outcomes.');
-    if (budget && (Number(budget) <= 0 || !Number.isFinite(Number(budget)))) {
-      return toast.error('Enter a valid budget greater than 0, or leave empty if terms are negotiable.');
-    }
 
     if (status === 'cancelled' && project?.status !== 'cancelled') {
       setConfirmCancelOpen(true);
@@ -282,7 +290,11 @@ function EditProjectContent() {
       <Card>
         <CardHeader>
           <CardTitle>Edit project</CardTitle>
-          <CardDescription>Update your project scope, budget, timeline, and reference images or attachments.</CardDescription>
+          <CardDescription>
+            {scopeLocked
+              ? 'Change how many freelancers this project needs.'
+              : 'Update your project scope, timeline, and reference images or attachments.'}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {!verified ? (
@@ -294,55 +306,52 @@ function EditProjectContent() {
             </div>
           ) : (
             <form className="space-y-6" onSubmit={save}>
-              <Field label="Title" htmlFor="edit-title">
-                <Input id="edit-title" value={title} onChange={(event) => setTitle(event.target.value)} />
+              {scopeLocked && (
+                <Alert
+                  tone="info"
+                  live={false}
+                  title={`${hiredCount} freelancer${hiredCount === 1 ? ' is' : 's are'} already hired`}
+                  description={`The project details are locked so they stay as agreed. You can still change how many freelancers you need, down to ${hiredCount}.`}
+                />
+              )}
+
+              <Field label="Title" htmlFor="edit-title" disabled={scopeLocked}>
+                <Input id="edit-title" value={title} disabled={scopeLocked} onChange={(event) => setTitle(event.target.value)} />
               </Field>
 
-              <Field label="Description" htmlFor="edit-description">
+              <Field label="Description" htmlFor="edit-description" disabled={scopeLocked}>
                 <Textarea
                   id="edit-description"
                   rows={6}
+                  disabled={scopeLocked}
                   value={description}
                   onChange={(event) => setDescription(event.target.value)}
                 />
               </Field>
 
-              <div className="grid gap-4 sm:grid-cols-3">
-                <Field label="Freelancers Needed" htmlFor="edit-freelancer-limit">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Freelancers Needed" htmlFor="edit-freelancer-limit" error={freelancerLimitError}>
                   <Input
                     id="edit-freelancer-limit"
                     type="number"
+                    inputMode="numeric"
                     min="1"
-                    max="50"
+                    max={MAX_FREELANCER_LIMIT}
+                    step="1"
                     value={freelancerLimit}
-                    onChange={(event) => setFreelancerLimit(Math.max(1, parseInt(event.target.value) || 1))}
+                    aria-invalid={Boolean(freelancerLimitError) || undefined}
+                    onChange={(event) => setFreelancerLimit(event.target.value)}
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Max freelancers who can join (e.g. 5).
+                    {scopeLocked
+                      ? `Max freelancers who can join. At least ${hiredCount}, the number already hired.`
+                      : 'Max freelancers who can join (e.g. 5).'}
                   </p>
                 </Field>
-                <Field label="Budget (ETH, Optional)" htmlFor="edit-budget">
-                  <Input
-                    id="edit-budget"
-                    type="number"
-                    min="0"
-                    step="any"
-                    placeholder="Flexible / Negotiable"
-                    value={budget}
-                    onChange={(event) => setBudget(event.target.value)}
-                  />
-                  {budget && parseFloat(budget) > 0 && (
-                    <p className="text-2xs font-medium text-primary mt-1">
-                      ≈ {formatEthToPhp(budget)}
-                    </p>
-                  )}
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Agreed upon per freelancer.
-                  </p>
-                </Field>
-                <Field label="Target Deadline (Optional)" htmlFor="edit-deadline">
+                <Field label="Target Deadline (Optional)" htmlFor="edit-deadline" disabled={scopeLocked}>
                   <Input
                     id="edit-deadline"
+                    disabled={scopeLocked}
                     type="date"
                     value={deadline}
                     onChange={(event) => setDeadline(event.target.value)}
@@ -357,7 +366,8 @@ function EditProjectContent() {
                 <Label htmlFor="edit-status">Status</Label>
                 <select
                   id="edit-status"
-                  className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm"
+                  disabled={scopeLocked}
+                  className="h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
                   value={status}
                   onChange={(event) => setStatus(event.target.value as ProjectStatus)}
                 >
@@ -426,17 +436,19 @@ function EditProjectContent() {
                                   </a>
                                 </Button>
                               )}
-                              <Button
-                                type="button"
-                                size="icon"
-                                variant="ghost"
-                                className="size-8 sm:size-7 text-destructive hover:text-destructive hover:bg-destructive/10 touch-manipulation"
-                                onClick={() => removeExistingAttachment(index)}
-                                title="Remove attachment"
-                                aria-label={`Remove attachment ${att.filename}`}
-                              >
-                                <Trash2 className="size-3.5" />
-                              </Button>
+                              {!scopeLocked && (
+                                <Button
+                                  type="button"
+                                  size="icon"
+                                  variant="ghost"
+                                  className="size-8 sm:size-7 text-destructive hover:text-destructive hover:bg-destructive/10 touch-manipulation"
+                                  onClick={() => removeExistingAttachment(index)}
+                                  title="Remove attachment"
+                                  aria-label={`Remove attachment ${att.filename}`}
+                                >
+                                  <Trash2 className="size-3.5" />
+                                </Button>
+                              )}
                             </div>
                           </div>
                         );
@@ -499,7 +511,7 @@ function EditProjectContent() {
                 )}
 
                 {/* Upload Button / Dropzone */}
-                {existingAttachments.length + newFiles.length < MAX_FILES && (
+                {!scopeLocked && existingAttachments.length + newFiles.length < MAX_FILES && (
                   <div>
                     <input
                       ref={fileInputRef}
@@ -528,7 +540,7 @@ function EditProjectContent() {
               </div>
 
               <div className="flex items-center gap-3 pt-2">
-                <Button type="submit" loading={saving} loadingText={uploadingProgress ? 'Uploading files…' : 'Saving…'}>
+                <Button type="submit" disabled={Boolean(freelancerLimitError)} loading={saving} loadingText={uploadingProgress ? 'Uploading files…' : 'Saving…'}>
                   <Save className="size-4" aria-hidden="true" />
                   Save changes
                 </Button>
