@@ -20,14 +20,26 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 
 const STATUS_FILTERS: { key: AdminBusinessProfileStatus; label: string; count: keyof AdminBusinessProfileList['counts'] }[] = [
   { key: 'all', label: 'All', count: 'all' },
-  { key: 'with_documents', label: 'With documents', count: 'withDocuments' },
+  { key: 'pending', label: 'Pending review', count: 'pending' },
+  { key: 'verified', label: 'Verified', count: 'verified' },
+  { key: 'rejected', label: 'Not verified', count: 'rejected' },
   { key: 'complete', label: 'Complete', count: 'complete' },
   { key: 'incomplete', label: 'Incomplete', count: 'incomplete' },
+  { key: 'with_documents', label: 'With documents', count: 'withDocuments' },
 ];
 
 function StatusBadge({ item }: { item: AdminBusinessProfileSummary }) {
+  if (item.verificationStatus === 'verified') {
+    return <Badge className="bg-success-subtle text-success">Verified</Badge>;
+  }
+  if (item.verificationStatus === 'rejected') {
+    return <Badge className="bg-destructive-subtle text-destructive">Not Verified</Badge>;
+  }
+  if (item.verificationStatus === 'pending') {
+    return <Badge className="border-blue-500/20 bg-blue-500/10 text-blue-500">Pending Review</Badge>;
+  }
   if (item.complete) {
-    return <Badge className="bg-success-subtle text-success">Complete</Badge>;
+    return <Badge className="bg-secondary text-secondary-foreground">Complete</Badge>;
   }
   const missing = item.missingFieldCount + item.missingDocumentCount;
   return (
@@ -68,34 +80,31 @@ export default function AdminBusinessDocumentsPage() {
   const debouncedSearch = useDebounce(search.trim(), 300);
   const [viewing, setViewing] = useState<AdminBusinessProfileSummary | null>(null);
 
-  const load = useCallback(
-    () =>
-      adminApi.listEmployerBusinessProfiles({
+  const refresh = useCallback(() => {
+    let active = true;
+    setLoading(true);
+    adminApi
+      .listEmployerBusinessProfiles({
         status,
         ...(debouncedSearch ? { search: debouncedSearch } : {}),
-      }),
-    [status, debouncedSearch],
-  );
-
-  useEffect(() => {
-    let active = true;
-    function run() {
-      load()
-        .then(({ data: response }) => {
-          if (active) setData(response);
-        })
-        .catch((error) => {
-          if (active) reportLoadFailure(error, 'business documents', run);
-        })
-        .finally(() => {
-          if (active) setLoading(false);
-        });
-    }
-    run();
+      })
+      .then(({ data: response }) => {
+        if (active) setData(response);
+      })
+      .catch((error) => {
+        if (active) reportLoadFailure(error, 'business documents', refresh);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
     return () => {
       active = false;
     };
-  }, [load]);
+  }, [status, debouncedSearch]);
+
+  useEffect(() => {
+    return refresh();
+  }, [refresh]);
 
   const items = data?.items ?? [];
 
@@ -249,6 +258,7 @@ export default function AdminBusinessDocumentsPage() {
             if (!open) setViewing(null);
           }}
           user={viewing ? { id: viewing.userId, name: viewing.name, email: viewing.email } : null}
+          onUpdated={refresh}
         />
       </div>
     </AdminPermissionGate>

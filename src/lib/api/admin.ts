@@ -73,6 +73,12 @@ export const adminApi = {
       completeness: BusinessProfileCompleteness | null;
     }>(`/admin/employers/${userId}/business-profile`),
 
+  verifyEmployerBusinessProfile: (userId: string, data?: { notes?: string }) =>
+    api.post<{ success: boolean; profile: EmployerProfile }>(`/admin/employers/${userId}/business-profile/verify`, data),
+
+  rejectEmployerBusinessProfile: (userId: string, data: { notes: string }) =>
+    api.post<{ success: boolean; profile: EmployerProfile }>(`/admin/employers/${userId}/business-profile/reject`, data),
+
   impersonateUser: (userId: string) =>
     api.post<{ user: AdminUser; accessToken: string }>(`/admin/users/${userId}/impersonate`),
 

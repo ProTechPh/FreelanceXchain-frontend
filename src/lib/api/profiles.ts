@@ -93,6 +93,9 @@ export const employersApi = {
   ensureProfile: () =>
     api.post<EmployerProfile>('/employers/profile'),
 
+  submitForVerification: () =>
+    api.post<{ verificationStatus: string; message: string }>('/employers/profile/submit-verification'),
+
   getCompleteness: () =>
     api.get<BusinessProfileCompleteness>('/employers/profile/completeness'),
 

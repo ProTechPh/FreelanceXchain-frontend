@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Briefcase, ExternalLink, Pencil, Plus, Save, Share2, Trash2, UserRound, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { skillsApi, freelancersApi } from '@/lib/api';
+import { skillsApi, freelancersApi, employersApi } from '@/lib/api';
 import { useUnsavedChangesWarning } from '@/hooks/use-unsaved-changes-warning';
 import { useProfileEditor } from '@/hooks/use-profile-editor';
 import { getApiErrorMessage } from '@/lib/auth-contract';
@@ -95,6 +95,7 @@ export function ProfileEditor({
   const [actionId, setActionId] = useState<string | null>(null);
   const [suggestSkillOpen, setSuggestSkillOpen] = useState(false);
   const [skillPickerOpen, setSkillPickerOpen] = useState(false);
+  const [submittingVerification, setSubmittingVerification] = useState(false);
   // Skill changes save one at a time so quick clicks never overwrite each other.
   const skillQueue = useRef<Promise<void>>(Promise.resolve());
   // Blocks a second submit (double click, Enter + click) before the first one finishes.
@@ -310,15 +311,27 @@ export function ProfileEditor({
     );
   }
 
-  // Last step of "Become an employer": save any edits, then switch. If the
-  // server still finds gaps, jump to the first step that has them.
+  // Last step of "Become an employer": save any edits, then submit for verification.
+  // If the server still finds gaps, jump to the first step that has them.
   const finishOnboarding = async () => {
     if (isDirty && !(await saveProfile())) return;
-    await switchTo('employer', {
-      onIncomplete: (gaps) => {
-        router.replace(`${pathname}?tab=${getFirstIncompleteTab(gaps)}`, { scroll: false });
-      },
-    });
+    setSubmittingVerification(true);
+    try {
+      const completenessRes = await employersApi.getCompleteness();
+      if (!completenessRes.data.complete) {
+        toast.error('Please complete all required business information and documents before submitting.');
+        router.replace(`${pathname}?tab=${getFirstIncompleteTab(completenessRes.data)}`, { scroll: false });
+        return;
+      }
+      await employersApi.submitForVerification();
+      toast.success('Business profile submitted for admin verification. You can switch to employer once approved.');
+      await reloadProfile();
+      router.push('/dashboard/freelancer');
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Unable to submit business profile for verification.'));
+    } finally {
+      setSubmittingVerification(false);
+    }
   };
 
   const identityCard = (
@@ -350,7 +363,7 @@ export function ProfileEditor({
           <div>
             <h1 className="text-2xl font-extrabold tracking-tight text-foreground">Become an employer</h1>
             <p className="text-muted-foreground">
-              Add your business information and documents. Once everything required is in, you can start acting as an
+              Add your business information and documents. Once verified by admin, you can start acting as an
               employer — and switch back to freelancer any time.
             </p>
           </div>
@@ -761,7 +774,7 @@ export function ProfileEditor({
           profile={employerProfile}
           updateField={updateEmployerField}
           identityCard={identityCard}
-          onboarding={onboarding ? { onFinish: () => void finishOnboarding(), finishing: saving || switching === 'employer' } : undefined}
+          onboarding={onboarding ? { onFinish: () => void finishOnboarding(), finishing: saving || switching === 'employer' || submittingVerification } : undefined}
         />
       )}
 

@@ -62,6 +62,17 @@ export function useRoleSwitch() {
           }
           return false;
         }
+        if (axios.isAxiosError(error) && error.response?.data?.error?.code === 'BUSINESS_PROFILE_NOT_VERIFIED') {
+          const details = error.response.data.error.details as { verificationStatus?: string; verificationNotes?: string } | undefined;
+          const status = details?.verificationStatus;
+          if (status === 'rejected') {
+            toast.error(error.response.data.error.message || 'Your business profile verification was rejected. Please review feedback and resubmit.');
+          } else {
+            toast.info(error.response.data.error.message || 'Your business profile is pending admin verification before you can switch to employer.');
+          }
+          router.push(BECOME_EMPLOYER_PATH);
+          return false;
+        }
         toast.error(getApiErrorMessage(error, 'Unable to switch roles right now. Please try again.'));
         return false;
       } finally {
