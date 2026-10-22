@@ -10,6 +10,7 @@ import { requestWalletProvider } from '@/lib/metamask';
 import { getLinkedWalletMismatchMessage } from '@/lib/wallet-linking';
 import { isUsablePngDataUrl, signContractTerms, WalletSigningError } from '@/lib/contract-signing';
 import { formatAmount, formatDate } from '@/lib/format';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -33,12 +34,24 @@ function NameControl({ value, onChange }: { value: string; onChange: (v: string)
 }
 
 /** Contract amounts are whole cents of ETH, so wei → ETH needs no big-number library. */
-const weiToEth = (wei: string) => {
-  try {
-    return formatAmount(Number(BigInt(wei) / BigInt(10) ** BigInt(16)) / 100, { currency: 'ETH' });
-  } catch {
-    return wei;
+const weiToEthNumber = (wei: string | number | null | undefined): number => {
+  if (wei == null) return 0;
+  if (typeof wei === 'number') return wei;
+  if (typeof wei === 'string' && wei.includes('.')) {
+    const parsed = parseFloat(wei);
+    return Number.isFinite(parsed) ? parsed : 0;
   }
+  try {
+    return Number(BigInt(wei) / BigInt(10) ** BigInt(14)) / 10000;
+  } catch {
+    const parsed = parseFloat(String(wei));
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+};
+
+const weiToEth = (wei: string | number | null | undefined): string => {
+  const num = weiToEthNumber(wei);
+  return formatAmount(num, { currency: 'ETH' });
 };
 
 /**
@@ -83,6 +96,7 @@ function SignContractForm({
   const [consent, setConsent] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const { formatEthToPhp } = useEthPhpRate();
   const { terms, legal } = payload;
   const nameValid = typedName.trim().length >= 2;
   const adopted = mode === 'draw' ? isUsablePngDataUrl(drawn) : nameValid;
@@ -121,88 +135,116 @@ function SignContractForm({
   };
 
   return (
-      <>
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FileSignature className="size-5 text-primary" aria-hidden="true" />
-            Sign the contract
-          </DialogTitle>
-          <DialogDescription>
-            Review the agreed terms, adopt your signature, then confirm with your wallet. Both signatures cover the same terms.
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          <FileSignature className="size-5 text-primary" aria-hidden="true" />
+          Sign the contract
+        </DialogTitle>
+        <DialogDescription>
+          Review the agreed terms, adopt your signature, then confirm with your wallet. Both signatures cover the same terms.
+        </DialogDescription>
+      </DialogHeader>
 
-        <section aria-labelledby="sign-terms-heading" className="space-y-3">
-          <h3 id="sign-terms-heading" className="text-sm font-semibold">1. Review the terms{payload.projectTitle ? ` for “${payload.projectTitle}”` : ''}</h3>
-          <dl className="grid grid-cols-2 gap-3 rounded-lg bg-muted p-3 text-sm sm:grid-cols-4">
-            <div><dt className="text-muted-foreground">Base</dt><dd className="font-semibold">{weiToEth(terms.baseAmountWei)}</dd></div>
-            <div><dt className="text-muted-foreground">Additional pay</dt><dd className="font-semibold">{weiToEth(terms.additionalPayWei)}</dd></div>
-            <div><dt className="text-muted-foreground">Rush fee</dt><dd className="font-semibold">{terms.rushFeeBps > 0 ? `${weiToEth(terms.rushFeeWei)} (${terms.rushFeeBps / 100}%)` : 'None'}</dd></div>
-            <div><dt className="text-muted-foreground">Total</dt><dd className="font-semibold text-primary">{weiToEth(terms.totalAmountWei)}</dd></div>
-            <div className="col-span-2 sm:col-span-4"><dt className="text-muted-foreground">Deadline</dt><dd className="font-medium">{formatDate(terms.deadline)}</dd></div>
-          </dl>
-          <ol className="space-y-2 text-sm">
-            {terms.milestones.map((m) => (
-              <li key={m.index} className="flex items-start justify-between gap-3 rounded-lg border border-border p-3">
-                <div>
-                  <p className="font-medium">{m.index + 1}. {m.title}</p>
-                  {m.description && <p className="text-xs text-muted-foreground">{m.description}</p>}
-                  <p className="text-xs text-muted-foreground">Due {formatDate(m.dueDate)}</p>
-                </div>
-                <span className="whitespace-nowrap font-medium">{weiToEth(m.amountWei)}</span>
-              </li>
-            ))}
-          </ol>
-          <div className="space-y-2 rounded-lg border border-border p-3 text-xs text-muted-foreground">
-            {legal.clauses.map((clause, i) => (
-              <p key={clause.title}><strong className="text-foreground">{i + 1}. {clause.title}:</strong> {clause.body}</p>
-            ))}
+      <section aria-labelledby="sign-terms-heading" className="space-y-3">
+        <h3 id="sign-terms-heading" className="text-sm font-semibold">1. Review the terms{payload.projectTitle ? ` for “${payload.projectTitle}”` : ''}</h3>
+        <dl className="grid grid-cols-2 gap-3 rounded-lg bg-muted p-3 text-sm sm:grid-cols-4">
+          <div>
+            <dt className="text-muted-foreground">Base</dt>
+            <dd className="font-semibold text-foreground">{formatEthToPhp(weiToEthNumber(terms.baseAmountWei))}</dd>
+            <dd className="text-2xs text-muted-foreground">{weiToEth(terms.baseAmountWei)}</dd>
           </div>
-          <p className="break-all font-mono text-2xs text-muted-foreground">Terms hash: {payload.termsHash}</p>
-        </section>
-
-        <section aria-labelledby="sign-adopt-heading" className="space-y-3">
-          <h3 id="sign-adopt-heading" className="text-sm font-semibold">2. Adopt your signature</h3>
-          <Tabs value={mode} onValueChange={(value) => setMode(value as 'draw' | 'type')}>
-            <TabsList>
-              <TabsTrigger value="draw">Draw</TabsTrigger>
-              <TabsTrigger value="type">Type</TabsTrigger>
-            </TabsList>
-            <TabsContent value="draw" className="pt-3">
-              <SignaturePad onChange={setDrawn} />
-            </TabsContent>
-            <TabsContent value="type" className="space-y-3 pt-3">
-              <Field label="Full legal name" error={typedName && !nameValid ? 'Enter at least 2 characters.' : null} required>
-                <NameControl value={typedName} onChange={setTypedName} />
-              </Field>
-              {nameValid && (
-                <p className="rounded-lg border border-border bg-card px-4 py-3 font-serif text-2xl italic text-foreground" aria-label={`Signature preview: ${typedName}`}>
-                  {typedName}
-                </p>
-              )}
-            </TabsContent>
-          </Tabs>
-          <div className="flex items-start gap-3">
-            <Checkbox id="sign-consent" checked={consent} onCheckedChange={(checked) => setConsent(Boolean(checked))} className="mt-0.5" />
-            <Label htmlFor="sign-consent" className="text-sm font-normal leading-snug">{legal.statement}</Label>
+          <div>
+            <dt className="text-muted-foreground">Additional pay</dt>
+            <dd className="font-semibold text-foreground">{formatEthToPhp(weiToEthNumber(terms.additionalPayWei))}</dd>
+            <dd className="text-2xs text-muted-foreground">{weiToEth(terms.additionalPayWei)}</dd>
           </div>
-        </section>
+          <div>
+            <dt className="text-muted-foreground">Rush fee</dt>
+            <dd className="font-semibold text-foreground">
+              {terms.rushFeeBps > 0 ? formatEthToPhp(weiToEthNumber(terms.rushFeeWei)) : 'None'}
+            </dd>
+            {terms.rushFeeBps > 0 && (
+              <dd className="text-2xs text-muted-foreground">
+                {weiToEth(terms.rushFeeWei)} ({terms.rushFeeBps / 100}%)
+              </dd>
+            )}
+          </div>
+          <div>
+            <dt className="text-muted-foreground">Total</dt>
+            <dd className="font-semibold text-primary">{formatEthToPhp(weiToEthNumber(terms.totalAmountWei))}</dd>
+            <dd className="text-2xs text-muted-foreground">{weiToEth(terms.totalAmountWei)}</dd>
+          </div>
+          <div className="col-span-2 sm:col-span-4">
+            <dt className="text-muted-foreground">Deadline</dt>
+            <dd className="font-medium">{formatDate(terms.deadline)}</dd>
+          </div>
+        </dl>
+        <ol className="space-y-2 text-sm">
+          {terms.milestones.map((m) => (
+            <li key={m.index} className="flex items-start justify-between gap-3 rounded-lg border border-border p-3">
+              <div>
+                <p className="font-medium">{m.index + 1}. {m.title}</p>
+                {m.description && <p className="text-xs text-muted-foreground">{m.description}</p>}
+                <p className="text-xs text-muted-foreground">Due {formatDate(m.dueDate)}</p>
+              </div>
+              <div className="text-right">
+                <p className="whitespace-nowrap font-semibold text-foreground">{formatEthToPhp(weiToEthNumber(m.amountWei))}</p>
+                <p className="text-2xs text-muted-foreground">{weiToEth(m.amountWei)}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+        <div className="space-y-2 rounded-lg border border-border p-3 text-xs text-muted-foreground">
+          {legal.clauses.map((clause, i) => (
+            <p key={clause.title}><strong className="text-foreground">{i + 1}. {clause.title}:</strong> {clause.body}</p>
+          ))}
+        </div>
+        <p className="break-all font-mono text-2xs text-muted-foreground">Terms hash: {payload.termsHash}</p>
+      </section>
 
-        <section aria-labelledby="sign-wallet-heading" className="space-y-2">
-          <h3 id="sign-wallet-heading" className="text-sm font-semibold">3. Confirm with your wallet</h3>
-          <p className="text-xs text-muted-foreground">
-            MetaMask asks you to sign these exact terms. Signing is free and doesn&apos;t send a transaction.
-          </p>
-          {!linkedWallet && <Alert tone="warning" title="Link a wallet in Settings before signing." />}
-          {error && <Alert tone="destructive" title={error} />}
-        </section>
+      <section aria-labelledby="sign-adopt-heading" className="space-y-3">
+        <h3 id="sign-adopt-heading" className="text-sm font-semibold">2. Adopt your signature</h3>
+        <Tabs value={mode} onValueChange={(value) => setMode(value as 'draw' | 'type')}>
+          <TabsList>
+            <TabsTrigger value="draw">Draw</TabsTrigger>
+            <TabsTrigger value="type">Type</TabsTrigger>
+          </TabsList>
+          <TabsContent value="draw" className="pt-3">
+            <SignaturePad onChange={setDrawn} />
+          </TabsContent>
+          <TabsContent value="type" className="space-y-3 pt-3">
+            <Field label="Full legal name" error={typedName && !nameValid ? 'Enter at least 2 characters.' : null} required>
+              <NameControl value={typedName} onChange={setTypedName} />
+            </Field>
+            {nameValid && (
+              <p className="rounded-lg border border-border bg-card px-4 py-3 font-serif text-2xl italic text-foreground" aria-label={`Signature preview: ${typedName}`}>
+                {typedName}
+              </p>
+            )}
+          </TabsContent>
+        </Tabs>
+        <div className="flex items-start gap-3">
+          <Checkbox id="sign-consent" checked={consent} onCheckedChange={(checked) => setConsent(Boolean(checked))} className="mt-0.5" />
+          <Label htmlFor="sign-consent" className="text-sm font-normal leading-snug">{legal.statement}</Label>
+        </div>
+      </section>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>Not now</Button>
-          <Button onClick={() => void handleSign()} disabled={!ready} loading={submitting} loadingText="Waiting for MetaMask…">
-            Sign contract
-          </Button>
-        </DialogFooter>
-      </>
+      <section aria-labelledby="sign-wallet-heading" className="space-y-2">
+        <h3 id="sign-wallet-heading" className="text-sm font-semibold">3. Confirm with your wallet</h3>
+        <p className="text-xs text-muted-foreground">
+          MetaMask asks you to sign these exact terms. Signing is free and doesn&apos;t send a transaction.
+        </p>
+        {!linkedWallet && <Alert tone="warning" title="Link a wallet in Settings before signing." />}
+        {error && <Alert tone="destructive" title={error} />}
+      </section>
+
+      <DialogFooter>
+        <Button variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>Not now</Button>
+        <Button onClick={() => void handleSign()} disabled={!ready} loading={submitting} loadingText="Waiting for MetaMask…">
+          Sign contract
+        </Button>
+      </DialogFooter>
+    </>
   );
 }

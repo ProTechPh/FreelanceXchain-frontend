@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatAmount } from '@/lib/format';
 import { GasFeeBreakdownCard } from '@/components/ui/gas-fee-breakdown-card';
 import { useEscrowDeploymentGasQuote } from '@/hooks/use-escrow-deployment-gas-quote';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 
 type ParticipantRole = Extract<UserRole, 'employer' | 'freelancer'>;
 
@@ -21,6 +22,8 @@ export function ContractFundingCards({
   paymentStatus,
   fundInfo,
 }: ContractFundingCardsProps) {
+  const { formatEthToPhp } = useEthPhpRate();
+  const isEth = !contract.currency || contract.currency.toUpperCase() === 'ETH';
   const deploymentQuote = useEscrowDeploymentGasQuote(
     fundInfo,
     role === 'employer' && Boolean(fundInfo),
@@ -38,15 +41,36 @@ export function ContractFundingCards({
               <div className="grid grid-cols-1 gap-3 text-sm xs:grid-cols-3">
                 <div>
                   <p className="text-muted-foreground">Total</p>
-                  <p className="font-semibold">{formatAmount(paymentStatus.totalAmount, { currency: contract.currency || 'ETH' })}</p>
+                  <p className="font-semibold text-foreground">
+                    {isEth ? formatEthToPhp(paymentStatus.totalAmount) : formatAmount(paymentStatus.totalAmount, { currency: contract.currency })}
+                  </p>
+                  {isEth && (
+                    <p className="text-2xs text-muted-foreground">
+                      {formatAmount(paymentStatus.totalAmount, { currency: 'ETH' })}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <p className="text-muted-foreground">Released</p>
-                  <p className="font-semibold text-success">{formatAmount(paymentStatus.releasedAmount, { currency: contract.currency || 'ETH' })}</p>
+                  <p className="font-semibold text-success">
+                    {isEth ? formatEthToPhp(paymentStatus.releasedAmount) : formatAmount(paymentStatus.releasedAmount, { currency: contract.currency })}
+                  </p>
+                  {isEth && (
+                    <p className="text-2xs text-muted-foreground">
+                      {formatAmount(paymentStatus.releasedAmount, { currency: 'ETH' })}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <p className="text-muted-foreground">Pending</p>
-                  <p className="font-semibold text-warning">{formatAmount(paymentStatus.pendingAmount, { currency: contract.currency || 'ETH' })}</p>
+                  <p className="font-semibold text-warning">
+                    {isEth ? formatEthToPhp(paymentStatus.pendingAmount) : formatAmount(paymentStatus.pendingAmount, { currency: contract.currency })}
+                  </p>
+                  {isEth && (
+                    <p className="text-2xs text-muted-foreground">
+                      {formatAmount(paymentStatus.pendingAmount, { currency: 'ETH' })}
+                    </p>
+                  )}
                 </div>
               </div>
               <div>
@@ -95,7 +119,7 @@ export function ContractFundingCards({
                 <p className="truncate font-mono text-xs">{fundInfo.arbiterWallet || 'Configured'}</p>
               </div>
               <p className="text-xs text-muted-foreground">
-                Funding will prompt MetaMask to deposit {formatAmount(contract.totalAmount, { currency: contract.currency || 'ETH' })} directly from your
+                Funding will prompt MetaMask to deposit {isEth ? `${formatEthToPhp(contract.totalAmount)} (${formatAmount(contract.totalAmount, { currency: 'ETH' })})` : formatAmount(contract.totalAmount, { currency: contract.currency })} directly from your
                 wallet into the secure smart contract escrow on the blockchain.
               </p>
               <GasFeeBreakdownCard
