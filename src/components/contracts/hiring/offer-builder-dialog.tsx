@@ -17,10 +17,10 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Alert } from '@/components/ui/alert';
-import { formatAmount } from '@/lib/format';
+import { formatAmount, formatGroupedNumberInput, parseGroupedNumber } from '@/lib/format';
 import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 import { GasFeeBreakdownCard } from '@/components/ui/gas-fee-breakdown-card';
-import { autoBalanceMilestones, floorToUnits, roundEth, toUnits, todayIso, validateOfferDraft } from '@/lib/contract-terms';
+import { autoBalanceMilestones, floorToUnits, minimumBaseAmount, roundEth, toUnits, todayIso, validateOfferDraft } from '@/lib/contract-terms';
 
 type EntryCurrency = 'PHP' | 'ETH';
 
@@ -30,35 +30,60 @@ type EntryCurrency = 'PHP' | 'ETH';
  */
 function MoneyControl({ value, onChange, currency, rate }: { value: number; onChange: (eth: number) => void; currency: EntryCurrency; rate: number }) {
   const field = useField();
+  const isPeso = currency === 'PHP';
   const toDisplay = (eth: number) => {
     if (!Number.isFinite(eth)) return '';
-    return currency === 'ETH' ? String(eth) : String(Math.round(eth * rate * 100) / 100);
+    return isPeso ? formatGroupedNumberInput(String(Math.round(eth * rate * 100) / 100)).text : String(eth);
   };
   const [text, setText] = useState(() => toDisplay(value));
-  const textEth = text.trim() === '' ? Number.NaN : currency === 'ETH' ? Number(text) : roundEth(Number(text) / rate);
+  const typedNumber = isPeso ? parseGroupedNumber(text) : text.trim() === '' ? Number.NaN : Number(text);
+  const textEth = isPeso ? roundEth(typedNumber / rate) : typedNumber;
   const inSync = (!Number.isFinite(textEth) && !Number.isFinite(value)) || toUnits(textEth) === toUnits(value);
   // Show what the user typed unless the value changed elsewhere (auto-balance, defaults).
   const display = inSync ? text : toDisplay(value);
 
+  // Pesos are typed into a text box so they can show comma separators ("20,000");
+  // ETH keeps the plain number input.
+  const handlePesoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target;
+    const formatted = formatGroupedNumberInput(input.value, input.selectionStart ?? input.value.length);
+    setText(formatted.text);
+    requestAnimationFrame(() => {
+      if (document.activeElement === input) input.setSelectionRange(formatted.caret, formatted.caret);
+    });
+    const typed = parseGroupedNumber(formatted.text);
+    onChange(Number.isFinite(typed) ? roundEth(typed / rate) : Number.NaN);
+  };
+
   return (
     <div className="space-y-1">
       <div className="relative">
-        <Input
-          {...field}
-          type="number"
-          inputMode="decimal"
-          step="any"
-          min="0"
-          className="pr-12 tabular-nums"
-          value={display}
-          onChange={(e) => {
-            const next = e.target.value;
-            setText(next);
-            if (next.trim() === '') return onChange(Number.NaN);
-            const typed = Number(next);
-            onChange(currency === 'ETH' ? typed : roundEth(typed / rate));
-          }}
-        />
+        {isPeso ? (
+          <Input
+            {...field}
+            type="text"
+            inputMode="decimal"
+            autoComplete="off"
+            className="pr-12 tabular-nums"
+            value={display}
+            onChange={handlePesoChange}
+          />
+        ) : (
+          <Input
+            {...field}
+            type="number"
+            inputMode="decimal"
+            step="any"
+            min="0"
+            className="pr-12 tabular-nums"
+            value={display}
+            onChange={(e) => {
+              const next = e.target.value;
+              setText(next);
+              onChange(next.trim() === '' ? Number.NaN : Number(next));
+            }}
+          />
+        )}
         <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs font-medium text-muted-foreground" aria-hidden="true">
           {currency === 'ETH' ? 'ETH' : '₱'}
         </span>
@@ -160,14 +185,18 @@ function OfferBuilderForm({
 }: OfferBuilderProps) {
   const [draft, setDraft] = useState<ContractOfferInput>(initialDraft);
   const [showErrors, setShowErrors] = useState(false);
+  // The main fields show their errors as soon as they're changed (e.g. a base amount
+  // below the minimum); milestone rows and untouched fields wait until Send is pressed.
+  const [edited, setEdited] = useState<ReadonlySet<string>>(() => new Set());
   const [currency, setCurrency] = useState<EntryCurrency>('PHP');
   const { rate, formatEthToPhp } = useEthPhpRate();
 
   const validation = useMemo(() => validateOfferDraft(draft, floor, { maxMilestones }), [draft, floor, maxMilestones]);
-  const err = (key: string) => (showErrors ? validation.errors[key] ?? null : null);
+  const err = (key: string) => (showErrors || edited.has(key) ? validation.errors[key] ?? null : null);
+  const markEdited = (key: string) => setEdited((current) => (current.has(key) ? current : new Set(current).add(key)));
   const eth = (value: number) => formatAmount(Number.isFinite(value) ? value : 0, { currency: 'ETH', fractionDigits: 4 });
   const ethWithPhp = (value: number) => `${eth(value)} (≈ ${formatEthToPhp(Number.isFinite(value) ? value : 0)})`;
-  const minimum = floorToUnits(floor);
+  const minimum = minimumBaseAmount(floor);
 
   const update = (patch: Partial<ContractOfferInput>) => setDraft((d) => ({ ...d, ...patch }));
   const updateMilestone = (index: number, patch: Partial<OfferMilestoneDraft>) =>
@@ -200,7 +229,8 @@ function OfferBuilderForm({
           <DialogHeader>
             <DialogTitle>{isCounter ? 'Send a counter-offer' : 'Propose contract terms'}</DialogTitle>
             <DialogDescription>
-              The base amount can&apos;t go below the freelancer&apos;s proposed rate of {ethWithPhp(minimum)}. Milestones must add up to the total.
+              The base amount can&apos;t go below half of the freelancer&apos;s proposed rate of {ethWithPhp(floorToUnits(floor))}, so
+              at least {ethWithPhp(minimum)}. Milestones must add up to the total.
             </DialogDescription>
           </DialogHeader>
 
@@ -227,13 +257,13 @@ function OfferBuilderForm({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Base amount" description={`Minimum ${eth(minimum)}`} error={err('baseAmount')} required>
-              <MoneyControl key={`base-${currency}`} currency={currency} rate={rate} value={draft.baseAmount} onChange={(v) => update({ baseAmount: v })} />
+              <MoneyControl key={`base-${currency}`} currency={currency} rate={rate} value={draft.baseAmount} onChange={(v) => { markEdited('baseAmount'); update({ baseAmount: v }); }} />
             </Field>
             <Field label="Additional pay" description="Bonus or extra scope on top of the base" error={err('additionalPay')}>
-              <MoneyControl key={`extra-${currency}`} currency={currency} rate={rate} value={draft.additionalPay} onChange={(v) => update({ additionalPay: v })} />
+              <MoneyControl key={`extra-${currency}`} currency={currency} rate={rate} value={draft.additionalPay} onChange={(v) => { markEdited('additionalPay'); update({ additionalPay: v }); }} />
             </Field>
             <Field label="Contract deadline" description="Last day for the final delivery" error={err('deadline')} required>
-              <DateControl value={draft.deadline} onChange={(v) => update({ deadline: v })} />
+              <DateControl value={draft.deadline} onChange={(v) => { markEdited('deadline'); update({ deadline: v }); }} />
             </Field>
             <Field label="Rush delivery" description="Optional fee charged on the base amount" error={err('rushFeePercentage')}>
               <RushControl
@@ -243,7 +273,7 @@ function OfferBuilderForm({
                   isRush: on,
                   ...(on && !(draft.rushFeePercentage > 0) ? { rushFeePercentage: defaultRushFeePercentage } : {}),
                 })}
-                onPercentage={(v) => update({ rushFeePercentage: v })}
+                onPercentage={(v) => { markEdited('rushFeePercentage'); update({ rushFeePercentage: v }); }}
               />
             </Field>
           </div>

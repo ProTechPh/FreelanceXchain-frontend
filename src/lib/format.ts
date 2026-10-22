@@ -106,6 +106,47 @@ export function formatNumber(value: number | null | undefined, fractionDigits = 
   }).format(value);
 }
 
+/**
+ * Re-format a number as it is typed, with comma thousands separators
+ * ("20000" → "20,000"). A trailing "." and up to `maxDecimals` decimals are kept
+ * as typed, and `caret` is moved so it stays after the same digit.
+ */
+export function formatGroupedNumberInput(
+  raw: string,
+  caret: number = raw.length,
+  maxDecimals = 2,
+): { text: string; caret: number } {
+  // Keep digits and the first ".", counting how many of them sit before the caret.
+  let cleaned = '';
+  let keptBeforeCaret = 0;
+  for (let i = 0; i < raw.length; i += 1) {
+    const ch = raw[i]!;
+    if (!/\d/.test(ch) && !(ch === '.' && !cleaned.includes('.'))) continue;
+    cleaned += ch;
+    if (i < caret) keptBeforeCaret += 1;
+  }
+
+  const dot = cleaned.indexOf('.');
+  const rawInteger = dot === -1 ? cleaned : cleaned.slice(0, dot);
+  const integer = rawInteger.replace(/^0+(?=\d)/, '');
+  keptBeforeCaret = Math.max(0, keptBeforeCaret - (rawInteger.length - integer.length));
+  const decimals = dot === -1 ? null : cleaned.slice(dot + 1, dot + 1 + maxDecimals);
+  const text = integer.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + (decimals === null ? '' : `.${decimals}`);
+
+  // Place the caret after the same number of kept characters, skipping commas.
+  let position = 0;
+  for (let kept = 0; position < text.length && kept < keptBeforeCaret; position += 1) {
+    if (text[position] !== ',') kept += 1;
+  }
+  return { text, caret: position };
+}
+
+/** The number in a value typed with comma separators; NaN when empty or incomplete. */
+export function parseGroupedNumber(text: string): number {
+  const plain = text.replace(/,/g, '').trim();
+  return plain === '' ? Number.NaN : Number(plain);
+}
+
 /** Ratings and scores: one decimal, never "4.0" collapsed to "4". */
 export function formatScore(value: number | null | undefined): string {
   if (value == null || !Number.isFinite(value)) return '—';
