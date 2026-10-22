@@ -17,7 +17,7 @@ async function authenticate(page: Page, role: 'freelancer' | 'employer') {
   await page.route('**/api/auth/me', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ user }) }));
   await page.route('**/auth/csrf-token', (route) => route.fulfill({ status: 200, contentType: 'application/json', headers: { 'set-cookie': 'psifi.x-csrf-token=e2e-csrf-token; Path=/; SameSite=Lax' }, body: JSON.stringify({ cookieName: 'psifi.x-csrf-token' }) }));
   // Posting a project needs a complete business profile; these specs exercise the form itself.
-  await page.route('**/api/employers/profile/completeness', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ complete: true, missingFields: [], missingDocuments: [] }) }));
+  await page.route('**/api/employers/profile/completeness', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ complete: true, missingFields: [], missingDocuments: [], verificationStatus: 'verified' }) }));
   return user;
 }
 

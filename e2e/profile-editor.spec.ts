@@ -7,8 +7,8 @@ async function pickWorkHistoryDate(page: Page, label: 'Start date' | 'End date',
   const [year, month, day] = date.split('-');
   await page.getByRole('button', { name: new RegExp(`^${label},`) }).click();
   const calendar = page.getByRole('dialog', { name: `Choose ${label.toLowerCase()}` });
-  await calendar.getByLabel('Year').selectOption(year!);
-  await calendar.getByLabel('Month').selectOption(String(Number(month)));
+  await calendar.getByLabel('Year', { exact: true }).selectOption(year!);
+  await calendar.getByLabel('Month', { exact: true }).selectOption(String(Number(month)));
   await calendar.getByRole('button', { name: new RegExp(`${MONTH_NAMES[Number(month) - 1]} ${Number(day)}, ${year}$`) }).click();
   await expect(calendar).toBeHidden();
 }
@@ -66,7 +66,7 @@ async function mockEmployerCompleteness(page: Page) {
   await page.route('**/api/employers/profile/completeness', (route) => route.fulfill({
     status: 200,
     contentType: 'application/json',
-    body: JSON.stringify({ complete: true, missingFields: [], missingDocuments: [] }),
+    body: JSON.stringify({ complete: true, missingFields: [], missingDocuments: [], verificationStatus: 'verified' }),
   }));
 }
 
