@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatAmount } from '@/lib/format';
 import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
+import { formatVacancies } from '@/lib/vacancies';
 import { formatDate, formatPostedDate } from './project-meta-helpers';
 
 interface ProjectEmployerSidebarProps {
@@ -48,15 +49,8 @@ export function ProjectEmployerSidebar({
             <span className="text-sm font-semibold text-foreground">{formatDate(project.deadline)}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Capacity</span>
-            <div className="text-right">
-              <span className="text-sm font-semibold text-foreground block">
-                {project.hiredCount ?? 0} of {project.freelancerLimit && project.freelancerLimit > 1 ? project.freelancerLimit : 1} Hired
-              </span>
-              <span className="text-2xs text-muted-foreground block">
-                {Math.max(0, (project.freelancerLimit || 1) - (project.hiredCount ?? 0))} slot{Math.max(0, (project.freelancerLimit || 1) - (project.hiredCount ?? 0)) === 1 ? '' : 's'} remaining
-              </span>
-            </div>
+            <span className="text-sm text-muted-foreground">Vacancies</span>
+            <span className="text-sm font-semibold text-foreground text-right">{formatVacancies(project)}</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Proposals</span>

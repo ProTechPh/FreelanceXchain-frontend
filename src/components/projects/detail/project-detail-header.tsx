@@ -25,6 +25,7 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { formatPostedDate } from './project-meta-helpers';
+import { formatVacancies, getVacancies } from '@/lib/vacancies';
 
 interface ProjectDetailHeaderProps {
   project: Project;
@@ -100,11 +101,11 @@ export function ProjectDetailHeader({
               )}
               {Boolean(project.freelancerLimit && project.freelancerLimit > 1) ? (
                 <Badge variant="secondary" className="px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
-                  {project.hiredCount ?? 0} of {project.freelancerLimit} Freelancers Hired
+                  {formatVacancies(project)}
                 </Badge>
               ) : (
                 <Badge variant="secondary" className="px-3 py-1 rounded-full text-xs font-semibold bg-secondary/80 text-foreground border border-border">
-                  {(project.hiredCount ?? 0) >= 1 ? '1 of 1 Hired' : '1 Freelancer Slot'}
+                  {formatVacancies(project)}
                 </Badge>
               )}
               <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full">
@@ -174,9 +175,9 @@ export function ProjectDetailHeader({
                       </Link>
                     </Button>
                   </div>
-                ) : (project.hiredCount ?? 0) >= (project.freelancerLimit ?? 1) ? (
+                ) : getVacancies(project).left === 0 ? (
                   <Badge variant="secondary" className="h-9 px-4 rounded-full bg-secondary/80 text-muted-foreground border border-border text-xs font-semibold">
-                    All Slots Filled ({project.freelancerLimit} of {project.freelancerLimit} Hired)
+                    No vacancies left
                   </Badge>
                 ) : (
                   <>
@@ -201,9 +202,9 @@ export function ProjectDetailHeader({
             )}
 
             {primaryAction === 'sign-in-to-submit' && (
-              (project.hiredCount ?? 0) >= (project.freelancerLimit ?? 1) ? (
+              getVacancies(project).left === 0 ? (
                 <Badge variant="secondary" className="h-9 px-4 rounded-full bg-secondary/80 text-muted-foreground border border-border text-xs font-semibold">
-                  All Slots Filled ({project.freelancerLimit} of {project.freelancerLimit} Hired)
+                  No vacancies left
                 </Badge>
               ) : (
                 <Button
