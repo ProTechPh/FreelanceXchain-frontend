@@ -86,7 +86,9 @@ test('verified employer edits an unlocked project', async ({ page }) => {
   await page.getByLabel('Title').fill('Updated project title');
   await page.getByRole('button', { name: 'Save changes' }).click();
   await expect(page.getByText('Project updated.')).toBeVisible();
-  expect(updateBody).toMatchObject({ title: 'Updated project title', budget: 1000, status: 'open' });
+  expect(updateBody).toMatchObject({ title: 'Updated project title', status: 'open' });
+  // Budget is no longer edited here, so the stored one is left untouched.
+  expect(updateBody).not.toHaveProperty('budget');
 });
 
 test('administrator creates a taxonomy skill', async ({ page }) => {

@@ -1,5 +1,21 @@
 import { expect, test, type Page } from '@playwright/test';
 
+const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** Picks a YYYY-MM-DD date in a work history Year / Month / Day dropdown group. */
+async function pickWorkHistoryDate(page: Page, label: 'Start date' | 'End date', date: string) {
+  const [year, month, day] = date.split('-');
+  const choices: [string, string][] = [
+    ['year', year!],
+    ['month', MONTH_LABELS[Number(month) - 1]!],
+    ['day', String(Number(day))],
+  ];
+  for (const [part, option] of choices) {
+    await page.getByRole('combobox', { name: `${label} ${part}` }).click();
+    await page.getByRole('option', { name: option, exact: true }).click();
+  }
+}
+
 const timestamps = {
   createdAt: '2026-08-06T00:00:00.000Z',
   updatedAt: '2026-08-06T00:00:00.000Z',
@@ -366,7 +382,9 @@ test('adding work history with skills saves immediately and leaves nothing pendi
   await page.getByRole('button', { name: 'Add work history' }).first().click();
   await page.getByLabel('Job position', { exact: true }).fill(addedExperience.title);
   await page.getByLabel('Company').fill(addedExperience.company);
-  await page.locator('#experience-start').fill(addedExperience.startDate);
+  await pickWorkHistoryDate(page, 'Start date', addedExperience.startDate);
+  // No end date: the role is current.
+  await page.getByRole('checkbox', { name: 'I currently work here' }).click();
   await page.locator('#experience-description').fill(addedExperience.description);
   const form = page.locator('form:has(#experience-title)');
   await form.getByRole('tab', { name: /Soft skills/ }).click();
@@ -467,8 +485,8 @@ test('work history cannot be saved twice and shows its skills by type', async ({
     await page.getByRole('button', { name: 'Add work history' }).first().click();
     await page.getByLabel('Job position', { exact: true }).fill(title);
     await page.getByLabel('Company').fill('meralco');
-    await page.locator('#experience-start').fill('2026-06-03');
-    await page.locator('#experience-end').fill('2026-10-22');
+    await pickWorkHistoryDate(page, 'Start date', '2026-06-03');
+    await pickWorkHistoryDate(page, 'End date', '2026-10-22');
     await page.locator('#experience-description').fill('Reactor safety work again.');
   };
 
