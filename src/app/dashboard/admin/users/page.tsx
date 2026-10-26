@@ -8,12 +8,10 @@ import { Input } from '@/components/ui/input';
 import { adminApi } from '@/lib/api';
 import { csrfTokenManager } from '@/lib/api-client';
 import { getApiErrorMessage } from '@/lib/auth-contract';
-import type { AdminUser, User, UserRole } from '@/types';
+import type { AdminUser, UserRole } from '@/types';
 import { toast } from 'sonner';
 import { reportLoadFailure } from '@/lib/report-failure';
-import { useRouter } from 'next/navigation';
-import { useImpersonate } from '@/stores/authStore';
-import { Users, Search, Ban, UserCheck, ShieldCheck, CheckCircle2, XCircle, ShieldAlert, Clock, AlertTriangle, Key, UserPlus, LogIn, Eye, MoreHorizontal, Copy, Building2 } from 'lucide-react';
+import { Users, Search, Ban, UserCheck, ShieldCheck, CheckCircle2, XCircle, ShieldAlert, Clock, AlertTriangle, Key, UserPlus, Eye, MoreHorizontal, Copy, Building2 } from 'lucide-react';
 import { ListSkeleton } from '@/components/dashboard/skeletons';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -46,8 +44,6 @@ const roleColors: Record<UserRole, string> = {
 };
 
 export default function UsersPage() {
-  const router = useRouter();
-  const impersonate = useImpersonate();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -134,24 +130,6 @@ export default function UsersPage() {
       setUserToVerify(null);
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Couldn\'t verify this user. Try again.'));
-    } finally {
-      setPendingActionId(null);
-    }
-  };
-
-  const handleLoginAs = async (targetUser: AdminUser) => {
-    setPendingActionId(targetUser.id);
-    try {
-      const { data } = await adminApi.impersonateUser(targetUser.id);
-      if (data?.accessToken && data?.user) {
-        impersonate(data.user as unknown as User, data.accessToken);
-        toast.success(`Signed in as ${targetUser.name || targetUser.email}`);
-        const destination = targetUser.role === 'admin' ? '/dashboard/admin' : `/dashboard/${targetUser.role}`;
-        router.push(destination);
-        return;
-      }
-    } catch (error) {
-      toast.error(getApiErrorMessage(error, `Couldn't sign in as ${targetUser.name || targetUser.email}`));
     } finally {
       setPendingActionId(null);
     }
@@ -482,18 +460,6 @@ export default function UsersPage() {
                                 <Copy className="w-4 h-4 mr-2" />
                                 <span>Copy email</span>
                               </DropdownMenuItem>
-                              {canManageAdmins && (
-                                <DropdownMenuItem
-                                  disabled={pendingActionId === user.id}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleLoginAs(user);
-                                  }}
-                                >
-                                  <LogIn className="w-4 h-4 mr-2" />
-                                  <span>Login as</span>
-                                </DropdownMenuItem>
-                              )}
                               {user.role === 'admin' && canManageAdmins && (
                                 <DropdownMenuItem
                                   onClick={(e) => {
@@ -536,23 +502,6 @@ export default function UsersPage() {
                             </DropdownMenuContent>
                           </DropdownMenu>
 
-                          {canManageAdmins && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-8 px-2.5 text-xs touch-manipulation flex items-center gap-1.5"
-                              title={`Sign in as ${user.name || user.email}`}
-                              aria-label={`Login as ${user.name || user.email} (Sign in as ${user.name || user.email})`}
-                              disabled={pendingActionId === user.id}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleLoginAs(user);
-                              }}
-                            >
-                              <LogIn className="w-3.5 h-3.5" />
-                              <span>Login as</span>
-                            </Button>
-                          )}
                           {user.role === 'admin' && canManageAdmins && (
                             <Button
                               variant="ghost"
@@ -792,18 +741,6 @@ export default function UsersPage() {
                           <Copy className="w-4 h-4 mr-2" />
                           <span>Copy email</span>
                         </DropdownMenuItem>
-                        {canManageAdmins && (
-                          <DropdownMenuItem
-                            disabled={pendingActionId === user.id}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleLoginAs(user);
-                            }}
-                          >
-                            <LogIn className="w-4 h-4 mr-2" />
-                            <span>Login as</span>
-                          </DropdownMenuItem>
-                        )}
                         {user.role === 'admin' && canManageAdmins && (
                           <DropdownMenuItem
                             onClick={(e) => {
@@ -846,23 +783,6 @@ export default function UsersPage() {
                       </DropdownMenuContent>
                     </DropdownMenu>
 
-                    {canManageAdmins && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 px-2 text-xs touch-manipulation flex items-center gap-1"
-                        title={`Sign in as ${user.name || user.email}`}
-                        aria-label={`Login as ${user.name || user.email} (Sign in as ${user.name || user.email})`}
-                        disabled={pendingActionId === user.id}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleLoginAs(user);
-                        }}
-                      >
-                        <LogIn className="w-3.5 h-3.5" />
-                        <span>Login as</span>
-                      </Button>
-                    )}
                     {user.role === 'admin' && canManageAdmins && (
                       <Button
                         variant="ghost"
@@ -987,7 +907,6 @@ export default function UsersPage() {
         canManageUsers={canManageUsers}
         canManageAdmins={canManageAdmins}
         canManageKyc={canManageKyc}
-        onLoginAs={handleLoginAs}
         onManagePermissions={setUserForPermissions}
         onVerifyKyc={setUserToVerify}
         onSuspend={setUserToSuspend}
