@@ -139,7 +139,7 @@ export default function KycReviewPage() {
       const { data: reviewedVerification } = await kycApi.adminReview(
         id,
         decision,
-        reviewNotes || undefined,
+        reviewNotes.trim() || undefined,
         reviewerId
       );
       toast.success(`User ${decision === 'approved' ? 'approved' : 'rejected'} successfully`);
@@ -387,6 +387,8 @@ function VerificationCard({
   const [cardAuditReasonError, setCardAuditReasonError] = useState<string | null>(null);
   const [dialogAuditReasonError, setDialogAuditReasonError] = useState<string | null>(null);
   const fetchedRef = useRef(false);
+  // Same audit-reason rule as the Manually Verify KYC dialog.
+  const reviewNotesValid = countMeaningfulChars(reviewNotes) >= 10 && reviewNotes.trim().length <= 500;
 
   useEffect(() => {
     if (expanded && !fetchedRef.current) {
@@ -744,32 +746,33 @@ function VerificationCard({
                       aria-label="Audit reason"
                       className="w-full p-3 rounded-lg bg-secondary border border-border text-sm resize-none"
                       rows={3}
+                      maxLength={500}
                       placeholder="Provide a clear, auditable reason for this KYC decision (at least 10 letters or numbers)..."
                       value={reviewNotes}
                       onChange={(e) => {
                         const val = e.target.value;
                         setReviewNotes(val);
-                        if (countMeaningfulChars(val) >= 10) {
+                        if (countMeaningfulChars(val) >= 10 && val.trim().length <= 500) {
                           setCardAuditReasonError(null);
                         } else if (val.length > 0) {
-                          setCardAuditReasonError('Audit reason must include at least 10 letters or numbers.');
+                          setCardAuditReasonError('Audit reason needs at least 10 letters or numbers (max 500 characters).');
                         }
                       }}
-                      aria-invalid={Boolean(cardAuditReasonError || (reviewNotes.length > 0 && countMeaningfulChars(reviewNotes) < 10))}
+                      aria-invalid={Boolean(cardAuditReasonError || (reviewNotes.length > 0 && !reviewNotesValid))}
                       aria-describedby={`kyc-audit-reason-desc-${v.id}`}
                     />
                     <div className="flex items-center justify-between text-xs mt-1">
-                      {(cardAuditReasonError || (reviewNotes.length > 0 && countMeaningfulChars(reviewNotes) < 10)) ? (
+                      {(cardAuditReasonError || (reviewNotes.length > 0 && !reviewNotesValid)) ? (
                         <p id={`kyc-audit-reason-desc-${v.id}`} className="text-destructive font-medium" role="alert">
-                          {cardAuditReasonError || 'Audit reason must include at least 10 letters or numbers.'}
+                          {cardAuditReasonError || 'Audit reason needs at least 10 letters or numbers (max 500 characters).'}
                         </p>
                       ) : (
                         <p id={`kyc-audit-reason-desc-${v.id}`} className="text-muted-foreground">
-                          Minimum 10 letters or numbers required for audit trail.
+                          At least 10 letters or numbers required for audit trail (max 500 characters).
                         </p>
                       )}
-                      <span className={`ml-auto font-mono ${countMeaningfulChars(reviewNotes) < 10 ? 'text-muted-foreground' : 'text-success'}`}>
-                        {countMeaningfulChars(reviewNotes)}/10
+                      <span className={`ml-auto font-mono ${reviewNotesValid ? 'text-success' : 'text-muted-foreground'}`}>
+                        {reviewNotes.trim().length}/500
                       </span>
                     </div>
                   </div>
@@ -779,11 +782,11 @@ function VerificationCard({
                       className="bg-success hover:bg-success/90 text-success-foreground"
                       loading={reviewing}
                       loadingText="Approving…"
-                      disabled={countMeaningfulChars(reviewNotes) < 10}
+                      disabled={!reviewNotesValid}
                       onClick={() => {
-                        if (countMeaningfulChars(reviewNotes) < 10) {
-                          setCardAuditReasonError('Audit reason must include at least 10 letters or numbers.');
-                          toast.warning('Audit reason must include at least 10 letters or numbers.');
+                        if (!reviewNotesValid) {
+                          setCardAuditReasonError('Audit reason needs at least 10 letters or numbers (max 500 characters).');
+                          toast.warning('Audit reason needs at least 10 letters or numbers (max 500 characters).');
                           return;
                         }
                         if (v.status === 'completed') {
@@ -802,11 +805,11 @@ function VerificationCard({
                       className="text-destructive border-destructive-border hover:bg-destructive-subtle"
                       loading={reviewing}
                       loadingText="Rejecting…"
-                      disabled={countMeaningfulChars(reviewNotes) < 10}
+                      disabled={!reviewNotesValid}
                       onClick={() => {
-                        if (countMeaningfulChars(reviewNotes) < 10) {
-                          setCardAuditReasonError('Audit reason must include at least 10 letters or numbers.');
-                          toast.warning('An audit reason with at least 10 letters or numbers is required before rejecting.');
+                        if (!reviewNotesValid) {
+                          setCardAuditReasonError('Audit reason needs at least 10 letters or numbers (max 500 characters).');
+                          toast.warning('An audit reason with at least 10 letters or numbers (max 500 characters) is required before rejecting.');
                           return;
                         }
                         setConfirmDecision('rejected');
@@ -928,32 +931,33 @@ function VerificationCard({
               name="reason"
               aria-label="Audit reason"
               rows={3}
+              maxLength={500}
               placeholder="Provide a clear, auditable reason for this KYC decision (at least 10 letters or numbers)..."
               value={reviewNotes}
               onChange={(e) => {
                 const val = e.target.value;
                 setReviewNotes(val);
-                if (countMeaningfulChars(val) >= 10) {
+                if (countMeaningfulChars(val) >= 10 && val.trim().length <= 500) {
                   setDialogAuditReasonError(null);
                 } else if (val.length > 0) {
-                  setDialogAuditReasonError('Audit reason must include at least 10 letters or numbers.');
+                  setDialogAuditReasonError('Audit reason needs at least 10 letters or numbers (max 500 characters).');
                 }
               }}
-              aria-invalid={Boolean(dialogAuditReasonError || (reviewNotes.length > 0 && countMeaningfulChars(reviewNotes) < 10))}
+              aria-invalid={Boolean(dialogAuditReasonError || (reviewNotes.length > 0 && !reviewNotesValid))}
               aria-describedby="kyc-confirm-reason-validation"
             />
             <div className="flex items-center justify-between text-xs mt-1">
-              {(dialogAuditReasonError || (reviewNotes.length > 0 && countMeaningfulChars(reviewNotes) < 10)) ? (
+              {(dialogAuditReasonError || (reviewNotes.length > 0 && !reviewNotesValid)) ? (
                 <p id="kyc-confirm-reason-validation" className="text-destructive font-medium" role="alert">
-                  {dialogAuditReasonError || 'Audit reason must include at least 10 letters or numbers.'}
+                  {dialogAuditReasonError || 'Audit reason needs at least 10 letters or numbers (max 500 characters).'}
                 </p>
               ) : (
                 <p id="kyc-confirm-reason-validation" className="text-muted-foreground">
-                  Minimum 10 letters or numbers required for audit trail.
+                  At least 10 letters or numbers required for audit trail (max 500 characters).
                 </p>
               )}
-              <span className={`ml-auto font-mono ${countMeaningfulChars(reviewNotes) < 10 ? 'text-muted-foreground' : 'text-success'}`}>
-                {countMeaningfulChars(reviewNotes)}/10
+              <span className={`ml-auto font-mono ${reviewNotesValid ? 'text-success' : 'text-muted-foreground'}`}>
+                {reviewNotes.trim().length}/500
               </span>
             </div>
           </div>
@@ -973,13 +977,12 @@ function VerificationCard({
               className={confirmDecision === 'approved' ? 'bg-success hover:bg-success/90 text-success-foreground' : ''}
               loading={Boolean(reviewing)}
               loadingText={confirmDecision === 'approved' ? 'Approving…' : 'Rejecting…'}
-              disabled={countMeaningfulChars(reviewNotes) < 10 || Boolean(reviewing)}
+              disabled={!reviewNotesValid || Boolean(reviewing)}
               onClick={() => {
                 if (confirmDecision) {
-                  const trimmed = reviewNotes.trim();
-                  if (countMeaningfulChars(trimmed) < 10) {
-                    setDialogAuditReasonError('Audit reason must include at least 10 letters or numbers.');
-                    toast.warning('Audit reason must include at least 10 letters or numbers.');
+                  if (!reviewNotesValid) {
+                    setDialogAuditReasonError('Audit reason needs at least 10 letters or numbers (max 500 characters).');
+                    toast.warning('Audit reason needs at least 10 letters or numbers (max 500 characters).');
                     return;
                   }
                   onReview(v.id, confirmDecision);

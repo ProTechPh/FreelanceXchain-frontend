@@ -12,6 +12,7 @@ import {
   appendCursorPage,
   buildAuditSearchParams,
   hasActiveAuditFilters,
+  type AuditActorRole,
   type AuditLogStatus,
 } from '@/lib/audit-log-search';
 import { resolveRange } from '@/lib/analytics-range';
@@ -36,6 +37,18 @@ const RANGE_PRESETS = [
   { label: 'Last 90 days', preset: '90d' as const },
 ];
 
+const ACTOR_FILTERS: Array<{ label: string; value: AuditActorRole | 'all' }> = [
+  { label: 'All', value: 'all' },
+  { label: 'Admins', value: 'admin' },
+  { label: 'Users', value: 'user' },
+];
+
+const actorRoleLabels: Record<NonNullable<AuditLogEntry['actor_role']>, string> = {
+  admin: 'Admin',
+  freelancer: 'Freelancer',
+  employer: 'Employer',
+};
+
 const STATUS_FILTERS: Array<{ label: string; value: AuditLogStatus | 'all' }> = [
   { label: 'All', value: 'all' },
   { label: 'Success', value: 'success' },
@@ -48,6 +61,7 @@ export default function AuditLogsPage() {
   const [actor, setActor] = useState('');
   const [resourceType, setResourceType] = useState('');
   const [status, setStatus] = useState<AuditLogStatus | 'all'>('all');
+  const [actorRole, setActorRole] = useState<AuditActorRole | 'all'>('all');
   const [rangePreset, setRangePreset] = useState<'7d' | '30d' | '90d'>('7d');
 
   const debouncedAction = useDebounce(action, 350);
@@ -65,13 +79,14 @@ export default function AuditLogsPage() {
       buildAuditSearchParams({
         action: debouncedAction,
         actor: debouncedActor,
+        actorRole: actorRole === 'all' ? undefined : actorRole,
         resourceType: debouncedResourceType,
         status: status === 'all' ? undefined : status,
         startDate: range.startDate,
         endDate: range.endDate,
         limit: AUDIT_SEARCH_PAGE_SIZE,
       }),
-    [debouncedAction, debouncedActor, debouncedResourceType, status, range],
+    [debouncedAction, debouncedActor, actorRole, debouncedResourceType, status, range],
   );
 
   const {
@@ -94,7 +109,13 @@ export default function AuditLogsPage() {
   const pendingCount = logs.filter((l) => l.status === 'pending').length;
   const failureCount = logs.filter((l) => l.status === 'failure').length;
 
-  const filtersActive = hasActiveAuditFilters({ action, actor, resourceType, status: status === 'all' ? undefined : status });
+  const filtersActive = hasActiveAuditFilters({
+    action,
+    actor,
+    actorRole: actorRole === 'all' ? undefined : actorRole,
+    resourceType,
+    status: status === 'all' ? undefined : status,
+  });
 
   const activity = useAdminActivitySummary(range.startDate ?? '', range.endDate ?? '');
 
@@ -239,6 +260,21 @@ export default function AuditLogsPage() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
+        <span className="text-sm text-muted-foreground">Actor</span>
+        {ACTOR_FILTERS.map((option) => (
+          <Button
+            key={option.value}
+            variant={actorRole === option.value ? 'gradient' : 'outline'}
+            size="sm"
+            aria-pressed={actorRole === option.value}
+            onClick={() => setActorRole(option.value)}
+          >
+            {option.label}
+          </Button>
+        ))}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
         <span className="text-sm text-muted-foreground">Status</span>
         {STATUS_FILTERS.map((option) => (
           <Button
@@ -259,6 +295,7 @@ export default function AuditLogsPage() {
               setActor('');
               setResourceType('');
               setStatus('all');
+              setActorRole('all');
             }}
           >
             Clear filters
@@ -311,6 +348,9 @@ export default function AuditLogsPage() {
                           <span className="text-sm font-mono" title={log.actor_id ?? log.user_id ?? undefined}>
                             {(log.actor_id ?? log.user_id ?? 'system').slice(0, 8)}
                           </span>
+                          {log.actor_role && (
+                            <Badge variant="outline" className="text-xs">{actorRoleLabels[log.actor_role]}</Badge>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell className="hidden p-4 text-sm sm:table-cell">

@@ -783,7 +783,8 @@ export function NotificationsCenter() {
           )}
         </div>
 
-        <PullToRefresh onRefresh={refresh} disabled={selecting}>
+        {/* overflow-visible: the page scrolls, not the list, so there's only one scrollbar. */}
+        <PullToRefresh onRefresh={refresh} disabled={selecting} className="overflow-visible">
           <TabsContent value="all">{renderList(applyCategory(inbox), 'all')}</TabsContent>
           <TabsContent value="unread">{renderList(applyCategory(unread), 'unread')}</TabsContent>
           <TabsContent value="archived">{renderArchived()}</TabsContent>
