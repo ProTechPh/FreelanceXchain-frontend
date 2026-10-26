@@ -65,6 +65,7 @@ import {
   ALLOWED_FORMATS_DESCRIPTION,
   isAllowedDocumentFile,
 } from './file-validation.ts';
+import { countMeaningfulChars } from './text-validation.ts';
 
 export const ALLOWED_PROJECT_EXTENSIONS = ALLOWED_DOCUMENT_EXTENSIONS;
 
@@ -112,11 +113,11 @@ export function validateProjectStep(
   form: ProjectSubmissionForm,
 ): string | null {
   if (step === 1) {
-    if (form.title.trim().length < 5) {
-      return 'Project title must be at least 5 characters.';
+    if (countMeaningfulChars(form.title) < 5) {
+      return 'Project title must include at least 5 letters or numbers.';
     }
-    if (form.description.trim().length < 20) {
-      return 'Project description must be at least 20 characters.';
+    if (countMeaningfulChars(form.description) < 20) {
+      return 'Project description must include at least 20 letters or numbers.';
     }
     if (form.skills.length === 0) {
       return 'Select at least one required skill.';

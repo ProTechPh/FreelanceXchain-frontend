@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { AttachmentPreviewDialog, type AttachmentPreviewTarget } from '@/components/ui/attachment-preview-dialog';
+import { countMeaningfulChars } from '@/lib/text-validation';
 
 const BUSINESS_DOCUMENT_EXTENSIONS = ['.pdf', '.png', '.jpg', '.jpeg', '.webp'];
 const BUSINESS_DOCUMENT_ACCEPT = '.pdf,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp';
@@ -85,7 +86,7 @@ export function BusinessDocumentsCard({
   }, []);
 
   const pickFile = (type: BusinessDocumentType) => {
-    if (type === 'other' && otherLabel.trim().length < 2) {
+    if (type === 'other' && countMeaningfulChars(otherLabel) < 2) {
       toast.error('Name the document before uploading it.');
       return;
     }

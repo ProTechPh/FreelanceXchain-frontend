@@ -116,7 +116,7 @@ test('Suspend and KYC verification enforce audit boundaries and update filters c
   await expect(suspendReason).toHaveAttribute('maxlength', '500');
   await suspendReason.fill('123456789');
   await expect(suspend).toBeDisabled();
-  await expect(dialog.getByRole('alert')).toContainText('at least 10 characters');
+  await expect(dialog.getByRole('alert')).toContainText('at least 10 letters or numbers');
   await suspendReason.fill('  1234567890  ');
   await expect(suspend).toBeEnabled();
   await suspend.click();

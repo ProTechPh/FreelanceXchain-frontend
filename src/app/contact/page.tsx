@@ -38,6 +38,7 @@ import { FooterSection } from "@/components/layout/footer-section";
 import { Sparkles as Sparkle, ShieldCheck, CircleQuestionMark as Question, Lock as LockKey, Mail, Copy, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { countMeaningfulChars } from "@/lib/text-validation";
 
 const SUPPORT_CHANNELS = [
   {
@@ -94,7 +95,7 @@ export default function ContactPage() {
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = "Please enter a valid email address.";
     if (!formData.subject.trim()) newErrors.subject = "Subject is required.";
     if (!formData.message.trim()) newErrors.message = "Message is required.";
-    else if (formData.message.trim().length < 10) newErrors.message = "Message must be at least 10 characters.";
+    else if (countMeaningfulChars(formData.message) < 10) newErrors.message = "Message must include at least 10 letters or numbers.";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }, [formData]);

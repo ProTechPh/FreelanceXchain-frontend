@@ -22,7 +22,7 @@ import {
 } from './profile-form.ts';
 
 test('validates freelancer profile fields against backend constraints', () => {
-  assert.equal(validateFreelancerProfile({ bio: 'too short', hourlyRate: 0, availability: 'available' }), 'Bio must be at least 10 characters.');
+  assert.equal(validateFreelancerProfile({ bio: 'too short', hourlyRate: 0, availability: 'available' }), 'Bio must include at least 10 letters or numbers.');
   assert.equal(validateFreelancerProfile({ bio: 'A sufficiently detailed bio', hourlyRate: 0, availability: 'available' }), 'Hourly rate must be at least 1.');
   assert.equal(validateFreelancerProfile({ bio: 'A sufficiently detailed bio', hourlyRate: 25, availability: 'available' }), null);
 });
@@ -42,8 +42,8 @@ const validEmployer = {
 };
 
 test('validates employer profile fields against backend constraints', () => {
-  assert.equal(validateEmployerProfile({ ...validEmployer, companyName: 'X' }), 'Company name must be at least 2 characters.');
-  assert.equal(validateEmployerProfile({ ...validEmployer, description: 'short' }), 'Company description must be at least 10 characters.');
+  assert.equal(validateEmployerProfile({ ...validEmployer, companyName: 'X' }), 'Company name must include at least 2 letters or numbers.');
+  assert.equal(validateEmployerProfile({ ...validEmployer, description: 'short' }), 'Company description must include at least 10 letters or numbers.');
   assert.equal(validateEmployerProfile(validEmployer), null);
 });
 
@@ -181,7 +181,7 @@ test('says what to enter for empty fields and what is wrong for invalid ones', (
   const thisYear = new Date().getFullYear();
   assert.equal(validateEmployerProfile({ ...validEmployer, companyName: '' }), 'Enter your company name.');
   assert.equal(validateEmployerProfile({ ...validEmployer, industry: ' ' }), 'Enter your industry, e.g. Construction or Retail.');
-  assert.equal(validateEmployerProfile({ ...validEmployer, industry: 'X' }), 'Industry must be at least 2 characters.');
+  assert.equal(validateEmployerProfile({ ...validEmployer, industry: 'X' }), 'Industry must include at least 2 letters or numbers.');
   assert.equal(validateEmployerProfile({ ...validEmployer, description: '' }), 'Add a short description of your company.');
   assert.equal(validateEmployerProfile({ ...validEmployer, yearEstablished: '15' }), 'Enter the year as 4 digits, e.g. 2015.');
   assert.equal(validateEmployerProfile({ ...validEmployer, yearEstablished: String(thisYear + 1) }), `Year established can't be later than ${thisYear}.`);

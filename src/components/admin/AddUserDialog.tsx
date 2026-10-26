@@ -36,6 +36,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { PERMISSION_GROUPS, PRESETS } from './AdminPermissionsDialog';
+import { countMeaningfulChars } from '@/lib/text-validation';
 
 interface AddUserDialogProps {
   open: boolean;
@@ -116,8 +117,8 @@ export function AddUserDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (name.trim().length < 2 || name.trim().length > 100) {
-      toast.error('Full name must be between 2 and 100 characters');
+    if (countMeaningfulChars(name) < 2 || name.trim().length > 100) {
+      toast.error('Full name must include at least 2 letters (max 100 characters)');
       return;
     }
 

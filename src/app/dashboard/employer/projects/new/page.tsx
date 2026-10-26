@@ -36,6 +36,7 @@ import { UnsavedChangesDialog } from '@/components/ui/unsaved-changes';
 import { BusinessProfileCompletenessAlert } from '@/components/dashboard/employer-profile-fields';
 import { getFirstIncompleteTab } from '@/lib/profile-form';
 import type { BusinessProfileCompleteness } from '@/types';
+import { countMeaningfulChars } from '@/lib/text-validation';
 
 const steps = [
   { id: 1, title: 'Project Details & Team', icon: FileText },
@@ -213,12 +214,12 @@ export default function CreateProjectPage() {
     setFieldErrors({});
 
     if (currentStep === 1) {
-      if (title.trim().length < 5) {
-        showFormError('Project title must be at least 5 characters.', 'title');
+      if (countMeaningfulChars(title) < 5) {
+        showFormError('Project title must include at least 5 letters or numbers.', 'title');
         return;
       }
-      if (description.trim().length < 20) {
-        showFormError('Project description must be at least 20 characters.', 'description');
+      if (countMeaningfulChars(description) < 20) {
+        showFormError('Project description must include at least 20 letters or numbers.', 'description');
         return;
       }
       if (skills.length === 0) {

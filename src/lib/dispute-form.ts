@@ -1,5 +1,6 @@
 import type { KycStatus } from '@/types';
 import { hasApprovedKyc } from './kyc-eligibility.ts';
+import { countMeaningfulChars } from './text-validation.ts';
 
 export type DisputeDraft = {
   contractId: string;
@@ -14,7 +15,7 @@ export function canUseDisputeActions(kycStatus: KycStatus | undefined) {
 export function validateDisputeDraft(draft: DisputeDraft): string | null {
   if (!draft.contractId) return 'Choose a contract.';
   if (!draft.milestoneId) return 'Choose a milestone.';
-  if (draft.reason.trim().length < 10) return 'Describe the issue in at least 10 characters.';
+  if (countMeaningfulChars(draft.reason) < 10) return 'Describe the issue using at least 10 letters or numbers.';
   return null;
 }
 

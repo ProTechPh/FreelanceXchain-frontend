@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Textarea } from '@/components/ui/textarea';
 import { AttachmentPreviewDialog, type AttachmentPreviewTarget } from '@/components/ui/attachment-preview-dialog';
 import { BUSINESS_DOCUMENTS_DISCLAIMER } from '@/components/dashboard/business-documents-card';
+import { countMeaningfulChars } from '@/lib/text-validation';
 
 type BusinessProfileResponse = {
   profile: EmployerProfile;
@@ -99,8 +100,8 @@ export function EmployerBusinessDialog({
 
   const handleReject = async () => {
     if (!userId) return;
-    if (rejectNotes.trim().length < 5) {
-      toast.error('Please enter notes explaining what needs to be corrected (min 5 characters).');
+    if (countMeaningfulChars(rejectNotes) < 5) {
+      toast.error('Please enter notes explaining what needs to be corrected (at least 5 letters or numbers).');
       return;
     }
     setActionBusy(true);
@@ -258,7 +259,7 @@ export function EmployerBusinessDialog({
                         variant="destructive"
                         size="sm"
                         loading={actionBusy}
-                        disabled={rejectNotes.trim().length < 5}
+                        disabled={countMeaningfulChars(rejectNotes) < 5}
                         onClick={handleReject}
                       >
                         Confirm &amp; Return as Not Verified
