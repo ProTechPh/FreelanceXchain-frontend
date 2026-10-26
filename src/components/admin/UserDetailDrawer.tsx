@@ -22,7 +22,6 @@ import {
   Key,
   Ban,
   UserCheck,
-  LogIn,
   Copy,
   Check,
   Wallet,
@@ -40,7 +39,6 @@ interface UserDetailDrawerProps {
   canManageUsers?: boolean;
   canManageAdmins?: boolean;
   canManageKyc?: boolean;
-  onLoginAs?: (user: AdminUser) => void;
   onManagePermissions?: (user: AdminUser) => void;
   onVerifyKyc?: (user: AdminUser) => void;
   onSuspend?: (user: AdminUser) => void;
@@ -66,7 +64,6 @@ export function UserDetailDrawer({
   canManageUsers = false,
   canManageAdmins = false,
   canManageKyc = false,
-  onLoginAs,
   onManagePermissions,
   onVerifyKyc,
   onSuspend,
@@ -281,22 +278,6 @@ export function UserDetailDrawer({
 
           {hasAnyMutationPermission ? (
             <div className="flex flex-col gap-2">
-              {canManageAdmins && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-start h-9 text-xs"
-                  disabled={pendingActionId === user.id}
-                  onClick={() => {
-                    onOpenChange(false);
-                    onLoginAs?.(user);
-                  }}
-                >
-                  <LogIn className="size-4 mr-2" />
-                  <span>Login as this user</span>
-                </Button>
-              )}
-
               {user.role === 'admin' && canManageAdmins && (
                 <Button
                   variant="outline"
@@ -364,7 +345,7 @@ export function UserDetailDrawer({
             <div className="rounded-lg border border-border/80 bg-muted/30 p-3 text-xs text-muted-foreground space-y-1">
               <p className="font-medium text-foreground">Read-only Permissions</p>
               <p>
-                You are viewing this user profile with read-only permissions. Mutation actions such as account suspension, KYC verification, and impersonation require elevated administrative privileges.
+                You are viewing this user profile with read-only permissions. Account suspension and KYC verification require elevated administrative privileges.
               </p>
             </div>
           )}
