@@ -19,6 +19,7 @@ import { PageHeader } from '@/components/dashboard/page-header';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { formatAmount, formatDate } from '@/lib/format';
 import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 import { PullToRefresh } from '@/components/ui/pull-to-refresh';
@@ -112,6 +113,30 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
       return title.includes(q) || counterparty.includes(q) || id.includes(q);
     });
   }, [sideContracts, selectedTab, searchQuery, role]);
+
+  // Employers see their contracts grouped under the project they belong to, newest project activity first.
+  const projectGroups = useMemo(() => {
+    const groups = new Map<string, { key: string; title: string; contracts: Contract[]; totalValue: number; latest: number }>();
+    for (const contract of filteredContracts) {
+      const key = contract.projectId || contract.id;
+      const createdAt = new Date(contract.createdAt).getTime() || 0;
+      const group = groups.get(key);
+      if (group) {
+        group.contracts.push(contract);
+        group.totalValue += contract.totalAmount || 0;
+        group.latest = Math.max(group.latest, createdAt);
+      } else {
+        groups.set(key, {
+          key,
+          title: contract.project?.title || contract.title || 'Untitled project',
+          contracts: [contract],
+          totalValue: contract.totalAmount || 0,
+          latest: createdAt,
+        });
+      }
+    }
+    return [...groups.values()].sort((a, b) => b.latest - a.latest);
+  }, [filteredContracts]);
 
   const handleRefresh = useCallback(async () => {
     let active = true;
@@ -276,113 +301,65 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
               }
             />
           ) : (
-            <div className="space-y-4">
-              {filteredContracts.map((contract) => {
-                const milestones = contract.milestones ?? [];
-                const completedMilestones = milestones.filter((milestone) => ['approved', 'completed'].includes(milestone.status)).length;
-                const progress = milestones.length ? Math.round((completedMilestones / milestones.length) * 100) : 0;
-                const counterparty = role === 'employer'
-                  ? contract.freelancer?.name || 'Freelancer'
-                  : contract.employer?.name || contract.employer?.companyName || 'Employer';
-
-                return (
-                  <Card key={contract.id} className="overflow-hidden border-border bg-card shadow-sm transition-all hover:border-border/80">
-                    {/* Category & Status Banner */}
-                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-muted/30 px-5 py-3 text-xs">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <StatusBadge status={contract.status} domain="contract" />
-                        <span className="text-muted-foreground">•</span>
-                        <Badge variant="outline" className="font-medium text-xs border-border/80 bg-background/60">
-                          {contract.status === 'active' && 'Category: Active • In Progress'}
-                          {contract.status === 'completed' && 'Category: Completed & Settled'}
-                          {contract.status === 'resolved' && 'Category: Resolved • Arbitration Final'}
-                          {contract.status === 'cancelled' && 'Category: Cancelled • Contract Closed'}
-                          {contract.status === 'disputed' && 'Category: In Dispute • Escrow Locked'}
-                          {contract.status === 'pending' && 'Category: Pending Setup'}
-                          {contract.status === 'negotiating' && 'Setting up • Negotiating terms'}
-                          {contract.status === 'awaiting_signatures' && 'Setting up • Awaiting signatures'}
-                          {contract.status === 'awaiting_funding' && 'Setting up • Awaiting escrow funding'}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center gap-2 text-muted-foreground text-xs font-mono">
-                        <span>Ref: #{contract.id.slice(0, 8)}</span>
-                        <span>•</span>
-                        <span className="font-sans">Created {formatDate(contract.createdAt)}</span>
-                      </div>
-                    </div>
-
-                    <CardHeader className="pb-3 pt-4">
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                        <div>
-                          <CardTitle className="text-lg font-bold">
-                            <Link
-                              href={getContractDetailRoute(role, contract.id)}
-                              className="hover:text-primary transition-colors hover:underline"
-                            >
-                              {contract.project?.title || contract.title || 'Contract'}
-                            </Link>
-                          </CardTitle>
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            Working with <strong className="font-medium text-foreground">{counterparty}</strong>
+            role === 'employer' ? (
+              <Accordion
+                // Remount per query so matching projects open while searching, then collapse again after.
+                key={searchQuery.trim() ? `search:${searchQuery.trim()}` : 'browse'}
+                type="multiple"
+                defaultValue={searchQuery.trim() ? projectGroups.map((group) => group.key) : []}
+                className="space-y-3"
+              >
+                {projectGroups.map((group) => (
+                  <AccordionItem
+                    key={group.key}
+                    value={group.key}
+                    className="overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+                  >
+                    <AccordionTrigger className="px-5 py-4 hover:text-foreground hover:bg-muted/30 rounded-none focus-visible:ring-offset-0">
+                      <div className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-3">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <FolderOpen className="size-5 shrink-0 text-primary" aria-hidden="true" />
+                          <span className="truncate text-base font-bold">{group.title}</span>
+                          <Badge variant="secondary" className="shrink-0 px-2 py-0 text-xs font-medium">
+                            {group.contracts.length} {group.contracts.length === 1 ? 'contract' : 'contracts'}
+                          </Badge>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-semibold tabular-nums text-foreground">{formatEthToPhp(group.totalValue)}</p>
+                          <p className="text-2xs font-normal text-muted-foreground">
+                            {formatAmount(group.totalValue, { currency: 'ETH' })}
                           </p>
                         </div>
-
-                        <div className="flex flex-wrap items-center gap-2 shrink-0">
-                          <Button asChild variant="outline" size="sm">
-                            <Link href={getContractDetailRoute(role, contract.id)}>View contract</Link>
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setSelectedInvoiceContract(contract)}
-                            className="gap-1.5 text-muted-foreground hover:text-foreground h-8"
-                          >
-                            <FileText className="size-4 text-primary" />
-                            Invoice / SOW
-                          </Button>
-                          {(contract.status === 'disputed' || contract.status === 'resolved') && (
-                            <Button asChild variant="ghost" size="sm" className="gap-1.5 text-warning hover:text-foreground h-8">
-                              <Link href={`/dashboard/${role}/disputes?contractId=${contract.id}`}>
-                                <Scale className="size-4" />
-                                Dispute case
-                              </Link>
-                            </Button>
-                          )}
-                        </div>
                       </div>
-                    </CardHeader>
-
-                    <CardContent className="space-y-4 pt-0">
-                      <div className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4 rounded-lg bg-muted/40 p-3.5 border border-border/60">
-                        <div>
-                          <p className="text-xs text-muted-foreground">Total Value</p>
-                          <p className="font-semibold tabular-nums text-foreground mt-0.5">
-                            {formatEthToPhp(contract.totalAmount)}
-                          </p>
-                          <p className="text-2xs text-muted-foreground">
-                            {formatAmount(contract.totalAmount, { currency: contract.currency || 'ETH' })}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground">Milestones</p>
-                          <p className="font-semibold text-foreground mt-0.5">{completedMilestones}/{milestones.length}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground">Progress</p>
-                          <p className="font-semibold text-foreground mt-0.5">{progress}%</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-muted-foreground">Created Date</p>
-                          <p className="font-semibold text-foreground mt-0.5">{formatDate(contract.createdAt)}</p>
-                        </div>
-                      </div>
-
-                      <Progress value={progress} label={`Contract progress: ${progress}%`} />
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="space-y-3 border-t border-border bg-muted/20 p-4">
+                      {group.contracts.map((contract) => (
+                        <ContractCard
+                          key={contract.id}
+                          contract={contract}
+                          role={role}
+                          formatEthToPhp={formatEthToPhp}
+                          onInvoice={setSelectedInvoiceContract}
+                          hideProjectTitle
+                        />
+                      ))}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            ) : (
+              <div className="space-y-4">
+                {filteredContracts.map((contract) => (
+                  <ContractCard
+                    key={contract.id}
+                    contract={contract}
+                    role={role}
+                    formatEthToPhp={formatEthToPhp}
+                    onInvoice={setSelectedInvoiceContract}
+                  />
+                ))}
+              </div>
+            )
           )}
         </>
       )}
@@ -399,5 +376,126 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
         />
       )}
     </PullToRefresh>
+  );
+}
+
+function ContractCard({
+  contract,
+  role,
+  formatEthToPhp,
+  onInvoice,
+  hideProjectTitle = false,
+}: {
+  contract: Contract;
+  role: Extract<UserRole, 'employer' | 'freelancer'>;
+  formatEthToPhp: ReturnType<typeof useEthPhpRate>['formatEthToPhp'];
+  onInvoice: (contract: Contract) => void;
+  /** Inside a project group the project name is the group header, so lead with the counterparty instead. */
+  hideProjectTitle?: boolean;
+}) {
+  const milestones = contract.milestones ?? [];
+  const completedMilestones = milestones.filter((milestone) => ['approved', 'completed'].includes(milestone.status)).length;
+  const progress = milestones.length ? Math.round((completedMilestones / milestones.length) * 100) : 0;
+  const counterparty = role === 'employer'
+    ? contract.freelancer?.name || 'Freelancer'
+    : contract.employer?.name || contract.employer?.companyName || 'Employer';
+
+  return (
+    <Card className="overflow-hidden border-border bg-card shadow-sm transition-all hover:border-border/80">
+      {/* Category & Status Banner */}
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-muted/30 px-5 py-3 text-xs">
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusBadge status={contract.status} domain="contract" />
+          <span className="text-muted-foreground">•</span>
+          <Badge variant="outline" className="font-medium text-xs border-border/80 bg-background/60">
+            {contract.status === 'active' && 'Category: Active • In Progress'}
+            {contract.status === 'completed' && 'Category: Completed & Settled'}
+            {contract.status === 'resolved' && 'Category: Resolved • Arbitration Final'}
+            {contract.status === 'cancelled' && 'Category: Cancelled • Contract Closed'}
+            {contract.status === 'disputed' && 'Category: In Dispute • Escrow Locked'}
+            {contract.status === 'pending' && 'Category: Pending Setup'}
+            {contract.status === 'negotiating' && 'Setting up • Negotiating terms'}
+            {contract.status === 'awaiting_signatures' && 'Setting up • Awaiting signatures'}
+            {contract.status === 'awaiting_funding' && 'Setting up • Awaiting escrow funding'}
+          </Badge>
+        </div>
+        <div className="flex items-center gap-2 text-muted-foreground text-xs font-mono">
+          <span>Ref: #{contract.id.slice(0, 8)}</span>
+          <span>•</span>
+          <span className="font-sans">Created {formatDate(contract.createdAt)}</span>
+        </div>
+      </div>
+
+      <CardHeader className="pb-3 pt-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <CardTitle className="text-lg font-bold">
+              <Link
+                href={getContractDetailRoute(role, contract.id)}
+                className="hover:text-primary transition-colors hover:underline"
+              >
+                {hideProjectTitle ? counterparty : contract.project?.title || contract.title || 'Contract'}
+              </Link>
+            </CardTitle>
+            {!hideProjectTitle && (
+              <p className="mt-1 text-sm text-muted-foreground">
+                Working with <strong className="font-medium text-foreground">{counterparty}</strong>
+              </p>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <Button asChild variant="outline" size="sm">
+              <Link href={getContractDetailRoute(role, contract.id)}>View contract</Link>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onInvoice(contract)}
+              className="gap-1.5 text-muted-foreground hover:text-foreground h-8"
+            >
+              <FileText className="size-4 text-primary" />
+              Invoice / SOW
+            </Button>
+            {(contract.status === 'disputed' || contract.status === 'resolved') && (
+              <Button asChild variant="ghost" size="sm" className="gap-1.5 text-warning hover:text-foreground h-8">
+                <Link href={`/dashboard/${role}/disputes?contractId=${contract.id}`}>
+                  <Scale className="size-4" />
+                  Dispute case
+                </Link>
+              </Button>
+            )}
+          </div>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-4 pt-0">
+        <div className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4 rounded-lg bg-muted/40 p-3.5 border border-border/60">
+          <div>
+            <p className="text-xs text-muted-foreground">Total Value</p>
+            <p className="font-semibold tabular-nums text-foreground mt-0.5">
+              {formatEthToPhp(contract.totalAmount)}
+            </p>
+            <p className="text-2xs text-muted-foreground">
+              {formatAmount(contract.totalAmount, { currency: contract.currency || 'ETH' })}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Milestones</p>
+            <p className="font-semibold text-foreground mt-0.5">{completedMilestones}/{milestones.length}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Progress</p>
+            <p className="font-semibold text-foreground mt-0.5">{progress}%</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">Created Date</p>
+            <p className="font-semibold text-foreground mt-0.5">{formatDate(contract.createdAt)}</p>
+          </div>
+        </div>
+
+        <Progress value={progress} label={`Contract progress: ${progress}%`} />
+      </CardContent>
+    </Card>
   );
 }
