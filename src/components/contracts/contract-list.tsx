@@ -153,7 +153,7 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
 
   return (
     <PullToRefresh onRefresh={handleRefresh} className="min-h-0">
-      <div className="space-y-6">
+      <div className="mx-auto max-w-7xl space-y-6">
         <PageHeader
           title="Contracts"
           description="Track funding, deliverables, approvals, and payment activity."
@@ -318,7 +318,6 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
                     <AccordionTrigger className="px-5 py-4 hover:text-foreground hover:bg-muted/30 rounded-none focus-visible:ring-offset-0">
                       <div className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-3">
                         <div className="flex min-w-0 items-center gap-3">
-                          <FolderOpen className="size-5 shrink-0 text-primary" aria-hidden="true" />
                           <span className="truncate text-base font-bold">{group.title}</span>
                           <Badge variant="secondary" className="shrink-0 px-2 py-0 text-xs font-medium">
                             {group.contracts.length} {group.contracts.length === 1 ? 'contract' : 'contracts'}
@@ -348,7 +347,7 @@ export function ContractList({ role }: { role: Extract<UserRole, 'employer' | 'f
                 ))}
               </Accordion>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-4 sm:px-2">
                 {filteredContracts.map((contract) => (
                   <ContractCard
                     key={contract.id}
@@ -401,7 +400,7 @@ function ContractCard({
     : contract.employer?.name || contract.employer?.companyName || 'Employer';
 
   return (
-    <Card className="overflow-hidden border-border bg-card shadow-sm transition-all hover:border-border/80">
+    <Card className="gap-0 overflow-hidden border-border bg-card pt-0 shadow-sm transition-all hover:border-border/80">
       {/* Category & Status Banner */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-muted/30 px-5 py-3 text-xs">
         <div className="flex flex-wrap items-center gap-2">
