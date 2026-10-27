@@ -41,17 +41,18 @@ test('a valid draft passes and reports totals', () => {
   assert.equal(result.totals.remaining, 0);
 });
 
-test('the base amount can go down to half the freelancer rate but not below', () => {
+test('the base amount must stay above half the freelancer rate', () => {
   assert.equal(validateOfferDraft(draft({ baseAmount: 1.99, additionalPay: 0.51 }), 2, { now }).errors.baseAmount, undefined);
-  assert.equal(validateOfferDraft(draft({ baseAmount: 1, additionalPay: 1.5 }), 2, { now }).errors.baseAmount, undefined);
-  const result = validateOfferDraft(draft({ baseAmount: 0.9999, additionalPay: 1.5001 }), 2, { now });
+  assert.equal(validateOfferDraft(draft({ baseAmount: 1.0001, additionalPay: 1.4999 }), 2, { now }).errors.baseAmount, undefined);
+  const result = validateOfferDraft(draft({ baseAmount: 1, additionalPay: 1.5 }), 2, { now });
   assert.equal(result.valid, false);
-  assert.equal(result.errors.baseAmount, "The base amount can't go below half of the freelancer's rate (1 ETH).");
+  assert.equal(result.errors.baseAmount, "The base amount must be more than half of the freelancer's rate (at least 1.0001 ETH).");
 });
 
-test('the minimum base amount is half the rate, rounded up to 4 decimals', () => {
-  assert.equal(minimumBaseAmount(2), 1);
-  assert.equal(minimumBaseAmount(0.1294), 0.0647);
+test('the minimum base amount is the smallest 4-decimal amount above half the rate', () => {
+  assert.equal(minimumBaseAmount(2), 1.0001);
+  assert.equal(minimumBaseAmount(0.1292), 0.0647);
+  assert.equal(minimumBaseAmount(0.1294), 0.0648);
   assert.equal(minimumBaseAmount(0.1535), 0.0768);
   assert.equal(minimumBaseAmount(0.0001), 0.0001);
 });
@@ -121,7 +122,7 @@ test('4-decimal proposed rates are the exact floor', () => {
   assert.equal(floorToUnits(0.1534), 0.1534);
   assert.equal(floorToUnits(0.15345), 0.1535);
   assert.equal(validateOfferDraft(draft({ baseAmount: 0.15, additionalPay: 2.35 }), 0.1534, { now }).errors.baseAmount, undefined);
-  assert.match(validateOfferDraft(draft({ baseAmount: 0.0766, additionalPay: 2.4234 }), 0.1534, { now }).errors.baseAmount, /0.0767 ETH/);
+  assert.match(validateOfferDraft(draft({ baseAmount: 0.0767, additionalPay: 2.4233 }), 0.1534, { now }).errors.baseAmount, /0.0768 ETH/);
   assert.equal(draftFromOffer(null, { floor: 0.1534, deadline: '2026-12-31', isRush: false, rushFeePercentage: 0, milestones: [] }, now).baseAmount, 0.1534);
   assert.equal(roundEth(22336.5 / 155000), 0.1441);
 });

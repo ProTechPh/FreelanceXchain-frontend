@@ -229,7 +229,7 @@ function OfferBuilderForm({
           <DialogHeader>
             <DialogTitle>{isCounter ? 'Send a counter-offer' : 'Propose contract terms'}</DialogTitle>
             <DialogDescription>
-              The base amount can&apos;t go below half of the freelancer&apos;s proposed rate of {ethWithPhp(floorToUnits(floor))}, so
+              The base amount must be more than half of the freelancer&apos;s proposed rate of {ethWithPhp(floorToUnits(floor))}, so
               at least {ethWithPhp(minimum)}. Milestones must add up to the total.
             </DialogDescription>
           </DialogHeader>

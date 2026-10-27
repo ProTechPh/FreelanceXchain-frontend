@@ -97,7 +97,7 @@ export function NegotiationPanel({
             Negotiate terms
           </CardTitle>
           <CardDescription>
-            Agree on milestones, extra pay, deadline and rush fee. The base amount can&apos;t go below half of the
+            Agree on milestones, extra pay, deadline and rush fee. The base amount must be more than half of the
             freelancer&apos;s rate of {formatEthToPhp(floorToUnits(floor.proposedRate))} ({formatAmount(floorToUnits(floor.proposedRate), { currency: 'ETH' })}),
             so at least {formatEthToPhp(minimumBaseAmount(floor.proposedRate))} ({formatAmount(minimumBaseAmount(floor.proposedRate), { currency: 'ETH' })}).
           </CardDescription>
