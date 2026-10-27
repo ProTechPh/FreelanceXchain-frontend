@@ -1,6 +1,7 @@
 import type { EmployerProfileUpdate } from '@/lib/api/profiles';
 import type { BusinessDocumentType, BusinessType, EmployerProfile } from '@/types';
 import { isCompleteDateValue, isPartialDateValue } from './date-select.ts';
+import { countMeaningfulChars } from './text-validation.ts';
 
 export type FreelancerProfileForm = {
   bio: string;
@@ -175,7 +176,7 @@ export type ExperienceForm = {
 };
 
 export function validateFreelancerProfile(form: FreelancerProfileForm): string | null {
-  if (form.bio.trim().length < 10) return 'Bio must be at least 10 characters.';
+  if (countMeaningfulChars(form.bio) < 10) return 'Bio must include at least 10 letters or numbers.';
   if (!Number.isFinite(form.hourlyRate) || form.hourlyRate < 1) return 'Hourly rate must be at least 1.';
   return null;
 }
@@ -210,11 +211,11 @@ export function getEmployerFieldErrors(form: EmployerProfileForm): EmployerField
   const errors: EmployerFieldErrors = {};
   const companyName = form.companyName.trim();
   if (!companyName) errors.companyName = 'Enter your company name.';
-  else if (companyName.length < 2) errors.companyName = 'Company name must be at least 2 characters.';
+  else if (countMeaningfulChars(companyName) < 2) errors.companyName = 'Company name must include at least 2 letters or numbers.';
 
   const industry = form.industry.trim();
   if (!industry) errors.industry = 'Enter your industry, e.g. Construction or Retail.';
-  else if (industry.length < 2) errors.industry = 'Industry must be at least 2 characters.';
+  else if (countMeaningfulChars(industry) < 2) errors.industry = 'Industry must include at least 2 letters or numbers.';
 
   const yearText = form.yearEstablished.trim();
   const year = Number(yearText);
@@ -229,7 +230,7 @@ export function getEmployerFieldErrors(form: EmployerProfileForm): EmployerField
 
   const description = form.description.trim();
   if (!description) errors.description = 'Add a short description of your company.';
-  else if (description.length < 10) errors.description = 'Company description must be at least 10 characters.';
+  else if (countMeaningfulChars(description) < 10) errors.description = 'Company description must include at least 10 letters or numbers.';
 
   if (!form.businessType) errors.businessType = 'Select your business type.';
 
@@ -240,13 +241,13 @@ export function getEmployerFieldErrors(form: EmployerProfileForm): EmployerField
   const registration = form.registrationNumber.trim();
   const registrationLabel = getRegistrationNumberLabel(form.businessType);
   if (!registration) errors.registrationNumber = `Enter your ${registrationLabel.replace('DTI / SEC', 'DTI or SEC')}.`;
-  else if (registration.length < 3 || registration.length > 50) {
+  else if (countMeaningfulChars(registration) < 3 || registration.length > 50) {
     errors.registrationNumber = `${registrationLabel} must be 3 to 50 characters.`;
   }
 
   const address = form.businessAddress.trim();
   if (!address) errors.businessAddress = 'Enter your business address.';
-  else if (address.length < 5 || address.length > 500) errors.businessAddress = 'Business address must be 5 to 500 characters.';
+  else if (countMeaningfulChars(address) < 5 || address.length > 500) errors.businessAddress = 'Business address must be 5 to 500 characters.';
 
   const phone = form.businessPhone.trim();
   if (!phone) errors.businessPhone = 'Enter your business phone number.';
@@ -333,9 +334,9 @@ export function validateExperience(
   today = todayDateInputValue(),
   { currentlyWorking }: { currentlyWorking?: boolean } = {},
 ): string | null {
-  if (form.title.trim().length < 2) return 'Job position must be at least 2 characters.';
-  if (form.company.trim().length < 2) return 'Company must be at least 2 characters.';
-  if (form.description.trim().length < 10) return 'Work history description must be at least 10 characters.';
+  if (countMeaningfulChars(form.title) < 2) return 'Job position must include at least 2 letters or numbers.';
+  if (countMeaningfulChars(form.company) < 2) return 'Company must include at least 2 letters or numbers.';
+  if (countMeaningfulChars(form.description) < 10) return 'Work history description must include at least 10 letters or numbers.';
   if (!form.startDate) return 'Start date is required.';
   if (isPartialDateValue(form.startDate)) return 'Choose the year, month and day of your start date.';
   if (currentlyWorking === false && !form.endDate) return 'Choose an end date, or tick "I currently work here".';

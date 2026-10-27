@@ -161,9 +161,9 @@ test('counter-offer builder enforces the floor before sending', async ({ page })
   // Amounts default to pesos; switch to ETH for exact values.
   await expect(dialog.getByRole('button', { name: '₱ Peso' })).toHaveAttribute('aria-pressed', 'true');
   await dialog.getByRole('button', { name: 'ETH', exact: true }).click();
-  // The base may go down to half the proposed rate (2 ETH → 1 ETH), not below.
+  // The base must stay above half the proposed rate (2 ETH → more than 1 ETH).
   await dialog.getByLabel('Base amount').fill('0.9');
-  await expect(dialog.getByText("can't go below half of the freelancer's rate", { exact: false })).toBeVisible();
+  await expect(dialog.getByText("must be more than half of the freelancer's rate", { exact: false })).toBeVisible();
   await dialog.getByRole('button', { name: 'Send counter-offer' }).click();
   expect(offerBody).toBeNull();
 

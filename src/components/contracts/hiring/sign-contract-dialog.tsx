@@ -27,6 +27,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Alert } from '@/components/ui/alert';
 import { SignaturePad } from './signature-pad';
+import { countMeaningfulChars } from '@/lib/text-validation';
 
 function NameControl({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const field = useField();
@@ -98,7 +99,7 @@ function SignContractForm({
 
   const { formatEthToPhp } = useEthPhpRate();
   const { terms, legal } = payload;
-  const nameValid = typedName.trim().length >= 2;
+  const nameValid = countMeaningfulChars(typedName) >= 2;
   const adopted = mode === 'draw' ? isUsablePngDataUrl(drawn) : nameValid;
   const ready = adopted && consent && Boolean(linkedWallet);
 
@@ -214,7 +215,7 @@ function SignContractForm({
             <SignaturePad onChange={setDrawn} />
           </TabsContent>
           <TabsContent value="type" className="space-y-3 pt-3">
-            <Field label="Full legal name" error={typedName && !nameValid ? 'Enter at least 2 characters.' : null} required>
+            <Field label="Full legal name" error={typedName && !nameValid ? 'Enter at least 2 letters.' : null} required>
               <NameControl value={typedName} onChange={setTypedName} />
             </Field>
             {nameValid && (

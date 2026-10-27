@@ -44,7 +44,8 @@ export function PullToRefresh({
     (e: React.TouchEvent) => {
       if (disabled || isRefreshing) return;
       const container = containerRef.current;
-      if (!container || container.scrollTop > 0) return;
+      // Only start a pull at the very top, whether the container or the page is what scrolls.
+      if (!container || container.scrollTop > 0 || window.scrollY > 0) return;
 
       startYRef.current = e.touches[0]?.clientY ?? 0;
       startXRef.current = e.touches[0]?.clientX ?? 0;

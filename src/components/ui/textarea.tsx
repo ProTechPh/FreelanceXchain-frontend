@@ -9,8 +9,9 @@ function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
       data-slot="textarea"
       className={cn(
         fieldVariants(),
-        // Height comes from content, so drop the fixed field height.
-        "field-sizing-content h-auto min-h-20 py-2",
+        // Height comes from content, so drop the fixed field height. wrap-anywhere
+        // keeps long unbroken text from widening the field past its container.
+        "field-sizing-content h-auto min-h-20 py-2 wrap-anywhere",
         className,
       )}
       {...props}

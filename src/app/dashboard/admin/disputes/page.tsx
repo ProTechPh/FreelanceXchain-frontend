@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/dialog';
 import { AdminPermissionGate } from '@/components/admin/AdminPermissionGate';
 import { useAdminPermissions } from '@/hooks/use-admin-permissions';
+import { useEthPhpRate } from '@/hooks/use-eth-php-rate';
 
 const statusColors: Record<DisputeStatus, string> = {
   open: 'bg-destructive-subtle text-destructive',
@@ -108,6 +109,8 @@ interface DisputeView {
 }
 
 export default function DisputesPage() {
+  // Contract amounts are stored in ETH; show pesos with the ETH figure beside it.
+  const { formatEthToPhp } = useEthPhpRate();
   const [views, setViews] = useState<DisputeView[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<DisputeStatus>('open');
@@ -330,8 +333,10 @@ export default function DisputesPage() {
                 <Coins className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{formatAmount(amountInDispute)}</p>
-                <p className="text-xs text-muted-foreground">In Dispute</p>
+                <p className="text-2xl font-bold">{formatEthToPhp(amountInDispute)}</p>
+                <p className="text-xs text-muted-foreground">
+                  In dispute · {formatAmount(amountInDispute, { currency: 'ETH' })}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -494,7 +499,13 @@ export default function DisputesPage() {
                   )}
 
                   <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                    {contract && <span className="font-medium text-primary">{formatAmount(contract.totalAmount)}</span>}
+                    {contract && (
+                      <span title="Total value of the disputed contract">
+                        <span className="text-muted-foreground">Contract value </span>
+                        <span className="font-medium text-primary">{formatEthToPhp(contract.totalAmount)}</span>
+                        <span className="ml-1 text-xs">({formatAmount(contract.totalAmount, { currency: contract.currency || 'ETH' })})</span>
+                      </span>
+                    )}
                     <span className="flex items-center gap-1">
                       <FileText className="w-3 h-3" /> {(dispute.evidence || []).length} evidence items
                     </span>

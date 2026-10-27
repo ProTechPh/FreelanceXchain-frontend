@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { AdminUser } from '@/types';
+import { countMeaningfulChars } from '@/lib/text-validation';
 
 const MIN_REASON_LENGTH = 10;
 const MAX_REASON_LENGTH = 500;
@@ -45,7 +46,7 @@ function VerifyKycForm({
   };
 
   const reasonLength = verifyReason.trim().length;
-  const isValid = reasonLength >= MIN_REASON_LENGTH && reasonLength <= MAX_REASON_LENGTH;
+  const isValid = countMeaningfulChars(verifyReason) >= MIN_REASON_LENGTH && reasonLength <= MAX_REASON_LENGTH;
 
   return (
     <>
@@ -79,7 +80,7 @@ function VerifyKycForm({
           className={`text-xs ${verifyReason.length > 0 && !isValid ? 'text-destructive font-medium' : 'text-muted-foreground'}`}
           role={verifyReason.length > 0 && !isValid ? 'alert' : undefined}
         >
-          Audit reason must be between {MIN_REASON_LENGTH} and {MAX_REASON_LENGTH} characters.
+          Audit reason needs at least {MIN_REASON_LENGTH} letters or numbers (max {MAX_REASON_LENGTH} characters).
         </p>
       </div>
       <DialogFooter>

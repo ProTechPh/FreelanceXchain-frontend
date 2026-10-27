@@ -10,7 +10,9 @@ const valid = {
 
 test('custom skills follow backend field constraints', () => {
   assert.equal(validateCustomSkill(valid), null);
-  assert.match(validateCustomSkill({ ...valid, name: 'A' }) ?? '', /2 and 100/);
-  assert.match(validateCustomSkill({ ...valid, description: 'Too short' }) ?? '', /10 and 500/);
+  assert.match(validateCustomSkill({ ...valid, name: 'A' }) ?? '', /at least 2 letters or numbers/);
+  assert.match(validateCustomSkill({ ...valid, name: 'A'.repeat(101) }) ?? '', /100 characters or fewer/);
+  assert.match(validateCustomSkill({ ...valid, description: 'Too short' }) ?? '', /at least 10 letters or numbers/);
+  assert.match(validateCustomSkill({ ...valid, description: ' . '.repeat(50) }) ?? '', /at least 10 letters or numbers/);
   assert.match(validateCustomSkill({ ...valid, yearsOfExperience: 51 }) ?? '', /0 and 50/);
 });

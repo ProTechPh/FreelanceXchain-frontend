@@ -4,10 +4,16 @@ export type AuditLogStatus = 'success' | 'failure' | 'pending';
 
 const VALID_STATUSES: AuditLogStatus[] = ['success', 'failure', 'pending'];
 
+/** Admins, or regular users (freelancers and employers). */
+export type AuditActorRole = 'admin' | 'user';
+
+const VALID_ACTOR_ROLES: AuditActorRole[] = ['admin', 'user'];
+
 export const AUDIT_SEARCH_PAGE_SIZE = 50;
 
 export interface AuditSearchFilters {
   actor?: string;
+  actorRole?: string;
   user?: string;
   action?: string;
   resourceType?: string;
@@ -22,6 +28,7 @@ export interface AuditSearchFilters {
 /** Exactly the query params GET /audit-logs/search reads. */
 export interface AuditSearchParams {
   actor?: string;
+  actorRole?: AuditActorRole;
   user?: string;
   action?: string;
   resourceType?: string;
@@ -35,6 +42,10 @@ export interface AuditSearchParams {
 
 export function isAuditLogStatus(value: unknown): value is AuditLogStatus {
   return typeof value === 'string' && VALID_STATUSES.includes(value as AuditLogStatus);
+}
+
+export function isAuditActorRole(value: unknown): value is AuditActorRole {
+  return typeof value === 'string' && VALID_ACTOR_ROLES.includes(value as AuditActorRole);
 }
 
 /**
@@ -61,6 +72,10 @@ export function buildAuditSearchParams(filters: AuditSearchFilters): AuditSearch
 
   if (isAuditLogStatus(filters.status)) {
     params.status = filters.status;
+  }
+
+  if (isAuditActorRole(filters.actorRole)) {
+    params.actorRole = filters.actorRole;
   }
 
   if (typeof filters.limit === 'number' && Number.isFinite(filters.limit)) {

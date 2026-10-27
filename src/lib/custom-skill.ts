@@ -1,3 +1,5 @@
+import { countMeaningfulChars } from './text-validation.ts';
+
 export type CustomSkillDraft = {
   name: string;
   description: string;
@@ -5,10 +7,10 @@ export type CustomSkillDraft = {
 };
 
 export function validateCustomSkill(draft: CustomSkillDraft): string | null {
-  const nameLength = draft.name.trim().length;
-  if (nameLength < 2 || nameLength > 100) return 'Skill name must be between 2 and 100 characters.';
-  const descriptionLength = draft.description.trim().length;
-  if (descriptionLength < 10 || descriptionLength > 500) return 'Description must be between 10 and 500 characters.';
+  if (countMeaningfulChars(draft.name) < 2) return 'Skill name must include at least 2 letters or numbers.';
+  if (draft.name.trim().length > 100) return 'Skill name must be 100 characters or fewer.';
+  if (countMeaningfulChars(draft.description) < 10) return 'Description must include at least 10 letters or numbers.';
+  if (draft.description.trim().length > 500) return 'Description must be 500 characters or fewer.';
   if (!Number.isFinite(draft.yearsOfExperience) || draft.yearsOfExperience < 0 || draft.yearsOfExperience > 50) return 'Years of experience must be between 0 and 50.';
   return null;
 }

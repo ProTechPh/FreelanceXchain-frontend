@@ -33,7 +33,7 @@ test('rejects incomplete project details before advancing', () => {
       ...validForm,
       title: 'test',
     }),
-    'Project title must be at least 5 characters.',
+    'Project title must include at least 5 letters or numbers.',
   );
 
   assert.equal(
@@ -41,7 +41,7 @@ test('rejects incomplete project details before advancing', () => {
       ...validForm,
       description: 'Too short',
     }),
-    'Project description must be at least 20 characters.',
+    'Project description must include at least 20 letters or numbers.',
   );
 });
 

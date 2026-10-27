@@ -32,6 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { countMeaningfulChars } from '@/lib/text-validation';
 
 function extractApiFieldErrors(error: unknown): Record<string, string> {
   const result: Record<string, string> = {};
@@ -134,8 +135,8 @@ export default function AdminSkillsPage() {
     const trimmedName = categoryName.trim();
     const trimmedDesc = categoryDescription.trim();
 
-    if (!trimmedName || trimmedName.length < 3) {
-      const msg = !trimmedName ? 'Category name is required.' : 'Category name must be at least 3 characters.';
+    if (!trimmedName || countMeaningfulChars(trimmedName) < 3) {
+      const msg = !trimmedName ? 'Category name is required.' : 'Category name must include at least 3 letters or numbers.';
       setCategoryNameError(msg);
       toast.error(msg);
       return;
@@ -291,17 +292,17 @@ export default function AdminSkillsPage() {
   onChange={(event) => {
     const val = event.target.value;
     setCategoryName(val);
-    if (val.trim().length >= 3) {
+    if (countMeaningfulChars(val) >= 3) {
       setCategoryNameError(null);
     } else if (val.trim().length > 0) {
-      setCategoryNameError('Category name must be at least 3 characters.');
+      setCategoryNameError('Category name must include at least 3 letters or numbers.');
     }
   }}
-  aria-invalid={Boolean(categoryNameError || (categoryName.length > 0 && categoryName.trim().length < 3))}
+  aria-invalid={Boolean(categoryNameError || (categoryName.length > 0 && countMeaningfulChars(categoryName) < 3))}
 />
-{(categoryNameError || (categoryName.length > 0 && categoryName.trim().length < 3)) && (
+{(categoryNameError || (categoryName.length > 0 && countMeaningfulChars(categoryName) < 3)) && (
   <p className="text-xs text-destructive mt-1" role="alert">
-    {categoryNameError || 'Category name must be at least 3 characters.'}
+    {categoryNameError || 'Category name must include at least 3 letters or numbers.'}
   </p>
 )}
 </Field><Field label="Description" htmlFor="category-description">

@@ -13,7 +13,7 @@ test('requires verified KYC for dispute actions', () => {
 test('validates the dispute fields required by the backend', () => {
   assert.equal(validateDisputeDraft({ contractId: '', milestoneId: '', reason: '' }), 'Choose a contract.');
   assert.equal(validateDisputeDraft({ contractId: 'contract-1', milestoneId: '', reason: '' }), 'Choose a milestone.');
-  assert.equal(validateDisputeDraft({ contractId: 'contract-1', milestoneId: 'milestone-1', reason: 'short' }), 'Describe the issue in at least 10 characters.');
+  assert.equal(validateDisputeDraft({ contractId: 'contract-1', milestoneId: 'milestone-1', reason: 'short' }), 'Describe the issue using at least 10 letters or numbers.');
   assert.equal(validateDisputeDraft({ contractId: 'contract-1', milestoneId: 'milestone-1', reason: 'The delivered files are incomplete.' }), null);
 });
 

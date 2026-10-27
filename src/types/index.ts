@@ -1401,6 +1401,8 @@ export interface AuditLogEntry {
   id: string;
   user_id: string | null;
   actor_id: string | null;
+  /** Actor's role when the action happened; null for actor-less events and older entries. */
+  actor_role?: 'admin' | 'freelancer' | 'employer' | null;
   action: string;
   resource_type: string;
   resource_id: string | null;

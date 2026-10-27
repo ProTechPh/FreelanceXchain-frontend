@@ -18,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { countMeaningfulChars } from '@/lib/text-validation';
 
 interface SuggestSkillDialogProps {
   open: boolean;
@@ -58,11 +59,11 @@ export function SuggestSkillDialog({
     const trimmedDesc = description.trim();
     const trimmedCategory = categoryName.trim();
 
-    if (trimmedName.length < 2 || trimmedName.length > 100) {
-      return toast.error('Skill name must be between 2 and 100 characters.');
+    if (countMeaningfulChars(trimmedName) < 2 || trimmedName.length > 100) {
+      return toast.error('Skill name must include at least 2 letters or numbers (max 100 characters).');
     }
-    if (trimmedDesc.length < 5 || trimmedDesc.length > 500) {
-      return toast.error('Please provide a brief description (5 to 500 characters) explaining what this skill is.');
+    if (countMeaningfulChars(trimmedDesc) < 5 || trimmedDesc.length > 500) {
+      return toast.error('Please provide a brief description (at least 5 letters or numbers, max 500 characters) explaining what this skill is.');
     }
 
     setSubmitting(true);

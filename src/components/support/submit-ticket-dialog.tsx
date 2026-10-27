@@ -33,6 +33,7 @@ import {
   TICKET_CATEGORY_ORDER,
 } from '@/lib/support-tickets';
 import type { SupportTicket, SupportTicketCategory } from '@/types';
+import { countMeaningfulChars } from '@/lib/text-validation';
 
 type SubmitTicketDialogProps = {
   open: boolean;
@@ -66,8 +67,8 @@ export function SubmitTicketDialog({ open, onOpenChange, onSubmitted }: SubmitTi
   const trimmedDescription = description.trim();
   const canSubmit =
     category !== '' &&
-    trimmedSubject.length >= MIN_SUBJECT_LENGTH &&
-    trimmedDescription.length >= MIN_DESCRIPTION_LENGTH;
+    countMeaningfulChars(trimmedSubject) >= MIN_SUBJECT_LENGTH &&
+    countMeaningfulChars(trimmedDescription) >= MIN_DESCRIPTION_LENGTH;
 
   const handleSubmit = async () => {
     if (category === '') return;
@@ -92,7 +93,7 @@ export function SubmitTicketDialog({ open, onOpenChange, onSubmitted }: SubmitTi
   };
 
   const descriptionRemaining = MAX_DESCRIPTION_LENGTH - description.length;
-  const descriptionShort = trimmedDescription.length > 0 && trimmedDescription.length < MIN_DESCRIPTION_LENGTH;
+  const descriptionShort = trimmedDescription.length > 0 && countMeaningfulChars(trimmedDescription) < MIN_DESCRIPTION_LENGTH;
 
   return (
     <Dialog
@@ -162,7 +163,7 @@ export function SubmitTicketDialog({ open, onOpenChange, onSubmitted }: SubmitTi
                   rather than bouncing a filled-in form back. */}
               <p className={descriptionShort ? 'text-warning' : 'text-muted-foreground'}>
                 {descriptionShort
-                  ? `A few more details, please — at least ${MIN_DESCRIPTION_LENGTH} characters.`
+                  ? `A few more details, please — at least ${MIN_DESCRIPTION_LENGTH} letters or numbers.`
                   : 'The more specific, the faster we can answer.'}
               </p>
               {descriptionRemaining < 400 && (

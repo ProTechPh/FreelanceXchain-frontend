@@ -29,9 +29,9 @@ export function floorToUnits(floor: number): number {
   return fromUnits(Math.ceil(floor * UNITS_PER_ETH - 1e-6));
 }
 
-/** Lowest base amount an offer may use: half the freelancer's proposed rate, rounded up (mirrors the API). */
+/** Lowest base amount an offer may use: the smallest amount above half the freelancer's proposed rate (mirrors the API). */
 export function minimumBaseAmount(proposedRate: number): number {
-  return fromUnits(Math.ceil(toUnits(floorToUnits(proposedRate)) * 0.5));
+  return fromUnits(Math.floor(toUnits(floorToUnits(proposedRate)) * 0.5) + 1);
 }
 
 function hasAtMostDecimals(value: number, decimals: number = AMOUNT_DECIMALS): boolean {
@@ -85,7 +85,7 @@ export function validateOfferDraft(
   if (!(draft.baseAmount > 0) || !hasAtMostDecimals(draft.baseAmount)) {
     errors.baseAmount = 'Enter a base amount greater than 0 with at most 4 decimals.';
   } else if (toUnits(draft.baseAmount) < toUnits(minimumBaseAmount(floor))) {
-    errors.baseAmount = `The base amount can't go below half of the freelancer's rate (${minimumBaseAmount(floor)} ETH).`;
+    errors.baseAmount = `The base amount must be more than half of the freelancer's rate (at least ${minimumBaseAmount(floor)} ETH).`;
   }
   if (draft.additionalPay < 0 || !hasAtMostDecimals(draft.additionalPay)) {
     errors.additionalPay = 'Additional pay must be 0 or more, with at most 4 decimals.';

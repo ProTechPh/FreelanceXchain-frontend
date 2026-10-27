@@ -69,3 +69,10 @@ test('pagination state alone does not count as an active filter', () => {
   assert.equal(hasActiveAuditFilters({ cursor: 'doc-1', limit: 50 }), false);
   assert.equal(hasActiveAuditFilters({ status: 'failure' }), true);
 });
+
+test('passes only the admin/user actor-role filter values the API accepts', () => {
+  assert.deepEqual(buildAuditSearchParams({ actorRole: 'admin' }), { actorRole: 'admin' });
+  assert.deepEqual(buildAuditSearchParams({ actorRole: 'user' }), { actorRole: 'user' });
+  assert.deepEqual(buildAuditSearchParams({ actorRole: 'freelancer' }), {});
+  assert.equal(hasActiveAuditFilters({ actorRole: 'user' }), true);
+});

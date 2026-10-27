@@ -47,6 +47,7 @@ import {
   MAX_FILE_SIZE,
   MAX_TOTAL_SIZE,
 } from '@/lib/file-validation';
+import { countMeaningfulChars } from '@/lib/text-validation';
 
 const MAX_FILES = 10;
 
@@ -234,8 +235,8 @@ function EditProjectContent() {
     event.preventDefault();
     if (freelancerLimitError) return;
     if (scopeLocked) return executeSave();
-    if (title.trim().length < 5) return toast.error('Project title must be at least 5 characters. Make it descriptive so freelancers know what to expect.');
-    if (description.trim().length < 20) return toast.error('Project description must be at least 20 characters. Include requirements and expected outcomes.');
+    if (countMeaningfulChars(title) < 5) return toast.error('Project title must include at least 5 letters or numbers. Make it descriptive so freelancers know what to expect.');
+    if (countMeaningfulChars(description) < 20) return toast.error('Project description must include at least 20 letters or numbers. Include requirements and expected outcomes.');
 
     if (status === 'cancelled' && project?.status !== 'cancelled') {
       setConfirmCancelOpen(true);
